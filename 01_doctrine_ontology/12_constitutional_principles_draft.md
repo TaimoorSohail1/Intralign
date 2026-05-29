@@ -45,6 +45,7 @@ Pending full disposition, contributors should not cite this file as authoritativ
 16. Dynamic epistemic synthesis is the canonical truth structure of the system.
 
 17. Organizational cognition evolves from individual understanding to orchestration infrastructure.
+   > **Absorption Note (per DL-034 / RB-003 / RB-010 partial):** This principle's substantive content is **absorbed by Doctrine 02 (Organizational Cognition Model)**, which is the canonical source for the Cognition Scope axis of the OSLO Evolution Framework. Draft Principle 17 no longer carries independent doctrinal force; its substantive content is canonized through Doctrine 02's four-stage arc (Individual Cognition → Shared Understanding → Governed Organizational Cognition → Outcome Orchestration Infrastructure). The remaining 19 Draft principles in this file are unaffected by this absorption and continue under the file-level Governance Status acknowledgment pending RB-010 full disposition.
 
 18. Outcome integrity supersedes workflow optimization.
 

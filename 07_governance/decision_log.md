@@ -344,6 +344,22 @@ Each decision entry contains:
 
 ---
 
+### DL-034 — Adopt Multi-Axis Progression Taxonomy per RB-003
+
+- **Date Recorded:** 2026-05-29
+- **Layer:** Doctrine; Constitution; Root Governance
+- **Source:** RB-003 (Progression Model Reconciliation); RB-003 Progression Model Comparison Report; Repository Owner Guidance (seven principles cited in the disposition document); RB-003 Disposition Document (`07_governance/rb_003_disposition.md`).
+- **Decision:** Adopt the OSLO Evolution Framework as the canonical progression taxonomy. The framework comprises four distinct but correlated axes: Cognition Scope (Doctrine 02 four-stage arc), Product Identity (Doctrine 09 four-stage arc), Trust Gradient (Doctrine 09 / Article 41 four-step progression), and Execution Depth (Doctrine 10 / Article 43 five-phase progression). Doctrine prevails over Constitution where stage labels or counts conflict, consistent with DL-033. Portfolio Cognition is a provisional long-term capability, not a ratified stage. Doctrine 09's "Governed Organizational Cognition" label prevails over Article 40's "Governance Infrastructure" at Product Identity Stage 3. Draft Principle 17's substantive content is absorbed by Doctrine 02. Full architectural detail is recorded in the disposition document.
+- **Rationale:** The four progressions describe distinct facets of OSLO's evolution that are conceptually independent but empirically correlated. Collapsing them loses analytical resolution; treating them as a single arc misrepresents the doctrine. Under DL-033, doctrinal precedence governs label conflicts. Portfolio Cognition is anticipated in Doctrine 10 but absent from Doctrine 02; the four-stage Cognition Scope arc therefore prevails until Portfolio Cognition is separately governed. The owner privileges fidelity to doctrinal source material.
+- **Disposition:** Accepted
+- **Conditions:** None.
+- **Supersedes:** No prior Decision. Closes RB-003. Partially resolves RB-010 with respect to Draft Principle 17 (substantive content absorbed by Doctrine 02; the file's overall disposition under RB-010 remains Partially Closed pending future Proposal). Partially unblocks RB-015 (Project MRI scoping). Article 40 Stage 3 label and Article 44 five-stage arc are dispositioned as provisional and do not constitute amendments to the Constitution Articles; their reconciliation with doctrine is governed by the Conflict Resolution Model from DL-033 and applied here.
+- **Affected Artifacts:** `01_doctrine_ontology/02_organizational_cognition_model.md` (confirmed canonical for Cognition Scope); `01_doctrine_ontology/09_plg_product_evolution_strategy.md` (confirmed canonical for Product Identity and Trust Gradient); `01_doctrine_ontology/10_execution_orchestration_maturity.md` (confirmed canonical for Execution Depth; Long-Term Direction items provisional); `01_doctrine_ontology/12_constitutional_principles_draft.md` (Draft 17 absorbed by Doctrine 02; annotation applied); `02_ux_constitution/08_product_evolution_constitution.md` (Article 40 and Article 44 annotated with provisional-status notes); `canonical_definitions.md` (OSLO Evolution Framework and four axes registered); `ontology_registry.md` (four axes registered; Long-Term Direction items marked Provisional); `07_governance/rb_003_disposition.md` (created); `07_governance/revision_backlog.md` (RB-003 closed; RB-010 Draft-17 absorption noted; RB-015 partial unblock noted); `07_governance/changelog.md` (CHG entries recorded).
+- **Resulting Actions:** Disposition document placed at `07_governance/rb_003_disposition.md`. Annotations applied to Article 40, Article 44, and Doctrine 12 Draft 17. `revision_backlog.md` updated. `canonical_definitions.md` and `ontology_registry.md` updated to register the framework and four axes. Changelog entries authorized by DL-034 recorded.
+- **Status:** Ratified.
+
+---
+
 ## Open Questions Not Recorded as Decisions
 
 The following appear in `03_implementation_specs/14_open_questions_design_risks.md` and remain explicitly open. They are not decisions and are listed here for reference only.
@@ -358,7 +374,7 @@ The following appear in `03_implementation_specs/14_open_questions_design_risks.
 
 ## Governance Notes
 
-1. The decision log is operative as of DL-029. DL-029 through DL-033 are Ratified under Framework 001/001A.
+1. The decision log is operative as of DL-029. DL-029 through DL-034 are Ratified under Framework 001/001A.
 2. DL-001 through DL-028 are grandfathered as Stated per DL-032. They remain in effect but require future Proposals to convert to Ratified.
 3. Future entries must cite the source Proposal, follow the Entry Schema, and adhere to the supersession rule declared by Framework 001.
 4. Decisions that reconcile conflicts among grandfathered entries must explicitly reference the superseded statements.

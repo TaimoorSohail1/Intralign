@@ -129,6 +129,62 @@ Each changelog entry contains:
 - **Change Summary:** Pre-ratification DL-XXX placeholders in the four annotated files replaced with the ratified Decision identifier DL-033. No other content modified; annotations now cite the ratified Decision.
 - **Supersession Reference:** None. Reference update only.
 
+### CHG-014 — RB-003 Ratified as DL-034
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `07_governance/decision_log.md` (DL-034 entry appended; header note updated to reflect operative range DL-029 through DL-034).
+- **Change Summary:** RB-003 (Progression Model Reconciliation) ratified as DL-034. The OSLO Evolution Framework is the canonical multi-axis progression taxonomy. Four distinct but correlated axes ratified: Cognition Scope (Doctrine 02 canonical), Product Identity (Doctrine 09 canonical), Trust Gradient (Doctrine 09 / Article 41 aligned), Execution Depth (Doctrine 10 / Article 43 aligned). Doctrine prevails over Constitution where stage labels or counts conflict.
+- **Supersession Reference:** Closes RB-003. Partially resolves RB-010 with respect to Draft Principle 17. Partially unblocks RB-015.
+
+### CHG-015 — RB-003 Disposition Document Placed
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `07_governance/rb_003_disposition.md` (created).
+- **Change Summary:** Full RB-003 disposition document placed in `07_governance/`. Document records the OSLO Evolution Framework, the four ratified axes, the ratified vs provisional status of each label, affected artifacts, and backlog impacts.
+- **Supersession Reference:** None.
+
+### CHG-016 — Constitution Articles 40 and 44 Annotated
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `02_ux_constitution/08_product_evolution_constitution.md` (inline Governance Notes added to Article 40 and Article 44).
+- **Change Summary:** Article 40 annotated to record that Doctrine 09's "Governed Organizational Cognition" label prevails over the Article's "Governance infrastructure" label at Stage 3 of Product Identity. Article 44 annotated to record that Doctrine 02's four-stage Cognition Scope arc prevails over the Article's five-stage arc, and that Portfolio Cognition is a provisional long-term capability. Article body text is not amended; the annotations declare doctrinal precedence and provisional status.
+- **Supersession Reference:** Article 40 Stage 3 label and Article 44 five-stage arc are dispositioned as provisional under doctrinal precedence (DL-033 conflict resolution model; DL-034 application).
+
+### CHG-017 — Draft Principle 17 Annotated as Absorbed
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `01_doctrine_ontology/12_constitutional_principles_draft.md` (absorption note added inline to Draft 17).
+- **Change Summary:** Draft Principle 17's substantive content is absorbed by Doctrine 02. Annotation added inline to record that Draft 17 no longer carries independent doctrinal force and that its substantive content is canonized through Doctrine 02's four-stage Cognition Scope arc. The remaining 19 Draft principles are unaffected and continue under the file-level Governance Status acknowledgment pending RB-010 full disposition.
+- **Supersession Reference:** Draft 17 superseded as an independent doctrinal statement; its content is now sourced from Doctrine 02.
+
+### CHG-018 — Backlog Updates for DL-034
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `07_governance/revision_backlog.md` (RB-003 closed; RB-010 updated to record Draft 17 absorption; RB-015 annotated with partial unblock).
+- **Change Summary:** RB-003 closed with DL-034 as the closing Decision. RB-010 updated to record that Draft Principle 17 is absorbed by Doctrine 02 (RB-010 remains Partially Closed; the remaining 19 Draft principles continue pending RB-010 full disposition). RB-015 annotated to record that the progression-model ambiguity that previously blocked Project MRI's analytical placement is now resolved; RB-015 remains Open with RB-004 as the upstream blocker for the scoping decision itself.
+- **Supersession Reference:** RB-003 closed; RB-010 partial scope reduced.
+
+### CHG-019 — canonical_definitions.md Updated
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `canonical_definitions.md` (Maturity and Progression Concepts section updated; OSLO Evolution Framework and four axes registered).
+- **Change Summary:** Registered the OSLO Evolution Framework as an Established term. Registered Cognition Scope, Product Identity, Trust Gradient, and Execution Depth as Established axis entries with canonical doctrinal sources. The pre-existing Organizational Cognition Arc entry annotated to indicate reframing as the Cognition Scope axis.
+- **Supersession Reference:** None. New entries; the prior Organizational Cognition Arc entry retained with a reframing note.
+
+### CHG-020 — ontology_registry.md Updated
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `ontology_registry.md` (Cognition and Progression Plane section updated; four axes registered; Portfolio Cognition and Long-Term Direction items marked Provisional).
+- **Change Summary:** Cognition and Progression Plane reorganized around the ratified OSLO Evolution Framework. Four axes registered as Established entries with canonical sources. Portfolio Cognition reclassified from Proposed to Provisional. Long-Term Direction items registered as Provisional. Predecessor entries (Organizational Cognition Arc, Trust Evolution, Execution Maturity Phases, Product Evolution Stages) noted as reframed by the ratified axes. Reconciled conflicts recorded.
+- **Supersession Reference:** Predecessor entries reframed (not deleted) as components of the ratified framework.
+
 ---
 
 ## Governance Notes

@@ -120,19 +120,53 @@ The driver list differs by two dimensions between doctrine and spec. Reconciliat
 
 ## Cognition and Progression Plane
 
+### Framework
+
+The canonical progression taxonomy for this plane is the **OSLO Evolution Framework** (DL-034), comprising four distinct but correlated axes.
+
 ### Entities
 
 | Entity | Status | Primary Source |
 |---|---|---|
-| Organizational Cognition Arc | Established (split source) | `01_doctrine_ontology/02_organizational_cognition_model.md`; `02_ux_constitution/08_product_evolution_constitution.md` Articles 40 and 44 |
-| Trust Evolution | Established | `01_doctrine_ontology/09_plg_product_evolution_strategy.md`; `02_ux_constitution/08_product_evolution_constitution.md` Article 41 |
-| Execution Maturity Phases | Established | `01_doctrine_ontology/10_execution_orchestration_maturity.md`; `02_ux_constitution/08_product_evolution_constitution.md` Article 43 |
-| Product Evolution Stages | Established | `01_doctrine_ontology/09_plg_product_evolution_strategy.md`; `02_ux_constitution/08_product_evolution_constitution.md` Article 40 |
-| Portfolio Cognition | Proposed | `01_doctrine_ontology/10_execution_orchestration_maturity.md`; `02_ux_constitution/08_product_evolution_constitution.md` Article 44 |
+| OSLO Evolution Framework | Established | DL-034; `07_governance/rb_003_disposition.md` |
+| Cognition Scope (Axis A) | Established | `01_doctrine_ontology/02_organizational_cognition_model.md` (canonical); DL-034 |
+| Product Identity (Axis B) | Established | `01_doctrine_ontology/09_plg_product_evolution_strategy.md` (canonical); DL-034 |
+| Trust Gradient (Axis C) | Established | `01_doctrine_ontology/09_plg_product_evolution_strategy.md` (canonical); `02_ux_constitution/08_product_evolution_constitution.md` Article 41 (aligned); DL-034 |
+| Execution Depth (Axis D) | Established | `01_doctrine_ontology/10_execution_orchestration_maturity.md` (canonical); `02_ux_constitution/08_product_evolution_constitution.md` Article 43 (aligned); DL-034 |
+| Portfolio Cognition | Provisional (long-term capability, not a ratified stage) | `01_doctrine_ontology/10_execution_orchestration_maturity.md` Long-Term Direction; `02_ux_constitution/08_product_evolution_constitution.md` Article 44 (Article 44's stage-promotion is provisional under DL-034) |
+| Long-Term Direction items (organizational systems cognition; cascading dependency awareness; organizational drift analysis; cross-initiative consequence modeling) | Provisional | `01_doctrine_ontology/10_execution_orchestration_maturity.md` |
 
-### Known Conflict
+### Predecessor Entries (Superseded by Reframing)
 
-The repository contains at least five overlapping progressions across this plane, with inconsistent stage counts (four versus five) and inconsistent stage labels. No mapping among them exists. Reconciliation pending — see `revision_backlog.md`, RB-003.
+The following entries appeared in the registry prior to DL-034 and are now reframed as components of the OSLO Evolution Framework:
+
+- *Organizational Cognition Arc* — now the **Cognition Scope** axis.
+- *Trust Evolution* — now the **Trust Gradient** axis.
+- *Execution Maturity Phases* — now the **Execution Depth** axis.
+- *Product Evolution Stages* — now the **Product Identity** axis.
+
+### Relationships
+
+- The four axes are **distinct** — each has a separately identifiable subject and origin point.
+- The four axes are **correlated** — organizations typically advance on multiple axes together.
+- The four axes are **convergent at terminal** — three axes terminate at Outcome Orchestration Infrastructure; Trust Gradient terminates at Orchestration Authority.
+- The four axes are **independently measurable** — position on one axis does not mechanically determine position on another.
+- The framework does not declare equivalence between Phase numbering (Execution Depth) and Stage numbering (Cognition Scope, Product Identity).
+
+### Reconciled Conflicts
+
+- **Cognition Scope stage count.** Doctrine 02's four-stage arc prevails over Article 44's five-stage arc. Closed by DL-034.
+- **Product Identity Stage 3 label.** Doctrine 09's "Governed Organizational Cognition" prevails over Article 40's "Governance Infrastructure." Closed by DL-034.
+- **Draft Principle 17.** Absorbed by Doctrine 02 via DL-034.
+
+### Open Items on This Plane
+
+- **B-4** Strategic Cognition Environment definition.
+- **B-5** Outcome Orchestration Infrastructure unified definition across axes.
+- **B-7** Agent Governance placement.
+- **B-9** Phase vs Stage numbering equivalence.
+- **B-10** Trust Gradient reachability conditions.
+- **B-11** Freemium / PLG entry point position.
 
 ---
 

@@ -253,7 +253,37 @@ All entries cite their source location. No definition in this file should be tre
 **Status:** Established (split source)
 **Source:** `01_doctrine_ontology/02_organizational_cognition_model.md`; `02_ux_constitution/08_product_evolution_constitution.md` (Articles 40 and 44)
 **Stated progression (doctrine 02):** Individual Cognition → Shared Understanding → Governed Organizational Cognition → Outcome Orchestration Infrastructure.
-**Note:** Constitution Article 40 uses different stage names. Article 44 expands the arc to five stages by inserting Portfolio Cognition. Doctrine 09, Doctrine 10, and the PLG specs add overlapping progressions (Trust Evolution, Execution Maturity Phases 0–4, Product Evolution Stages 1–4). Reconciliation required.
+**Note (per DL-034):** This concept is reframed as the **Cognition Scope axis** of the OSLO Evolution Framework. See the OSLO Evolution Framework entry below for the ratified taxonomy.
+
+### OSLO Evolution Framework
+
+**Status:** Established
+**Source:** `07_governance/rb_003_disposition.md`; DL-034.
+**Definition:** The canonical multi-axis progression taxonomy for OSLO's evolution. Comprises four distinct but correlated axes: Cognition Scope, Product Identity, Trust Gradient, Execution Depth. The four axes are independently measurable and converge structurally at terminal Outcome Orchestration Infrastructure (Trust Gradient terminates at Orchestration Authority, the trust-dimensional articulation of the same endpoint).
+
+### Cognition Scope (Axis A)
+
+**Status:** Established
+**Source:** `01_doctrine_ontology/02_organizational_cognition_model.md`; DL-034.
+**Definition:** The scale-of-cognition axis of the OSLO Evolution Framework. Stages: Individual Cognition → Shared Understanding → Governed Organizational Cognition → Outcome Orchestration Infrastructure. Four stages, ratified. Portfolio Cognition is a provisional long-term capability, not a ratified stage.
+
+### Product Identity (Axis B)
+
+**Status:** Established
+**Source:** `01_doctrine_ontology/09_plg_product_evolution_strategy.md`; DL-034.
+**Definition:** The product-perception axis of the OSLO Evolution Framework. Stages: Planning and Understanding Intelligence → Strategic Cognition Environment → Governed Organizational Cognition → Outcome Orchestration Infrastructure. Stage 3 label "Governed Organizational Cognition" (Doctrine 09) prevails over Article 40's provisional "Governance Infrastructure" label.
+
+### Trust Gradient (Axis C)
+
+**Status:** Established
+**Source:** `01_doctrine_ontology/09_plg_product_evolution_strategy.md`; `02_ux_constitution/08_product_evolution_constitution.md` (Article 41); DL-034.
+**Definition:** The trust-grant axis of the OSLO Evolution Framework. Steps: OSLO Observations → OSLO Recommendations → OSLO Operational Influence → OSLO Orchestration Authority. Doctrine and Constitution aligned at ratification.
+
+### Execution Depth (Axis D)
+
+**Status:** Established
+**Source:** `01_doctrine_ontology/10_execution_orchestration_maturity.md`; `02_ux_constitution/08_product_evolution_constitution.md` (Article 43); DL-034.
+**Definition:** The execution-interaction-depth axis of the OSLO Evolution Framework. Phases (zero-indexed): Phase 0 Execution-State Ingestion → Phase 1 Observational Intelligence → Phase 2 Guided Optimization → Phase 3 Assisted Coordination → Phase 4 Outcome Orchestration Infrastructure. Doctrine and Constitution aligned at ratification. Doctrine 10's Long-Term Direction items (Portfolio Cognition, organizational systems cognition, cascading dependency awareness, organizational drift analysis, cross-initiative consequence modeling) remain provisional long-term capabilities.
 
 ---
 

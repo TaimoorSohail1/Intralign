@@ -59,7 +59,10 @@ All entries below are **Proposed**.
 - **Affected Concepts:** Organizational Cognition Arc; Trust Evolution; Execution Maturity Phases; Product Evolution Stages; Portfolio Cognition.
 - **Proposal Scope:** Reconcile the progressions into a single canonical Progression Model with named axes. Provide mappings showing how each existing progression projects onto it. Resolve the four-stage versus five-stage inconsistency. Do not eliminate any progression without explicit supersession.
 - **Dependencies:** Blocked by RB-001.
-- **Status:** Proposed.
+- **Disposition:** Closed — Resolved by DL-034. The OSLO Evolution Framework is ratified as a four-axis taxonomy (Cognition Scope, Product Identity, Trust Gradient, Execution Depth). Doctrine 02 is canonical for Cognition Scope. Doctrine 09 is canonical for Product Identity and Trust Gradient. Doctrine 10 is canonical for Execution Depth. Article 40 Stage 3 label and Article 44 five-stage arc are provisional; doctrinal precedence applies. Portfolio Cognition is dispositioned as a provisional long-term capability, not a ratified stage. Full taxonomy detail recorded in `07_governance/rb_003_disposition.md`.
+- **Closed By:** DL-034.
+- **Date Closed:** 2026-05-29
+- **Status:** Closed.
 
 ### RB-004 — Doctrine Stubs for Under-Specified Systems
 
@@ -129,9 +132,9 @@ All entries below are **Proposed**.
 - **Affected Concepts:** Constitutional Principles; all Articles.
 - **Proposal Scope:** Decide the disposition of the draft principles. Either supersede them with the Articles, ratify them as a parallel summary, or fold them into the Constitution. Record the disposition.
 - **Dependencies:** Blocked by RB-005.
-- **Disposition:** Partially Closed — Under DL-033, the Draft sits at the Doctrine layer and Constitution Articles sit at the Constitution layer; doctrinal precedence applies. The Draft would nominally outrank conflicting Articles. The instability is acknowledged in the header of `01_doctrine_ontology/12_constitutional_principles_draft.md` per the pre-ratification minimum remediation. Full disposition of the Draft (ratification, supersession, or formal retirement) requires a future Proposal.
-- **Partially Closed By:** DL-033.
-- **Date Partially Closed:** 2026-05-29
+- **Disposition:** Partially Closed — Under DL-033, the Draft sits at the Doctrine layer and Constitution Articles sit at the Constitution layer; doctrinal precedence applies. The Draft would nominally outrank conflicting Articles. The instability is acknowledged in the header of `01_doctrine_ontology/12_constitutional_principles_draft.md` per the pre-ratification minimum remediation. **Additional partial disposition by DL-034:** Draft Principle 17 specifically is absorbed by Doctrine 02 (Organizational Cognition Model); its substantive content is canonized through Doctrine 02's four-stage Cognition Scope arc and no longer carries independent doctrinal force. The remaining 19 Draft principles still require RB-010 full disposition through a future Proposal.
+- **Partially Closed By:** DL-033 (precedence framework); DL-034 (Draft Principle 17 absorption).
+- **Date Partially Closed:** 2026-05-28 (DL-033 partial); 2026-05-29 (DL-034 Draft 17 absorption).
 - **Status:** Partially Closed.
 
 ### RB-011 — Resolve "Lifecycle" Terminology Tension
@@ -184,7 +187,8 @@ All entries below are **Proposed**.
 - **Affected Concepts:** Project MRI; Confidence; Outcome Integrity; Understanding Boundaries.
 - **Proposal Scope:** Map each of the six Project MRI concerns to existing ontology entries. Decide whether Project MRI is a workspace surface, a subsystem, or a doctrinal lens. Doctrine-stub required before specification.
 - **Dependencies:** Blocked by RB-004.
-- **Status:** Proposed.
+- **Partial Unblock by DL-034:** The progression-model ambiguity that previously blocked Project MRI's analytical placement across axes is now resolved. Project MRI's positioning can be analyzed against the four ratified axes of the OSLO Evolution Framework (Cognition Scope, Product Identity, Trust Gradient, Execution Depth). The subsystem still requires doctrinal scoping; RB-004 remains the upstream blocker for the scoping decision itself.
+- **Status:** Proposed (partially unblocked).
 
 ### RB-016 — Anchor Confidence Scoring Methodology
 
