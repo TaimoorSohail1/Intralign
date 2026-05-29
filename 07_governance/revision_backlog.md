@@ -1,0 +1,248 @@
+# Revision Backlog
+
+## Status
+
+**Operative — Governance Framework Active**
+
+The revision backlog operates under Framework 001 (per DL-030) and Framework 001A (per DL-031) as of 2026-05-28. Entries record proposed revisions to repository content. Promotion of any entry from Proposed to Ratified for Work requires a Proposal processed through the operative governance lifecycle.
+
+**Governance Discipline Directive (per Repository Owner Action Plan):** New backlog entries are temporarily restricted to items required to resolve Proposal 000 unless specifically directed by the repository owner.
+
+Entries are not prioritized for scheduling at the backlog level. Sequencing is determined during Review under Framework 001A.
+
+---
+
+## Entry Schema
+
+Each entry contains:
+
+- **ID** — Backlog identifier (RB-NNN).
+- **Title** — Short descriptive title.
+- **Source Finding** — Where the gap or conflict was identified.
+- **Affected Layer(s)** — Doctrine, Constitution, Implementation Spec, Manifest, or Root Governance.
+- **Affected Concepts** — Ontology entries touched.
+- **Proposal Scope** — What the revision would address (not implementation detail).
+- **Dependencies** — Other backlog items this is blocked by or blocks.
+- **Status** — Proposed, Under Review, Ratified for Work, Deferred, or Closed.
+
+All entries below are **Proposed**.
+
+---
+
+## P0 — Foundational Governance
+
+### RB-001 — Canonical Registry Consolidation
+
+- **Source Finding:** Two canonical-definitions surfaces exist — `02_ux_constitution/10_canonical_definitions.md` is populated; root `canonical_definitions.md` and `ontology_registry.md` were empty until this initial draft. The manifest does not declare which is authoritative.
+- **Affected Layer(s):** Constitution; Root Governance.
+- **Affected Concepts:** All canonical definitions; all ontology entries.
+- **Proposal Scope:** Declare a single source of truth for canonical definitions and the ontology registry. Reconcile divergent definitions (Outcome Integrity States, Epistemic Object Types, Confidence Drivers). Establish the relationship between the root registry, the root definitions file, and the Constitution's definitions article.
+- **Dependencies:** Blocks RB-002, RB-003.
+- **Status:** Proposed.
+
+### RB-002 — Governance Traceability Spine
+
+- **Source Finding:** `decision_log.md` and this file (`revision_backlog.md`) were empty prior to the initial governance review draft. `changelog.md` remained empty. No schema or workflow existed for recording governance decisions, revisions, or changes.
+- **Affected Layer(s):** Root Governance.
+- **Affected Concepts:** All canonical content.
+- **Proposal Scope:** Define the schema and workflow for `decision_log.md`, `revision_backlog.md`, and `changelog.md`. Specify what a decision entry, backlog entry, and changelog entry must contain. Specify ratification triggers and supersession rules.
+- **Dependencies:** None.
+- **Disposition:** Closed — Resolved through adoption of Framework 001 (DL-030) with the condition that the Traceability Record schema remains an open governance item. The condition is recorded against DL-030 itself; no successor backlog entry is created at this time per the governance discipline directive.
+- **Closed By:** DL-030 (Accepted with Conditions); DL-031 (Accepted).
+- **Date Closed:** 2026-05-28
+- **Status:** Closed.
+
+### RB-003 — Progression Model Reconciliation
+
+- **Source Finding:** The repository contains at least five overlapping progressions: Organizational Cognition Arc (Doctrine 02), Product Evolution Stages (Doctrine 09, Article 40), Trust Evolution (Doctrine 09, Article 41), Execution Maturity Phases (Doctrine 10, Article 43), and Organizational Cognition Expansion (Article 44, which adds Portfolio Cognition as a fifth stage). Stage counts and labels are inconsistent.
+- **Affected Layer(s):** Doctrine; Constitution.
+- **Affected Concepts:** Organizational Cognition Arc; Trust Evolution; Execution Maturity Phases; Product Evolution Stages; Portfolio Cognition.
+- **Proposal Scope:** Reconcile the progressions into a single canonical Progression Model with named axes. Provide mappings showing how each existing progression projects onto it. Resolve the four-stage versus five-stage inconsistency. Do not eliminate any progression without explicit supersession.
+- **Dependencies:** Blocked by RB-001.
+- **Status:** Proposed.
+
+### RB-004 — Doctrine Stubs for Under-Specified Systems
+
+- **Source Finding:** Several concepts are named in canonical or specification material without doctrinal definition. They include: Working Memory, Outcome Map, Alternative Outcome Models, Confidence Scoring Methodology, Assumption Expiration, Policy DSL, Collaboration Role Model, Agent Governance, Portfolio Cognition, Project MRI subsystem internals.
+- **Affected Layer(s):** Doctrine; Constitution.
+- **Affected Concepts:** As listed above.
+- **Proposal Scope:** Establish a "doctrine-stub" convention. Each stub declares concept scope, dependencies on existing doctrine, and open questions blocking ratification. Stubs ensure specification cannot quietly fill in undefined doctrinal territory.
+- **Dependencies:** Blocked by RB-001.
+- **Status:** Proposed.
+
+### RB-005 — Layer Promotion and Citation Rule
+
+- **Source Finding:** The manifest declares precedence among layers but does not declare the relationship between doctrine and Constitution, nor how a concept is promoted from doctrine to Constitution, nor how implementation specs must cite the Articles they implement.
+- **Affected Layer(s):** Manifest; Root Governance.
+- **Affected Concepts:** All canonical content.
+- **Proposal Scope:** Constitutionalize the promotion rule between layers. Declare whether the Constitution is derived from, peer to, or supreme over doctrine. Define what evidence is required to promote a doctrinal concept into a Constitutional Article. Require implementation specs to cite the Article(s) they implement. Place the manifest itself in the precedence hierarchy.
+- **Dependencies:** Blocks ratification of any Stated decision in `decision_log.md`.
+- **Disposition:** Partially Closed — Resolved by DL-033 for the precedence hierarchy and concept promotion model (Doctrine > Constitution > Implementation Specifications; promotion paths declared in the disposition document). Residual scope remains: explicit citation requirements for Implementation Specs (how an Implementation Spec must cite the Doctrinal or Constitutional source it implements).
+- **Partially Closed By:** DL-033.
+- **Date Partially Closed:** 2026-05-29
+- **Status:** Partially Closed.
+
+---
+
+## P1 — Conflict Reconciliation
+
+### RB-006 — Reconcile Outcome Integrity States
+
+- **Source Finding:** Three sources list different state sets. Doctrine 04 lists Initial, Clarified, Aligned, Feasible, Governed, Execution Ready, Fragile, Drift Emerging. Article 33 omits Initial. Spec 08 adds "At Risk." `03_implementation_specs/02_plg_60_second_flow_wireframes.md` Screen 5 uses the compound phrase "Clarified but Fragile."
+- **Affected Layer(s):** Doctrine; Constitution; Implementation Spec.
+- **Affected Concepts:** Outcome Integrity States.
+- **Proposal Scope:** Ratify a single state set. Decide whether compound states are permitted, and if so, how they compose. Resolve whether "At Risk" is canonical or spec drift.
+- **Dependencies:** Blocked by RB-001.
+- **Status:** Proposed.
+
+### RB-007 — Reconcile Epistemic Object Types vs Epistemic Labels
+
+- **Source Finding:** Constitution Article 8 names five Epistemic Object Types (Facts, Inferences, Assumptions, Recommendations, Conflicts). Component Spec section 3 lists nine "Epistemic Label" types by adding Unknown, Provisional, Weakly Supported, Validated — conflating epistemic kind with epistemic strength.
+- **Affected Layer(s):** Constitution; Implementation Spec.
+- **Affected Concepts:** Epistemic Object Types; Confidence (as strength dimension).
+- **Proposal Scope:** Separate epistemic kind from epistemic strength. Decide whether the five canonical types form a closed set, and whether strength labels belong to a different concept entirely.
+- **Dependencies:** Blocked by RB-001.
+- **Status:** Proposed.
+
+### RB-008 — Reconcile Confidence Drivers
+
+- **Source Finding:** `01_doctrine_ontology/06_confidence_understanding_model.md` lists seven drivers. `03_implementation_specs/09_confidence_integrity_logic.md` lists nine, adding stakeholder coverage and dependency stability.
+- **Affected Layer(s):** Doctrine; Implementation Spec.
+- **Affected Concepts:** Confidence; Confidence Drivers.
+- **Proposal Scope:** Ratify a single driver set. If specification needs additional inputs, route them through doctrine before adoption.
+- **Dependencies:** Blocked by RB-001.
+- **Status:** Proposed.
+
+### RB-009 — Reconcile Override State Model with Override Severity Tiers
+
+- **Source Finding:** `03_implementation_specs/08_state_logic_state_machines.md` defines an eight-state Override state machine (Proposed, Low Impact Accepted, Rationale Required, Rationale Provided, Approved, Rejected, Escalated, Recorded). `03_implementation_specs/11_governance_override_logic.md` defines four severity tiers (Low, Moderate, High, Governance Critical). No mapping exists.
+- **Affected Layer(s):** Implementation Spec.
+- **Affected Concepts:** Human Override; Governance Escalation.
+- **Proposal Scope:** Map states to severity tiers. Determine whether severity drives state transitions or vice versa.
+- **Dependencies:** Blocked by RB-001.
+- **Status:** Proposed.
+
+### RB-010 — Resolve Constitutional Principles Draft vs Constitution Articles
+
+- **Source Finding:** `01_doctrine_ontology/12_constitutional_principles_draft.md` enumerates twenty principles. The Constitution enumerates fifty Articles. Significant overlap exists with different numbering and phrasing. No document declares which supersedes which.
+- **Affected Layer(s):** Doctrine; Constitution.
+- **Affected Concepts:** Constitutional Principles; all Articles.
+- **Proposal Scope:** Decide the disposition of the draft principles. Either supersede them with the Articles, ratify them as a parallel summary, or fold them into the Constitution. Record the disposition.
+- **Dependencies:** Blocked by RB-005.
+- **Disposition:** Partially Closed — Under DL-033, the Draft sits at the Doctrine layer and Constitution Articles sit at the Constitution layer; doctrinal precedence applies. The Draft would nominally outrank conflicting Articles. The instability is acknowledged in the header of `01_doctrine_ontology/12_constitutional_principles_draft.md` per the pre-ratification minimum remediation. Full disposition of the Draft (ratification, supersession, or formal retirement) requires a future Proposal.
+- **Partially Closed By:** DL-033.
+- **Date Partially Closed:** 2026-05-29
+- **Status:** Partially Closed.
+
+### RB-011 — Resolve "Lifecycle" Terminology Tension
+
+- **Source Finding:** `repository_manifest.md` discloses the acronym "Outcome-Driven Strategic Lifecycle Orchestration." The term *Lifecycle* is in tension with the doctrinal stance that Outcome Integrity States are not workflow phases (DL-014). No source anchors the *Strategic Lifecycle* compound.
+- **Affected Layer(s):** Manifest; Doctrine; Constitution.
+- **Affected Concepts:** OSLO (concept and acronym); Outcome Integrity States; Execution Maturity Phases.
+- **Proposal Scope:** Reconcile the acronym with the non-lifecycle stance. Either anchor *Lifecycle* doctrinally with a definition that does not contradict existing doctrine, or revise the acronym, or add a manifest annotation acknowledging the historical compound.
+- **Dependencies:** Blocked by RB-005.
+- **Disposition:** Closed — Resolved by DL-033. Under the doctrine-centered architecture, the Manifest sits in the Governance tier as orientation with non-doctrinal force. The "Lifecycle" term in the OSLO acronym is therefore advisory and carries no doctrinal weight. The pre-ratification annotation on `repository_manifest.md` records the advisory status of substantive Manifest claims. Future promotion of *Lifecycle* to the Content tier would require a Proposal.
+- **Closed By:** DL-033.
+- **Date Closed:** 2026-05-29
+- **Status:** Closed.
+
+---
+
+## P2 — Scoping and Anchoring
+
+### RB-012 — Anchor the Collaboration Role Model
+
+- **Source Finding:** `03_implementation_specs/10_collaboration_sharing_logic.md` introduces six collaboration roles (Viewer, Commenter, Clarifier, Approver, Governance Reviewer, Owner) without doctrinal or constitutional basis.
+- **Affected Layer(s):** Doctrine; Constitution; Implementation Spec.
+- **Affected Concepts:** Collaboration Role Model; Governance.
+- **Proposal Scope:** Establish doctrinal grounding for the role model. Tie each role to existing collaboration layers (Artifact-Level, Intelligence-Level, Understanding-Level).
+- **Dependencies:** Blocked by RB-004.
+- **Status:** Proposed.
+
+### RB-013 — Define the Attention Queue Canonically
+
+- **Source Finding:** `01_doctrine_ontology/05_workspace_navigation_doctrine.md` describes Attention Queue as a "persistent operational intelligence surface." Specs describe it as a queue sorted by outcome impact. No single defining statement exists.
+- **Affected Layer(s):** Doctrine; Constitution; Implementation Spec.
+- **Affected Concepts:** Attention Queue.
+- **Proposal Scope:** Provide a single canonical definition. Reconcile the surface-versus-queue framings.
+- **Dependencies:** Blocked by RB-001.
+- **Status:** Proposed.
+
+### RB-014 — Define Artifact Canonically
+
+- **Source Finding:** Artifact is referenced throughout doctrine, Constitution, and specs. The five Artifact Domains are enumerated. No single defining statement of *Artifact* itself exists.
+- **Affected Layer(s):** Doctrine; Constitution.
+- **Affected Concepts:** Artifact; Artifact Domains.
+- **Proposal Scope:** Provide a single canonical definition that distinguishes Artifact from Understanding surfaces and from epistemic objects.
+- **Dependencies:** Blocked by RB-001.
+- **Status:** Proposed.
+
+### RB-015 — Scope Project MRI Doctrinally
+
+- **Source Finding:** `04_project_mri/README.md` is a stub. The manifest scopes Project MRI to ambiguity, fragility, confidence, outcome integrity risk, understanding gaps, and interpretation drift exposure. No doctrinal mapping exists between Project MRI concerns and the existing ontology.
+- **Affected Layer(s):** Doctrine; Manifest.
+- **Affected Concepts:** Project MRI; Confidence; Outcome Integrity; Understanding Boundaries.
+- **Proposal Scope:** Map each of the six Project MRI concerns to existing ontology entries. Decide whether Project MRI is a workspace surface, a subsystem, or a doctrinal lens. Doctrine-stub required before specification.
+- **Dependencies:** Blocked by RB-004.
+- **Status:** Proposed.
+
+### RB-016 — Anchor Confidence Scoring Methodology
+
+- **Source Finding:** `03_implementation_specs/14_open_questions_design_risks.md` Open Question 1 explicitly leaves confidence scoring methodology undefined. Confidence is load-bearing across every layer.
+- **Affected Layer(s):** Doctrine; Implementation Spec.
+- **Affected Concepts:** Confidence; Confidence Drivers; Confidence Maturity.
+- **Proposal Scope:** Establish a doctrine-stub defining what a scoring methodology must satisfy (decomposable, explainable, evidence-linked, historically traceable) without specifying the methodology itself.
+- **Dependencies:** Blocked by RB-004, RB-008.
+- **Status:** Proposed.
+
+### RB-017 — Define Assumption Expiration Semantics
+
+- **Source Finding:** `01_doctrine_ontology/07_governance_policy_doctrine.md` offers "Assumptions expire after 30 days" as an example policy. No expiration semantics, revival rules, or propagation to confidence are defined.
+- **Affected Layer(s):** Doctrine.
+- **Affected Concepts:** Assumption; Confidence; Outcome Integrity Policy.
+- **Proposal Scope:** Doctrine-stub for assumption lifecycle states and confidence impact. Do not specify thresholds.
+- **Dependencies:** Blocked by RB-004.
+- **Status:** Proposed.
+
+### RB-018 — Establish Policy Grammar Doctrine
+
+- **Source Finding:** Outcome Integrity Policies are described as human-readable doctrine, not workflow scripting. Several example policies exist. No defining structure for what constitutes a policy is provided.
+- **Affected Layer(s):** Doctrine; Constitution.
+- **Affected Concepts:** Outcome Integrity Policy.
+- **Proposal Scope:** Doctrine-stub for the structural requirements of a policy statement (condition, evidence basis, affected integrity dimension, required resolution). Do not specify a DSL.
+- **Dependencies:** Blocked by RB-004.
+- **Status:** Proposed.
+
+---
+
+## P3 — Manifest Governance
+
+### RB-019 — Place the Manifest in the Precedence Hierarchy
+
+- **Source Finding:** `repository_manifest.md` functions as orientation but has no declared governance status, version, or ratification record. It declares precedence among the four canonical layers but does not place itself among them.
+- **Affected Layer(s):** Manifest; Root Governance.
+- **Affected Concepts:** All canonical content.
+- **Proposal Scope:** Declare whether the manifest is meta-doctrine, charter, README, or a fifth canonical layer. Establish version and ratification record for the manifest.
+- **Dependencies:** Blocked by RB-002, RB-005.
+- **Disposition:** Closed — Resolved by DL-033. The Manifest is placed within the Governance tier as an orientation charter with non-doctrinal force. The pre-ratification annotation on `repository_manifest.md` records this placement and the advisory status of substantive Manifest claims.
+- **Closed By:** DL-033.
+- **Date Closed:** 2026-05-29
+- **Status:** Closed.
+
+### RB-020 — Populate Root README and CLAUDE.md
+
+- **Source Finding:** `README.md` and `CLAUDE.md` at the repository root are empty. The manifest exists but does not substitute for orientation files used by tooling and contributors.
+- **Affected Layer(s):** Root Governance.
+- **Affected Concepts:** Repository orientation.
+- **Proposal Scope:** Populate both files using only existing canonical content. README must cite the manifest as the authoritative orientation document. CLAUDE.md must record the governance posture for AI contributors as established by the project instructions and manifest.
+- **Dependencies:** Blocked by RB-019.
+- **Status:** Proposed.
+
+---
+
+## Governance Notes
+
+1. This backlog is a draft. Entries reflect findings from initial repository review, not ratified governance positions.
+2. Promotion of any entry from Proposed to Ratified for Work requires the governance workflow established by RB-002 and the promotion rule established by RB-005.
+3. New entries should cite the source finding explicitly. Entries inferred without source citation should not be added.
+4. Entries that close existing items must reference them in a Supersedes field.

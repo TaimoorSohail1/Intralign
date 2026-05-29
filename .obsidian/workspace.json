@@ -1,0 +1,209 @@
+{
+  "main": {
+    "id": "2aeb03c908342797",
+    "type": "split",
+    "children": [
+      {
+        "id": "f9658fb0d9dada03",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "c5480c25a0d322c1",
+            "type": "leaf",
+            "state": {
+              "type": "canvas",
+              "state": {
+                "file": "Untitled.canvas",
+                "viewState": {
+                  "x": 0,
+                  "y": -642.7535156250001,
+                  "zoom": 0
+                }
+              },
+              "icon": "lucide-layout-dashboard",
+              "title": "Untitled"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "1cc8f7fca261946a",
+    "type": "split",
+    "children": [
+      {
+        "id": "7984a621c5f3f20e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "034184844deee3c8",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "3c5cf07eff145959",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "0a9682fb97f48e60",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "7a327595a5b78afa",
+    "type": "split",
+    "children": [
+      {
+        "id": "7ffdab041591e321",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "698ba5eafb57803a",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Untitled.canvas",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Untitled"
+            }
+          },
+          {
+            "id": "93225bfa05c49dc6",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Untitled.canvas",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Untitled"
+            }
+          },
+          {
+            "id": "1936e6246557960f",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "78b4645b226d63e0",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "00d455ee079e54e3",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Untitled.canvas",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Untitled"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "034184844deee3c8",
+  "lastOpenFiles": [
+    "REPOSITORY_ARCHITECTURE.md",
+    "07_governance/proposal_000_disposition.md",
+    "00_raw_transcript/00_transcript_index.md",
+    "Untitled.canvas",
+    "canonical_definitions.md",
+    "07_governance/changelog.md",
+    "07_governance/revision_backlog.md",
+    "07_governance/decision_log.md",
+    "07_governance",
+    "untitled folder",
+    "CLAUDE.md",
+    "decision_log.md",
+    "repository_manifest.md",
+    "02_ux_constitution/02_epistemic_constitution.md",
+    "02_ux_constitution/00_constitution_index.md",
+    "01_doctrine_ontology/01_core_philosophical_doctrine.md",
+    "01_doctrine_ontology/00_index.md"
+  ]
+}

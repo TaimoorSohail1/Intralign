@@ -1,5 +1,17 @@
 # Draft Constitutional Principles
 
+## Governance Status — Pre-Ratification Acknowledgment
+
+This document is a **draft**. Under the doctrine-centered repository architecture (per Proposal 000 disposition, DL-033), the Doctrine layer holds the highest content-tier precedence. As a Drafted doctrinal document located in the Doctrine layer, this file would nominally outrank ratified Constitution Articles where they conflict.
+
+This instability is acknowledged. Full disposition of this draft — ratification, supersession, or formal retirement — remains open governance work tracked as RB-010 and requires a future Proposal.
+
+Pending full disposition, contributors should not cite this file as authoritative against Constitution Articles without first raising the conflict through governance.
+
+---
+
+## Principles
+
 1. Preserve trustworthy organizational understanding under dynamic conditions.
 
 2. Understanding before execution.
