@@ -94,7 +94,7 @@ Specs 10 and 12 move whole without header annotations. No "mixed concerns" heade
 
 The Historical Artifact header in `04_research/historical_artifacts/05_constitutional_principles_draft.md` contains both historical and forward-looking references:
 
-- **Historical (preserve verbatim):** Origin path citation `01_governance/doctrine/12_constitutional_principles_draft.md` — preserved as historical record.
+- **Historical (preserve verbatim):** Origin path citation `01_doctrine_ontology/12_constitutional_principles_draft.md` — preserved as historical record.
 - **Forward-looking (update to new path):** Reference to Doctrine 02 (now `01_governance/doctrine/02_organizational_cognition_model.md`); reference to rb_003_disposition.md and rb_010_disposition.md (now at `01_governance/decisions/`).
 
 The DL-035 substantive content is preserved unchanged.

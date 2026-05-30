@@ -77,7 +77,7 @@ Each changelog entry contains:
 
 - **Date:** 2026-05-29
 - **Authorizing Decision:** Repository Owner Action (Pre-Ratification Minimum Remediation directive). Subsequently bound to DL-033 by reference at ratification.
-- **Affected Artifacts:** `01_governance/doctrine/12_constitutional_principles_draft.md` (Governance Status header added); `repository_manifest.md` (Governance Status header added); `canonical_definitions.md` (Status section updated with Governance-tier acknowledgment and dual-surface note); `ontology_registry.md` (Status section updated with Governance-tier acknowledgment).
+- **Affected Artifacts:** `01_doctrine_ontology/12_constitutional_principles_draft.md` (Governance Status header added); `repository_manifest.md` (Governance Status header added); `canonical_definitions.md` (Status section updated with Governance-tier acknowledgment and dual-surface note); `ontology_registry.md` (Status section updated with Governance-tier acknowledgment).
 - **Change Summary:** Minimum pre-ratification header annotations applied to four files to make Proposal 000 ratification-safe without expanding scope. Doctrine 12 acknowledged as Drafted doctrinal content with nominal precedence over Constitution Articles pending RB-010 full disposition. Manifest acknowledged as Governance-tier orientation with advisory force on substantive claims. Root canonical_definitions.md and ontology_registry.md acknowledged as Governance-tier orientation surfaces.
 - **Supersession Reference:** None. Annotations added without modifying body content.
 
@@ -125,7 +125,7 @@ Each changelog entry contains:
 
 - **Date:** 2026-05-29
 - **Authorizing Decision:** DL-033.
-- **Affected Artifacts:** `repository_manifest.md`; `canonical_definitions.md`; `ontology_registry.md`; `01_governance/doctrine/12_constitutional_principles_draft.md`.
+- **Affected Artifacts:** `repository_manifest.md`; `canonical_definitions.md`; `ontology_registry.md`; `01_doctrine_ontology/12_constitutional_principles_draft.md`.
 - **Change Summary:** Pre-ratification DL-XXX placeholders in the four annotated files replaced with the ratified Decision identifier DL-033. No other content modified; annotations now cite the ratified Decision.
 - **Supersession Reference:** None. Reference update only.
 
@@ -157,7 +157,7 @@ Each changelog entry contains:
 
 - **Date:** 2026-05-29
 - **Authorizing Decision:** DL-034.
-- **Affected Artifacts:** `01_governance/doctrine/12_constitutional_principles_draft.md` (absorption note added inline to Draft 17).
+- **Affected Artifacts:** `01_doctrine_ontology/12_constitutional_principles_draft.md` (absorption note added inline to Draft 17).
 - **Change Summary:** Draft Principle 17's substantive content is absorbed by Doctrine 02. Annotation added inline to record that Draft 17 no longer carries independent doctrinal force and that its substantive content is canonized through Doctrine 02's four-stage Cognition Scope arc. The remaining 19 Draft principles are unaffected and continue under the file-level Governance Status acknowledgment pending RB-010 full disposition.
 - **Supersession Reference:** Draft 17 superseded as an independent doctrinal statement; its content is now sourced from Doctrine 02.
 
@@ -205,7 +205,7 @@ Each changelog entry contains:
 
 - **Date:** 2026-05-29
 - **Authorizing Decision:** DL-035.
-- **Affected Artifacts:** `01_governance/doctrine/12_constitutional_principles_draft.md` (removed); `00_raw_transcript/05_constitutional_principles_draft.md` (placed with Historical Artifact header).
+- **Affected Artifacts:** `01_doctrine_ontology/12_constitutional_principles_draft.md` (removed); `00_raw_transcript/05_constitutional_principles_draft.md` (placed with Historical Artifact header).
 - **Change Summary:** File relocated from the Doctrine layer to the Source Material layer. The pre-ratification "Governance Status" header section and the DL-034 inline Draft 17 absorption note are superseded by a single "Historical Artifact" header section in the relocated file. The 20 principles are preserved verbatim in their original drafted form. The file is now non-canonical and cannot be cited as authority.
 - **Supersession Reference:** Pre-ratification annotation and DL-034 inline Draft 17 note folded into the Historical Artifact header.
 

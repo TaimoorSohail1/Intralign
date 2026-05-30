@@ -130,12 +130,12 @@ All entries below are **Proposed**.
 
 ### RB-010 — Resolve Constitutional Principles Draft vs Constitution Articles
 
-- **Source Finding:** `01_governance/doctrine/12_constitutional_principles_draft.md` enumerates twenty principles. The Constitution enumerates fifty Articles. Significant overlap exists with different numbering and phrasing. No document declares which supersedes which.
+- **Source Finding:** `01_doctrine_ontology/12_constitutional_principles_draft.md` enumerates twenty principles. The Constitution enumerates fifty Articles. Significant overlap exists with different numbering and phrasing. No document declares which supersedes which.
 - **Affected Layer(s):** Doctrine; Constitution.
 - **Affected Concepts:** Constitutional Principles; all Articles.
 - **Proposal Scope:** Decide the disposition of the draft principles. Either supersede them with the Articles, ratify them as a parallel summary, or fold them into the Constitution. Record the disposition.
 - **Dependencies:** Blocked by RB-005.
-- **Disposition:** Closed — Resolved by DL-035. The file `01_governance/doctrine/12_constitutional_principles_draft.md` is reclassified as non-canonical Source Material and relocated to `00_raw_transcript/05_constitutional_principles_draft.md` with a Historical Artifact header. Draft Principle 17's substantive content remains absorbed by Doctrine 02 per DL-034. The remaining 19 principles are dispositioned by reclassification: 18 are substantively represented by Constitution Articles 1, 2, 3, 5, 6, 7, 10, 11, 12, 18, 19, 21, 24, 25, 28, 31, 35, and 45; Draft Principle 18 is substantively captured by Article 2 and Constitutional Drift Warning 2. Full disposition detail recorded in `01_governance/decisions/rb_010_disposition.md`.
+- **Disposition:** Closed — Resolved by DL-035. The file `01_doctrine_ontology/12_constitutional_principles_draft.md` is reclassified as non-canonical Source Material and relocated to `00_raw_transcript/05_constitutional_principles_draft.md` with a Historical Artifact header. Draft Principle 17's substantive content remains absorbed by Doctrine 02 per DL-034. The remaining 19 principles are dispositioned by reclassification: 18 are substantively represented by Constitution Articles 1, 2, 3, 5, 6, 7, 10, 11, 12, 18, 19, 21, 24, 25, 28, 31, 35, and 45; Draft Principle 18 is substantively captured by Article 2 and Constitutional Drift Warning 2. Full disposition detail recorded in `01_governance/decisions/rb_010_disposition.md`.
 - **Closed By:** DL-035 (final disposition). Prior partial closures recorded by DL-033 (precedence framework) and DL-034 (Draft Principle 17 absorption).
 - **Date Closed:** 2026-05-29 (DL-035 final closure).
 - **Status:** Closed.

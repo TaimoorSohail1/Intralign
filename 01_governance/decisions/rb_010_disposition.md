@@ -24,7 +24,7 @@ RB-010 — Resolve Constitutional Principles Draft vs Constitution Articles
 
 **Option C — Convert the Draft into a Historical Artifact.**
 
-The file `01_governance/doctrine/12_constitutional_principles_draft.md` is reclassified as non-canonical Source Material and relocated to `00_raw_transcript/05_constitutional_principles_draft.md`. Its substantive content is preserved as a historical record of the principles that informed the Doctrine and Constitution. Under the ratified architecture (DL-033), Source Material is non-canonical and cannot be cited as authority. The reclassification eliminates the duplicate-authority paradox that the Draft created at the Doctrine layer.
+The file `01_doctrine_ontology/12_constitutional_principles_draft.md` is reclassified as non-canonical Source Material and relocated to `00_raw_transcript/05_constitutional_principles_draft.md`. Its substantive content is preserved as a historical record of the principles that informed the Doctrine and Constitution. Under the ratified architecture (DL-033), Source Material is non-canonical and cannot be cited as authority. The reclassification eliminates the duplicate-authority paradox that the Draft created at the Doctrine layer.
 
 ## Rationale
 
@@ -48,7 +48,7 @@ Option C uniquely satisfies both criteria. Options A, B, D, and E are rejected f
 
 ## Effects on Doctrine
 
-- `01_governance/doctrine/12_constitutional_principles_draft.md` is removed from the Doctrine folder via relocation.
+- `01_doctrine_ontology/12_constitutional_principles_draft.md` is removed from the Doctrine folder via relocation.
 - Doctrine 01–11 are unchanged. They remain the canonical foundational layer.
 - Doctrine 02 retains its canonical-source role for the Cognition Scope axis (per DL-034). Draft Principle 17's substance continues to be canonized through Doctrine 02.
 - No new doctrine is introduced. No existing doctrine is amended or superseded.
@@ -83,14 +83,14 @@ Option C uniquely satisfies both criteria. Options A, B, D, and E are rejected f
 
 ## Effects on Citation Rules
 
-- Contributors may no longer cite `01_governance/doctrine/12_constitutional_principles_draft.md` as canonical Doctrine. The file no longer exists at that path.
+- Contributors may no longer cite `01_doctrine_ontology/12_constitutional_principles_draft.md` as canonical Doctrine. The file no longer exists at that path.
 - Contributors may reference the relocated file (`00_raw_transcript/05_constitutional_principles_draft.md`) as Source Material for historical context only. Per DL-033, Source Material informs but does not bind; it cannot be cited as authority in Proposals.
 - For each of the 18 represented principles, contributors should cite the corresponding Constitution Article(s) as identified in the RB-010 Disposition Report mapping table.
 - For Draft 18's supersession concept, contributors should cite Article 2 and Constitutional Drift Warning 2 in combination.
 
 ## Affected Artifacts
 
-- `01_governance/doctrine/12_constitutional_principles_draft.md` — file removed from this location.
+- `01_doctrine_ontology/12_constitutional_principles_draft.md` — file removed from this location.
 - `00_raw_transcript/05_constitutional_principles_draft.md` — file placed here as Source Material with non-canonical Historical Artifact header.
 - `00_raw_transcript/00_transcript_index.md` — index updated to register the new file.
 - `01_governance/constitution/01_foundational_constitutional_doctrine.md`, `01_governance/constitution/02_epistemic_constitution.md`, and other Constitution files — substantively unchanged; their Articles continue to express the principles that the Draft compiled.
@@ -106,7 +106,7 @@ Option C uniquely satisfies both criteria. Options A, B, D, and E are rejected f
 
 1. Place this disposition document at `01_governance/decisions/rb_010_disposition.md`.
 2. Record DL-035 in `01_governance/decisions/decision_log.md`.
-3. Relocate `01_governance/doctrine/12_constitutional_principles_draft.md` to `00_raw_transcript/05_constitutional_principles_draft.md`. The principles content is preserved verbatim; the pre-ratification "Governance Status" header section and the DL-034 inline Draft 17 absorption note are superseded by a single "Historical Artifact" header section that records: (a) the file's pre-DL-033 location and Drafted-Doctrinal status; (b) DL-035 as the authorizing reclassification Decision; (c) the file's current status as non-canonical Source Material; (d) the disposition of Draft Principle 17 per DL-034; (e) the disposition of the remaining 19 principles by reclassification per DL-035.
+3. Relocate `01_doctrine_ontology/12_constitutional_principles_draft.md` to `00_raw_transcript/05_constitutional_principles_draft.md`. The principles content is preserved verbatim; the pre-ratification "Governance Status" header section and the DL-034 inline Draft 17 absorption note are superseded by a single "Historical Artifact" header section that records: (a) the file's pre-DL-033 location and Drafted-Doctrinal status; (b) DL-035 as the authorizing reclassification Decision; (c) the file's current status as non-canonical Source Material; (d) the disposition of Draft Principle 17 per DL-034; (e) the disposition of the remaining 19 principles by reclassification per DL-035.
 4. Update `00_raw_transcript/00_transcript_index.md` to register the new file with a one-line entry noting its provenance and non-canonical status.
 5. Update `01_governance/backlog/revision_backlog.md` to close RB-010 with DL-035 as the closing Decision.
 6. Record CHG entries authorized by DL-035 for the placement, the relocation, the index update, and the backlog closure.
