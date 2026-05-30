@@ -1,0 +1,379 @@
+# Repository Changelog
+
+## Status
+
+**Operative — Provisional Schema**
+
+The changelog records canonical repository changes authorized by ratified Decisions. Each entry references the authorizing Decision and identifies the artifacts modified.
+
+The current changelog schema is **provisional** per the condition on DL-030. The Traceability Record schema remains an open governance item to be addressed by future governance work. Entries recorded under the provisional schema are durable; the schema itself may be amended without invalidating prior entries.
+
+---
+
+## Provisional Entry Schema
+
+Each changelog entry contains:
+
+- **ID** — Change identifier (CHG-NNN).
+- **Date** — Date the change was recorded.
+- **Authorizing Decision** — The ratified Decision (DL-NNN) that authorizes the change.
+- **Affected Artifacts** — Repository files or sections modified.
+- **Change Summary** — Brief description of the modification.
+- **Supersession Reference** — Any prior change, decision, or definition superseded by this change.
+
+---
+
+## Entries
+
+### CHG-001 — Founding Bootstrap Stipulation Recorded
+
+- **Date:** 2026-05-28
+- **Authorizing Decision:** DL-029
+- **Affected Artifacts:** `decision_log.md` (DL-029 entry added; header annotated to indicate operative status).
+- **Change Summary:** Founding bootstrap stipulation recorded. Frameworks 001 and 001A admitted to the repository by stipulation. The stipulation is the only canonical change made without prior Proposal-Review-Decision; all subsequent canonical changes proceed under the operative lifecycle.
+- **Supersession Reference:** None. Founding act.
+
+### CHG-002 — Framework 001 Adopted
+
+- **Date:** 2026-05-28
+- **Authorizing Decision:** DL-030
+- **Affected Artifacts:** `decision_log.md` (DL-030 entry added); `revision_backlog.md` (RB-002 closed); `changelog.md` (this file instantiated under provisional schema); `repository_manifest.md` (Governance Principles operationalized in effect).
+- **Change Summary:** Framework 001 adopted as the canonical governance framework with disposition Accepted with Conditions. The condition (Traceability Record schema remains open) is recorded against DL-030. The provisional changelog schema established by this entry is itself subject to future governance refinement.
+- **Supersession Reference:** None.
+
+### CHG-003 — Framework 001A Adopted
+
+- **Date:** 2026-05-28
+- **Authorizing Decision:** DL-031
+- **Affected Artifacts:** `decision_log.md` (DL-031 entry added); Framework 001 (extended by 001A); future Reviews and AI contributions (now governed by 001A authority and output schemas).
+- **Change Summary:** Framework 001A adopted as an amendment to Framework 001. Review disposition states, review output schema, repository owner authority, and AI authority limitations become operative.
+- **Supersession Reference:** None. 001A extends 001 by addition.
+
+### CHG-004 — Transitional Rule for Pre-Framework Decisions Adopted
+
+- **Date:** 2026-05-28
+- **Authorizing Decision:** DL-032
+- **Affected Artifacts:** `decision_log.md` (DL-032 entry added; header annotated to indicate grandfathered range DL-001 through DL-028); `revision_backlog.md` (entries that touch grandfathered decisions implicitly reference DL-032).
+- **Change Summary:** Pre-framework Stated decisions (DL-001 through DL-028) grandfathered as Stated. They remain in effect; conversion to Ratified requires future Proposals processed under the operative lifecycle.
+- **Supersession Reference:** None. Grandfathered entries are preserved as-is; this change establishes their forward-looking status.
+
+### CHG-005 — RB-002 Closed
+
+- **Date:** 2026-05-28
+- **Authorizing Decision:** DL-030 (closure authority); DL-031 (refinement).
+- **Affected Artifacts:** `revision_backlog.md` (RB-002 status changed from Proposed to Closed; disposition and closing decisions recorded).
+- **Change Summary:** RB-002 (Governance Traceability Spine) closed as resolved through the adoption of Framework 001 with the condition that the Traceability Record schema remains an open governance item.
+- **Supersession Reference:** Closure satisfies the substantive scope of RB-002; the residual schema condition is tracked on DL-030.
+
+### CHG-006 — Governance Framework Declared Operative
+
+- **Date:** 2026-05-28
+- **Authorizing Decision:** DL-029 (bootstrap); DL-030 (substance); DL-031 (refinement).
+- **Affected Artifacts:** `decision_log.md` and `revision_backlog.md` headers updated to reflect operative-under-framework status; `changelog.md` instantiated.
+- **Change Summary:** The repository governance framework is declared operative. All subsequent canonical changes proceed under Framework 001/001A.
+- **Supersession Reference:** None.
+
+### CHG-007 — Pre-Ratification Annotations Applied
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** Repository Owner Action (Pre-Ratification Minimum Remediation directive). Subsequently bound to DL-033 by reference at ratification.
+- **Affected Artifacts:** `01_governance/doctrine/12_constitutional_principles_draft.md` (Governance Status header added); `repository_manifest.md` (Governance Status header added); `canonical_definitions.md` (Status section updated with Governance-tier acknowledgment and dual-surface note); `ontology_registry.md` (Status section updated with Governance-tier acknowledgment).
+- **Change Summary:** Minimum pre-ratification header annotations applied to four files to make Proposal 000 ratification-safe without expanding scope. Doctrine 12 acknowledged as Drafted doctrinal content with nominal precedence over Constitution Articles pending RB-010 full disposition. Manifest acknowledged as Governance-tier orientation with advisory force on substantive claims. Root canonical_definitions.md and ontology_registry.md acknowledged as Governance-tier orientation surfaces.
+- **Supersession Reference:** None. Annotations added without modifying body content.
+
+### CHG-008 — Proposal 000 Ratified
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-033.
+- **Affected Artifacts:** `01_governance/decisions/decision_log.md` (DL-033 entry appended; header note updated to reflect operative range DL-029 through DL-033).
+- **Change Summary:** Proposal 000 ratified. The doctrine-centered repository architecture is the canonical architecture of the OSLO knowledge base. Content tier and Governance tier are functionally distinct. Precedence within Content tier: Doctrine > Constitution > Implementation Specifications. Source Material is non-canonical. Manifest sits in Governance tier as orientation with non-doctrinal force. Subsystems must anchor to canonical content.
+- **Supersession Reference:** None. Establishes architecture; does not supersede prior Decisions. Grandfathered Stated decisions DL-001 through DL-028 continue under DL-032.
+
+### CHG-009 — Proposal 000 Disposition Document Placed
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-033.
+- **Affected Artifacts:** `01_governance/decisions/proposal_000_disposition.md` (created).
+- **Change Summary:** The full Proposal 000 Disposition Document placed in `07_governance/` as the canonical record of the ratified architecture. Document includes the architecture, role definitions for each repository object class, rejected options and reasoning, accepted tradeoffs, backlog impacts, and resulting repository actions.
+- **Supersession Reference:** None.
+
+### CHG-010 — Backlog Updates Recording Proposal 000 Outcomes
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-033.
+- **Affected Artifacts:** `01_governance/backlog/revision_backlog.md` (RB-019 and RB-011 closed; RB-005 and RB-010 partially closed; each entry annotated with Disposition, Closed/Partially Closed By, Date, and Status fields).
+- **Change Summary:** Backlog updated to reflect Proposal 000 outcomes. RB-019 (Manifest precedence) closed by placing Manifest in Governance tier. RB-011 (Lifecycle terminology) closed by Manifest's non-doctrinal status. RB-005 (Layer promotion and citation) partially closed; precedence and promotion model resolved, citation requirements residual. RB-010 (Constitutional Principles Draft vs Articles) partially closed; precedence resolved, full Draft disposition residual.
+- **Supersession Reference:** RB-019 and RB-011 superseded as open items by their closure. RB-005 and RB-010 scope reduced.
+
+### CHG-011 — Proposal 001 Closed as Absorbed
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-033.
+- **Affected Artifacts:** No separate file modified; closure recorded by reference in DL-033 and this entry.
+- **Change Summary:** Proposal 001 (Repository Hierarchy) closed as absorbed by Proposal 000. All seven of Proposal 001's candidate questions are answered by DL-033 and the disposition document.
+- **Supersession Reference:** Proposal 001 absorbed by Proposal 000.
+
+### CHG-012 — REPOSITORY_ARCHITECTURE.md Placed at Repository Root
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-033.
+- **Affected Artifacts:** `REPOSITORY_ARCHITECTURE.md` (created at repository root).
+- **Change Summary:** Contributor-facing architecture summary placed at the repository root. Document explains the doctrine-centered architecture in plain language for contributors and reviewers. Includes the six principles (Doctrine defines truth; Constitution operationalizes doctrine; Implementation realizes doctrine; Governance controls repository evolution; Source Material informs but does not bind; Subsystems must anchor to canonical content), a placement table, conflict-handling guidance, and pointers to deeper governance reading.
+- **Supersession Reference:** None. New orientation surface; does not supersede the Manifest.
+
+### CHG-013 — DL-XXX Placeholders Replaced with DL-033
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-033.
+- **Affected Artifacts:** `repository_manifest.md`; `canonical_definitions.md`; `ontology_registry.md`; `01_governance/doctrine/12_constitutional_principles_draft.md`.
+- **Change Summary:** Pre-ratification DL-XXX placeholders in the four annotated files replaced with the ratified Decision identifier DL-033. No other content modified; annotations now cite the ratified Decision.
+- **Supersession Reference:** None. Reference update only.
+
+### CHG-014 — RB-003 Ratified as DL-034
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `01_governance/decisions/decision_log.md` (DL-034 entry appended; header note updated to reflect operative range DL-029 through DL-034).
+- **Change Summary:** RB-003 (Progression Model Reconciliation) ratified as DL-034. The OSLO Evolution Framework is the canonical multi-axis progression taxonomy. Four distinct but correlated axes ratified: Cognition Scope (Doctrine 02 canonical), Product Identity (Doctrine 09 canonical), Trust Gradient (Doctrine 09 / Article 41 aligned), Execution Depth (Doctrine 10 / Article 43 aligned). Doctrine prevails over Constitution where stage labels or counts conflict.
+- **Supersession Reference:** Closes RB-003. Partially resolves RB-010 with respect to Draft Principle 17. Partially unblocks RB-015.
+
+### CHG-015 — RB-003 Disposition Document Placed
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `01_governance/decisions/rb_003_disposition.md` (created).
+- **Change Summary:** Full RB-003 disposition document placed in `07_governance/`. Document records the OSLO Evolution Framework, the four ratified axes, the ratified vs provisional status of each label, affected artifacts, and backlog impacts.
+- **Supersession Reference:** None.
+
+### CHG-016 — Constitution Articles 40 and 44 Annotated
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `01_governance/constitution/08_product_evolution_constitution.md` (inline Governance Notes added to Article 40 and Article 44).
+- **Change Summary:** Article 40 annotated to record that Doctrine 09's "Governed Organizational Cognition" label prevails over the Article's "Governance infrastructure" label at Stage 3 of Product Identity. Article 44 annotated to record that Doctrine 02's four-stage Cognition Scope arc prevails over the Article's five-stage arc, and that Portfolio Cognition is a provisional long-term capability. Article body text is not amended; the annotations declare doctrinal precedence and provisional status.
+- **Supersession Reference:** Article 40 Stage 3 label and Article 44 five-stage arc are dispositioned as provisional under doctrinal precedence (DL-033 conflict resolution model; DL-034 application).
+
+### CHG-017 — Draft Principle 17 Annotated as Absorbed
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `01_governance/doctrine/12_constitutional_principles_draft.md` (absorption note added inline to Draft 17).
+- **Change Summary:** Draft Principle 17's substantive content is absorbed by Doctrine 02. Annotation added inline to record that Draft 17 no longer carries independent doctrinal force and that its substantive content is canonized through Doctrine 02's four-stage Cognition Scope arc. The remaining 19 Draft principles are unaffected and continue under the file-level Governance Status acknowledgment pending RB-010 full disposition.
+- **Supersession Reference:** Draft 17 superseded as an independent doctrinal statement; its content is now sourced from Doctrine 02.
+
+### CHG-018 — Backlog Updates for DL-034
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `01_governance/backlog/revision_backlog.md` (RB-003 closed; RB-010 updated to record Draft 17 absorption; RB-015 annotated with partial unblock).
+- **Change Summary:** RB-003 closed with DL-034 as the closing Decision. RB-010 updated to record that Draft Principle 17 is absorbed by Doctrine 02 (RB-010 remains Partially Closed; the remaining 19 Draft principles continue pending RB-010 full disposition). RB-015 annotated to record that the progression-model ambiguity that previously blocked Project MRI's analytical placement is now resolved; RB-015 remains Open with RB-004 as the upstream blocker for the scoping decision itself.
+- **Supersession Reference:** RB-003 closed; RB-010 partial scope reduced.
+
+### CHG-019 — canonical_definitions.md Updated
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `canonical_definitions.md` (Maturity and Progression Concepts section updated; OSLO Evolution Framework and four axes registered).
+- **Change Summary:** Registered the OSLO Evolution Framework as an Established term. Registered Cognition Scope, Product Identity, Trust Gradient, and Execution Depth as Established axis entries with canonical doctrinal sources. The pre-existing Organizational Cognition Arc entry annotated to indicate reframing as the Cognition Scope axis.
+- **Supersession Reference:** None. New entries; the prior Organizational Cognition Arc entry retained with a reframing note.
+
+### CHG-020 — ontology_registry.md Updated
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-034.
+- **Affected Artifacts:** `ontology_registry.md` (Cognition and Progression Plane section updated; four axes registered; Portfolio Cognition and Long-Term Direction items marked Provisional).
+- **Change Summary:** Cognition and Progression Plane reorganized around the ratified OSLO Evolution Framework. Four axes registered as Established entries with canonical sources. Portfolio Cognition reclassified from Proposed to Provisional. Long-Term Direction items registered as Provisional. Predecessor entries (Organizational Cognition Arc, Trust Evolution, Execution Maturity Phases, Product Evolution Stages) noted as reframed by the ratified axes. Reconciled conflicts recorded.
+- **Supersession Reference:** Predecessor entries reframed (not deleted) as components of the ratified framework.
+
+### CHG-021 — RB-010 Ratified as DL-035
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-035.
+- **Affected Artifacts:** `01_governance/decisions/decision_log.md` (DL-035 entry appended; header note updated to reflect operative range DL-029 through DL-035).
+- **Change Summary:** RB-010 (Resolve Constitutional Principles Draft vs Constitution Articles) ratified as DL-035. The Constitutional Principles Draft is reclassified as non-canonical Source Material and relocated from the Doctrine layer to `00_raw_transcript/`. Of 20 original Draft principles, Draft 17 remains absorbed by Doctrine 02 per DL-034; the remaining 19 are dispositioned by reclassification (18 represented by Constitution Articles; Draft 18 captured by Article 2 and Drift Warning 2).
+- **Supersession Reference:** Closes RB-010. Supersedes the pre-ratification "Governance Status" annotation on the original file path and the DL-034 inline Draft 17 absorption note (both folded into the Historical Artifact header at the new file location).
+
+### CHG-022 — RB-010 Disposition Document Placed
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-035.
+- **Affected Artifacts:** `01_governance/decisions/rb_010_disposition.md` (created).
+- **Change Summary:** Full RB-010 disposition document placed in `07_governance/`. Document records the selected Option C disposition, rationale, rejected options, effects on Doctrine and Constitution, effects on DL-033 and DL-034, backlog impacts, citation rule changes, affected artifacts, and required repository actions.
+- **Supersession Reference:** None.
+
+### CHG-023 — Constitutional Principles Draft Relocated and Reclassified
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-035.
+- **Affected Artifacts:** `01_governance/doctrine/12_constitutional_principles_draft.md` (removed); `00_raw_transcript/05_constitutional_principles_draft.md` (placed with Historical Artifact header).
+- **Change Summary:** File relocated from the Doctrine layer to the Source Material layer. The pre-ratification "Governance Status" header section and the DL-034 inline Draft 17 absorption note are superseded by a single "Historical Artifact" header section in the relocated file. The 20 principles are preserved verbatim in their original drafted form. The file is now non-canonical and cannot be cited as authority.
+- **Supersession Reference:** Pre-ratification annotation and DL-034 inline Draft 17 note folded into the Historical Artifact header.
+
+### CHG-024 — Raw Transcript Index Updated
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-035.
+- **Affected Artifacts:** `00_raw_transcript/00_transcript_index.md` (entry 5 added).
+- **Change Summary:** Index updated to register the relocated Constitutional Principles Draft as entry 5, noting its historical-artifact provenance and non-canonical status. Existing entries 1–4 unchanged.
+- **Supersession Reference:** None.
+
+### CHG-025 — RB-010 Closed
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-035.
+- **Affected Artifacts:** `01_governance/backlog/revision_backlog.md` (RB-010 status changed from Partially Closed to Closed; Disposition, Closed By, and Date Closed fields updated).
+- **Change Summary:** RB-010 closed in the revision backlog with DL-035 recorded as the final closing Decision. Prior partial closures by DL-033 and DL-034 preserved in the historical record of the entry.
+- **Supersession Reference:** Supersedes the prior Partially Closed status of RB-010.
+
+### CHG-026 — RB-001 Ratified as DL-036
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-036.
+- **Affected Artifacts:** `01_governance/decisions/decision_log.md` (DL-036 entry appended; header note updated to reflect operative range DL-029 through DL-036; DL-036 noted as Ratified with Conditions).
+- **Change Summary:** RB-001 (Canonical Registry Consolidation) ratified as DL-036 with disposition Accepted with Conditions. The bounded Registry Foundation (Resolutions R1–R8) is adopted. Eight closing-Decision clarifications are recorded in the disposition document as narrative guidance. Bounded scope respected: no doctrinal introduction, no Constitution amendment, no Implementation Spec edits, no ontology conflict resolution, no new backlog entries.
+- **Supersession Reference:** Closes RB-001. Supersedes the legacy "Established" and "Established (split source)" status flags in registry surfaces.
+
+### CHG-027 — RB-001 Disposition Document Placed
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-036.
+- **Affected Artifacts:** `01_governance/decisions/rb_001_disposition.md` (created).
+- **Change Summary:** Full disposition document placed in `07_governance/`. Document records the eight Resolutions as ratified, the eight Clarifications, effects on canonical surfaces, effects on backlog items, and required repository actions.
+- **Supersession Reference:** None.
+
+### CHG-028 — Surface Authority Rule Recorded in Registry Surfaces
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-036.
+- **Affected Artifacts:** `canonical_definitions.md` (Status section updated); `ontology_registry.md` (Status section updated).
+- **Change Summary:** Resolution R1 ratified: root `canonical_definitions.md` is the Governance-tier orientation registry; Constitution Article 10 is the Content-tier definitional surface; Article 10's definition is authoritative operational expression where consistent with Doctrine; Doctrine prevails over Article 10 where they substantively conflict (Clarification #1). The relationship between the two surfaces is now operationally declared. Constitution Article 10 is NOT amended; only its status is recorded in the Governance-tier registry.
+- **Supersession Reference:** Supersedes the pre-ratification DL-033 dual-surface note in `canonical_definitions.md` Status section with the now-ratified operational rule.
+
+### CHG-029 — Status Taxonomy Adopted and Legacy Flags Migrated
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-036.
+- **Affected Artifacts:** `canonical_definitions.md` (Status section + existing entries reclassified); `ontology_registry.md` (Status section + existing entries reclassified).
+- **Change Summary:** Resolution R2 ratified: six status flags adopted (Canonical, Provisional, Proposed, Conflicting, Undefined, Duplicate). Resolution R3 ratified: status-change rules declared. Clarification #2 applied: existing "Established" entries migrated to "Canonical" via clerical bulk replacement; existing "Established (split source)" entries migrated to "Conflicting" except Organizational Cognition Arc (Clarification #7 applies; reclassified as Duplicate). Clarification #8 applied: tie-breaking priority order declared (Conflicting > Undefined > Proposed > Provisional > Duplicate > Canonical). Migration is clerical; no individual entry review required.
+- **Supersession Reference:** Supersedes legacy "Established" and "Established (split source)" flag usage.
+
+### CHG-030 — Nine Doctrinal Concepts Registered
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-036.
+- **Affected Artifacts:** `canonical_definitions.md` (nine entries added in new section "Doctrinal Concepts Registered by DL-036 (R4)"); `ontology_registry.md` (nine entries added in new section "Doctrinal Concepts Registered by DL-036 (R4)" with plane assignments).
+- **Change Summary:** Resolution R4 ratified: nine canonical doctrinal concepts registered using existing Doctrine sources only. Concepts registered: Dynamic Systems Orientation; Constitutional Principle (test question); Epistemic Governance; Flawed Intended Reality Handling; Stability vs Movement; Shared Cognition Principle; Narrative Views; Freemium Doctrine; Strategic UX Doctrine. Each entry cites existing doctrinal source. Status: Canonical. Per Clarification #3, R4 is PRD-authorized at the Resolution level by DL-036; per-entry registrations are clerical executions under the umbrella authorization. Doctrine files are not edited.
+- **Supersession Reference:** None (registrations of previously unregistered concepts).
+
+### CHG-031 — Four Predecessor Names Deprecated
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-036.
+- **Affected Artifacts:** `canonical_definitions.md` (Organizational Cognition Arc entry updated to Duplicate status; new section "Deprecated Predecessor Names (per DL-036 R5)" added with Strategic Arc, Trust Evolution, Intelligence Visibility Doctrine entries); `ontology_registry.md` (Predecessor Entries section replaced with formal Duplicate-status deprecation table; new Emotional-and-Visibility deprecation table added for Intelligence Visibility Doctrine).
+- **Change Summary:** Resolution R5 ratified: four predecessor names formally deprecated with Duplicate status. Strategic Arc → Cognition Scope (DL-034). Organizational Cognition Arc → Cognition Scope (DL-034; extends existing CHG-019 reframing per Clarification #7). Trust Evolution → Trust Gradient (DL-034). Intelligence Visibility Doctrine → Progressive Visibility (DL-016 Stated grandfathered per Clarification #4; substantively aligned with Article 25). Source files (Doctrine, Constitution) are NOT edited; deprecation operates only in registry surfaces.
+- **Supersession Reference:** Extends CHG-019 (Organizational Cognition Arc reframing) into formal Duplicate-status deprecation per Clarification #7.
+
+### CHG-032 — Provisional Term Disambiguated in Registry
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-036.
+- **Affected Artifacts:** `canonical_definitions.md` (Provisional disambiguation declared in Status section).
+- **Change Summary:** Resolution R6 ratified: "Provisional" disambiguated between Epistemic Label usage (Spec 05) and Governance Status usage (R2 taxonomy). Registry context uses qualified forms where ambiguity could arise. Per Clarification #6, R6 operates in registry context only; Spec 05's "Provisional" Epistemic Label is unchanged and reserved for RB-007 reconciliation. Inventory I-A item 1 flags the Spec 05 additional labels as unanchored; the three references (R6, I-A item 1, RB-007) operate at distinct layers without contradiction.
+- **Supersession Reference:** None.
+
+### CHG-033 — Inventories I-A and I-B Placed Inline in Ontology Registry
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-036.
+- **Affected Artifacts:** `ontology_registry.md` (two new sections added).
+- **Change Summary:** Resolution R7 ratified: two inventories placed inline in `ontology_registry.md` per Clarification #5. Inventory I-A — Unanchored Implementation Concepts (13 conceptual groups) added as a new section after the existing "Concepts Used But Not Registered" section. Inventory I-B — Registry Entries Lacking Authoritative Definitions (4 entries: Artifact, Attention Queue, Project MRI, Outcome Space) added immediately following I-A. Both inventories are open and updateable; future Decisions may add or remove items via clerical changelog entries. Inventories feed RB-004 (general doctrine stubs), RB-012, RB-013, RB-014, RB-015, RB-016, RB-017, RB-018 as input.
+- **Supersession Reference:** None (new observation artifacts).
+
+### CHG-034 — Citation Paths for Four Axes Declared; RB-001 Closed
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-036.
+- **Affected Artifacts:** `canonical_definitions.md` (axis entries reflect ratified citation paths); `ontology_registry.md` (Cognition and Progression Plane axis entries reflect ratified citation paths); `01_governance/backlog/revision_backlog.md` (RB-001 status changed from Proposed to Closed; Disposition, Closed By, Date Closed recorded).
+- **Change Summary:** Resolution R8 ratified: canonical citation paths formalized for the four OSLO Evolution Framework axes. Cognition Scope cites Doctrine 02. Product Identity cites Doctrine 09. Trust Gradient cites Doctrine 09 and Article 41 (aligned). Execution Depth cites Doctrine 10 and Article 43 (aligned). Citation paths consistent with DL-034 and formally promoted into the registry as operational citation rules. RB-001 closed in revision backlog with DL-036 as closing Decision.
+- **Supersession Reference:** Closes RB-001.
+
+### CHG-035 — DL-037 Ratified; Phase 1 Pending Framework Verification Gate
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-037.
+- **Affected Artifacts:** `01_governance/decisions/decision_log.md` (DL-037 entry appended; header note updated to reflect operative range DL-029 through DL-037; DL-037 noted as Ratified with Conditions); `01_governance/decisions/proposal_003_restructure_disposition.md` (created at pre-Phase-1 location). Both files will be relocated to `01_governance/decisions/` during Phase 1 execution.
+- **Change Summary:** Repository Domain Restructure (Proposal 003) ratified as DL-037 with disposition Accepted with Conditions. Ten closing-Decision clarifications recorded in the disposition document. Five-phase migration authorized as execution steps within the single Decision. Rollback authority granted to AI for constraint violations, scoped exclusively to migration execution actions under DL-037 and not extending to reversing owner-ratified Decisions, Frameworks, or Stated decisions DL-001 through DL-028 preserved under DL-032. Bounded scope respected: no doctrinal/constitutional/spec body edits; no ontology conflict resolution; no doctrinal stubs; no new backlog entries; RB-020 remains Open through closure. Phase 1 execution pending owner Framework 001 and 001A verification gate per Clarification #2.
+- **Supersession Reference:** No prior Decision superseded. Establishes the post-migration repository structure as canonical physical organization.
+
+### CHG-036 — Phase 1 Complete (Governance Stabilization)
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-037.
+- **Affected Artifacts:** `01_governance/` directory created with 9 subdirectories (`doctrine/`, `constitution/`, `canonical_definitions/`, `ontology/`, `decisions/`, `backlog/`, `changelog/`, `frameworks/`, `manifest/`); `01_governance/README.md` created; `01_governance/frameworks/framework_001.md` created from already-ratified content per Clarification #2 (owner verified substantive match); `01_governance/frameworks/framework_001A.md` created from already-ratified content per Clarification #2 (owner verified substantive match with one revision: Purpose section omitted to preserve strict verbatim alignment with originally-issued text). 38 governance content files relocated (13 Doctrine; 14 Constitution; 6 governance objects from `07_governance/` to `01_governance/decisions/` — including `proposal_003_restructure_disposition.md` newly placed pre-Phase-1; `revision_backlog.md` to `01_governance/backlog/`; `changelog.md` to `01_governance/changelog/`; root `canonical_definitions.md`, `ontology_registry.md`, `repository_manifest.md` to their respective `01_governance/` subdirectories). Path-reference updates executed mechanically across 12 files per the Reference Update Matrix. Substitution patterns: `01_doctrine_ontology/` → `01_governance/doctrine/`; `02_ux_constitution/` → `01_governance/constitution/`; `07_governance/{decision_log, proposal_000_disposition, proposal_003_restructure_disposition, rb_001_disposition, rb_003_disposition, rb_010_disposition, revision_backlog, changelog}.md` → appropriate `01_governance/{decisions, backlog, changelog}/` paths. Remaining `07_governance/` references in change summaries are historical narrative describing past placement events; preserved per the Clarification #4 historical-vs-forward distinction.
+- **Change Summary:** Phase 1 of the Repository Domain Restructure complete. All Doctrine, Constitution, and Governance content relocated to `01_governance/`. No body content modified. Framework files materialized faithfully from DL-030 and DL-031 dispositions per owner verification (Clarification #2). Framework 001A draft revised to remove Purpose section per owner direction for strict verbatim preservation of originally-issued content. DL-036 substantive content preserved; only path citations updated (Clarification #7). Manifest pre-ratification annotation verified to contain no path references; no annotation updates required (Clarification #5). Legacy directories `01_doctrine_ontology/`, `02_ux_constitution/`, and `07_governance/` are now empty pending final removal in Phase 5.
+- **Supersession Reference:** Legacy paths superseded: `01_doctrine_ontology/*`, `02_ux_constitution/*`, `07_governance/*`, root `canonical_definitions.md`, `ontology_registry.md`, `repository_manifest.md` now operative at their `01_governance/` paths.
+
+### CHG-037 — Phase 2 Complete (Product Organization)
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-037.
+- **Affected Artifacts:** `02_product/` directory created with 5 subdirectories (`user_experience/`, `plg/`, `workflows/`, `collaboration/`, `tiering/`); `02_product/README.md` created; 8 Implementation Specs relocated from `03_implementation_specs/` to `02_product/`: Spec 01 (Product Shell Layout Wireframe) → `02_product/user_experience/`; Spec 02 (PLG 60-Second Flow Wireframes) → `02_product/plg/`; Spec 03 (Outcome Space Workspace Wireframes) → `02_product/user_experience/`; Spec 04 (Core Navigation & Information Architecture) → `02_product/user_experience/`; Spec 06 (Interaction Rules) → `02_product/user_experience/`; Spec 07 (Workflow Specifications) → `02_product/workflows/`; Spec 10 (Collaboration & Sharing Logic) moved whole → `02_product/collaboration/`; Spec 12 (Freemium / Tier Behavior Logic) moved whole → `02_product/tiering/`.
+- **Change Summary:** Phase 2 of the Repository Domain Restructure complete. Product-shaped Implementation Specs relocated to `02_product/`. Spec body content unchanged. Specs 10 and 12 moved whole per Clarification #3 — no header notes added, splits deferred to follow-on Proposals if owner directs. Future product subdirectories (positioning, product_strategy, onboarding, sharing, virality, security_and_compliance) documented in README as potential expansion areas, not pre-created as empty folders.
+- **Supersession Reference:** Legacy paths superseded for relocated specs.
+
+### CHG-038 — Phase 3 Complete (Architecture Extraction)
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-037.
+- **Affected Artifacts:** `03_architecture/` directory created with 4 subdirectories (`runtime_architecture/`, `judgement_layer/`, `governance_layer/`, `components/`); `03_architecture/README.md` created with future-architecture-roadmap section listing 16 potential architecture domains as documentation (not pre-created as empty folders); 4 Implementation Specs relocated from `03_implementation_specs/` to `03_architecture/`: Spec 05 (Component System Specification) → `03_architecture/components/`; Spec 08 (State Logic & State Machines) → `03_architecture/runtime_architecture/`; Spec 09 (Confidence & Integrity Logic) → `03_architecture/judgement_layer/`; Spec 11 (Governance & Override Logic) → `03_architecture/governance_layer/`.
+- **Change Summary:** Phase 3 of the Repository Domain Restructure complete. Architecture-shaped Implementation Specs relocated to `03_architecture/`. Spec body content unchanged. Future architecture subdirectories documented in README only; no empty folders pre-created per the bounded-scope principle.
+- **Supersession Reference:** Legacy paths superseded for relocated specs.
+
+### CHG-039 — Phase 4 Complete (Execution Tracking)
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-037.
+- **Affected Artifacts:** `05_execution/implementation_tracking/` directory created; `05_execution/README.md` created (future operational subdirectories roadmap, initiatives, milestones documented but not created); 2 Implementation Specs relocated from `03_implementation_specs/` to `05_execution/implementation_tracking/`: Spec 13 (Implementation Backlog) and Spec 14 (Open Questions & Design Risks).
+- **Change Summary:** Phase 4 of the Repository Domain Restructure complete. Operational tracking Specs relocated to `05_execution/implementation_tracking/`. Spec body content unchanged. Future operational subdirectories documented in README only.
+- **Supersession Reference:** Legacy paths superseded for relocated specs.
+
+### CHG-040 — Phase 5 Research and Subsystems Relocations Complete
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-037.
+- **Affected Artifacts:** `04_research/` directory created with 2 subdirectories (`transcripts/`, `historical_artifacts/`); `04_research/README.md` created; 7 raw transcript items relocated to `04_research/transcripts/` (00_transcript_index.md, 01_foundational_product_experience.md, 02_plg_freemium_intake_confidence.md, 03_collaboration_governance_epistemics.md, 04_ontology_strategy_constitutional_principles.md, README.md); Historical Artifact `05_constitutional_principles_draft.md` relocated to `04_research/historical_artifacts/` with Clarification #4 reference treatment applied (historical origin path `01_doctrine_ontology/12_constitutional_principles_draft.md` preserved verbatim; forward-looking references to disposition documents updated to `01_governance/decisions/rb_003_disposition.md` and `01_governance/decisions/rb_010_disposition.md`); `03_implementation_specs/00_index.md` relocated to `04_research/historical_artifacts/03_implementation_specs_index_historical.md` per Clarification #8 (supersedes Proposal 003 Artifact 2 retirement treatment; converts retirement to relocation); `03_implementation_specs/README.md` relocated to `04_research/historical_artifacts/03_implementation_specs_readme_historical.md` per Clarification #8; `subsystems/` directory created with `project_mri/` subdirectory; `04_project_mri/README.md` relocated to `subsystems/project_mri/README.md`; `04_research/transcripts/00_transcript_index.md` Entry 5 reference updated to point to new historical artifact location while preserving historical origin reference.
+- **Change Summary:** Phase 5 Research and Subsystems relocations complete. Raw transcripts and Historical Artifact preserved at non-canonical locations per DL-033 and DL-035. Index file disposition executed per Clarification #8: relocated as historical content with `_historical.md` suffix; no Historical Artifact headers added (header treatment per Clarification #8 preserved no-spec-edits constraint). Cursor-like AI-native IDE identity claim remains visible in historical record; Inventory I-A item 9 continues to flag it as unanchored.
+- **Supersession Reference:** Legacy `00_raw_transcript/` and `04_project_mri/` paths superseded.
+
+### CHG-041 — Phase 5 Root Files Updated
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-037.
+- **Affected Artifacts:** Root `README.md` populated per Bounded Executor Package Deliverable 5 (after Clarification #6 owner confirmation); root `CLAUDE.md` populated per Bounded Executor Package Deliverable 6 (after Clarification #6 owner confirmation); root `REPOSITORY_ARCHITECTURE.md` revised per Bounded Executor Package Deliverable 7 (after Clarification #6 owner confirmation).
+- **Change Summary:** Root orientation files populated. Each file content traces to existing ratified Decisions (DL-029 through DL-037), Framework provisions, or structural descriptions of the post-migration repository. No new normative claims introduced. Owner reviewed drafts against orientation-only constraint before placement per Clarification #6.
+- **Supersession Reference:** Empty pre-existing `README.md` and `CLAUDE.md` superseded; prior `REPOSITORY_ARCHITECTURE.md` superseded by revised version.
+
+### CHG-042 — Legacy Directories Removed
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-037.
+- **Affected Artifacts:** Removed: `00_raw_transcript/`, `01_doctrine_ontology/`, `02_ux_constitution/`, `03_implementation_specs/`, `04_project_mri/`, `07_governance/` (all empty after Phases 1–5 relocations).
+- **Change Summary:** Legacy directories removed after grep audit confirmed remaining old-path references are limited to historical-narrative descriptions in changelog change summaries and disposition documents (preserved per Clarification #4 historical-vs-forward distinction). Removal preceded by Post-Migration Validation Checklist verification.
+- **Supersession Reference:** Legacy top-level directory structure fully superseded by the new domain taxonomy.
+
+### CHG-043 — DL-037 Migration Complete
+
+- **Date:** 2026-05-29
+- **Authorizing Decision:** DL-037.
+- **Affected Artifacts:** `01_governance/changelog/changelog.md` (this entry); `01_governance/decisions/decision_log.md` (DL-037 status confirmed Ratified with Conditions; migration complete).
+- **Change Summary:** Repository Domain Restructure migration (DL-037) complete. All five phases executed sequentially under owner phase gates. 61 files relocated (matrix item 52 and 53 reclassified from retirement to relocation per Clarification #8; total relocation count 61, retirements 0). 12 files explicitly created or populated (Framework 001, Framework 001A with Purpose section omitted per owner direction, five top-level domain READMEs, this disposition document, root README, root CLAUDE.md, project_mri README inherited from migration). 14 files received path-reference housekeeping updates. 6 legacy directories removed after empty-state verification. Zero substantive content edits performed. Repository operates under the new domain taxonomy: `01_governance/`, `02_product/`, `03_architecture/`, `04_research/`, `05_execution/`, `subsystems/`. RB-020 remains Open per Clarification #1; owner reviews post-migration README and CLAUDE.md content for potential clerical closure under DL-036 R3 precedent. Rollback authority not invoked during execution. No constraint violations detected.
+- **Supersession Reference:** Migration complete. No further phases required.
+
+---
+
+## Governance Notes
+
+1. The changelog is operative as of CHG-001. All subsequent canonical changes must be recorded here, authorized by a ratified Decision.
+2. The current schema is provisional pending governance refinement of the Traceability Record (open condition on DL-030).
+3. Entries do not require Proposal-Review-Decision in their own right when they merely record changes authorized by a ratified Decision. The authorizing Decision provides the governance traceability.
+4. Amendments to the changelog schema require a Proposal under Framework 001/001A.

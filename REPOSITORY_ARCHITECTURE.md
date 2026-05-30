@@ -1,6 +1,6 @@
 # Repository Architecture
 
-This document explains how the OSLO knowledge base is organized and how to contribute to it. It is written for contributors and reviewers. It is not a governance manual.
+This document explains how the OSLO knowledge base is organized and how to contribute to it. It is written for contributors and reviewers.
 
 ## The One-Sentence Version
 
@@ -10,70 +10,71 @@ OSLO is a doctrine-centered repository: doctrine defines what is true; everythin
 
 ### 1. Doctrine defines truth.
 
-The folder `01_doctrine_ontology/` contains the canonical truth of the OSLO system. When the repository disagrees with itself, doctrine wins. If you want to know what OSLO is, read doctrine first.
+`01_governance/doctrine/` contains the canonical truth of OSLO. When the repository disagrees with itself, doctrine wins.
 
 ### 2. Constitution operationalizes doctrine.
 
-The folder `02_ux_constitution/` translates doctrine into operational language — Articles that govern UX, interaction, and product behavior. The Constitution is authoritative for operational guidance, but it is downstream of doctrine. If a Constitutional Article disagrees with doctrine, the Article is wrong, not the doctrine.
+`01_governance/constitution/` translates doctrine into Articles that govern UX, interaction, and product behavior. Articles inherit authority from doctrinal grounding.
 
 ### 3. Implementation realizes doctrine.
 
-The folder `03_implementation_specs/` contains wireframes, components, workflows, state logic, and other implementation-level specifications. Implementation specs realize what doctrine asserts and what the Constitution articulates. If you find a spec that introduces a concept with no doctrinal or constitutional source, that concept is provisional — it lives on borrowed authority until governance promotes it (or supersedes it).
+`02_product/` and `03_architecture/` realize what doctrine asserts. Concepts introduced here without doctrinal anchor are provisional.
 
 ### 4. Governance controls repository evolution.
 
-The folder `07_governance/` contains the procedural objects that govern how the repository changes. Frameworks declare the lifecycle. Proposals propose changes. Reviews analyze them. Decisions ratify them. The Revision Backlog queues identified work. The Changelog records changes.
-
-Governance objects do not assert what OSLO is. They assert how the repository evolves. They cannot override doctrine.
+`01_governance/decisions/`, `backlog/`, `changelog/`, and `frameworks/` govern how the repository changes. Governance objects do not assert doctrine.
 
 ### 5. Source Material informs but does not bind.
 
-The folder `00_raw_transcript/` (and any future source material) contains the conversations, transcripts, and documents that informed canonical content. It is preserved for interpretive context and historical traceability. It is not canonical and cannot be cited as authority.
+`04_research/` contains transcripts and historical artifacts. Non-canonical.
 
 ### 6. Subsystems must anchor to canonical content.
 
-A subsystem (for example, Project MRI in `04_project_mri/`) is a sub-category of the Content tier. Every subsystem must declare its doctrinal scope, constitutional articulation (if any), and implementation specifications. A subsystem cannot float — it must anchor to canonical content.
+`subsystems/` holds sub-categories that declare their doctrinal scope, constitutional articulation, and implementation specs.
 
 ## Where Do I Put Things?
 
 | What you have | Where it goes |
 |---|---|
-| A foundational claim about what OSLO is or how it should be understood | `01_doctrine_ontology/` — requires Proposal to add |
-| An operational principle that articulates how doctrine is expressed in product behavior | `02_ux_constitution/` — requires Proposal to add |
-| A wireframe, component spec, workflow, or state machine | `03_implementation_specs/` — should cite the doctrine or Constitution it implements |
-| A raw transcript, design conversation, or source document | `00_raw_transcript/` — non-canonical; can be added freely |
-| A proposed change to canonical content | `07_governance/` (Proposals subdirectory if/when created) — requires Review and Decision |
-| A reviewer's analysis of a Proposal | `07_governance/` (Reviews subdirectory if/when created) |
-| An identified concern or pending work | `07_governance/revision_backlog.md` — currently restricted; see Governance Discipline below |
-| A subsystem with its own scope | A new content directory, anchored to doctrine via Proposal |
+| A foundational claim about OSLO | `01_governance/doctrine/` — requires Proposal |
+| An operational principle | `01_governance/constitution/` — requires Proposal |
+| A UX wireframe or workspace specification | `02_product/user_experience/` |
+| A PLG flow | `02_product/plg/` |
+| A workflow specification | `02_product/workflows/` |
+| Collaboration or sharing logic | `02_product/collaboration/` |
+| Tier behavior | `02_product/tiering/` |
+| A component specification | `03_architecture/components/` |
+| Runtime state logic | `03_architecture/runtime_architecture/` |
+| Confidence/integrity engineering | `03_architecture/judgement_layer/` |
+| Governance override engineering | `03_architecture/governance_layer/` |
+| Implementation backlog or open questions | `05_execution/implementation_tracking/` |
+| A raw transcript or source document | `04_research/transcripts/` |
+| A historical preserved artifact | `04_research/historical_artifacts/` |
+| A proposed canonical change | Governance proposal — requires Review and Decision |
 
 ## What If I Find a Conflict?
 
-If you find content in the repository that contradicts itself:
-
 1. Determine which tier each conflicting position lives at.
-2. The higher tier wins. Doctrine over Constitution. Constitution over Implementation Specs.
-3. Do not edit canonical content directly to resolve the conflict. Conflicts are resolved through Proposals.
-4. Add the conflict to the Revision Backlog if it is not already there.
+2. The higher tier wins. Doctrine > Constitution > Implementation.
+3. Do not edit canonical content directly to resolve conflicts. Conflicts are resolved through Proposals.
+4. Add the conflict to the Revision Backlog (`01_governance/backlog/`).
 
 ## Authority
 
-Only the repository owner may ratify, reject, supersede, or adopt canonical content. AI systems may assist with analysis, consistency checking, conflict identification, and recommendation generation. AI systems do not ratify decisions.
+Only the repository owner ratifies canonical content. AI systems assist under Framework 001A authority constraints. See `CLAUDE.md`.
 
-## Governance Discipline (Current)
+## Migration Rationale
 
-The repository is in a phase where new governance work is restricted. Until the repository owner directs otherwise, contributors should not create new Governance Frameworks, new Proposals, or new Revision Backlog entries unless required to resolve open governance work. The current focus is execution, not analysis.
+The repository was restructured under DL-037 to separate Governance, Product, Architecture, Research, and Execution into clear domains. The restructure preserved all existing content; no Doctrine, Constitution, or Implementation Spec content was edited. Path references were updated to reflect new locations.
 
-## Where to Read More
+The Architecture domain currently contains four populated subdirectories; additional architecture domains are documented in `03_architecture/README.md` as a future roadmap and will be created when content exists.
 
-- `repository_manifest.md` — original orientation charter
-- `canonical_definitions.md` — established terms and their sources
-- `ontology_registry.md` — ontology entities and relationships
-- `07_governance/proposal_000_disposition.md` — full architectural disposition
-- `07_governance/decision_log.md` — record of ratified decisions
-- `07_governance/revision_backlog.md` — identified work pending Proposal
-- `07_governance/changelog.md` — record of canonical changes
+## Reading Pointers
 
-## Final Note
-
-This architecture exists to preserve the original understanding of OSLO across change. When in doubt, read doctrine, then ask whether the change you are proposing would weaken or strengthen what doctrine asserts. Then take the answer through governance.
+- Repository orientation: this file and `01_governance/manifest/repository_manifest.md`.
+- Doctrine: `01_governance/doctrine/`.
+- Constitution: `01_governance/constitution/`.
+- Decisions: `01_governance/decisions/decision_log.md`.
+- Backlog: `01_governance/backlog/revision_backlog.md`.
+- Changelog: `01_governance/changelog/changelog.md`.
+- Frameworks: `01_governance/frameworks/`.

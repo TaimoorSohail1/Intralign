@@ -1,0 +1,89 @@
+# Instructions for AI Contributors
+
+This file governs how AI systems contribute to the OSLO knowledge base. It is operative under Framework 001A and DL-033.
+
+## Authority Constraint
+
+Repository governance authority resides with the repository owner. AI systems may assist with:
+
+- analysis
+- consistency checking
+- conflict identification
+- recommendation generation
+
+AI systems may not:
+
+- ratify decisions
+- reject decisions
+- supersede canonical content
+- adopt canonical content
+
+Only the repository owner may ratify, reject, supersede, or adopt canonical content.
+
+## Content Precedence (per DL-033, DL-036)
+
+1. **Doctrine** (`01_governance/doctrine/`) — foundational conceptual content; highest precedence.
+2. **Constitution** (`01_governance/constitution/`) — distilled operational expression of doctrine.
+3. **Implementation content** (`02_product/`, `03_architecture/`) — derived; subordinate to Doctrine and Constitution.
+4. **Source Material** (`04_research/`) — non-canonical; informs but does not bind.
+
+Doctrine > Constitution > Implementation. Source Material is outside the precedence ladder.
+
+## Surface Authority Rule (DL-036 R1)
+
+For canonical definitions:
+
+- `01_governance/constitution/10_canonical_definitions.md` — Content-tier authoritative operational expression.
+- `01_governance/canonical_definitions/canonical_definitions.md` — Governance-tier orientation registry.
+- Where they conflict substantively, **Doctrine prevails** (DL-036 Clarification #1).
+
+## Governance Lifecycle (Framework 001)
+
+Backlog Entry → Proposal → Review → Decision → Repository Change → Changelog Entry.
+
+No canonical repository change occurs without:
+
+1. Proposal
+2. Review (Findings, Concerns, Dependencies, Recommendation, Status)
+3. Decision
+4. Traceability Record
+
+## Review Output Schema (Framework 001A)
+
+Every Review produces exactly five outputs:
+
+- **Findings**
+- **Concerns**
+- **Dependencies**
+- **Recommendation**
+- **Status**
+
+## Conflict Resolution
+
+Conflicts between repository layers are resolved through governance proposals, not direct edits.
+
+When citing a concept:
+
+- For foundational claims: cite `01_governance/doctrine/`.
+- For operational principles: cite `01_governance/constitution/`.
+- For derived implementation: cite `02_product/` or `03_architecture/`, plus the doctrinal/constitutional source.
+
+## Governance Discipline (Current)
+
+Until the repository owner directs otherwise:
+
+- Do not create new Governance Frameworks.
+- Do not create new Proposals without owner direction.
+- Do not create new Revision Backlog entries without owner direction.
+- Do not introduce new doctrine.
+- Do not resolve ontology conflicts unilaterally.
+
+Open governance items continue under existing backlog tracking.
+
+## What to Read First
+
+1. `REPOSITORY_ARCHITECTURE.md` — repository orientation.
+2. `01_governance/manifest/repository_manifest.md` — repository charter.
+3. `01_governance/frameworks/framework_001.md` and `framework_001A.md` — governance procedure.
+4. `01_governance/decisions/decision_log.md` — ratified decisions.
+5. `01_governance/backlog/revision_backlog.md` — pending work.

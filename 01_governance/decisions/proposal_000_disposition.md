@@ -251,13 +251,13 @@ The following items remain open and continue to operate under the ratified archi
 
 ## Resulting Repository Actions
 
-1. Record DL-033 in `07_governance/decision_log.md`.
-2. Place this disposition document at `07_governance/proposal_000_disposition.md`.
+1. Record DL-033 in `01_governance/decisions/decision_log.md`.
+2. Place this disposition document at `01_governance/decisions/proposal_000_disposition.md`.
 3. Close Proposal 001 as absorbed (recorded in the decision log entry and changelog; no separate file modified).
-4. Update `07_governance/revision_backlog.md` to mark RB-019 and RB-011 as Closed, RB-005 and RB-010 as Partially Closed.
+4. Update `01_governance/backlog/revision_backlog.md` to mark RB-019 and RB-011 as Closed, RB-005 and RB-010 as Partially Closed.
 5. Place `REPOSITORY_ARCHITECTURE.md` at the repository root.
-6. Replace pre-ratification DL-XXX placeholders with DL-033 in `repository_manifest.md`, `canonical_definitions.md`, `ontology_registry.md`, and `01_doctrine_ontology/12_constitutional_principles_draft.md`.
-7. Record corresponding entries in `07_governance/changelog.md`.
+6. Replace pre-ratification DL-XXX placeholders with DL-033 in `repository_manifest.md`, `canonical_definitions.md`, `ontology_registry.md`, and `01_governance/doctrine/12_constitutional_principles_draft.md`.
+7. Record corresponding entries in `01_governance/changelog/changelog.md`.
 
 ## Status
 

@@ -39,6 +39,14 @@
    - Navigation architecture
    - Constitutional doctrine
 
+5. `05_constitutional_principles_draft.md` *(Historical Artifact; placed by DL-035 per RB-010)*
+   - Twenty drafted constitutional principles
+   - Originally located at `01_doctrine_ontology/12_constitutional_principles_draft.md` as a Drafted-Doctrinal file (now relocated to `04_research/historical_artifacts/05_constitutional_principles_draft.md` per DL-037)
+   - Reclassified as non-canonical Source Material under the ratified architecture (DL-033)
+   - Draft Principle 17 absorbed by Doctrine 02 per DL-034
+   - Remaining 19 principles dispositioned by reclassification per DL-035 (18 represented by Constitution Articles; Draft 18 captured by Article 2 and Drift Warning 2)
+   - Non-authoritative; cannot be cited as authority
+
 ## Most Important Emerging Doctrines
 
 - OSLO is a Cursor-like AI-native IDE for Outcome Orchestration.

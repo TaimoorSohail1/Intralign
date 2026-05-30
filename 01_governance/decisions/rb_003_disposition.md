@@ -145,20 +145,20 @@ The framework neither asserts nor denies a mechanical mapping between stage numb
 
 ## Affected Artifacts
 
-- `01_doctrine_ontology/02_organizational_cognition_model.md` — Confirmed as canonical Cognition Scope arc.
-- `01_doctrine_ontology/09_plg_product_evolution_strategy.md` — Confirmed as canonical Product Identity arc and canonical Trust Gradient progression. Stage 3 label authoritative.
-- `01_doctrine_ontology/10_execution_orchestration_maturity.md` — Confirmed as canonical Execution Depth phases. Long-Term Direction items remain provisional.
-- `01_doctrine_ontology/12_constitutional_principles_draft.md` — Draft 17's substantive content is absorbed by Doctrine 02; Draft 17 itself remains in the file pending RB-010 full disposition.
-- `02_ux_constitution/08_product_evolution_constitution.md`:
+- `01_governance/doctrine/02_organizational_cognition_model.md` — Confirmed as canonical Cognition Scope arc.
+- `01_governance/doctrine/09_plg_product_evolution_strategy.md` — Confirmed as canonical Product Identity arc and canonical Trust Gradient progression. Stage 3 label authoritative.
+- `01_governance/doctrine/10_execution_orchestration_maturity.md` — Confirmed as canonical Execution Depth phases. Long-Term Direction items remain provisional.
+- `01_governance/doctrine/12_constitutional_principles_draft.md` — Draft 17's substantive content is absorbed by Doctrine 02; Draft 17 itself remains in the file pending RB-010 full disposition.
+- `01_governance/constitution/08_product_evolution_constitution.md`:
   - Article 40 Stage 3 ("Governance Infrastructure") — provisional; doctrinal label prevails. Annotation applied at ratification.
   - Article 41 — aligned; no change.
   - Article 43 — aligned; no change.
   - Article 44 (five-stage Cognition Scope arc; Portfolio Cognition stage) — provisional. Annotation applied at ratification.
 - `canonical_definitions.md` — Four-axis taxonomy registered as established terminology.
 - `ontology_registry.md` — Four axes registered; Long-Term Direction items marked Provisional.
-- `07_governance/decision_log.md` — DL-034 entry.
-- `07_governance/revision_backlog.md` — RB-003 closed; RB-010 Draft-17 absorption noted; RB-015 partial unblock noted.
-- `07_governance/changelog.md` — CHG entries recorded.
+- `01_governance/decisions/decision_log.md` — DL-034 entry.
+- `01_governance/backlog/revision_backlog.md` — RB-003 closed; RB-010 Draft-17 absorption noted; RB-015 partial unblock noted.
+- `01_governance/changelog/changelog.md` — CHG entries recorded.
 
 ---
 
@@ -176,7 +176,7 @@ The four-axis taxonomy is ratified. The label and stage-count conflicts identifi
 
 Per owner guidance, Draft 17 is treated as absorbed by Doctrine 02. Draft 17's substantive content — the four-stage Cognition Scope arc — is canonized through Doctrine 02 rather than through the Draft itself. Draft 17 no longer carries independent doctrinal force; Doctrine 02 is its substantive home.
 
-The remaining 19 Draft principles in Doctrine 12 still require RB-010 full disposition. The pre-ratification annotation on `01_doctrine_ontology/12_constitutional_principles_draft.md` continues to apply for the other 19 principles.
+The remaining 19 Draft principles in Doctrine 12 still require RB-010 full disposition. The pre-ratification annotation on `01_governance/doctrine/12_constitutional_principles_draft.md` continues to apply for the other 19 principles.
 
 ### RB-015 — Scope Project MRI Doctrinally
 
