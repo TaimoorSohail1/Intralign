@@ -551,7 +551,7 @@ Deep Pass consumes original intake artifacts, synthesized planning artifacts, Fa
 
 ### Deep Pass Responsibilities
 
-Deep Pass performs Understanding Expansion, Confidence Refinement, Alignment Validation, Feasibility Validation, Recommendation Expansion, MRI Evolution, Planning Validation, and Issue Maturation.
+Deep Pass (the **Deep Analysis Pass**) performs Understanding Expansion, **Confidence Recalculation** (Confidence Refinement), Alignment Validation, Feasibility Validation, **Expanded Recommendations** (Recommendation Expansion), MRI Evolution, Planning Validation, and **Expanded Findings** (Issue Maturation and additional finding discovery). The Deep Analysis Pass continues after the 60-Second Orientation; it improves understanding and performs no governance (it does not accept understanding or create Accepted Understanding).
 
 ### Deep Pass Execution Model
 
@@ -1104,7 +1104,9 @@ Release 1 exists to prove:
 
 ### In Scope
 
-Artifact Workspace, Planning Synthesis, Confidence System, CAF, Fast Pass, Deep Pass, Issues, Recommendations, Suggested Fixes, OSLO Chat, MRI, Collaboration, CAF Review Requests, Sharing, Alpha onboarding, Telemetry, and Tier limits.
+Artifact Workspace, Planning Synthesis, Confidence System, CAF, Fast Pass (Fast Analysis Pass), Deep Pass (Deep Analysis Pass), Confidence Recalculation, Expanded Findings, Expanded Recommendations, Issues, Recommendations, Suggested Fixes, OSLO Chat, MRI, Collaboration, CAF Review Requests, Sharing, Alpha onboarding, Telemetry, and Tier limits.
+
+Release 1 contains **two active analysis horizons**: the **Fast Analysis Pass** (producing the 60-Second Orientation) and the **Deep Analysis Pass** (continuing after orientation to perform Confidence Recalculation and produce Expanded Findings and Expanded Recommendations). Both are Active Release 1; the 60-Second Orientation is not the final analysis state.
 
 ### Out of Scope
 
