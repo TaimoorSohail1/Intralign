@@ -73,25 +73,25 @@ All contract packages live in `03_architecture/contracts/`. Each is an **Impl + 
 |---|---|---|
 | Architecture | **95%** | Cognitive Responsibility canonical (DL-043); ESC-0 closed |
 | Epistemic model & lifecycle | **95%** | Attested/Derived, history, two-axis replay ratified |
-| Contracts | **80%** | Full roadmap generated (A/B/C/U/E); packages await per-package conformance review |
+| Contracts | **90%** | Full roadmap generated (A/B/C/U/E) **+ consolidated conformance review (all CONFORMANT)**; owner approval pending |
 | Data model | **85%** | Logical model complete; physical binding at env-bind |
 | Environment | **85%** | Profile provided + reconciled; numeric calibration defaulted |
 | Governance (QA/Obs/Control/Classification) | **90%** | Ratified; Claude Code Constraints pending owner ratification |
 | Repository hygiene | **95%** | Reorganized, reference-intact, DL-043-consistent (audit 001) |
-| Deployment | **30%** | Deployment Governance not yet authored (pre-production) |
-| **Overall** | **≈ 88% — READY WITH CONTROLS** | up from ≈46%; all four prior Criticals resolved |
+| Deployment | **85%** | **Deployment Governance v1 authored** (gates/branch/rollback/secrets/migration discipline); pending owner ratification; pipeline config at env-bind |
+| **Overall** | **≈ 93% — READY WITH CONTROLS** | up from ≈46%; all four prior Criticals resolved; remaining gap is owner-ratification + build-time binding (appropriately open) |
 
 ## 7. Before Autonomous Coding Begins — owner actions
 
 1. **Ratify `CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1`** — it governs how Claude Code builds (the one standing pre-code gate).
-2. **Approve the Wave contract packages** (per-package conformance review → owner approval) as each wave is picked up.
+2. **Approve the Wave contract packages** — all five are **CONFORMANT** per `contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001`; owner approval (per wave or as a set) is the remaining step.
 3. **Confirm or adjust the Calibration Defaults** (`environment/RELEASE_1_CALIBRATION_DEFAULTS_V1`).
-4. *(Before first production deploy, not before coding):* **author Deployment Governance** (task #122).
+4. **Ratify `DEPLOYMENT_GOVERNANCE_SPECIFICATION_V1`** before the first production deploy (authored; concrete pipeline config produced at env-bind).
 
 ## 8. Maturity Ladder (so nobody mistakes status)
 
 - **Ratified (build against these):** Cognitive Responsibility Architecture; DL-043 foundation (epistemic model, lifecycle, user-acceptance); object/behavior/ownership/data models; QA & Observability Governance; Application/Platform Classification; Control System.
-- **Ready-for-Review (approve per wave before coding that wave):** Wave A/B/C/U/E contract packages; Claude Code Implementation Constraints (owner ratify).
+- **Ready-for-Review (approve before coding):** Wave A/B/C/U/E contract packages (**conformance-reviewed CONFORMANT** — `contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001`); Claude Code Implementation Constraints (owner ratify); Deployment Governance (owner ratify, before production).
 - **Owner-input pending (non-blocking):** numeric calibration; Deployment Governance.
 - **Historical (reasoning trail — do not treat as current scope):** the pre-DL-043 reviews/audits under `03_architecture/reviews/` and the legacy layer material under `legacy_layer_engineering/` (all bannered).
 
