@@ -1,6 +1,8 @@
 # GOV-ARCH-001 — OSLO Canonical Architecture Governance Review
 
-**Document Type:** Architecture Governance Review (independent; recommendation — owner ratifies) · **Status:** **Pending Owner Ratification** · **Date:** 2026-05-31
+**Document Type:** Architecture Governance Review (independent; recommendation — owner ratifies) · **Status:** **Ratified via DL-043 constituent A (2026-06-04)** · **Date:** 2026-05-31
+
+> **⚠ DL-043 (2026-06-04):** This review's recommendation — adopt the Cognitive Responsibility Architecture as canonical — was **ratified by the owner as DL-043 constituent A**. The architecture core it reviews is now canonical; this document is the governance review of record that supported that ratification.
 **Reviews:** `OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md` (target) · `OSLO_ARCHITECTURE_VALIDATION_REVIEW_003.md` · `OSLO_ADVISORY_COGNITION_ARCHITECTURE_SPECIFICATION_V1.md` · `RELEASE_1_RUNTIME_OWNERSHIP_UPDATE_SPECIFICATION_V1.md` · the Advisory/Responsibility review arc · `OSLO_ARCHITECTURE_BASELINE_V1.md` (prior layer model).
 
 > **Mode:** independent governance review — **not** preserving prior conclusions; challenge every assumption; optimize for architectural correctness, governed-AI design, agentic evolution, outcome orchestration, separation of concerns, ownership clarity. **Architecture only** — no implementation, technology, databases, APIs, prompts, or coding. **Per `CLAUDE.md`, only the owner ratifies canonical content;** this review **recommends** the GOV-ARCH-001 decision. This decision is assumed to become **canonical for all future OSLO development**, which raises the bar for maturity and stability.

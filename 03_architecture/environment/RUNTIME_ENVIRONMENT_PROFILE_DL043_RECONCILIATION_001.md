@@ -1,6 +1,6 @@
 # Runtime Environment Profile — DL-043 Reconciliation 001
 
-**Document Type:** Environment-Binding Reconciliation Review (governance) · **Status:** **Draft · Pending Owner Decision** · **Date:** 2026-06-04
+**Document Type:** Environment-Binding Reconciliation Review (governance) · **Status:** **R1–R5 Owner-Confirmed (2026-06-04); numeric calibration defaulted (owner-review pending)** · **Date:** 2026-06-04
 **Reconciles:** `RUNTIME_ENVIRONMENT_CONSTRAINT_PROFILE_V1.md` (owner-provided) **against** ratified **DL-043** (Cognitive Responsibility Architecture · Epistemic State Model · Derived Cognition Lifecycle · Integrity-not-Authority · User Acceptance Recording · Application/Platform Classification).
 
 > **Mode:** independent reconciliation — the Environment Profile is welcome and unblocks coding, but a few items use **pre-DL-043 vocabulary** (governance decisions, Findings/Issues/Recs as "system of record") that conflict with the ratified epistemic model. I flag these and **route them to the owner**, rather than silently re-binding. **No architecture change.** Per `CLAUDE.md`, owner ratifies.

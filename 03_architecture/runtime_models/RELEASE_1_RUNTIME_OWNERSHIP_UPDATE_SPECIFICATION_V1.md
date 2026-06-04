@@ -1,7 +1,10 @@
 # Release 1 Runtime Ownership Update Specification v1
 
-**Document Type:** Ownership Remap (architecture-to-Release-1; advisory — owner ratifies) · **Status:** **Draft · Pending Owner Ratification of target model** · **Date:** 2026-05-31
-**Target model (authoritative for this remap):** `OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md` (Draft · Canonical upon Owner Ratification). **Supersedes the mapping in:** `RELEASE_1_RUNTIME_LAYER_OWNERSHIP_SPECIFICATION_V1.md` (layer-primary).
+**Document Type:** Ownership Remap (architecture-to-Release-1; advisory — owner ratifies) · **Status:** **Ratified under DL-043 (2026-06-04) — with R1 Authority-scope reconciliation below** · **Date:** 2026-06-04
+**Target model (authoritative for this remap):** `OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md` (Canonical under DL-043). **Supersedes the mapping in:** `RELEASE_1_RUNTIME_LAYER_OWNERSHIP_SPECIFICATION_V1.md` (layer-primary).
+
+> ### ⚠ DL-043 RECONCILIATION (2026-06-04) — supersedes the "Authority involvement" column for Release 1
+> The responsibility ownership (Producer column) is **canonical and unchanged**. But the **Authority-involvement** entries below (promotion authorization, "Authority governs exposure/timing", Wave D) describe the **target/Future model** — under DL-043, **Authority is inactive in Release 1** (Integrity-not-Authority): R1 admission is **integrity-gated** (Perceive readiness + Retain provenance), R1 exposure is **epistemic-safety disclosure** (Disclose), and R1 disposition is **user-acceptance attestation + reconciliation** (Wave U), **not** an Authority Governance Decision. Read the "Authority involvement" cells as **Future-model annotations**; in R1 they resolve to **integrity + Disclose**, no Authority engine.
 
 > **Constraints.** No implementation, APIs, schemas, services, prompts, tools, or database design. **Does not re-open the architecture debate** — the Cognitive Responsibility model is **treated as the target**. Anything unclear or dependent on an unmade owner decision is marked **Requires Owner Decision (ROD)**. **The target architecture is Draft pending owner ratification (and sequenced with GOV-ARCH-001/001A/000); every mapping below is therefore conditional on that ratification.**
 
