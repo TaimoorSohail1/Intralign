@@ -1,5 +1,7 @@
 # Component System Specification
 
+> **⚠ DL-043 re-home (2026-06-04).** Implementation-detail backing under the **Cognitive Responsibility Architecture** (canonical). These component specs are **secondary** to the responsibility model and the Runtime Object/Behavior Models; presentation components map to **Disclose/Render**, the Confidence Shell to **Evaluate**. Not a primary architecture source.
+
 ## 1. Confidence Shell Component
 
 ### Purpose

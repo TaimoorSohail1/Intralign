@@ -1,7 +1,9 @@
 # CURRENT TRUTH — OSLO Release 1
 
 **The first document every engineer reads.** Concise, current, authoritative for Release 1.
-**Date:** 2026-05-31 · **Status:** Active source-of-truth entry point.
+**Date:** 2026-05-31 · **Status:** **Secondary representation under DL-043 (2026-06-04).** Capability set preserved; architecture vocabulary superseded.
+
+> **⚠ DL-043 reconciliation (2026-06-04).** The **canonical architecture** is now the **Cognitive Responsibility Architecture** (`OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`). This page's **layer vocabulary** (Context Plane / Knowledge Layer / Planning Intelligence / Judgment / Governance / Communication) is a **secondary dependency-ordering view**, mapped as: Context Plane→**Perceive**, Knowledge Layer→**Retain**, Planning Intelligence→**Infer + Evaluate**, Communication→**Disclose/Render**. The **Release 1 capability set on this page remains valid** (re-expressed, not invalidated). Two scope clarifications from DL-043: **(1)** R1 admission is **integrity-gated, not governance-gated** — consistent with this page's "Knowledge Layer not governance-gated"; **(2)** R1 **records user acceptance events** as attested project history (User Acceptance Record + Acceptance-Impact Assessment) while OSLO-level acceptance/Outcome Governance remains deferred — consistent with this page's deferral of the Governance Domain. **For canonical architecture, read the Cognitive Responsibility spec and DL-043 first.**
 
 > If you read only one page, read this. For the definitive scope, read `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` next. Everything else is reference.
 

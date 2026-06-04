@@ -1,5 +1,7 @@
 # OSLO Architecture Baseline v1
 
+> **⚠ DL-043 reconciliation (2026-06-04).** This Baseline is a **secondary, layer-as-primary representation.** The **canonical architecture** is the **Cognitive Responsibility Architecture** (`03_architecture/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`); layers are retained here only as a dependency-ordering view (Context Plane→Perceive · Knowledge→Retain · Planning Intelligence→Infer+Evaluate · Communication→Disclose/Render). Content preserved; read the Cognitive Responsibility spec + DL-043 for the canonical model.
+
 *Engineering-oriented architecture baseline synthesized from the OSLO corpus. Optimized for engineering onboarding, roadmap planning, feature decomposition, and Linear initiative creation. Founder-intent-aligned synthesis: where multiple representations exist, this document prioritizes the founder's intended product vision.*
 
 **Status:** Engineering Planning Artifact (v1, 2026-05-30)

@@ -1,5 +1,7 @@
 # Confidence & Integrity Logic
 
+> **⚠ DL-043 re-home (2026-06-04).** Implementation-detail backing under the **Evaluate** responsibility (confidence/reliability/CAF/integrity). Secondary to the Cognitive Responsibility Architecture and the Runtime Object/Behavior Models (where Confidence is a Derived attribute of Evaluate). 'Judgment layer' = the Evaluate responsibility under the canonical model.
+
 ## Confidence Inputs
 
 Confidence should consider:

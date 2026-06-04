@@ -1,5 +1,7 @@
 # Governance & Override Logic
 
+> **⚠ DL-043 re-home (2026-06-04).** This is **Authority (Outcome Governance) detail — OUT of Release 1 (Authority plane specified but inactive in R1, DL-043 constituent B).** Retained as Future implementation-detail backing under the **Authority** responsibility. Not active R1 content; R1 admission is integrity-gated and R1 disposition is user acceptance, not governance.
+
 ## Governance Trigger Conditions
 
 Trigger governance behavior when:

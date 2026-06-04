@@ -1,5 +1,7 @@
 # State Logic & State Machines
 
+> **⚠ DL-043 re-home (2026-06-04).** Implementation-detail backing for runtime **state / recompute** behavior, owned under **Adapt (emergent) + Act** and expressed canonically in the **Runtime Behavior Model**. Secondary to the Cognitive Responsibility Architecture. Note: recompute **appends** Cognition History Records (never overwrites) per DL-043.
+
 ## Outcome Space State
 
 Possible states:
