@@ -5,6 +5,14 @@
 
 > **Mode:** independent governance & architecture review board. Purpose is **not** to redesign OSLO, but to determine which Release 1 capabilities belong inside the **governed OSLO contract domain** (and therefore require contracts) versus the application/platform shell, commodity infrastructure, or deferred scope. **Challenge assumptions; identify over-engineering; prevent unnecessary governance expansion.** **No** new responsibility, object, plane, layer, runtime/governance concept, service, or architecture is introduced. Per `CLAUDE.md`, **only the owner ratifies.**
 
+> ### ⚠ DL-043 RECONCILIATION (2026-06-04) — supersedes the "Governance"/"User Interaction" rows below
+> Under ratified **DL-043** (Integrity-not-Authority + User Acceptance), the classification's **core conclusion holds** (most uncovered capability is platform/commodity, not governed; no P1–P5 governance track). **But the rows that route disposition through *Authority / Wave D / Pkg 003* are superseded:**
+> - **Promotion Authorization (Pkg 003) → integrity, not governance.** Authority plane is **inactive in R1**; admission is integrity-gated (Perceive readiness + Retain provenance). Pkg 003-as-governance is **dropped from R1**.
+> - **Exposure Decisions / Wave D → out of R1** (Future). No Governance Decision object in R1.
+> - **Recommendation/Clarification/Resolution Disposition → reclassified.** In R1 these are **user-acceptance events** recorded as attested project history (User Acceptance Record + Acceptance-Impact Assessment, the **Wave U** capability) — **NOT** an "Authority Governance Decision in Wave D." The matrix's "governed disposition = Authority" cells should read **"user-acceptance attestation + reconciliation (non-governance)."**
+> - **Access Control** remains correctly distinct from the (deferred) Authority/exposure plane.
+> The §1 matrix rows and §2 "Authority Governance Decision in Wave D" language below are **historical (pre-DL-043)** to that extent; the platform/commodity classification and the "no over-engineering" verdict stand.
+
 ---
 
 ## Headline Finding

@@ -1,6 +1,9 @@
 # Release 1 Capability Coverage Review v1
 
-**Document Type:** Independent Governance & Architecture Review Board — Coverage Determination · **Status:** **Pending Owner Decision** · **Date:** 2026-06-03
+**Document Type:** Independent Governance & Architecture Review Board — Coverage Determination · **Status:** **Historical (pre-DL-043) — Reconciled 2026-06-04** · **Date:** 2026-06-03
+
+> ### ⚠ DL-043 RECONCILIATION (2026-06-04)
+> This review predates DL-043 ratification and references **Authority-in-R1 / Wave D / Pkg 003** as part of the roadmap. Under DL-043 those are **out of Release 1** (Authority inactive; Integrity-not-Authority), the cognition chain is **A→B→C + Wave U (User Acceptance) + Wave E**, and disposition is **user-acceptance attestation + reconciliation**, not an Authority Governance Decision. The review's *coverage-gap analysis and platform/commodity findings remain valid*; its Authority/Wave-D references are **superseded** by DL-043 and the updated Contract Inventory/Generation Plan. Read for the coverage logic, not the Authority scoping.
 **Reviews:** Wave A–E Contract Roadmap vs. intended Release 1 **product** scope. **Authoritative inputs (accepted, not re-opened):** Cognitive Responsibility Architecture · Runtime Ownership Update · Runtime Object Model · Runtime Behavior Model · Contract Inventory · Contract Generation Plan · QA Governance · Observability Governance · Runtime Environment Constraint Profile · Wave A Package 001 (Artifact Intake) + its Conformance Review.
 
 > **Mode:** independent coverage determination — *does the current contract roadmap fully cover Release 1?* **No** new architecture, contracts, ownership, runtime models, or implementation. **Challenge assumptions; do not rubber-stamp.** Where a gap requires a classification decision, it is routed to the owner as a backlog-style item — **no new responsibility, object, or governance concept is invented here.** Per `CLAUDE.md`, the owner ratifies.

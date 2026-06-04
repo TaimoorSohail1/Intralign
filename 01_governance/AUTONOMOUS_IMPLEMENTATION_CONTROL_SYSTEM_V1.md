@@ -5,9 +5,12 @@
 
 > **Mode:** skeptical, evidence-based, repository-verified. **Architecture-preserving** — no new responsibility, object, layer, plane, governance/runtime concept, service, workflow, or product capability is introduced. Where an architecture conflict exists, it is **surfaced and routed to the owner, not resolved unilaterally** (per `CLAUDE.md` and `REPOSITORY_ARCHITECTURE.md`: same-tier conflicts resolve through Proposals, only the owner ratifies).
 
+> ### ⚠ DL-043 RECONCILIATION (2026-06-04) — read first; supersedes the body where they conflict
+> **ESC-0 is RESOLVED and CLOSED.** The owner ratified **DL-043**, which **adopts the Cognitive Responsibility Architecture as the single canonical Release 1 target** and reconciles `CURRENT_TRUTH.md` to a secondary representation. **The "Headline" and "Deliverable 1" below — which describe the active-architecture conflict as unresolved, the architecture as "UNDECIDED," and a hard STOP — are now HISTORICAL** (they captured the pre-ratification state and the *reasoning that led to* DL-043). The operating rules in Deliverables 2–10 (precedence, MAY/MUST-NOT, escalation matrix, readiness gate, drift register) **remain in force.** Two further DL-043 corrections to this document's framing: **(1)** Authority/Governance is **inactive in Release 1** (Integrity-not-Authority) — references below to "Authority-in-R1," "promotion authorization (Pkg 003)," and "Wave D" describe the *pre-DL-043* contract assumption and are superseded; **(2)** "ESC-0" as a live blocker is closed — the master stop conditions that remain are *missing contract / missing environment binding / same-tier conflict*, not the (now-resolved) architecture choice. **The single remaining hard gate to coding is no longer architecture; it is environment binding, now provided (Runtime Environment Constraint Profile).**
+
 ---
 
-## Headline (stated first)
+## Headline (stated first) — *historical; see DL-043 Reconciliation banner above*
 
 **A repository-verified, Critical architecture conflict makes a clean Active Architecture Declaration impossible without an owner decision — and that conflict is now the #1 blocker to autonomous development.**
 
