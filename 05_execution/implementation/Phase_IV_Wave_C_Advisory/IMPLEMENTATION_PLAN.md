@@ -18,6 +18,7 @@ Generate **advice** — Recommendations and Clarification Requests anchored to F
 - **Conformance:** `03_architecture/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§2 WC-ADVISE)
 - **Recommendation model:** `02_product/specs/models/RECOMMENDATION_SYSTEM_SPECIFICATION_V1.md` (Resolution Paths = substructure, no standalone object)
 - **Surface (for shape only):** `02_product/specs/ux/RECOMMENDATION_PANEL_SPECIFICATION_V1.md`
+- **Fixtures + test specs (Recommendation):** `02_product/specs/testing_fixtures/RECOMMENDATION_FIXTURE_LIBRARY_SPECIFICATION_V1.md` · `…/RECOMMENDATION_SUBSYSTEM_TEST_SPECIFICATION_V1.md`
 
 ### Always-required (every phase)
 - **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
@@ -26,6 +27,7 @@ Generate **advice** — Recommendations and Clarification Requests anchored to F
 - **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
 - **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
 - **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
+- **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
 
 ## Depends on
 Phase III (Findings/Issues to anchor to) and Phase II (recompute appends CHRs for advisory emissions too).

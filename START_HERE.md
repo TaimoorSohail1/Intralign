@@ -42,6 +42,7 @@ That's it. Stop there. Do **not** read `01_governance/doctrine/`, the ~480 other
 ## 3. What to ignore (permission granted)
 
 - **`01_governance/`** beyond the decision log + AGENTS rules — it's the constitutional/governance system; you don't need it to write code.
+- *(Do read when testing:* `02_product/specs/testing_fixtures/` holds the Testing Strategy, determinism note, and fixture/subsystem test specs — the per-phase manifests link the relevant ones.*)*
 - **`02_product/specs/`** — ~130 product/UX specs; you'll pull the relevant ones *per wave* (Wave E references the UX specs), not up front.
 - **`04_research/`, `raw/`, anything "Historical/superseded/secondary"** — never an implementation source.
 - The DL ledger below DL-043 — earlier decisions are superseded/contextual.

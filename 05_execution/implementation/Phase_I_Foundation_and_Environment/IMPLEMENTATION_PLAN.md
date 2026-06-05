@@ -31,6 +31,7 @@ Stand up the ratified environment and the enforcement scaffolding so that autono
 - **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
 - **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
 - **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
+- **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
 
 ## Depends on
 - Phase 0 owner setup complete (GitHub Pro + protected `main`; cloud accounts; access).

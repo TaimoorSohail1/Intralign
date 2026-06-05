@@ -19,6 +19,8 @@ Produce OSLO's **understanding** of the canonical record — Findings (Infer), a
 - **Conformance:** `03_architecture/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§1 WB-INFER/WB-EVAL)
 - **Scoring models (Evaluate):** `02_product/specs/models/CONFIDENCE_MODEL_V2.md` · `…/RELIABILITY_MODEL_V2.md` · `…/CAF_SCORING_MODEL_V2.md`
 - **Drift/band config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§2 bands, §3 drift)
+- **Fixtures + test specs (Finding):** `02_product/specs/testing_fixtures/FINDING_FIXTURE_LIBRARY_SPECIFICATION_V1.md` · `…/FINDING_SUBSYSTEM_TEST_SPECIFICATION_V1.md`
+- **Fixtures + test specs (Confidence/Evaluate):** `02_product/specs/testing_fixtures/RELEASE_1_CONFIDENCE_FIXTURE_LIBRARY_SPECIFICATION.md` · `…/RELEASE_1_CONFIDENCE_SUBSYSTEM_TEST_SPECIFICATION.md` · `…/RELEASE_1_CONFIDENCE_FIXTURE_LIBRARY_REVIEW_001.md`
 
 ### Always-required (every phase)
 - **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
@@ -27,6 +29,7 @@ Produce OSLO's **understanding** of the canonical record — Findings (Infer), a
 - **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
 - **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
 - **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
+- **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
 
 ## Depends on
 Phase II (Attested store + recompute backbone — understanding is recomputed via 00R and appends CHRs).

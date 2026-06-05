@@ -177,6 +177,8 @@ The agent's tests are **not** discarded after merge — they become the permanen
 
 **Division of labor:** Claude Code **authors** the tests (positive **and** negative, tracing each to its contract) and runs them; **standard frameworks** execute them; **CI** enforces the gates; **you** approve. You do **not** need a managed third-party QA service — the suite below plus CI covers Release 1, and much of it (invariant + replay) is custom anyway.
 
+> **Read these first when authoring tests** (they already exist in the repo): `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` (test strategy), `…/DETERMINISM_CALIBRATION_NOTE_001.md` (determinism tiers), and the **fixture-library + subsystem test specs** for Finding, Confidence, and Recommendation in the same folder. These define *what fixtures and golden cases to build*; the populated fixture data + golden files are then generated during the build. Each phase's Context Manifest links the ones relevant to that phase.
+
 | QA validation layer (spec §3) | What it checks | Suggested framework(s) | Who authors |
 |---|---|---|---|
 | **1. Object** | object existence, single ownership, lifecycle, legal state transitions | unit tests — **pytest** (Py) / **Jest/Vitest** (TS) | Claude Code; dev reviews |
