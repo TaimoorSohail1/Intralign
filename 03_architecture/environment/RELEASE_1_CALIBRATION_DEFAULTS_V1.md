@@ -64,7 +64,7 @@
 | **Time-to-First-MRI — hard ceiling (p100)** | **< 60 s** | **ratified** (Master Spec §20 / M1); the QA performance gate fails above this |
 | **Fast Pass timeout** | **60 s** | at the ceiling: on breach, return partial orientation + transition to `analyzing` (never hang) |
 
-**Supported-project-size envelope (the scope the 60s holds for):**
+**Supported-project-size envelope — Tier-1 / Free (the scope the 60s holds for; tier-keyed, paid-tier envelopes TBD):**
 
 | Dimension | Proposed default | Note |
 |---|---|---|
@@ -73,7 +73,9 @@
 | Concurrency (R1) | **1 active Fast Pass per project** | single-user project; Deep Pass is async/coalesced |
 
 - **Outside the envelope:** Fast Pass still runs but the 60s target is **not guaranteed** — it returns a partial orientation within budget and continues in `analyzing`/Deep Pass. The QA performance gate (DL-046) is asserted **on envelope-sized fixtures**.
-- **⚠ Confidence note:** these envelope numbers are **conservative engineering placeholders**, not derived from target-customer data. The Performance/NFR spec (R-1) flags the envelope as the single highest-priority owner decision — **confirm against real target project sizes before relying on the 60s promise in production.**
+- **✓ Tier-1 owner-confirmed (2026-06-05):** the **Free / Tier-1** envelope is set at **~20 artifacts / ~50k words / 1 active**, confirmed against typical free-tier project scale (brief/PRD/charter-sized document sets). This is the **guaranteed Tier-1 envelope** where the <60s gate and the DL-048 ~$3 Tier-1 cost math hold; larger projects are **not rejected** — they degrade gracefully (partial orientation + coalesced Deep).
+- **Tier-keyed:** the envelope is a **tier dimension** (like the §4c cost caps + routing). **Paid-tier envelopes are TBD** (Open-TBD A1/E3) — add tier rows, not code, when defined.
+- **Still to verify post-build:** real Fast-Pass latency (Phase III telemetry) may warrant raising/lowering the Tier-1 guarantee; re-tune alongside the cost defaults (§4c).
 
 ## 4c. Cost Governance — Freemium Unit Economics (proposed; DL-048, Balanced ~$3/mo)
 
@@ -97,8 +99,41 @@
 
 **Cost basis (June 2026 pricing, verified):** GPT-4.1 $2/$8 · GPT-4.1-mini $0.40/$1.60 · GPT-4.1-nano $0.10/$0.40 · Sonnet 4.6 $3/$15 · Haiku 4.5 $1/$5 per 1M tokens (in/out). Per-run estimates: Fast ~120k tok ≈ $0.08 (mini); Deep ~500k tok ≈ $0.32 (mini) / $1.60 (GPT-4.1) / $2.70 (Sonnet). Monthly rollup: 4.0M tok/mo blended (nano-in/mini-out) ≈ **$3.04 worst-case if maxed daily**; median far below. Keep nano on extraction (pure-mini ≈ $3.52).
 
-- **Per-tier, not free-vs-paid:** all knobs above are **tier rows**; **paid-tier limits are undefined (TBD — Open-TBD A6 / Capability Matrix note 10)** — add rows, not code, when defined.
-- **⚠ Confidence note:** these are **estimate-based starting placeholders**, not measured runs. Re-tune from the `AI Spend Recorded` telemetry in the first weeks; the ~$1/$3/$5 posture is an owner decision (Balanced selected).
+**Tier 2 — Basic (owner-confirmed 2026-06-05; first paid step, $12/mo):** differentiates on **capacity, not model quality** (routing stays cheap-class — full-quality model is the Tier-3 Pro upsell).
+
+| Config knob | Basic / Tier 2 | Δ vs Free |
+|---|---|---|
+| Max active projects | **3** | the primary upgrade trigger |
+| Model routing | **extraction → nano · synthesis/eval → mini** (same class as Free) | capacity is the differentiator |
+| Fast Pass per-run token cap | **300,000** | 2× envelope (40 docs / ~100k words) |
+| Deep Pass per-run token cap | **1,000,000** | larger-project expansion |
+| Deep concurrency | **1** + coalescing **on** | structural |
+| Deep runs / day | **6** | burst ceiling (not the governor) |
+| Suggested fixes / day | **20** | removes daily-limit friction |
+| Chat messages / day | **75** | |
+| Daily token budget / user | **1,500,000** | burst smoothing |
+| **Monthly token budget / user (hard rollup)** | **10,000,000** | the binding governor (~12 Deep or ~80 Fast/mo across 3 projects) |
+| Monthly cost @ budget | **~$7.90 worst-case** / ~$2 typical (25% util) | $12 price → 34% worst / ~84% typical margin |
+
+- **Per-tier, not free-vs-paid:** all knobs are **tier rows**. **Tier 1 (Free) and Tier 2 (Basic) are owner-confirmed; Tiers 3–5 (Pro · Team · Enterprise) remain TBD** (Open-TBD A1/E3; ladder draft `01_governance/backlog/BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE.md`) — add rows, not code.
+- **⚠ Confidence note:** these are **estimate-based starting placeholders**, not measured runs. Re-tune from the `AI Spend Recorded` telemetry in the first weeks. Free posture = Balanced (~$3); Basic = $12/mo capacity tier.
+
+## 4d. Upgrade-Prompt timing — Tier-1 (proposed; FREEMIUM_UPGRADE_PROMPT_TIMING_AUDIT_001)
+
+*(Tunable timing config for MON-04 Upgrade Prompts. The **trigger taxonomy** is in `02_product/tiering/12_freemium_tier_behavior_logic.md`; these are the **numbers** — conservative starting defaults, re-tuned from TEL-07 against the optimality objective. Friction triggers consume the DL-048 constraint-detection signals.)*
+
+| Knob | Proposed default | Note |
+|---|---|---|
+| Global prompt cap | **≤ 2 / day**, **≤ 1 / session** | hard ceiling across all triggers; anti-annoyance |
+| Per-trigger cooldown (friction, daily-cap) | **24 h** | UP-1/2/5: once/day each |
+| Per-trigger cooldown (monthly) | **1 / month** | UP-6 |
+| High-intent trigger (UP-3, 2nd project) | **immediate, no cooldown** | intent moment — exempt from the per-day softening |
+| Value-trigger cooldown (UP-7) | **≥ 7 days** | rare by design |
+| First-value guard | **on** — no prompt before first MRI delivered | session/activation guard |
+| No-interrupt guard | **on** — never during an active Fast/Deep pass | |
+| Annoyance threshold (auto-suppress) | **dismiss-rate > 60% AND convert-rate < 2%** over a trigger's last N shows | suppress + flag for re-tune |
+
+- These are **owner-tunable placeholders**, not measured; TEL-07 (displayed/clicked/converted + dismiss) provides the tuning signal. UP-3 (high-intent) and UP-4 (honest-disclosure, fired with the Wave E partial-orientation surface) are exempt from the per-day cap when they coincide with a genuine constraint event.
 
 ## 5. Status & Tuning
 

@@ -255,7 +255,7 @@
 | MON-01 | Free Tier Scope | One active project; full Workspace, Confidence, CAF, MRI, Issues, Recs, Sharing, Comments; limited fixes/chat; PDF export only | C | Real value free | Alpha | High | PF-03 | §13, §16 C13 | C13 | WS, Proj | Settings | N | Maximizes trust creation |
 | MON-02 | Daily Fix Allowance & Reset | Daily suggested-fix allowance that resets automatically | C | Habit + re-engagement | Alpha | High | REC-04 | §13, §16 C13 | C13 | Fix, Usr | IssuePanel | N | Drives re-engagement and upgrade |
 | MON-03 | Usage Limits | Limit recommendation applications and chat usage on Free tier | C | Clear upgrade reason | Alpha | Medium | CHAT-01, REC-02 | §13 | C13 | WS | Settings | N | Limited chat / limited rec applications |
-| MON-04 | Upgrade Prompts | Contextual upgrade prompts when limits are reached | C | Timely upgrade path | Alpha | Medium | MON-02, MON-03 | §13, §16 C13 | C13 | WS, Usr | IssuePanel, Settings | N | Appear contextually at limits |
+| MON-04 | Upgrade Prompts | Contextual upgrade prompts when limits are reached | C | Timely upgrade path | Alpha | Medium | MON-02, MON-03 | §13, §16 C13 | C13 | WS, Usr | IssuePanel, Settings | N | Trigger taxonomy + timing defined: `12_freemium_tier_behavior_logic.md` (UP-1…8) · timing config Calibration §4d · UP-4 = Wave E honest-limit disclosure (FREEMIUM_UPGRADE_PROMPT_TIMING_AUDIT_001) |
 
 ---
 

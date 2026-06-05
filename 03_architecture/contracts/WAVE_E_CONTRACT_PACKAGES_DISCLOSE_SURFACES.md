@@ -15,6 +15,8 @@
 **Assisted Editing / Persistent Intelligence (AW-04/05):** during artifact editing, Disclose presents always-visible Outcome Confidence / Clarity / Alignment / Feasibility / Understanding-State, and routes assists to Chat (B1) or Suggested Fix (B3).
 **CRR status visibility (CRR-05):** review status presented across the workspace + in MRI. *(The CRR workflow UI — create/package/notify — is Category E commodity per DL-043 J; the cognitive seam response→evidence→Deep Pass is contracted in Wave A DL-047 Additions.)*
 
+**Honest-limit disclosure (DL-048 / Upgrade-Prompt UP-4 — one surface).** When a Fast/Deep run is **scope- or budget-limited** (Tier-1 envelope exceeded → partial orientation; DL-048 degradation), Disclose **must present a truthful partial-analysis disclosure** — reduced coverage/confidence shown with the reason ("partial because the project exceeds the tier size"). This is an **epistemic-safety obligation first** (never imply a full/final analysis); the commodity **Upgrade-Prompt affordance (MON-04 UP-4)** is rendered **on this same surface**, not as a separate or competing element. **QA negative:** a scope/budget-limited result presented as complete/final, or an upgrade prompt shown **in place of** (instead of alongside) the honest disclosure. *(The prompt copy/targeting is commodity — `12_freemium_tier_behavior_logic.md`; the honest disclosure is the contracted part.)*
+
 ---
 
 ## E0. Shared Orientation & Invariants (all surfaces)

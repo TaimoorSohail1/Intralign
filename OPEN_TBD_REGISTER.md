@@ -9,7 +9,7 @@
 
 | # | Item | Status | Source |
 |---|---|---|---|
-| A1 | **Fast Pass project-size *envelope*** (artifacts / words / concurrency the 60s holds for) | **Highest-priority owner decision (R-1).** Proposed defaults exist (≤20 artifacts / ≤~50k words / 1 active — Calibration Defaults §4b) but are **conservative placeholders — confirm against target-customer sizes.** | Perf/NFR §20.1; Calibration §4b |
+| A1 | **Fast Pass project-size *envelope*** (artifacts / words / concurrency the 60s holds for) — **tier-keyed** | **Tier-1 (Free) owner-confirmed (2026-06-05): ~20 artifacts / ~50k words / 1 active** (typical free-tier project is brief/PRD/charter-scale). This is the **guaranteed Tier-1 envelope** where the <60s gate + the DL-048 ~$3 Tier-1 cost math hold; **larger projects degrade gracefully** (partial orientation + coalesced Deep), not rejected. **Paid-tier envelopes are TBD** (parameterize like the cost config — see E3). **Re-confirm Tier-1 latency post-build (Phase III).** | Perf/NFR §20.1; Calibration §4b/§4c; E3 |
 | A2 | **Time-to-First-MRI latency distribution** (p50/p95 percentile) | Proposed (DL-046: p50≤25s/p95≤50s/<60s ceiling) — **owner to confirm.** The **< 60s ceiling itself is ratified** (Master Spec §20/M1). | Calibration §4b; Perf/NFR §3 |
 | A3 | **Deep Pass** completion target / acceptable range / timeout | TBD | Perf/NFR §4 |
 | A4 | **API latencies** (project create/load, artifact save, evidence upload, findings/recs load, reporting, notifications) | TBD | Perf/NFR §3, §7 |
@@ -42,7 +42,7 @@
 |---|---|---|---|
 | E1 | Supported-browser matrix | TBD (current evergreen baseline) | Perf/NFR §16 |
 | E2 | Accessibility target (e.g. WCAG tier) | TBD (behavioral baseline in UI §18) | Perf/NFR §16 |
-| E3 | Paid-tier limits / relaxed quotas | **TBD — still open (DL-048 sets Free/Tier-1 only).** Enforcement is **tier-parameterized**, so paid tiers are added as **config rows in Calibration §4c, not new code** (Capability Matrix note 10: paid tiers undefined). | Perf/NFR §12; MON capabilities; Calibration §4c; DL-048 |
+| E3 | Paid-tier limits / relaxed quotas — **Tiers 3–5: Pro · Team · Enterprise** | **Partly resolved — Tier 2 (Basic) owner-confirmed 2026-06-05 ($12/mo; Calibration §4c, CHG-057); Tiers 3–5 still TBD.** Canonical tiers: **Free · Basic · Pro · Team · Enterprise** (glossary). Enforcement is **tier-parameterized**, so remaining tiers are added as **config rows in Calibration §4c, not new code**. Illustrative costed ladder: `01_governance/backlog/BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE.md`. | Perf/NFR §12; MON; Calibration §4c; DL-048; backlog |
 
 ## What is NOT on this register (already decided — do not re-open)
 

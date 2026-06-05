@@ -47,6 +47,18 @@
 | **ChatSession / ChatExchange** | Disclose-class interaction; consumes/triggers cognition, **writes no canonical, changes no assessment**. | "assistant that edits" |
 | **Time-to-First-MRI** | The one ratified numeric target: **< 60 seconds** (Master Spec §20/M1). | any other latency name for this |
 
+## Subscription tiers (canonical names — owner-set 2026-06-05)
+
+| Tier | Canonical name | Banned / not this |
+|---|---|---|
+| **Tier 1** | **Free** | "freemium tier" (as a name), "starter" |
+| **Tier 2** | **Basic** | "Lite", "Standard", "Plus" |
+| **Tier 3** | **Pro** | "Premium", "Professional", "Advanced" |
+| **Tier 4** | **Team** | "Business", "Group", "Squad" |
+| **Tier 5** | **Enterprise** | "Org", "Custom", "Corporate" |
+
+Tiers are a **tier-keyed config dimension** (DL-048 §4c + CHG-056 envelope): each knob (project-size envelope, active projects, Deep/day, fix·chat caps, model routing, token budget) is set **per tier**, increasing up the ladder. Use `tier` as the config/telemetry key; values for **Tier 1 (Free)** and **Tier 2 (Basic)** are owner-confirmed (Calibration §4c), **Tiers 3–5 (Pro · Team · Enterprise) are TBD** (Open-TBD A1/E3; ladder draft in `01_governance/backlog/BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE.md`). **Do not hard-code tier behavior** — read it from config.
+
 ## Modes that are NOT cognition (don't contract as such)
 
 **Commodity / platform** (DL-043 J, Categories C/E/F — normal engineering, not cognition-contracted): auth, RBAC, project CRUD, settings, notifications-**state**, sharing, monetization/limits, product telemetry, the CRR **workflow UI** (the cognitive response→Deep-Pass seam *is* contracted). **Render** is a non-cognitive service. **Authority** is specified-but-inactive in R1 — do not build it.
