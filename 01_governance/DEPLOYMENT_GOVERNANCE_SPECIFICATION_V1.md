@@ -1,6 +1,6 @@
 # Deployment Governance Specification v1
 
-**Document Type:** Governance Specification (deployment & release control) · **Status:** **Draft · Pending Owner Ratification** · **Date:** 2026-06-04
+**Document Type:** Governance Specification (deployment & release control) · **Status:** **Ratified (with Conditions) under DL-044 constituent D — 2026-06-04** · **Date:** 2026-06-04
 **Binds to:** Runtime Environment Constraint Profile (Heroku/Vercel · Dev→Staging→Prod · CI/CD · secrets) · Autonomous Implementation Control System (human-approval gates) · Claude Code Implementation Constraints · DL-043 invariants (canonical append-only). **Governs:** how Release 1 code moves from commit to production safely, and what Claude Code may and may not do at the deployment boundary.
 
 > **Purpose:** the readiness audit's last open Critical was the absence of deployment governance. This defines branch strategy, promotion, approval gates, rollback, environment separation, secrets, and change control — at the **governance level** (policy + gates), binding to the environment stack without prescribing vendor minutiae. **Per `CLAUDE.md`, the owner ratifies; deployment to production is a human-approval action — Claude Code never self-deploys to production.**

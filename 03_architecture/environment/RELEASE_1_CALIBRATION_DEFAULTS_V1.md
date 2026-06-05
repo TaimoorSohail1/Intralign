@@ -1,6 +1,6 @@
 # Release 1 Calibration Defaults v1
 
-**Document Type:** Calibration Parameter Defaults (numeric dials — owner-review pending) · **Status:** **Proposed Defaults · Owner-Review Pending (2026-06-04)** · **Date:** 2026-06-04
+**Document Type:** Calibration Parameter Defaults (numeric dials) · **Status:** **Adopted as operative defaults under DL-044 constituent C — 2026-06-04 (tunable; owner may retune any value without a new Decision)** · **Date:** 2026-06-04
 **Satisfies:** DL-043 Condition 4 (numeric determinism/drift/band calibration) and the Environment-Profile R5 retention residual — provisionally, with **safe conservative defaults** the owner can tune later. **These are dials, not architecture:** changing any value changes behavior sensitivity, not the model. Per `CLAUDE.md`, the owner ratifies.
 
 > **Why defaults now:** they unblock implementation without forcing premature precision. Every value is **conservative** (errs toward *surfacing* a concern rather than hiding it, consistent with OSLO's anti-false-certainty doctrine) and **independently tunable**. Engineering should treat these as configuration, not constants.

@@ -504,6 +504,22 @@ Each decision entry contains:
 
 ---
 
+### DL-044 — Release 1 Engineering Handoff Ratification (Consolidated)
+
+- **Date Recorded:** 2026-06-04
+- **Layer:** Implementation Spec (engineering enablement) + Governance Specification.
+- **Source:** `01_governance/decisions/RELEASE_1_ENGINEERING_HANDOFF_RATIFICATION_DL044_DISPOSITION.md` (full disposition) · `RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md` §7. **Builds on:** DL-043.
+- **Decision:** Ratifies the Release 1 **engineering-enablement layer** as four constituents, unlocking environment-bound implementation: **(A)** `CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1` adopted as the governing coding standard and pre-code gate (responsibility-organized code-tree, no Authority module in R1, canonical/derived store separation with append-only receipts, ratified-stack-only deps behind interfaces, canonical vocabulary, stop/escalate/human-approval gates); **(B)** the **Wave A (001 re-issue · 002 · 00R), B, C, U, E** contract packages approved as CONFORMANT environment-independent sets per `WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001` (no Critical/Major; four Minor clarifications MF-A…MF-D non-blocking; Wave D out of R1); **(C)** `RELEASE_1_CALIBRATION_DEFAULTS_V1` adopted as operative, **tunable** default configuration; **(D)** `DEPLOYMENT_GOVERNANCE_SPECIFICATION_V1` ratified (protected `main`, Dev→Staging→Production with production deploy human-only, CI gates incl. epistemic-invariant gate, append-only canonical migration discipline, reversible releases, secrets, Claude Code STOP conditions). Also records the **Runtime Environment Constraint Profile** as the canonical environment-binding anchor with R1–R5 reconciliations owner-confirmed.
+- **Rationale:** DL-043 made the architecture buildable; this layer makes it safely build-able by Claude Code. The coding standard binds construction to the ratified contracts; the conformance review confirmed the packages are internally consistent and invariant-preserving; calibration defaults remove the last numeric blocker; deployment governance closes the readiness audit's final Critical and keeps production human-gated. Readiness ≈93% (Ready With Controls); per-wave environment-bound implementation may begin.
+- **Disposition:** Accepted with Conditions.
+- **Conditions:** (1) calibration values are tunable defaults — owner may retune any tolerance/band/threshold without a new Decision; (2) per-wave coding proceeds only after this ratification **and** that wave's package approval (B) **and** the readiness gate (Control System D7); (3) production stays human-gated — Claude Code never self-deploys to Production; (4) build-time residuals (R1–R5 application, physical store/schema binding, audit-retention vs. compliance) applied at environment-bind.
+- **Supersedes:** Nothing. Extends DL-043 by adding the engineering-enablement layer. The pre-DL-043 readiness audit's "NOT READY" verdict is historical (already bannered).
+- **Affected Artifacts:** Adopt as canonical/operative: Claude Code Implementation Constraints; Deployment Governance; Calibration Defaults; the approved Wave packages. No architecture/Doctrine/Constitution change.
+- **Resulting Actions:** Four constituent docs flipped to ratified/approved; MF-A…MF-D recorded as logical-data-model/config clarifications; per-wave environment-bound implementation authorized under the Control System gate; CHG-051 recorded; concrete CI/CD pipeline config to be produced at environment-bind under Deployment Governance.
+- **Status:** Ratified with Conditions.
+
+---
+
 ## Open Questions Not Recorded as Decisions
 
 The following appear in `03_implementation_specs/14_open_questions_design_risks.md` and remain explicitly open. They are not decisions and are listed here for reference only.
@@ -518,7 +534,7 @@ The following appear in `03_implementation_specs/14_open_questions_design_risks.
 
 ## Governance Notes
 
-1. The decision log is operative as of DL-029. DL-029 through DL-043 are Ratified under Framework 001/001A. DL-036, DL-037, DL-038, and DL-039 are Ratified with Conditions; DL-040 and DL-041 are Ratified with Clarifications; DL-042 is Ratified (unconditional); **DL-043 is Ratified with Conditions** (consolidated Release 1 architecture & epistemic foundation, constituents A–J). Operative governance framework set: Framework 001, Framework 001A, OGAP v1.0, DECISION-READY.
+1. The decision log is operative as of DL-029. DL-029 through DL-044 are Ratified under Framework 001/001A. DL-036, DL-037, DL-038, and DL-039 are Ratified with Conditions; DL-040 and DL-041 are Ratified with Clarifications; DL-042 is Ratified (unconditional); **DL-043 is Ratified with Conditions** (consolidated Release 1 architecture & epistemic foundation, constituents A–J); **DL-044 is Ratified with Conditions** (Release 1 engineering-enablement layer, constituents A–D: Claude Code Constraints, Wave packages, Calibration Defaults, Deployment Governance). Operative governance framework set: Framework 001, Framework 001A, OGAP v1.0, DECISION-READY.
 2. DL-001 through DL-028 are grandfathered as Stated per DL-032. They remain in effect but require future Proposals to convert to Ratified.
 3. Future entries must cite the source Proposal, follow the Entry Schema, and adhere to the supersession rule declared by Framework 001.
 4. Decisions that reconcile conflicts among grandfathered entries must explicitly reference the superseded statements.

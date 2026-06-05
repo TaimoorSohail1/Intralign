@@ -1,6 +1,6 @@
-# DL-044 (DRAFT) — Release 1 Engineering Handoff Ratification
+# DL-044 — Release 1 Engineering Handoff Ratification (Disposition)
 
-**Status of this file:** **DRAFT · Proposed · Pending Owner Ratification.** Prepared for owner sign-off of the four standing pre-coding actions identified in the Engineering Handoff Package §7. **Not yet appended to `decision_log.md`; adopts nothing.** Per `CLAUDE.md`, only the owner ratifies. On ratification, the owner moves the entry into `decision_log.md`, sets Disposition/Status, and records the changelog entry.
+**Status of this file:** **RATIFIED WITH CONDITIONS — owner-ratified 2026-06-04.** Recorded in `decision_log.md` as **DL-044**; changelog **CHG-051**. This is the full disposition behind the decision-log entry. The four constituent docs are flipped to ratified/approved; per-wave environment-bound implementation is authorized under the Control System readiness gate.
 
 > **Purpose:** DL-043 ratified the *architecture and epistemic foundation*. This entry ratifies the *engineering-enablement layer* that lets the build begin — the coding standard, the (conformance-reviewed) contract packages, the calibration values, and deployment governance. It is a **single sign-off** covering the four owner actions in `RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1` §7. **One decision, four constituents (A–D).**
 
@@ -28,7 +28,7 @@
 
 - **Rationale:** DL-043 made the architecture buildable; this layer makes it *safely build-able by Claude Code*. The coding standard binds construction to the ratified contracts; the conformance reviews confirmed the contracts are internally consistent and invariant-preserving; the calibration defaults remove the last numeric blocker (tunable later); deployment governance closes the readiness audit's final Critical and keeps production human-gated. With these ratified, **readiness reaches ≈93% (Ready With Controls)** and per-wave environment-bound implementation may begin.
 
-- **Disposition:** *(owner to record — Accepted / Accepted with Conditions / Deferred / Returned for Revision)*
+- **Disposition:** **Accepted with Conditions** (owner-ratified 2026-06-04).
 
 - **Conditions (proposed):**
   1. **Calibration values are defaults, not locked** — owner may retune any tolerance/band/threshold without a new Decision (config, not architecture).
@@ -42,18 +42,18 @@
 
 - **Resulting Actions:** Flip status of the four constituent docs to ratified/approved; record MF-A…MF-D as logical-data-model/config clarifications; authorize per-wave environment-bound implementation under the Control System gate; record the changelog entry (CHG-NNN); on first production-deploy preparation, produce the concrete CI/CD pipeline config under Deployment Governance.
 
-- **Status:** **Proposed — Pending Owner Ratification.** *(On ratification: Ratified / Ratified with Conditions per owner.)*
+- **Status:** **Ratified with Conditions** (owner-ratified 2026-06-04).
 
 ---
 
-## Owner Ratification Checklist
-- [ ] **(A)** Ratify Claude Code Implementation Constraints (the pre-code gate).
-- [ ] **(B)** Approve the Wave A/B/C/U/E packages (conformance-reviewed CONFORMANT).
-- [ ] **(C)** Adopt Calibration Defaults (or note overrides).
-- [ ] **(D)** Ratify Deployment Governance.
-- [ ] Confirm Environment Profile + R1–R5 reconciliations as recorded.
-- [ ] Set Disposition + Date + Status; move entry into `decision_log.md`; record CHG-NNN.
-- [ ] Authorize per-wave environment-bound implementation to begin.
+## Owner Ratification Checklist (complete)
+- [x] **(A)** Ratify Claude Code Implementation Constraints (the pre-code gate).
+- [x] **(B)** Approve the Wave A/B/C/U/E packages (conformance-reviewed CONFORMANT).
+- [x] **(C)** Adopt Calibration Defaults (defaults stand; tunable).
+- [x] **(D)** Ratify Deployment Governance.
+- [x] Confirm Environment Profile + R1–R5 reconciliations as recorded.
+- [x] Set Disposition + Date + Status; entry recorded in `decision_log.md` as DL-044; CHG-051 recorded.
+- [x] Authorize per-wave environment-bound implementation to begin.
 
 ---
 

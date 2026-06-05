@@ -1,6 +1,6 @@
 # Claude Code Implementation Constraints & Code-Tree Convention v1
 
-**Document Type:** Engineering Standard for Autonomous Development (governance) · **Status:** **Draft · Pending Owner Ratification** · **Date:** 2026-06-04
+**Document Type:** Engineering Standard for Autonomous Development (governance) · **Status:** **Ratified under DL-044 constituent A — 2026-06-04 (governing coding standard / pre-code gate)** · **Date:** 2026-06-04
 **Operationalizes:** `AUTONOMOUS_IMPLEMENTATION_CONTROL_SYSTEM_V1.md` (precedence, MAY/MUST-NOT, escalation, readiness gate) into **code-time** rules. **Binds to:** Cognitive Responsibility Architecture · DL-043 · Runtime Object/Behavior Models · Logical Data Model · Runtime Environment Constraint Profile (+ DL-043 reconciliations) · Calibration Defaults.
 
 > **Purpose:** give Claude Code (and any engineer) the concrete coding rules, directory convention, and **stop/escalate/human-approval** boundaries so implementation realizes the architecture **without invention or drift**. This is the "how Claude Code writes code" standard the readiness audit found missing. Per `CLAUDE.md`, owner ratifies.
