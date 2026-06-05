@@ -9,6 +9,24 @@ Let the **user** accept a recommendation and record that acceptance as a **user-
 ## Scope
 - **`IC-WU-ACCEPT`** — `UserAcceptanceRecord` (user-attested, **version-pinned** to a `CognitionHistoryRecord`); **plan fact** (a user-attested `AttestedAssertion` — "factual in the plan," not world-truth); `AcceptanceImpactAssessment` (Derived, via Infer+Evaluate). Owners are existing responsibilities (Perceive capture · Retain record · Infer/Evaluate reconcile · Disclose surface) — **no new responsibility, no Authority engine.**
 
+## Context manifest — what you need in the repo to implement this phase
+
+> Links only; nothing is copied here. The contract below is authoritative — if a plan and a contract differ, the **contract wins**.
+
+### Phase-specific (Wave U — User Acceptance, additive/non-governance)
+- **Contract:** `03_architecture/contracts/WAVE_C_AND_U_CONTRACT_PACKAGES_ADVISORY_AND_ACCEPTANCE.md` (**Wave U section**)
+- **Conformance:** `03_architecture/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§3 WU-ACCEPT)
+- **Design basis:** `03_architecture/decisions/USER_ACCEPTANCE_EVENT_IMPACT_ANALYSIS_001.md` · DL-043 constituent G (`01_governance/decisions/decision_log.md`)
+- **Acceptance-impact config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§3 acceptance-impact drift)
+
+### Always-required (every phase)
+- **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
+- **Canonical architecture:** `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
+- **Models:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
+- **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
+- **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
+
 ## Depends on
 Phase IV (recommendations to accept), Phase II (attested store + version-pinning to CHRs).
 

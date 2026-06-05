@@ -11,6 +11,24 @@ Build the ingestion → canonical-retention → recompute spine: artifacts come 
 2. **`IC-WA-001` — Artifact Intake (Perceive)** — integrity-gated admission (no Authority step); upload ≠ canonical; provenance; idempotency; Promotion-Candidate → Attested handoff to Retain; user-acceptance capture input for Wave U.
 3. **`IC-WA-002` — Canonical Knowledge Retention (Retain)** — `AttestedAssertion`, `CognitionHistoryRecord`, `UserAcceptanceRecord`, `PlanFact`; Canonical = Attested; persistence ≠ canonicalization; append-only.
 
+## Context manifest — what you need in the repo to implement this phase
+
+> Links only; nothing is copied here. The contracts below are authoritative — if a plan and a contract differ, the **contract wins**.
+
+### Phase-specific (Wave A — build 00R → 001 → 002)
+- **Contracts:** `03_architecture/contracts/WAVE_A_CONTRACT_PACKAGE_00R_RECOMPUTE_STALE_BACKBONE.md` · `…/WAVE_A_CONTRACT_PACKAGE_001_ARTIFACT_INTAKE.md` · `…/WAVE_A_CONTRACT_PACKAGE_002_CANONICAL_KNOWLEDGE_RETENTION.md`
+- **Conformance (must pass review):** `03_architecture/contracts/WAVE_A_CONTRACT_PACKAGE_001_ARTIFACT_INTAKE_CONFORMANCE_REVIEW.md` · `…/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md`
+- **Ownership map:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OWNERSHIP_UPDATE_SPECIFICATION_V1.md`
+- **Inventory:** `03_architecture/contracts/RELEASE_1_CONTRACT_INVENTORY_V1.md`
+
+### Always-required (every phase)
+- **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
+- **Canonical architecture:** `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
+- **Models:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
+- **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
+- **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
+
 ## Depends on
 Phase I (stores, schema, CI).
 

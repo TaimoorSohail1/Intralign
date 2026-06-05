@@ -10,6 +10,24 @@ Produce OSLO's **understanding** of the canonical record — Findings (Infer), a
 1. **`IC-WB-INFER` — Finding (Infer)** — generate Findings (gap/conflict/risk) from Attested content; one producer; conflicts **surfaced, not resolved**; each Finding is Derived.
 2. **`IC-WB-EVAL` — Issue · Confidence · Reliability · CAF · Outcome Confidence (Evaluate)** — assess Findings into Issues; compute Confidence (trust-in-understanding, **never** project health); reliability-qualified; band-semantic per Calibration Defaults.
 
+## Context manifest — what you need in the repo to implement this phase
+
+> Links only; nothing is copied here. The contract below is authoritative — if a plan and a contract differ, the **contract wins**.
+
+### Phase-specific (Wave B — Infer + Evaluate)
+- **Contract:** `03_architecture/contracts/WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING.md`
+- **Conformance:** `03_architecture/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§1 WB-INFER/WB-EVAL)
+- **Scoring models (Evaluate):** `02_product/specs/models/CONFIDENCE_MODEL_V2.md` · `…/RELIABILITY_MODEL_V2.md` · `…/CAF_SCORING_MODEL_V2.md`
+- **Drift/band config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§2 bands, §3 drift)
+
+### Always-required (every phase)
+- **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
+- **Canonical architecture:** `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
+- **Models:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
+- **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
+- **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
+
 ## Depends on
 Phase II (Attested store + recompute backbone — understanding is recomputed via 00R and appends CHRs).
 

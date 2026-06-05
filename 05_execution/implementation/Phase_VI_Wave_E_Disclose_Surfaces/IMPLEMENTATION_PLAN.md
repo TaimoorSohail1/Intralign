@@ -9,6 +9,24 @@ Present everything the prior phases produced — **epistemically safely**. Discl
 ## Scope (surfaces, per ratified UX specs)
 - **MRI** (umbrella), **Finding Panel** & **Recommendation Panel** (RP-C1: Recommendation Panel only in Finding context), **Issue Cards**, **Project Overview**, **Understanding Companion** (routes via Finding — Option B), **Notification/Awareness**, **History/Timeline**, **Export/Share-out**.
 
+## Context manifest — what you need in the repo to implement this phase
+
+> Links only; nothing is copied here. The contract + UX specs below are authoritative — if a plan and a source differ, the **source wins**.
+
+### Phase-specific (Wave E — Disclose surfaces)
+- **Contract:** `03_architecture/contracts/WAVE_E_CONTRACT_PACKAGES_DISCLOSE_SURFACES.md`
+- **Conformance:** `03_architecture/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§4 WE-DISCLOSE)
+- **UI master:** `02_product/specs/ux/RELEASE_1_UI_SPECIFICATION_V1.md` · `…/UI_SCREEN_INVENTORY.md`
+- **Surface specs:** `02_product/specs/ux/` → `MRI_EXPERIENCE_SPECIFICATION_V1.md` · `FINDING_PANEL_SPECIFICATION_V1.md` · `RECOMMENDATION_PANEL_SPECIFICATION_V1.md` · `PROJECT_OVERVIEW_SCREEN_SPECIFICATION_V1.md` · `UNDERSTANDING_COMPANION_SURFACE_EXPERIENCE_SPECIFICATION_V1.md` · `NOTIFICATION_AND_AWARENESS_SURFACE_SPECIFICATION_V1.md` · `HISTORY_AND_TIMELINE_SURFACE_SPECIFICATION_V1.md` · `EXPORT_AND_SHARE_OUT_EXPERIENCE_SPECIFICATION_V1.md`
+
+### Always-required (every phase)
+- **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
+- **Canonical architecture:** `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
+- **Models:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
+- **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
+- **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
+
 ## Depends on
 Phases II–V (there is nothing to disclose until the cognition + acceptance records exist).
 

@@ -13,6 +13,25 @@ Stand up the ratified environment and the enforcement scaffolding so that autono
 - Physical schema + environment-profile R1–R5 binding to the Logical Data Model (Attested vs Derived stores; append-only canonical tables).
 - Staging provisioned (Heroku/Vercel) with synthetic data; per-environment secrets; observability (OTel→Grafana). Production locked.
 
+## Context manifest — what you need in the repo to implement this phase
+
+> Links only; nothing is copied here. The files below are authoritative in their own locations — if a plan and a source differ, the **source wins**.
+
+### Phase-specific (Foundation)
+- **Starter kit (seed the app repo):** `03_architecture/engineering/starter_kit/` (`docker-compose.yml`, `.env.example`, `ci-pipeline.yml`, `AGENTS.md`, `README.md`)
+- **Environment binding:** `03_architecture/environment/RUNTIME_ENVIRONMENT_CONSTRAINT_PROFILE_V1.md` (+ `…/RUNTIME_ENVIRONMENT_PROFILE_DL043_RECONCILIATION_001.md`)
+- **Schema source:** `03_architecture/runtime_models/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Pipeline/gates:** `01_governance/DEPLOYMENT_GOVERNANCE_SPECIFICATION_V1.md`
+- **Code-tree:** `03_architecture/engineering/starter_kit/AGENTS.md` (§ code-tree)
+
+### Always-required (every phase)
+- **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
+- **Canonical architecture:** `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
+- **Models:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
+- **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
+- **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
+
 ## Depends on
 - Phase 0 owner setup complete (GitHub Pro + protected `main`; cloud accounts; access).
 
