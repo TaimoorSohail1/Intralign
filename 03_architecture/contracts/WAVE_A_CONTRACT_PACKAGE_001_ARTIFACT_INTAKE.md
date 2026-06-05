@@ -10,6 +10,8 @@
 
 ## 0. Package Orientation
 
+> **DL-046 note.** Intake feeds the **Fast Pass** orientation; integrity-gated admission must **not block** the **Time-to-First-MRI < 60 s** budget.
+
 **What this package owns.** **Perceive** — the always-on origin of the loop: it ingests raw artifacts and user actions, normalizes them, checks **promotion-readiness + integrity**, and produces **Promotion Candidates** that Retain admits as **Attested** knowledge. Perceive is the only responsibility that **captures user input** — including **user-acceptance actions** (the Wave U input).
 
 **What this package is not.** Perceive does **not** infer, evaluate, advise, disclose, govern, or accept. It does **not** decide what is true; it records *what was submitted, by whom, when*. It performs **no Authority/governance** step (none exists in R1).

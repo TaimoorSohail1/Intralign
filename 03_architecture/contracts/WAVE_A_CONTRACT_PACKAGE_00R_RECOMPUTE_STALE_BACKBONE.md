@@ -10,6 +10,8 @@
 
 ## 0. Package Orientation
 
+> **DL-046 note.** 00R is the **Deep Pass** engine — async, event-triggered, **coalesced**, last-known-good on failure; it must **not block** the Fast Pass < 60 s orientation budget.
+
 **What this package owns.** The **recompute backbone**: stale detection, recompute triggering, state transitions, and the rule that **every cognition emission appends a Cognition History Record (never overwrites)**. It does **not** itself reason, evaluate, advise, or store canonical knowledge — it **orchestrates re-running** the cognition chain and **enforces the append-only emission discipline**.
 
 **Core principle.** **Only recompute changes assessment.** Evidence change, knowledge mutation, or a user action that changes information triggers `Retain → Infer → Evaluate → Advise`; nothing else alters a Finding/Issue/Confidence/Recommendation. **Adapt is emergent** — a property of the loop, owned by no single responsibility; **trigger detection** belongs to Perceive (change/stale) and Act (coordination).

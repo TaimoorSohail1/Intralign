@@ -1,6 +1,8 @@
 # Release 1 Contract Inventory v1
 
-**Document Type:** Contract Inventory (governance — authoritative planning artifact) · **Status:** **Updated under DL-043 (2026-06-04)** · **Date:** 2026-06-04
+**Document Type:** Contract Inventory (governance — authoritative planning artifact) · **Status:** **Updated under DL-043; Wave B Fast/Deep + 60 s NFR added under DL-046 (2026-06-04)** · **Date:** 2026-06-04
+
+> **DL-046:** Wave B (Infer/Evaluate) carries `mode` (fast|deep) + `confidence_stage` (Orientation→Expanded→Validated) as **emission attributes** (no new object), and a ratified **Time-to-First-MRI < 60 s** NFR acceptance gate (Master Spec §20/M1; p50/p95 + project-size envelope `TBD – Owner Decision`).
 **Operates against the ratified core** (DL-043 — Cognitive Responsibility Architecture canonical). **Sources:** `OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md` · `RELEASE_1_RUNTIME_OWNERSHIP_UPDATE_SPECIFICATION_V1.md` · `RELEASE_1_UX_PRODUCT_BACKLOG_V1.md` · the contract specs.
 
 > ### DL-043 Inventory Amendments (authoritative — supersede conflicting rows)

@@ -520,6 +520,22 @@ Each decision entry contains:
 
 ---
 
+### DL-046 — Fast/Deep Analysis Modes + <60s Time-to-First-MRI (Wave B Contract Amendment)
+
+- **Date Recorded:** 2026-06-04
+- **Layer:** Implementation Spec (contract amendment) + NFR.
+- **Source:** `03_architecture/contracts/WAVE_B_CONTRACT_AMENDMENT_FAST_DEEP_60S_DISPOSITION.md` · backlog `BACKLOG_FAST_DEEP_CONTRACT_FORMALIZATION_DRAFT.md`. **Builds on:** DL-043/DL-044.
+- **Decision:** Formalizes the **Fast Pass** and **Deep Pass** analysis modes and the owner-approved **Time-to-First-MRI < 60 s** target as **explicit obligations** in the ratified Wave B contracts (`IC/QA/OBS-WB-INFER`, `IC/QA/OBS-WB-EVAL`), with clarifying notes to `IC-WA-001` (intake feeds Fast Pass; must not block 60 s) and `IC-WA-00R` (00R is the Deep Pass engine; async/coalesced; must not block Fast). Adds: required behavior for both modes; `mode` + `confidence_stage` (Orientation→Expanded→Validated) as **emission attributes** (no new object/responsibility); a **QA performance gate asserting Time-to-First-MRI < 60 s**; mode/stage observability. Adopts the 60 s as a **ratified Release 1 NFR acceptance gate** (Master Spec §20/M1).
+- **Rationale:** Fast/Deep are confirmed R1 product scope and the 60 s is the only owner-approved numeric target, but the responsibility-organized contracts had abstracted them away — leaving a Critical capability + its performance target *implicit*. This makes them contracted and testable without changing architecture (modes are timing of the existing Infer/Evaluate + recompute).
+- **Disposition:** Accepted.
+- **Conditions:** p50/p95 latency distribution and the supported-project-size envelope for the 60 s target remain **`TBD – Owner Decision Required`** (Performance/NFR spec §20).
+- **Supersedes:** Nothing. Amends (adds to) the DL-044-approved Wave B contracts; introduces no new responsibility or object.
+- **Affected Artifacts:** `WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING.md` (amended); `WAVE_A_CONTRACT_PACKAGE_001` / `…_00R` (notes); `WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001` (§1 re-checked CONFORMANT); `RELEASE_1_CONTRACT_INVENTORY_V1` (noted). Disposition + backlog drafts retired.
+- **Resulting Actions:** Edits applied to the contracts; Wave B conformance re-confirmed; CHG-053 recorded.
+- **Status:** Ratified.
+
+---
+
 ## Open Questions Not Recorded as Decisions
 
 The following appear in `03_implementation_specs/14_open_questions_design_risks.md` and remain explicitly open. They are not decisions and are listed here for reference only.
@@ -534,7 +550,7 @@ The following appear in `03_implementation_specs/14_open_questions_design_risks.
 
 ## Governance Notes
 
-1. The decision log is operative as of DL-029. DL-029 through DL-044 are Ratified under Framework 001/001A. DL-036, DL-037, DL-038, and DL-039 are Ratified with Conditions; DL-040 and DL-041 are Ratified with Clarifications; DL-042 is Ratified (unconditional); **DL-043 is Ratified with Conditions** (consolidated Release 1 architecture & epistemic foundation, constituents A–J); **DL-044 is Ratified with Conditions** (Release 1 engineering-enablement layer, constituents A–D: Claude Code Constraints, Wave packages, Calibration Defaults, Deployment Governance). Operative governance framework set: Framework 001, Framework 001A, OGAP v1.0, DECISION-READY.
+1. The decision log is operative as of DL-029. DL-029 through DL-046 are Ratified under Framework 001/001A (DL-045 is a separate pending draft — tool-neutral agent terminology — not yet recorded here). DL-036, DL-037, DL-038, and DL-039 are Ratified with Conditions; DL-040 and DL-041 are Ratified with Clarifications; DL-042 is Ratified (unconditional); **DL-043 is Ratified with Conditions** (consolidated Release 1 architecture & epistemic foundation, constituents A–J); **DL-044 is Ratified with Conditions** (Release 1 engineering-enablement layer, constituents A–D: Claude Code Constraints, Wave packages, Calibration Defaults, Deployment Governance); **DL-046 is Ratified** (Fast/Deep analysis modes + <60s Time-to-First-MRI as explicit Wave B contract + NFR obligations). Operative governance framework set: Framework 001, Framework 001A, OGAP v1.0, DECISION-READY.
 2. DL-001 through DL-028 are grandfathered as Stated per DL-032. They remain in effect but require future Proposals to convert to Ratified.
 3. Future entries must cite the source Proposal, follow the Entry Schema, and adhere to the supersession rule declared by Framework 001.
 4. Decisions that reconcile conflicts among grandfathered entries must explicitly reference the superseded statements.

@@ -1,6 +1,6 @@
 # Backlog (DRAFT) — Formalize Fast/Deep Analysis Modes + 60s Target in the Ratified Contracts
 
-**Status:** **Proposed · Pending Owner Ratification.** Raised at owner direction (owner is uncomfortable with the Fast/Deep behavior modes and the 60-second performance target being *implicit* at the contract layer). Per `CLAUDE.md`, only the owner ratifies; this routes a contract-level change to the owner rather than editing ratified contracts directly.
+**Status:** **RESOLVED — ratified as DL-046 (2026-06-04); applied to the Wave B contracts (CHG-053).** Raised at owner direction (owner is uncomfortable with the Fast/Deep behavior modes and the 60-second performance target being *implicit* at the contract layer). Per `CLAUDE.md`, only the owner ratifies; this routes a contract-level change to the owner rather than editing ratified contracts directly.
 
 ## The gap
 

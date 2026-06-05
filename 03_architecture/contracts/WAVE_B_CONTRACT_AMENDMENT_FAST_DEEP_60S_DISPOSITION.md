@@ -1,6 +1,6 @@
-# Wave B Contract Amendment (DRAFT) — Fast/Deep Analysis Modes + <60s Time-to-First-MRI
+# Wave B Contract Amendment (DISPOSITION) — Fast/Deep Analysis Modes + <60s Time-to-First-MRI
 
-**Status:** **Proposed · Pending Owner Ratification.** A reviewable amendment to the ratified `WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING.md` (+ small notes to `WAVE_A_CONTRACT_PACKAGE_001` / `00R`). Implements the owner-directed backlog item `01_governance/backlog/BACKLOG_FAST_DEEP_CONTRACT_FORMALIZATION_DRAFT.md`. **Adopts nothing; edits no ratified contract.** On ratification, the owner applies the additions below verbatim and records the changelog entry.
+**Status:** **RATIFIED as DL-046 (2026-06-04) — APPLIED to the contracts; CHG-053 recorded.** The amendment to the ratified `WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING.md` (+ small notes to `WAVE_A_CONTRACT_PACKAGE_001` / `00R`). Implements the owner-directed backlog item `01_governance/backlog/BACKLOG_FAST_DEEP_CONTRACT_FORMALIZATION_DRAFT.md`. **Adopts nothing; edits no ratified contract.** On ratification, the owner applies the additions below verbatim and records the changelog entry.
 
 > **Design guardrail (preserved):** this adds **no new responsibility and no new object.** Fast/Deep are **modes** of the existing Infer+Evaluate over the 00R recompute backbone; **confidence stage** (Orientation/Expanded/Validated) and **analysis mode** (fast/deep) are **attributes on the emission**, not new entities. Consistent with DL-043, DL-044, and the Cognitive Responsibility architecture.
 

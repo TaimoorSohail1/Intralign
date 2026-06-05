@@ -15,7 +15,7 @@
 - **§E** ✅ Finding (Infer), Issue/Confidence/Reliability/CAF/Outcome Confidence (Evaluate) trace to the Object Model (all Derived per DL-043 overlay) and Behavior Model (Finding Detected / Issue Generated / CAF Assessed / Outcome Confidence Computed + append-on-recompute). One producer each.
 - **§H** ✅ QA positives↔required, negatives↔forbidden; IC events ⊆ OBS; invariants bound/validated/observed. Confidence-as-understanding (not project health) preserved; conflicts surfaced not resolved.
 - **§K** ✅ no orphan behavior; no Authority; no invented concepts (Severity/Confidence/Reliability as attributes per Object Model §8); no env binding.
-- **Verdict:** **CONFORMANT.** The "why did confidence change" capability is satisfied structurally via Cognition History lineage. Drift thresholds align to Calibration Defaults (±/10-pt). 
+- **Verdict:** **CONFORMANT.** The "why did confidence change" capability is satisfied structurally via Cognition History lineage. Drift thresholds align to Calibration Defaults (±/10-pt). **(DL-046, 2026-06-04)** Re-checked after the Fast/Deep + 60 s amendment — still **CONFORMANT**: modes + confidence-stage are emission attributes (no new object/responsibility); the 60 s performance gate is an added QA acceptance; Infer/Evaluate ownership and the recompute discipline are unchanged. 
 
 ## 2. WC-ADVISE — Wave C (Advisory)
 - **§E** ✅ Recommendation (+ Suggested-Action/Candidate-Improvement types), Clarification Request → Advise; anchored to Finding/Issue; Resolution Paths presentation-only (AMB-1, no object).
