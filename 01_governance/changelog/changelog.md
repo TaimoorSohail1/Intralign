@@ -521,6 +521,14 @@ Each changelog entry contains:
 - **Change Summary:** Defined virality as a tracked objective. **k = i × c** (exposures-per-active-user × conversion-to-activation; k > 1 self-sustaining) is computed from TEL-06 + TEL-02 **per loop** (active CRR / passive MRI-share / portable PDF), with **cycle-time T** per loop, **Internal accounts excluded** (CHG-059, so test traffic can't inflate k). Measurement window, k target, conversion-attribution window, and decline alert are tunable **Calibration §4f** config — with the **k target deliberately track-only until a measured baseline exists** (set from data, not guessed). A virality dashboard (k/i/c/T per loop, segmented) is the natural surface. This is the objective function the other virality optimizations (P1–P5) tune against; pure measurement, no cognition. No Doctrine, Constitution, contract, or architecture change.
 - **Supersession Reference:** None. Commodity measurement specification; supersedes no Decision.
 
+### CHG-063 — Virality P7 Applied (share-link hygiene; gap #339 addressed) + P5 referral drafted
+
+- **Date:** 2026-06-05
+- **Authorizing Decision:** Owner direction (applied P7; drafted P5 of `RELEASE_1_VIRALITY_K_FACTOR_AUDIT_001`). Commodity (SEC/SHARE/MON); no DL.
+- **Affected Artifacts:** `02_product/specs/planning/OSLO_CAPABILITY_MATRIX_V2.md` (gap #339 share-link security → addressed; SHARE-05 note); `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§4g share-link hygiene); `RELEASE_1_VIRALITY_K_FACTOR_AUDIT_001.md` (P7 status); `01_governance/backlog/BACKLOG_REFERRAL_REWARD.md` (new — P5 draft).
+- **Change Summary:** **P7 applied** — share links (SHARE-02/03/04) are now specified as **read-only by default, scoped to the shared item only** (no project access, mirroring DL-049's scope-not-widened guard), **owner-revocable any time**, with a **default 90-day expiry** (tunable, Calibration §4g); private links require an authenticated `Principal` (DL-049), public links are unauthenticated read-only carrying the P1 attribution+CTA. This closes Matrix gap #339 and lets the passive loop (MRI links) spread without becoming a data-leak surface; SEC-audited. **P5 referral reward drafted** (`BACKLOG_REFERRAL_REWARD`, Proposed) — a bounded, conversion-credited capacity bump for inviting users who join, designed defensively (finite tier-keyed config from a bounded pool, monthly per-user cap, DL-048-bounded, email de-dup + velocity + fraud guards, Internal accounts excluded, value-aligned), with ROI folded into the P6 k-factor metric; its **in/out-of-R1 decision and reward values are routed to the owner.** No Doctrine, Constitution, contract, or architecture change.
+- **Supersession Reference:** None. Commodity spec + a proposed backlog draft; supersedes no Decision.
+
 ---
 
 ## Governance Notes

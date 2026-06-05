@@ -176,6 +176,20 @@
 
 - **Owner-set placeholders**; the k target is deliberately **track-only first** — set it from a measured baseline, not a guess. Internal/test accounts (CHG-059) are excluded from all virality metrics.
 
+## 4g. Share-link hygiene (proposed; Virality Audit 001 P7 / gap #339)
+
+*(Tunable security defaults for share links — SHARE-02/03/04. Commodity SEC/SHARE; closes Matrix gap #339.)*
+
+| Knob | Proposed default | Note |
+|---|---|---|
+| Default link expiry | **90 days** (tunable; "no expiry" allowed per share) | links spread safely when they don't live forever by accident |
+| Access scope | **shared item only**, **read-only** | never grants project access (mirrors DL-049 scope-not-widened) |
+| Revocation | **owner-revocable any time** | immediate; revoked link → access denied |
+| Private vs public | private = authenticated `Principal` (DL-049); public = unauthenticated read-only | public links carry attribution+CTA (P1) |
+| Audit | share create / revoke / access logged (SEC-06) | |
+
+- Owner-tunable placeholders; safe-by-default (expiry on, read-only, scoped). Enables the passive loop (MRI links) to spread without becoming a data-leak surface.
+
 ## 5. Status & Tuning
 
 - **All values above are owner-review-pending defaults.** They are **configuration**, surfaced for ops to adjust per environment; none changes the architecture or any contract's structure.

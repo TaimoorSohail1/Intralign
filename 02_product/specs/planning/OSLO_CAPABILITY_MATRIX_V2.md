@@ -230,7 +230,7 @@
 | SHARE-02 | MRI Sharing & Links | Share MRI via view sharing, public links, private links | S | Spread understanding | Alpha | High | MRI-01, SEC-02 | §7, §16 C12 | C12 | Shr, MRI | Sharing, MRIv | N | MRI is the passive virality mechanism; **Free-tier (P2); carries attribution+CTA (P1, Virality Audit 001)** |
 | SHARE-03 | Artifact Sharing | Share individual artifacts | S | Targeted sharing | Alpha | Medium | SEC-02 | §16 C12 | C12 | Shr, Art | Sharing, ArtView | N | — |
 | SHARE-04 | PDF Export | Export MRI/artifacts to PDF | S/C | Portable output | Alpha | Medium | MRI-01 | §7, §13, §16 C12 | C12 | Shr, MRI, Art | Sharing | N | Free tier: PDF export only; **carries attribution+CTA — viral surface (P1, Virality Audit 001)** |
-| SHARE-05 | Permission Levels | Permission levels on shared content | S/F | Control access | Alpha | High | SEC-02 | §16 C12 | C12 | Shr | Sharing | N | Levels not enumerated (see §22) |
+| SHARE-05 | Permission Levels | Permission levels on shared content | S/F | Control access | Alpha | High | SEC-02 | §16 C12 | C12 | Shr | Sharing | N | Levels not enumerated (see §22); **link hygiene (expiry/revocation/scoping) = Calibration §4g (P7, gap #339 addressed)** |
 
 ---
 
@@ -336,7 +336,7 @@ Items the Master Spec references or implies but does not specify. Recorded for g
 5. **No Notification object or surface.** CAF Review Requests, comments, and mentions all imply notifying users/stakeholders, but §18's object model has no Notification object and §15 has no notification surface. How a reviewer learns a request is waiting is undefined.
 6. **External reviewer identity/auth — RESOLVED (DL-049, 2026-06-05).** ~~undefined~~ → a single **`Principal`** identity object with **`type: reviewer | user`** (email-verified Reviewer scoped to shared items; in-place `reviewer→user` promotion, provenance-stable, scope-preserving). See Runtime Object Model DL-049 Object Additions. *(Link security / scoping — #339 below — routes to the commodity recipient-experience spec; recipient experience R1-vs-fast-follow is an open owner scope call.)*
 7. **Sharing permission levels are not enumerated.** §16 C12 requires "permission levels supported" without listing them.
-8. **Share-link security is unspecified.** Public/private MRI links (§7) have no stated expiry, revocation, or access-scoping rules.
+8. **Share-link security — ADDRESSED (P7, Virality Audit 001 · 2026-06-05).** ~~unspecified~~ → share links (SHARE-02/03/04) are **read-only by default**, **scoped to the shared item only** (no project access), **owner-revocable any time**, and carry a **default expiry** (Calibration §4g; tunable); **private links** require an authenticated `Principal` (DL-049), **public links** are unauthenticated read-only. Commodity SEC/SHARE. *(Permission-level enumeration — SHARE-05/§22 — remains a separate item.)*
 9. **Concurrency/multi-user edit conflicts are unaddressed.** Collaboration (§16 C11) and direct editing (§10) imply simultaneous editing, but no conflict-resolution or locking model is described.
 10. **Paid tiers beyond Free are undefined.** §13 details the Free tier and §12/§21 reference "Tier 1 and Tier 2 customers," but no paid-tier capability matrix, "Tier limits" definition, or upgrade target is specified.
 11. **Acceptance Criteria coverage is partial.** §16 defines AC for 14 capabilities; Telemetry (§17), Security (§12/§21), Platform (§12), and several MRI/Confidence sub-capabilities have no AC. 39 of 97 capabilities here carry no AC reference.

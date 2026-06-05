@@ -71,7 +71,7 @@ OSLO's **credibility is its growth engine**: people share honest, high-trust und
 
 **P6 — Make k a tracked objective (F7). ✓ APPLIED (CHG-062; def. in `12_freemium_tier_behavior_logic.md`, targets Calibration §4f).** Compute **k and cycle-time per loop** (CRR vs MRI-share vs PDF) from TEL-06/02, with a target and a dashboard — so P0–P5 are tuned on data, not intuition (mirrors the upgrade-prompt optimality objective).
 
-**P7 — Share-link hygiene (F8).** Specify expiry/revocation/scoping so links spread safely.
+**P7 — Share-link hygiene (F8). ✓ APPLIED (CHG-063; Calibration §4g, gap #339 addressed).** Specify expiry/revocation/scoping so links spread safely.
 
 ## 6. Owner decision required
 - [ ] Approve **P0 (external-stakeholder experience)** as the priority — and whether it is **R1 scope** or fast-follow (it's also architecture gap #337).
