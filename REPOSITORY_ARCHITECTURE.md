@@ -84,7 +84,7 @@ The Architecture domain currently contains four populated subdirectories; additi
 
 The two formerly-flat hotspots were sub-foldered for retrieval (top-level domains unchanged; see `REPOSITORY_REORGANIZATION_PROPOSAL_V1.md`):
 
-- **`03_architecture/`** → `specifications/`, `runtime_models/`, `contracts/` (incl. Wave packages + conformance reviews), `decisions/`, `reviews/`, `environment/`, and `legacy_layer_engineering/` (the secondary layer dirs). `README.md` stays at the root.
+- **`03_architecture/`** → `specifications/`, `runtime_models/`, `contracts/` (incl. Wave packages + conformance reviews), `decisions/`, `reviews/`, `environment/`, `engineering/` (engineering-enablement: onboarding runbook entry point at the `03_architecture/` root, Linear import, and the env-bind `starter_kit/` templates), and `legacy_layer_engineering/` (the secondary layer dirs). `README.md` stays at the root. **Engineering starts at `RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md` → `RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md`.**
 - **`02_product/specs/`** → `ux/`, `models/`, `decisions/`, `audits_reviews/`, `data_api_nfr/`, `testing_fixtures/`, `planning/`. `CURRENT_TRUTH.md` stays at the root as the entry point.
 
 New files should land in the matching sub-folder. Cross-references use **bare filenames** (resilient to location); only full-path references encode directories.

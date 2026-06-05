@@ -4,6 +4,8 @@
 **Reflects:** DL-043 (ratified) · the reorganized tree (commit `734e18a`) · the pre-handoff audit (`RELEASE_1_PRE_HANDOFF_AUDIT_001`).
 
 > **Read me first.** This package points to the canonical foundation, states what is **Ratified vs Ready-for-Review vs Historical**, gives the build order, the hard rules, the readiness score, and the residuals. If you read one more doc after this, read the **Cognitive Responsibility Architecture Specification** and **DL-043**.
+>
+> **To actually start building**, read the **[Engineering Onboarding Runbook](RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md)** (`03_architecture/`) — it sequences the who-does-what (Claude Code access, GitHub, environment bring-up, the per-wave loop). Tracker import and the env-bind starter kit (docker-compose, CI, `.env`) live in `03_architecture/engineering/`.
 
 ---
 
