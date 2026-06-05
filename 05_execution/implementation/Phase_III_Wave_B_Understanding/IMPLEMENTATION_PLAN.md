@@ -10,6 +10,8 @@ Produce OSLO's **understanding** of the canonical record — Findings (Infer), a
 1. **`IC-WB-INFER` — Finding (Infer)** — generate Findings (gap/conflict/risk) from Attested content; one producer; conflicts **surfaced, not resolved**; each Finding is Derived.
 2. **`IC-WB-EVAL` — Issue · Confidence · Reliability · CAF · Outcome Confidence (Evaluate)** — assess Findings into Issues; compute Confidence (trust-in-understanding, **never** project health); reliability-qualified; band-semantic per Calibration Defaults.
 
+> **Two analysis modes are an explicit Release 1 requirement (not implicit).** Wave B runs as a **Fast Pass** — latency-bound, delivering Orientation Confidence + initial MRI/findings within the **< 60s Time-to-First-MRI** budget — and a **Deep Pass** — continuous, async, event-triggered expansion (Confidence Recalculation, Expanded Findings/Recommendations), with **progressive confidence** (Orientation → Expanded → Validated). The user never waits for Deep Pass. See the Analysis-modes + Performance-NFR references in the manifest.
+
 ## Context manifest — what you need in the repo to implement this phase
 
 > Links only; nothing is copied here. The contract below is authoritative — if a plan and a contract differ, the **contract wins**.
@@ -21,6 +23,8 @@ Produce OSLO's **understanding** of the canonical record — Findings (Infer), a
 - **Drift/band config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§2 bands, §3 drift)
 - **Fixtures + test specs (Finding):** `02_product/specs/testing_fixtures/FINDING_FIXTURE_LIBRARY_SPECIFICATION_V1.md` · `…/FINDING_SUBSYSTEM_TEST_SPECIFICATION_V1.md`
 - **Fixtures + test specs (Confidence/Evaluate):** `02_product/specs/testing_fixtures/RELEASE_1_CONFIDENCE_FIXTURE_LIBRARY_SPECIFICATION.md` · `…/RELEASE_1_CONFIDENCE_SUBSYSTEM_TEST_SPECIFICATION.md` · `…/RELEASE_1_CONFIDENCE_FIXTURE_LIBRARY_REVIEW_001.md`
+- **Analysis modes (Fast / Deep — REQUIRED, not implicit):** `02_product/specs/data_api_nfr/RELEASE_1_ANALYSIS_ENGINE_SPECIFICATION_V1.md` · `02_product/specs/FAST_DEEP_WORKFLOW_PACK/FAST_PASS_STAGE_IO_SPEC.md` · `…/DEEP_PASS_STAGE_IO_SPEC.md` · `…/FAST_VS_DEEP_PASS_COMPARISON.md` · `…/ACCEPTANCE_CRITERIA.md`
+- **Performance NFR (60s):** `02_product/specs/data_api_nfr/RELEASE_1_PERFORMANCE_AND_NFR_SPECIFICATION_V1.md` — **Time-to-First-MRI < 60s** (the only owner-approved numeric target; Master Spec §20 / M1)
 
 ### Always-required (every phase)
 - **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
@@ -43,6 +47,9 @@ Phase II (Attested store + recompute backbone — understanding is recomputed vi
 - ✅ A recompute produces a **new** CHR; comparing two emissions shows confidence/outcome **drift** surfaced at ≥10 pts or a band change (product feature).
 - ✅ "Why did confidence change?" is answerable structurally via CHR lineage.
 - ✅ Determinism: rule-derived values replay **exactly**; AI-numeric values replay within **±7 pts & same band**.
+
+- ✅ **Fast Pass (explicit):** a first end-to-end pass delivers Orientation Confidence + an initial MRI/findings within the **owner-approved < 60s Time-to-First-MRI** budget; the user is never blocked on Deep Pass.
+- ✅ **Deep Pass (explicit):** continuous, async, event-triggered expansion runs after orientation (Confidence Recalculation, Expanded Findings/Recommendations); **progressive confidence stages (Orientation → Expanded → Validated)** are present, observable, and history-tracked.
 
 ## Invariants enforced
 Cognition is **Derived** and recomputable; confidence ≠ project health; conflicts surfaced not resolved; only-recompute-changes-assessment; one producer per output.

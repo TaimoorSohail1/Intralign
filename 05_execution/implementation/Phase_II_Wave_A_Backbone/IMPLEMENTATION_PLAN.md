@@ -20,6 +20,7 @@ Build the ingestion → canonical-retention → recompute spine: artifacts come 
 - **Conformance (must pass review):** `03_architecture/contracts/WAVE_A_CONTRACT_PACKAGE_001_ARTIFACT_INTAKE_CONFORMANCE_REVIEW.md` · `…/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md`
 - **Ownership map:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OWNERSHIP_UPDATE_SPECIFICATION_V1.md`
 - **Inventory:** `03_architecture/contracts/RELEASE_1_CONTRACT_INVENTORY_V1.md`
+- **Analysis modes (this backbone powers Fast/Deep):** `02_product/specs/data_api_nfr/RELEASE_1_ANALYSIS_ENGINE_SPECIFICATION_V1.md` (00R recompute = the **Deep Pass** continuous-expansion engine; intake feeds the **Fast Pass** orientation) · `02_product/specs/data_api_nfr/RELEASE_1_PERFORMANCE_AND_NFR_SPECIFICATION_V1.md` (the **< 60s** Fast-Pass budget the backbone must not block)
 
 ### Always-required (every phase)
 - **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
@@ -42,6 +43,8 @@ Phase I (stores, schema, CI).
 - ✅ A recompute **appends** a new `CognitionHistoryRecord`; the prior record is unchanged and still queryable (history is append-only).
 - ✅ A forced recompute failure leaves the last-known-good projection intact (no canonical loss).
 - ✅ Negative tests prove: a Derived value **cannot** be written to the canonical store as Attested; a recompute **cannot** overwrite a CHR.
+
+- ✅ **Analysis-mode support (explicit):** the 00R recompute backbone supports **Deep Pass** async / event-triggered re-analysis (coalesced; last-known-good on failure) **and** does not block the **Fast Pass** < 60s orientation budget.
 
 ## Invariants enforced
 Canonical = Attested; persistence ≠ canonicalization; **recompute appends, never overwrites**; one producer per output; no Authority.
