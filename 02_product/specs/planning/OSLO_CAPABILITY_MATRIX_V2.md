@@ -334,7 +334,7 @@ Items the Master Spec references or implies but does not specify. Recorded for g
 3. **Templates are referenced but undefined.** "Start From Template" (§15A/§15B) has no template catalog, schema, or count.
 4. **Guided Intake steps are unspecified.** The guided path is named (§15A/§15B) without a defined question flow.
 5. **No Notification object or surface.** CAF Review Requests, comments, and mentions all imply notifying users/stakeholders, but §18's object model has no Notification object and §15 has no notification surface. How a reviewer learns a request is waiting is undefined.
-6. **External reviewer identity/auth is undefined.** CRRs and external-stakeholder virality (§16 C14, §17) imply non-account participants, but there is no Stakeholder/Reviewer object distinct from User, and no external-auth model.
+6. **External reviewer identity/auth — RESOLVED (DL-049, 2026-06-05).** ~~undefined~~ → a single **`Principal`** identity object with **`type: reviewer | user`** (email-verified Reviewer scoped to shared items; in-place `reviewer→user` promotion, provenance-stable, scope-preserving). See Runtime Object Model DL-049 Object Additions. *(Link security / scoping — #339 below — routes to the commodity recipient-experience spec; recipient experience R1-vs-fast-follow is an open owner scope call.)*
 7. **Sharing permission levels are not enumerated.** §16 C12 requires "permission levels supported" without listing them.
 8. **Share-link security is unspecified.** Public/private MRI links (§7) have no stated expiry, revocation, or access-scoping rules.
 9. **Concurrency/multi-user edit conflicts are unaddressed.** Collaboration (§16 C11) and direct editing (§10) imply simultaneous editing, but no conflict-resolution or locking model is described.

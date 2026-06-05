@@ -57,7 +57,7 @@ OSLO's **credibility is its growth engine**: people share honest, high-trust und
 
 ## 5. Recommendation — prioritized k-factor optimizations (owner-routed; nothing redefined)
 
-**P0 — Define the external-stakeholder experience (unblocks c; resolves F1/F2).** A **low-friction, no-account-required (or one-tap) review/view** for invited recipients, with a **natural "create your own project" convert-moment at realized value** (after they review a finding or explore a shared MRI). This is the single highest-leverage change; route to a dedicated scoping item (it's also a real architecture gap, #337).
+**P0 — Define the external-stakeholder experience (unblocks c; resolves F1/F2).** A **low-friction, no-account-required (or one-tap) review/view** for invited recipients, with a **natural "create your own project" convert-moment at realized value** (after they review a finding or explore a shared MRI). This is the single highest-leverage change; route to a dedicated scoping item (it's also a real architecture gap, #337). **✓ Identity model ratified — DL-049 (single `Principal`, `type: reviewer | user`, in-place promotion); gap #337 resolved. The commodity recipient UI/convert-moment + R1-vs-fast-follow scope remain owner-open.**
 
 **P1 — Make every shared artifact a viral surface (F3).** Specify tasteful attribution + CTA on **PDF exports and shared MRI links** ("Made with OSLO — map your own project's understanding"). Cheapest i×c lever; pure presentation; no cognition touched.
 

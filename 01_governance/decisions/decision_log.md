@@ -568,6 +568,22 @@ Each decision entry contains:
 
 ---
 
+### DL-049 — External-Stakeholder / Reviewer Identity + Reviewer→User Promotion
+
+- **Date Recorded:** 2026-06-05
+- **Layer:** Implementation Spec (architecture-additive: object model + identity/auth).
+- **Source:** `01_governance/decisions/PROPOSAL_EXTERNAL_STAKEHOLDER_REVIEWER_IDENTITY_DL049_DISPOSITION.md` · `01_governance/backlog/BACKLOG_EXTERNAL_STAKEHOLDER_EXPERIENCE.md` · `RELEASE_1_VIRALITY_K_FACTOR_AUDIT_001` (P0). **Builds on:** DL-043/047/048.
+- **Decision:** Resolves Capability-Matrix gap #337 (owner elected Option A). Introduces a **single `Principal` identity object** with attribute **`type: reviewer | user`** — **not** two distinct objects. **Reviewer** = lightweight, email-verified principal **scoped to shared items** (CRR finding / MRI), may view + respond, **no Workspace/projects**; **User** = `Principal` + Workspace/Account + projects + tier (default **Free**). **Reviewer→User promotion is an in-place state transition** (flip `type`, provision Workspace, assign Free tier) on the **same `Principal` ID** — not a data migration. A `StakeholderResponse` (DL-047) is authored by a `Principal` and remains **evidence-attested**; the CRR response→evidence→Deep-Pass seam (Wave A/I) is **preserved, not redefined**.
+- **Rationale:** the single-principal model makes conversion a clean promotion with **stable provenance** (prior responses never re-attributed — append-only preserved), whereas two distinct objects re-introduce copy/merge + provenance-rewrite risk. Unblocks the virality audit's P0 conversion path within the ratified epistemic model.
+- **Disposition:** Accepted.
+- **Conditions:** single-`Principal`-with-`type` (not two objects); promotion = state transition, not data copy; **scope to the inviter's project never widened** on promotion (account-type ≠ share-scope); provenance/history **immutable**; default tier **Free**; promotion **audited** (SEC-06); reviewer-driven recompute **DL-048-bounded**; CRR seam preserved. **Separable (not decided here):** whether the recipient experience **ships in R1 or fast-follow** (owner scope call).
+- **Supersedes:** Nothing. Additive; introduces the `Principal` identity object; preserves all DL-043 epistemic invariants.
+- **Affected Artifacts:** `RELEASE_1_RUNTIME_OBJECT_MODEL_V1` (DL-049 Object Additions — `Principal`); `OSLO_CAPABILITY_MATRIX_V2` (gap #337 resolved); `WAVE_I_CONTRACT_PACKAGE_INTERACTION_COLLABORATION` (note: StakeholderResponse author = Principal); backlog + virality audit (status); link-security (#339) routed to the commodity recipient-experience spec.
+- **Resulting Actions:** Object Model updated; gap #337 resolved; CHG-060 recorded. Commodity recipient UI/convert-moment/link-security and the R1-vs-fast-follow scope call remain owner-scoped follow-ups.
+- **Status:** Ratified with Conditions.
+
+---
+
 ## Open Questions Not Recorded as Decisions
 
 The following appear in `03_implementation_specs/14_open_questions_design_risks.md` and remain explicitly open. They are not decisions and are listed here for reference only.
@@ -582,7 +598,7 @@ The following appear in `03_implementation_specs/14_open_questions_design_risks.
 
 ## Governance Notes
 
-1. The decision log is operative as of DL-029. DL-029 through DL-048 are Ratified under Framework 001/001A (DL-045 is a separate pending draft — tool-neutral agent terminology — not yet recorded here). DL-036, DL-037, DL-038, and DL-039 are Ratified with Conditions; DL-040 and DL-041 are Ratified with Clarifications; DL-042 is Ratified (unconditional); **DL-043 is Ratified with Conditions** (consolidated Release 1 architecture & epistemic foundation, constituents A–J); **DL-044 is Ratified with Conditions** (Release 1 engineering-enablement layer, constituents A–D: Claude Code Constraints, Wave packages, Calibration Defaults, Deployment Governance); **DL-046 is Ratified** (Fast/Deep analysis modes + <60s Time-to-First-MRI as explicit Wave B contract + NFR obligations); **DL-047 is Ratified with Conditions** (contract-coverage resolution: synthesis engine as Derived/extended-Infer, Chat/CRR/Suggested-Fix classification, sub-feature enumeration, capability→contract traceability gate); **DL-048 is Ratified with Conditions** (cost governance / freemium unit economics: contracted per-tier token-budget enforcement on the Fast/Deep engine + QA gate + `AI Spend Recorded` observability; Balanced ~$3/mo Free-tier config defaults; paid-tier limits TBD). Operative governance framework set: Framework 001, Framework 001A, OGAP v1.0, DECISION-READY.
+1. The decision log is operative as of DL-029. DL-029 through DL-049 are Ratified under Framework 001/001A (DL-045 is a separate pending draft — tool-neutral agent terminology — not yet recorded here). DL-036, DL-037, DL-038, and DL-039 are Ratified with Conditions; DL-040 and DL-041 are Ratified with Clarifications; DL-042 is Ratified (unconditional); **DL-043 is Ratified with Conditions** (consolidated Release 1 architecture & epistemic foundation, constituents A–J); **DL-044 is Ratified with Conditions** (Release 1 engineering-enablement layer, constituents A–D: Claude Code Constraints, Wave packages, Calibration Defaults, Deployment Governance); **DL-046 is Ratified** (Fast/Deep analysis modes + <60s Time-to-First-MRI as explicit Wave B contract + NFR obligations); **DL-047 is Ratified with Conditions** (contract-coverage resolution: synthesis engine as Derived/extended-Infer, Chat/CRR/Suggested-Fix classification, sub-feature enumeration, capability→contract traceability gate); **DL-048 is Ratified with Conditions** (cost governance / freemium unit economics: contracted per-tier token-budget enforcement on the Fast/Deep engine + QA gate + `AI Spend Recorded` observability; Balanced ~$3/mo Free-tier config defaults; paid-tier limits TBD). Operative governance framework set: Framework 001, Framework 001A, OGAP v1.0, DECISION-READY.
 2. DL-001 through DL-028 are grandfathered as Stated per DL-032. They remain in effect but require future Proposals to convert to Ratified.
 3. Future entries must cite the source Proposal, follow the Entry Schema, and adhere to the supersession rule declared by Framework 001.
 4. Decisions that reconcile conflicts among grandfathered entries must explicitly reference the superseded statements.

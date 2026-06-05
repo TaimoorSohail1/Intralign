@@ -237,3 +237,14 @@ Core observability surfaces: **state transitions, recompute triggers, governance
 | `SuggestedFix` | **Derived** (Advise candidate) | Advise | application = user edit; no autonomous OSLO write |
 
 `confidence_stage` (DL-046) generalizes to the **Understanding State Model** (AE-04): Initial→Partial→Refined→Validated→Mature — an emission attribute, not a new object.
+
+## DL-049 Object Additions (ratified 2026-06-05)
+
+Resolves gap #337. **One identity object, two capability levels — not two objects.**
+
+| Object | Class | Notes |
+|---|---|---|
+| `Principal` | **Identity (canonical account record)** | the single identity object. Attribute **`type: reviewer \| user`**. `reviewer` = email-verified, **scoped to shared items** (CRR finding / MRI), may view + respond, **no Workspace/projects**. `user` = `Principal` + Workspace/Account + projects + tier (default **Free**). |
+| `StakeholderResponse` **author** | reference → `Principal` (`type = reviewer` typically) | the CRR response (DL-047) is authored by a `Principal`; remains **evidence-attested**, provenance = that `Principal`. No seam change. |
+
+**Promotion `reviewer → user` (state transition, NOT a data migration):** flip `type` to `user`, provision Workspace, assign Free tier — **same `Principal` ID**. **Invariants:** identity ID stable → prior `StakeholderResponse` attribution **immutable** (append-only, never re-keyed); response = **evidence, not truth** (unchanged by promotion); **scope to the inviter's project is never widened** (account-type ≠ share-scope); promotion **audited** (SEC-06). Reviewer-driven recompute (CRR-04 → Deep Pass) is **DL-048-bounded** (draws the inviter's budget). Different-email later signup = a **new** `Principal` (optional later email-link; merge deferred); **de-dup on verified email**.

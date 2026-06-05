@@ -1,6 +1,6 @@
 # Backlog (DRAFT) — External-Stakeholder Experience (the P0 conversion-path scoping item)
 
-**Status:** **Proposed — owner-directed (2026-06-05).** Pending Owner Ratification. Resolves **P0** of `RELEASE_1_VIRALITY_K_FACTOR_AUDIT_001` and **Capability-Matrix gap #337**. **Architecture-touching** (a new identity concept) — therefore this **scopes** the decision and **routes the ontology/identity choice to the owner**; it does **not** decide it. Per `CLAUDE.md`: no new ontology resolved unilaterally; the contracted CRR evidence seam is **preserved, not redefined.**
+**Status:** **Identity model RATIFIED — Option A, DL-049 (2026-06-05); gap #337 resolved; `Principal` added to the Object Model; CHG-060.** The **recipient-experience build** (low-friction view/respond UI, convert-moment, link security #339) and the **R1-vs-fast-follow scope call** remain owner-open commodity follow-ups. Resolves **P0** of `RELEASE_1_VIRALITY_K_FACTOR_AUDIT_001`. The contracted CRR evidence seam is **preserved, not redefined.**
 
 ---
 
@@ -32,6 +32,21 @@ So a CRR or shared MRI produces an *invitation* with **no specified recipient ex
 | **C — Full account required** | Recipient must sign up to view/respond | **highest** (kills c) | strong | n/a — this is the implicit status quo the audit flags |
 
 **Recommendation: Option A** — best balance of low friction, scoped security, attribution, and a **clean in-place convert path** (a Reviewer simply becomes a User). It introduces a **new identity object** (Reviewer/Stakeholder ≠ User), so it is an **ontology/architecture decision for the owner** (may warrant a DL). Option B is a faster, weaker interim; Option C is not recommended.
+
+> **✓ Owner elected Option A (2026-06-05).** Drafted as **DL-049** (`PROPOSAL_EXTERNAL_STAKEHOLDER_REVIEWER_IDENTITY_DL049_DISPOSITION.md`) — pending ratification. The migration path is in §4b below.
+
+### 4b. Reviewer → User migration path (Option A; DL-049)
+
+**Model Reviewer and User as one `Principal` with a `type: reviewer | user` attribute — not two objects.** Then promotion is a **state transition, not a data migration**:
+
+- At the convert-moment the Reviewer is **already authenticated** (verified email) → **one-step promotion**: provision a Workspace/Account, set **`type = user`**, assign **Free (Tier 1)**, enable project creation. **Identity ID unchanged.**
+- **Carries (unchanged):** verified email + display name, **all prior CRR-response attribution** (append-only — never re-keyed), audit trail.
+- **Gains:** own Workspace, Free tier, project creation.
+- **Never widens:** scoped access to the **inviter's** project — account-type and share-scope are **separate axes** (privilege-escalation guard).
+- **Invariants:** history immutable (no re-attribution); response = evidence-not-truth (unchanged by promotion); CRR seam preserved; promotion **audited** (SEC-06).
+- **Edge cases:** different-email later signup = **new** principal (optional later email-link, account-merge deferred); **de-dup on verified email**; non-converting reviewers persist; promotion tier = plain **Free**.
+
+*Why single-`Principal`: a two-object model re-introduces copy-and-merge + provenance-rewrite risk; one principal at two capability levels makes promotion clean and keeps attribution stable. This is the ontology decision in DL-049.*
 
 ## 4. Recipient flow (illustrative — Option A)
 

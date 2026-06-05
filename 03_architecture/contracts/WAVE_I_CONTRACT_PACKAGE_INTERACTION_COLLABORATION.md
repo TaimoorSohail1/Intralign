@@ -26,7 +26,7 @@
 - **Object:** `ChatSession` / `ChatExchange` — **non-canonical interaction records** (not Attested, not Derived cognition).
 
 ### 1B. CAF Review Request — cognitive seam (CRR-01…05)
-- **Required (Perceive):** a submitted **`StakeholderResponse`** (Comment/Approve/Reject/Suggest-Alternative on a shared finding) is admitted as **new evidence** (evidence-attested) and **triggers Deep Pass** (00R); confidence/MRI update via recompute. **Required (Disclose):** present review **status** across workspace + MRI (CRR-05).
+- **Required (Perceive):** a submitted **`StakeholderResponse`** (Comment/Approve/Reject/Suggest-Alternative on a shared finding) is admitted as **new evidence** (evidence-attested) and **triggers Deep Pass** (00R); confidence/MRI update via recompute. **Required (Disclose):** present review **status** across workspace + MRI (CRR-05). **(DL-049)** the response is authored by a **`Principal`** (`type = reviewer`); provenance = that Principal; a later `reviewer→user` promotion **does not re-attribute** prior responses (append-only). Seam unchanged.
 - **Forbidden:** treating a response as **world-truth** or as **OSLO self-acceptance**; a response **changing an assessment without recompute**.
 - **Commodity (not this contract):** creating the request, building the package, notifications, the sharing UI — Category-E (DL-043 J).
 
