@@ -36,14 +36,23 @@ Claude Code is a CLI the developer installs and signs into with **their own** Cl
 
 **Decision to record:** which access model, and who pays.
 
-### 1.2 GitHub access
+### 1.2 GitHub plan — Pro now, Team later
+Branch protection on a **private** repo (required reviews + required status checks) is **not** available on GitHub Free — it needs a paid plan. You do **not** need an organization or per-seat Team plan to start. The cheapest sufficient path:
+
+- **Now — GitHub Pro on your personal account (~$4/mo, one payer).** Enables branch protection on private repos; collaborators are **free** (they don't each need a paid plan). Upgrade at **github.com/settings/billing → Plans and usage → Upgrade → GitHub Pro**.
+- **Later — migrate to an Organization on Team** when you want team management, multiple developers, or are standing up **production**. Team is **per-seat** (~$4/user/mo); defer it until that value is real.
+
+> **Why pay anything pre-production?** Because the agent is *autonomous*. Branch protection is what stops Claude Code/Codex from **merging its own PRs** and what turns the CI gates from advisory into **enforced** (on Free, the epistemic-invariant gate still *runs* but can't *block* a bad merge — which then auto-flows to Staging). $4/mo closes that gap from day one.
+
+### 1.3 GitHub access (setup order)
 The knowledge base is already on GitHub (`github.com/idris-cmyk/oslo-knowledge-base`, fully pushed).
 
-1. **Create the application repo** (e.g., `oslo` or `oslo-app`) under your account/org — or decide the developer creates it and you own it. (Per Deployment Governance, you should own the repo that deploys to production.)
-2. **Add the developer as a collaborator with write access** on both repos (knowledge base = read is enough; app repo = write). For tighter control on the knowledge base, keep them **read-only** there.
-3. **Enable branch protection on `main`** in the application repo: require a PR, require **your** review, require green CI, no force-push. *This is the control that makes "autonomous" safe — it's already mandated by Deployment Governance §2.*
+1. **Upgrade your personal account to Pro** (above) so branch protection is available.
+2. **Create the application repo** (e.g., `oslo` or `oslo-app`) **private, under your personal account** (Owner = you). Per Deployment Governance, you own the repo that deploys to production. *(Defer the org/Team move to the Team-later step.)*
+3. **Add the developer as a collaborator with write access** on the app repo (knowledge base = read is enough; keep them **read-only** there).
+4. **Enable branch protection on `main`**: **Settings → Branches → Add rule/ruleset** for `main` → require a PR, require **your** approval (1), require green CI status checks, no force-push. *This is the control that makes "autonomous" safe — mandated by Deployment Governance §2.*
 
-### 1.3 Cloud accounts & ownership (decide who owns what)
+### 1.4 Cloud accounts & ownership (decide who owns what)
 Per the Runtime Environment Constraint Profile:
 
 | Resource | Purpose | Recommended owner |
@@ -57,13 +66,14 @@ Per the Runtime Environment Constraint Profile:
 
 > For a contractor: you typically own production accounts and keys; the developer gets Dev (local) and Staging. Nothing production-grade should sit only in the developer's personal accounts.
 
-### 1.4 (Recommended) Set up Linear and import the work
+### 1.5 (Recommended) Set up Linear and import the work
 The waves/contracts are pre-packaged for Linear import — see `03_architecture/engineering/LINEAR_IMPORT_README.md` and the CSV beside it. Import gives you per-wave visibility and lets Claude Code update issues via the Linear MCP. **Boundary: Linear is the tracker; this repo stays the source of truth.** Linear issues *reference* contracts; they never replace them.
 
 ### Phase 0 checklist
 - [ ] Claude Code access model decided (and who pays)
-- [ ] Application repo created; developer granted write; knowledge-base access set (read)
-- [ ] Branch protection enabled on app-repo `main` (you = required reviewer)
+- [ ] **GitHub Pro** active on owner's personal account (unlocks private-repo branch protection); org/Team deferred to nearer production
+- [ ] Application repo created **private under owner's account**; developer granted write; knowledge-base access set (read)
+- [ ] Branch protection enabled on app-repo `main` (you = required reviewer; require green CI)
 - [ ] Cloud accounts + ownership decided (Heroku, Vercel, OpenAI, Anthropic, DBs, observability)
 - [ ] Linear set up and Release 1 imported (optional but recommended)
 
