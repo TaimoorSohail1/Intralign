@@ -1,10 +1,17 @@
 # START HERE — Engineering Onboarding (read this first)
 
+> ## 🛑 Step 0 — the front door: read [`ANTI_ASSUMPTION_BUILD_PROTOCOL.md`](ANTI_ASSUMPTION_BUILD_PROTOCOL.md) before anything else
+> This is **the engineering team's front door.** The one rule: **never fill a specification gap by inference — escalate it.** A missing detail is either intentionally-commodity, an owner TBD ([`OPEN_TBD_REGISTER.md`](OPEN_TBD_REGISTER.md)), or a genuine gap to STOP and raise — never something to invent. Read it, then continue below.
+
 **You are here because you're about to build OSLO.** This repo has ~500 documents. **You need about six of them to start.** This page is the 90-minute path from "confused" to "first PR open." Everything else is governance history you can ignore until you need it.
 
 > Tooling note: you're using **Claude Code**. Claude Code auto-reads **`CLAUDE.md`** (and the equivalent `AGENTS.md`), so it inherits the build rules without you configuring anything. Your job here is to understand the *mental model* and the *build loop* — not to memorize the repo.
 >
-> **🛑 Drift control (read before building).** This team builds with **Claude Code**, which auto-reads **`CLAUDE.md`** — the drift-control files are linked there too. Read **`ANTI_ASSUMPTION_BUILD_PROTOCOL.md` FIRST** — the one rule: **never fill a spec gap by inference — escalate it.** Then keep four files open while you build: **`ANTI_ASSUMPTION_BUILD_PROTOCOL.md`**, **`CANONICAL_GLOSSARY.md`** (terms + banned synonyms), **`RELEASE_1_BUILD_TEST_OBSERVE_TRACEABILITY_MATRIX.md`** (capability → contract → test → event), and **`OPEN_TBD_REGISTER.md`** (do-not-assume items).
+> **🛑 Drift control (keep these four open while you build).** This team builds with **Claude Code**, which auto-reads **`CLAUDE.md`** — these are linked there too:
+> 1. **[`ANTI_ASSUMPTION_BUILD_PROTOCOL.md`](ANTI_ASSUMPTION_BUILD_PROTOCOL.md)** — never infer a gap; escalate it (**read first**).
+> 2. **[`CANONICAL_GLOSSARY.md`](CANONICAL_GLOSSARY.md)** — one name per concept + banned synonyms.
+> 3. **[`RELEASE_1_BUILD_TEST_OBSERVE_TRACEABILITY_MATRIX.md`](RELEASE_1_BUILD_TEST_OBSERVE_TRACEABILITY_MATRIX.md)** — capability → contract → test → event.
+> 4. **[`OPEN_TBD_REGISTER.md`](OPEN_TBD_REGISTER.md)** — every owner-decision-required value; do not assume.
 
 ---
 
