@@ -31,11 +31,11 @@
 | MRI-04/05/06/07 | Heatmap / CAF Triangle / Timeline / Dependencies | WAVE_E (DL-047) | each sub-component present; traces to UX spec | (presentation) | VI |
 | ISS-01…04 | Issue engine / severity / lifecycle / linkage | WAVE_B · IC-WB-EVAL | Issue from Finding; severity; append-only | Issue Generated | III |
 | REC-01/02/03 | Recommendation engine / actions / lifecycle | WAVE_C · IC-WC-ADVISE | only-in-Finding-context; never accepts/executes (neg) | Recommendation Emitted | IV |
-| REC-04 | Suggested Fixes | WAVE_C (DL-047) | suggest only; **neg: autonomous artifact write** | Suggested Fix Offered | IV |
-| REC-05 | Validation Recommendations | WAVE_C (DL-047) | Validation type; routes to CRR on user action | Recommendation Emitted (Validation) | IV |
+| REC-04 | Suggested Fixes | **WAVE_I · IC-WI-INTERACT** | suggest only; **neg: autonomous artifact write** | Suggested Fix Offered | IV |
+| REC-05 | Validation Recommendations | **WAVE_I · IC-WI-INTERACT** | Validation type; routes to CRR on user action | Recommendation Emitted (Validation) | IV |
 | OVL-01/02/03 | CAF Overlay engine / panel / actions | WAVE_E · IC-WE-DISCLOSE | overlay maps to CAF; in-context | (presentation) | VI |
-| CHAT-01…04 | OSLO Chat (+context/functions/improvements) | WAVE_E (DL-047) | **neg: writes canonical / mutates artifact / changes assessment** | Chat Exchange | VI |
-| CRR-01…05 | CAF Review Requests | WAVE_A_001 (DL-047 seam) + Wave E status; **workflow UI = commodity** | response→evidence→Deep Pass; **neg: response-as-truth** | Stakeholder Response Submitted | II/VI |
+| CHAT-01…04 | OSLO Chat (+context/functions/improvements) | **WAVE_I · IC-WI-INTERACT** | **neg: writes canonical / mutates artifact / changes assessment** | Chat Exchange | VI |
+| CRR-01…05 | CAF Review Requests | **WAVE_I · IC-WI-INTERACT** (seam) + WAVE_A_001 intake; **workflow UI = commodity** | response→evidence→Deep Pass; **neg: response-as-truth** | Stakeholder Response Submitted | II/VI |
 | AW-04/05 | Assisted Editing / Persistent Intelligence | WAVE_E (DL-047) | always-visible Confidence/CAF/state; routes to Chat/Fix | (presentation) | VI |
 | (User Acceptance) | Accept + plan fact + Acceptance-Impact | WAVE_U · IC-WU-ACCEPT | user-attested; version-pinned; **neg: self-accept / overwrite** | Acceptance-Impact Assessed | V |
 

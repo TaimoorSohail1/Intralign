@@ -9,7 +9,7 @@
 
 ## 0. Summary Verdict
 
-**All packages are CONFORMANT and READY FOR OWNER APPROVAL** (five original + **Wave S Synthesis Engine, added & conformance-checked under DL-047 — §6b**). Each owns one responsibility's output, traces fully to the Object/Behavior Models, preserves the DL-043 invariants (Canonical = Attested; Derived recomputable; recompute-appends-never-overwrites; **no Authority engine in R1**; OSLO-never-accepts; two-axis replay), and carries **mandatory positive + negative QA**. **No Critical or Major defect.** A small set of **Minor cross-package clarifications** (§7) are non-blocking. The contract pipeline is proven end-to-end (intake → understanding → advisory → user-acceptance → presentation).
+**All packages are CONFORMANT and READY FOR OWNER APPROVAL** (five original + **Wave S Synthesis Engine §6b + Wave I Interaction/Collaboration §6c, added & conformance-checked under DL-047**). Each owns one responsibility's output, traces fully to the Object/Behavior Models, preserves the DL-043 invariants (Canonical = Attested; Derived recomputable; recompute-appends-never-overwrites; **no Authority engine in R1**; OSLO-never-accepts; two-axis replay), and carries **mandatory positive + negative QA**. **No Critical or Major defect.** A small set of **Minor cross-package clarifications** (§7) are non-blocking. The contract pipeline is proven end-to-end (intake → understanding → advisory → user-acceptance → presentation).
 
 ## 1. WB-INFER / WB-EVAL — Wave B (Understanding)
 - **§E** ✅ Finding (Infer), Issue/Confidence/Reliability/CAF/Outcome Confidence (Evaluate) trace to the Object Model (all Derived per DL-043 overlay) and Behavior Model (Finding Detected / Issue Generated / CAF Assessed / Outcome Confidence Computed + append-on-recompute). One producer each.
@@ -46,6 +46,10 @@
 ## 6b. WS-SYNTH — Synthesis Engine (Perceive extraction + Infer synthesis/generation) — DL-047
 - **§E/§H/§K** ✅ Extraction→Perceive (evidence-attested, no Derived cognition); synthesis + **generation of `PlanningArtifact`s as Derived**→Infer (recompute-appends-CHR; user-edit = new Attested input → recompute; never Attested-as-truth); seed→Evaluate; one producer each; no new responsibility (Infer extension per DL-047 A2 Option 1).
 - **Verdict:** **CONFORMANT.** Full-depth triad; the generative boundary is protected by Critical negatives (Derived-as-Attested, change-without-recompute, history overwrite, **silent gap-fill**, **autonomous artifact write**). Determinism: exact for explicit attributions, semantic for AI-synthesized content. Preserves all DL-043 invariants + DL-046 modes.
+
+## 6c. WI-INTERACT — Interaction & Collaboration (Chat · CRR seam · Suggested Fixes) — DL-047 Part B
+- **§E/§H/§K** ✅ Chat→Disclose (consume/trigger; no canonical write, no assessment change); CRR response→evidence→Deep-Pass→Perceive (workflow UI = commodity); Suggested-Fix/Validation→Advise (candidate; **no autonomous artifact write**). One producer each; no new responsibility.
+- **Verdict:** **CONFORMANT.** Full-depth triad; Critical negatives protect the consume/trigger boundary (no canonical write, no autonomous artifact edit, no out-of-recompute assessment change, stakeholder-response-as-evidence-not-truth).
 
 ## 7. Minor Cross-Package Clarifications (non-blocking)
 - **MF-A — Cognition History Record schema is shared.** B/C/U all append CHRs; confirm a **single CHR shape** (output_kind discriminator) so emitters stay consistent — a logical-data-model note, not a per-package change.
