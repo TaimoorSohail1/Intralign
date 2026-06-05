@@ -38,7 +38,7 @@ Stand up the ratified environment and the enforcement scaffolding so that autono
 - Phase 0 owner setup complete (GitHub Pro + protected `main`; cloud accounts; access).
 
 ## Build steps
-1. Seed app repo from `03_architecture/engineering/starter_kit/` (compose, `.env`, CI workflow, `AGENTS.md`+`CLAUDE.md`).
+1. Seed app repo from `03_architecture/engineering/starter_kit/` (compose, `.env`, CI workflow, `CLAUDE.md`+`AGENTS.md`).
 2. `docker compose up` — all five datastores healthy.
 3. Scaffold `/backend/responsibilities/...`, `/services`, `/shared`, `/frontend`, `/tests` per the code-tree.
 4. Wire CI gates; confirm each can **fail** the build.

@@ -4,7 +4,7 @@
 
 > Tooling note: you're using **Claude Code**. Claude Code auto-reads **`CLAUDE.md`** (and the equivalent `AGENTS.md`), so it inherits the build rules without you configuring anything. Your job here is to understand the *mental model* and the *build loop* — not to memorize the repo.
 >
-> **🛑 If you're an external team / a different LLM, read `ANTI_ASSUMPTION_BUILD_PROTOCOL.md` FIRST.** The one rule: **never fill a spec gap by inference — escalate it.** Then keep four files open while you build: **`ANTI_ASSUMPTION_BUILD_PROTOCOL.md`**, **`CANONICAL_GLOSSARY.md`** (terms + banned synonyms), **`RELEASE_1_BUILD_TEST_OBSERVE_TRACEABILITY_MATRIX.md`** (capability → contract → test → event), and **`OPEN_TBD_REGISTER.md`** (do-not-assume items).
+> **🛑 Drift control (read before building).** This team builds with **Claude Code**, which auto-reads **`CLAUDE.md`** — the drift-control files are linked there too. Read **`ANTI_ASSUMPTION_BUILD_PROTOCOL.md` FIRST** — the one rule: **never fill a spec gap by inference — escalate it.** Then keep four files open while you build: **`ANTI_ASSUMPTION_BUILD_PROTOCOL.md`**, **`CANONICAL_GLOSSARY.md`** (terms + banned synonyms), **`RELEASE_1_BUILD_TEST_OBSERVE_TRACEABILITY_MATRIX.md`** (capability → contract → test → event), and **`OPEN_TBD_REGISTER.md`** (do-not-assume items).
 
 ---
 
@@ -58,7 +58,7 @@ When in doubt about scope: a doc only matters if a **contract** you're building 
 Follow the runbook's **Phase 1**. Short version:
 
 1. Install Claude Code; sign in (your own Pro/Max). Clone this repo (reference) and the **app repo** (where you build).
-2. Seed the app repo from `03_architecture/engineering/starter_kit/`: copy in `docker-compose.yml`, `.env.example` (→ `.env`), `ci-pipeline.yml` (→ `.github/workflows/ci.yml`), and **`AGENTS.md` + `CLAUDE.md`** at the root.
+2. Seed the app repo from `03_architecture/engineering/starter_kit/`: copy in `docker-compose.yml`, `.env.example` (→ `.env`), `ci-pipeline.yml` (→ `.github/workflows/ci.yml`), and **`CLAUDE.md` + `AGENTS.md`** at the root.
 3. `docker compose up -d` — confirm Postgres, Neo4j, MongoDB, Qdrant, Redis are healthy.
 4. Scaffold the LangGraph skeleton using the code-tree in AGENTS.md (`/backend/responsibilities/...`).
 

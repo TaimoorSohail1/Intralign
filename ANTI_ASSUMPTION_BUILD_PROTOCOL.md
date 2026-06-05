@@ -1,7 +1,7 @@
 # Anti-Assumption Build Protocol — READ BEFORE WRITING ANY CODE
 
-**Audience:** the engineering team and the LLM building OSLO Release 1 (any tool). · **Status:** Authoritative build rule · **Date:** 2026-06-04
-**Why this exists:** this body of work is handed off to a team and an LLM that did **not** author it. The single biggest risk to a high-quality system is **drift** — the LLM or a person filling a gap with a plausible *assumption* instead of the specified truth. This document exists to make the default behavior **"escalate the gap," not "guess the gap."**
+**Audience:** the engineering team building OSLO Release 1 with **Claude Code** (which auto-reads `CLAUDE.md`, where this file is linked). · **Status:** Authoritative build rule · **Date:** 2026-06-04
+**Why this exists:** this body of work is handed off to a team and a Claude Code instance that did **not** author it. The single biggest risk to a high-quality system is **drift** — the LLM or a person filling a gap with a plausible *assumption* instead of the specified truth. Claude Code inherits the build rules from `CLAUDE.md`, but this document makes the **anti-assumption rule unmissable for the whole team**: the default behavior must be **"escalate the gap," not "guess the gap."**
 
 ---
 
@@ -30,7 +30,7 @@ When a detail you need is not in the spec, it is **always** one of exactly three
 
 ## How to start (so you don't drift on day one)
 
-1. Read `START_HERE.md` → the Engineering Handoff Package → the Onboarding Runbook.
+1. Read `START_HERE.md` → the Engineering Handoff Package → the Onboarding Runbook. (Claude Code auto-loads `CLAUDE.md`, which links this protocol + the glossary, matrix, and TBD register.)
 2. Read `CANONICAL_GLOSSARY.md` and **this** protocol.
 3. For any capability you build, open the **`RELEASE_1_BUILD_TEST_OBSERVE_TRACEABILITY_MATRIX.md`**, find its contract + acceptance test + observability event, and build **to those**, not to your model of what it "should" do.
 4. Check `OPEN_TBD_REGISTER.md` — if your work depends on a TBD, escalate before proceeding.

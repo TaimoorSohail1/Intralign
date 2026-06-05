@@ -87,3 +87,12 @@ Open governance items continue under existing backlog tracking.
 3. `01_governance/frameworks/framework_001.md` and `framework_001A.md` — governance procedure.
 4. `01_governance/decisions/decision_log.md` — ratified decisions.
 5. `01_governance/backlog/revision_backlog.md` — pending work.
+
+## Drift-control files (read before building — this team uses Claude Code, which reads this file)
+The engineering team builds with **Claude Code**, which loads **`CLAUDE.md`** automatically. Before writing any OSLO application code, read — and keep open:
+- `ANTI_ASSUMPTION_BUILD_PROTOCOL.md` — **never infer a spec gap; escalate it.** Read first.
+- `CANONICAL_GLOSSARY.md` — one canonical name per concept + banned synonyms.
+- `RELEASE_1_BUILD_TEST_OBSERVE_TRACEABILITY_MATRIX.md` — every capability → contract → test → observability event.
+- `OPEN_TBD_REGISTER.md` — every owner-decision-required value; **DO NOT ASSUME**.
+
+For building the application: `03_architecture/RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md` → `RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md`. The app-repo build-rules file is `03_architecture/engineering/starter_kit/CLAUDE.md` (with `AGENTS.md` as its tool-neutral twin).
