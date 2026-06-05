@@ -42,8 +42,8 @@ All values pending owner decision; none invented. UI loading/skeleton behavior (
 | Attribute | Value |
 |---|---|
 | **Orientation target (Time-to-First-MRI)** | **< 60 seconds** *(owner-approved; Master Spec §20 / M1)* |
-| Acceptable range | **TBD – Owner Decision Required** (e.g., p50/p95 distribution within the 60s ceiling) |
-| Supported-project-size envelope for the 60s target | **TBD – Owner Decision Required** (undefined upstream; readiness audit D9 / Data §20.1) |
+| Acceptable range | **Proposed defaults (DL-046): p50 ≤ 25s · p95 ≤ 50s · hard ceiling < 60s** — see `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` §4b; owner to confirm |
+| Supported-project-size envelope for the 60s target | **Proposed defaults (DL-046): ≤ 20 artifacts / ≤ ~50,000 words / 1 active Fast Pass** — see Calibration Defaults §4b; **conservative placeholders — confirm against target-customer project sizes (highest-priority owner decision, R-1)** |
 | Timeout threshold | **TBD – Owner Decision Required** |
 | Failure behavior | run → `failed` (Event `analysis_failed`); Project remains `created`/reverts; user offered retry (new run); prior state preserved (State Model §17) |
 | Retry behavior | failed fast run is **not** restarted in place — a new `AnalysisRun` is queued, `previous_run_id` linked; retry bound **TBD** |

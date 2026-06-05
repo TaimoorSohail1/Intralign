@@ -53,6 +53,28 @@
 | **Canonical records** (Attested Assertions · Cognition History Records · User Acceptance Records / plan facts) | **retained for project lifetime + 1 year** (append-only; never deleted while the project is active) — these are the system of record |
 | **Audit receipts** (integrity-clearance, user-action) | **≥ 1 year** default; **owner to confirm against any compliance regime** (the "per compliance" residual) |
 
+## 4b. Performance — Fast Pass NFR (proposed; resolves DL-046 open items)
+
+*(Proposed starting values for the two items DL-046 left as `TBD – Owner Decision Required`: the latency **distribution** within the 60s ceiling, and the **supported-project-size envelope** for which the 60s target holds. Conservative; owner to confirm/tune. The **< 60s ceiling itself is ratified** — these only shape the distribution and the scope it applies to.)*
+
+| Dial | Proposed default | Note |
+|---|---|---|
+| **Time-to-First-MRI — p50** | **≤ 25 s** | typical case should *feel* fast, well inside the ceiling |
+| **Time-to-First-MRI — p95** | **≤ 50 s** | tail stays clear of the ceiling |
+| **Time-to-First-MRI — hard ceiling (p100)** | **< 60 s** | **ratified** (Master Spec §20 / M1); the QA performance gate fails above this |
+| **Fast Pass timeout** | **60 s** | at the ceiling: on breach, return partial orientation + transition to `analyzing` (never hang) |
+
+**Supported-project-size envelope (the scope the 60s holds for):**
+
+| Dimension | Proposed default | Note |
+|---|---|---|
+| Source artifacts per project | **≤ 20 artifacts** | Fast Pass orientation scope |
+| Total project text | **≤ ~50,000 words** (~65–75k tokens) | the content the Fast Pass reasons over |
+| Concurrency (R1) | **1 active Fast Pass per project** | single-user project; Deep Pass is async/coalesced |
+
+- **Outside the envelope:** Fast Pass still runs but the 60s target is **not guaranteed** — it returns a partial orientation within budget and continues in `analyzing`/Deep Pass. The QA performance gate (DL-046) is asserted **on envelope-sized fixtures**.
+- **⚠ Confidence note:** these envelope numbers are **conservative engineering placeholders**, not derived from target-customer data. The Performance/NFR spec (R-1) flags the envelope as the single highest-priority owner decision — **confirm against real target project sizes before relying on the 60s promise in production.**
+
 ## 5. Status & Tuning
 
 - **All values above are owner-review-pending defaults.** They are **configuration**, surfaced for ops to adjust per environment; none changes the architecture or any contract's structure.
