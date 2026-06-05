@@ -118,6 +118,18 @@
 - **Per-tier, not free-vs-paid:** all knobs are **tier rows**. **Tier 1 (Free) and Tier 2 (Basic) are owner-confirmed; Tiers 3–5 (Pro · Team · Enterprise) remain TBD** (Open-TBD A1/E3; ladder draft `01_governance/backlog/BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE.md`) — add rows, not code.
 - **⚠ Confidence note:** these are **estimate-based starting placeholders**, not measured runs. Re-tune from the `AI Spend Recorded` telemetry in the first weeks. Free posture = Balanced (~$3); Basic = $12/mo capacity tier.
 
+**Internal entitlement (non-consumer; test-bypass — `BACKLOG_INTERNAL_TEST_BYPASS_ENTITLEMENT`):** a **designated-test-account** entitlement that **bypasses Free-tier (and all) caps** via config, **not** a code branch — the same DL-048 enforcement runs and reads "unlimited."
+
+| Config knob | Internal | Note |
+|---|---|---|
+| All caps (projects · fix/chat · envelope · Deep/day · daily+monthly budget) | **unlimited / very-high** | bypass the limit, **not** the meter |
+| Model routing | configurable for testing | |
+| `AI Spend Recorded` telemetry | **still emits** | uncapped cost must stay visible |
+| Conversion (TEL-07) + unit-economics analytics | **excluded** | don't let test traffic skew tuning/medians |
+| Upgrade Prompts (MON-04) | **suppressed** | not a conversion target |
+
+- **Not part of the consumer ladder** (Free·Basic·Pro·Team·Enterprise). **Granted server-side, admin-only, allowlisted, audited, default-off; staging/test only** (owner default). The grant mechanism is a MON/SEC commodity item — see the backlog. **No cognition or epistemic invariant is affected.**
+
 ## 4d. Upgrade-Prompt timing — Tier-1 (proposed; FREEMIUM_UPGRADE_PROMPT_TIMING_AUDIT_001)
 
 *(Tunable timing config for MON-04 Upgrade Prompts. The **trigger taxonomy** is in `02_product/tiering/12_freemium_tier_behavior_logic.md`; these are the **numbers** — conservative starting defaults, re-tuned from TEL-07 against the optimality objective. Friction triggers consume the DL-048 constraint-detection signals.)*

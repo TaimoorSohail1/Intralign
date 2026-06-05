@@ -56,6 +56,7 @@
 | **Tier 3** | **Pro** | "Premium", "Professional", "Advanced" |
 | **Tier 4** | **Team** | "Business", "Group", "Squad" |
 | **Tier 5** | **Enterprise** | "Org", "Custom", "Corporate" |
+| **(non-consumer)** | **Internal** | "test tier", "admin tier", "god mode" — a **non-consumer** test-bypass entitlement, **not** part of the 1–5 ladder |
 
 Tiers are a **tier-keyed config dimension** (DL-048 §4c + CHG-056 envelope): each knob (project-size envelope, active projects, Deep/day, fix·chat caps, model routing, token budget) is set **per tier**, increasing up the ladder. Use `tier` as the config/telemetry key; values for **Tier 1 (Free)** and **Tier 2 (Basic)** are owner-confirmed (Calibration §4c), **Tiers 3–5 (Pro · Team · Enterprise) are TBD** (Open-TBD A1/E3; ladder draft in `01_governance/backlog/BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE.md`). **Do not hard-code tier behavior** — read it from config.
 
