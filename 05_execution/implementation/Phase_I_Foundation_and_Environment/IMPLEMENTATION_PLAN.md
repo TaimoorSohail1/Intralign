@@ -32,6 +32,7 @@ Stand up the ratified environment and the enforcement scaffolding so that autono
 - **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
 - **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
 - **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
+- **Observability:** `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
 
 ## Depends on
 - Phase 0 owner setup complete (GitHub Pro + protected `main`; cloud accounts; access).

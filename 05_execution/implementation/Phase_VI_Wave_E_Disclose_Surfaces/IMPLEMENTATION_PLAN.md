@@ -27,11 +27,13 @@ Present everything the prior phases produced — **epistemically safely**. Discl
 - **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
 - **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
 - **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
+- **Observability:** `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
 
 ## Depends on
 Phases II–V (there is nothing to disclose until the cognition + acceptance records exist).
 
 ## Expected outcomes (definition of done)
+- ✅ **Observability:** each governed output emits its events and **appends a Cognition History Record**, with **two-axis replay** hooks present and validated per the OBS contract (a phase is not done until its outputs are observable — functional success ≠ observed success).
 - ✅ Each surface presents the governed objects it owns and **traces** to its ratified UX spec.
 - ✅ Every surface labels **epistemic state** (Attested vs Derived), the **confidence band**, and any **conflict** — Derived is never shown as settled (negative tests enforce; band-edge guard applied).
 - ✅ **Recommendation Panel renders only in a Finding context** (RP-C1) — enforced in Disclose (presentation), not duplicated as a cognition rule.

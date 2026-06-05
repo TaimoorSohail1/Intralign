@@ -29,11 +29,13 @@ Build the ingestion → canonical-retention → recompute spine: artifacts come 
 - **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
 - **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
 - **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
+- **Observability:** `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
 
 ## Depends on
 Phase I (stores, schema, CI).
 
 ## Expected outcomes (definition of done)
+- ✅ **Observability:** each governed output emits its events and **appends a Cognition History Record**, with **two-axis replay** hooks present and validated per the OBS contract (a phase is not done until its outputs are observable — functional success ≠ observed success).
 - ✅ An artifact can be ingested; it is **not** canonical on upload; provenance + identity recorded.
 - ✅ A promotion candidate is handed to Retain and stored as an **Attested Assertion** (attributed + re-derivable).
 - ✅ Re-ingesting the same artifact is **idempotent** (no duplicate canonical record).

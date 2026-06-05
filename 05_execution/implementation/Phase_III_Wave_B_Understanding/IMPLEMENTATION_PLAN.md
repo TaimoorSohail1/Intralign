@@ -30,11 +30,13 @@ Produce OSLO's **understanding** of the canonical record — Findings (Infer), a
 - **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
 - **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
 - **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
+- **Observability:** `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
 
 ## Depends on
 Phase II (Attested store + recompute backbone — understanding is recomputed via 00R and appends CHRs).
 
 ## Expected outcomes (definition of done)
+- ✅ **Observability:** each governed output emits its events and **appends a Cognition History Record**, with **two-axis replay** hooks present and validated per the OBS contract (a phase is not done until its outputs are observable — functional success ≠ observed success).
 - ✅ Findings are generated from attested content and stored as **Derived** (never written to the canonical store as Attested).
 - ✅ Issues/Confidence/Reliability/CAF/Outcome Confidence compute, each carrying explicit `epistemic_state = derived` and a confidence **band** (0–49/50–74/75–100, with the ±3 edge-guard).
 - ✅ Confidence is expressed as **trust in understanding**, reliability-qualified — never as project health/readiness/probability/score (negative tests enforce this).

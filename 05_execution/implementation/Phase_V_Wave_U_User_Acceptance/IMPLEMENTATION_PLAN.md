@@ -27,11 +27,13 @@ Let the **user** accept a recommendation and record that acceptance as a **user-
 - **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
 - **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
 - **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
+- **Observability:** `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
 
 ## Depends on
 Phase IV (recommendations to accept), Phase II (attested store + version-pinning to CHRs).
 
 ## Expected outcomes (definition of done)
+- ✅ **Observability:** each governed output emits its events and **appends a Cognition History Record**, with **two-axis replay** hooks present and validated per the OBS contract (a phase is not done until its outputs are observable — functional success ≠ observed success).
 - ✅ A user can accept a recommendation; a `UserAcceptanceRecord` is stored, **user-attested** and **version-pinned** to the exact CHR accepted.
 - ✅ Acceptance creates a **plan fact** (user-attested) — recorded as fact *in the plan*, distinct from world-truth (OSLO certifies neither).
 - ✅ Acceptance is **append-only**; a record cannot be overwritten (negative test) and has no valid form without its version-pin (negative test).
