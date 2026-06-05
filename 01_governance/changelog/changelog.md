@@ -513,6 +513,14 @@ Each changelog entry contains:
 - **Change Summary:** Applied the value-aligned, no-dependency virality amplifiers. **P2 — viral primitives guaranteed on Free:** MRI share links, PDF export, comments, and **CRR (limited, cost-governed under DL-048)** are explicit Free-tier capabilities — the loop seeds on Free; monetize depth/capacity, never the seed. **P1 — artifact attribution:** PDF exports and shared MRI links carry tasteful, honest **"Made with OSLO — map your own project's understanding" attribution + CTA** (the cheapest i×c lever; not a misleading watermark). **P3 — share/invite prompt timing:** a value-moment two-class trigger set (SP-1 strong/first MRI, SP-2 invite-a-stakeholder on a finding, SP-3 confidence/milestone, SP-4 post-export) reusing the upgrade-prompt guards, with timing numbers as tunable Calibration §4e config, foregrounding SP-2 because a stakeholder response becomes evidence (value = virality). All bound by the value-alignment guardrails (user-initiated, no autonomous sends, no dark patterns) and tuned via TEL-06. P0 (DL-049) prior; P5 (referral) and the recipient-experience R1-vs-fast-follow remain owner-open. No Doctrine, Constitution, contract, or architecture change.
 - **Supersession Reference:** None. Commodity product/config specification; supersedes no Decision.
 
+### CHG-062 — Virality P6 Applied (k-factor instrumentation)
+
+- **Date:** 2026-06-05
+- **Authorizing Decision:** Owner direction (applied P6 of `RELEASE_1_VIRALITY_K_FACTOR_AUDIT_001`). Commodity (TEL) measurement definition + config; no DL.
+- **Affected Artifacts:** `02_product/tiering/12_freemium_tier_behavior_logic.md` ("Virality measurement — k-factor" definition); `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§4f virality/k-factor targets); `02_product/specs/planning/OSLO_CAPABILITY_MATRIX_V2.md` (TEL-06 note); `RELEASE_1_VIRALITY_K_FACTOR_AUDIT_001.md` (P6 status).
+- **Change Summary:** Defined virality as a tracked objective. **k = i × c** (exposures-per-active-user × conversion-to-activation; k > 1 self-sustaining) is computed from TEL-06 + TEL-02 **per loop** (active CRR / passive MRI-share / portable PDF), with **cycle-time T** per loop, **Internal accounts excluded** (CHG-059, so test traffic can't inflate k). Measurement window, k target, conversion-attribution window, and decline alert are tunable **Calibration §4f** config — with the **k target deliberately track-only until a measured baseline exists** (set from data, not guessed). A virality dashboard (k/i/c/T per loop, segmented) is the natural surface. This is the objective function the other virality optimizations (P1–P5) tune against; pure measurement, no cognition. No Doctrine, Constitution, contract, or architecture change.
+- **Supersession Reference:** None. Commodity measurement specification; supersedes no Decision.
+
 ---
 
 ## Governance Notes

@@ -243,7 +243,7 @@
 | TEL-03 | Understanding Telemetry | initial/current confidence, delta, initial/current CAF, understanding-state progression | F | Measure understanding | Alpha | High | TEL-01, CONF-01 | §17 | — | Tel, Confst | — | N | — |
 | TEL-04 | Improvement Telemetry | issues generated/opened/resolved, recs generated/viewed/accepted/rejected, fixes applied, artifact edits | F | Measure improvement loop | Alpha | High | TEL-01 | §17 | — | Tel, Iss, Rec, Fix | — | N | — |
 | TEL-05 | Collaboration Telemetry | comments, replies, mentions, CRRs created/opened/completed, approvals/rejections/alternatives | F | Measure collaboration | Alpha | Medium | TEL-01 | §17 | — | Tel, Cmt, CRR | — | N | — |
-| TEL-06 | Virality Telemetry | MRI/artifact/CRR shared, external stakeholder invited/joined/returned/converted | F | Measure virality | Alpha | Medium | TEL-01 | §17 | — | Tel, Shr | — | N | — |
+| TEL-06 | Virality Telemetry | MRI/artifact/CRR shared, external stakeholder invited/joined/returned/converted | F | Measure virality | Alpha | Medium | TEL-01 | §17 | — | Tel, Shr | — | N | **Computes k = i×c + cycle-time per loop (CRR/MRI/PDF); Internal excluded; targets Calibration §4f (P6, Virality Audit 001)** |
 | TEL-07 | Conversion Telemetry | daily fix usage, limits reached (fix/chat/project), upgrade prompt displayed/clicked, upgrade completed | F/C | Measure conversion | Alpha | Medium | TEL-01, MON-04 | §17 | — | Tel | — | N | — |
 
 ---

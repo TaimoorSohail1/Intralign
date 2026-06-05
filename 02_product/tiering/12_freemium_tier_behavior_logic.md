@@ -89,6 +89,19 @@ Reuses the Upgrade-Prompt **two-class** model, but here the dominant class is **
 
 **Guards (reuse §4d pattern):** user-initiated only (no autonomous sends); never interrupt an active pass; value before ask (not before first MRI); per-trigger cooldown + global cap (Calibration §4e); no persistent wallpaper. **Foreground SP-2** — because a CRR response becomes evidence (CRR-04), "invite a stakeholder" both grows the network *and* improves the user's own understanding (value = virality). **Objective (TEL-06):** maximize invites→joins→conversions while keeping the annoyance signal bounded.
 
+## Virality measurement — k-factor (P6)
+
+Make virality a **tracked objective**, not a vibe. From **TEL-06** (shared / invited / joined / returned / converted) + **TEL-02** (invited / accepted / activated):
+
+- **k (virality coefficient) = i × c** — `i` = exposures (shares + invites) generated per active user per window; `c` = fraction of those exposures that convert to an **activated** new account. **k > 1 = self-sustaining** growth.
+- **Per loop, separately:** **active (CRR)** · **passive (MRI share links)** · **portable (PDF)** — so you know *which* loop drives growth and where to invest.
+- **Cycle time T:** median exposure→conversion time per loop (governs how fast k compounds).
+- **Exclusions:** **Internal accounts excluded** (CHG-059) — test traffic must never inflate k.
+- **Window + targets:** rolling window + k target are **Calibration §4f** config (owner-set; track-only until a baseline exists). Alert on sustained decline.
+- **Surface:** a **virality dashboard** (k, i, c, T per loop, segmented) — a natural live artifact, refreshed from telemetry.
+
+This is the objective function P1–P5 are tuned against; pure measurement, no cognition.
+
 ---
 
 # Tier 3 — Pro

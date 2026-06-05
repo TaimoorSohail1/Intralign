@@ -163,6 +163,19 @@
 
 - Owner-tunable placeholders; **user-initiated only, no autonomous sends, no dark patterns.** SP-2 (invite-a-stakeholder) is exempt from the per-day cap when it coincides with a genuine validation/finding moment.
 
+## 4f. Virality / k-factor targets (proposed; Virality Audit 001 P6)
+
+*(Measurement config for the k-factor objective — definition in `12_freemium_tier_behavior_logic.md` "Virality measurement". From TEL-06/02; Internal accounts excluded.)*
+
+| Knob | Proposed default | Note |
+|---|---|---|
+| Measurement window | **30-day rolling** | per loop (CRR / MRI-share / PDF) + blended |
+| k target | **track-only until baseline; then owner-set** | k > 1 = self-sustaining (ambitious); set a milestone ladder after first real data |
+| Conversion (c) attribution window | **14 days** exposure→activation | how long an exposure can "credit" a conversion |
+| Decline alert | **k down > 20% vs prior window (per loop)** | trust/growth signal to investigate |
+
+- **Owner-set placeholders**; the k target is deliberately **track-only first** — set it from a measured baseline, not a guess. Internal/test accounts (CHG-059) are excluded from all virality metrics.
+
 ## 5. Status & Tuning
 
 - **All values above are owner-review-pending defaults.** They are **configuration**, surfaced for ops to adjust per environment; none changes the architecture or any contract's structure.
