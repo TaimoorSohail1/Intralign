@@ -1,5 +1,7 @@
 # OSLO Linear Initiatives v1
 
+> **📦 ARCHIVED 2026-06-04 — historical.** Superseded by `OSLO_LINEAR_INITIATIVES_V2.md`. Moved to `04_research/historical_artifacts/` to keep the active tree clean; content preserved for history and does **not** govern implementation.
+
 *Linear-ready initiative structure for engineering planning. Synthesized from OSLO_ARCHITECTURE_BASELINE_V1.md and OSLO_CAPABILITY_MATRIX_V1.md. Designed for direct use in Linear: each initiative becomes a top-level Linear Initiative; Projects within become Linear Projects; Capabilities map to Linear Issues / Epics.*
 
 **Status:** Engineering Planning Artifact (v1, 2026-05-30)

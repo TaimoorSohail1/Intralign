@@ -1,5 +1,7 @@
 # OSLO Capability Matrix v1
 
+> **📦 ARCHIVED 2026-06-04 — historical.** Superseded by `OSLO_CAPABILITY_MATRIX_V2.md`. Moved to `04_research/historical_artifacts/` to keep the active tree clean; content preserved for history and does **not** govern implementation.
+
 *Engineering planning matrix. Foundation for roadmap planning and backlog decomposition. Companion to OSLO_ARCHITECTURE_BASELINE_V1.md and OSLO_LINEAR_INITIATIVES_V1.md.*
 
 **Status:** Engineering Planning Artifact (v1, 2026-05-30)

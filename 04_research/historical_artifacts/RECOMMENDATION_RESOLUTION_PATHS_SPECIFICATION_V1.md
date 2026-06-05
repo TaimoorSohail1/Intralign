@@ -1,5 +1,7 @@
 # Recommendation Resolution Paths Specification v1 — RETIRED
 
+> **📦 ARCHIVED 2026-06-04 — historical.** Superseded by `RECOMMENDATION_SYSTEM_SPECIFICATION_V1.md (§4 / §11b)`. Moved to `04_research/historical_artifacts/` to keep the active tree clean; content preserved for history and does **not** govern implementation.
+
 > ## ⛔ RETIRED — AMB-1 reconciliation, Decision A ratified (2026-05-31)
 > **Resolution Paths are NOT a modeled construct.** Per `RECOMMENDATION_RESOLUTION_PATHS_RECONCILIATION_DECISION_001.md` (Option A), "Possible Resolution Paths" are a **UI presentation pattern over multiple Recommendations associated with the same Finding**, not an embedded Recommendation substructure and not a domain object.
 > - **Do not implement** `resolution_paths[]`, `is_recommended`, or `is_selected` as modeled fields.
@@ -8,7 +10,7 @@
 > - Retained for history only; the content below no longer governs implementation. Future-Architecture Resolution Candidate remains untouched.
 
 **Type:** Implementation specification — **RETIRED** (was: Resolution Paths as an embedded Recommendation substructure)
-**Status:** Active Release 1 · **Date:** 2026-05-31
+**Status:** Historical — archived 2026-06-04 (no longer governs implementation) · **Date:** 2026-05-31
 **Sits below (authoritative — implements, must not modify):** `RECOMMENDATION_SYSTEM_SPECIFICATION_V1.md` · Recommendation Model v1 · Finding Model · `RECOMMENDATION_FINDING_COUPLING_SPECIFICATION_V1.md` · CAF Scoring v2 · Reliability v2 · Confidence v2 · State/Data/Event Models.
 **Supersedes (as implementation direction):** `CLARIFICATION_CANDIDATE_MODEL_V1.md` (retired) · `CLARIFICATION_CANDIDATE_INTEGRATION_SPEC_V1.md` (superseded).
 

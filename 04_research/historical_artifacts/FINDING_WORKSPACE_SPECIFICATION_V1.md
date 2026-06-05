@@ -1,5 +1,7 @@
 # Finding Workspace Specification v1 — SUPERSEDED / REPOSITIONED
 
+> **📦 ARCHIVED 2026-06-04 — historical.** Superseded by `FINDING_PANEL_SPECIFICATION_V1.md`. Moved to `04_research/historical_artifacts/` to keep the active tree clean; content preserved for history and does **not** govern implementation.
+
 > ## ⛔ SUPERSEDED / REPOSITIONED — Surface Reconciliation Decision 001, Option A ratified (2026-05-31)
 > - This document is **superseded/repositioned by `FINDING_PANEL_SPECIFICATION_V1.md`**.
 > - The former **"workspace" framing is no longer canonical for Release 1.** Per `FINDING_AND_RECOMMENDATION_SURFACE_RECONCILIATION_DECISION_001.md` (Option A — Panel Model), the canonical Release 1 surface is a **contextual Finding Panel opened from the MRI Workspace and Artifact Workspace**, subordinate to them — **not a standalone destination**.

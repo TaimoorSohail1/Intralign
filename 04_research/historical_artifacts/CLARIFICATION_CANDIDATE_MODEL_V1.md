@@ -1,5 +1,7 @@
 # Clarification Candidate Model v1 — RETIRED
 
+> **📦 ARCHIVED 2026-06-04 — historical.** Superseded by `RECOMMENDATION_SYSTEM_SPECIFICATION_V1.md (Resolution Paths substructure)`. Moved to `04_research/historical_artifacts/` to keep the active tree clean; content preserved for history and does **not** govern implementation.
+
 > ## ⛔ RETIRED / SUPERSEDED — founder decision (2026-05-31)
 > **Per founder decision, the Clarification Candidate is NOT a first-class persisted Release 1 object.** "Resolution Paths" are instead modeled as a **Recommendation substructure** (`Recommendation → resolution_paths[]`), not as a standalone domain object.
 > - This document is **NOT registered as an active domain object** and **NOT** added to the active model lineage. It is **retained for reference only** (history preserved; not deleted).

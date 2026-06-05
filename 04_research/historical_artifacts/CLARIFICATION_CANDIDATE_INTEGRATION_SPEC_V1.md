@@ -1,5 +1,7 @@
 # Clarification Candidate (Resolution Path) — Integration Specification v1 — SUPERSEDED
 
+> **📦 ARCHIVED 2026-06-04 — historical.** Superseded by `RECOMMENDATION_SYSTEM_SPECIFICATION_V1.md / RECOMMENDATION_RESOLUTION_PATHS_RECONCILIATION_DECISION_001.md`. Moved to `04_research/historical_artifacts/` to keep the active tree clean; content preserved for history and does **not** govern implementation.
+
 > ## ⛔ SUPERSEDED — founder decision (2026-05-31)
 > **This integration direction is no longer in effect.** Per founder decision, Clarification Candidate is **not** a first-class persisted object; Resolution Paths are a **Recommendation substructure**. The standalone entity/lifecycle/events/endpoints below are **withdrawn**.
 > - **Superseded by:** `RECOMMENDATION_RESOLUTION_PATHS_SPECIFICATION_V1.md`.
