@@ -2,7 +2,7 @@
 
 **You are here because you're about to build OSLO.** This repo has ~500 documents. **You need about six of them to start.** This page is the 90-minute path from "confused" to "first PR open." Everything else is governance history you can ignore until you need it.
 
-> Tooling note: you're using **OpenAI Codex**. Codex auto-reads `AGENTS.md`, so it inherits the build rules without you configuring anything. Your job here is to understand the *mental model* and the *build loop* — not to memorize the repo.
+> Tooling note: you're using **Claude Code**. Claude Code auto-reads **`CLAUDE.md`** (and the equivalent `AGENTS.md`), so it inherits the build rules without you configuring anything. Your job here is to understand the *mental model* and the *build loop* — not to memorize the repo.
 
 ---
 
@@ -32,7 +32,7 @@ If you internalize only this section, you'll understand 80% of the codebase deci
 | 2 | **Cognitive Responsibility Architecture Spec** | the canonical architecture (the model above, in full) | `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md` |
 | 3 | **DL-043 + DL-044** (decision log entries) | the two ratified decisions that define R1 scope and the engineering layer | `01_governance/decisions/decision_log.md` |
 | 4 | **Engineering Onboarding Runbook** | who-does-what: access, environment bring-up, the per-wave build loop, testing flow | `03_architecture/RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md` |
-| 5 | **AGENTS.md** (app-repo version) | the rules Codex follows — read it so you know what the agent is bound to | `03_architecture/engineering/starter_kit/AGENTS.md` |
+| 5 | **CLAUDE.md / AGENTS.md** (agent rules) | the rules Claude Code follows — read so you know what the agent is bound to (`CLAUDE.md` and `AGENTS.md` carry the same rules) | `CLAUDE.md` · `03_architecture/engineering/starter_kit/AGENTS.md` |
 | 6 | **Wave A 00R contract** (your first build target) | the first thing you'll implement — the recompute backbone | `03_architecture/contracts/WAVE_A_CONTRACT_PACKAGE_00R_RECOMPUTE_STALE_BACKBONE.md` |
 
 That's it. Stop there. Do **not** read `01_governance/doctrine/`, the ~480 other specs, `04_research/`, or anything marked *Historical / superseded* — they're the reasoning trail, not the build spec.
@@ -54,7 +54,7 @@ When in doubt about scope: a doc only matters if a **contract** you're building 
 
 Follow the runbook's **Phase 1**. Short version:
 
-1. Install Codex; sign in. Clone this repo (reference) and the **app repo** (where you build).
+1. Install Claude Code; sign in (your own Pro/Max). Clone this repo (reference) and the **app repo** (where you build).
 2. Seed the app repo from `03_architecture/engineering/starter_kit/`: copy in `docker-compose.yml`, `.env.example` (→ `.env`), `ci-pipeline.yml` (→ `.github/workflows/ci.yml`), and **`AGENTS.md` + `CLAUDE.md`** at the root.
 3. `docker compose up -d` — confirm Postgres, Neo4j, MongoDB, Qdrant, Redis are healthy.
 4. Scaffold the LangGraph skeleton using the code-tree in AGENTS.md (`/backend/responsibilities/...`).
@@ -64,7 +64,7 @@ Follow the runbook's **Phase 1**. Short version:
 ## 5. The build loop (how every increment goes)
 
 1. **Pick the contract** for the increment (start: Wave A **00R**, then **001**, **002**, then Wave B…). Build order is in the Handoff Package §3.
-2. **Point Codex at the contract.** It reads `AGENTS.md` + the contract, builds in `/backend/responsibilities/<owner>/` on a `feat/...` branch, writes **positive + negative** tests, and self-verifies.
+2. **Point Claude Code at the contract.** It reads `CLAUDE.md` + the contract, builds in `/backend/responsibilities/<owner>/` on a `feat/...` branch, writes **positive + negative** tests, and self-verifies.
 3. **Open a PR citing the contract id** (e.g. `IC-WA-00R`). CI re-runs the gates automatically.
 4. **You review** — validate the agent's negative tests + invariant assertions, do exploratory testing, approve.
 5. **Owner approves + merges** → Staging. Production is owner-only.
