@@ -18,6 +18,18 @@
 
 ---
 
+## DL-048 Additions (authoritative — ratified 2026-06-05)
+
+**Cost-governance obligation — per-tier token budgets (Fast/Deep engine).** Both modes (DL-046) **must** operate within a **per-tier token budget read from config** (Calibration Defaults §4c; tier-keyed, owner-set). This is bounded behavior of the existing Infer/Evaluate machinery over the 00R coalescing backbone — **no new responsibility or object.**
+- **Per-run over budget → graceful degradation:** Fast Pass returns a **partial orientation within budget** (truncates scope, transitions to `analyzing`); Deep Pass **coalesces/defers** the expansion. **Never** silent overspend, never a hung/runaway pass.
+- **Per-user rollup over budget (daily / monthly) → gate:** further AI spend for that user/tier is gated until the window resets (upgrade prompt is commodity MON). Free tier enforces single-active-project + **single active Deep run + event coalescing** (no runaway re-analysis) + daily fix/chat caps — all tier-keyed config.
+- **Model routing is tier-keyed config** (the primary cost lever): the Free tier routes to the cheap model class (extraction → nano, synthesis/eval → mini, Haiku fallback per Calibration §4c). The engine **must** honor the configured per-tier routing.
+- **Values vs mechanism:** the cap *numbers* are configuration; the *enforcement* here is contracted and non-optional.
+**QA:** positive — a Free-tier Fast/Deep run on the envelope fixture stays **≤ the configured per-run and per-user budgets**; over-budget **degrades/gates and emits**. **Negatives (rejected/impossible):** budget **bypass**; **runaway re-analysis** (a burst of triggers must coalesce to ≤ the configured Deep concurrency); **silent overspend** (proceeding over budget without degrade/gate/emit); **wrong-tier routing** (a Free run on a full-quality model when config says cheap).
+**OBS:** new event **`AI Spend Recorded`** — `tokens_in`, `tokens_out`, `est_cost`, `tier`, `user`, `mode` (fast|deep), `model` per run; **over-budget = trust signal**. Lets the owner replace the starting estimates with measured medians and re-tune the §4c config.
+
+---
+
 ## 0. Shared Orientation (applies to both packages)
 
 **Position in the chain.** `Retain (Attested) → Infer (Findings) → Evaluate (Issues/Confidence/CAF/Outcome Confidence) → [Advise, Wave C]`. Infer reads canonical (Attested) knowledge; Evaluate reads Infer's Findings. **Both read Attested, produce Derived** — they never write canonical knowledge and never promote Derived to Attested (one-way flow).

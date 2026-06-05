@@ -7,6 +7,17 @@
 
 ---
 
+## DL-048 Additions (authoritative — ratified 2026-06-05)
+
+**Cost-governance obligation — synthesis is token-heavy; it runs under the per-tier budget.** Extraction and especially **generation** of planning artifacts are dominant token consumers, so the Synthesis engine is bound by the **same DL-048 cost-governance obligation** as Wave B (Calibration Defaults §4c; tier-keyed, owner-set; **no new responsibility/object**).
+- The Fast/Deep pass driving extraction + synthesis **operates within the configured per-tier token budget**; **per-run over-budget → graceful degradation** (synthesize a **partial** model from the highest-priority evidence within budget; defer remaining generation to a coalesced Deep Pass) — **never** silent overspend or runaway regeneration.
+- **Model routing is tier-keyed config:** Free tier routes **extraction → nano, synthesis/generation → mini** (Haiku fallback) per §4c; the engine must honor it.
+- Per-user daily/monthly rollups are enforced at the engine seam (shared with Wave B); regeneration on user edits is **coalesced** (no per-keystroke synthesis spend).
+**QA:** positive — a Free-tier synthesis run on the envelope fixture stays ≤ the configured budget; over-budget produces a partial Derived model + defers, and **emits**. **Negatives:** budget bypass; **runaway regeneration** (rapid edits must coalesce); silent overspend; wrong-tier routing (Free generation on a full-quality model).
+**OBS:** emit **`AI Spend Recorded`** (tokens/est-cost per run, by `tier`/`mode`/`model`) on extraction + generation; over-budget = trust signal. Shares the single event shape defined in Wave B.
+
+---
+
 ## 0. Package Orientation
 
 - **Capabilities owned:** `EI-02` Claim Extraction · `PS-01` Planning Synthesis Engine · `PS-02` Planning Artifact Generation · `PS-03` Understanding Evaluation seam.

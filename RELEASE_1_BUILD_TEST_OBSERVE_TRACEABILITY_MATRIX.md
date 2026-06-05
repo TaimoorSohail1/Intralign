@@ -38,9 +38,10 @@
 | CRR-01…05 | CAF Review Requests | **WAVE_I · IC-WI-INTERACT** (seam) + WAVE_A_001 intake; **workflow UI = commodity** | response→evidence→Deep Pass; **neg: response-as-truth** | Stakeholder Response Submitted | II/VI |
 | AW-04/05 | Assisted Editing / Persistent Intelligence | WAVE_E (DL-047) | always-visible Confidence/CAF/state; routes to Chat/Fix | (presentation) | VI |
 | (User Acceptance) | Accept + plan fact + Acceptance-Impact | WAVE_U · IC-WU-ACCEPT | user-attested; version-pinned; **neg: self-accept / overwrite** | Acceptance-Impact Assessed | V |
+| MON-COST | Cost Governance / Freemium Unit Economics (per-tier token-budget enforcement; cross-cutting on Fast/Deep) | **WAVE_B + WAVE_S · IC/QA-WB/WS** (DL-048); chat/fix caps **WAVE_I** | per-tier budget honored; per-run over → **graceful degradation**; per-user rollup over → **gate**; **neg: bypass / runaway / silent overspend / wrong-tier routing** | **AI Spend Recorded** (tokens·cost per run·user·tier·mode·model) | II/III |
 
 ## Commodity / platform (NOT cognition-contracted — DL-043 J; build with normal engineering)
-`PF-01/02/03/05` (alpha access, project init/lifecycle, pre-account) · `AW-01/02/03/06/07` (workspace, views, direct editing, panels, navigation) · `COLLAB` · `SHARE` · `TEL-01…07` (product telemetry) · `MON-01…04` (tiering/limits) · `SEC-01…07` (auth/RBAC/isolation/encryption/secrets/audit/privacy) · `PLAT-01…06` (persistence, orchestration, trigger efficiency, compute/token, perf arch, data model) · the **CRR workflow UI**.
+`PF-01/02/03/05` (alpha access, project init/lifecycle, pre-account) · `AW-01/02/03/06/07` (workspace, views, direct editing, panels, navigation) · `COLLAB` · `SHARE` · `TEL-01…07` (product telemetry) · `MON-01…04` (tiering/limits — *billing/upgrade UI is commodity; the cost-**enforcement** on the engine is contracted as **MON-COST** above, DL-048*) · `SEC-01…07` (auth/RBAC/isolation/encryption/secrets/audit/privacy) · `PLAT-01…06` (persistence, orchestration, trigger efficiency, compute/token, perf arch, data model) · the **CRR workflow UI**.
 
 ## Deferred (NOT Release 1)
 `AE-06` Understanding Debt (Future) · `CONF-07` Operational Confidence (Future).

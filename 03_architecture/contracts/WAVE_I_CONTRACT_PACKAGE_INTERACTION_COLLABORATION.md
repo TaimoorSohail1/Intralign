@@ -7,6 +7,17 @@
 
 ---
 
+## DL-048 Additions (authoritative — ratified 2026-06-05)
+
+**Cost-governance — interaction surfaces respect the per-tier daily caps + routing (Calibration Defaults §4c).** Chat and Suggested-Fix consume AI tokens, so they are bound by the DL-048 cost-governance config (tier-keyed; **no new responsibility/object**).
+- **Per-tier daily caps (config):** **chat messages/day** and **suggested-fixes/day** are enforced from §4c (Free defaults: 20 chat/day, 5 fixes/day). On cap → **gate** (surface "limit reached" + upgrade prompt, commodity MON); the existing API `429 rate_limited` already covers the free-tier suggested-fix daily limit.
+- A chat **Improve** that triggers Deep Pass (via 00R) inherits the **per-user rollup budget + routing** enforced at the Wave B/S engine seam — it cannot bypass the budget.
+- **Model routing is tier-keyed config:** Free-tier chat/fix inference routes to the cheap class (§4c).
+**QA:** positive — Free-tier chat/fix usage past the configured daily cap is **gated and emitted**; a chat-triggered Deep Pass stays within the per-user budget. **Negatives:** exceeding a daily cap without gating; a chat-triggered run **bypassing** the engine budget/routing; silent overspend.
+**OBS:** chat/fix inference emits **`AI Spend Recorded`** (shared Wave B event shape: tokens/est-cost by `tier`/`mode`/`model`); daily-cap-hit = product signal, budget-bypass = trust signal.
+
+---
+
 ## 1. Implementation Contract — IC-WI-INTERACT
 
 ### 1A. OSLO Chat (CHAT-01…04) — Disclose

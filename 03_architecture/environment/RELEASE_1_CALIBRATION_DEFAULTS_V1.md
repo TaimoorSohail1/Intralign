@@ -75,6 +75,31 @@
 - **Outside the envelope:** Fast Pass still runs but the 60s target is **not guaranteed** — it returns a partial orientation within budget and continues in `analyzing`/Deep Pass. The QA performance gate (DL-046) is asserted **on envelope-sized fixtures**.
 - **⚠ Confidence note:** these envelope numbers are **conservative engineering placeholders**, not derived from target-customer data. The Performance/NFR spec (R-1) flags the envelope as the single highest-priority owner decision — **confirm against real target project sizes before relying on the 60s promise in production.**
 
+## 4c. Cost Governance — Freemium Unit Economics (proposed; DL-048, Balanced ~$3/mo)
+
+*(Tier-keyed cost config adopted under DL-048. **The values are owner-tunable configuration; the enforcement mechanism, QA gate, and `AI Spend Recorded` event are contracted** — Wave B / Wave S / Wave I. Owner selected the **Balanced (~$3/active-free-user/month)** posture. Numbers are estimate-based starting defaults; the contracted cost telemetry replaces them with measured medians. **Per-run caps trigger graceful degradation; per-user rollups gate further AI spend — never silent overspend.**)*
+
+**Free / Tier 1 defaults:**
+
+| Config knob (tier-keyed) | Free / Tier 1 default | Note |
+|---|---|---|
+| Max active projects | **1** | structural |
+| Model routing | **extraction → nano · synthesis/eval → mini · Haiku fallback** | primary cost lever; engine must honor per tier |
+| Fast Pass per-run token cap (→ degrade) | **150,000** | envelope-driven (posture-independent); over → partial orientation |
+| Deep Pass per-run token cap (→ coalesce/defer) | **600,000** | bounds worst case |
+| Deep concurrency | **1** + coalescing **on** | structural; prevents runaway re-analysis |
+| Deep runs / day | **2** | gate the expensive path |
+| Suggested fixes / day | **5** | API `429 rate_limited` on breach |
+| Chat messages / day | **20** | bound interactive burn |
+| Daily token budget / user | **500,000** | burst smoothing |
+| **Monthly token budget / user (hard rollup)** | **4,000,000** | the binding governor |
+| Monthly $ ceiling / user (alert KPI) | **~$3.00** | business target |
+
+**Cost basis (June 2026 pricing, verified):** GPT-4.1 $2/$8 · GPT-4.1-mini $0.40/$1.60 · GPT-4.1-nano $0.10/$0.40 · Sonnet 4.6 $3/$15 · Haiku 4.5 $1/$5 per 1M tokens (in/out). Per-run estimates: Fast ~120k tok ≈ $0.08 (mini); Deep ~500k tok ≈ $0.32 (mini) / $1.60 (GPT-4.1) / $2.70 (Sonnet). Monthly rollup: 4.0M tok/mo blended (nano-in/mini-out) ≈ **$3.04 worst-case if maxed daily**; median far below. Keep nano on extraction (pure-mini ≈ $3.52).
+
+- **Per-tier, not free-vs-paid:** all knobs above are **tier rows**; **paid-tier limits are undefined (TBD — Open-TBD A6 / Capability Matrix note 10)** — add rows, not code, when defined.
+- **⚠ Confidence note:** these are **estimate-based starting placeholders**, not measured runs. Re-tune from the `AI Spend Recorded` telemetry in the first weeks; the ~$1/$3/$5 posture is an owner decision (Balanced selected).
+
 ## 5. Status & Tuning
 
 - **All values above are owner-review-pending defaults.** They are **configuration**, surfaced for ops to adjust per environment; none changes the architecture or any contract's structure.

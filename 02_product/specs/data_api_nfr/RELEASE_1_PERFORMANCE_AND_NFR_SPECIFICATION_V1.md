@@ -176,21 +176,21 @@ Grounded in Data Model §16:
 
 ---
 
-## 12. Cost Constraints  *(critical)*
+## 12. Cost Constraints  *(critical)* — **ratified enforcement gate (DL-048)**
 
-AI inference is the dominant cost driver; depth is the lever.
+AI inference is the dominant cost driver; depth is the lever. **Per DL-048, freemium unit economics is an enforced, tested, observable Release 1 criterion:** the **enforcement mechanism is contracted** on the Fast/Deep engine (Wave B/S, chat/fix caps Wave I) — per-tier token budgets read from config, **per-run over-budget → graceful degradation**, **per-user rollup over-budget → gate**, never silent overspend; a **QA acceptance gate** asserts Free-tier runs stay within budget (negatives: bypass / runaway / silent overspend / wrong-tier routing); and an **`AI Spend Recorded`** event emits tokens + est-cost per run/user/tier/mode/model. The **cap values are tunable config** (Calibration Defaults §4c); the mechanism is non-optional.
 
 | Item | Expectation |
 |---|---|
-| AI call budget (overall) | **TBD – Owner Decision Required** |
-| Fast Analysis budget (per run) | **TBD – Owner Decision Required** — bounded to protect the 60s/low-cost orientation |
-| Deep Analysis budget (per run) | **TBD – Owner Decision Required** — the costlier pass; gated by coalescing + tier |
+| AI call budget (overall) | **Config (DL-048 / Calibration §4c)** — per-tier monthly rollup (Free: 4M tok/mo ≈ ~$3); enforcement contracted |
+| Fast Analysis budget (per run) | **Config — Free 150k tok** (degrade on breach); bounded to protect the 60s/low-cost orientation |
+| Deep Analysis budget (per run) | **Config — Free 600k tok** (coalesce/defer on breach); the costlier pass; gated by coalescing + tier |
 | Storage cost | **TBD** (driven by retention §8) |
 | Notification cost | in-product only → **near-zero external cost**; no email/SMS/Slack spend (no delivery channels in R1) |
-| Free-tier constraints | one active project; **daily suggested-fix limit** (scope/Monetization); other caps **TBD** |
-| Paid-tier assumptions | higher/relaxed limits — **TBD – Owner Decision Required** |
+| Free-tier constraints | **Config — Balanced ~$3/mo (DL-048):** 1 active project; Deep 2/day single-active+coalesced; 5 fixes/day; 20 chats/day; 500k daily / 4M monthly token budget; nano/mini routing |
+| Paid-tier assumptions | higher/relaxed limits — **TBD – Owner Decision Required** (tier-parameterized config rows; Open-TBD E3) |
 
-**No financial values invented.** Cost control mechanisms that *are* defined: single-active-project (free), suggested-fix daily cap, single-active-deep-run + event coalescing (prevents runaway re-analysis). Dollar figures are owner decisions.
+**Values are owner-set config; the enforcement, QA gate, and `AI Spend Recorded` telemetry are contracted (DL-048).** Cost-control mechanisms: single-active-project (free), suggested-fix daily cap, single-active-deep-run + event coalescing (prevents runaway re-analysis), **tier-keyed cheap-model routing** (the primary lever), per-tier budget gating with graceful degradation. Starting dollar/token figures are estimate-based defaults (Calibration §4c), re-tuned from the contracted cost telemetry.
 
 ---
 
