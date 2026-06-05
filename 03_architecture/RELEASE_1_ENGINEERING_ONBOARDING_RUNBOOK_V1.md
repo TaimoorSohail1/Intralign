@@ -147,7 +147,33 @@ Every change, in order; any failure stops the change:
 
 ---
 
-## 5. Quick reference — who owns each gate
+## 5. Testing tooling — frameworks by QA validation layer (non-canonical guidance)
+
+> **Status of this section:** practical starting point, **not governance.** `QA_GOVERNANCE_SPECIFICATION_V1` is deliberately tool-agnostic ("*no test frameworks, tooling… not how tests are built*") — it defines *what* to validate and the gates; this section suggests *how*. Swap any tool freely; the governance is unaffected.
+
+**Division of labor:** Claude Code **authors** the tests (positive **and** negative, tracing each to its contract) and runs them; **standard frameworks** execute them; **CI** enforces the gates; **you** approve. You do **not** need a managed third-party QA service — the suite below plus CI covers Release 1, and much of it (invariant + replay) is custom anyway.
+
+| QA validation layer (spec §3) | What it checks | Suggested framework(s) | Who authors |
+|---|---|---|---|
+| **1. Object** | object existence, single ownership, lifecycle, legal state transitions | unit tests — **pytest** (Py) / **Jest/Vitest** (TS) | Claude Code; dev reviews |
+| **2. Behavior** | event generation, recompute (only info-change recomputes), state transitions | integration tests — pytest/Jest against the LangGraph graph | Claude Code; dev reviews |
+| **3. Governance** | exposure/authorization decisions; **Authority generates nothing** | integration + targeted **negative** tests | **dev-owned negatives** + Claude |
+| **4. Contract** | Impl acceptance present; QA pos+neg present & passing; Observability present | the wave's contract test module (pytest/Jest) + the **contract-traceability CI gate** | Claude Code; dev curates |
+| **5. Regression** | prior-approved behavior/conformance/invariants preserved | full suite on every PR in CI; snapshot/golden-file tests | CI (automated) |
+
+**Cross-cutting / specialized (add as the relevant wave lands):**
+
+- **Determinism / two-axis replay** (exact for records & rules; ±7-pts & same-band for AI-numeric; semantic for AI-text — per Calibration Defaults) → **custom replay harness** (pytest fixtures pinning a baseline). No off-the-shelf tool does this; Claude builds it against the Observability contract.
+- **Epistemic-invariant gate** (no Derived→Attested write; recompute appends; no Authority module; canonical append-only) → **custom assertion suite + static checks**, wired as CI gate 4. Custom by nature.
+- **End-to-end / UI** (Wave E Disclose surfaces) → **Playwright** (recommended) or **Cypress**.
+- **Security** (CI gate 6) → **CodeQL** or **Snyk** (SAST/deps) + **gitleaks** (secret-scan).
+- **Load / performance** (optional, later) → **k6** or **Locust**.
+
+**The independence rule, kept real:** the spec requires that *the implementer does not validate itself.* Because tests trace to the **contract** (the independent source of truth) and you approve, Claude authoring tests is acceptable — **but** have your developer **own and curate the negative tests and the invariant-gate assertions** (the Governance-layer and gate-4 rows above) rather than accepting Claude-generated assertions on both sides unchecked. That preserves the principle in spirit.
+
+---
+
+## 6. Quick reference — who owns each gate
 
 | Action | Claude Code (autonomous) | Developer | Owner (you) |
 |---|---|---|---|
