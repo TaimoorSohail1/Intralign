@@ -34,7 +34,7 @@ If you internalize only this section, you'll understand 80% of the codebase deci
 | 2 | **Cognitive Responsibility Architecture Spec** | the canonical architecture (the model above, in full) | `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md` |
 | 3 | **DL-043 + DL-044** (decision log entries) | the two ratified decisions that define R1 scope and the engineering layer | `01_governance/decisions/decision_log.md` |
 | 4 | **Engineering Onboarding Runbook** | who-does-what: access, environment bring-up, the per-wave build loop, testing flow | `03_architecture/RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md` |
-| 5 | **CLAUDE.md / AGENTS.md** (agent rules) | the rules Claude Code follows — read so you know what the agent is bound to (`CLAUDE.md` and `AGENTS.md` carry the same rules) | `CLAUDE.md` · `03_architecture/engineering/starter_kit/AGENTS.md` |
+| 5 | **CLAUDE.md** (agent rules — Claude Code reads it) | the rules Claude Code follows — read so you know what the agent is bound to (`AGENTS.md` is the identical tool-neutral twin) | `CLAUDE.md` · app-repo: `03_architecture/engineering/starter_kit/CLAUDE.md` |
 | 6 | **Wave A 00R contract** (your first build target) | the first thing you'll implement — the recompute backbone | `03_architecture/contracts/WAVE_A_CONTRACT_PACKAGE_00R_RECOMPUTE_STALE_BACKBONE.md` |
 
 That's it. Stop there. Do **not** read `01_governance/doctrine/`, the ~480 other specs, `04_research/`, or anything marked *Historical / superseded* — they're the reasoning trail, not the build spec.
@@ -60,7 +60,7 @@ Follow the runbook's **Phase 1**. Short version:
 1. Install Claude Code; sign in (your own Pro/Max). Clone this repo (reference) and the **app repo** (where you build).
 2. Seed the app repo from `03_architecture/engineering/starter_kit/`: copy in `docker-compose.yml`, `.env.example` (→ `.env`), `ci-pipeline.yml` (→ `.github/workflows/ci.yml`), and **`CLAUDE.md` + `AGENTS.md`** at the root.
 3. `docker compose up -d` — confirm Postgres, Neo4j, MongoDB, Qdrant, Redis are healthy.
-4. Scaffold the LangGraph skeleton using the code-tree in AGENTS.md (`/backend/responsibilities/...`).
+4. Scaffold the LangGraph skeleton using the code-tree in `CLAUDE.md` (`/backend/responsibilities/...`).
 
 ---
 
