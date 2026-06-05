@@ -18,6 +18,7 @@ Produce OSLO's **understanding** of the canonical record — Findings (Infer), a
 
 ### Phase-specific (Wave B — Infer + Evaluate)
 - **Contract:** `03_architecture/contracts/WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING.md`
+- **Synthesis Engine contract (DL-047, build with/before Wave B):** `03_architecture/contracts/WAVE_S_CONTRACT_PACKAGE_SYNTHESIS_ENGINE.md` (IC/QA/OBS-WS-SYNTH — extraction · synthesis · generation as Derived)
 - **Conformance:** `03_architecture/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§1 WB-INFER/WB-EVAL)
 - **Scoring models (Evaluate):** `02_product/specs/models/CONFIDENCE_MODEL_V2.md` · `…/RELIABILITY_MODEL_V2.md` · `…/CAF_SCORING_MODEL_V2.md`
 - **Drift/band config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§2 bands, §3 drift)
