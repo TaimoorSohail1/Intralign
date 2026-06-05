@@ -23,3 +23,9 @@ A **constitutional knowledge system**, not a software project. It holds OSLO's d
 5. For **building the application**: `03_architecture/RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md` → `RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md`. The app-repo agent instructions are seeded from `03_architecture/engineering/starter_kit/AGENTS.md`.
 
 *Authoritative source: `CLAUDE.md`. This file mirrors it for tool neutrality; where they differ, `CLAUDE.md` governs.*
+
+## Drift-control files (external team / LLM — read before building)
+- `ANTI_ASSUMPTION_BUILD_PROTOCOL.md` — never infer a gap; escalate. **Read first.**
+- `CANONICAL_GLOSSARY.md` — one name per concept + banned synonyms.
+- `RELEASE_1_BUILD_TEST_OBSERVE_TRACEABILITY_MATRIX.md` — capability → contract → test → event.
+- `OPEN_TBD_REGISTER.md` — every owner-decision-required value; DO NOT ASSUME.

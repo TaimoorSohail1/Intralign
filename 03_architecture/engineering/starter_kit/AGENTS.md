@@ -80,3 +80,9 @@ Mandatory **positive AND negative** suites, mirrored to the code structure. Dete
 
 ## DL-047 vocabulary additions
 Use: `SynthesizedPlanningModel`, `PlanningArtifact` (Derived, generated, user-editable), `ChatSession`/`ChatExchange`, `ReviewRequest`/`StakeholderResponse`, `SuggestedFix`. Rules: planning artifacts are **Derived** (never written Attested-as-truth; recompute appends a CHR); **OSLO never autonomously writes a Suggested Fix** (user applies); **Chat writes no canonical and changes no assessment**; a stakeholder response is **evidence** that triggers Deep Pass.
+
+## Drift-control files (external team / LLM — read before building)
+- `ANTI_ASSUMPTION_BUILD_PROTOCOL.md` — never infer a gap; escalate. **Read first.**
+- `CANONICAL_GLOSSARY.md` — one name per concept + banned synonyms.
+- `RELEASE_1_BUILD_TEST_OBSERVE_TRACEABILITY_MATRIX.md` — capability → contract → test → event.
+- `OPEN_TBD_REGISTER.md` — every owner-decision-required value; DO NOT ASSUME.
