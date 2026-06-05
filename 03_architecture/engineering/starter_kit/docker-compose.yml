@@ -1,0 +1,88 @@
+# OSLO Release 1 — Local Development Stack (TEMPLATE)
+# Seeds the APPLICATION repo, not the knowledge base. Copy to the app repo root.
+# Brings up the five datastores from the Runtime Environment Constraint Profile for
+# local Dev only. Synthetic/seed data only — never raw production canonical data.
+# Values come from .env (see .env.example). Do not commit .env.
+
+services:
+  # --- Postgres: system of record (Attested Assertions, Cognition History, User Acceptance) ---
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-oslo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oslo_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-oslo}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-oslo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Neo4j: graph (relationships among governed objects) ---
+  neo4j:
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-oslo_dev_pw}
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"
+      - "${NEO4J_BOLT_PORT:-7687}:7687"
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # --- MongoDB: documents (artifacts, derived projections) ---
+  mongodb:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-oslo}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-oslo_dev}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # --- Qdrant: vector embeddings ---
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # --- Redis: cache / sessions / streams ---
+  redis:
+    image: redis:7
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  mongo_data:
+  qdrant_data:
+  redis_data:
