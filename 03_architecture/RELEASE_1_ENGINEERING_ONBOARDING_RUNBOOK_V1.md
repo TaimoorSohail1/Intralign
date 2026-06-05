@@ -161,6 +161,20 @@ Every change, in order; any failure stops the change:
 
 > **Status of this section:** practical starting point, **not governance.** `QA_GOVERNANCE_SPECIFICATION_V1` is deliberately tool-agnostic ("*no test frameworks, tooling… not how tests are built*") — it defines *what* to validate and the gates; this section suggests *how*. Swap any tool freely; the governance is unaffected.
 
+### 5.0 Testing flow — who tests what, when
+
+Testing happens in **two automated passes before any human looks**, then a human review pass. The agent does real testing; the developer makes sure that testing is *honest* and catches what automation can't.
+
+1. **Agent builds + tests locally (1st automated pass).** Claude Code / Codex writes the code **and** the positive + negative suites against the contract, runs them on its feature branch, and **self-verifies against the contract's QA** before doing anything else.
+2. **Agent opens the PR**, citing the contract id.
+3. **CI re-runs the gates (2nd automated pass).** On PR open, GitHub Actions re-executes everything in a clean environment — build · contract-traceability · pos+neg tests **again** · epistemic-invariant gate · observability · security. It does **not** just trust the agent's local run. A red gate blocks the PR before the developer spends any time.
+4. **Developer reviews (human pass) — "validate and harden," not "re-run."** Read the diff for contract-conformance; **curate the agent's negative tests and invariant assertions** (the QA-Governance *implementer-doesn't-validate-itself* rule — the agent must not be sole author *and* sole grader); do **exploratory / edge testing** CI can't express (pull the branch, run locally); then request changes or approve.
+5. **Owner approves + merges** (branch-protection gate) → merge to `main` → auto-deploy to Staging.
+
+The agent's tests are **not** discarded after merge — they become the permanent **regression suite** that runs on every future PR (layer 5 below).
+
+
+
 **Division of labor:** Claude Code **authors** the tests (positive **and** negative, tracing each to its contract) and runs them; **standard frameworks** execute them; **CI** enforces the gates; **you** approve. You do **not** need a managed third-party QA service — the suite below plus CI covers Release 1, and much of it (invariant + replay) is custom anyway.
 
 | QA validation layer (spec §3) | What it checks | Suggested framework(s) | Who authors |
