@@ -147,6 +147,22 @@
 
 - These are **owner-tunable placeholders**, not measured; TEL-07 (displayed/clicked/converted + dismiss) provides the tuning signal. UP-3 (high-intent) and UP-4 (honest-disclosure, fired with the Wave E partial-orientation surface) are exempt from the per-day cap when they coincide with a genuine constraint event.
 
+## 4e. Share / Invite prompt timing (proposed; Virality Audit 001 P3)
+
+*(Tunable timing for the value-moment Share/Invite prompts — `12_freemium_tier_behavior_logic.md` SP-1…4. Reuses the §4d pattern; tuned via TEL-06 against invites→joins→conversions.)*
+
+| Knob | Proposed default | Note |
+|---|---|---|
+| Global share-prompt cap | **≤ 2 / day**, **≤ 1 / session** | shares the §4d budget where co-located; anti-annoyance |
+| SP-1 (strong/first MRI) | **once / project** | the activation share moment |
+| SP-2 (invite-stakeholder on a finding) | **in-context, no cooldown** | high-intent; foregrounded (value = virality) |
+| SP-3 (confidence/milestone) | **cooldown ≥ 3 days** | |
+| SP-4 (post-export) | **once / export, non-modal** | |
+| First-value guard | **on** — no share prompt before first MRI | |
+| No-interrupt guard | **on** — never during an active pass | |
+
+- Owner-tunable placeholders; **user-initiated only, no autonomous sends, no dark patterns.** SP-2 (invite-a-stakeholder) is exempt from the per-day cap when it coincides with a genuine validation/finding moment.
+
 ## 5. Status & Tuning
 
 - **All values above are owner-review-pending defaults.** They are **configuration**, surfaced for ops to adjust per environment; none changes the architecture or any contract's structure.

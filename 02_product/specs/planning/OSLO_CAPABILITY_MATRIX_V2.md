@@ -214,7 +214,7 @@
 
 | ID | Capability | Description | Obj | User Value | Scope | Pri | Deps | Spec §§ | AC | Objects | Surfaces | AI | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| CRR-01 | Review Request Creation | "Share For Review" a CAF finding to a stakeholder | S/I | Get the right input | Alpha | High | OVL-03, REC-05 | §8, §14 F11, §16 C14 | C14 | CRR, Ovl, Find | OvlPanel, IssuePanel | N | Active virality mechanism |
+| CRR-01 | Review Request Creation | "Share For Review" a CAF finding to a stakeholder | S/I | Get the right input | Alpha | High | OVL-03, REC-05 | §8, §14 F11, §16 C14 | C14 | CRR, Ovl, Find | OvlPanel, IssuePanel | N | Active virality mechanism; **Free-tier with bounded cap (P2); recipient = Reviewer Principal (DL-049)** |
 | CRR-02 | Review Package | Package includes finding, context, recommendation, artifact reference | S | Reviewer has full context | Alpha | High | CRR-01 | §16 C14 | C14 | CRR, Find, Rec, Art | Sharing | N | Sent to selected stakeholder |
 | CRR-03 | Stakeholder Responses | Reviewer can Comment, Approve, Reject, Suggest Alternative | S | Structured stakeholder input | Alpha | High | CRR-02 | §16 C14 | C14 | CRR, Cmt | Sharing | N | Responses preserved |
 | CRR-04 | Response → Deep Pass | Submitted responses become evidence and trigger Deep Pass; confidence/MRI update | U/S | Input improves understanding | Alpha | High | CRR-03, AE-03 | §8, §16 C14 | C14 | CRR, Evid, Confst, MRI | Overview | Y | "Review Requests create evidence" (§18) |
@@ -227,9 +227,9 @@
 | ID | Capability | Description | Obj | User Value | Scope | Pri | Deps | Spec §§ | AC | Objects | Surfaces | AI | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | SHARE-01 | Project Sharing | Share a project | S | Bring others in | Alpha | High | SEC-02 | §16 C12 | C12 | Shr, Proj | Sharing | N | — |
-| SHARE-02 | MRI Sharing & Links | Share MRI via view sharing, public links, private links | S | Spread understanding | Alpha | High | MRI-01, SEC-02 | §7, §16 C12 | C12 | Shr, MRI | Sharing, MRIv | N | MRI is the passive virality mechanism |
+| SHARE-02 | MRI Sharing & Links | Share MRI via view sharing, public links, private links | S | Spread understanding | Alpha | High | MRI-01, SEC-02 | §7, §16 C12 | C12 | Shr, MRI | Sharing, MRIv | N | MRI is the passive virality mechanism; **Free-tier (P2); carries attribution+CTA (P1, Virality Audit 001)** |
 | SHARE-03 | Artifact Sharing | Share individual artifacts | S | Targeted sharing | Alpha | Medium | SEC-02 | §16 C12 | C12 | Shr, Art | Sharing, ArtView | N | — |
-| SHARE-04 | PDF Export | Export MRI/artifacts to PDF | S/C | Portable output | Alpha | Medium | MRI-01 | §7, §13, §16 C12 | C12 | Shr, MRI, Art | Sharing | N | Free tier: PDF export only |
+| SHARE-04 | PDF Export | Export MRI/artifacts to PDF | S/C | Portable output | Alpha | Medium | MRI-01 | §7, §13, §16 C12 | C12 | Shr, MRI, Art | Sharing | N | Free tier: PDF export only; **carries attribution+CTA — viral surface (P1, Virality Audit 001)** |
 | SHARE-05 | Permission Levels | Permission levels on shared content | S/F | Control access | Alpha | High | SEC-02 | §16 C12 | C12 | Shr | Sharing | N | Levels not enumerated (see §22) |
 
 ---

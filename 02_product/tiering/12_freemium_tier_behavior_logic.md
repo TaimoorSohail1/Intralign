@@ -12,6 +12,17 @@
 - PDF/export snapshot
 - lightweight sharing
 
+### Viral primitives guaranteed on Free (P2 — Virality Audit 001)
+
+The viral loop **seeds on Free**; monetize *depth/capacity*, not the *seed*. The following are **Free-tier capabilities** (subject only to bounded caps, never tier-gated off):
+
+- **MRI share links** (SHARE-02) — the passive loop.
+- **PDF export** (SHARE-04) — the portable, brandable artifact (Free = PDF only).
+- **Comments** (COLLAB-01) — pull people into context.
+- **CAF Review Requests — limited** (CRR) — the **active** loop. Available on Free with a **bounded daily/active CRR cap** (cost-governed under DL-048; tier-keyed config), since CRR is both the strongest virality mechanic *and* how Free users get stakeholder value. **Gate CRR *depth/volume*, not its existence.**
+
+*(What stays constrained on Free remains below: collaboration **depth**, integrations, continuous monitoring, governance, export/sync — i.e. capacity and advanced surfaces, not the seed primitives.)*
+
 ---
 
 # Freemium Constraints
@@ -54,6 +65,29 @@ Constrain:
 **Global guards (all triggers):** never interrupt an active Fast/Deep pass; not before first value (first MRI) delivered; honor per-trigger cooldown + a global per-day cap (Calibration §4d); no persistent wallpaper.
 
 **Optimality objective (what TEL-07 tunes against):** maximize **prompt → conversion** while keeping the **dismissal/annoyance signal** (rapid-dismiss, repeat-ignore) below threshold. A trigger that under-converts **and** over-annoys is auto-suppressed and re-tuned. "Optimal timing" = this objective, not a fixed schedule.
+
+---
+
+# Virality — Surface Attribution + Share-Prompt Timing (P1/P3 — Virality Audit 001)
+
+*Applied from `RELEASE_1_VIRALITY_K_FACTOR_AUDIT_001`. Commodity (SHARE/MON); **value-aligned** — user-initiated, honest, no dark patterns; reuses the Upgrade-Prompt two-class trigger model. Timing numbers → Calibration §4e.*
+
+## Viral surface attribution (P1)
+
+Every shared artifact is a viral surface. **PDF exports (SHARE-04)** and **shared MRI links (SHARE-02)** carry **tasteful attribution + CTA** — e.g. *"Made with OSLO — map your own project's understanding,"* linking to project creation. **Honest attribution, not a watermark gimmick; never misleading.** This is the cheapest i×c lever (pure presentation).
+
+## Share / Invite prompt timing (P3)
+
+Reuses the Upgrade-Prompt **two-class** model, but here the dominant class is **value-moment** (sharing is sold at a peak, not at a wall):
+
+| # | Trigger event | Class | Message (illustrative) | Timing |
+|---|---|---|---|---|
+| SP-1 | Strong MRI delivered / first MRI | value | "Share this understanding with your stakeholders." | at value peak; once/project |
+| SP-2 | Finding ready for stakeholder input (REC-05 validation rec) | value | "**Invite a stakeholder to strengthen this finding**" → CRR | in-context on the finding |
+| SP-3 | Confidence raised / outcome milestone | value | "Share your progress." | at milestone; cooldown |
+| SP-4 | Export completed (PDF) | value (soft) | "Your PDF carries a link — invite others to map their own." | once per export, non-modal |
+
+**Guards (reuse §4d pattern):** user-initiated only (no autonomous sends); never interrupt an active pass; value before ask (not before first MRI); per-trigger cooldown + global cap (Calibration §4e); no persistent wallpaper. **Foreground SP-2** — because a CRR response becomes evidence (CRR-04), "invite a stakeholder" both grows the network *and* improves the user's own understanding (value = virality). **Objective (TEL-06):** maximize invites→joins→conversions while keeping the annoyance signal bounded.
 
 ---
 
