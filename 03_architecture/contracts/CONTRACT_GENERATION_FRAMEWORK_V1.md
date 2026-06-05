@@ -143,3 +143,10 @@ This framework uses formal OSLO specification style, mirroring `IMPLEMENTATION_C
 *This framework defines how a coordinated contract set — Implementation Contract, QA Contract, and Runtime Observability Contract — is generated from each Release 1 backlog story, transforming validated source understanding into contract-ready, machine-consumable delivery intent. It establishes that every set is generated from canonical source specs and stories (contracts never originate intent), that the three contracts remain mutually consistent across source story, epic, construct type, scope, out-of-scope, positive and negative acceptance, invariants, states, dependencies, ambiguities, deferred items, and human-review requirements (a mismatch fails conformance), that every obligation traces bidirectionally to a source clause/story/conformance/fail-condition/invariant, that positive and negative acceptance are both carried forward and applicable invariants bind all three contracts, that ambiguity is surfaced not resolved, that deferred scope and new constructs require owner decision and prior classification, and that human approval is required before any set becomes usable. It defines pre-use validation, the relationship to the Release 1 Contract Inventory it populates, completion criteria, and conformance fail conditions. It defines the framework only — no APIs, prompts, tools, models, vendors, implementation, automation, databases, schemas, infrastructure, CI/CD, testing tools, telemetry systems, or coding standards.*
 
 **Contract Generation Framework v1 complete.**
+
+
+---
+
+## §E+ Capability-to-Contract Traceability Gate (DL-047 Part D, ratified 2026-06-04)
+
+Every **`OSLO_CAPABILITY_MATRIX_V2` Alpha (Release 1)** capability must reference **either** an owning contract **or** an explicit classification: **commodity** (Category C/E/F per DL-043 J) or **deferred** (out of R1, owner-recorded). A capability that is Alpha with neither is a **coverage defect** (the Fast/Deep / synthesis-engine class). CI SHOULD assert this mapping; un-mapped Alpha capabilities fail the contract-pipeline pre-use check (§K).

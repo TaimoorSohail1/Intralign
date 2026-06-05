@@ -8,6 +8,15 @@
 
 ---
 
+## DL-047 Additions (authoritative — ratified 2026-06-04)
+
+**OSLO Chat (CHAT-01…04) — Disclose-class interaction surface.** Chat is a project-aware interaction surface that **consumes** existing cognition (Explain/Clarify) and may **trigger** cognition (Improve → routes through Advise + Deep Pass). It **generates no canonical content** and **changes no assessment** itself. Inherits context when launched from an issue/recommendation/artifact/CRR. **QA negative (Critical):** Chat writing canonical, self-accepting, mutating an artifact directly, or changing an assessment outside recompute. **OBS:** `Chat Exchange` events (non-canonical).
+**MRI sub-components (MRI-04…07):** the Disclose MRI surface **must** present the **Artifact Understanding Heatmap**, **CAF Triangle**, **Understanding Timeline**, and **Understanding Dependencies (blocked-awaiting-review)** — each tracing to its governed objects + UX spec.
+**Assisted Editing / Persistent Intelligence (AW-04/05):** during artifact editing, Disclose presents always-visible Outcome Confidence / Clarity / Alignment / Feasibility / Understanding-State, and routes assists to Chat (B1) or Suggested Fix (B3).
+**CRR status visibility (CRR-05):** review status presented across the workspace + in MRI. *(The CRR workflow UI — create/package/notify — is Category E commodity per DL-043 J; the cognitive seam response→evidence→Deep Pass is contracted in Wave A DL-047 Additions.)*
+
+---
+
 ## E0. Shared Orientation & Invariants (all surfaces)
 
 **What Disclose owns:** posture-aware **disclosure**, **epistemic-safety**, **surface-invariant meaning preservation**. **Render** (Service) does pixel-level formatting. **MRI is the umbrella** (visualization + diagnostic experience); Finding/Recommendation are **Panels** (not Workspaces); the **Recommendation Panel opens only in Finding context** (RP-C1); "Possible Resolution Paths" is **presentation-only** (multiple Recommendations, no object — AMB-1).

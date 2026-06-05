@@ -536,6 +536,22 @@ Each decision entry contains:
 
 ---
 
+### DL-047 — Release 1 Contract-Coverage Resolution (Synthesis Engine · Interaction/Collaboration · Enumeration)
+
+- **Date Recorded:** 2026-06-04
+- **Layer:** Implementation Spec (architecture-additive) + contract amendments.
+- **Source:** `01_governance/decisions/PROPOSAL_CONTRACT_COVERAGE_RESOLUTION_DL047_DISPOSITION.md` · audit `03_architecture/reviews/RELEASE_1_CONTRACT_COVERAGE_AUDIT_002.md`. **Builds on:** DL-043/044/046.
+- **Decision:** Closes the cognitive contract-coverage gaps found in Audit 002 (the Fast/Deep class). **(A)** the evidence→plan engine — **Perceive performs source-attributed claim extraction** (evidence-attested, no Derived cognition), and **Infer is extended to synthesize a `SynthesizedPlanningModel` and generate `PlanningArtifact`s as Derived Cognition** (recomputable, CHR-per-generation, user-editable, never Attested-as-truth); Evaluate seeds CAF/Confidence from the synthesized model. **No new responsibility** (Option 1). **(B)** classify: **OSLO Chat** = R1 Disclose-class interaction surface (consumes/triggers cognition, writes no canonical); **CAF Review Requests** = contract the response→evidence→Deep-Pass seam (Perceive), workflow UI is Category-E commodity; **Suggested Fixes** = Advise candidate + **user-applied** edit (no autonomous OSLO write); **Validation Recommendations** = Advise type. **(C)** enumerate False-Confidence Detection, Understanding State Model, Progressive Disclosure, MRI sub-components, assisted editing into Wave B/E. **(D)** adopt a **capability-to-contract traceability gate** (Framework §E+) to prevent recurrence.
+- **Rationale:** the responsibility-organized contracts captured the cognitive spine but not several named Alpha capabilities; most criticially the generative synthesis engine had no contracted home. Modeling synthesis as Derived (extended Infer) makes it buildable within the ratified epistemic model without inventing a responsibility.
+- **Disposition:** Accepted (as a whole).
+- **Conditions:** generated Planning Artifacts are Derived (never Attested-as-truth); OSLO performs no autonomous artifact writes (Suggested Fixes are user-applied); CRR workflow UI remains commodity; Chat writes no canonical and changes no assessment.
+- **Supersedes:** Nothing. Additive within existing responsibilities; preserves all DL-043 epistemic invariants.
+- **Affected Artifacts:** Architecture spec, Object Model, Behavior Model (DL-047 sections added); Wave A-001, Wave B, Wave C, Wave E contracts (DL-047 Additions); Contract Inventory; Contract Generation Framework (§E+ gate); phase plans II/III/IV/VI. Audit 002 + DL-047 proposal retired.
+- **Resulting Actions:** Additions applied; conformance to be re-confirmed at contract regeneration; CHG-054 recorded.
+- **Status:** Ratified with Conditions.
+
+---
+
 ## Open Questions Not Recorded as Decisions
 
 The following appear in `03_implementation_specs/14_open_questions_design_risks.md` and remain explicitly open. They are not decisions and are listed here for reference only.
@@ -550,7 +566,7 @@ The following appear in `03_implementation_specs/14_open_questions_design_risks.
 
 ## Governance Notes
 
-1. The decision log is operative as of DL-029. DL-029 through DL-046 are Ratified under Framework 001/001A (DL-045 is a separate pending draft — tool-neutral agent terminology — not yet recorded here). DL-036, DL-037, DL-038, and DL-039 are Ratified with Conditions; DL-040 and DL-041 are Ratified with Clarifications; DL-042 is Ratified (unconditional); **DL-043 is Ratified with Conditions** (consolidated Release 1 architecture & epistemic foundation, constituents A–J); **DL-044 is Ratified with Conditions** (Release 1 engineering-enablement layer, constituents A–D: Claude Code Constraints, Wave packages, Calibration Defaults, Deployment Governance); **DL-046 is Ratified** (Fast/Deep analysis modes + <60s Time-to-First-MRI as explicit Wave B contract + NFR obligations). Operative governance framework set: Framework 001, Framework 001A, OGAP v1.0, DECISION-READY.
+1. The decision log is operative as of DL-029. DL-029 through DL-047 are Ratified under Framework 001/001A (DL-045 is a separate pending draft — tool-neutral agent terminology — not yet recorded here). DL-036, DL-037, DL-038, and DL-039 are Ratified with Conditions; DL-040 and DL-041 are Ratified with Clarifications; DL-042 is Ratified (unconditional); **DL-043 is Ratified with Conditions** (consolidated Release 1 architecture & epistemic foundation, constituents A–J); **DL-044 is Ratified with Conditions** (Release 1 engineering-enablement layer, constituents A–D: Claude Code Constraints, Wave packages, Calibration Defaults, Deployment Governance); **DL-046 is Ratified** (Fast/Deep analysis modes + <60s Time-to-First-MRI as explicit Wave B contract + NFR obligations); **DL-047 is Ratified with Conditions** (contract-coverage resolution: synthesis engine as Derived/extended-Infer, Chat/CRR/Suggested-Fix classification, sub-feature enumeration, capability→contract traceability gate). Operative governance framework set: Framework 001, Framework 001A, OGAP v1.0, DECISION-READY.
 2. DL-001 through DL-028 are grandfathered as Stated per DL-032. They remain in effect but require future Proposals to convert to Ratified.
 3. Future entries must cite the source Proposal, follow the Entry Schema, and adhere to the supersession rule declared by Framework 001.
 4. Decisions that reconcile conflicts among grandfathered entries must explicitly reference the superseded statements.

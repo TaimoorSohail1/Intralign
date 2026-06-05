@@ -50,3 +50,12 @@ Presentation negatives + E2E (Playwright/Cypress): reject Derived-as-settled, ov
 
 ## Exit gate (owner-approved — Release 1 feature-complete)
 All surfaces present the cognition chain + acceptance with enforced epistemic-safety labeling and current+history views; Disclose proven to generate nothing and change no assessment. → Release 1 ready for production-readiness review (production deploy remains owner-only).
+
+
+---
+
+## DL-047 scope additions (ratified 2026-06-04)
+- **OSLO Chat (CHAT-01…04):** Disclose-class interaction surface — consumes/triggers cognition, **generates no canonical, changes no assessment**; context inheritance; Explain/Clarify/Resolve/Improve. Negative test (Critical): Chat writing canonical / mutating an artifact / changing assessment outside recompute.
+- **MRI sub-components (MRI-04…07):** Heatmap · CAF Triangle · Understanding Timeline · Understanding Dependencies.
+- **Assisted Editing / Persistent Intelligence (AW-04/05):** always-visible Confidence/CAF/Understanding-State while editing; routes assists to Chat / Suggested Fix.
+- **CRR status visibility (CRR-05).** Source: `WAVE_E…` DL-047 Additions · the ratified UX specs.

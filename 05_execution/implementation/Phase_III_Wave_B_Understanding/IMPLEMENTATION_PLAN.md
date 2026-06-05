@@ -59,3 +59,13 @@ Behavior layer + determinism tiers: exact replay for rule/formula steps; band-se
 
 ## Exit gate (owner-approved before Phase IV)
 OSLO produces calibrated, Derived understanding with banded confidence and surfaced drift; the determinism tiers hold on replay; uncertainty is explicit, never hidden.
+
+
+---
+
+## DL-047 scope additions (ratified 2026-06-04)
+- **Planning Synthesis + Generation (Infer, Derived):** build `SynthesizedPlanningModel` + generated `PlanningArtifact`s (Intent/Context/Scope/Requirements/WBS/Resources/Schedule) as **Derived** (recomputable, CHR-per-generation, user-editable, never Attested-as-truth).
+- **Understanding Evaluation (Evaluate):** seed initial CAF/Confidence from the synthesized model.
+- **False-Confidence Detection (CONF-06):** flag high confidence on weak understanding (QA negative required).
+- **Understanding State Model / Progressive Disclosure (AE-04/05):** Initial→Partial→Refined→Validated→Mature (extends DL-046 `confidence_stage`).
+- DoD: artifacts generated as Derived with CHR + recompute-supersede; negative test rejects a generated artifact written as Attested-truth or changed without recompute. Source: `WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING` DL-047 Additions · `RELEASE_1_ANALYSIS_ENGINE_SPECIFICATION_V1` · `FAST_DEEP_WORKFLOW_PACK/`.

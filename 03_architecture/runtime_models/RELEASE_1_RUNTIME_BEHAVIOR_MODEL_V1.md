@@ -179,3 +179,16 @@ With **architecture, ownership, object model, and behavior model complete**, the
 *This Release 1 Runtime Behavior Model defines what happens at runtime — consistent with the accepted architecture, ownership, and object model — without drifting into implementation. It provides a comprehensive runtime event catalog (intake, knowledge promotion, finding/issue/recommendation/clarification generation, governance decisions, recommendation user-states, recompute and state-transition events) with producers/consumers/triggers/recompute/governance/observability; a responsibility interaction model (Perceive→Retain→[Intend]→Infer→Evaluate→Advise→[Authority]→Disclose→Act) with five feedback loops all closing via Perceive→recompute; a runtime trigger matrix; a recompute model preserving Adapt-as-emergent and the invariant that only information change (artifact edit, clarification answer, knowledge mutation, signal, stale reanalysis) recomputes assessment while recommendation accept/reject/defer and governance/presentation do not, with cascading re-derivation as the behavioral contract; a governance intervention model with gates before promotion, before generation (input constraint), after generation/before disclosure (expose/suppress/defer/block), and before actuation (authorize, future), where Authority generates nothing and recompute is ungoverned; lifecycle transition models for Findings/Issues/Recommendations/Clarifications/Governance Decisions; and an observability model across operational, governance, and cognitive classes including deterministic replay. A consistency review finds no Critical/Major conflicts and four Minor clarifications (accept-no-recompute; cascading scope; Intend provisional; recompute ungoverned), and assesses the model Ready with Minor Clarifications (Behavioral 92, Observability 90, Contract Readiness 92), recommending the Contract Generation Plan as the next artifact. It defines no APIs, schemas, workflow/graph nodes, queues, implementation, infrastructure, or deployment.*
 
 **Release 1 Runtime Behavior Model v1 complete.**
+
+
+---
+
+## DL-047 Behavior Additions (ratified 2026-06-04)
+
+- **Claim Extracted** (Perceive) — evidence → evidence-attested assertions (source-attributed).
+- **Planning Artifact Generated / Regenerated** (Infer) — Derived; appends CHR; recompute-supersedes.
+- **Understanding State Changed** (Evaluate) — Initial→…→Mature; only via recompute.
+- **False-Confidence Flagged** (Evaluate) — high confidence on weak understanding.
+- **Chat Exchange** (Disclose) — non-canonical; may trigger Deep Pass via Advise.
+- **Stakeholder Response Submitted** (Perceive) — becomes evidence → triggers Deep Pass.
+- **Suggested Fix Offered** (Advise) — application observed as a user artifact edit + recompute (no autonomous write).

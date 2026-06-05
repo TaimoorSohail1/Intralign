@@ -192,3 +192,18 @@ Perceive → Retain → Intend → Infer → Evaluate → Advise → Disclose �
 *This specification canonicalizes OSLO's architecture as a Cognitive Responsibility Architecture, incorporating the corrections validated in Architecture Validation Review 003. It establishes responsibility-primary structure (Responsibility → Domain → Engine, with Layer/Service/Plane as orthogonal axes) and the corrected, validated responsibility set Perceive → Retain → Intend → Infer → Evaluate → Advise → Disclose → Act (→ Coordinate), with Authority/Perception/Adapt cross-cutting, Learn for evolution, and Render as a non-cognitive service. It adds Intend (the maintained outcome reference without which drift/alignment cannot be computed), reclassifies Governance as a cross-cutting Authority Plane that constrains inputs and governs outputs while generating nothing, demotes Adapt to emergent recompute and adds Learn as the distinct evolution responsibility, splits the former Express into cognitive Disclose and service Render, scopes Coordinate as the multi-agent arbitration extension, and preserves Advisory Cognition re-grounded as governable candidate generation. It maps the prior six layers onto these responsibilities (retaining layers only as dependency-ordering representation), assesses Release 1 impact (Findings→Infer; Issues/CAF/Confidence/Reliability→Evaluate; Recommendations/Clarifications→Advise; MRI/Resolution-Paths/panels→Disclose/Render presentation; outcome/charter→Intend; reanalysis→Adapt; Learn/Coordinate future), and defines conformance rules. It is architecture only — no implementation, APIs, schemas, databases, frameworks, prompts, vendors, or tooling — and is canonical upon owner ratification, sequenced with the GOV-ARCH architecture-representation review.*
 
 **OSLO Cognitive Responsibility Architecture Specification v1 complete.**
+
+
+---
+
+## DL-047 Architecture Update (ratified 2026-06-04) — Synthesis, Extraction, Interaction
+
+No new responsibility is introduced; the change is **additive within existing responsibilities** (DL-047 Part A2 Option 1).
+
+- **Perceive — source-attributed extraction.** "No cognition" is clarified to **"no *Derived* cognition."** Perceive extracts admitted evidence into **evidence-attested assertions** (source-attributed, re-derivable) for Retain. It still produces **no** Findings/assessments.
+- **Infer — synthesis + generation (Derived).** Infer additionally **constructs a `SynthesizedPlanningModel` and generates `PlanningArtifact`s** (Intent/Context/Scope/Requirements/WBS/Resources/Schedule). These are **Derived Cognition** — recomputable, history-tracked (CHR per generation), two-axis replay, user-editable, never promoted to Attested-as-truth. Generation is *interpretation*, not authority.
+- **Evaluate — seeds from the synthesized model; False-Confidence Detection (CONF-06); Understanding State Model (AE-04).**
+- **Disclose — OSLO Chat** (interaction surface; consumes/triggers cognition, generates no canonical), **MRI sub-components**, **assisted-editing intelligence layer**, **CRR status**.
+- **Suggested Fixes** = Advise candidate + **user-applied** edit (no autonomous OSLO write). **CAF Review Requests** = stakeholder response → **evidence** (Perceive) → Deep Pass; workflow UI is commodity.
+
+This preserves the epistemic invariants (Canonical=Attested; Derived recomputable; recompute-appends; one-way flow; OSLO-never-accepts; no Authority engine in R1).

@@ -1,6 +1,6 @@
-# DL-047 (DRAFT) — Release 1 Contract-Coverage Resolution (Synthesis Engine · Interaction/Collaboration · Sub-feature Enumeration)
+# DL-047 (DISPOSITION) — Release 1 Contract-Coverage Resolution (Synthesis Engine · Interaction/Collaboration · Sub-feature Enumeration)
 
-**Status:** **DRAFT · Proposed · Pending Owner Ratification.** Resolves the findings of `03_architecture/reviews/RELEASE_1_CONTRACT_COVERAGE_AUDIT_002.md` (owner-directed). **Adopts nothing; edits no ratified contract.** Per `CLAUDE.md`, only the owner ratifies. Structured in three parts (A→B→C) in the recommended resolution order; the owner may ratify part-by-part.
+**Status:** **RATIFIED AS A WHOLE — DL-047 (2026-06-04); applied across architecture/contracts/models/phase plans; CHG-054.** Recommended dispositions adopted (A1 Perceive-extracts; A2 Infer-extension; B1 Chat contract; B2 CRR split; B3 Suggested-Fix suggest-only; C enumerate; D traceability gate). Resolves the findings of `03_architecture/reviews/RELEASE_1_CONTRACT_COVERAGE_AUDIT_002.md` (owner-directed). **Adopts nothing; edits no ratified contract.** Per `CLAUDE.md`, only the owner ratifies. Structured in three parts (A→B→C) in the recommended resolution order; the owner may ratify part-by-part.
 
 > **Why a Decision (not just an amendment):** Part A raises a genuine **architecture question** — whether OSLO's evidence→plan **synthesis/generation** is a behavior of an existing responsibility or needs a named one. That cannot be settled by a contract edit alone; the owner decides. Parts B and C are classification + enumeration that follow once A is set.
 

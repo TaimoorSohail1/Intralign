@@ -1,6 +1,6 @@
 # Release 1 Contract Coverage Audit 002 — Cognitive Capabilities Not Explicitly Contracted
 
-**Document Type:** Independent Coverage Audit (build/test/observe) · **Status:** Complete — findings below; owner-routed · **Date:** 2026-06-04
+**Document Type:** Independent Coverage Audit (build/test/observe) · **Status:** **RESOLVED — all findings ratified as DL-047 (2026-06-04) and applied; CHG-054.** Findings below · **Date:** 2026-06-04
 **Question (owner-directed):** *Beyond Fast/Deep + 60s (DL-046), are there other Release 1 product features not explicitly captured in the contracts for build, test, or observe?*
 **Method:** mapped every capability in `OSLO_CAPABILITY_MATRIX_V2` (92 capabilities, 19 categories) to the authoritative build-spec contracts (`WAVE_A–E + U` packages, Runtime Object/Behavior Models, Contract Inventory) by name-presence + behavior coverage. Per `CLAUDE.md`, **no contract is edited here; gaps are routed to the owner.**
 

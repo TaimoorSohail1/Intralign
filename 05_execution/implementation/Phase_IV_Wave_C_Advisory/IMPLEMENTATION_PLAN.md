@@ -49,3 +49,10 @@ Governance-adjacent negatives are central here: prove Advise cannot accept/gover
 
 ## Exit gate (owner-approved before Phase V)
 OSLO advises with Finding-anchored, governable candidate recommendations and clarifications; the "advise proposes, never disposes" boundary is proven by passing negative tests.
+
+
+---
+
+## DL-047 scope additions (ratified 2026-06-04)
+- **Validation Recommendations (REC-05):** Recommendation type seeking stakeholder confirmation; routes to a CAF Review Request on user action.
+- **Suggested Fixes (REC-04):** Advise generates a `SuggestedFix` candidate; **applying** it is a user-initiated artifact edit + recompute. **Negative test (Critical): OSLO must not autonomously write a fix to an artifact.** Source: `WAVE_C…` DL-047 Additions.

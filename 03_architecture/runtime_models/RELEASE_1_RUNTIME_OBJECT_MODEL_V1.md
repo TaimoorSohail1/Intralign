@@ -222,3 +222,18 @@ Core observability surfaces: **state transitions, recompute triggers, governance
 *This Release 1 Runtime Object Model defines every runtime object required for Release 1 as an architecture concept — answering what it is, how it lives, how it changes, how it is governed, and how it is observed — building on the Contract Inventory's ownership answers. It inventories objects by owning responsibility and classification (Core/Supporting/Presentation/Governance/Event), defines the Core objects (Artifact, Project, Canonical Fact/Assumption/Constraint/Dependency, Finding, Issue, CAF Assessment, Outcome Confidence, Recommendation, Clarification Request, Governance Decision), specifies lifecycle and mutability (canonical knowledge append-only/versioned; Findings/Issues/Recommendations derived with append-only supersession; Governance Decisions and events append-only/immutable; nothing deleted), state models for Finding/Issue/Recommendation/Clarification/Governance-Decision/Notification/Recompute-Event consistent with the ratified lifecycles, the Artifact→Finding→Issue→Recommendation→Governance-Decision→Card relationship graph (Clarification anchored to Findings with answers feeding recompute; CAF/Outcome-Confidence derived; MRI a presentation view; no Resolution-Path object), governance touchpoints (exposure/authorization per object; recompute/events ungoverned), and observability requirements (state transitions, recompute triggers, governance decisions, recommendation/clarification generation events). A consistency review finds no Critical/Major issues — only Minor classification clarifications (severity/confidence/reliability are attributes; gap/conflict/risk and suggested-action/improvement are types; outcome-reference is a Canonical Fact in R1 with Intend provisional; no Resolution-Path object) — and assesses the model Ready with Minor Clarifications (Completeness 93, Ownership Clarity 96, Contract Readiness 92), recommending the Contract Generation Plan as the next artifact. It discusses no databases, APIs, implementation, schemas, languages, frameworks, or UI technology.*
 
 **Release 1 Runtime Object Model v1 complete.**
+
+
+---
+
+## DL-047 Object Additions (ratified 2026-06-04)
+
+| Object | Class | Owner | Notes |
+|---|---|---|---|
+| `SynthesizedPlanningModel` | **Derived** | Infer | constructed planning model from Attested assertions; recomputable; CHR per emission |
+| `PlanningArtifact` (Intent/Context/Scope/Requirements/WBS/Resources/Schedule) | **Derived** (generated, user-editable) | Infer (generate) · Retain (store version) · Disclose (present) | a user edit = new Attested input → recompute; never Attested-as-truth |
+| `ChatSession` / `ChatExchange` | **Non-canonical interaction** | Disclose | consumes/triggers cognition; writes no canonical |
+| `ReviewRequest` / `StakeholderResponse` (CRR) | response → **evidence-attested** on submit | Perceive (intake) · Disclose (status) | response triggers Deep Pass; workflow UI = commodity |
+| `SuggestedFix` | **Derived** (Advise candidate) | Advise | application = user edit; no autonomous OSLO write |
+
+`confidence_stage` (DL-046) generalizes to the **Understanding State Model** (AE-04): Initial→Partial→Refined→Validated→Mature — an emission attribute, not a new object.

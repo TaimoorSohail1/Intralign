@@ -77,3 +77,6 @@ Mandatory **positive AND negative** suites, mirrored to the code structure. Dete
 
 ---
 *This AGENTS.md is a tool-neutral digest of the OSLO autonomous-development governance (DL-043/DL-044). It lets Codex or any AGENTS.md-aware agent inherit the same guardrails Claude Code gets from CLAUDE.md. Authoritative rules live in the knowledge-base governance docs; where they differ, they win.*
+
+## DL-047 vocabulary additions
+Use: `SynthesizedPlanningModel`, `PlanningArtifact` (Derived, generated, user-editable), `ChatSession`/`ChatExchange`, `ReviewRequest`/`StakeholderResponse`, `SuggestedFix`. Rules: planning artifacts are **Derived** (never written Attested-as-truth; recompute appends a CHR); **OSLO never autonomously writes a Suggested Fix** (user applies); **Chat writes no canonical and changes no assessment**; a stakeholder response is **evidence** that triggers Deep Pass.

@@ -54,3 +54,10 @@ Object + Behavior layers: object existence/ownership/lifecycle (Retain); event g
 
 ## Exit gate (owner-approved before Phase III)
 Ingest → attested retention → recompute-appends demonstrated end to end, with the append-only and no-Derived-as-Attested invariants proven by passing negative tests.
+
+
+---
+
+## DL-047 scope additions (ratified 2026-06-04)
+- **Claim Extraction (Perceive):** extract admitted evidence into **evidence-attested assertions** (source-attributed, re-derivable) for Retain — Perceive does this; it performs **no** Derived cognition. DoD: extraction produces correctly-typed, source-attributed assertions; negative test rejects Perceive emitting a Finding/assessment.
+- **CRR response intake:** a submitted stakeholder response is admitted as **new evidence** and triggers Deep Pass (00R). Source: `WAVE_A_CONTRACT_PACKAGE_001` DL-047 Additions.

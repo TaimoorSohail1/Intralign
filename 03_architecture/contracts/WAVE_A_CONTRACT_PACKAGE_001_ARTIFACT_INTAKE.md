@@ -8,6 +8,14 @@
 
 ---
 
+## DL-047 Additions (authoritative — ratified 2026-06-04)
+
+**Claim Extraction (EI-02) — Perceive behavior.** Perceive's "no cognition" means **no Derived cognition (no Findings/assessments)** — Perceive **does perform source-attributed extraction**: it interprets admitted evidence into **evidence-attested `AttestedAssertion`s** (Canonical Fact / Assumption / Constraint / Dependency, each attributed to its source + re-derivable) and hands them to Retain. **Required:** every extracted assertion carries source attribution + re-derivability; **Forbidden:** inferring Findings/severity/confidence (that is Infer/Evaluate); promoting non-attributable content to Attested. **QA:** positive — extraction produces source-attributed assertions of the correct type; negative — Perceive emitting a Finding/assessment, or an unattributed "fact." **OBS:** `Claim Extracted` event + provenance.
+
+**CRR response intake (CRR-04) — Perceive seam.** A submitted **StakeholderResponse** (from a CAF Review Request) is admitted as **new evidence** (evidence-attested) and triggers the Deep Pass recompute (00R). Perceive captures it; it is not a Governance Decision. **Negative:** a stakeholder response treated as world-truth or as OSLO self-acceptance.
+
+---
+
 ## 0. Package Orientation
 
 > **DL-046 note.** Intake feeds the **Fast Pass** orientation; integrity-gated admission must **not block** the **Time-to-First-MRI < 60 s** budget.

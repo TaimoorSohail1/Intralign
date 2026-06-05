@@ -8,6 +8,16 @@
 
 ---
 
+## DL-047 Additions (authoritative — ratified 2026-06-04)
+
+**Planning Synthesis + Generation (PS-01/02) — Infer extension; Derived.** Infer additionally **synthesizes a planning model and generates Planning Artifacts** (Intent / Context / Scope / Requirements / WBS / Resources / Schedule) from Attested assertions. These are **Derived Cognition** (`SynthesizedPlanningModel`, `PlanningArtifact`): non-canonical, **recomputable**, **append-a-CHR per generation**, **two-axis replay** (semantic for AI-generated content), user-**editable** (a user edit is a new Attested input that triggers recompute), **never promoted to Attested as truth**. One producer (Infer). **Forbidden:** writing a generated artifact to the canonical store as Attested-truth; changing it outside recompute.
+**Understanding Evaluation (PS-03):** Evaluate seeds initial CAF/Confidence from the `SynthesizedPlanningModel` (its input is now contracted).
+**False-Confidence Detection (CONF-06):** Evaluate **must** flag **high confidence built on weak/inaccurate understanding** (the dangerous 4th state) as a trust signal. **QA negative:** high confidence emitted over low-reliability/low-coverage understanding without a false-confidence flag.
+**Understanding State Model (AE-04) + Progressive Disclosure (AE-05):** classify understanding **Initial → Partial → Refined → Validated → Mature** (an emission attribute, extends DL-046 `confidence_stage`); present progressively, never Unknown→Final-Truth.
+**QA:** positive — artifacts generated as Derived with CHR + recompute-supersede; negative — generated artifact written as Attested, or changed without recompute. **OBS:** `Planning Artifact Generated/Regenerated`, `Understanding State Changed`, false-confidence flag events.
+
+---
+
 ## 0. Shared Orientation (applies to both packages)
 
 **Position in the chain.** `Retain (Attested) → Infer (Findings) → Evaluate (Issues/Confidence/CAF/Outcome Confidence) → [Advise, Wave C]`. Infer reads canonical (Attested) knowledge; Evaluate reads Infer's Findings. **Both read Attested, produce Derived** — they never write canonical knowledge and never promote Derived to Attested (one-way flow).
