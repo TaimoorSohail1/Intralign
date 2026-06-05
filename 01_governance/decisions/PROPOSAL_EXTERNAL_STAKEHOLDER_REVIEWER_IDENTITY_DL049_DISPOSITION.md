@@ -1,6 +1,6 @@
 # DL-049 (DISPOSITION DRAFT) — External-Stakeholder / Reviewer Identity + Reviewer→User Promotion
 
-**Status:** **RATIFIED — DL-049 (2026-06-05); applied to the Runtime Object Model (Principal); gap #337 resolved; CHG-060.** Owner elected **Option A — lightweight Reviewer**. Per `CLAUDE.md`, only the owner ratifies; the contracted CRR evidence seam is **preserved, not redefined.** **Separable scope call (R1 vs fast-follow for the recipient experience) remains owner-open.**
+**Status:** **RATIFIED — DL-049 (2026-06-05); applied to the Runtime Object Model (Principal); gap #337 resolved; CHG-060.** Owner elected **Option A — lightweight Reviewer**. Per `CLAUDE.md`, only the owner ratifies; the contracted CRR evidence seam is **preserved, not redefined.** **Separable scope call RESOLVED (2026-06-05, CHG-064): the recipient-experience build is fast-follow → Release 2; R1 (the owner's own validation vehicle) generates + measures invitations only.** The identity *model* is ratified now; the *recipient UI / auth / promotion / convert-moment* is R2.
 
 > **Why a Decision (ontology):** this introduces a **new identity concept** into the object model (a Reviewer/Stakeholder principal distinct in *capability* from a full User) and the rule for how one becomes the other. That is an **ontology/architecture choice** — it cannot be settled by a commodity spec. The **recipient UI, convert-moment, and link security are commodity**; only the **identity model + promotion semantics** are decided here.
 
@@ -51,7 +51,7 @@ Promotion is an **in-place upgrade of the same principal**, triggered at the rea
 ## Disposition / conditions
 - **Disposition:** **Accepted** (owner ratified 2026-06-05; Option A). Object Model updated; gap #337 resolved.
 - **Conditions (proposed):** single-`Principal`-with-`type` model (not two objects); promotion is a **state transition, not a data copy**; **scope is never widened** on promotion (account-type ≠ share-scope); **provenance/history immutable** (no re-attribution); default tier **Free**; promotion **audited**; the CRR evidence seam is **preserved, not redefined**.
-- **Separable scope call (NOT decided here):** whether the recipient experience **ships in R1 or fast-follow** (Virality Audit §6) is a **scope decision the owner still makes** — this DL fixes the *model*, not the *timing*. (If fast-follow, R1 still ships share/CRR generating invitations + TEL-06 measuring them, instrumented and ready.)
+- **Separable scope call — RESOLVED (2026-06-05): fast-follow → Release 2.** R1 is the owner's own test/validation vehicle, so the conversion side has nothing to convert yet; R1 ships share/CRR generating invitations + TEL-06 measuring them (instrumented and ready), and **Release 2** builds the recipient experience (auth, view/respond, promotion, convert-moment) against real funnel data. The identity model (this DL) is unchanged — zero rework, clean drop-in.
 
 ## Owner decision required
 - [ ] Adopt **Part A** — single `Principal` with `type: reviewer | user` (Option A).

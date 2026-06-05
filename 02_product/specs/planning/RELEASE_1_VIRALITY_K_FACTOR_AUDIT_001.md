@@ -3,6 +3,8 @@
 **Document Type:** Owner-directed growth audit (Framework 001A Review schema) · **Status:** **Findings recorded — optimizations route to owner; nothing redefined.** · **Date:** 2026-06-05
 **Question (owner-directed):** *Audit Release 1 for virality; suggest optimizations to maximize k-factor.*
 **Frame:** **k = i × c**, where **i** = invitations/exposures generated per active user and **c** = the share→signup conversion rate of those exposures; **cycle time T** governs how fast k compounds. Self-sustaining growth needs **k > 1**; even k < 1 materially lowers blended CAC.
+
+> **Scope outcome (2026-06-05, CHG-064):** R1 is the owner's own **validation vehicle** (bottleneck = proving the product, not acquiring users). Therefore the **conversion side (`c`) is fast-follow → Release 2**: R1 ships **`i` (generation) + measurement** (P1/P2/P3/P6/P7 applied; identity model DL-049 ratified); **Release 2** builds the recipient experience and **P5 referral**, tuned against R1's real funnel data. P0's *model* is done; its *build* is R2.
 **Sources:** `OSLO_CAPABILITY_MATRIX_V2.md` (CRR-01…05, SHARE-01…05, COLLAB-01…03, REC-02/05, OVL-03, TEL-02/05/06, MON-01, gaps #337/#339) · `12_freemium_tier_behavior_logic.md` · DL-048/CHG-056-059 (tiering) · `FREEMIUM_UPGRADE_PROMPT_TIMING_AUDIT_001`.
 
 ---

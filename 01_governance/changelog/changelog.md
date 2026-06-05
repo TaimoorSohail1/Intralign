@@ -529,6 +529,14 @@ Each changelog entry contains:
 - **Change Summary:** **P7 applied** — share links (SHARE-02/03/04) are now specified as **read-only by default, scoped to the shared item only** (no project access, mirroring DL-049's scope-not-widened guard), **owner-revocable any time**, with a **default 90-day expiry** (tunable, Calibration §4g); private links require an authenticated `Principal` (DL-049), public links are unauthenticated read-only carrying the P1 attribution+CTA. This closes Matrix gap #339 and lets the passive loop (MRI links) spread without becoming a data-leak surface; SEC-audited. **P5 referral reward drafted** (`BACKLOG_REFERRAL_REWARD`, Proposed) — a bounded, conversion-credited capacity bump for inviting users who join, designed defensively (finite tier-keyed config from a bounded pool, monthly per-user cap, DL-048-bounded, email de-dup + velocity + fraud guards, Internal accounts excluded, value-aligned), with ROI folded into the P6 k-factor metric; its **in/out-of-R1 decision and reward values are routed to the owner.** No Doctrine, Constitution, contract, or architecture change.
 - **Supersession Reference:** None. Commodity spec + a proposed backlog draft; supersedes no Decision.
 
+### CHG-064 — Recipient Experience scoped to Release 2 (DL-049 separable scope call resolved)
+
+- **Date:** 2026-06-05
+- **Authorizing Decision:** Owner direction (resolves the DL-049 separable scope call). Scope decision; no contract/architecture change.
+- **Affected Artifacts:** `PROPOSAL_EXTERNAL_STAKEHOLDER_REVIEWER_IDENTITY_DL049_DISPOSITION.md` + `decision_log.md` (DL-049 separable scope call → resolved, R2); `BACKLOG_EXTERNAL_STAKEHOLDER_EXPERIENCE.md` (recipient build → R2); `RELEASE_1_VIRALITY_K_FACTOR_AUDIT_001.md` (scope outcome); `BACKLOG_REFERRAL_REWARD.md` (P5 → R2); `OSLO_CAPABILITY_MATRIX_V2.md` (gap #337 note).
+- **Change Summary:** The owner resolved the DL-049 separable scope call: **Release 1 is the owner's own test/validation vehicle** (bottleneck = proving the product, not acquiring users), so the **external-stakeholder recipient experience is fast-follow → Release 2.** R1 ships the **invitation-generation + measurement** side (CRR/MRI/PDF sharing, attribution+CTA P1, viral primitives on Free P2, share-prompt timing P3, k-factor instrumentation P6, link hygiene P7) and the **ratified identity model (DL-049 `Principal`)**, so the loop is instrumented and ready; **Release 2** builds the recipient UI + external auth + reviewer→user promotion + convert-moment, plus the **P5 referral reward** (which credits on join and therefore depends on the R2 recipient experience), all tuned against R1's real funnel data. The identity model is unchanged — zero rework, clean drop-in. No Doctrine, Constitution, contract, or architecture change.
+- **Supersession Reference:** None. Scope decision; supersedes no Decision.
+
 ---
 
 ## Governance Notes

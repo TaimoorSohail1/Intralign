@@ -1,6 +1,6 @@
 # Backlog (DRAFT) — Referral Reward (Virality Audit P5)
 
-**Status:** **Proposed — owner-directed (2026-06-05).** Pending Owner Ratification + an **in/out-of-R1** call. Commodity (MON + SHARE); **cost-and-abuse-sensitive** — bounded by DL-048 + Internal-style guards. No cognition, no epistemic invariant touched.
+**Status:** **Proposed — targeted Release 2 (2026-06-05, CHG-064).** The referral reward credits on *join*, which requires the R2 recipient experience — so it is **out of R1, in the R2 fast-follow** with the recipient build. Reward values remain owner decisions at R2. Commodity (MON + SHARE); **cost-and-abuse-sensitive** — bounded by DL-048 + Internal-style guards. No cognition, no epistemic invariant touched.
 
 ---
 

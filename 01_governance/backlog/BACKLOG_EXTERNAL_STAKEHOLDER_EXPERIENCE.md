@@ -1,6 +1,6 @@
 # Backlog (DRAFT) — External-Stakeholder Experience (the P0 conversion-path scoping item)
 
-**Status:** **Identity model RATIFIED — Option A, DL-049 (2026-06-05); gap #337 resolved; `Principal` added to the Object Model; CHG-060.** The **recipient-experience build** (low-friction view/respond UI, convert-moment, link security #339) and the **R1-vs-fast-follow scope call** remain owner-open commodity follow-ups. Resolves **P0** of `RELEASE_1_VIRALITY_K_FACTOR_AUDIT_001`. The contracted CRR evidence seam is **preserved, not redefined.**
+**Status:** **Identity model RATIFIED — Option A, DL-049 (2026-06-05); gap #337 resolved; `Principal` added to the Object Model; CHG-060.** **Scope RESOLVED (2026-06-05, CHG-064): the recipient-experience build (view/respond UI, auth, convert-moment, promotion) is fast-follow → Release 2.** R1 generates + measures invitations only (owner validation vehicle). Link security (#339) was applied in R1 via P7 (it covers R1's own share links). Resolves **P0** of `RELEASE_1_VIRALITY_K_FACTOR_AUDIT_001`. CRR evidence seam **preserved, not redefined.**
 
 ---
 
