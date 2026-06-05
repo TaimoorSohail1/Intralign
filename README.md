@@ -6,6 +6,7 @@ This repository is the canonical knowledge base for OSLO, organized as a doctrin
 
 ## Where to Start
 
+- **Engineers / building OSLO:** Read **`START_HERE.md`** — the 90-minute path (read 6 docs, ignore the rest) to your first PR.
 - **New to OSLO:** Read `REPOSITORY_ARCHITECTURE.md` for orientation.
 - **AI contributors:** Read `CLAUDE.md` for governance posture and authority constraints.
 - **What does OSLO mean?** Read `01_governance/doctrine/`.
