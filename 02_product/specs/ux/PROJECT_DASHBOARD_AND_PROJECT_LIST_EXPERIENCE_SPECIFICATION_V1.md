@@ -52,6 +52,7 @@ Workspace Home
 - **Purpose:** an **at-a-glance** view of the user's projects — the quickest way to recognize and open the right one.
 - **Visible information (per project — Q2):** project **name**; **ownership/sharing** indication (owned vs. shared, §Q); **status** (analysis state — e.g., analyzing / analyzed / stale; §K); a **presented understanding indicator** (the project's existing reliability-qualified understanding summary; §L); **last-updated/activity** recency; and optional descriptive metadata (type/workflow if set). All **presented**, none computed.
 - **Allowed actions:** open a project; pin/unpin (§N); reach archive (§O); create a project.
+- **Active-project limit (Free tier) — Create Project stays enabled.** A user at the active-project cap may **attempt** to create another; the attempt is **gated by the platform** (server returns the limit state — not computed here) and the surface **presents the upgrade prompt with two resolutions: upgrade, or archive the current project** (archiving is reversible, §O). **Do not disable or hide Create Project at the limit** (that would suppress the attempt). Limit *values* per Tier Definitions; this is **presentation/interaction, not computation or governance.**
 - **Constraint:** the dashboard is **recognition and access**, not analytics — it shows no computed scores and no fabricated "health."
 
 ## F. Project List Experience

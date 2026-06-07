@@ -537,6 +537,14 @@ Each changelog entry contains:
 - **Change Summary:** The owner resolved the DL-049 separable scope call: **Release 1 is the owner's own test/validation vehicle** (bottleneck = proving the product, not acquiring users), so the **external-stakeholder recipient experience is fast-follow → Release 2.** R1 ships the **invitation-generation + measurement** side (CRR/MRI/PDF sharing, attribution+CTA P1, viral primitives on Free P2, share-prompt timing P3, k-factor instrumentation P6, link hygiene P7) and the **ratified identity model (DL-049 `Principal`)**, so the loop is instrumented and ready; **Release 2** builds the recipient UI + external auth + reviewer→user promotion + convert-moment, plus the **P5 referral reward** (which credits on join and therefore depends on the R2 recipient experience), all tuned against R1's real funnel data. The identity model is unchanged — zero rework, clean drop-in. No Doctrine, Constitution, contract, or architecture change.
 - **Supersession Reference:** None. Scope decision; supersedes no Decision.
 
+### CHG-065 — Second-Project Attempt → Upgrade-Trigger Path Specified (UP-3 precondition)
+
+- **Date:** 2026-06-05
+- **Authorizing Decision:** Owner direction (close an under-specified UX moment). Commodity (MON/UX) interaction clarification; no DL.
+- **Affected Artifacts:** `02_product/tiering/12_freemium_tier_behavior_logic.md` (UP-3 precondition); `02_product/specs/ux/PROJECT_DASHBOARD_AND_PROJECT_LIST_EXPERIENCE_SPECIFICATION_V1.md` (§D active-project-limit behavior); `02_product/specs/ux/ONBOARDING_AND_PROJECT_CREATION_EXPERIENCE_SPECIFICATION_V1.md` (§I); `02_product/specs/planning/OSLO_CAPABILITY_MATRIX_V2.md` (PF-03 note).
+- **Change Summary:** Closed an under-specified gap between the API and the UX: the `422` free-tier active-project limit (API) and the UP-3 upgrade trigger (freemium behavior) both existed, but no UX spec stated what a Free user sees when they try to add a second project. Specified the **attempt→trigger path**: the **Create Project affordance stays enabled at the active-project cap** (Free = 1 *active* project; archiving is reversible and frees the slot, so the limit is on the active set, not lifetime count); a Free user may **attempt** a second active project; the attempt is **gated server-side (`POST /projects` → `422`)** and surfaces **UP-3 with two resolutions — upgrade, or archive the current project.** The control is **never disabled or hidden** at the limit (which would suppress the highest-intent upgrade trigger). Kept as presentation/interaction (limit values per Tier Definitions, presented not computed) — no governance, no computation in the UX surfaces. No Doctrine, Constitution, contract, or architecture change.
+- **Supersession Reference:** None. Interaction clarification; supersedes no Decision.
+
 ---
 
 ## Governance Notes

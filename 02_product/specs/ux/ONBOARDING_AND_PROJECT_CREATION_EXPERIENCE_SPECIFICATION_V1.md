@@ -103,6 +103,7 @@ Each step has **purpose, visible information, allowed actions, transition condit
 - **Purpose:** create a new project as the container for artifacts and understanding.
 - **Visible information:** the minimal creation surface — **project name** (required) and optional metadata (§J).
 - **Allowed actions:** name the project; optionally add metadata; proceed to ingestion.
+- **Active-project limit (Free tier):** the **Create Project** entry remains available at the cap; a Free user may **attempt** creation and is **gated** with the **upgrade-or-archive prompt (UP-3)** — never a hidden or disabled control. The gate is **server-enforced** (API `422`); limit values per Tier Definitions (presented, not computed).
 - **Release 1 resolutions:**
   - **Can a user create an empty project?** **Yes** — a project can be created without artifacts; artifacts are **optional to create the project** but **required to reach understanding/value** (the empty project simply waits in an "add artifacts" empty state, §R).
   - **Is a project name required?** **Yes** — a name is the minimal identity for a project.

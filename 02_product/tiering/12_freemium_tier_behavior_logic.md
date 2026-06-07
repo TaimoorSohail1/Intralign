@@ -64,6 +64,8 @@ Constrain:
 
 **Global guards (all triggers):** never interrupt an active Fast/Deep pass; not before first value (first MRI) delivered; honor per-trigger cooldown + a global per-day cap (Calibration §4d); no persistent wallpaper.
 
+**UP-3 precondition — attempt → trigger (required).** The **Create Project** affordance **stays enabled at the active-project limit.** A Free user at the cap may **attempt** a 2nd active project; the attempt is **gated server-side (API `POST /projects` → `422`)** and surfaces UP-3 with **two resolutions: upgrade, *or* archive the current project** (archiving is reversible and frees the slot). The control is **never disabled or hidden** at the limit — doing so would suppress the highest-intent upgrade trigger. (Project Dashboard §D and Onboarding §I carry the matching UX rule; limit *values* per Tier Definitions, presented not computed.)
+
 **Optimality objective (what TEL-07 tunes against):** maximize **prompt → conversion** while keeping the **dismissal/annoyance signal** (rapid-dismiss, repeat-ignore) below threshold. A trigger that under-converts **and** over-annoys is auto-suppressed and re-tuned. "Optimal timing" = this objective, not a fixed schedule.
 
 ---
