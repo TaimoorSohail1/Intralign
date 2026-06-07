@@ -32,6 +32,17 @@ OSLO is a doctrine-centered repository: doctrine defines what is true; everythin
 
 `subsystems/` holds sub-categories that declare their doctrinal scope, constitutional articulation, and implementation specs.
 
+## Canonical-Architecture Precedence (read before trusting any architecture doc)
+
+When two architecture documents disagree, this is the order (KIA-9, 2026-06-05):
+
+1. **Cognitive Responsibility Architecture Spec** (`03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`) + the **Runtime Object/Behavior Models** + the **Wave contracts** — **canonical** (ratified DL-043). The runtime is the **cognitive spine** (Perceive→Retain→Infer→Evaluate→Advise→Disclose), **not** layers.
+2. **`OSLO_ARCHITECTURE_BASELINE_V1.md`** — a **secondary** representation (DL-043); informative, not authoritative on conflict.
+3. **`03_architecture/legacy_layer_engineering/`** — **deprecated** layer model; do **not** build from it (see its README).
+4. **Reorganization / simplification proposals** (`REPOSITORY_REORGANIZATION_PROPOSAL_V1.md`, `…SIMPLIFICATION_PLAN.md`, `…SIMPLIFICATION_REPORT.md`) — **PROPOSED, not necessarily applied**; never a build source.
+
+The **decision log + changelog** are the live ledger; where any architecture summary differs from the ledger, the ledger wins.
+
 ## Where Do I Put Things?
 
 | What you have | Where it goes |

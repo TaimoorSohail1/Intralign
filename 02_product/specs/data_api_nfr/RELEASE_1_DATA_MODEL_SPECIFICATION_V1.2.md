@@ -1,5 +1,7 @@
 # Release 1 Data Model Specification v1.2
 
+> **✅ CURRENT CANONICAL data model (KIA-5 confirmed, 2026-06-05).** v1 and v1.1 are superseded by this version; build to this file.
+
 **Type:** Implementation artifact — the authoritative Release 1 persistence data model (Recommendation reconciliation applied)
 **Status:** Active Architecture V1 · **Date:** 2026-05-31
 **Supersedes:** `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.1.md` (v1.1 retained; this is the additive successor)

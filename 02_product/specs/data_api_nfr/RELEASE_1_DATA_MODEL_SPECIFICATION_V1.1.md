@@ -1,7 +1,9 @@
 # Release 1 Data Model Specification v1.1
 
-**Type:** Implementation artifact — the authoritative Release 1 persistence data model (reconciled)
-**Status:** Active Architecture V1 · **Date:** 2026-05-31
+> **⚠ SUPERSEDED (KIA-5, 2026-06-05) — build to `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.2.md` (current canonical).** Retained for history.
+
+**Type:** Implementation artifact — ~~authoritative~~ **superseded** Release 1 persistence data model (reconciled)
+**Status:** **Historical — superseded by v1.2** · **Date:** 2026-05-31
 **Supersedes:** `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.md` (v1 retained; this is the reconciled successor)
 **Reconciliation basis:** `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` (lifecycle authority) · `RELEASE_1_EVENT_MODEL_SPECIFICATION_V1.md` (transition authority) · `RELEASE_1_DATA_STATE_RECONCILIATION_AUDIT.md` · `DATA_MODEL_RECONCILIATION_CHANGE_LOG.md` · `DATA_MODEL_RECONCILIATION_PATCH_001.md`
 **Aligned with:** `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `OSLO_ARCHITECTURE_BASELINE_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md` · `OSLO_LINEAR_INITIATIVES_V2.md` · `OSLO_RELEASE_1_IMPLEMENTATION_PLAN.md` · `OSLO_RELEASE_1_MASTER_SPEC.md` §18

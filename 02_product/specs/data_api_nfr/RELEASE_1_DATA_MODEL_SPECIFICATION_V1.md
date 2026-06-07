@@ -1,7 +1,9 @@
 # Release 1 Data Model Specification v1
 
-**Type:** Implementation artifact — the authoritative Release 1 persistence data model
-**Status:** Active Architecture V1 · **Date:** 2026-05-31
+> **⚠ SUPERSEDED (KIA-5, 2026-06-05) — build to `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.2.md` (current canonical).** v1 → v1.1 → v1.2; v1.2 has the reconciliations applied. Retained for history.
+
+**Type:** Implementation artifact — ~~authoritative~~ **superseded** Release 1 persistence data model
+**Status:** **Historical — superseded by v1.2** · **Date:** 2026-05-31
 **Aligned with:** `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `OSLO_ARCHITECTURE_BASELINE_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md` · `OSLO_LINEAR_INITIATIVES_V2.md` · `OSLO_RELEASE_1_IMPLEMENTATION_PLAN.md` · `OSLO_RELEASE_1_MASTER_SPEC.md` §18 (object model)
 
 > **Scope guardrails.** Active Release 1 only. **No Governance Domain entities** (no Resolution Candidate, Review Request, Disposition, Governance, or Accepted Understanding), no Agent Governance, no Execution Intelligence, no Future Architecture, no Release 2. This is an **implementation artifact, not doctrine** — it defines persistence entities and resolves ambiguity with explicit modeling decisions (marked **[decision]**). It models the Master Spec §18 object model's **active** subset and the Canonical Scope flow: Fast Analysis Pass → 60-Second Orientation → Deep Analysis Pass → Confidence Recalculation → Expanded Findings → Expanded Recommendations.

@@ -39,12 +39,21 @@ If you internalize only this section, you'll understand 80% of the codebase deci
 |---|---|---|---|
 | 1 | **Engineering Handoff Package** | the map: what's ratified, the build order, the hard rules, the readiness score | `03_architecture/RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md` |
 | 2 | **Cognitive Responsibility Architecture Spec** | the canonical architecture (the model above, in full) | `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md` |
-| 3 | **DL-043 + DL-044** (decision log entries) | the two ratified decisions that define R1 scope and the engineering layer | `01_governance/decisions/decision_log.md` |
+| 3 | **DL-043 + DL-044** (+ skim **DL-046–049**, see note ↓) | the ratified decisions that define R1 scope, the engineering layer, and the operative additions since | `01_governance/decisions/decision_log.md` |
 | 4 | **Engineering Onboarding Runbook** | who-does-what: access, environment bring-up, the per-wave build loop, testing flow | `03_architecture/RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md` |
 | 5 | **CLAUDE.md** (agent rules — Claude Code reads it) | the rules Claude Code follows — read so you know what the agent is bound to (`AGENTS.md` is the identical tool-neutral twin) | `CLAUDE.md` · app-repo: `03_architecture/engineering/starter_kit/CLAUDE.md` |
 | 6 | **Wave A 00R contract** (your first build target) | the first thing you'll implement — the recompute backbone | `03_architecture/contracts/WAVE_A_CONTRACT_PACKAGE_00R_RECOMPUTE_STALE_BACKBONE.md` |
 
 That's it. Stop there. Do **not** read `01_governance/doctrine/`, the ~480 other specs, `04_research/`, or anything marked *Historical / superseded* — they're the reasoning trail, not the build spec.
+
+> **🔁 Then — the decisions & specs ratified SINCE DL-044 (skim, ~15 min; not optional — they change the build):**
+> - **DL-046** — Fast/Deep analysis modes + the **< 60 s Time-to-First-MRI** gate (Wave B).
+> - **DL-047** — the evidence→plan **synthesis engine** (Wave S) + OSLO Chat / CAF Review Requests / Suggested Fixes (Wave I).
+> - **DL-048** — **cost governance / freemium unit economics** — per-tier token budgets enforced on the Fast/Deep engine (`Calibration §4c`); the `AI Spend Recorded` event.
+> - **DL-049** — the **`Principal`** identity (`type: reviewer|user`, in-place promotion) — resolves external-stakeholder identity.
+> - **Read when you touch them:** `02_product/specs/telemetry/OSLO_RELEASE_1_OBSERVABILITY_AND_ECONOMICS_PLATFORM_SPECIFICATION_V1.md` (telemetry + AI economics) · `02_product/specs/ux/RELEASE_1_VISUAL_DESIGN_AND_BRANDING_SPECIFICATION_V1.md` (design tokens / brand).
+> - **Two canonical-definitions surfaces exist** — `01_governance/canonical_definitions/canonical_definitions.md` (governance-tier) and `constitution/10_canonical_definitions.md` (content-tier). **Where they conflict, Doctrine prevails (DL-036).**
+> - **The ledger is the source of truth:** `decision_log.md` (DL-029–DL-049) + `changelog.md` (CHG-001–069) are current — **when in doubt, the ledger wins over any summary, including this page.** Also see **`REPOSITORY_INDEX.md`** (concept → canonical file).
 
 ---
 
@@ -54,7 +63,7 @@ That's it. Stop there. Do **not** read `01_governance/doctrine/`, the ~480 other
 - *(Do read when testing:* `02_product/specs/testing_fixtures/` holds the Testing Strategy, determinism note, and fixture/subsystem test specs — the per-phase manifests link the relevant ones.*)*
 - **`02_product/specs/`** — ~130 product/UX specs; you'll pull the relevant ones *per wave* (Wave E references the UX specs), not up front.
 - **`04_research/`, `raw/`, anything "Historical/superseded/secondary"** — never an implementation source.
-- The DL ledger below DL-043 — earlier decisions are superseded/contextual.
+- The DL ledger **below DL-043** — earlier decisions are superseded/contextual. **(But DL-046–049 *above* DL-044 ARE operative — see the note in §2.)**
 
 When in doubt about scope: a doc only matters if a **contract** you're building points to it.
 

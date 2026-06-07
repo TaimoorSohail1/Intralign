@@ -203,6 +203,8 @@ Risk: 🔴 high · 🟡 medium · 🟢 low.
 
 ## 10. Governance Backlog (prioritized)
 
+> **Execution status (2026-06-05, CHG-070): KIA-1, 3, 5, 6, 7, 8, 9, 10 — ✅ DONE** (entry docs refreshed; `REPOSITORY_INDEX.md` created; legacy-layer do-not-build banner; data-model v1.2 confirmed canonical / v1+v1.1 superseded; architecture precedence stated; README layer-terminology fixed). **Owner-gated remaining: KIA-2 (canonical Vision), KIA-4 (Outcome Management define/retire), KIA-11 (CAF/Confidence formula).**
+
 | ID | Action | Priority | Risk addressed | Impact | Effort | Owner |
 |---|---|---|---|---|---|---|
 | KIA-1 | **Refresh `START_HERE.md`** — operative DL range DL-029–DL-049 + one-liners for DL-046/047/048/049; add telemetry + visual specs to the reading map | **P0** | drift #2, all §7 | **High** (converts the biggest latent risk) | S | Owner/Claude |

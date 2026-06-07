@@ -11,7 +11,10 @@ This repository is the canonical knowledge base for OSLO, organized as a doctrin
 - **AI contributors:** Read `CLAUDE.md` for governance posture and authority constraints.
 - **What does OSLO mean?** Read `01_governance/doctrine/`.
 - **How does OSLO behave in product?** Read `01_governance/constitution/` and `02_product/`.
-- **How is OSLO built?** Read `03_architecture/`.
+- **How is OSLO built?** Read `03_architecture/` (organized by the **cognitive spine** Perceive→Retain→Infer→Evaluate→Advise→Disclose, not by layers).
+- **How is OSLO measured?** Read `02_product/specs/telemetry/OSLO_RELEASE_1_OBSERVABILITY_AND_ECONOMICS_PLATFORM_SPECIFICATION_V1.md` (product analytics + trust + AI economics).
+- **How does OSLO look?** Read `02_product/specs/ux/RELEASE_1_VISUAL_DESIGN_AND_BRANDING_SPECIFICATION_V1.md` (design tokens / brand).
+- **Where is concept X?** Read `REPOSITORY_INDEX.md` (concept → canonical file).
 
 ## Repository Structure
 
@@ -19,7 +22,7 @@ This repository is the canonical knowledge base for OSLO, organized as a doctrin
 |---|---|---|
 | `01_governance/` | What OSLO means: doctrine, constitution, ontology, decisions | Canonical (Content tier) and Governance tier |
 | `02_product/` | What OSLO does for users: capabilities, UX, PLG, workflows, tiering, collaboration | Derived (Implementation tier) |
-| `03_architecture/` | How OSLO is built: runtime, components, judgement, governance layer | Derived (Implementation tier) |
+| `03_architecture/` | How OSLO is built: cognitive-spine responsibilities, runtime models, Wave contracts, engineering. *(`legacy_layer_engineering/` = deprecated layer docs, re-homed under DL-043 — do not build from them.)* | Derived (Implementation tier) |
 | `04_research/` | Non-canonical source material, transcripts, historical artifacts | Non-canonical |
 | `05_execution/` | Implementation tracking, open questions, design risks | Operational |
 | `subsystems/` | Subsystems anchored to canonical content | Mixed (currently: Project MRI stub) |
