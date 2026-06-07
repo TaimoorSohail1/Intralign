@@ -52,7 +52,7 @@
 
 | # | Item | Status | Source |
 |---|---|---|---|
-| F1 | **CAF / Confidence scoring formula** — how Clarity/Alignment/Feasibility compute to 0–100 and how Confidence aggregates | **TBD BY DESIGN (owner, 2026-06-05, KIA-11):** *mark TBD pending calibration + empirical validation* — do **not** hardcode a formula; scaffold the computation and **calibrate from real data** (consistent with the track-and-tune discipline). Confidence remains **maturity, not probability** (S6). | Capability Matrix gap #1; KIA-11; `models/` |
+| F1 | **CAF / Confidence scoring formula** — how Clarity/Alignment/Feasibility compute to 0–100 and how Confidence aggregates | **v0 FORMULA PRESENT for R1 build/test (2026-06-05):** `models/CAF_CONFIDENCE_V0_SCORING_FORMULA_V1.md` — baseline-minus-impact dimensions + symmetric power-mean aggregation (default geometric, "between an average and a minimum") + non-arithmetic reliability qualifier + bands. Doctrine-compliant, transparent, **owner-ratifiable**. **Still owner-open:** ratify v0 + **calibrate `p`/`ε`/the impact-magnitude table from real data** (Calibration §4h). Confidence remains **maturity, not probability** (S6). *(Corrects the earlier "do not hardcode" framing — R1 needs a v0 to compute/test against; the canonical formula is what's deferred.)* | Capability Matrix gap #1; KIA-11; Calibration §4h; v0 spec |
 
 ## What is NOT on this register (already decided — do not re-open)
 

@@ -43,7 +43,7 @@ So the AC mostly **exists and is discoverable**; #11 is a *cross-reference* gap,
 
 | Item | Status | Why it's not a defect |
 |---|---|---|
-| **CAF / Confidence numeric scoring AC** | **TBD-by-design** (Open-TBD F1; owner Q11=B) | you cannot acceptance-test a formula that is *intentionally* to-be-calibrated-from-data; the **structural** AC (Derived, recompute-appends, confidence≠probability, band-edge guard) **is** present in Wave B QA. The numeric AC lands when the formula does. |
+| **CAF / Confidence numeric scoring AC** | **v0 FORMULA NOW PRESENT (2026-06-05)** → testable | `CAF_CONFIDENCE_V0_SCORING_FORMULA_V1.md` supplies the doctrine-compliant v0 (power-mean aggregation + baseline-minus-impact dims) **with its own §5 acceptance criteria** (no-findings→100; material weakness felt; exact replay; false-confidence flag; negatives: no static weights / not simple-average / not weakest-link / reliability-not-arithmetic / not-probability). The earlier "no formula to test against" gap is **closed**; only **parameter calibration** (`p`/`ε`/impact table) + canonical ratification remain owner-open. |
 | **Numeric NFR acceptance** (latency, scale, etc.) | **owner-confirmed defaults** (Open-TBD A–E, 2026-06-05) | scaffolded with confirmed starting values; refine from telemetry. |
 
 ## 3. Resolution
