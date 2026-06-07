@@ -32,6 +32,12 @@ OSLO is a doctrine-centered repository: doctrine defines what is true; everythin
 
 `subsystems/` holds sub-categories that declare their doctrinal scope, constitutional articulation, and implementation specs.
 
+## Multi-Repo Topology (objective-organized repos)
+
+This repository — **`oslo-knowledge-base`** — is the **governed canon for the OSLO *product*** (dev / product / architecture). Intralign's other objectives live in **separate, physically-independent repositories**, organized by objective. The first is **`intralign-gtm`** — **Intralign's (the company's) go-to-market** repo (narrative, launch, campaigns, sales enablement, growth, GTM metrics). Note the level: **OSLO is the product; Intralign is the company going to market**, so GTM is company-scoped and currently centers on OSLO but may span future products.
+
+**Dependency direction is one-way:** objective repos (e.g. `intralign-gtm`) **reference this repo's OSLO product canon** (positioning, tiers, pricing, capabilities) read-only; **this repo never depends on them.** Where an objective repo and this canon disagree on a product fact, **this canon wins** (ledger-wins). Canonical product/architecture/governance content is **not duplicated** into objective repos — it is **referenced** (links / a source-dependency index, pinned for campaigns where a fact must not drift). Each objective repo carries its **own lightweight governance** appropriate to its purpose; it does **not** inherit this repo's doctrine/constitution/decision-log apparatus.
+
 ## Canonical-Architecture Precedence (read before trusting any architecture doc)
 
 When two architecture documents disagree, this is the order (KIA-9, 2026-06-05):
