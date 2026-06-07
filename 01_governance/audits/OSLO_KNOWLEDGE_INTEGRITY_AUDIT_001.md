@@ -203,7 +203,7 @@ Risk: 🔴 high · 🟡 medium · 🟢 low.
 
 ## 10. Governance Backlog (prioritized)
 
-> **Execution status (2026-06-05, CHG-070): KIA-1, 3, 5, 6, 7, 8, 9, 10 — ✅ DONE** (entry docs refreshed; `REPOSITORY_INDEX.md` created; legacy-layer do-not-build banner; data-model v1.2 confirmed canonical / v1+v1.1 superseded; architecture precedence stated; README layer-terminology fixed). **KIA-2 — ⚠ skeleton drafted** (`OSLO_PRODUCT_VISION_AND_POSITIONING_V1.md`, owner to complete strategy fields). **KIA-4 — ⚠ resolution proposed** (`PROPOSAL_OUTCOME_MANAGEMENT_RESOLUTION_DL050_DISPOSITION.md`, owner to ratify). **Owner-gated remaining: KIA-2 completion, KIA-4 ratification, KIA-11 (CAF/Confidence formula).**
+> **Execution status (2026-06-05, CHG-070): KIA-1, 3, 5, 6, 7, 8, 9, 10 — ✅ DONE** (entry docs refreshed; `REPOSITORY_INDEX.md` created; legacy-layer do-not-build banner; data-model v1.2 confirmed canonical / v1+v1.1 superseded; architecture precedence stated; README layer-terminology fixed). **ALL 11 KIA ITEMS NOW CLOSED (2026-06-05):** **KIA-2 ✅** Vision owner-completed & adopted (CHG-072); **KIA-4 ✅** "Outcome Management" retired (DL-050, Option B, CHG-073); **KIA-11 ✅** CAF/Confidence formula resolved as **TBD-by-design** (Open-TBD F1 — calibrate from data; owner Q11=B). KIA-1/3/5/6/7/8/9/10 applied earlier (CHG-070). Overall Knowledge Health projected ~79 → ~88.
 
 | ID | Action | Priority | Risk addressed | Impact | Effort | Owner |
 |---|---|---|---|---|---|---|

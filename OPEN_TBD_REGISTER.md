@@ -5,6 +5,9 @@
 
 > The corpus already enforces "no invented numbers." This register **consolidates** the open items so an external team/LLM sees them in one place. The detailed, owner-assigned source of truth is **`02_product/specs/data_api_nfr/RELEASE_1_NFR_ACCEPTANCE_MATRIX.md`** (+ Performance/NFR §20). Where this register and that matrix differ, **the matrix wins.**
 
+> ## ✅ OWNER CONFIRMATION (2026-06-05) — `OWNER_DECISION_QUEUE.md` Q17–Q29
+> The owner **confirmed all proposed defaults** in Sections A–E as the **R1 working values** (rationale: R1 optimizes learning velocity/telemetry/trust validation; *defaults stay unless implementation constraints emerge; future adjustments are telemetry-informed*). Therefore: where a row below has a **proposed default**, treat it as **owner-confirmed-for-R1 (refine from telemetry)**; where a row had **no concrete default**, adopt a sensible starting value, scaffold the metric, and refine from telemetry. **Still genuinely open:** paid-tier values (A1-paid / E3 → R2), brand type/logo/microcopy (E4 → designer), and the CAF/Confidence formula (F1 → TBD-by-design). Accessibility (E2) = **WCAG 2.1 AA adopted.**
+
 ## A. Performance / latency (almost all numeric NFRs)
 
 | # | Item | Status | Source |
@@ -40,10 +43,16 @@
 
 | # | Item | Status | Source |
 |---|---|---|---|
-| E1 | Supported-browser matrix | TBD (current evergreen baseline) | Perf/NFR §16 |
-| E2 | Accessibility target (e.g. WCAG tier) | **Proposed WCAG 2.1 AA** (Visual Spec §3) — owner to confirm | Perf/NFR §16; Visual Spec §3 |
+| E1 | Supported-browser matrix | **Owner-confirmed (2026-06-05): evergreen** — latest Chrome / Edge / Safari / Firefox. | Perf/NFR §16 |
+| E2 | Accessibility target (WCAG tier) | **Owner-ADOPTED (2026-06-05): WCAG 2.1 AA** (Visual Spec §3). | Perf/NFR §16; Visual Spec §3 |
 | E4 | **Visual branding / design-token values** (palette, type, spacing, logo, microcopy) | **Palette FORMALIZED (owner, 2026-06-05, CHG-068)** — canonical Intralign palette in Visual Spec §1.1 (core: charcoal `#111315` · warm-white `#F5F4F0` · orange `#D97A3A`). **Still designer-pending:** type scale/fonts, logo/favicon/OG assets, any component redlines, microcopy. Token contract holds; designer refines via token-swap; lint forbids hardcoded brand. | Visual Spec §1, §4; CHG-067/068 |
 | E3 | Paid-tier limits / relaxed quotas — **Tiers 3–5: Pro · Team · Enterprise** | **Partly resolved — Tier 2 (Basic) owner-confirmed 2026-06-05 ($12/mo; Calibration §4c, CHG-057); Tiers 3–5 still TBD.** Canonical tiers: **Free · Basic · Pro · Team · Enterprise** (glossary). Enforcement is **tier-parameterized**, so remaining tiers are added as **config rows in Calibration §4c, not new code**. Illustrative costed ladder: `01_governance/backlog/BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE.md`. | Perf/NFR §12; MON; Calibration §4c; DL-048; backlog |
+
+## F. Cognition scoring (model formula)
+
+| # | Item | Status | Source |
+|---|---|---|---|
+| F1 | **CAF / Confidence scoring formula** — how Clarity/Alignment/Feasibility compute to 0–100 and how Confidence aggregates | **TBD BY DESIGN (owner, 2026-06-05, KIA-11):** *mark TBD pending calibration + empirical validation* — do **not** hardcode a formula; scaffold the computation and **calibrate from real data** (consistent with the track-and-tune discipline). Confidence remains **maturity, not probability** (S6). | Capability Matrix gap #1; KIA-11; `models/` |
 
 ## What is NOT on this register (already decided — do not re-open)
 

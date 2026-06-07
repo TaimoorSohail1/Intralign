@@ -30,7 +30,8 @@
 |---|---|
 | Foundational thesis (what OSLO is) | `01_governance/doctrine/` (DL-001) |
 | Outcome Orchestration | `01_governance/canonical_definitions/canonical_definitions.md`; `ontology/ontology_registry.md` |
-| **Outcome Management** | ❌ undefined → **resolution proposed** `01_governance/decisions/PROPOSAL_OUTCOME_MANAGEMENT_RESOLUTION_DL050_DISPOSITION.md` (KIA-4; recommend retire/map) |
+| **Outcome Orchestration** (the discipline/category) | `CANONICAL_GLOSSARY.md`; `OSLO_PRODUCT_VISION_AND_POSITIONING_V1.md`; `canonical_definitions.md` |
+| ~~Outcome Management~~ | **RETIRED (DL-050)** → use **Outcome Orchestration** / Outcome Integrity (glossary banned synonym) |
 | Planning Intelligence | `02_product/specs/planning/OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` |
 | Execution Intelligence | Future/R2 — `01_governance/backlog/RELEASE_2_BACKLOG_CANDIDATES.md` |
 | CAF (Clarity/Alignment/Feasibility) | `02_product/specs/models/` + `constitution/`; Evaluate |

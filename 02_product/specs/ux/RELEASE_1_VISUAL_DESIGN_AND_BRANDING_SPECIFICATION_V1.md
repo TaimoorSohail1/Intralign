@@ -96,7 +96,7 @@ OSLO's voice: **honest, precise, never overstating.** "OSLO advises; you decide.
 - Put every reusable component in **Storybook** from day one (the visual review surface, §6).
 
 ## 3. Accessibility target (R1)
-- **WCAG 2.1 AA** as the working baseline (the corpus flags accessibility as TBD — adopt AA): contrast ≥4.5:1 body / 3:1 large; visible focus (`--color-focus`); full keyboard nav; semantic HTML/ARIA; respects `prefers-reduced-motion` (and **never** animates during an active Fast/Deep pass — the no-interrupt rule). Final tier is an owner confirm (Open-TBD).
+- **WCAG 2.1 AA — owner-ADOPTED (2026-06-05, Open-TBD E2)**: contrast ≥4.5:1 body / 3:1 large; visible focus (`--color-focus`); full keyboard nav; semantic HTML/ARIA; respects `prefers-reduced-motion` (and **never** animates during an active Fast/Deep pass — the no-interrupt rule). This is the Release-1 accessibility conformance target.
 
 ## 4. What we need from the designer *(input checklist — maps 1:1 to the tokens)*
 Delivering these = filling the token contract; no code change required.

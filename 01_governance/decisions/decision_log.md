@@ -584,6 +584,21 @@ Each decision entry contains:
 
 ---
 
+### DL-050 — Resolve "Outcome Management" (retire & map to Outcome Orchestration)
+
+- **Date Recorded:** 2026-06-05
+- **Layer:** Canon / ontology (terminology).
+- **Source:** `PROPOSAL_OUTCOME_MANAGEMENT_RESOLUTION_DL050_DISPOSITION.md`; KIA-4 (`OSLO_KNOWLEDGE_INTEGRITY_AUDIT_001`). **Builds on:** DL-002 (Outcome Integrity).
+- **Decision:** **Option B (retire & map).** "Outcome Management" is **not** a canonical OSLO concept — it was undefined and unused, and "management" connotes acting-on/coordinating work, which conflicts with OSLO's **advise-never-act** posture. **Outcome Orchestration is the discipline/category** (per the Product Vision, CHG-072). Surviving "Outcome Management" references are **historical terminology**, to be **mapped into the Outcome Orchestration framework** during reconciliation/cleanup. Recorded in `CANONICAL_GLOSSARY.md` as a banned synonym (→ Outcome Orchestration / Outcome Integrity).
+- **Rationale:** removes a dangling, drift-prone undefined term; aligns terminology with the owner-adopted category (Outcome Orchestration) and the epistemic posture.
+- **Disposition:** Accepted (Option B).
+- **Supersedes:** Nothing (the term was never canonical). Maps historical usages to Outcome Orchestration.
+- **Affected Artifacts:** `CANONICAL_GLOSSARY.md` (outcome-family + banned synonym); `REPOSITORY_INDEX.md`; `OSLO_PRODUCT_VISION_AND_POSITIONING_V1.md` (names Outcome Orchestration the category); KIA-4 closed.
+- **Resulting Actions:** Glossary + index updated; CHG-073 recorded.
+- **Status:** Ratified.
+
+---
+
 ## Open Questions Not Recorded as Decisions
 
 The following appear in `03_implementation_specs/14_open_questions_design_risks.md` and remain explicitly open. They are not decisions and are listed here for reference only.
@@ -598,7 +613,7 @@ The following appear in `03_implementation_specs/14_open_questions_design_risks.
 
 ## Governance Notes
 
-1. The decision log is operative as of DL-029. DL-029 through DL-049 are Ratified under Framework 001/001A (DL-045 is a separate pending draft — tool-neutral agent terminology — not yet recorded here). DL-036, DL-037, DL-038, and DL-039 are Ratified with Conditions; DL-040 and DL-041 are Ratified with Clarifications; DL-042 is Ratified (unconditional); **DL-043 is Ratified with Conditions** (consolidated Release 1 architecture & epistemic foundation, constituents A–J); **DL-044 is Ratified with Conditions** (Release 1 engineering-enablement layer, constituents A–D: Claude Code Constraints, Wave packages, Calibration Defaults, Deployment Governance); **DL-046 is Ratified** (Fast/Deep analysis modes + <60s Time-to-First-MRI as explicit Wave B contract + NFR obligations); **DL-047 is Ratified with Conditions** (contract-coverage resolution: synthesis engine as Derived/extended-Infer, Chat/CRR/Suggested-Fix classification, sub-feature enumeration, capability→contract traceability gate); **DL-048 is Ratified with Conditions** (cost governance / freemium unit economics: contracted per-tier token-budget enforcement on the Fast/Deep engine + QA gate + `AI Spend Recorded` observability; Balanced ~$3/mo Free-tier config defaults; paid-tier limits TBD). Operative governance framework set: Framework 001, Framework 001A, OGAP v1.0, DECISION-READY.
+1. The decision log is operative as of DL-029. DL-029 through DL-050 are Ratified under Framework 001/001A (DL-045 is a separate pending draft — tool-neutral agent terminology — not yet recorded here; **pending owner review**). **DL-049 Ratified with Conditions** (`Principal` identity, reviewer→user). **DL-050 Ratified** ("Outcome Management" retired & mapped to Outcome Orchestration). DL-036, DL-037, DL-038, and DL-039 are Ratified with Conditions; DL-040 and DL-041 are Ratified with Clarifications; DL-042 is Ratified (unconditional); **DL-043 is Ratified with Conditions** (consolidated Release 1 architecture & epistemic foundation, constituents A–J); **DL-044 is Ratified with Conditions** (Release 1 engineering-enablement layer, constituents A–D: Claude Code Constraints, Wave packages, Calibration Defaults, Deployment Governance); **DL-046 is Ratified** (Fast/Deep analysis modes + <60s Time-to-First-MRI as explicit Wave B contract + NFR obligations); **DL-047 is Ratified with Conditions** (contract-coverage resolution: synthesis engine as Derived/extended-Infer, Chat/CRR/Suggested-Fix classification, sub-feature enumeration, capability→contract traceability gate); **DL-048 is Ratified with Conditions** (cost governance / freemium unit economics: contracted per-tier token-budget enforcement on the Fast/Deep engine + QA gate + `AI Spend Recorded` observability; Balanced ~$3/mo Free-tier config defaults; paid-tier limits TBD). Operative governance framework set: Framework 001, Framework 001A, OGAP v1.0, DECISION-READY.
 2. DL-001 through DL-028 are grandfathered as Stated per DL-032. They remain in effect but require future Proposals to convert to Ratified.
 3. Future entries must cite the source Proposal, follow the Entry Schema, and adhere to the supersession rule declared by Framework 001.
 4. Decisions that reconcile conflicts among grandfathered entries must explicitly reference the superseded statements.

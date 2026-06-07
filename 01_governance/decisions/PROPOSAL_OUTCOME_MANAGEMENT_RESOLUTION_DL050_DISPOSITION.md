@@ -1,6 +1,6 @@
 # DL-050 (DISPOSITION DRAFT) — Resolve "Outcome Management" (define or retire)
 
-**Status:** **DRAFT — pending Owner Ratification.** Owner-directed (KIA-4, `OSLO_KNOWLEDGE_INTEGRITY_AUDIT_001`). **Resolves no ontology unilaterally; routes the canon decision to the owner.** Per `CLAUDE.md` (do not resolve ontology conflicts unilaterally; do not introduce doctrine).
+**Status:** **RATIFIED — DL-050 (2026-06-05); Option B (retire & map); CHG-073.** Owner elected **B**: retire "Outcome Management" as a primary concept; **Outcome Orchestration is the discipline**; map surviving references into the Outcome Orchestration framework during reconciliation/cleanup. Glossary banned-synonym entry added. Owner-directed (KIA-4).
 
 ---
 
@@ -27,10 +27,9 @@ An **undefined-but-referenced** term is a drift magnet: a future Claude Code ins
 
 **Option B (retire + map + glossary-ban).** There is no definition, no usage, and a real **semantic conflict** ("management" ⇒ action/control) with OSLO's never-acts model. Mapping to the established Integrity/Orchestration terms preserves intent without inventing a concept or weakening the epistemic posture. Adopt Option A **only** if the owner affirmatively intends a new, distinct, non-action concept.
 
-## 5. Owner decision required
-- [ ] **A (define)** — provide the definition + relationships + confirm non-action; or
-- [ ] **B (retire & map)** *(recommended)* — non-canonical; map to Outcome Integrity / Orchestration; glossary-ban.
-- [ ] On ratification: update `CANONICAL_GLOSSARY.md` (+ `canonical_definitions.md` if A); update the `REPOSITORY_INDEX.md` entry; record DL-050 + changelog; close **KIA-4**.
+## 5. Owner decision — RECORDED
+- [x] **B (retire & map)** — **Outcome Management retired as a primary discipline; Outcome Orchestration is the discipline.** Surviving references = historical terminology, mapped into the Outcome Orchestration framework during reconciliation/cleanup (owner clarification 2026-06-05).
+- [x] Applied: `CANONICAL_GLOSSARY.md` (banned-synonym + outcome-family section); `REPOSITORY_INDEX.md`; decision log DL-050; CHG-073; **KIA-4 closed.** The Product Vision (CHG-072) names Outcome Orchestration the created category — consistent.
 
 ---
 *This draft resolves the KIA-4 finding that "Outcome Management" is referenced as if canonical but is undefined and unused in the repository, while the canonical outcome-family (Outcome Integrity, Orchestration, Confidence) is well-defined. It routes the canon decision to the owner with two options — define it as a genuinely distinct concept, or (recommended) retire it as non-canonical and map it to Outcome Integrity/Orchestration with a glossary ban — recommending retirement because the term has no definition or usage and because "management" connotes acting on/controlling outcomes, which conflicts with OSLO's advise-never-act epistemic posture. It decides no ontology unilaterally and changes no canon until ratified.*

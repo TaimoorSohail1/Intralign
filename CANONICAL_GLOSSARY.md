@@ -60,6 +60,15 @@
 
 Tiers are a **tier-keyed config dimension** (DL-048 §4c + CHG-056 envelope): each knob (project-size envelope, active projects, Deep/day, fix·chat caps, model routing, token budget) is set **per tier**, increasing up the ladder. Use `tier` as the config/telemetry key; values for **Tier 1 (Free)** and **Tier 2 (Basic)** are owner-confirmed (Calibration §4c), **Tiers 3–5 (Pro · Team · Enterprise) are TBD** (Open-TBD A1/E3; ladder draft in `01_governance/backlog/BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE.md`). **Do not hard-code tier behavior** — read it from config.
 
+## Canon — outcome family (DL-050)
+
+| Canonical term | Meaning (one line) | Banned / not this |
+|---|---|---|
+| **Outcome Orchestration** | **The discipline/category OSLO creates** — continuously governing outcome integrity as work, context, and understanding evolve. | — |
+| **Outcome Integrity** | Coherence between **Intended Reality** and **Current Reality** (DL-002). | "outcome correctness" |
+| **Outcome Confidence** | Evaluate's confidence in the *understanding* of an outcome (Derived; maturity, **not** probability). | "success probability" |
+| **~~Outcome Management~~** | **RETIRED (DL-050, 2026-06-05).** Not a canonical concept. **"Management" implies acting on/coordinating work — which OSLO does NOT do** (advise-never-act). | **banned** → use **Outcome Orchestration** (discipline) or **Outcome Integrity** (the coherence sense); historical references map into the Outcome Orchestration framework. |
+
 ## Modes that are NOT cognition (don't contract as such)
 
 **Commodity / platform** (DL-043 J, Categories C/E/F — normal engineering, not cognition-contracted): auth, RBAC, project CRUD, settings, notifications-**state**, sharing, monetization/limits, product telemetry, the CRR **workflow UI** (the cognitive response→Deep-Pass seam *is* contracted). **Render** is a non-cognitive service. **Authority** is specified-but-inactive in R1 — do not build it.

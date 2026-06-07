@@ -593,6 +593,27 @@ Each changelog entry contains:
 - **Change Summary:** Advanced the two owner-gated KIA items to owner-ready state without inventing strategy or ontology. **KIA-2:** a canonical **Product Vision & Positioning** skeleton — grounded sections filled from existing canon (foundational thesis DL-001, outcome-integrity DL-002, the epistemic-honesty differentiator, R1-as-validation, the Curiosity→Trust→Habit→Conversion model, and the high-confidence non-goals) and cited, with the genuinely strategic fields (Intralign mission, aspirational end-state, category name + competitive set, ICP, value-prop wording, strategic-objective ladder, positioning statement) marked **`[OWNER TO COMPLETE]`** and deliberately not invented (Anti-Assumption Protocol). **KIA-4:** a **DL-050 draft** resolving "Outcome Management" (NOT DISCOVERABLE / undefined) — routes the canon decision to the owner with two options (define as a distinct concept; or — recommended — **retire & map** to the defined Outcome Integrity/Orchestration with a glossary ban), recommending retirement because the term is undefined/unused and "management" connotes acting-on/controlling outcomes, conflicting with OSLO's advise-never-act posture. Index + KIA status updated (Vision ⚠ skeleton; Outcome Management ⚠ proposed). Owner-gated remaining: KIA-2 completion, KIA-4 ratification, KIA-11. No Doctrine/Constitution/contract/architecture change.
 - **Supersession Reference:** None. Owner-ready drafts; supersede no Decision.
 
+### CHG-072 — Product Vision & Positioning completed + adopted (KIA-2 closed)
+
+- **Date:** 2026-06-05 · **Authorizing Decision:** Owner Decision Responses Q1–Q9.
+- **Affected Artifacts:** `02_product/specs/planning/OSLO_PRODUCT_VISION_AND_POSITIONING_V1.md` (DRAFT skeleton → owner-completed & adopted canonical); `REPOSITORY_INDEX.md`; KIA-2 closed.
+- **Change Summary:** The owner completed and adopted the canonical Product Vision & Positioning. **Intralign mission:** build AI-native systems for better outcomes via governed planning/execution/orchestration. **OSLO vision:** the **system of record for outcome integrity** — the governance/orchestration layer above human + AI execution. **Category: create a new one — Outcome Orchestration** (secondary: AI-Native Planning Intelligence + Outcome Governance), wedge = 60-second project intelligence + governed planning QA, entering via planning intelligence and expanding to execution intelligence + outcome orchestration; competitive set = Jira/Asana/Monday/Smartsheet/MS Project/Planview/Primavera/AI planning copilots. **ICP** = anyone responsible for project outcomes (beachhead PM/PgM/PMO/coordinators/delivery/transformation; mid-market+enterprise), bought on outcome responsibility not title. Includes per-persona value, a 7-level strategic ladder (individual outcomes → … → Outcome Orchestration as a discipline), the moat, the non-goals (incl. "not a work-coordination tool"), and the positioning statement. Resolves the KIA NOT-DISCOVERABLE Vision finding; becomes the canonical strategic anchor. No Doctrine/Constitution/architecture change.
+- **Supersession Reference:** None.
+
+### CHG-073 — DL-050 Ratified ("Outcome Management" retired → Outcome Orchestration; KIA-4 closed)
+
+- **Date:** 2026-06-05 · **Authorizing Decision:** DL-050 (owner Q10 = Option B).
+- **Affected Artifacts:** `decision_log.md` (DL-050; range → DL-029–DL-050); `PROPOSAL_OUTCOME_MANAGEMENT_RESOLUTION_DL050_DISPOSITION.md` (→ Ratified); `CANONICAL_GLOSSARY.md` (outcome-family section + banned synonym); `REPOSITORY_INDEX.md`.
+- **Change Summary:** Owner ratified **Option B** — **"Outcome Management" is retired** as a primary concept (it was undefined/unused and "management" connotes acting-on/coordinating work, conflicting with OSLO's advise-never-act posture). **Outcome Orchestration is the discipline/category** (per the Vision, CHG-072); surviving references are historical and map into the Outcome Orchestration framework during reconciliation. Glossary records the banned synonym and the outcome-family (Orchestration / Integrity / Confidence). No model/contract/architecture change.
+- **Supersession Reference:** None (term was never canonical).
+
+### CHG-074 — Owner Decision Queue confirms applied (Q11, Q13–Q29)
+
+- **Date:** 2026-06-05 · **Authorizing Decision:** Owner Decision Responses.
+- **Affected Artifacts:** `OPEN_TBD_REGISTER.md` (owner-confirmation block; E1 evergreen; E2 WCAG 2.1 AA; new F1 CAF-formula-TBD); `02_product/specs/ux/RELEASE_1_VISUAL_DESIGN_AND_BRANDING_SPECIFICATION_V1.md` (§3 AA owner-adopted); `OWNER_DECISION_QUEUE.md`; KIA-11 closed.
+- **Change Summary:** Applied the owner's confirmations: **all proposed Open-TBD numeric defaults (Q17–Q27, Sections A–E) confirmed as R1 working values**, to be refined from telemetry (rationale: R1 = learning velocity; defaults hold unless implementation constraints emerge). **Accessibility = WCAG 2.1 AA adopted** (E2; Visual §3). **Browser = evergreen** (E1). **CAF/Confidence scoring formula marked TBD-by-design** (Q11=B; new Open-TBD **F1** — scaffold + calibrate from data, confidence stays maturity-not-probability; KIA-11 closed). **Paid tiers 3–5 / P5 referral / exec-monitoring confirmed R2; Free/Basic numbers held for telemetry** (Q13–Q16). **Q12 (DL-045)** remains pending owner review; **Q30 (brand type/logo/microcopy)** is designer-driven. No canonical model/contract/architecture change.
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
