@@ -2,7 +2,7 @@
 
 **Type:** Implementation artifact — the authoritative Release 1 event architecture (events, triggers, recompute, ordering, idempotency, dispatch)
 **Status:** Active Architecture V1 · **Date:** 2026-05-31
-**Aligned with:** `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_DATA_STATE_RECONCILIATION_AUDIT.md` · `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `OSLO_ARCHITECTURE_BASELINE_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md` · `OSLO_LINEAR_INITIATIVES_V2.md` · `OSLO_RELEASE_1_IMPLEMENTATION_PLAN.md`
+**Aligned with:** `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.2.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_DATA_STATE_RECONCILIATION_AUDIT.md` · `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `OSLO_ARCHITECTURE_BASELINE_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md` · `OSLO_LINEAR_INITIATIVES_V2.md` · `OSLO_RELEASE_1_IMPLEMENTATION_PLAN.md`
 
 > Active Release 1 only. **No Governance Domain concepts** (no Resolution Candidate, Review Request, Disposition, Governance, Accepted Understanding), no Agent Governance, Execution Intelligence, Future Architecture, or Release 2. This document defines **what causes state transitions**. It does not define schema (Data Model), API design, UI, or governance behavior.
 >

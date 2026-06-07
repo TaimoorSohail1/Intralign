@@ -47,7 +47,8 @@ def allow_hist(path_str): return any(a.lower() in path_str.lower() for a in HIST
 def is_active(p):
     s = rel(p)
     return not any(x in s for x in ("04_research/", "legacy_layer_engineering/",
-                   "historical_artifacts/", "01_governance/audits/", "00_raw"))
+                   "historical_artifacts/", "01_governance/audits/", "00_raw",
+                   "raw/"))  # raw/ = raw Notion/source export, not part of the active knowledge tree
 
 # high-signal RETIRED terms only (unambiguous; common words like "Governance Layer"
 # are excluded — they appear legitimately in governance/constitution prose).
@@ -111,7 +112,8 @@ if dl_log.exists():
     dls = [int(m.group(1)) for m in re.finditer(r"DL-0?(\d{2,3})", log_text)]
     max_dl = max(dls) if dls else 0
     for f in MD:
-        if "audit" in rel(f).lower(): continue
+        # the ledger + dispositions record historical ranges by design; not stale claims
+        if any(x in rel(f).lower() for x in ("audit","decision_log","changelog","proposal_","disposition")): continue
         for m in re.finditer(r"DL-029 through DL-0?(\d{2,3})", f.read_text(encoding='utf-8', errors='ignore')):
             claimed = int(m.group(1))
             if claimed < max_dl:

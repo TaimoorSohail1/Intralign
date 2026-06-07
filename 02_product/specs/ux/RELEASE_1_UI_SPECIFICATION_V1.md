@@ -2,7 +2,7 @@
 
 **Type:** Implementation artifact — the authoritative Release 1 UI specification
 **Status:** Active Architecture V1 · **Date:** 2026-05-31
-**Grounded exclusively in:** `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `OSLO_ARCHITECTURE_BASELINE_V1.md` · `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.1.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_EVENT_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_API_CONTRACT_SPECIFICATION_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md`
+**Grounded exclusively in:** `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `OSLO_ARCHITECTURE_BASELINE_V1.md` · `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.2.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_EVENT_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_API_CONTRACT_SPECIFICATION_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md`
 
 > **Scope guardrails.** Active Release 1 only. **No Governance Domain concepts, Future Architecture, Agent Governance, or Execution Intelligence.** This spec introduces **no new capabilities, workflows, entities, or lifecycle states** — it presents the architecture already defined. All entity states shown are the Data Model v1.1 / State Model enums verbatim; all refresh triggers are Event Model events; all data flows are API contract endpoints.
 

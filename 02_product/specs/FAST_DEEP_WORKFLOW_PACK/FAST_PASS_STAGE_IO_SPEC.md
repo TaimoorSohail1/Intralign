@@ -3,7 +3,7 @@
 **Type:** Locked workflow spec — Fast Analysis Pass stages (intake → orientation)
 **Status:** Active Architecture V1 · **Date:** 2026-05-31
 **Authority order:** Planning Intelligence > State Model > Event Model > Data Model v1.1 > Analysis Engine > NFR > API/UI/Testing > Supporting models > Proposal notes
-**Grounded in:** `PLANNING_INTELLIGENCE_SPECIFICATION_V1.md` · `RELEASE_1_ANALYSIS_ENGINE_SPECIFICATION_V1.md` §9 · `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.1.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_EVENT_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_PERFORMANCE_AND_NFR_SPECIFICATION_V1.md`
+**Grounded in:** `PLANNING_INTELLIGENCE_SPECIFICATION_V1.md` · `RELEASE_1_ANALYSIS_ENGINE_SPECIFICATION_V1.md` §9 · `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.2.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_EVENT_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_PERFORMANCE_AND_NFR_SPECIFICATION_V1.md`
 
 > **Scope.** Active Release 1 only. The Fast Pass produces the **60-Second Orientation**, which is **not final understanding**. No governance, accepted understanding, agent governance, autonomous execution, actuation, or outcome-orchestration runtime. No invented formulas, weights, percentages, or thresholds. Each stage is tagged `canonical` / `derived` / `proposal` / `TBD`. Stage time budgets are **proposal** (load-test pending); the only `canonical` numeric target is Time-to-First-MRI **< 60s** (NFR §3).
 >

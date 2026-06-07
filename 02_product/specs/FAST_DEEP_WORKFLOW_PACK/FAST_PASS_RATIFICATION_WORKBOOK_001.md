@@ -21,7 +21,7 @@
 
 ---
 
-## B. Items that add fields to `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.1.md` (→ v1.2)
+## B. Items that add fields to `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.2.md` (→ v1.2)
 
 These are **schema reconciliation** edits; on approval they follow the same backlog path as the R-1…R-6 reconciliation (new successor `…_V1.2.md` + change-log entry). State/Event/Engine specs already reference them.
 

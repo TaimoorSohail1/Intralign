@@ -2,7 +2,7 @@
 
 **Type:** Release 1 Testing Strategy Specification
 **Status:** Active Architecture V1 · **Date:** 2026-05-31
-**Grounded exclusively in:** `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.1.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_EVENT_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_API_CONTRACT_SPECIFICATION_V1.md` · `RELEASE_1_UI_SPECIFICATION_V1.md` · `RELEASE_1_PERFORMANCE_AND_NFR_SPECIFICATION_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md`
+**Grounded exclusively in:** `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.2.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_EVENT_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_API_CONTRACT_SPECIFICATION_V1.md` · `RELEASE_1_UI_SPECIFICATION_V1.md` · `RELEASE_1_PERFORMANCE_AND_NFR_SPECIFICATION_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md`
 
 > **Scope guardrails.** Active Release 1 only. **No new architecture, entities, states, events, capabilities, workflows, or future scope.** Testing **validates** behavior defined by the specifications; it never **redefines** it. The State Model is the lifecycle authority, the Event Model the event authority, the API Contract the interface authority, the UI Spec the UI authority, and the NFR Spec the performance authority. The **only** approved numeric performance threshold is the **60-second Time-to-First-MRI**; all other performance targets are tested as **`TBD – Owner Decision Required`** (no thresholds invented).
 >

@@ -2,11 +2,11 @@
 
 **Type:** Implementation artifact — the authoritative Release 1 lifecycle & state-behavior specification
 **Status:** Active Architecture V1 · **Date:** 2026-05-31
-**Aligned with:** `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.md` · `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `OSLO_ARCHITECTURE_BASELINE_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md` · `OSLO_LINEAR_INITIATIVES_V2.md` · `OSLO_RELEASE_1_IMPLEMENTATION_PLAN.md`
+**Aligned with:** `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.2.md` · `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `OSLO_ARCHITECTURE_BASELINE_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md` · `OSLO_LINEAR_INITIATIVES_V2.md` · `OSLO_RELEASE_1_IMPLEMENTATION_PLAN.md`
 
 > **Scope guardrails.** Active Release 1 only. **No Governance Domain concepts** (no Resolution Candidate, Review Request Model, Disposition, Governance, Accepted Understanding), no Agent Governance, Execution Intelligence, Future Architecture, or Release 2. This document defines **lifecycle behavior, state transitions, recomputation, supersession, and event-triggered state changes**. It does **not** define database schema (the Data Model owns that), API, UI, or governance behavior.
 >
-> **Authority note.** This is the **lifecycle authority**. Where a state name here differs from an enum value in `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.md`, this document governs the *behavior* and the Data Model's enum should be reconciled to it (see the post-document "Recommended Data Model updates"). Each state machine below includes a **Data-Model mapping**.
+> **Authority note.** This is the **lifecycle authority**. Where a state name here differs from an enum value in `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.2.md`, this document governs the *behavior* and the Data Model's enum should be reconciled to it (see the post-document "Recommended Data Model updates"). Each state machine below includes a **Data-Model mapping**.
 
 ---
 

@@ -1,5 +1,7 @@
 # Canonical Definitions
 
+> **🔎 Two canonical-definitions surfaces exist (KIA2-3 / DL-036).** This is the **Governance-tier — orientation registry / cross-index**. The companion is the **Content-tier authoritative operational expression** at `01_governance/constitution/10_canonical_definitions.md`. **Where they conflict substantively, Doctrine prevails (DL-036 Clarification #1).** For an operational definition, use the constitution file; for orientation / the registry, use this file.
+
 ## Status
 
 **Operative — Governance-Tier Orientation Registry (per DL-036)**

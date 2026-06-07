@@ -2,7 +2,7 @@
 
 **Type:** Implementation artifact — the authoritative Release 1 Non-Functional Requirements & Performance specification
 **Status:** Active Architecture V1 · **Date:** 2026-05-31
-**Grounded exclusively in:** `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `OSLO_ARCHITECTURE_BASELINE_V1.md` · `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.1.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_EVENT_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_API_CONTRACT_SPECIFICATION_V1.md` · `RELEASE_1_UI_SPECIFICATION_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md`
+**Grounded exclusively in:** `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `OSLO_ARCHITECTURE_BASELINE_V1.md` · `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.2.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_EVENT_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_API_CONTRACT_SPECIFICATION_V1.md` · `RELEASE_1_UI_SPECIFICATION_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md`
 
 > **Scope guardrails.** Active Release 1 only. **No Governance Domain concepts, Future Architecture, Agent Governance, or Execution Intelligence.** This document defines **quality constraints only** — no new capabilities, entities, workflows, or lifecycle states. **No quantitative target is invented.** The only owner-approved numeric target in the corpus is the **60-second Time-to-First-MRI** (Master Spec §20 / Canonical Scope M1); every other quantitative value is marked **`TBD – Owner Decision Required`** and enumerated in §20.
 

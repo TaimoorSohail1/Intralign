@@ -33,7 +33,7 @@ Only the repository owner ratifies canonical content. AI systems assist with ana
 
 ## Operative Governance State
 
-- **Frameworks:** Framework 001 and Framework 001A operative (DL-029 through DL-031).
+- **Frameworks:** Framework 001 and Framework 001A operative (ratified under DL-030 / DL-031). **Operative decision range: DL-029–DL-050** (see `01_governance/decisions/decision_log.md`; the ledger is the source of truth).
 - **Architecture:** Doctrine-centered (DL-033).
 - **Progression taxonomy:** OSLO Evolution Framework with four axes (DL-034).
 - **Source Material:** Constitutional Principles Draft as Historical Artifact (DL-035).

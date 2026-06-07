@@ -69,7 +69,11 @@ All 11 KIA-001 backlog items + the owner decisions are applied and verified in-r
 
 **Projected: 89 + (4–5 + 2 + 1–2 + 2 + 1) ≈ 96–97 — upper-90s achieved.**
 
-> **✅ KIA2-1 BUILT (2026-06-05, CHG-077).** `tools/doc_integrity_check.py` + `.github/workflows/doc-integrity.yml` — runs autonomously on every push/PR as a **read-only gate** (never edits/merges/deploys). Current state: **0 ERRORS (PASS)**, **248 warnings** which are themselves the **KIA2-2 worklist** the CI found automatically: **18** active specs still referencing the superseded data-model **v1.1**; **219** retired-layer-term uses (concentrated in `OSLO_ARCHITECTURE_BASELINE_V1` + the Fast/Deep pack); **11** stale DL-range claims. Flip CI to `--strict` once the warn backlog is cleared to lock the upper-90s. **Reliability dimension now machine-guarded.**
+> **✅ KIA2-1 BUILT (2026-06-05, CHG-077).** `tools/doc_integrity_check.py` + `.github/workflows/doc-integrity.yml` — runs autonomously on every push/PR as a **read-only gate** (never edits/merges/deploys). **Reliability dimension now machine-guarded.**
+>
+> **✅ KIA2-2 + KIA2-3 APPLIED (2026-06-05, CHG-078).** Residue archived → active tree is **pure canon**: `OSLO_ARCHITECTURE_BASELINE_V1`, `legacy_layer_engineering/`, and data-model **v1/v1.1** moved to `04_research/historical_artifacts/`; active data-model references repointed to **v1.2**. Dual canonical-definitions surfaces now carry **mutual cross-reference banners** (DL-036 rule on each — zero ambiguity). The doc-integrity CI worklist dropped **248 → 56 warnings (0 errors, PASS)** — and the residual ~56 are now **mostly legitimate** (docs *naming* a retired term to deprecate/map it, or *citing what they superseded*), not drift.
+>
+> **Projected health now ~94–95.** Remaining to ~96–97: **KIA2-4** (acceptance-criteria coverage) + optional inline-allow annotations to drive the legitimate warnings toward zero and flip CI to `--strict`.
 
 ## 6. Honest ceiling (read before chasing 98+)
 

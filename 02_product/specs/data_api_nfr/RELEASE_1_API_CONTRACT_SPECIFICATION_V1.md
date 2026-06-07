@@ -2,7 +2,7 @@
 
 **Type:** Implementation artifact — the authoritative Release 1 API & service-contract specification
 **Status:** Active Architecture V1 · **Date:** 2026-05-31
-**Grounded exclusively in:** `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.1.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_EVENT_MODEL_SPECIFICATION_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md` · `OSLO_RELEASE_1_IMPLEMENTATION_PLAN.md`
+**Grounded exclusively in:** `OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` · `RELEASE_1_DATA_MODEL_SPECIFICATION_V1.2.md` · `RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` · `RELEASE_1_EVENT_MODEL_SPECIFICATION_V1.md` · `OSLO_CAPABILITY_MATRIX_V2.md` · `OSLO_RELEASE_1_IMPLEMENTATION_PLAN.md`
 
 > **Scope guardrails.** Active Release 1 only. **No Governance Domain concepts, Future Architecture, Execution Intelligence, Agent Governance, or Autonomous Actions.** This spec introduces **no new entities, lifecycle states, or capabilities** — it exposes the existing architecture only. All resource names, enums, and events are used **exactly** as defined by the Data Model v1.1, State Model, and Event Model. Where a value is not yet defined upstream (e.g., latency targets), it is marked **TBD** — no benchmarks are invented.
 >
