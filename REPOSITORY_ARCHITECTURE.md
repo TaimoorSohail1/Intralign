@@ -38,6 +38,8 @@ This repository — **`oslo-knowledge-base`** — is the **governed canon for th
 
 **Dependency direction is one-way:** objective repos (e.g. `intralign-gtm`) **reference this repo's OSLO product canon** (positioning, tiers, pricing, capabilities) read-only; **this repo never depends on them.** Where an objective repo and this canon disagree on a product fact, **this canon wins** (ledger-wins). Canonical product/architecture/governance content is **not duplicated** into objective repos — it is **referenced** (links / a source-dependency index, pinned for campaigns where a fact must not drift). Each objective repo carries its **own lightweight governance** appropriate to its purpose; it does **not** inherit this repo's doctrine/constitution/decision-log apparatus.
 
+Above the objective repos sits **`intralign-company`** — the **company operating system** (company-level decisions `CD-###`, strategy, customer-insight synthesis). It provides **parent context** and **creates no dependency** in either direction: this product repo does not depend on it, and it only *references* product canon (e.g. telemetry definitions) one-directionally. Note the distinct ledgers: company decisions are `CD-###` (in `intralign-company`); **product** decisions remain `DL-###` (here).
+
 ## Canonical-Architecture Precedence (read before trusting any architecture doc)
 
 When two architecture documents disagree, this is the order (KIA-9, 2026-06-05):
