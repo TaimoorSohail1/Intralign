@@ -129,6 +129,31 @@ When the designer delivers: one PR replaces token **values** (and adds the font 
 Claude Code builds to the surface spec + default tokens → PR with screenshots + Storybook → owner reviews behavioral conformance now, visual conformance when brand lands → designer delivers → token-swap PR → visual-regression confirms. Behavior is right from day one; brand is right the day the tokens land.
 
 ---
+
+## 7. Reference Pattern Library *(proven platforms, filtered through OSLO's invariants)*
+
+**Use proven UX as a per-surface pattern source — never a wholesale clone.** Reference platforms supply *familiar form* that an autonomous build can emulate confidently; OSLO's **fail-conditions are the filter** that decides what that form is allowed to *do*. The single biggest trap: products like **Cursor *act* on the world** (auto-apply, agents) — **OSLO advises and never acts** (DL-047; the Recommendation Panel explicitly prohibits "Apply Automatically / Run Agent"). Borrow the *review* loop, never the *act* loop.
+
+> **The filter (apply to every borrowed pattern):** does it imply OSLO **acts** (writes the artifact, runs an agent), **computes health** (good/bad score), or **asserts certainty** (confidence as probability)? If yes → modify the pattern until it doesn't. OSLO surfaces *understanding*; it does not act, grade, or predict.
+
+| OSLO surface | Reference | Pattern to borrow | **OSLO bound (the filter)** |
+|---|---|---|---|
+| Recommendations · Suggested Fixes | **Cursor** | inline AI, **accept / reject / modify diff review**, "candidate" framing | **No auto-apply, no agent.** OSLO never writes the artifact; the *user* applies; the fix is a candidate (Wave I / DL-047). |
+| OSLO Chat | **Cursor chat · Linear AI** | context-anchored chat, explain/clarify/improve, handoff links to surfaces | Disclose-class: **consumes/triggers** cognition, **writes no canonical, changes no assessment** (Wave E DL-047). |
+| Global nav · command palette · speed | **Linear** | keyboard-first, ⌘K palette, instant transitions, crisp empty/loading states | no computed "health/readiness/status" beyond OSLO's **honest** analysis states (analyzing/analyzed/**stale**). |
+| Artifact editing | **Notion** | block editing, side panels, structured content, slash-commands | edits are **Attested inputs → trigger recompute**, not silent mutation; artifacts are source-of-truth. |
+| MRI · CAF Triangle · Confidence · Heatmap | **Grafana · Linear insights** (observability/analytics) | diagnostic visualization, drill-down, overlays | **Confidence = maturity, never probability/health**; epistemic labels (Attested/Derived) visible; **never a "score cockpit"** that displaces understanding (Dashboard fail-conditions). |
+| Issues / worklist | **Linear issues · Sentry** | severity triage, filter/sort, persistent worklist | **Issues weaken/close ONLY via reanalysis** (Finding Panel fail-condition) — **no manual "resolve."** |
+| CRR · comments · review | **Figma · GitHub PR review** | request → respond → resolve, threaded comments, @-mention | stakeholder response = **evidence, not truth**; **no autonomous acceptance**; OSLO never self-accepts. |
+| Onboarding → first value (60s) | **Vercel · Lovable · Bolt** | instant time-to-value, minimal-friction first run | name + 1 artifact → orientation; **honest** empty/loading/failure states; no fabricated progress. |
+| Notifications / awareness | **Linear · Slack** | unobtrusive awareness, unread/activity | **notification-state is not canonical** (presented, not computed); no interrupt during an active pass. |
+| History / understanding timeline | **GitHub history · Linear activity** | append-only timeline, diff-over-time, restore-view | **append-only; never deleted**; honest supersession; "why did confidence change" via lineage. |
+| Export / share | **Notion · Figma share** | scoped links, export presets | epistemic labels honored on export; links **scoped/expiring** (P7); attribution + CTA (P1); **no dark patterns**. |
+| Limit-reached / upgrade | **Linear · Vercel upgrade UX** | contextual, value-framed upgrade moments | affordance **stays enabled → gated → honest prompt + resolutions** (Seam Audit 001); **never** a wall or a dark pattern. |
+
+**How the build & review use this:** each surface PR cites both its **behavioral spec** *and* its **reference + bound** ("feels like Cursor's diff review, minus auto-apply") — giving Claude Code a concrete interaction target and the owner a sharper review yardstick alongside the conformance checklist (§6.1). **IP caveat:** borrow interaction **conventions** (command palettes, diff review, block editing — not protectable); **do not pixel-copy** any platform's proprietary visual design — that's the brand layer (§1, the designer's).
+
+---
 *This specification fills the deliberate visual/brand gap in OSLO's Release-1 UX corpus by defining a design-token contract as the designer↔code seam: all color, type, spacing, radius, shadow, and motion are tokens (Tailwind + shadcn/ui), so R1 builds to a clean, accessible default now and the designer's brand applies later as a single-PR token swap rather than a rebuild, with a token-adherence lint guaranteeing nothing brand-related is hardcoded. It encodes OSLO-specific epistemic constraints on the visuals (Confidence/CAF rendered as a neutral maturity ramp, never a red/green health palette; honest, no-dark-pattern microcopy), sets a WCAG-AA accessibility baseline, provides a designer-input checklist that maps one-to-one onto the tokens, and defines a two-track verification process — behavioral/structural conformance (checklists from each UX spec's fail-conditions, screenshot PR review) runnable now, and visual conformance (Storybook, visual-regression, Figma diff) that activates when the brand source of truth arrives. Brand values remain owner/designer-TBD per the Anti-Assumption Protocol: the build escalates rather than invents a brand identity.*
 
 **Release 1 Visual Design & Branding Specification v1 complete.**
