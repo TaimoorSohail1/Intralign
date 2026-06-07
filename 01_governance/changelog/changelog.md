@@ -614,6 +614,13 @@ Each changelog entry contains:
 - **Change Summary:** Applied the owner's confirmations: **all proposed Open-TBD numeric defaults (Q17–Q27, Sections A–E) confirmed as R1 working values**, to be refined from telemetry (rationale: R1 = learning velocity; defaults hold unless implementation constraints emerge). **Accessibility = WCAG 2.1 AA adopted** (E2; Visual §3). **Browser = evergreen** (E1). **CAF/Confidence scoring formula marked TBD-by-design** (Q11=B; new Open-TBD **F1** — scaffold + calibrate from data, confidence stays maturity-not-probability; KIA-11 closed). **Paid tiers 3–5 / P5 referral / exec-monitoring confirmed R2; Free/Basic numbers held for telemetry** (Q13–Q16). **Q12 (DL-045)** remains pending owner review; **Q30 (brand type/logo/microcopy)** is designer-driven. No canonical model/contract/architecture change.
 - **Supersession Reference:** None.
 
+### CHG-075 — DL-045 Ratified (tool-neutral autonomous-agent terminology)
+
+- **Date:** 2026-06-05 · **Authorizing Decision:** DL-045 (owner Q12).
+- **Affected Artifacts:** `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md` (tool-neutral scope note); `01_governance/DEPLOYMENT_GOVERNANCE_SPECIFICATION_V1.md` (§9 retitled "Autonomous coding agent at the Deployment Boundary" + generalized phrasing); `decision_log.md` (DL-045 entry recorded; governance note updated — DL-045 no longer pending); `PROPOSAL_TOOL_NEUTRAL_AGENT_TERMINOLOGY_DL045_DRAFT.md` (→ Ratified); `OWNER_DECISION_QUEUE.md` (Q12 resolved).
+- **Change Summary:** Owner ratified DL-045, generalizing the governance naming from **"Claude Code"** to **"autonomous coding agent"** (Claude Code / OpenAI Codex / other AGENTS.md-aware agents interchangeable) so the standard reads accurately for any tool or a mixed-tool team. Applied as **scope notes** (filenames retained to avoid repo-wide reference churn) plus the Deployment Governance §9 retitle; `AGENTS.md` (root + starter-kit) is recorded as the tool-neutral twin of `CLAUDE.md`. **No rule, gate, epistemic invariant, STOP condition, readiness gate, or the human-only-production constraint changes** — the enforcement surface is tool-agnostic by design; only the noun is generalized. Runtime LLM routing (OpenAI primary / Anthropic fallback) is unrelated and untouched. This closes the last open item in `OWNER_DECISION_QUEUE.md` (Q12). No Doctrine/Constitution/contract/architecture change.
+- **Supersession Reference:** None. Generalizes DL-044 naming.
+
 ---
 
 ## Governance Notes

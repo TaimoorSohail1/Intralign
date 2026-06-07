@@ -68,9 +68,11 @@
 - **Deployment audit log** (per Observability Governance): release tag, contract refs, approver, timestamp, migration refs. Retained per the audit-retention policy (Calibration Defaults; ≥1 year pending compliance).
 - **Architecture/contract changes** follow governance (DL ledger) — code does not change architecture; a deploy never ratifies a decision.
 
-## 9. Claude Code at the Deployment Boundary (STOP conditions)
+## 9. Autonomous coding agent at the Deployment Boundary (STOP conditions)
 
-Claude Code **MUST STOP / escalate** (no autonomous action) when: a change reaches **Staging→Production**; a **canonical-data migration** is involved; a **new secret/credential or provider/model change** is needed; a **CI gate fails** (no overriding gates); a **rollback** is required; or any change would touch an **epistemic invariant** (§4 gate 4). Claude Code **MAY** autonomously: build on feature branches, run CI, open PRs, deploy to **Dev**, and propose Staging — within an approved contract.
+> **(DL-045)** "Claude Code" below = **any autonomous coding agent** (Claude Code, OpenAI Codex, …); these STOP/MAY rules and the **human-only-production** constraint apply identically regardless of tool.
+
+The **autonomous coding agent MUST STOP / escalate** (no autonomous action) when: a change reaches **Staging→Production**; a **canonical-data migration** is involved; a **new secret/credential or provider/model change** is needed; a **CI gate fails** (no overriding gates); a **rollback** is required; or any change would touch an **epistemic invariant** (§4 gate 4). The agent **MAY** autonomously: build on feature branches, run CI, open PRs, deploy to **Dev**, and propose Staging — within an approved contract.
 
 ## 10. Conformance & Residual
 - Closes the readiness audit's last open Critical (deployment governance absent). ✅

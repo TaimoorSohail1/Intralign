@@ -6,11 +6,11 @@
 
 > ## ✅ RESOLVED (2026-06-05) — owner answered & applied
 > - **A (Q1–Q9):** Vision **completed & adopted** → `OSLO_PRODUCT_VISION_AND_POSITIONING_V1.md` (CHG-072). Category = **Outcome Orchestration** (created).
-> - **B (Q10):** Outcome Management **retired** → DL-050 / Option B (CHG-073). **(Q11):** CAF/Confidence formula **TBD-by-design** → Open-TBD F1 (KIA-11 closed). **(Q12 — DL-045):** **PENDING your review** — summary provided; the draft is `01_governance/decisions/PROPOSAL_TOOL_NEUTRAL_AGENT_TERMINOLOGY_DL045_DRAFT.md` (terminology-only: "Claude Code" → "autonomous coding agent"; no rule changes).
+> - **B (Q10):** Outcome Management **retired** → DL-050 / Option B (CHG-073). **(Q11):** CAF/Confidence formula **TBD-by-design** → Open-TBD F1 (KIA-11 closed). **(Q12 — DL-045):** **RATIFIED** (CHG-075) — "Claude Code" → "autonomous coding agent" generalization applied (no rule changes).
 > - **C (Q13–Q16):** confirmed — paid tiers / referral / exec-monitoring = **R2**; Free/Basic numbers = **hold for telemetry**.
 > - **D (Q17–Q27):** **all proposed defaults owner-confirmed** as R1 working values (refine from telemetry) → Open-TBD owner-confirmation block (CHG-074).
 > - **E (Q28–Q29):** browser = **evergreen**; accessibility = **WCAG 2.1 AA adopted** (Visual §3). **(Q30):** brand type/logo/microcopy = **designer-driven** (no owner decision).
-> **Only item still awaiting you: Q12 (DL-045).**
+> **✅ ALL ITEMS RESOLVED.** (Q30 is designer-driven, not an owner decision.)
 
 ---
 

@@ -1,6 +1,6 @@
-# DL-045 (DRAFT) — Tool-Neutral Autonomous-Agent Terminology
+# DL-045 — Tool-Neutral Autonomous-Agent Terminology
 
-**Status of this file:** **DRAFT · Proposed · Pending Owner Ratification.** Per `CLAUDE.md`, only the owner ratifies. Prepared at owner direction (the developer may use OpenAI Codex instead of, or alongside, Claude Code). **Adopts nothing; changes no rule.** This is a **terminology-generalization** proposal only.
+**Status of this file:** **RATIFIED — DL-045 (2026-06-05); CHG-075.** Owner ratified. Applied: (A) `CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1` tool-neutral scope note; (B) `DEPLOYMENT_GOVERNANCE_SPECIFICATION_V1` §9 retitled "Autonomous coding agent at the Deployment Boundary"; (C) AGENTS.md recorded as the tool-neutral twin. **Changes no rule, gate, invariant, or the human-only-production constraint** — terminology generalization only ("Claude Code" → "autonomous coding agent"). Filenames retained to avoid reference churn.
 
 > **Why:** DL-044 ratified the engineering-enablement layer using the name **"Claude Code"** in two places. The governance *rules* are agent-behavior rules and already apply to any autonomous coding agent — but the *naming* reads as if it mandates one vendor. Generalizing the language keeps the governance accurate as the tool choice opens up (Claude Code, Codex, or both), without weakening a single rule.
 
