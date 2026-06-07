@@ -197,7 +197,7 @@
 | Parameter | Proposed v0 default | Note |
 |---|---|---|
 | Finding **impact-magnitude** table (`impact_i`) | trivial **0.03** · minor **0.08** · moderate **0.18** · significant **0.35** · material **0.55** | per-dimension reduction = `100 × Π(1−impact_i)`; sized from Impact Assessment, **not** finding type |
-| Aggregation **power-mean exponent `p`** | **0** (geometric mean) | symmetric; "between an average and a minimum"; sweet spot `p ∈ [−1, 0]`; `p=1` (arithmetic) forbidden as default |
+| Aggregation **power-mean exponent `p`** | **−0.5** (revised from 0 after pressure-test) | symmetric; "between an average and a minimum"; severe single weakness reads Low (aligns with "surface over suppress"); sweet spot `p ∈ [−1, 0]`; `p=1` (arithmetic) forbidden as default |
 | Dimension **floor `ε`** | **5** | prevents hard weakest-link domination when a dimension ≈ 0 |
 | Confidence **bands** | 0–49 Low / 50–74 Medium / 75–100 High (§2) + ±3 band-edge guard | reused from §2 |
 | Reliability | **qualifier label, never arithmetic** (Reliability Model v2) | High-conf + Low-reliability → false-confidence flag (CONF-06) |

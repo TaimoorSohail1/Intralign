@@ -46,7 +46,7 @@ Conf_raw  =  power_mean_p(c, a, f)
             =  ( c · a · f ) ^ (1/3)                  for p = 0   (geometric mean)
 ```
 
-- **v0 default `p = 0` (geometric mean)** — symmetric, provably between average and minimum, lets weakness be felt without weakest-link collapse. **Calibration knob** `p ∈ [−2, 1]` (Calibration §4h): `p=1` = arithmetic (too lax, weakness not felt); `p→−∞` = minimum (weakest-link, too harsh); **`p ∈ [−1, 0]` is the doctrinal sweet spot.** v0 `ε = 5`.
+- **v0 default `p = −0.5`** (revised from geometric `p=0` after pressure-testing — §7) — symmetric, provably between average and minimum, lets weakness be felt **a touch more strongly than geometric**, aligning with OSLO's "surface over suppress" posture (Calibration §5). **Calibration knob** `p ∈ [−2, 1]` (Calibration §4h): `p=1` = arithmetic (too lax, weakness not felt); `p→−∞` = minimum (weakest-link, too harsh); **`p ∈ [−1, 0]` is the doctrinal sweet spot** (geometric `p=0` is the lax end of it; `p=−0.5` the v0 pick). v0 `ε = 5`.
 - **No static weights** — `p` is shared across all three; the dimensions remain co-equal.
 
 ## 3. Reliability qualifier (NON-arithmetic) + bands + false-confidence
@@ -68,6 +68,16 @@ Conf_raw  =  power_mean_p(c, a, f)
 - **Structure (this doc, doctrine-fixed):** baseline-minus-impact dimensions; power-mean aggregation; reliability-as-qualifier; band mapping; explainability.
 - **Calibration (Calibration §4h, owner-tunable, refine from data):** the `impact_i` magnitude table; the power-mean `p`; the floor `ε`; band edges (already §2).
 - **Owner-canonical follow-up (Open-TBD F1):** ratify the v0 as the R1 formula (or amend), then **calibrate `p`, `ε`, and the impact table against real cohorts** — the v0 is the thing the calibration *refines*, not a blank.
+
+## 7. Pressure-test findings (v0 sensitivity, 2026-06-05)
+
+Ran a battery of dimension profiles × `p`, finding-stacking, monotonicity, and edge cases (script reproducible). **Structure validated:** monotonic non-increasing per added finding; saturating in [0,100]; output sits between the arithmetic mean and the minimum for every profile; no weakest-link domination (the `ε=5` floor holds — a true-zero dimension `(100,100,0)` → **37 Low**, not 0). Material weakness lands exactly at the **45** low-band edge by design.
+
+**Two calibration findings (acted on / flagged):**
+1. **`p` revised 0 → −0.5.** Geometric (`p=0`) read a *severe* single-dimension weakness `(85,85,20)` as **52 (Medium)** and `(100,100,45)` as **High** — too lax for OSLO's "surface over suppress" posture (Calibration §5). At `p=−0.5`, `(85,85,20)` → **46 (Low)** while a *moderate* single weakness `(85,85,60)` stays **~75 (High/Med edge)** — weakness felt, not over-penalized. So **v0 default = −0.5** (still strictly between average and minimum).
+2. **Small-finding stacking compounds — calibration watch-item.** Because dimensions reduce multiplicatively, **many small findings accumulate**: 10 × `minor` (0.08) → dim **43 (Low)**. The *shape* is correct (issues add up, saturating) but the *magnitude* could systematically depress dimensions on finding-heavy projects. **Calibrate the `impact_i` table against real finding-count distributions**; candidate refinements if over-penalizing: lower `minor`/`trivial`, or add mild diminishing-returns on same-dimension stacking. **Do not change the structure** — only the magnitudes.
+
+These are exactly the levers calibration-from-data refines; the v0 is safe to build/test against today.
 
 ---
 *This v0 scoring formula supplies the CAF/Confidence arithmetic that the ratified v2 models deliberately deferred, so Release 1 has a concrete, testable computation rather than an unbuildable gap — while keeping the canonical formula an owner-calibration decision. It satisfies the ratified doctrine by construction: per-dimension scores start at 100 and are reduced multiplicatively by each finding's Impact-Assessment-sized magnitude (never its type), and the three co-equal dimensions consolidate through a symmetric power mean (default geometric, p=0) that provably sits "between an average and a minimum" with a small floor to prevent weakest-link domination, after which Reliability qualifies the banded result without ever entering the arithmetic and a high-confidence/low-reliability combination raises the false-confidence flag. All numeric parameters (the impact table, the power-mean exponent p, the floor ε, the bands) are tunable calibration to be refined from real data; the structure is doctrine-fixed; and the whole thing is provisional and owner-ratifiable, not canonical.*
