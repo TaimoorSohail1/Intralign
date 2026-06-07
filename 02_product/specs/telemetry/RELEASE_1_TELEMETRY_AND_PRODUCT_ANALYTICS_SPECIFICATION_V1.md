@@ -1,6 +1,8 @@
 # Release 1 — Telemetry & Product Analytics System Specification v1
 
-**Document Type:** Product/Business Telemetry & Analytics Spec (implementation-ready) · **Status:** Draft for engineering handoff · **Date:** 2026-06-05
+> **⚠ SUPERSEDED (2026-06-05) — absorbed into `OSLO_RELEASE_1_OBSERVABILITY_AND_ECONOMICS_PLATFORM_SPECIFICATION_V1`.** Its product-analytics content (taxonomy, funnels, Trust Index, lifecycle, Upgrade-Intent) is consolidated there with the AI-economics/unit-economics layer into one platform. Retained for history; **build to the unified spec.**
+
+**Document Type:** Product/Business Telemetry & Analytics Spec (implementation-ready) · **Status:** **Historical — superseded by the Observability & Economics Platform spec.** · **Date:** 2026-06-05
 **Authoring stance:** Senior Product Analytics Architect · Staff Engineer · PM · Startup Growth Advisor.
 **Classification:** **Commodity product telemetry (TEL, Category F — DL-043 J).** This is **distinct from** the contracted *cognitive* Observability Governance (two-axis replay of governed cognition); that system is unchanged and not duplicated here. This spec instruments **user/business behavior** and **realizes + extends the existing `TEL-01…07` capabilities**.
 
