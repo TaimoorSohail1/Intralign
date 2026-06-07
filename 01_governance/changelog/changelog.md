@@ -663,6 +663,13 @@ Each changelog entry contains:
 - **Change Summary:** Ran a reproducible pressure-test battery (dimension profiles × `p`, finding-stacking, monotonicity, edge cases). **Structure validated** — monotonic, saturating in [0,100], output always between the arithmetic mean and the minimum, ε-floor prevents weakest-link domination (true-zero dimension → Low ~37, not 0). **Two findings:** (1) geometric `p=0` is *lax* on a single severe weakness (`(85,85,20)`→52 Med; `(100,100,45)`→High), conflicting with OSLO's "surface over suppress" posture — **default revised to `p=−0.5`** (severe weakness → Low 46; moderate weakness stays High/Med edge; re-verified strictly between min and mean for all profiles); (2) small findings **compound** multiplicatively (10×minor → dim 43 Low) — flagged as a **calibration watch-item** for the `impact_i` magnitudes vs real finding-count distributions (structure unchanged). Both are calibration levers, not structural changes; the v0 remains owner-ratifiable and data-calibratable. No meaning/contract/architecture change.
 - **Supersession Reference:** None.
 
+### CHG-082 — Phase I Build Kickoff Packet (day-one onramp)
+
+- **Date:** 2026-06-05 · **Authorizing Decision:** Owner-directed (begin the build).
+- **Affected Artifacts:** `05_execution/implementation/Phase_I_Foundation_and_Environment/PHASE_1_BUILD_KICKOFF_PACKET.md` (new); `START_HERE.md` (§4 pointer).
+- **Change Summary:** Produced the day-one build onramp that operationalizes the existing START_HERE + Onboarding Runbook into a single ordered Phase-I checklist for the developer + autonomous coding agent (Claude Code or Codex, DL-045). Confirms the build-ready state (cognitive spine, Wave contracts, traceability matrix, data-model v1.2, Calibration Defaults incl. the CAF/Confidence v0 formula, doc-integrity CI; knowledge health ~95–96), lists the owner-pending-but-non-blocking items to build around (canonical formula → v0; NFR numerics → confirmed defaults; brand → design tokens; paid tiers/recipient/referral/exec-monitoring → R2), and gives the ordered setup steps (read → clone → seed starter kit → `docker compose up` the five datastores → scaffold the cognitive-spine code-tree → wire-and-fail-test the CI gates → bind append-only schema → provision locked Staging/Production with OTel→Grafana), the first contract target (Wave A 00R) and build order, the per-increment build loop, the non-negotiable drift-control guardrails, the CI gates, and the exit-gate checklist to Phase II. Linked from START_HERE §4. No canonical content changed.
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

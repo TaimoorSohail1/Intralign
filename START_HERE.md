@@ -71,6 +71,8 @@ When in doubt about scope: a doc only matters if a **contract** you're building 
 
 ## 4. Your first 30 minutes of *doing* (environment)
 
+> **Day-one checklist:** `05_execution/implementation/Phase_I_Foundation_and_Environment/PHASE_1_BUILD_KICKOFF_PACKET.md` — the ordered Phase-I onramp (readiness state, setup steps, first contract, guardrails, exit gate).
+
 Follow the runbook's **Phase 1**. Short version:
 
 1. Install Claude Code; sign in (your own Pro/Max). Clone this repo (reference) and the **app repo** (where you build).
