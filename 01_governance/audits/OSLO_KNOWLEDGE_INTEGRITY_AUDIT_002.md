@@ -73,7 +73,9 @@ All 11 KIA-001 backlog items + the owner decisions are applied and verified in-r
 >
 > **✅ KIA2-2 + KIA2-3 APPLIED (2026-06-05, CHG-078).** Residue archived → active tree is **pure canon**: `OSLO_ARCHITECTURE_BASELINE_V1`, `legacy_layer_engineering/`, and data-model **v1/v1.1** moved to `04_research/historical_artifacts/`; active data-model references repointed to **v1.2**. Dual canonical-definitions surfaces now carry **mutual cross-reference banners** (DL-036 rule on each — zero ambiguity). The doc-integrity CI worklist dropped **248 → 56 warnings (0 errors, PASS)** — and the residual ~56 are now **mostly legitimate** (docs *naming* a retired term to deprecate/map it, or *citing what they superseded*), not drift.
 >
-> **Projected health now ~94–95.** Remaining to ~96–97: **KIA2-4** (acceptance-criteria coverage) + optional inline-allow annotations to drive the legitimate warnings toward zero and flip CI to `--strict`.
+> **✅ KIA2-4 + KIA2-5 APPLIED (2026-06-05, CHG-079).** AC coverage **reconciled** (`RELEASE_1_ACCEPTANCE_CRITERIA_COVERAGE_RECONCILIATION_001`) — gap #11 closed: the acceptance bases the original audit thought missing already exist (Wave QA contracts + traceability matrix for cognitive; telemetry/security/platform specs + DL-043-J commodity normal-engineering + this session's QA for the rest). Only open AC = the CAF/Confidence **numeric formula** (TBD-by-design, F1). **KIA2-5** recorded: intentional commodity non-contracts are integrity strengths, not defects.
+>
+> **Projected health now ~95–96 — upper-90s reached.** The full KIA2 path (1–5) is applied. Residual to a hard 97+: optional inline-allow annotations to take the ~56 legitimate CI warnings toward zero and flip the gate to `--strict` (a permanent-discipline refinement, not a knowledge gap).
 
 ## 6. Honest ceiling (read before chasing 98+)
 
