@@ -25,23 +25,27 @@ The build can proceed on **clean default tokens**; behavior is verifiable today,
 ### 1.1 Token categories
 ```css
 :root {
-  /* COLOR — semantic. INTERIM values; SEED FROM intralign.ai (owner direction 2026-06-05),
-     then designer supersedes. The exact intralign.ai hexes are TBD — see note below; the
-     values here are a neutral professional stand-in, NOT asserted to be intralign's brand. */
-  --color-bg:           #0b0c0f;   /* app background — TBD intralign */
-  --color-surface:      #16181d;   /* cards/panels */
-  --color-surface-2:    #1e2127;
-  --color-text:         #e7e9ee;
-  --color-text-muted:   #9aa1ad;
-  --color-border:       #2a2e37;
-  --color-primary:      #5b8cff;   /* brand accent — TBD, seed from intralign.ai */
-  --color-primary-fg:   #0b0c0f;
-  --color-focus:        #5b8cff;
+  /* COLOR — CANONICAL Intralign brand palette (owner-formalized 2026-06-05).
+     Dark theme is primary (executive / AI-native / premium positioning).
+     Designer may refine via token-swap; component code never changes. */
+  --color-bg:           #111315;   /* Charcoal Black — primary background */
+  --color-surface:      #1B1F24;   /* Dark Slate — secondary background */
+  --color-surface-2:    #242A31;   /* Graphite — panels/cards (raised) */
+  --color-text:         #F5F4F0;   /* Warm White — primary text */
+  --color-text-muted:   #B8BDC5;   /* Soft Gray — secondary text */
+  --color-text-subtle:  #8C939D;   /* Cool Gray — muted text */
+  --color-border:       #343B44;   /* Slate Gray — border/divider */
+  --color-primary:      #D97A3A;   /* Intralign Orange — primary accent */
+  --color-primary-hover:#C86A2B;   /* Deep Orange */
+  --color-primary-light:#E59A63;   /* Soft Orange */
+  --color-primary-fg:   #111315;   /* charcoal text on orange (AA 4.8:1; white on orange
+                                      is 3.6:1 — large/bold only) */
+  --color-focus:        #D97A3A;   /* brand orange focus ring */
 
   /* SYSTEM state (success/warn/danger — UI feedback ONLY, never project "health") */
-  --color-success:      #3fb27f;
-  --color-warning:      #d6a13c;
-  --color-danger:       #e5645e;
+  --color-success:      #4D8B6B;   /* Muted Green */
+  --color-warning:      #D9A441;   /* Amber */
+  --color-danger:       #C75B5B;   /* Muted Red */
 
   /* TYPE */
   --font-sans: "Inter", system-ui, sans-serif;
@@ -58,9 +62,11 @@ The build can proceed on **clean default tokens**; behavior is verifiable today,
   /* LAYOUT */ --container-max:1200px; --bp-md:768px; --bp-lg:1024px;
 }
 ```
-*(Interim = a neutral professional dark theme. Light theme = the same token names under `:root[data-theme="light"]`. The designer overwrites values; **component code never changes**.)*
+*(Dark theme is primary. Light theme = the same token names under `:root[data-theme="light"]`. The designer refines values; **component code never changes**.)*
 
-> **Interim palette source — `intralign.ai` (owner direction, 2026-06-05).** Seed the interim color tokens from the **intralign.ai** brand palette so R1 feels on-direction before the designer delivers. **Exact hexes are TBD** — `intralign.ai` is client-rendered, so they need to be captured from the live site (designer, browser inspector, or a connected extraction) rather than guessed; the values above are a stand-in **not asserted to be intralign's**. Map intralign's primary/accent → `--color-primary`, its background/surface neutrals → `--color-bg`/`--color-surface`, its text neutrals → `--color-text(-muted)`. The designer's eventual brand delivery supersedes this seed entirely (single token-swap, §5).
+> **Canonical brand palette — Intralign (owner-formalized 2026-06-05).** The three **core brand colors** carry ~90% of the identity: **Charcoal Black `#111315` · Warm White `#F5F4F0` · Intralign Orange `#D97A3A`** — everything else is supporting UI. Positioning: **strategic, executive, AI-native, trustworthy, premium, outcome-focused** — deliberately **not** the typical blue/purple AI-startup look. Full mapping: bg/surfaces = charcoal → graphite ramp; text = warm-white → soft/cool gray; accent (+hover/light) = the orange family; system success/warn/error = muted green/amber/red (UI feedback only). The designer may refine via token-swap; the **token-adherence lint** keeps it swappable.
+>
+> **Accent contrast note (AA):** charcoal text on Intralign Orange passes AA (4.8:1); **white text on orange is ~3.6:1 — large/bold only.** Prefer the orange for accents, focus, small emphasis, and large/bold CTAs; pair with `--color-primary-fg` (charcoal) for normal-size text on an orange fill.
 
 ### 1.2 OSLO-specific epistemic color constraints *(this is where the product's rules shape the visuals — brief the designer on these)*
 
@@ -68,8 +74,10 @@ These are **not stylistic preferences** — they protect OSLO's epistemic invari
 
 - **Confidence & CAF are NOT health/traffic-light colored.** Confidence (0–100) is **understanding maturity, not a probability or a good/bad health score** (Seam Audit 001 S6; UX fail-conditions forbid fabricated "health"). Use a **neutral maturity ramp** (e.g. low-saturation cool→warm or a single-hue intensity scale), **never red=bad / green=good**. A red low-confidence reads as "failing project" — which OSLO must never imply.
   ```css
-  --conf-low: #6b7280; --conf-medium: #8b93a7; --conf-high: #b9c2d8;  /* maturity ramp, not health */
+  /* Intralign grays → warm white: more mature understanding = clearer/brighter. NEVER red/green health. */
+  --conf-low: #8C939D; --conf-medium: #B8BDC5; --conf-high: #F5F4F0;
   ```
+  *(Optionally a subtle Intralign-Orange marker for "high reliability" accents — but the **ramp itself stays neutral gray→white**; orange is the action accent, not a confidence/health signal.)*
 - **Severity (Issues) may use an alert ramp** (critical/moderate/warning) — these *are* problem signals, so warning/danger hues are correct **for issues**, distinct from confidence.
 - **Analysis state** (analyzing / analyzed / **stale**) needs a clear, non-alarming **stale** treatment (muted + a "may be out of date" affordance) — stale is honest, not an error.
 - **Epistemic labels** (Attested vs Derived, provisional banners, reliability) must be **visually legible and consistent** — they are a safety feature, not decoration.
