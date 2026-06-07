@@ -92,6 +92,7 @@ OSLO Chat is a **floating conversational layer** above the project surfaces — 
 
 - **Availability:** invocable from **every project surface**; floats above the current surface and **preserves** it — opening/closing Chat never navigates away or disturbs the underlying surface (consistent with the navigation shell).
 - **Composition:** a conversation transcript; an input affordance; OSLO-initiated **clarification prompts** (optionally with choice options); **explanation** answers sourced from existing understanding; and **navigational/handoff links** into structured surfaces (Finding/Recommendation Panels, MRI, Artifact).
+- **Free-tier daily chat cap — limit-reached interaction.** At the daily chat limit the **input affordance stays enabled**; a send attempt is **gated** (server `429`) and surfaces the **upgrade prompt (UP-2) + resolution (upgrade / wait for reset)** — **never** a disabled/hidden input or a raw error (shared rule, `12_freemium_tier_behavior_logic.md`). Presentation/interaction only; values per Tier Definitions.
 - **Non-destination:** Chat is **not** a primary navigation destination and does not appear in global navigation as a place; it is an assistant available *on* places.
 
 ## F. Context Model

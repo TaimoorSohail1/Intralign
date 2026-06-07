@@ -75,7 +75,7 @@ Confidence is **never** shown bare (always with its reliability qualifier) and *
 
 - **View Findings** — from the Finding Summary Card into the full Findings experience (Finding Presentation Spec).
 - **View Recommendations** — from the Recommendation Summary Card into the full Recommendations experience (Recommendation Presentation Spec).
-- **Reanalysis access** — a clear affordance to update project information / trigger reanalysis (the only path that changes assessment).
+- **Reanalysis access** — a clear affordance to update project information / trigger reanalysis (the only path that changes assessment). *(Free-tier deep-analysis / budget caps: the affordance **stays enabled** and follows the shared **limit-reached interaction rule** — attempt gated (`429`/DL-048) → upgrade prompt (UP-5/UP-6) + resolution (upgrade / wait / keep last analysis); never disabled or a raw error. See `12_freemium_tier_behavior_logic.md`.)*
 - **History access** — reach prior (superseded) orientations (append-only; never deleted).
 - **Project settings access** — basic project controls (rename/archive), separate from the understanding console.
 

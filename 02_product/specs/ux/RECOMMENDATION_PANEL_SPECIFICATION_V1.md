@@ -107,6 +107,8 @@ A **presentation grouping of the *other* Recommendations** addressing the **same
 
 **Allowed:** Accept Recommendation · Reject Recommendation · **Defer Recommendation** · View Finding (returns to the Finding Panel) · Update Project Information · Trigger Reanalysis · Close Panel (returns to Finding context).
 
+- **Limit-reached interaction (Free tier).** A capped action surfaced here — e.g. **applying a Suggested Fix at the daily allowance** — follows the shared **limit-reached interaction rule** (`12_freemium_tier_behavior_logic.md`): the action **stays enabled**, the attempt is **gated** (server `429`), and the surface presents the **upgrade prompt (UP-1) + resolution (upgrade / wait for reset)** — **never** a disabled/hidden control or a raw error. Presentation/interaction only; values per Tier Definitions.
+
 **Explicitly prohibited:** Execute · Apply Automatically · Run Agent · Govern · Approve · **Resolve Finding** · Modify CAF · Modify Confidence. OSLO advises; the user decides among recommendations and changes information; **reanalysis** does the rest. The panel offers **no** path to act on the world, resolve a finding directly, or alter an assessment signal.
 
 ## L. Reanalysis Experience

@@ -66,6 +66,18 @@ Constrain:
 
 **UP-3 precondition — attempt → trigger (required).** The **Create Project** affordance **stays enabled at the active-project limit.** A Free user at the cap may **attempt** a 2nd active project; the attempt is **gated server-side (API `POST /projects` → `422`)** and surfaces UP-3 with **two resolutions: upgrade, *or* archive the current project** (archiving is reversible and frees the slot). The control is **never disabled or hidden** at the limit — doing so would suppress the highest-intent upgrade trigger. (Project Dashboard §D and Onboarding §I carry the matching UX rule; limit *values* per Tier Definitions, presented not computed.)
 
+**Limit-reached interaction rule — ALL monetization caps (Seam Audit 001 S1–S3).** UP-3 generalizes: **every** limit-bearing affordance follows one pattern — it **stays enabled**, the attempt is **gated server-side** (`429`/`422` + `Retry-After` where applicable), and the surface presents the **matching UP prompt + resolution(s)**. **Never disabled/hidden** (suppresses the trigger); **never a raw error** (always the value-framed prompt).
+
+| Cap | Affordance (surface) | Gate | Prompt | Resolutions |
+|---|---|---|---|---|
+| Active project | Create Project (Dashboard/Onboarding) | `422` | UP-3 | upgrade · archive current |
+| Daily fix | Apply Suggested Fix (Recommendation Panel / Issue Panel / Artifact view) | `429` | UP-1 | upgrade · wait for daily reset |
+| Daily chat | Chat send (OSLO Chat) | `429` | UP-2 | upgrade · wait for reset |
+| Deep-runs/day | Analyze / trigger reanalysis (Project Overview) | `429` / DL-048 gate | UP-5 | upgrade · wait · keep last analysis |
+| Monthly budget | any AI action | DL-048 gate | UP-6 | upgrade · wait for month reset |
+
+Each listed UX surface carries a pointer to this rule. Values per Tier Definitions (presented, not computed); no governance, no computation in the surface.
+
 **Optimality objective (what TEL-07 tunes against):** maximize **prompt → conversion** while keeping the **dismissal/annoyance signal** (rapid-dismiss, repeat-ignore) below threshold. A trigger that under-converts **and** over-annoys is auto-suppressed and re-tuned. "Optimal timing" = this objective, not a fixed schedule.
 
 ---
