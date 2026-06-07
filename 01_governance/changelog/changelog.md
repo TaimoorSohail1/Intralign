@@ -621,6 +621,13 @@ Each changelog entry contains:
 - **Change Summary:** Owner ratified DL-045, generalizing the governance naming from **"Claude Code"** to **"autonomous coding agent"** (Claude Code / OpenAI Codex / other AGENTS.md-aware agents interchangeable) so the standard reads accurately for any tool or a mixed-tool team. Applied as **scope notes** (filenames retained to avoid repo-wide reference churn) plus the Deployment Governance §9 retitle; `AGENTS.md` (root + starter-kit) is recorded as the tool-neutral twin of `CLAUDE.md`. **No rule, gate, epistemic invariant, STOP condition, readiness gate, or the human-only-production constraint changes** — the enforcement surface is tool-agnostic by design; only the noun is generalized. Runtime LLM routing (OpenAI primary / Anthropic fallback) is unrelated and untouched. This closes the last open item in `OWNER_DECISION_QUEUE.md` (Q12). No Doctrine/Constitution/contract/architecture change.
 - **Supersession Reference:** None. Generalizes DL-044 naming.
 
+### CHG-076 — Knowledge Integrity Audit (KIA) 002 — re-audit + path to upper-90s
+
+- **Date:** 2026-06-05 · **Authorizing Decision:** Owner-directed re-audit.
+- **Affected Artifacts:** `01_governance/audits/OSLO_KNOWLEDGE_INTEGRITY_AUDIT_002.md` (new).
+- **Change Summary:** Re-audited the repository after the KIA-001 remediation + owner decisions. **Overall Knowledge Health 79 → 89 (+10)** — the largest latent risks (stale entry path, missing Vision, undefined Outcome Management, version conflicts, layer drift) are verified closed, with zero inbound references to the superseded telemetry spec. Finds the path from **89 to the upper-90s** is a different class of work: **KIA2-1** an automated doc-integrity CI (broken-link / superseded-reference / banned-synonym / stale-DL-range checks — the #1 lever, lifts the lagging Reliability dimension); **KIA2-2** archive the bannered-but-present legacy layer dirs + superseded data-model versions so the active tree is pure canon; **KIA2-3** consolidate the dual canonical-definitions surfaces; **KIA2-4** close the ~40% acceptance-criteria coverage gap; **KIA2-5** recognize intentional deferrals as integrity strengths, not defects. Projected ~96–97. Notes honestly that 96–97 is the appropriate target (a living, reasoned-in corpus should not chase 100) and that durable upper-90s comes from **permanent automated enforcement**, not more documentation. No canonical content changed (audit is read-only).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
