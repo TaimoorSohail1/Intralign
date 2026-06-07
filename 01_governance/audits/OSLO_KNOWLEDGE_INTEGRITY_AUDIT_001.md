@@ -203,7 +203,7 @@ Risk: 🔴 high · 🟡 medium · 🟢 low.
 
 ## 10. Governance Backlog (prioritized)
 
-> **Execution status (2026-06-05, CHG-070): KIA-1, 3, 5, 6, 7, 8, 9, 10 — ✅ DONE** (entry docs refreshed; `REPOSITORY_INDEX.md` created; legacy-layer do-not-build banner; data-model v1.2 confirmed canonical / v1+v1.1 superseded; architecture precedence stated; README layer-terminology fixed). **Owner-gated remaining: KIA-2 (canonical Vision), KIA-4 (Outcome Management define/retire), KIA-11 (CAF/Confidence formula).**
+> **Execution status (2026-06-05, CHG-070): KIA-1, 3, 5, 6, 7, 8, 9, 10 — ✅ DONE** (entry docs refreshed; `REPOSITORY_INDEX.md` created; legacy-layer do-not-build banner; data-model v1.2 confirmed canonical / v1+v1.1 superseded; architecture precedence stated; README layer-terminology fixed). **KIA-2 — ⚠ skeleton drafted** (`OSLO_PRODUCT_VISION_AND_POSITIONING_V1.md`, owner to complete strategy fields). **KIA-4 — ⚠ resolution proposed** (`PROPOSAL_OUTCOME_MANAGEMENT_RESOLUTION_DL050_DISPOSITION.md`, owner to ratify). **Owner-gated remaining: KIA-2 completion, KIA-4 ratification, KIA-11 (CAF/Confidence formula).**
 
 | ID | Action | Priority | Risk addressed | Impact | Effort | Owner |
 |---|---|---|---|---|---|---|

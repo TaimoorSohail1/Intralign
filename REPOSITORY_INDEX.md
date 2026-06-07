@@ -30,13 +30,13 @@
 |---|---|
 | Foundational thesis (what OSLO is) | `01_governance/doctrine/` (DL-001) |
 | Outcome Orchestration | `01_governance/canonical_definitions/canonical_definitions.md`; `ontology/ontology_registry.md` |
-| **Outcome Management** | ❌ **NOT DISCOVERABLE** (KIA-4 — define or retire) |
+| **Outcome Management** | ❌ undefined → **resolution proposed** `01_governance/decisions/PROPOSAL_OUTCOME_MANAGEMENT_RESOLUTION_DL050_DISPOSITION.md` (KIA-4; recommend retire/map) |
 | Planning Intelligence | `02_product/specs/planning/OSLO_RELEASE_1_CANONICAL_SCOPE_V1.md` |
 | Execution Intelligence | Future/R2 — `01_governance/backlog/RELEASE_2_BACKLOG_CANDIDATES.md` |
 | CAF (Clarity/Alignment/Feasibility) | `02_product/specs/models/` + `constitution/`; Evaluate |
 | Outcome Confidence · Reliability · False-Confidence | `02_product/specs/models/OUTCOME_CONFIDENCE_*`; DL-047 (false-confidence); Evaluate |
 | Confidence ≠ probability/health | `CANONICAL_GLOSSARY.md`; Seam Audit 001 S6; Visual Spec §1.2 |
-| **Product Vision / positioning / Intralign mission** | ❌ **NOT DISCOVERABLE** (KIA-2 — author canonical Vision) |
+| **Product Vision / positioning / Intralign mission** | ⚠ **DRAFT skeleton** `02_product/specs/planning/OSLO_PRODUCT_VISION_AND_POSITIONING_V1.md` (KIA-2 — `[OWNER TO COMPLETE]` strategy fields) |
 
 ## Product
 | Concept | Canonical file |
