@@ -69,6 +69,8 @@ All 11 KIA-001 backlog items + the owner decisions are applied and verified in-r
 
 **Projected: 89 + (4–5 + 2 + 1–2 + 2 + 1) ≈ 96–97 — upper-90s achieved.**
 
+> **✅ KIA2-1 BUILT (2026-06-05, CHG-077).** `tools/doc_integrity_check.py` + `.github/workflows/doc-integrity.yml` — runs autonomously on every push/PR as a **read-only gate** (never edits/merges/deploys). Current state: **0 ERRORS (PASS)**, **248 warnings** which are themselves the **KIA2-2 worklist** the CI found automatically: **18** active specs still referencing the superseded data-model **v1.1**; **219** retired-layer-term uses (concentrated in `OSLO_ARCHITECTURE_BASELINE_V1` + the Fast/Deep pack); **11** stale DL-range claims. Flip CI to `--strict` once the warn backlog is cleared to lock the upper-90s. **Reliability dimension now machine-guarded.**
+
 ## 6. Honest ceiling (read before chasing 98+)
 
 - **96–97 is the right target; 98–100 has sharp diminishing returns** for a *living* knowledge base. A repository that is still **reasoned in** will always carry some healthy churn, a reasoning trail (`04_research/`, audits, superseded drafts), and **intentional TBDs** — these are features of a governed, evolving system, not defects. Driving to 100 means freezing the corpus or deleting its lineage, which would *reduce* its value.
