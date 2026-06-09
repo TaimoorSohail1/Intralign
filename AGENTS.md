@@ -12,15 +12,15 @@ A **constitutional knowledge system**, not a software project. It holds OSLO's d
 - **Do not introduce new doctrine, frameworks, proposals, or backlog entries without owner direction.**
 - **Do not resolve ontology/spec conflicts unilaterally** — surface them as backlog-style proposals.
 - **Preserve canonical terminology; avoid terminology drift.**
-- **Content precedence:** Doctrine > Constitution > Implementation (`02_product/`, `03_architecture/`). Source Material (`04_research/`, `raw/`) is non-canonical and never an implementation source.
+- **Content precedence:** Doctrine > Constitution > Implementation (`10_product/`, `30_engineering/`). Source Material (`90_research/`, `raw/`) is non-canonical and never an implementation source.
 
 ## Where to start
 
 1. `REPOSITORY_ARCHITECTURE.md` — repository map.
-2. `01_governance/manifest/repository_manifest.md` — charter.
-3. `01_governance/frameworks/framework_001.md` + `framework_001A.md` — governance procedure.
-4. `01_governance/decisions/decision_log.md` — ratified decisions (through DL-044).
-5. For **building the application**: `03_architecture/RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md` → `RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md`. The app-repo agent instructions are seeded from `03_architecture/engineering/starter_kit/AGENTS.md`.
+2. `00_owner/manifest/repository_manifest.md` — charter.
+3. `00_owner/frameworks/framework_001.md` + `framework_001A.md` — governance procedure.
+4. `00_owner/decisions/decision_log.md` — ratified decisions (through DL-044).
+5. For **building the application**: `30_engineering/delivery/RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md` → `RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md`. The app-repo agent instructions are seeded from `30_engineering/delivery/starter_kit/AGENTS.md`.
 
 *Authoritative source: `CLAUDE.md`. This file mirrors it for tool neutrality; where they differ, `CLAUDE.md` governs.*
 
