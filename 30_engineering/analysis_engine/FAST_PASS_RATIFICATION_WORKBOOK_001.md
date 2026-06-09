@@ -17,7 +17,7 @@
 | OD-3 | **Fast claim-count bound** | Approve range **50–100 salient claims** | Replace 〔proposal — `TBD`〕 in §9 Stage 3 with the ratified range; promote `FAST_CLAIM_COUNT_TARGET` to canonical | ☐ |
 | OD-17 | **Oversize-input routing** | Approve — accept but route Deep-only with "large project" message | Remove 〔proposal〕 from §9 Stage 0 routing clause | ☐ |
 | (map) | **Finding-type → recommendation-type mapping** (Stage 6) | Approve as a deterministic rule mapping | Remove 〔proposal〕 from §9 Stage 6; add the mapping table to Recommendation Model as canonical | ☐ |
-| (key) | **`canonical_key` for dedup/determinism** (Stage 3) | Approve | Remove 〔proposal〕 from §9 Stage 3; add `canonical_key` to the Data Model claim fields (see OD-15) | ☐ |
+| (key) | **`dedup_key` for dedup/determinism** (Stage 3) | Approve | Remove 〔proposal〕 from §9 Stage 3; add `dedup_key` to the Data Model claim fields (see OD-15) | ☐ |
 
 ---
 
@@ -27,7 +27,7 @@ These are **schema reconciliation** edits; on approval they follow the same back
 
 | ID | Item | Recommendation | Edit on approval | Decision (owner) |
 |---|---|---|---|---|
-| OD-15 | **Claim attribute schema** on `ContextItem` (claim): `verbatim_span`, `normalized_text`, `modality`, `support_status`, `is_measurable`, `vagueness_flags`, `canonical_key`, `structured_proposition`, `relationship_links`, `extraction_confidence` | Approve (additive; no existing field changes) | Add fields to Data Model §9 ContextItem; promote `PROPOSED_CLAIM_FIELDS` → required/optional in `analysis_constants.py`; drop `proposal` tags in `analysis_contracts.py` Claim | ☐ |
+| OD-15 | **Claim attribute schema** on `ContextItem` (claim): `verbatim_span`, `normalized_text`, `modality`, `support_status`, `is_measurable`, `vagueness_flags`, `dedup_key`, `structured_proposition`, `relationship_links`, `extraction_confidence` | Approve (additive; no existing field changes) | Add fields to Data Model §9 ContextItem; promote `PROPOSED_CLAIM_FIELDS` → required/optional in `analysis_constants.py`; drop `proposal` tags in `analysis_contracts.py` Claim | ☐ |
 | OD-16 | **CAFState attribute additions**: `evaluation_completeness`, `contributing_findings`, `direction_vs_prior`, `dimension_coverage` | Approve (additive) | Add fields to Data Model §10 CAFState; promote `PROPOSED_CAF_STATE_FIELDS`; drop `proposal` tags in contracts | ☐ |
 
 ---

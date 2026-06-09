@@ -3,7 +3,7 @@
 **Document:** MODEL_LINEAGE_INDEX_V1.md
 **Status:** Informational architecture map (navigational index, onboarding guide, governance review aid)
 **Architecture V1 classification (per founder decision):** **Active Architecture V1 (Planning Intelligence)** = CAF Assessment · CAF Scoring · Reliability · Confidence · MRI · Overlay · Finding · Recommendation · **Notification**. **Future Architecture (Outcome Orchestration / Agent Governance)** = Resolution Candidate · Review Request · Disposition · Governance · Accepted Understanding (preserved and specified; **not part of active V1**).
-**Indexes (authoritative, unmodified):** `CAF_ASSESSMENT_MODEL_V1.md` · `CAF_SCORING_MODEL_V1.md` · `RELIABILITY_MODEL_V1.md` · `CONFIDENCE_MODEL_V1.md` · `MRI_MODEL_V1.md` · `OVERLAY_MODEL_V1.md` · `FINDING_MODEL_V1.md` · `RECOMMENDATION_MODEL_V1.md` · `RESOLUTION_CANDIDATE_MODEL_V1.md` · `REVIEW_REQUEST_MODEL_V1.md` · `DISPOSITION_MODEL_V1.md` · `GOVERNANCE_MODEL_V1.md` · `ACCEPTED_UNDERSTANDING_MODEL_V1.md` · `NOTIFICATION_MODEL_V1.md`
+**Indexes (authoritative, unmodified):** `CAF_ASSESSMENT_MODEL_V1.md` · `CAF_SCORING_MODEL_V1.md` · `RELIABILITY_MODEL_V1.md` · `CONFIDENCE_MODEL_V1.md` · `MRI_MODEL_V1.md` · `OVERLAY_MODEL_V1.md` · `FINDING_MODEL_V1.md` · `RECOMMENDATION_MODEL_V1.md` · `RESOLUTION_CANDIDATE_MODEL_V1.md` · `REVIEW_REQUEST_MODEL_V1.md` · `DISPOSITION_MODEL_V1.md` · `AUTHORITY_PLANE_MODEL_V1.md` · `ACCEPTED_UNDERSTANDING_MODEL_V1.md` · `NOTIFICATION_MODEL_V1.md`
 **Date:** 2026-05-31
 
 > **Nature of this document.** This is an **index and architecture map**. It is **informational, not normative**. It introduces no new doctrine, defines no new model, and does not reinterpret or modify any existing model. Every statement here is drawn from the fourteen authoritative documents listed above; where this index and a model document appear to differ, the model document governs.
@@ -239,7 +239,7 @@ Active Architecture V1 contains the eight Understanding Domain models plus the N
 - **Resolution Candidate Model** — defines proposed resolutions to Findings as governance objects that bridge Understanding and Governed Understanding. *(Specified: `RESOLUTION_CANDIDATE_MODEL_V1.md`.)*
 - **Review Request Model** — defines the governance object that requests evaluation of one or more Resolution Candidates, bridging Proposed Resolution and Human Evaluation. *(Specified: `REVIEW_REQUEST_MODEL_V1.md`.)*
 - **Disposition Model** — defines the governance object that records evaluation outcomes, bridging Human Evaluation and Governed Outcome Recording. *(Specified: `DISPOSITION_MODEL_V1.md`.)*
-- **Governance Model** — defines the acceptance layer that bridges Understanding and Accepted Understanding. *(Specified: `GOVERNANCE_MODEL_V1.md`.)*
+- **Governance Model** — defines the acceptance layer that bridges Understanding and Accepted Understanding. *(Specified: `AUTHORITY_PLANE_MODEL_V1.md`.)*
 - **Accepted Understanding Model** — defines the durable, governed output of Governance and the bridge to future Knowledge Layer concepts. *(Specified: `ACCEPTED_UNDERSTANDING_MODEL_V1.md`.)*
 
 **Specified Supporting Services**

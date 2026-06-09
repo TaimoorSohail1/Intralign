@@ -73,5 +73,45 @@ Tiers are a **tier-keyed config dimension** (DL-048 §4c + CHG-056 envelope): ea
 
 **Commodity / platform** (DL-043 J, Categories C/E/F — normal engineering, not cognition-contracted): auth, RBAC, project CRUD, settings, notifications-**state**, sharing, monetization/limits, product telemetry, the CRR **workflow UI** (the cognitive response→Deep-Pass seam *is* contracted). **Render** is a non-cognitive service. **Authority** is specified-but-inactive in R1 — do not build it.
 
+## Disambiguation Register — one word, many senses (DL-053)
+
+Some words carry **different concepts across frames** — OSLO-the-**product**, the **build** process, and the
+**repository governance** process. **Rule: never use the bare colliding word where the frame is ambiguous; use the
+qualified canonical form below.** (This register *qualifies* — it does not redefine the underlying concepts.)
+
+**Process-word collisions:**
+
+| Bare word | Sense → **canonical qualified name** | Frame |
+|---|---|---|
+| **Governance** | OSLO governing its own outputs → **Authority-Plane Governance** *(specified, INACTIVE R1)* | product |
+| | engineering ship-controls (CI gates, deploy) → **Build-Governance** | build (`00_owner/build_governance`) |
+| | Framework-001 / DL- ratification process → **Repository Governance** | repo-process |
+| **Gate** | canonical-admission / inactive Authority gate → **Integrity Gate** | product |
+| | CI · exit · owner · readiness gate → **Build Gate** | build |
+| **Review** | OSLO CAF stakeholder review → **ReviewRequest (CRR)** | product |
+| | Framework 001A review → **Governance Review** · code review → **Code Review** | repo / build |
+| **Decision** | OSLO governance-decision object → **Governance Decision (object)** | product |
+| | ratified repo decision → **Ratified Decision (DL-)** | repo-process |
+| **Authority** | OSLO Authority Plane → **Authority Plane** *(INACTIVE R1 — do not build)* | product |
+| | owner's ratification right → **Owner Authority** | repo-process |
+| **Validation** | OSLO validation response → **Validation (Recommendation type)** | product |
+| | QA validation → **QA Validation** | build |
+| **Acceptance** | user-attested → **UserAcceptanceRecord** · target met → **NFR Acceptance** | product / build |
+| **State** | product maturity → **Understanding State** · machine status → **run state** (`run_status`) | product / eng |
+| **Policy** | OSLO product policies → **Product Policy** · build constraints → **Build-Policy** | product / build |
+
+**Semantic landmines** (same word, unrelated/opposite meaning):
+
+| Bare word | Sense A | Sense B | Rule |
+|---|---|---|---|
+| **Canonical** | "Canonical = Attested" (truth tier) | the dedup field → **`dedup_key`** (renamed, DL-053) | "Canonical" = truth tier only; never name the act "make canonical" for dedup |
+| **Drift** | **Outcome Drift** — understanding changed, *surfaced as value* (feature) | **Determinism Drift** — *a bug that fails the build* | bare "Drift" banned; always qualify |
+| **Model** | **Domain Model** (`CONFIDENCE_MODEL` — conceptual, no formula) | **Data Model** (schema) · **Scoring Model** (formula) · **LLM model** | bare "Model" banned in specs; qualify which |
+| **Attested / Derived** | doctrine concepts (truth vs interpretation) | the `epistemic_state` field value | concept stays capitalized; the column is `epistemic_state` |
+
+> **Structural reinforcement (DL-053):** the product Authority-Plane governance artifact is named
+> `AUTHORITY_PLANE_MODEL_V1` (renamed from `GOVERNANCE_MODEL_V1`) so the product sense is unmistakable; the
+> dedup field is `dedup_key` (renamed from `canonical_key`). doc-integrity WARNs on bare colliding words in active specs.
+
 ---
 *This glossary fixes one canonical name per concept across the epistemic core (Attested/Derived, the assertion + record types), the seven cognitive responsibilities, the cognition outputs (Finding/Issue/Confidence/CAF/Recommendation/SuggestedFix), and the DL-046/047 additions (Fast/Deep, confidence stages, SynthesizedPlanningModel, PlanningArtifact, CRR objects, Chat, Time-to-First-MRI), listing the banned synonyms beside each so an external team/LLM cannot silently drift terminology; it also marks what is commodity/non-cognition so those terms aren't mistaken for governed concepts.*

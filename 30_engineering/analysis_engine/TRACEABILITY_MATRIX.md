@@ -66,7 +66,7 @@
 
 | Attribute | On | Classification |
 |---|---|---|
-| verbatim_span, normalized_text, modality, support_status, clarity flags, canonical_key | Claim/ContextItem | **proposal** |
+| verbatim_span, normalized_text, modality, support_status, clarity flags, dedup_key | Claim/ContextItem | **proposal** |
 | structured_proposition, relationship_links, extraction_confidence | Claim/ContextItem | **proposal** |
 | evaluation_completeness, contributing_findings, direction_vs_prior, dimension_coverage | CAFState | **proposal** |
 

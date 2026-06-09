@@ -75,7 +75,7 @@ class Claim:
     support_status: Optional[SupportStatus] = None    # proposal
     is_measurable: Optional[bool] = None              # proposal (Clarity, rule-derivable)
     vagueness_flags: list = field(default_factory=list)  # proposal (Clarity)
-    canonical_key: Optional[str] = None               # proposal (dedup/determinism)
+    dedup_key: Optional[str] = None               # proposal (dedup/determinism)
     structured_proposition: Optional[dict] = None     # proposal
     referenced_entities: list = field(default_factory=list)  # proposal
     relationship_links: list = field(default_factory=list)   # proposal (enriched in Deep)

@@ -16,7 +16,7 @@
 - Finding object **emission** (type, dimension, basis links assembly).
 - Recommendation **type selection** (finding-type → recommendation-type mapping).
 - Confidence/CAF **state assembly**, supersession-pointer maintenance, reliability-qualifier attachment.
-- `canonical_key`/hash for dedup and determinism.
+- `dedup_key`/hash for dedup and determinism.
 - MRI render, atomic persistence, event emission, state transitions.
 
 ## 2. What MAY use the LLM `canonical`/`derived`
@@ -70,7 +70,7 @@
 ## 8. Parallelism guidance `proposal`
 
 - **Fast:** parallelize claim extraction across chunks, but every chunk **carries the Stage-2 global map** as shared context (preserves global semantics; prevents chunk-boundary determinism hazards).
-- **Deep:** parallelize extraction/expansion across the corpus; merge/dedup by `canonical_key`; single active deep run per project with event coalescing.
+- **Deep:** parallelize extraction/expansion across the corpus; merge/dedup by `dedup_key`; single active deep run per project with event coalescing.
 - Run fan-out ordering (`confidence → finding → recommendation → notification`) must be preserved under one `correlation_id` regardless of parallelism (Event Model §16).
 
 ## 9. Determinism contract reference `canonical`
