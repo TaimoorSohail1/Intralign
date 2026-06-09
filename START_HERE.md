@@ -1,5 +1,14 @@
 # START HERE — Engineering Onboarding (read this first)
 
+> **Organized by ownership zone (DL-051).** This repository is filed by *ownership*, not topic:
+> `00_owner/` (doctrine, constitution, frameworks, decisions, canonical definitions, glossary/ontology,
+> build-governance — owner-only) · `10_product/` (product-authoritative) · `20_handoff/` (co-governed
+> seam: contracts, traceability, interfaces) · `30_engineering/` (engineering-authoritative) ·
+> `90_research/` (non-canonical). Precedence **Doctrine > Constitution > Implementation** is unchanged;
+> all canonical change routes through Framework 001 and the **owner** ratifies. See `ZONE_GROUNDING_RULES.md`
+> for the filing rules. *(Some narrative layout descriptions below predate the move and read against the
+> old `01–05` domains; path references are current.)*
+
 > ## 🛑 Step 0 — the front door: read [`ANTI_ASSUMPTION_BUILD_PROTOCOL.md`](ANTI_ASSUMPTION_BUILD_PROTOCOL.md) before anything else
 > This is **the engineering team's front door.** The one rule: **never fill a specification gap by inference — escalate it.** A missing detail is either intentionally-commodity, an owner TBD ([`OPEN_TBD_REGISTER.md`](OPEN_TBD_REGISTER.md)), or a genuine gap to STOP and raise — never something to invent. Read it, then continue below.
 
@@ -37,32 +46,32 @@ If you internalize only this section, you'll understand 80% of the codebase deci
 
 | # | Read | Why | Path |
 |---|---|---|---|
-| 1 | **Engineering Handoff Package** | the map: what's ratified, the build order, the hard rules, the readiness score | `03_architecture/RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md` |
-| 2 | **Cognitive Responsibility Architecture Spec** | the canonical architecture (the model above, in full) | `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md` |
-| 3 | **DL-043 + DL-044** (+ skim **DL-046–049**, see note ↓) | the ratified decisions that define R1 scope, the engineering layer, and the operative additions since | `01_governance/decisions/decision_log.md` |
-| 4 | **Engineering Onboarding Runbook** | who-does-what: access, environment bring-up, the per-wave build loop, testing flow | `03_architecture/RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md` |
-| 5 | **CLAUDE.md** (agent rules — Claude Code reads it) | the rules Claude Code follows — read so you know what the agent is bound to (`AGENTS.md` is the identical tool-neutral twin) | `CLAUDE.md` · app-repo: `03_architecture/engineering/starter_kit/CLAUDE.md` |
-| 6 | **Wave A 00R contract** (your first build target) | the first thing you'll implement — the recompute backbone | `03_architecture/contracts/WAVE_A_CONTRACT_PACKAGE_00R_RECOMPUTE_STALE_BACKBONE.md` |
+| 1 | **Engineering Handoff Package** | the map: what's ratified, the build order, the hard rules, the readiness score | `30_engineering/delivery/RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md` |
+| 2 | **Cognitive Responsibility Architecture Spec** | the canonical architecture (the model above, in full) | `30_engineering/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md` |
+| 3 | **DL-043 + DL-044** (+ skim **DL-046–049**, see note ↓) | the ratified decisions that define R1 scope, the engineering layer, and the operative additions since | `00_owner/decisions/decision_log.md` |
+| 4 | **Engineering Onboarding Runbook** | who-does-what: access, environment bring-up, the per-wave build loop, testing flow | `30_engineering/delivery/RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md` |
+| 5 | **CLAUDE.md** (agent rules — Claude Code reads it) | the rules Claude Code follows — read so you know what the agent is bound to (`AGENTS.md` is the identical tool-neutral twin) | `CLAUDE.md` · app-repo: `30_engineering/delivery/starter_kit/CLAUDE.md` |
+| 6 | **Wave A 00R contract** (your first build target) | the first thing you'll implement — the recompute backbone | `20_handoff/contracts/WAVE_A_CONTRACT_PACKAGE_00R_RECOMPUTE_STALE_BACKBONE.md` |
 
-That's it. Stop there. Do **not** read `01_governance/doctrine/`, the ~480 other specs, `04_research/`, or anything marked *Historical / superseded* — they're the reasoning trail, not the build spec.
+That's it. Stop there. Do **not** read `00_owner/doctrine/`, the ~480 other specs, `90_research/`, or anything marked *Historical / superseded* — they're the reasoning trail, not the build spec.
 
 > **🔁 Then — the decisions & specs ratified SINCE DL-044 (skim, ~15 min; not optional — they change the build):**
 > - **DL-046** — Fast/Deep analysis modes + the **< 60 s Time-to-First-MRI** gate (Wave B).
 > - **DL-047** — the evidence→plan **synthesis engine** (Wave S) + OSLO Chat / CAF Review Requests / Suggested Fixes (Wave I).
 > - **DL-048** — **cost governance / freemium unit economics** — per-tier token budgets enforced on the Fast/Deep engine (`Calibration §4c`); the `AI Spend Recorded` event.
 > - **DL-049** — the **`Principal`** identity (`type: reviewer|user`, in-place promotion) — resolves external-stakeholder identity.
-> - **Read when you touch them:** `02_product/specs/telemetry/OSLO_RELEASE_1_OBSERVABILITY_AND_ECONOMICS_PLATFORM_SPECIFICATION_V1.md` (telemetry + AI economics) · `02_product/specs/ux/RELEASE_1_VISUAL_DESIGN_AND_BRANDING_SPECIFICATION_V1.md` (design tokens / brand).
-> - **Two canonical-definitions surfaces exist** — `01_governance/canonical_definitions/canonical_definitions.md` (governance-tier) and `constitution/10_canonical_definitions.md` (content-tier). **Where they conflict, Doctrine prevails (DL-036).**
+> - **Read when you touch them:** `30_engineering/telemetry/OSLO_RELEASE_1_OBSERVABILITY_AND_ECONOMICS_PLATFORM_SPECIFICATION_V1.md` (telemetry + AI economics) · `10_product/experience/RELEASE_1_VISUAL_DESIGN_AND_BRANDING_SPECIFICATION_V1.md` (design tokens / brand).
+> - **Two canonical-definitions surfaces exist** — `00_owner/canonical_definitions/canonical_definitions.md` (governance-tier) and `constitution/10_canonical_definitions.md` (content-tier). **Where they conflict, Doctrine prevails (DL-036).**
 > - **The ledger is the source of truth:** `decision_log.md` (DL-029–DL-049) + `changelog.md` (CHG-001–069) are current — **when in doubt, the ledger wins over any summary, including this page.** Also see **`REPOSITORY_INDEX.md`** (concept → canonical file).
 
 ---
 
 ## 3. What to ignore (permission granted)
 
-- **`01_governance/`** beyond the decision log + AGENTS rules — it's the constitutional/governance system; you don't need it to write code.
-- *(Do read when testing:* `02_product/specs/testing_fixtures/` holds the Testing Strategy, determinism note, and fixture/subsystem test specs — the per-phase manifests link the relevant ones.*)*
-- **`02_product/specs/`** — ~130 product/UX specs; you'll pull the relevant ones *per wave* (Wave E references the UX specs), not up front.
-- **`04_research/`, `raw/`, anything "Historical/superseded/secondary"** — never an implementation source.
+- **`00_owner/`** beyond the decision log + AGENTS rules — it's the constitutional/governance system; you don't need it to write code.
+- *(Do read when testing:* `30_engineering/testing_fixtures/` holds the Testing Strategy, determinism note, and fixture/subsystem test specs — the per-phase manifests link the relevant ones.*)*
+- **`10_product/specs/`** — ~130 product/UX specs; you'll pull the relevant ones *per wave* (Wave E references the UX specs), not up front.
+- **`90_research/`, `raw/`, anything "Historical/superseded/secondary"** — never an implementation source.
 - The DL ledger **below DL-043** — earlier decisions are superseded/contextual. **(But DL-046–049 *above* DL-044 ARE operative — see the note in §2.)**
 
 When in doubt about scope: a doc only matters if a **contract** you're building points to it.
@@ -71,12 +80,12 @@ When in doubt about scope: a doc only matters if a **contract** you're building 
 
 ## 4. Your first 30 minutes of *doing* (environment)
 
-> **Day-one checklist:** `05_execution/implementation/Phase_I_Foundation_and_Environment/PHASE_1_BUILD_KICKOFF_PACKET.md` — the ordered Phase-I onramp (readiness state, setup steps, first contract, guardrails, exit gate).
+> **Day-one checklist:** `30_engineering/implementation/Phase_I_Foundation_and_Environment/PHASE_1_BUILD_KICKOFF_PACKET.md` — the ordered Phase-I onramp (readiness state, setup steps, first contract, guardrails, exit gate).
 
 Follow the runbook's **Phase 1**. Short version:
 
 1. Install Claude Code; sign in (your own Pro/Max). Clone this repo (reference) and the **app repo** (where you build).
-2. Seed the app repo from `03_architecture/engineering/starter_kit/`: copy in `docker-compose.yml`, `.env.example` (→ `.env`), `ci-pipeline.yml` (→ `.github/workflows/ci.yml`), and **`CLAUDE.md` + `AGENTS.md`** at the root.
+2. Seed the app repo from `30_engineering/delivery/starter_kit/`: copy in `docker-compose.yml`, `.env.example` (→ `.env`), `ci-pipeline.yml` (→ `.github/workflows/ci.yml`), and **`CLAUDE.md` + `AGENTS.md`** at the root.
 3. `docker compose up -d` — confirm Postgres, Neo4j, MongoDB, Qdrant, Redis are healthy.
 4. Scaffold the LangGraph skeleton using the code-tree in `CLAUDE.md` (`/backend/responsibilities/...`).
 

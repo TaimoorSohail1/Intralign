@@ -39,16 +39,17 @@ HIST_REF_ALLOW = ("audit", "changelog", "decision_log", "REPOSITORY_INDEX",
                   "legacy_layer_engineering", "historical_artifacts",
                   "REORGANIZATION", "SIMPLIFICATION", "KNOWLEDGE_INTEGRITY",
                   "OPEN_TBD", "PROPOSAL_", "DISPOSITION", "/decisions/", "/backlog/",
-                  "/constitution/", "/doctrine/", "/models/", "RECONCILIATION",
+                  "/architecture_decisions/", "/product_decisions/", "/audits_reviews/",
+                  "/constitution/", "/doctrine/", "/models/", "/domain/", "RECONCILIATION",
                   "CONSOLIDATION", "/transcripts/", "REVIEW", "REPOSITORY_ARCHITECTURE")
 def allow_hist(path_str): return any(a.lower() in path_str.lower() for a in HIST_REF_ALLOW)
 
 # active tree = build-relevant; exclude history + research + the reasoning trail
 def is_active(p):
     s = rel(p)
-    return not any(x in s for x in ("04_research/", "legacy_layer_engineering/",
-                   "historical_artifacts/", "01_governance/audits/", "00_raw",
-                   "raw/"))  # raw/ = raw Notion/source export, not part of the active knowledge tree
+    return not any(x in s for x in ("90_research/", "legacy_layer_engineering/",
+                   "historical_artifacts/", "00_owner/audits/", "00_raw",
+                   "raw/"))  # 90_research/ + raw/ = raw Notion/source export, not part of the active knowledge tree
 
 # high-signal RETIRED terms only (unambiguous; common words like "Governance Layer"
 # are excluded — they appear legitimately in governance/constitution prose).
