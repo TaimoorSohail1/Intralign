@@ -19,7 +19,7 @@
 | OD-12 | **Bounded-equivalence determinism tolerance** | TBD | tolerance over governable outputs (framework only) | determinism tests | Engine §15 |
 | OD-13 | **Global-skeleton pattern adoption** | proposal | adopt 2-stage global+local | global semantics, parallelism | pack |
 | OD-14 | **Severity assignment basis** (critical/moderate/warning) | TBD | rule heuristic default (proposal) | findings | Finding model |
-| OD-15 | **Claim attribute schema** (verbatim_span, normalized_text, modality, support_status, clarity flags, canonical_key, structured_proposition, relationship_links) | proposal | add as ContextItem fields | extraction, dedup, determinism | pack; Data §9 |
+| OD-15 | **Claim attribute schema** (verbatim_span, normalized_text, modality, support_status, clarity flags, dedup_key, structured_proposition, relationship_links) | proposal | add as ContextItem fields | extraction, dedup, determinism | pack; Data §9 |
 | OD-16 | **CAFState attribute additions** (evaluation_completeness, contributing_findings, direction_vs_prior, dimension_coverage) | proposal | add as CAFState fields | CAF UX, traceability | pack; Data §10 |
 | OD-17 | **Oversize-input routing policy** (Deep-only/queue) | TBD | route Deep-only with message (proposal) | intake | pack |
 | OD-18 | **Event transport** (websocket/SSE/poll) + dead-letter | TBD | — | UI refresh, ordering | Event §19; NFR |

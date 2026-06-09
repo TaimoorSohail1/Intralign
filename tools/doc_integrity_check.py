@@ -107,7 +107,7 @@ for f in MD:
             warns.append(f"[banned-term] {rel(f)}:{i} → {BANNED_RE.search(line).group(0)}")
 
 # ---- 4: stale DL-range -----------------------------------------------------
-dl_log = ROOT / "01_governance/decisions/decision_log.md"
+dl_log = ROOT / "00_owner/decisions/decision_log.md"
 if dl_log.exists():
     log_text = dl_log.read_text(encoding="utf-8", errors="ignore")
     dls = [int(m.group(1)) for m in re.finditer(r"DL-0?(\d{2,3})", log_text)]
@@ -119,6 +119,25 @@ if dl_log.exists():
             claimed = int(m.group(1))
             if claimed < max_dl:
                 warns.append(f"[stale-DL-range] {rel(f)} claims …DL-{claimed:03d} but ledger max is DL-{max_dl:03d}")
+
+# ---- 5: DL-053 disambiguation regression guard -----------------------------
+# Bare-word qualification (Governance/Gate/Drift/Model → qualified form) is an AUTHORING
+# NORM in CANONICAL_GLOSSARY § Disambiguation Register — it is NOT regex-enforced here,
+# because the bare words have hundreds of legitimate uses ("authority resides with the
+# owner", "scope drift") and flagging them all is noise, not signal.
+# What IS enforced (precise, low-false-positive): the DL-053 RENAMES must not regress —
+# the retired identifiers may not reappear in active build-relevant specs.
+RENAMED = [("canonical_key", "dedup_key"),
+           ("GOVERNANCE_MODEL_V1", "AUTHORITY_PLANE_MODEL_V1")]
+# the glossary, the DL-053 proposal, and the ledger legitimately name the old identifiers
+GUARD_SKIP = ("canonical_glossary", "proposal_terminology_disambiguation", "decision_log")
+for f in MD:
+    if not is_active(f) or allow_hist(rel(f)): continue
+    if any(s in rel(f).lower() for s in GUARD_SKIP): continue
+    text = f.read_text(encoding="utf-8", errors="ignore")
+    for old, new in RENAMED:
+        if old in text:
+            warns.append(f"[renamed-term] {rel(f)} uses retired '{old}' → use '{new}' (DL-053)")
 
 # ---- report ----------------------------------------------------------------
 print(f"OSLO doc-integrity: {len(MD)} docs · {len(errors)} errors · {len(warns)} warnings\n")

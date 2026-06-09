@@ -24,7 +24,7 @@
 - **Exit criteria** `derived` — Enriched context available for later stages.
 - **Rule responsibilities** `proposal` — Re-index entities/terms over full corpus; carry global map as shared context to parallel chunks.
 - **LLM responsibilities** `canonical` — Deeper semantic extraction.
-- **Validation rules** `proposal` — Items schema-validated; source spans required; dedup by canonical_key.
+- **Validation rules** `proposal` — Items schema-validated; source spans required; dedup by dedup_key.
 - **Fallback/failure behavior** `derived` — Failure ⇒ run `failed`; Project reverts to last completed state; retry = new run.
 - **Events emitted** `canonical` — `deep_analysis_started` (at run begin).
 - **State transitions** `canonical` — Project `deep_analyzing`; run `queued → running`.
@@ -112,7 +112,7 @@
 - **Exit criteria** `proposal` — Fuller claim set (toward the ~350–850 total estimate — **proposal/TBD**).
 - **Rule responsibilities** `proposal` — Assertion pre-filter on previously-skipped units.
 - **LLM responsibilities** `canonical` — Identify additional/implicit claims.
-- **Validation rules** `proposal` — Dedup against existing claims by canonical_key; spans required.
+- **Validation rules** `proposal` — Dedup against existing claims by dedup_key; spans required.
 - **Fallback/failure behavior** `derived` — Failure ⇒ run `failed`.
 - **Events emitted** — none at stage.
 - **State transitions** — run `running`.

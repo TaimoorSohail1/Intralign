@@ -157,7 +157,7 @@ REQUIRED_FIELDS = {  # canonical
 # PROPOSED additional fields (not yet in the Data Model) — OD-15 / OD-16.
 PROPOSED_CLAIM_FIELDS = [  # proposal
     "verbatim_span", "normalized_text", "modality", "support_status",
-    "is_measurable", "vagueness_flags", "canonical_key",
+    "is_measurable", "vagueness_flags", "dedup_key",
     "structured_proposition", "relationship_links", "extraction_confidence",
 ]
 PROPOSED_CAF_STATE_FIELDS = [  # proposal

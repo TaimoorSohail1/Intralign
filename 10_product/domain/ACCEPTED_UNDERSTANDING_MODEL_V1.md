@@ -2,7 +2,7 @@
 
 **Document:** ACCEPTED_UNDERSTANDING_MODEL_V1.md
 **Status:** Specification of the Accepted Understanding Model — **the output of Governance**
-**Consumes (authoritative, unmodified):** `CAF_ASSESSMENT_MODEL_V1.md` · `CAF_SCORING_MODEL_V1.md` · `RELIABILITY_MODEL_V1.md` · `CONFIDENCE_MODEL_V1.md` · `MRI_MODEL_V1.md` · `OVERLAY_MODEL_V1.md` · `FINDING_MODEL_V1.md` · `RECOMMENDATION_MODEL_V1.md` · `RESOLUTION_CANDIDATE_MODEL_V1.md` · `REVIEW_REQUEST_MODEL_V1.md` · `DISPOSITION_MODEL_V1.md` · `GOVERNANCE_MODEL_V1.md` · `MODEL_LINEAGE_INDEX_V1.md`
+**Consumes (authoritative, unmodified):** `CAF_ASSESSMENT_MODEL_V1.md` · `CAF_SCORING_MODEL_V1.md` · `RELIABILITY_MODEL_V1.md` · `CONFIDENCE_MODEL_V1.md` · `MRI_MODEL_V1.md` · `OVERLAY_MODEL_V1.md` · `FINDING_MODEL_V1.md` · `RECOMMENDATION_MODEL_V1.md` · `RESOLUTION_CANDIDATE_MODEL_V1.md` · `REVIEW_REQUEST_MODEL_V1.md` · `DISPOSITION_MODEL_V1.md` · `AUTHORITY_PLANE_MODEL_V1.md` · `MODEL_LINEAGE_INDEX_V1.md`
 **Date:** 2026-05-31
 
 > **Architecture V1 classification (added by the Architecture V1 Simplification Refactor):** **Future Architecture — Outcome Orchestration / Agent Governance.** This model is **preserved and specified in full** and is **not part of the active Architecture V1 (Planning Intelligence) system**; it is deferred for later activation. This classification is additive — **no model content below is changed, deprecated, or invalidated.** See `ARCHITECTURE_V1_REFACTOR_REPORT.md`.

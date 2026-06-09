@@ -2,7 +2,7 @@
 
 **Document:** NOTIFICATION_MODEL_V1.md
 **Status:** Specification of the Notification Model — **a supporting awareness & delivery service**
-**Consumes (authoritative, unmodified):** `MODEL_LINEAGE_INDEX_V1.md` · `MODEL_COVERAGE_AUDIT_V1.md` · `GOVERNANCE_MODEL_V1.md` · `ACCEPTED_UNDERSTANDING_MODEL_V1.md` · `REVIEW_REQUEST_MODEL_V1.md` · `DISPOSITION_MODEL_V1.md` · `RESOLUTION_CANDIDATE_MODEL_V1.md` · `FINDING_MODEL_V1.md` · `RECOMMENDATION_MODEL_V1.md` · `MRI_MODEL_V1.md` · `OVERLAY_MODEL_V1.md`
+**Consumes (authoritative, unmodified):** `MODEL_LINEAGE_INDEX_V1.md` · `MODEL_COVERAGE_AUDIT_V1.md` · `AUTHORITY_PLANE_MODEL_V1.md` · `ACCEPTED_UNDERSTANDING_MODEL_V1.md` · `REVIEW_REQUEST_MODEL_V1.md` · `DISPOSITION_MODEL_V1.md` · `RESOLUTION_CANDIDATE_MODEL_V1.md` · `FINDING_MODEL_V1.md` · `RECOMMENDATION_MODEL_V1.md` · `MRI_MODEL_V1.md` · `OVERLAY_MODEL_V1.md`
 **Date:** 2026-05-31
 
 > **Scope.** This document defines the **Notification Model** — Notification as a **supporting awareness and delivery service** that surfaces awareness of relevant changes, requests, and events. It does **not** redefine governance, assessment, recommendations, or user action, and it does **not** define routing rules, delivery channels, email/Slack/in-app behavior, assignment algorithms, notification-priority formulas, escalation behavior, workflow implementation, governance behavior, assessment behavior, or recommendation logic. Those are out of scope.

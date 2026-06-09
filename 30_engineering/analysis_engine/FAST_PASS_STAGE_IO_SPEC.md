@@ -90,12 +90,12 @@
 - **Input spec** `derived` — Normalized units + global map (Stage 2) as shared context.
 - **Output spec** `canonical` — `ContextItem`s of `item_type=claim` (`extraction_horizon=fast`), each with attributes per RULE_LLM_GUIDELINES / claim contract.
 - **Required entities** `canonical` — `ContextItem`.
-- **Required fields** `canonical` + `proposal` — `context_item_id`, `project_id`, `evidence_id`, `item_type=claim`, `extraction_horizon=fast`, `produced_by_run_id`, `content`, `source_attribution`; **proposed claim attributes**: verbatim_span, normalized_text, modality, support_status, clarity flags, canonical_key *(proposal — not yet Data Model fields; see OPEN_DECISIONS)*.
+- **Required fields** `canonical` + `proposal` — `context_item_id`, `project_id`, `evidence_id`, `item_type=claim`, `extraction_horizon=fast`, `produced_by_run_id`, `content`, `source_attribution`; **proposed claim attributes**: verbatim_span, normalized_text, modality, support_status, clarity flags, dedup_key *(proposal — not yet Data Model fields; see OPEN_DECISIONS)*.
 - **Entry criteria** `derived` — Normalization complete (Stage 2 optional but recommended).
 - **Exit criteria** `proposal` — Bounded claim set produced (target ≈ **50–100** salient claims — **proposal/TBD**).
-- **Rule responsibilities** `proposal` — Assertion pre-filter (modal/declarative patterns) to bound LLM load; canonical_key/hash for dedup + determinism.
+- **Rule responsibilities** `proposal` — Assertion pre-filter (modal/declarative patterns) to bound LLM load; dedup_key/hash for dedup + determinism.
 - **LLM responsibilities** `canonical` — Identify claims incl. paraphrased/implicit; produce normalized_text.
-- **Validation rules** `proposal` — Each claim must carry a resolvable source span; output schema-validated; duplicates collapsed by canonical_key.
+- **Validation rules** `proposal` — Each claim must carry a resolvable source span; output schema-validated; duplicates collapsed by dedup_key.
 - **Fallback/failure behavior** `derived` — Extraction failure ⇒ run `failed`; retry = new run (`previous_run_id`).
 - **Events emitted** — none at stage; claims surface via `finding_created` downstream and `fast_analysis_completed`.
 - **State transitions** — run `running`.

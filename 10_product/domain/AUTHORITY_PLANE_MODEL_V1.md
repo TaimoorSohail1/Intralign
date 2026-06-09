@@ -1,7 +1,12 @@
-# Governance Model v1
+# Authority-Plane Model v1 (Product Governance — formerly Governance Model)
 
-**Document:** GOVERNANCE_MODEL_V1.md
-**Status:** Specification of the Governance Model — **the Governance Domain's acceptance layer**
+**Document:** AUTHORITY_PLANE_MODEL_V1.md *(renamed from `GOVERNANCE_MODEL_V1.md` per DL-053 to disambiguate)*
+**Status:** Specification of the Authority-Plane Model — **OSLO's product Authority-Plane (the Governance Domain's acceptance layer)**
+
+> **Disambiguation (DL-053):** "Governance" in this document means OSLO's **product Authority-Plane Governance**
+> (the product governing its own outputs — expose/suppress/authorize a finding), **specified but INACTIVE in R1**.
+> It is **not** Build-Governance (CI/deploy/QA gates) or Repository Governance (Framework 001 / DL- ratification).
+> See `00_owner/CANONICAL_GLOSSARY.md` § Disambiguation Register.
 **Consumes (authoritative, unmodified):** `CAF_ASSESSMENT_MODEL_V1.md` · `CAF_SCORING_MODEL_V1.md` · `RELIABILITY_MODEL_V1.md` · `CONFIDENCE_MODEL_V1.md` · `MRI_MODEL_V1.md` · `OVERLAY_MODEL_V1.md` · `FINDING_MODEL_V1.md` · `RECOMMENDATION_MODEL_V1.md` · `RESOLUTION_CANDIDATE_MODEL_V1.md` · `REVIEW_REQUEST_MODEL_V1.md` · `DISPOSITION_MODEL_V1.md` · `MODEL_LINEAGE_INDEX_V1.md`
 **Date:** 2026-05-31
 
