@@ -1,0 +1,46 @@
+# PROPOSED CODEOWNERS — authority overlay (DRAFT)
+# Rename to `CODEOWNERS` (or `.github/CODEOWNERS`) to activate, AFTER:
+#   1) the zone restructure is executed, and 2) real GitHub handles/teams replace the placeholders below.
+# Replace: @owner = the repository owner (e.g. @idris-manley); @eng-lead = engineering lead's handle.
+#
+# Semantics: the listed owners are REQUIRED reviewers for changes under that path.
+# - 00_owner: owner only (governs all zones; canonical changes route through Framework 001).
+# - 10_product: product-authoritative (owner acts as PM today).
+# - 20_handoff: CO-GOVERNED SEAM — BOTH owner and engineering required on every change.
+# - 30_engineering: engineering-authoritative (default author = eng); owner still ratifies CANON changes.
+# - 90_research: non-canonical; no required owner.
+
+# --- Default: owner sees everything not otherwise matched ---
+*                       @owner
+
+# --- 00_owner — owner only (doctrine, constitution, frameworks, decisions, glossary, TBD/queue) ---
+/00_owner/              @owner
+# Build-governance is owner-ratified policy that binds engineering (deployment/QA/observability
+# governance, Anti-Assumption Protocol, implementation constraints, AI-First delivery rules).
+# Engineering may PROPOSE edits; the owner RATIFIES. Owner-required even though eng is a co-reviewer:
+/00_owner/build_governance/   @owner @eng-lead
+
+# --- 10_product — product-authoritative (engineering reads) ---
+/10_product/            @owner
+
+# --- 20_handoff — THE SEAM — both signatures required ---
+/20_handoff/            @owner @eng-lead
+
+# --- 30_engineering — engineering-authoritative (product reads) ---
+/30_engineering/        @eng-lead
+# (Reminder: changes to ratified architecture CANON still require owner ratification via Framework 001,
+#  even though engineering is the default author here. CODEOWNERS enforces review, not ratification.)
+
+# --- 90_research — non-canonical ---
+/90_research/           @owner @eng-lead
+
+# --- Cross-zone meta / infra (owner-controlled; agents read these) ---
+/CLAUDE.md              @owner
+/AGENTS.md              @owner
+/README.md              @owner
+/START_HERE.md          @owner
+/REPOSITORY_ARCHITECTURE.md   @owner
+/REPOSITORY_INDEX.md    @owner
+/CODEOWNERS             @owner
+/tools/                 @owner @eng-lead
+/.github/               @owner @eng-lead
