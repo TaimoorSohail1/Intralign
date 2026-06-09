@@ -1,0 +1,40 @@
+# CODEOWNERS — review-routing overlay (active under current 01–05 structure)
+# Listed owners are REQUIRED reviewers for changes under each path (enforced by the
+# `protect-main` ruleset: PR + 1 approval + "require review from Code Owners").
+#
+# This is the INTERIM map for today's structure. When the zone restructure
+# (00_owner / 10_product / 20_handoff / 30_engineering / 90_research) is ratified
+# (supersedes DL-037), replace this with CODEOWNERS.proposed.
+#
+# NOTE: CODEOWNERS enforces REVIEW, not ratification. Canonical changes still route
+# through Framework 001; only the owner ratifies/supersedes/adopts canon.
+
+# --- Default: owner reviews everything not otherwise matched ---
+*                               @idris-manley
+
+# --- Governance canon — owner only (doctrine > constitution > implementation) ---
+/01_governance/                 @idris-manley
+
+# --- Agent rules & repository orientation — owner only ---
+/CLAUDE.md                      @idris-manley
+/AGENTS.md                      @idris-manley
+/README.md                      @idris-manley
+/START_HERE.md                  @idris-manley
+/REPOSITORY_ARCHITECTURE.md     @idris-manley
+/REPOSITORY_INDEX.md            @idris-manley
+
+# --- Drift-control / build-governance files — owner-ratified policy ---
+/ANTI_ASSUMPTION_BUILD_PROTOCOL.md                              @idris-manley
+/CANONICAL_GLOSSARY.md                                          @idris-manley
+/OPEN_TBD_REGISTER.md                                           @idris-manley
+/RELEASE_1_BUILD_TEST_OBSERVE_TRACEABILITY_MATRIX.md            @idris-manley
+
+# --- Engineering / architecture — co-reviewed seam ---
+# Owner ratifies canon; eng lead (@mkashifse) is co-author of realization.
+# Both required: owner keeps ratification authority, eng lead reviews the how.
+/03_architecture/               @idris-manley @mkashifse
+/02_product/                    @idris-manley @mkashifse
+
+# --- CI / infra — owner-controlled, eng lead co-reviews ---
+/tools/                         @idris-manley @mkashifse
+/.github/                       @idris-manley @mkashifse
