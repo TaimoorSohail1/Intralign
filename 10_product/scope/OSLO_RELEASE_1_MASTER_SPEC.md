@@ -767,7 +767,9 @@ Every recommendation should answer:
 - Which confidence dimension improves?
 - What outcome is expected?
 
-Recommendation actions include Accept, Reject, Modify, Discuss, Apply, and Share For Review.
+Recommendation **state-changing actions** are **Accept, Defer, Reject, and Apply** (Apply = Implemented). Editing a recommendation is **not** a state — a user edit triggers re-analysis and **supersedes** the prior recommendation with a new one. **Discuss** (OSLO Chat) and **Share For Review** (CAF Review Request) are **collaboration affordances**, not recommendation states.
+
+> The canonical recommendation **state lifecycle** is the State Model (`RELEASE_1_STATE_MODEL_SPECIFICATION_V1.md` §11, the lifecycle authority): `Generated → Accepted → Rejected → Deferred → Implemented` (+ `Superseded`). Per **DL-055**. *(Reconciled from the prior list "Accept, Reject, Modify, Discuss, Apply, and Share For Review": "Modify" removed → supersession; "Defer" added; "Discuss"/"Share For Review" reclassified as affordances.)*
 
 ### Validation Recommendations
 
@@ -797,6 +799,8 @@ Applied
   ↓
 Verified
 ```
+
+> *This is the **presentation/explanation** flow (how a recommendation is surfaced and applied), not the canonical state machine. The canonical **state lifecycle** is the State Model §11: `Generated → Accepted → Rejected → Deferred → Implemented` (+ `Superseded`). Per DL-055.*
 
 ### Relationship to CAF Review Requests
 
@@ -1203,7 +1207,7 @@ Recommendation
   ↓
 Preview
   ↓
-Accept / Modify / Reject
+Accept / Defer / Reject
   ↓
 Apply
   ↓
@@ -1642,7 +1646,7 @@ Acceptance Criteria:
 - Recommendations generated from findings.
 - Recommendations include explanation.
 - Recommendations include expected impact.
-- Recommendations support Accept, Modify, Reject, Share For Review.
+- Recommendations support Accept, Defer, Reject, and Apply; editing supersedes the prior recommendation; Share For Review is a collaboration affordance (per DL-055 / State Model §11).
 - Recommendation outcomes are verified.
 
 ### Capability 9 — OSLO Chat
