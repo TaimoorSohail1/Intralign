@@ -2,7 +2,7 @@
 
 **Document Type:** Design artifact — backend workflow diagrams (non-canonical) · **Status:** Non-canonical analysis under Framework 001A · **Date:** 2026-06-10 · **Author:** AI-generated synthesis (Claude)
 
-> **Non-canonical.** This artifact lives in `90_research/` and **informs but does not bind** (DL-033 precedence). It is a synthesized representation of the **Orient phase (= Fast Pass)** for engineering orientation only. On any conflict the canonical sources prevail: the **Analysis Engine Spec** (`30_engineering/analysis_engine/RELEASE_1_ANALYSIS_ENGINE_SPECIFICATION_V1.md`), the **Fast / Deep Pass Stage I/O Specs**, the **Rule/LLM Guidelines**, the **Scope Guardrails**, the **Runtime Object/Behavior/Logical-Data Models**, the **CAF/Confidence/Reliability** scoring models, and the **Wave contracts** (`20_handoff/`). Where this differs from a contract or the decision log, **the ledger/contract wins**. Storage bindings (PG/Neo4j/Mongo/Qdrant/Redis) follow the logical-data-model bindings — confirm against the final infra spec.
+> **Non-canonical.** This artifact lives in `90_research/` and **informs but does not bind** (DL-033 precedence). It is a synthesized representation of the **Orient phase (= Fast Pass)** for engineering orientation only. On any conflict the canonical sources prevail: the **Analysis Engine Spec** (`30_engineering/analysis_engine/RELEASE_1_ANALYSIS_ENGINE_SPECIFICATION_V1.md`), the **Fast / Deep Pass Stage I/O Specs**, the **Rule/LLM Guidelines**, the **Scope Guardrails**, the **Runtime Object/Behavior/Logical-Data Models**, the **CAF/Confidence/Reliability** scoring models, and the **Wave contracts** (`20_handoff/`). Where this differs from a contract or the decision log, **the ledger/contract wins**. Storage bindings (Supabase Postgres/Neo4j/Supabase pgvector/Supabase Storage/Redis — per DL-054) follow the logical-data-model bindings — confirm against the final infra spec.
 
 The **Orient phase = the Fast Pass**, executed as **one durable `AnalysisRun` job** (`queued → running → completed`), driving the project `created → orienting → oriented`, target **< 60s** (Time-to-First-MRI).
 
@@ -23,15 +23,15 @@ The **Orient phase = the Fast Pass**, executed as **one durable `AnalysisRun` jo
 
 | Stage | Processing | Input | Output | Store |
 |---|---|---|---|---|
-| **S0 Intake & Acquisition** | RULE | project, evidence, intent | Evidence rows, `AnalysisRun(queued)` | PG (rows, run) · Mongo (raw body) · Redis (queue) |
-| **S1 Normalization** | RULE | raw `content_ref` | span-tagged units | Mongo (units) · Redis (working set) |
+| **S0 Intake & Acquisition** | RULE | project, evidence, intent | Evidence rows, `AnalysisRun(queued)` | PG (rows, run) · Supabase Storage (raw body) · Redis (queue) |
+| **S1 Normalization** | RULE | raw `content_ref` | span-tagged units | Supabase Storage (units) · Redis (working set) |
 | **S2 Global Skeleton** | HYBRID | normalized units (whole corpus) | global map: intent, entity index, rel-skeleton | PG (ctx index) · Neo4j (entity/rel) · Redis (shared ctx) |
-| **S3 Claim Extraction** | HYBRID | units + global map | ~50–100 claims (`ContextItem`, horizon=fast) | PG (claims) · Qdrant (embeddings, if enabled) |
+| **S3 Claim Extraction** | HYBRID | units + global map | ~50–100 claims (`ContextItem`, horizon=fast) | PG (claims) · Supabase pgvector (embeddings, if enabled) |
 | **S4 CAF Evaluation** | HYBRID | claims + map + evidence | `CAFState` (3 dims + per-dim reliability) | PG (`CAFState`) |
-| **S5 Finding Generation** | HYBRID | CAF + claims + basis | Findings `status=detected` (7 types, ≥1 evidence link) | PG (index) · Mongo (CHR snapshot) |
-| **S6 Recommendation Gen** | HYBRID | Findings + basis | Recommendations `status=generated` (3 types) | PG (index) · Mongo (CHR snapshot) |
+| **S5 Finding Generation** | HYBRID | CAF + claims + basis | Findings `status=detected` (7 types, ≥1 evidence link) | PG (index) · Postgres jsonb (CHR snapshot) |
+| **S6 Recommendation Gen** | HYBRID | Findings + basis | Recommendations `status=generated` (3 types) | PG (index) · Postgres jsonb (CHR snapshot) |
 | **S7 Confidence & State** | RULE | `CAFState` + reliability inputs | `ConfidenceState` (band + qualifier + basis) | PG (`ConfidenceState`) · Redis (live projection) |
-| **S8 MRI & Publication** | RULE | CAF, Confidence, Findings, Recs | `MRISnapshot`, `run=completed` | PG (commit + event ledger) · Mongo (MRI payload) · Redis (cache) |
+| **S8 MRI & Publication** | RULE | CAF, Confidence, Findings, Recs | `MRISnapshot`, `run=completed` | PG (commit + event ledger) · Postgres jsonb (MRI payload) · Redis (cache) |
 
 **Processing legend:** **RULE** = deterministic (no LLM) · **LLM** = semantic judgment · **HYBRID** = rule pre-filter + LLM + rule assembly.
 
@@ -49,21 +49,21 @@ classDef ckpt fill:#fef9c3,stroke:#ca8a04,color:#713f12;
 classDef bad fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
 TRIG(["Trigger: first analyzable input<br/>(no completed fast run yet)"])
 J0["⛓ Durable job created — AnalysisRun queued→running<br/>emit fast_analysis_requested / _started"]:::ckpt
-S0["S0 · INTAKE & ACQUISITION — RULE<br/>in: project, evidence, intent<br/>do: validate envelope ~20k/33k, provenance, enqueue<br/>out: Evidence rows, AnalysisRun<br/>store: PG · Mongo raw · Redis queue"]:::rule
+S0["S0 · INTAKE & ACQUISITION — RULE<br/>in: project, evidence, intent<br/>do: validate envelope ~20k/33k, provenance, enqueue<br/>out: Evidence rows, AnalysisRun<br/>store: PG · Supabase Storage raw · Redis queue"]:::rule
 OVR{"envelope oversize?"}
 OVRF["FALLBACK · accept but route DEEP-only<br/>(skip Fast, queue for Deep)"]:::bad
-S1["S1 · NORMALIZATION — RULE<br/>in: raw content_ref<br/>do: parse, de-boilerplate, segment, span-tag<br/>out: span-tagged units<br/>store: Mongo units · Redis working set"]:::rule
+S1["S1 · NORMALIZATION — RULE<br/>in: raw content_ref<br/>do: parse, de-boilerplate, segment, span-tag<br/>out: span-tagged units<br/>store: Supabase Storage units · Redis working set"]:::rule
 CK1["⛓ checkpoint"]:::ckpt
 S2["S2 · GLOBAL SKELETON — HYBRID<br/>RULE: NER entity index, cross-ref link<br/>LLM: intent restatement, relationship skeleton<br/>out: global map (fast-horizon ContextItems)<br/>store: PG ctx · Neo4j rel · Redis shared ctx"]:::hybrid
 SKOK{"skeleton built?"}
 SKF["FALLBACK · isolation-only mode<br/>Coverage↓ → reliability↓<br/>run CONTINUES (not failed)"]:::bad
-S3["S3 · CLAIM EXTRACTION — HYBRID<br/>RULE: assertion pre-filter, dedup_key/hash<br/>LLM: identify claims (paraphrased/implicit)<br/>out: ~50–100 claims<br/>store: PG claims · Qdrant embeddings"]:::hybrid
+S3["S3 · CLAIM EXTRACTION — HYBRID<br/>RULE: assertion pre-filter, dedup_key/hash<br/>LLM: identify claims (paraphrased/implicit)<br/>out: ~50–100 claims<br/>store: PG claims · pgvector embeddings"]:::hybrid
 S4["S4 · CAF EVALUATION — HYBRID<br/>RULE: Clarity detectors, constraint NER, coverage set-diff<br/>LLM: Alignment/Feasibility (preliminary)<br/>out: CAFState (3 dims + reliability)<br/>store: PG CAFState"]:::hybrid
-S5["S5 · FINDING GENERATION — HYBRID<br/>detect (rule/LLM) → emit (RULE) Findings<br/>out: Findings detected (7 types, ≥1 evidence link)<br/>store: PG index · Mongo CHR snapshot"]:::hybrid
-S6["S6 · RECOMMENDATION GEN — HYBRID<br/>RULE: finding-type→rec-type map<br/>LLM: rationale phrasing<br/>out: Recommendations generated (3 types)<br/>store: PG index · Mongo CHR snapshot"]:::hybrid
+S5["S5 · FINDING GENERATION — HYBRID<br/>detect (rule/LLM) → emit (RULE) Findings<br/>out: Findings detected (7 types, ≥1 evidence link)<br/>store: PG index · PG jsonb CHR snapshot"]:::hybrid
+S6["S6 · RECOMMENDATION GEN — HYBRID<br/>RULE: finding-type→rec-type map<br/>LLM: rationale phrasing<br/>out: Recommendations generated (3 types)<br/>store: PG index · PG jsonb CHR snapshot"]:::hybrid
 S7["S7 · CONFIDENCE & STATE — RULE<br/>do: consolidate power-mean p=-0.5 ε=5, qualify<br/>out: ConfidenceState (band + reliability + basis)<br/>store: PG ConfidenceState · Redis projection"]:::rule
 CK2["⛓ checkpoint (pre-publish)"]:::ckpt
-S8["S8 · MRI & PUBLICATION — RULE<br/>do: build MRI, ATOMIC commit all-or-none<br/>store: PG commit+ledger · Mongo MRI · Redis cache"]:::rule
+S8["S8 · MRI & PUBLICATION — RULE<br/>do: build MRI, ATOMIC commit all-or-none<br/>store: PG commit+ledger · PG jsonb MRI · Redis cache"]:::rule
 PUBOK{"atomic commit ok?"}
 PUBF["FALLBACK · rollback (nothing persisted)<br/>run=failed → Project reverts to created<br/>emit analysis_failed → retry/resume"]:::bad
 DONE["✅ SUCCESS — Project orienting→ORIENTED<br/>ordered fan-out (one correlation_id):<br/>fast_analysis_completed → confidence_created →<br/>finding_created×N → recommendation_created×M → notification_created<br/>banner: not final — Deep to follow"]:::store

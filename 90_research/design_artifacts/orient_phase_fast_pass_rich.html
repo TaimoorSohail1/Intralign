@@ -91,28 +91,28 @@
 const P={RULE:{c:'#4338ca',bg:'#e0e7ff',tx:'#1e1b4b',ic:'lucide:binary'},
          LLM:{c:'#7b1fa2',bg:'#f5e8fd',tx:'#4a148c',ic:'lucide:sparkles'},
          HYBRID:{c:'#c2410c',bg:'#ffedd5',tx:'#7c2d12',ic:'lucide:blend'}};
-const SI={postgresql:'logos:postgresql',mongodb:'logos:mongodb-icon',redis:'logos:redis',neo4j:'logos:neo4j',qdrant:'simple-icons:qdrant'};
+const SI={postgresql:'logos:postgresql',supabase:'logos:supabase-icon',redis:'logos:redis',neo4j:'logos:neo4j',pgvector:'logos:postgresql'};
 const stages=[
- {k:'S0',t:'Intake & Acquisition',p:'RULE',i:'lucide:inbox',io:'evidence → run queued',s:['postgresql','mongodb','redis']},
- {k:'S1',t:'Normalization',p:'RULE',i:'lucide:scissors',io:'raw → span-tagged units',s:['mongodb','redis']},
+ {k:'S0',t:'Intake & Acquisition',p:'RULE',i:'lucide:inbox',io:'evidence → run queued',s:['postgresql','supabase','redis']},
+ {k:'S1',t:'Normalization',p:'RULE',i:'lucide:scissors',io:'raw → span-tagged units',s:['supabase','redis']},
  {k:'S2',t:'Global Skeleton',p:'HYBRID',i:'lucide:network',io:'units → global map',s:['postgresql','neo4j','redis']},
- {k:'S3',t:'Claim Extraction',p:'HYBRID',i:'lucide:list-checks',io:'map → ~50–100 claims',s:['postgresql','qdrant']},
+ {k:'S3',t:'Claim Extraction',p:'HYBRID',i:'lucide:list-checks',io:'map → ~50–100 claims',s:['postgresql','pgvector']},
  {k:'S4',t:'CAF Evaluation',p:'HYBRID',i:'lucide:gauge',io:'claims → CAFState',s:['postgresql']},
- {k:'S5',t:'Finding Generation',p:'HYBRID',i:'lucide:search',io:'CAF → Findings (7 types)',s:['postgresql','mongodb']},
- {k:'S6',t:'Recommendation Gen',p:'HYBRID',i:'lucide:lightbulb',io:'Findings → Recs (3 types)',s:['postgresql','mongodb']},
+ {k:'S5',t:'Finding Generation',p:'HYBRID',i:'lucide:search',io:'CAF → Findings (7 types)',s:['postgresql','supabase']},
+ {k:'S6',t:'Recommendation Gen',p:'HYBRID',i:'lucide:lightbulb',io:'Findings → Recs (3 types)',s:['postgresql','supabase']},
  {k:'S7',t:'Confidence & State',p:'RULE',i:'lucide:badge-check',io:'CAF → ConfidenceState',s:['postgresql','redis']},
- {k:'S8',t:'MRI & Publication',p:'RULE',i:'lucide:layout-dashboard',io:'all → MRI + publish',s:['postgresql','mongodb','redis']}];
+ {k:'S8',t:'MRI & Publication',p:'RULE',i:'lucide:layout-dashboard',io:'all → MRI + publish',s:['postgresql','supabase','redis']}];
 const pipe=document.getElementById('pipe');
 stages.forEach((s,idx)=>{const p=P[s.p];const c=document.createElement('div');c.className='card';c.style.borderTopColor=p.c;
   c.innerHTML=`<div class="top"><span class="code">${s.k}</span>
    <span class="pill" style="background:${p.bg};color:${p.tx};border-color:${p.c}40"><iconify-icon icon="${p.ic}"></iconify-icon>${s.p}</span></div>
    <div class="big"><span class="ic" style="background:${p.bg};color:${p.c}"><iconify-icon icon="${s.i}" width="21"></iconify-icon></span>
    <span class="title">${s.t}</span></div><div class="io">${s.io}</div>
-   <div class="stores">${s.s.map(x=>`<iconify-icon icon="${SI[x]}" class="${x==='qdrant'?'qd':''}" title="${x}"></iconify-icon>`).join('')}</div>`;
+   <div class="stores">${s.s.map(x=>`<iconify-icon icon="${SI[x]}" class="${x==='pgvector'?'qd':''}" title="${x}"></iconify-icon>`).join('')}</div>`;
   pipe.appendChild(c);
   if(idx<stages.length-1){const ch=document.createElement('div');ch.className='chev';ch.innerHTML='<iconify-icon icon="lucide:chevron-right" width="20"></iconify-icon>';pipe.appendChild(ch);}});
-const stores=[['postgresql','PostgreSQL','canonical · CHR · indexes'],['mongodb','MongoDB','artifact bodies · snapshots'],['neo4j','Neo4j','entity / dependency graph'],['qdrant','Qdrant','claim embeddings'],['redis','Redis','cache · queue · job state']];
-document.getElementById('strip').innerHTML=stores.map(([k,n,r])=>`<span class="s"><iconify-icon icon="${SI[k]}" class="${k==='qdrant'?'qd':''}"></iconify-icon><span><span class="nm">${n}</span> · <span class="ro">${r}</span></span></span>`).join('');
+const stores=[['postgresql','PostgreSQL','canonical · CHR · indexes'],['supabase','Supabase Storage','artifact bodies · CHR snapshots (jsonb)'],['neo4j','Neo4j','entity / dependency graph'],['pgvector','pgvector','claim embeddings'],['redis','Redis','cache · queue · job state']];
+document.getElementById('strip').innerHTML=stores.map(([k,n,r])=>`<span class="s"><iconify-icon icon="${SI[k]}" class="${k==='pgvector'?'qd':''}"></iconify-icon><span><span class="nm">${n}</span> · <span class="ro">${r}</span></span></span>`).join('');
 const props=[['lucide:save','Checkpointed','after every stage'],['lucide:history','Side effects recorded','LLM calls · writes · events'],['lucide:copy-check','Idempotent events','deduped · replay-suppressed'],['lucide:package-check','Atomic publish','all-or-none → ORIENTED']];
 document.getElementById('durable').innerHTML=props.map(([i,t,d])=>`<div class="prop"><iconify-icon icon="${i}"></iconify-icon><span><b>${t}</b><span>${d}</span></span></div>`).join('');
 const main=[['queued','st-n'],['→ pick up'],['running','st-a'],['→ publish ok'],['completed','st-ok'],['→ later deep'],['superseded','st-m']];
