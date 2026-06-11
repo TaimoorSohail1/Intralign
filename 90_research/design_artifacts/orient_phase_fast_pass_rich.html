@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>OSLO Orient Phase (Fast Pass) — Rich Diagram</title>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<style>
+  :root{color-scheme:light dark}
+  body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#0f172a;background:#fff;margin:0;padding:26px 30px;line-height:1.45}
+  h1{font-size:19px;margin:0 0 4px}
+  .meta{font-size:12px;opacity:.7;margin:0 0 12px}
+  .note{font-size:12.5px;background:rgba(127,127,127,.08);border:1px solid rgba(127,127,127,.25);border-radius:8px;padding:10px 12px;margin:0 0 16px}
+  .banner{display:flex;align-items:center;gap:10px;border:1px solid #fde68a;background:#fffbeb;color:#78350f;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:16px}
+  .banner b{font-weight:700}
+  .lbl{font-size:11px;font-weight:700;opacity:.5;margin:18px 0 8px;letter-spacing:.05em;text-transform:uppercase}
+  .pipe{display:flex;align-items:stretch;gap:4px;overflow-x:auto;padding:4px 2px 12px}
+  .card{flex:0 0 172px;border:1px solid #e5e7eb;border-top-width:3px;border-radius:13px;padding:11px 12px;background:#fff;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+  .top{display:flex;align-items:center;justify-content:space-between}
+  .code{font-weight:800;font-size:11px;letter-spacing:.04em;opacity:.55}
+  .pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid}
+  .big{display:flex;align-items:center;gap:9px}
+  .big .ic{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;flex:0 0 auto}
+  .title{font-size:12.5px;font-weight:650;line-height:1.2}
+  .io{font-size:10.5px;opacity:.62;font-style:italic}
+  .stores{display:flex;gap:6px;align-items:center;margin-top:auto;padding-top:6px;border-top:1px dashed #e5e7eb}
+  .stores iconify-icon{font-size:17px}.qd{color:#7c3aed}
+  .chev{display:flex;align-items:center;color:#cbd5e1;flex:0 0 auto}
+  .strip{display:flex;flex-wrap:wrap;gap:14px;align-items:center;border:1px solid #e5e7eb;border-radius:12px;padding:11px 14px;font-size:12px;background:#fff}
+  .strip .s{display:flex;align-items:center;gap:7px}.strip iconify-icon{font-size:20px}
+  .strip .nm{font-weight:650}.strip .ro{opacity:.6}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:10px}
+  .prop{display:flex;gap:10px;align-items:flex-start;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px;background:#fff;font-size:12px}
+  .prop iconify-icon{font-size:20px;color:#0ea5e9;flex:0 0 auto;margin-top:1px}
+  .prop b{display:block;font-size:12.5px;margin-bottom:1px}.prop span{opacity:.7}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .st{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:650;padding:4px 11px;border-radius:999px;border:1px solid}
+  .st-n{background:#f1f5f9;color:#334155;border-color:#cbd5e1}
+  .st-a{background:#dbeafe;color:#1e3a8a;border-color:#60a5fa}
+  .st-ok{background:#dcfce7;color:#14532d;border-color:#4ade80}
+  .st-m{background:#f5f3ff;color:#6d28d9;border-color:#c4b5fd}
+  .st-f{background:#fee2e2;color:#7f1d1d;border-color:#fca5a5}
+  .arr{display:inline-flex;align-items:center;gap:3px;color:#94a3b8;font-size:10px;font-style:italic}
+  .branch{font-size:11.5px;opacity:.85;margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .fan{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+  .ev{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px;background:#ecfeff;color:#155e63;border:1px solid #a5f3fc}
+  .ev iconify-icon{color:#0891b2}
+  .fbs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+  .fb{display:flex;gap:10px;align-items:flex-start;border:1px solid #fecaca;background:#fef2f2;color:#7f1d1d;border-radius:12px;padding:10px 12px;font-size:11.5px}
+  .fb iconify-icon{font-size:20px;flex:0 0 auto;margin-top:1px}
+  .fb b{display:block;font-size:12.5px;margin-bottom:2px}
+  @media (prefers-color-scheme:dark){
+    body{background:#0b0f17;color:#e5e7eb}
+    .card,.strip,.prop{background:rgba(255,255,255,.04);border-color:#334155}
+    .stores{border-color:#334155}.chev{color:#475569}
+    .banner{background:#3f2d0a;border-color:#854d0e;color:#fde68a}
+    .fb{background:#3f1d1d;border-color:#7f1d1d;color:#fecaca}
+    .ev{background:#08363b;color:#67e8f9;border-color:#155e63}
+    h1{color:#f1f5f9}.meta,.note{color:#94a3b8}
+  }
+</style>
+</head>
+<body>
+<h1>OSLO Orient Phase (Fast Pass) — Rich Diagram</h1>
+<p class="meta">Non-canonical design artifact · Framework 001A · 2026-06-10 · custom SVG/HTML + Iconify</p>
+<div class="note"><b>Non-canonical.</b> Orientation-only synthesis of the Orient phase (= Fast Pass); <b>informs but does not bind</b> (DL-033). Canonical sources prevail on conflict (Analysis Engine Spec, Fast/Deep Stage I/O, Rule/LLM Guidelines, Scope Guardrails, Runtime + scoring models, Wave contracts). Icons load from the Iconify CDN — needs network on first open; structure still reads if icons are blocked.</div>
+
+<div class="banner"><iconify-icon icon="lucide:repeat-2" width="20"></iconify-icon>
+  <span><b>Durable AnalysisRun job</b> — checkpoints after each stage · resumes on crash · target &lt;60s · created → orienting → oriented</span></div>
+
+<div class="lbl">Fast Pass pipeline — S0 → S8</div>
+<div class="pipe" id="pipe"></div>
+
+<div class="lbl">Storage bindings</div>
+<div class="strip" id="strip"></div>
+
+<div class="lbl">Durable execution</div>
+<div class="grid" id="durable"></div>
+
+<div class="lbl">Job state machine</div>
+<div class="flow" id="smMain"></div>
+<div class="branch" id="smBranch"></div>
+
+<div class="lbl">On success — ordered event fan-out (one correlation_id)</div>
+<div class="fan" id="fan"></div>
+
+<div class="lbl">Fallback paths</div>
+<div class="fbs" id="fbs"></div>
+
+<script>
+const P={RULE:{c:'#4338ca',bg:'#e0e7ff',tx:'#1e1b4b',ic:'lucide:binary'},
+         LLM:{c:'#7b1fa2',bg:'#f5e8fd',tx:'#4a148c',ic:'lucide:sparkles'},
+         HYBRID:{c:'#c2410c',bg:'#ffedd5',tx:'#7c2d12',ic:'lucide:blend'}};
+const SI={postgresql:'logos:postgresql',mongodb:'logos:mongodb-icon',redis:'logos:redis',neo4j:'logos:neo4j',qdrant:'simple-icons:qdrant'};
+const stages=[
+ {k:'S0',t:'Intake & Acquisition',p:'RULE',i:'lucide:inbox',io:'evidence → run queued',s:['postgresql','mongodb','redis']},
+ {k:'S1',t:'Normalization',p:'RULE',i:'lucide:scissors',io:'raw → span-tagged units',s:['mongodb','redis']},
+ {k:'S2',t:'Global Skeleton',p:'HYBRID',i:'lucide:network',io:'units → global map',s:['postgresql','neo4j','redis']},
+ {k:'S3',t:'Claim Extraction',p:'HYBRID',i:'lucide:list-checks',io:'map → ~50–100 claims',s:['postgresql','qdrant']},
+ {k:'S4',t:'CAF Evaluation',p:'HYBRID',i:'lucide:gauge',io:'claims → CAFState',s:['postgresql']},
+ {k:'S5',t:'Finding Generation',p:'HYBRID',i:'lucide:search',io:'CAF → Findings (7 types)',s:['postgresql','mongodb']},
+ {k:'S6',t:'Recommendation Gen',p:'HYBRID',i:'lucide:lightbulb',io:'Findings → Recs (3 types)',s:['postgresql','mongodb']},
+ {k:'S7',t:'Confidence & State',p:'RULE',i:'lucide:badge-check',io:'CAF → ConfidenceState',s:['postgresql','redis']},
+ {k:'S8',t:'MRI & Publication',p:'RULE',i:'lucide:layout-dashboard',io:'all → MRI + publish',s:['postgresql','mongodb','redis']}];
+const pipe=document.getElementById('pipe');
+stages.forEach((s,idx)=>{const p=P[s.p];const c=document.createElement('div');c.className='card';c.style.borderTopColor=p.c;
+  c.innerHTML=`<div class="top"><span class="code">${s.k}</span>
+   <span class="pill" style="background:${p.bg};color:${p.tx};border-color:${p.c}40"><iconify-icon icon="${p.ic}"></iconify-icon>${s.p}</span></div>
+   <div class="big"><span class="ic" style="background:${p.bg};color:${p.c}"><iconify-icon icon="${s.i}" width="21"></iconify-icon></span>
+   <span class="title">${s.t}</span></div><div class="io">${s.io}</div>
+   <div class="stores">${s.s.map(x=>`<iconify-icon icon="${SI[x]}" class="${x==='qdrant'?'qd':''}" title="${x}"></iconify-icon>`).join('')}</div>`;
+  pipe.appendChild(c);
+  if(idx<stages.length-1){const ch=document.createElement('div');ch.className='chev';ch.innerHTML='<iconify-icon icon="lucide:chevron-right" width="20"></iconify-icon>';pipe.appendChild(ch);}});
+const stores=[['postgresql','PostgreSQL','canonical · CHR · indexes'],['mongodb','MongoDB','artifact bodies · snapshots'],['neo4j','Neo4j','entity / dependency graph'],['qdrant','Qdrant','claim embeddings'],['redis','Redis','cache · queue · job state']];
+document.getElementById('strip').innerHTML=stores.map(([k,n,r])=>`<span class="s"><iconify-icon icon="${SI[k]}" class="${k==='qdrant'?'qd':''}"></iconify-icon><span><span class="nm">${n}</span> · <span class="ro">${r}</span></span></span>`).join('');
+const props=[['lucide:save','Checkpointed','after every stage'],['lucide:history','Side effects recorded','LLM calls · writes · events'],['lucide:copy-check','Idempotent events','deduped · replay-suppressed'],['lucide:package-check','Atomic publish','all-or-none → ORIENTED']];
+document.getElementById('durable').innerHTML=props.map(([i,t,d])=>`<div class="prop"><iconify-icon icon="${i}"></iconify-icon><span><b>${t}</b><span>${d}</span></span></div>`).join('');
+const main=[['queued','st-n'],['→ pick up'],['running','st-a'],['→ publish ok'],['completed','st-ok'],['→ later deep'],['superseded','st-m']];
+document.getElementById('smMain').innerHTML=main.map(m=>m.length===2?`<span class="st ${m[1]}">${m[0]}</span>`:`<span class="arr"><iconify-icon icon="lucide:chevron-right"></iconify-icon>${m[0].replace('→ ','')}</span>`).join('');
+document.getElementById('smBranch').innerHTML=`<span class="arr">branches:</span><span class="st st-a">running</span><span class="arr"><iconify-icon icon="lucide:chevron-right"></iconify-icon></span><span class="st st-f">failed</span><span class="arr"><iconify-icon icon="lucide:rotate-ccw"></iconify-icon>retry / resume</span><span class="st st-n">queued</span><span class="arr">&nbsp;·&nbsp;</span><span class="st st-a">running</span><span class="arr"><iconify-icon icon="lucide:chevron-right"></iconify-icon></span><span class="st st-n">cancelled</span>`;
+const evs=['fast_analysis_completed','confidence_created','finding_created ×N','recommendation_created ×M','notification_created'];
+document.getElementById('fan').innerHTML=evs.map((e,i)=>`<span class="ev"><iconify-icon icon="lucide:zap"></iconify-icon>${e}</span>`+(i<evs.length-1?'<span class="chev"><iconify-icon icon="lucide:chevron-right" width="16"></iconify-icon></span>':'')).join('');
+const fbs=[['lucide:weight','Oversize input (S0)','accept → route Deep-only, skip Fast'],['lucide:unplug','Skeleton fails (S2)','isolation-only mode, reliability↓, run continues'],['lucide:shield-alert','LLM invalid (S2–S6)','retry (bounded) → degrade or fail stage'],['lucide:package-x','Publish fails (S8)','rollback, run=failed, revert to created, retry'],['lucide:rotate-ccw','Process crash','resume from checkpoint, replay side effects']];
+document.getElementById('fbs').innerHTML=fbs.map(([i,t,d])=>`<div class="fb"><iconify-icon icon="${i}"></iconify-icon><span><b>${t}</b>${d}</span></div>`).join('');
+</script>
+</body>
+</html>
