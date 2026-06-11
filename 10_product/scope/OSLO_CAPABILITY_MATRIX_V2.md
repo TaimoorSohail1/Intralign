@@ -73,7 +73,7 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | EI-01 | Artifact Ingestion (multi-format) | Ingest PDF, DOCX, TXT, prompts, meeting transcripts, planning artifacts | U/F | Bring any evidence | Alpha | Critical | — | §15B, §16 C1 | C1 | Evid, Proj | Onbd, ArtView | N | Intent/Context/Planning/Informal evidence types |
 | EI-02 | Claim Extraction | Extract goals, outcomes, stakeholders, assumptions, constraints, dependencies from evidence | U | Turns docs into structure | Alpha | Critical | EI-01 | §15B, §16 C1 | C1 | Evid, Find | — | Y | First step before synthesis |
-| EI-03 | Intake Paths (Describe/Template/Guided) | Free-form prompt, template start, and guided intake entry methods | U/F | Flexible starting point | Alpha | High | — | §15A, §15B | C1 | Evid, Proj | Onbd | N | Template catalog & guided steps under-specified (see §22) |
+| EI-03 | Intake Paths (Describe/Template) | Free-form prompt + template start (curated 5). Guided Intake → R2 | U/F | Flexible starting point | Alpha | High | — | §15A, §15B; Template Intake Spec V1 | C1 | Evid, Proj | Onbd | N | Templates defined (DL-056, Template Intake Spec V1); Guided Intake deferred to R2 |
 | EI-04 | Planning-Maturity-Agnostic Intake | Accept minimal (idea), partial (charter+reqs), or advanced (full plan) maturity | U | Works at any stage | Alpha | High | EI-01, PS-01 | §15B, §16 C1 | C1 | Evid, Art | Onbd | N | No mandatory review/validation gate |
 
 ---
@@ -331,8 +331,8 @@ Items the Master Spec references or implies but does not specify. Recorded for g
 
 1. **CAF scoring methodology is unspecified.** How Clarity/Alignment/Feasibility are computed to 0–100, and how Confidence aggregates from the three dimensions, is not defined (§3, §4). The headline number has no stated formula.
 2. **Confidence band thresholds are provisional.** §3 gives example ranges and states "exact thresholds may evolve." No canonical thresholds exist.
-3. **Templates are referenced but undefined.** "Start From Template" (§15A/§15B) has no template catalog, schema, or count.
-4. **Guided Intake steps are unspecified.** The guided path is named (§15A/§15B) without a defined question flow.
+3. **Templates — RESOLVED (DL-056, 2026-06-10).** ~~referenced but undefined~~ → `RELEASE_1_TEMPLATE_INTAKE_SPECIFICATION_V1` defines a single-planning-document template, a **curated catalog of five** (Generic / Product Launch / Marketing Campaign / Event / Strategic Initiative), owner-curated only, adopted as one editable evidence-class Artifact (`source="template"`) on the standard Fast Pass path; `project_type` pre-filled, non-gating. **In scope for Release 1.**
+4. **Guided Intake — DEFERRED to Release 2 (DL-056, 2026-06-10).** The named-but-unspecified question flow (§15A/§15B) is **not built in Release 1**; deferred to R2. (Template start covers the curated-start need for R1.)
 5. **Notification surface — ADDRESSED (stale gap; Seam Audit 001 S4).** ~~no surface~~ → `NOTIFICATION_AND_AWARENESS_SURFACE_SPECIFICATION_V1` exists and §18 carries a Notification object. The original gap predates that spec. *(Build note: confirm the CRR/comment/mention → notification wiring is expressed there — "how a reviewer learns a request is waiting." External-reviewer delivery is R2 per CHG-064.)*
 6. **External reviewer identity/auth — RESOLVED (DL-049, 2026-06-05).** ~~undefined~~ → a single **`Principal`** identity object with **`type: reviewer | user`** (email-verified Reviewer scoped to shared items; in-place `reviewer→user` promotion, provenance-stable, scope-preserving). See Runtime Object Model DL-049 Object Additions. *(Link security / scoping — #339 below — addressed in R1 via P7. **Recipient-experience build (auth, view/respond, promotion, convert-moment) = Release 2 fast-follow** per CHG-064; R1 generates + measures invitations only.)*
 7. **Sharing permission levels are not enumerated.** §16 C12 requires "permission levels supported" without listing them.
