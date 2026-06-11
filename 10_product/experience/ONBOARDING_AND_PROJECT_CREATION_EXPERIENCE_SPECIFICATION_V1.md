@@ -136,7 +136,7 @@ Release 1 ingestion methods (resolved):
 - **Upload files — Yes.** Users can upload artifact files.
 - **Paste content — Yes.** Users can paste content as an artifact.
 - **Combine multiple sources — Yes.** Users can add several artifacts (uploads and/or pasted) to one project.
-- **Start from templates — Yes (Release 1, per DL-056).** A template is **pre-provided content the user adopts and edits**, not generated content: choosing one copies a single planning document in as **one editable Artifact** (`source="template"`), analyzed on the standard Fast Pass path. Curated catalog of **five**, owner-curated only; `project_type` pre-filled (non-gating). See `RELEASE_1_TEMPLATE_INTAKE_SPECIFICATION_V1`.
+- **Start from templates — Yes (Release 1, per DL-056).** A template is **pre-provided content the user adopts and edits**, not generated content: choosing one **instantiates a populated sample project** — a fully worked fictitious sample plan copied in as **one editable Artifact** (`source="template"`, project flagged a sample), analyzed on the standard Fast Pass path (Project MRI in ~60s), then editable into the user's own project. Curated catalog of **five**, owner-curated only; `project_type` pre-filled (non-gating). See `RELEASE_1_TEMPLATE_INTAKE_SPECIFICATION_V1`.
 - **Start from AI-generated content — Deferred / out of scope for Release 1.** Generating starting content would be **generation**, which this experience must not introduce ("it generates nothing"); deferred to an owner decision (§V).
 
 Ingestion methods **add content only**; none compute or generate assessment.

@@ -1,28 +1,42 @@
-# Product / Software Launch Plan
+# Product / Software Launch — "Pulse" Team Check-in App (Sample)
 
-> _Starter template (project_type: `product_launch`). Replace each italic prompt with your specifics, then start analysis. Delete any section that doesn't apply._
+> _Sample project (project_type: `product_launch`). A **fictitious worked example** so you can see OSLO analyze a realistic launch plan right away. Edit it to fit your launch, or start fresh._
 
 ## Outcome & Success Metrics
-_What does a successful launch achieve? State the primary outcome and the measurable signals (e.g., adoption, activation, revenue, retention) that prove it._
+Launch **Pulse**, a lightweight async team check-in app, to general availability by **June 30**. Success = **300 activated teams** and **40% week-4 retention** within 60 days of GA, with a **<2%** crash-free-session shortfall.
 
 ## Target Users
-_Who is this for? Describe the primary user/segment, their core problem, and why they'll switch to or adopt this._
+People managers of distributed teams (5–30 people) who run weekly status rituals over chat and lose signal in long threads. They want a 2-minute structured check-in that rolls up into a digest. They'll adopt because it replaces a manual ritual they already dislike.
 
 ## Scope & Non-Goals
 **In scope (this launch)**
-_The capabilities/features shipping in this release._
+- Async check-in templates, scheduled prompts, manager digest
+- Slack + email delivery; web + iOS apps
+- Free tier + Team tier billing
 
 **Non-goals**
-_What you are deliberately not building or shipping yet._
+- Android app (fast-follow)
+- Performance-review or HR integrations
+- Analytics dashboards beyond the digest
 
 ## Requirements
-_The functional and non-functional requirements that must be met to launch (capability, quality, performance, compliance, support readiness)._
+- Check-in round-trip in **under 2 minutes** for a respondent
+- Digest delivered reliably on schedule (>99%)
+- SSO (Google/Microsoft) for Team tier
+- WCAG 2.1 AA; data export; account deletion
 
 ## Release Milestones
-_Key dates: feature complete, code freeze, beta, GA/launch, post-launch review. Rough dates are fine._
+- **Apr 30** — Feature complete
+- **May 15** — Private beta (25 teams)
+- **Jun 10** — Code freeze + launch readiness review
+- **Jun 30** — GA + launch announcement
+- **Jul 31** — Post-launch retro
 
 ## Dependencies & Risks
-_What does this launch depend on (teams, vendors, infra, approvals)? What are the top risks and mitigations?_
+- *Dependency:* Slack app-directory review (lead time ~2 weeks) — submit by May 20.
+- *Risk:* beta retention below target signals weak core loop — gate GA on a beta retention check.
+- *Risk:* SSO edge cases delay Team tier — spike auth early in beta.
 
 ## Stakeholders
-_Product, engineering, design, GTM/marketing, support, and the decision-maker(s). Who owns the launch call?_
+- **Decision-maker (launch go/no-go):** VP Product
+- **Owners:** PM (scope), Eng Lead (delivery), Design Lead (UX), GTM Lead (announcement), Support Lead (readiness)

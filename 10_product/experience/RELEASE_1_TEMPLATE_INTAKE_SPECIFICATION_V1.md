@@ -10,22 +10,22 @@
 
 ## 1. Purpose
 
-Give a user starting a project a faster on-ramp than a blank page by letting them **adopt a pre-authored planning document** as their first artifact, then edit it and run analysis exactly as with an uploaded or pasted artifact. Templates lower the activation cost of the **name + one artifact** minimum-to-value without OSLO ever generating content.
+Let a new user reach value in **~60 seconds** by selecting a **pre-authored, fully worked fictitious sample project** of a familiar type. Selecting a template **instantly instantiates a populated sample project** (one filled planning artifact) that Fast Pass analyzes immediately — so the user sees a realistic Project MRI on a believable example **without writing anything**, then edits it into their own project or starts fresh. This directly serves the 60-second Time-to-First-MRI / "Prove Understanding" value path. The sample content is **pre-authored and static** — instantiating it is copying, **not** system generation (Onboarding OB-C3 preserved).
 
 ## 2. What a Template Is (and is not)
 
-- A template is **owner-curated, pre-authored content** — a single planning document with headed sections and brief inline guidance prompts.
-- Adopting a template **copies that content into the project as one editable Artifact**; the user then edits it freely.
+- A template is an **owner-curated, pre-authored, fully worked fictitious sample plan** of a given type — a single planning document with realistic example content already filled in (**no blank prompts**).
+- Selecting a template **instantiates a populated sample project** by copying that content into **one editable Artifact**; the project is **flagged as a sample** so the user knows it's fictitious. The user then edits it into their own project, or starts a fresh blank project instead.
 - A template is **not** AI-generated, not a wizard/question flow (that is Guided Intake, R2), not a project-structure engine, and not user-creatable in R1.
-- **Hard rule (carried from Onboarding OB-C3):** the system must not *generate* starting content. A template is **static pre-provided** content; copying it is not generation.
+- **Hard rule (carried from Onboarding OB-C3):** the system must not *generate* starting content. The sample is **static pre-authored** content; instantiating it is copying, **not** generation.
 
 ## 3. Form (DL-056 Q1 — single planning document)
 
-Adopting a template produces **one Artifact** whose body is the template's pre-authored document: a set of **headed sections** (markdown), each with a one- or two-line **guidance prompt** the user replaces with their own content. It satisfies minimum-to-value (name + one artifact) on its own.
+Selecting a template produces **one Artifact** whose body is the template's **fully worked fictitious sample plan** — headed sections (markdown) with realistic example content already written (e.g., a sample "Office Relocation" or "Spring Cold Brew Launch"), **no prompts to fill**. It satisfies minimum-to-value (name + one artifact) on its own and is **immediately analyzable** by Fast Pass; the instantiated project is marked a **sample**.
 
 ## 4. Catalog (DL-056 Q2 — curated five, owner-authored)
 
-Release 1 ships **five** owner-curated templates. Each is a single planning document; section sets below are the R1 baseline (owner may refine the body copy before GA):
+Release 1 ships **five** owner-curated templates — each a **fully worked fictitious sample plan** (full bodies in `templates/`). Sample scenarios: **Office Relocation** (generic), **"Pulse" team check-in app launch** (product), **"Brew & Co" cold-brew campaign** (marketing), **"DevNorth 2026" developer conference** (event), and **EU market expansion** (strategic/OKR). Section sets below; owner may refine body copy before GA:
 
 | Template | `project_type` pre-fill | Baseline sections |
 |---|---|---|
@@ -42,22 +42,22 @@ Catalog content is **canon** under `10_product/experience/templates/` (one markd
 ```text
 Choose Start Method → Start From Template
   ↓
-Pick a template (catalog of 5; each shows name + one-line description)
+Pick a template (catalog of 5; each shows name + a one-line "what this sample shows")
   ↓
-Project created with project_type pre-filled (non-gating; user-editable)
+Sample project instantiated: project_type pre-filled (non-gating); worked sample
+  copied in as ONE editable Artifact (source="template"); project flagged "sample"
   ↓
-Template body copied in as ONE editable Artifact (source = "template")
+Fast Pass runs on the populated sample → Project MRI in ~60s (value immediately)
   ↓
-User edits the artifact in the Artifact Workspace (adopt-and-edit)
-  ↓
-User starts analysis → standard Fast Pass (no special path)
+User explores the MRI, then edits the artifact into their own project (or starts fresh)
 ```
 
-Selecting a template is equivalent, downstream, to uploading/pasting a document — it joins the **standard intake → Fast Pass** pipeline with no template-specific analysis behavior.
+Selecting a template is equivalent, downstream, to uploading a complete document — it joins the **standard intake → Fast Pass** pipeline with no template-specific analysis behavior. The only differences: the content is pre-authored and the project is flagged a **sample**.
 
 ## 6. Data & Epistemic Handling (canon-settled defaults)
 
 - The adopted document is an ordinary **Artifact**: `source = "template"`, `template_id` recorded in `provenance`, `content_ref` = the copied body. Append-only/versioned like any artifact.
+- The instantiated **project carries a `sample` flag** so the fictitious content is clearly distinguished from the user's real data (UX surfacing is a build detail; the flag does not change analysis behavior).
 - It is an **evidence-class** artifact (analyzed like an upload). It carries **no special epistemic status**; OSLO self-attests nothing on adoption and **generates nothing**.
 - Subsequent user edits follow normal artifact versioning and trigger event-driven Deep Pass like any edit.
 
@@ -68,11 +68,12 @@ Choosing a template **pre-fills the project's optional `project_type`** with the
 ## 8. Acceptance Criteria
 
 - A user can start a project by choosing **Start From Template** and selecting one of the **five** catalog templates.
-- Selection **copies the template body into one editable Artifact** (`source="template"`); no content is generated.
+- Selection **instantiates a populated sample project** — the worked sample is copied into **one editable Artifact** (`source="template"`); **no content is generated** by the system.
+- The instantiated project is **flagged as a sample** (fictitious content clearly distinguished from the user's own data).
 - The project's `project_type` is **pre-filled** from the template and remains **editable and non-gating**.
-- The template artifact is **fully editable** in the Artifact Workspace and is **analyzed by Fast Pass on the standard path**.
-- A template start **satisfies minimum-to-value** (name + one artifact) with no upload required.
-- **Fail conditions:** any system-*generated* starting content; a template choice that gates/locks behavior; a template artifact treated as anything other than ordinary evidence; users able to create/save templates in R1.
+- The populated sample is **immediately analyzable** — Fast Pass runs on it on the **standard path**, producing a Project MRI within the **60-second** Time-to-First-MRI target.
+- The artifact is **fully editable** in the Artifact Workspace; the user can adapt it into their own project or start a fresh blank project instead.
+- **Fail conditions:** any system-*generated* starting content; a template that ships **empty or prompt-only** instead of a worked sample; a template choice that gates/locks behavior; a sample project not distinguishable from real data; users able to create/save templates in R1.
 
 ## 9. Out of Scope (Release 1)
 
