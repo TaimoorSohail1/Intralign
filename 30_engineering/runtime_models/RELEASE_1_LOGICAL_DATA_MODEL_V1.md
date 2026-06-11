@@ -1,7 +1,7 @@
 # Release 1 Logical Data Model v1
 
 **Document Type:** Logical Data Model (environment-independent; maps to Runtime Object Model + DL-043) · **Status:** **DL-043-conformed (2026-06-04) — Ready for Review** · **Date:** 2026-06-04
-**Consumes:** Runtime Object Model (DL-043 overlay) · Epistemic State Model · Derived Cognition Lifecycle · User Acceptance/Plan-Fact · Calibration Defaults · Environment Profile R2 store-binding. **Scope:** *logical* entities/fields/relationships/lifecycle only — **no physical schema, DDL, indexes, or DB-specific types.** Physical binding (PostgreSQL/Neo4j/Qdrant/MongoDB/Redis) is the environment layer.
+**Consumes:** Runtime Object Model (DL-043 overlay) · Epistemic State Model · Derived Cognition Lifecycle · User Acceptance/Plan-Fact · Calibration Defaults · Environment Profile R2 store-binding. **Scope:** *logical* entities/fields/relationships/lifecycle only — **no physical schema, DDL, indexes, or DB-specific types.** Physical binding (Supabase Postgres + Auth + pgvector + Storage / Neo4j / Redis — per DL-054; MongoDB and Qdrant removed) is the environment layer.
 
 > **Mode:** the field-level logical model engineering needs to build persistence — derived entirely from ratified objects. **R2 binding honored:** the **append-only receipts** (Attested Assertions · Cognition History Records · User Acceptance Records / plan facts) are the **system of record**; **live Derived cognition** is a **recomputable representation** (current-view), never the canonical copy. Per `CLAUDE.md`, owner ratifies.
 
@@ -71,11 +71,11 @@ Acceptance-Impact ──compares──> (Plan Fact / UAR version-pin) vs (curren
 6. **Derived carries no authority.** Live projections are reconstructable; losing them loses nothing canonical.
 
 ## 6. Physical-Binding Notes (deferred — environment layer)
-*(Logical → physical mapping, per Environment Profile R2; recorded for engineering, not built here.)*
-- **PostgreSQL (system of record, append-only):** Attested Assertions, Cognition History Records, User Acceptance Records, Plan Facts, History Records, Projects, Users, Orgs, Artifacts(meta).
+*(Logical → physical mapping, per Environment Profile R2 **as amended by DL-054**; recorded for engineering, not built here.)*
+- **Supabase Postgres (system of record, append-only):** Attested Assertions, Cognition History Records, User Acceptance Records, Plan Facts, History Records, Projects, Users, Orgs, Artifacts(meta). *(Identity/authz via Supabase Auth + RLS.)*
 - **Neo4j:** Dependency/relationship graph over Attested Assertions.
-- **MongoDB:** unstructured artifact bodies (`content_ref`).
-- **Qdrant:** semantic embeddings (retrieval; derived, rebuildable).
+- **Supabase Storage:** unstructured artifact bodies (`content_ref`). *(Per DL-054 — was MongoDB; large derived blobs may also live here.)*
+- **Supabase pgvector:** semantic embeddings (retrieval; derived, rebuildable). *(Per DL-054 — was Qdrant.)*
 - **Redis:** live Derived projection cache, sessions, event buffers (all recomputable/transient).
 - **No physical schema is specified here** — types/indexes/migrations belong to the environment-bound build.
 
@@ -92,6 +92,6 @@ Acceptance-Impact ──compares──> (Plan Fact / UAR version-pin) vs (curren
 
 ---
 
-*This Release 1 Logical Data Model provides the environment-independent, field-level entity model engineering needs, derived from the ratified Runtime Object Model and DL-043: a two-class epistemic backbone (canonical append-only Attested Assertions — evidence-, OSLO-self-, and user-attested — plus Cognition History Records, User Acceptance Records, and Plan Facts as the system of record; and live Derived cognition as a recomputable, authority-free representation), with universal provenance/version fields, canonical entity definitions (Attested Assertion with content-typing; Cognition History Record with input/model versions and lineage; Artifact and transient Promotion Candidate; User Acceptance Record version-pinned to an emission; user-attested Plan Fact; generic History Record), Derived projection definitions with confidence band/conflict attributes, a graph-friendly relationship map (with the dependency graph suited to Neo4j), logical lifecycle/versioning invariants (canonical append-only, recompute-appends-never-overwrites, one-way flow, version-pin integrity, provenance everywhere, Derived carries no authority), and deferred physical-binding notes mapping entities to PostgreSQL/Neo4j/MongoDB/Qdrant/Redis per the Environment Profile R2 decision — honoring receipts-as-system-of-record with no Governance Decision entity, specifying no physical schema, and routing to the owner for review.*
+*This Release 1 Logical Data Model provides the environment-independent, field-level entity model engineering needs, derived from the ratified Runtime Object Model and DL-043: a two-class epistemic backbone (canonical append-only Attested Assertions — evidence-, OSLO-self-, and user-attested — plus Cognition History Records, User Acceptance Records, and Plan Facts as the system of record; and live Derived cognition as a recomputable, authority-free representation), with universal provenance/version fields, canonical entity definitions (Attested Assertion with content-typing; Cognition History Record with input/model versions and lineage; Artifact and transient Promotion Candidate; User Acceptance Record version-pinned to an emission; user-attested Plan Fact; generic History Record), Derived projection definitions with confidence band/conflict attributes, a graph-friendly relationship map (with the dependency graph suited to Neo4j), logical lifecycle/versioning invariants (canonical append-only, recompute-appends-never-overwrites, one-way flow, version-pin integrity, provenance everywhere, Derived carries no authority), and deferred physical-binding notes mapping entities to Supabase Postgres/Neo4j/Supabase pgvector/Supabase Storage/Redis per the Environment Profile R2 decision (amended by DL-054: MongoDB and Qdrant removed) — honoring receipts-as-system-of-record with no Governance Decision entity, specifying no physical schema, and routing to the owner for review.*
 
 **Release 1 Logical Data Model v1 complete.**
