@@ -1,28 +1,40 @@
-# Event Plan
+# Event Plan — "DevNorth 2026" Developer Conference (Sample)
 
-> _Starter template (project_type: `event`). Replace each italic prompt with your specifics, then start analysis. Delete any section that doesn't apply._
+> _Sample project (project_type: `event`). A **fictitious worked example** so you can see OSLO analyze a realistic event plan right away. Edit it to fit your event, or start fresh._
 
 ## Event Goal
-_What is the event for, and what does success look like? State the primary objective and the format (in-person, virtual, hybrid) and date/window._
+Run **DevNorth 2026**, a one-day in-person developer conference on **September 18**, to strengthen the regional developer community and generate pipeline. Success = a sold-out, well-rated event that produces qualified leads for the sponsoring company.
 
 ## Audience & Attendance
-_Who is this for, and how many do you expect? Describe the target attendees and the attendance target._
+Regional software engineers, tech leads, and engineering managers. Target **450 attendees** (in-person), with a waitlist. Secondary audience: 8–10 sponsors seeking developer mindshare.
 
 ## Scope
 **Program**
-_Sessions, speakers, agenda, content — what the event delivers to attendees._
+- 2 keynotes, 12 breakout talks across 2 tracks, 1 workshop block, evening networking reception.
+- Speaker CFP, selection, and rehearsal.
 
 **Logistics**
-_Venue/platform, registration, AV, catering, travel — what must be arranged. Note anything explicitly out of scope._
+- Venue (Riverside Conference Center), AV, catering, registration/check-in, badging, signage, A/V recording.
+- *Out of scope:* a virtual/hybrid stream (in-person only this year).
 
 ## Timeline & Milestones
-_Key dates: venue/platform locked, speakers confirmed, registration open, promotion push, run-of-show ready, event day, debrief._
+- **May 1** — Venue + date locked; CFP opens
+- **Jun 30** — CFP closes; **Jul 15** — speakers confirmed
+- **Jul 1** — Registration opens; sponsor sales close **Aug 15**
+- **Sep 1** — Run-of-show final; **Sep 18** — event; **Sep 25** — debrief
 
 ## Vendors & Dependencies
-_External parties this depends on (venue, AV, catering, platform, sponsors, partners) and what each must deliver by when._
+- **Venue** — rooms, power, Wi-Fi (must confirm 500-person Wi-Fi capacity)
+- **AV vendor** — staging, mics, recording
+- **Caterer** — breakfast, lunch, reception
+- **Sponsors** — booths + collateral by Sep 10
 
 ## Risks
-_Top risks (low attendance, vendor failure, tech issues, weather/travel) and how you'd mitigate or have a fallback._
+- *Risk:* low registration pace — mitigate with early-bird pricing + speaker promotion.
+- *Risk:* Wi-Fi can't handle load (a common conference failure) — mitigate with a venue load test in August.
+- *Risk:* keynote speaker drop-out — line up one backup per keynote.
 
 ## Success Metrics
-_How success is measured: registrations vs. target, attendance/show-rate, satisfaction, leads/pipeline, or other outcomes._
+- 450 registrations / ≥85% show-rate
+- Attendee satisfaction (CSAT) ≥ 4.3/5
+- ≥120 sponsor-qualified leads

@@ -1,28 +1,44 @@
-# Project Plan
+# Project Plan — Office Relocation (Sample)
 
-> _Starter template (project_type: `generic`). Replace each italic prompt with your project's specifics, then start analysis. Delete any section that doesn't apply — OSLO analyzes what you keep._
+> _Sample project (project_type: `generic`). This is a **fictitious worked example** instantiated so you can see OSLO analyze a realistic plan immediately. Edit any section to make it your own, or start a fresh project to plan from scratch._
 
 ## Intent / Outcome
-_State the single primary outcome this project must achieve, in one or two sentences. Why does it matter, and why now?_
+Relocate the company's 120-person headquarters from the Downtown office to the new Riverside building by **March 31** with **zero lost business days** and no degradation to customer support coverage. Success = everyone working productively from Riverside the first Monday after the move, with IT, security, and facilities fully operational.
 
 ## Context
-_What's the background? What prompted this work, what's already true, and what constraints (time, budget, people, tech, policy) shape it?_
+The current lease expires March 31 and will not be renewed. The Riverside space is leased and under fit-out. Headcount is expected to grow ~15% this year, which the new floorplan must accommodate. Hybrid work means ~60% average daily occupancy. Prior small-office moves overran by two weeks, mainly due to network cutover delays.
 
 ## Scope
 **In scope**
-_List the work this project will deliver._
+- Physical move of people, equipment, and furniture
+- Network, telephony, and security system cutover at Riverside
+- Decommission and handover of the Downtown space
+- Updated wayfinding, desk booking, and access badges
 
 **Out of scope**
-_List what this project explicitly will not do, so boundaries are clear._
+- New furniture procurement (handled separately by Facilities)
+- Any org/headcount changes beyond the planned 15% growth seats
 
 ## Key Requirements
-_What must be true for the outcome to be achieved? List the most important requirements or success conditions._
+- Riverside network + Wi-Fi live and load-tested **one week before** move day
+- Support team relocated in two waves so phone coverage never drops below 80%
+- All staff badges + desk assignments issued before first Riverside Monday
+- Data-room and server equipment moved by certified vendor with chain-of-custody
 
 ## Milestones
-_List the major checkpoints and target dates (e.g., kickoff, key deliverable, launch). Rough dates are fine._
+- **Jan 15** — Fit-out complete, space accepted
+- **Feb 15** — Network/security installed and tested
+- **Mar 7** — Pilot move (IT + Facilities teams)
+- **Mar 21–24** — Main move (departmental waves)
+- **Mar 31** — Downtown handover; project close
 
 ## Risks & Assumptions
-_What assumptions is this plan resting on, and what could go wrong? Note the biggest risks and how you'd mitigate them._
+- *Assumption:* fit-out finishes on time — **risk:** contractor slip; mitigate with weekly site reviews and a one-week buffer.
+- *Risk:* network cutover delay (caused prior overruns) — mitigate with early install + parallel-run before cutover.
+- *Risk:* support coverage gap during move — mitigate with two-wave relocation and temporary remote coverage.
 
 ## Stakeholders
-_Who owns this, who decides, who does the work, and who must be kept informed?_
+- **Sponsor:** COO
+- **Project lead:** Facilities Manager
+- **Workstream owners:** Head of IT (network/equipment), Head of Support (coverage), Office Manager (logistics)
+- **Informed:** All staff (move comms), Finance (lease/budget)

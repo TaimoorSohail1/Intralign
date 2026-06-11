@@ -677,6 +677,27 @@ Each changelog entry contains:
 - **Change Summary:** Enacted the DL-054 environment-binding revision (ENV-REV-001). **§2:** relational provider → **Supabase Postgres**; identity/authz → **Supabase Auth (GoTrue) + RLS** + app-level authorization; artifact bodies → **Supabase Storage**; snapshots/projections → Postgres **`jsonb`**; embeddings → **Supabase pgvector**; **MongoDB and Qdrant removed**; **Cognition History Records + User Acceptance Records** added as canonical append-only stores (DL-043 reconciliation §R2 enacted); Findings/Issues/Recommendations marked **Derived**. **§5:** provider abstraction realized as **Pydantic AI + OSS adapter** behind `/services/llm_provider`, with **workload routing / quotas / model-consumption auditability preserved** (condition 3); no `/authority` module. **§7:** **LangSmith added as a complement, not a replacement** to OpenTelemetry → Grafana (retained for service-health/queue-stream/retention); two-axis derivation replay + governed-output events + drift/trust remain **app-level**; **audit retention remains owner-pending (OPEN_TBD C1)** (condition 2). Platform architecture (DL-043) unchanged; conditions 1–4 apply. **Remaining DL-054 propagations (separate changes):** `RELEASE_1_LOGICAL_DATA_MODEL_V1.md` physical bindings (Mongo/Qdrant → Supabase Storage/pgvector); the non-canonical `ORIENT_PHASE` stage matrix; starter-kit templates (**blocked until the app repo exists**).
 - **Supersession Reference:** None. Amends the owner-provided Runtime Environment Constraint Profile per DL-054; supersedes no prior Decision.
 
+### CHG-084 — DL-054 follow-on propagations: Logical Data Model + ORIENT_PHASE store bindings
+
+- **Date:** 2026-06-11 · **Authorizing Decision:** DL-054.
+- **Affected Artifacts:** `30_engineering/runtime_models/RELEASE_1_LOGICAL_DATA_MODEL_V1.md` (§6 physical-binding notes + scope line + summary); `90_research/design_artifacts/ORIENT_PHASE_FAST_PASS_WORKFLOW_DIAGRAMS.md` and its two HTML renders (stage-matrix store column + mermaid).
+- **Change Summary:** Propagated the DL-054 storage binding into the remaining artifacts: **MongoDB → Supabase Storage** (artifact bodies/units), **Qdrant → Supabase pgvector** (embeddings), **PostgreSQL → Supabase Postgres** (+ Supabase Auth/RLS), CHR/MRI snapshots → Postgres `jsonb`. Historical "was MongoDB/Qdrant" notes retained for traceability. Logical model unchanged (no schema/DDL); ORIENT_PHASE is non-canonical orientation only.
+- **Supersession Reference:** None. Completes the DL-054 propagation noted as pending in CHG-083.
+
+### CHG-085 — DL-055: recommendation action/state reconciliation (Master Spec §8 ↔ State Model)
+
+- **Date:** 2026-06-11 · **Authorizing Decision:** DL-055.
+- **Affected Artifacts:** `10_product/scope/OSLO_RELEASE_1_MASTER_SPEC.md` (§8 Recommendations actions + lifecycle pointer; §15 Flow 5; §16 Capability 8); `00_owner/decisions/decision_log.md` (DL-055 recorded).
+- **Change Summary:** Made the **State Model §11** canonical for recommendation states. Master Spec §8 amended: state-changing actions = **Accept / Defer / Reject / Apply** (Apply = Implemented); **"Modify" removed** → editing supersedes the prior recommendation; **"Discuss" and "Share For Review" reclassified** as collaboration affordances; §8 now points to the State Model as the lifecycle authority. Consistency mentions in §15 Flow 5 and §16 Capability 8 aligned. Data Model v1.2 unchanged (already aligned).
+- **Supersession Reference:** None. Reconciles §8 prose to the ratified State Model; supersedes no Decision.
+
+### CHG-086 — DL-056: Template Intake (Start From Template in R1; Guided Intake → R2)
+
+- **Date:** 2026-06-11 · **Authorizing Decision:** DL-056.
+- **Affected Artifacts:** `10_product/experience/RELEASE_1_TEMPLATE_INTAKE_SPECIFICATION_V1.md` (new) + `10_product/experience/templates/` (five worked-sample bodies + README index, new); `10_product/experience/ONBOARDING_AND_PROJECT_CREATION_EXPERIENCE_SPECIFICATION_V1.md` (§L + owner-defaults note + OB-C3 + deferred list + summary); `10_product/scope/OSLO_CAPABILITY_MATRIX_V2.md` (§22 #3 resolved / #4 → R2; EI-03 row); `00_owner/decisions/decision_log.md` (DL-056 recorded).
+- **Change Summary:** Defined **Start From Template** for Release 1: selecting a template **instantiates a populated sample project** from a **fully worked fictitious sample plan** (one editable Artifact, `source="template"`, project flagged a **sample**), analyzed on the standard Fast Pass path → Project MRI in ~60s, then editable into the user's own project. **Owner-curated catalog of five** (Office Relocation, "Pulse" launch, "Brew & Co" campaign, "DevNorth 2026" event, EU expansion OKR); owner-curated only; `project_type` pre-filled, non-gating; **no system generation** — instantiation is copying static pre-authored content (OB-C3 preserved). **Guided Intake deferred to Release 2.** Reconciled Onboarding §L (templates Deferred → in scope) and Capability Matrix §22 (#3 resolved, #4 → R2). *(Note: the `Project.is_sample` flag is recorded as a build-detail in the spec; no Project field schema was invented in the data model.)*
+- **Supersession Reference:** Supersedes the prior template deferral in `ONBOARDING_AND_PROJECT_CREATION_EXPERIENCE_SPECIFICATION_V1` §L. Preserves the deferral of AI-generated starting content.
+
 ---
 
 ## Governance Notes
