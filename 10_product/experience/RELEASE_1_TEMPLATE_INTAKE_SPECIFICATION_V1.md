@@ -35,7 +35,7 @@ Release 1 ships **five** owner-curated templates. Each is a single planning docu
 | **Event** | `event` | Event Goal · Audience & Attendance · Scope (program/logistics) · Timeline & Milestones · Vendors & Dependencies · Risks · Success Metrics |
 | **Strategic Initiative (OKR/Plan)** | `strategic_initiative` | Objective · Key Results · Context & Rationale · Scope · Workstreams & Milestones · Dependencies & Risks · Stakeholders |
 
-Catalog content is **canon** under `10_product/` (template bodies maintained as owner-curated source); engineering renders the picker and copies the chosen body in — it authors no template content.
+Catalog content is **canon** under `10_product/experience/templates/` (one markdown body per template; see that folder's `README.md` for the index); engineering renders the picker and copies the chosen body in — it authors no template content. Starter body copy for all five is provided there (proposed; owner may refine before GA without a new decision, per DL-056).
 
 ## 5. Adoption Flow
 
