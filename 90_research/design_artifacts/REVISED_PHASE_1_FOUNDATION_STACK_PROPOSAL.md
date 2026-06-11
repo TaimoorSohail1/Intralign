@@ -1,6 +1,6 @@
 # Revised Phase 1 Foundation — Environment Binding Revision (PROPOSAL)
 
-**Decision ref:** ENV-REV-001 (engineering decision candidate) · **Document Type:** Environment-binding revision proposal (non-canonical) · **Status:** 🔒 **Engineering-locked candidate — PENDING OWNER RATIFICATION** · **Date:** 2026-06-10 · **Author:** Engineering (recorded by AI assistant)
+**Decision ref:** ENV-REV-001 (engineering decision candidate) · **Document Type:** Environment-binding revision proposal (non-canonical) · **Status:** ✅ **Ratified with Conditions per DL-054 (2026-06-10)** — conditions applied below; profile amended via CHG-083 · **Date:** 2026-06-10 · **Author:** Engineering (recorded by AI assistant)
 
 > **Governance note (Authority Constraint, Framework 001A).** This revises the **owner-provided** `RUNTIME_ENVIRONMENT_CONSTRAINT_PROFILE_V1` and the Database Ownership Matrix. Engineering proposes; **the owner ratifies.** This document is a *locked engineering position*, not ratified canon — it does not supersede the profile until the owner approves the items in §12. It lives in `90_research/` (non-canonical; informs but does not bind). The **platform architecture (DL-043) is unchanged** — this is an implementation/environment binding only, exactly the class of decision the profile governs.
 
@@ -11,7 +11,7 @@
 | Concern | Decision |
 |---|---|
 | Language / typing | **Python** + **Pydantic** (typed domain + epistemic types) |
-| Agent / LLM layer | **Pydantic AI** (typed agents + structured outputs) over an **open-source LLM adapter** for provider abstraction + model selection; **standard SDK streaming** |
+| Agent / LLM layer | **Pydantic AI** (typed agents + structured outputs) over an **open-source LLM adapter** behind `/services/llm_provider` — provider abstraction + **workload-based routing, usage quotas, model-consumption auditability** (Profile §5 preserved); **standard SDK streaming** |
 | Structured output | Production-grade structured-output enforcement via **Pydantic AI / Pydantic models** (LLM outputs validated against contract schemas; non-conforming → retry) |
 | Orchestration / durability | **LangGraph** (StateGraph + reusable subgraphs; **Postgres checkpointer** for durable, resumable runs) |
 | Relational + Auth + Vector + Object storage | **Supabase** (local **Docker** via the Supabase CLI) — Postgres, **Auth (GoTrue)**, **pgvector**, **Storage** |
@@ -25,9 +25,9 @@
 
 ---
 
-## 2. Delta vs the ratified Runtime Environment Constraint Profile
+## 2. Delta vs the owner-provided Runtime Environment Constraint Profile
 
-| Component | Ratified profile | Revised decision | Action | Owner ratification? |
+| Component | Owner-provided profile | Revised decision | Action | Owner ratification? |
 |---|---|---|---|---|
 | Relational system-of-record | PostgreSQL | **Supabase Postgres** (local Docker) | Change provider (still Postgres) | ⚠️ confirm |
 | Auth / identity | "centrally enforced" RBAC (build) | **Supabase Auth (GoTrue)** + RLS for Platform→Org→Project RBAC | Adopt managed auth | ⚠️ confirm |
@@ -35,8 +35,8 @@
 | Documents / unstructured | **MongoDB** | **Supabase Storage** (bodies) + Postgres `jsonb` (snapshots/projections) | **Remove MongoDB** | ✅ required |
 | Knowledge graph | Neo4j | **Neo4j (Docker)** | Keep | — |
 | Cache / sessions / event buffers | Redis | **Redis (Docker)** | Keep | — |
-| LLM strategy | OpenAI primary / Anthropic fallback, provider abstraction, routing | **Pydantic AI + OSS adapter** (abstraction + model selection); OpenAI/Anthropic behind it; **streaming** | Implements the abstraction intent | ⚠️ confirm (LLM routing change needs human approval per app `CLAUDE.md`) |
-| Observability | **OpenTelemetry → Grafana** | **LangSmith** (self-hosted) for runs/traces | **Replace/Complement** — see §7 | ✅ required |
+| LLM strategy | OpenAI primary / Anthropic fallback, provider abstraction, routing | **Pydantic AI + OSS adapter** behind `/services/llm_provider`; OpenAI/Anthropic behind it; **workload routing + quotas + model-consumption auditability preserved**; **streaming** | Implements the abstraction intent | ✅ approved (DL-054 cond. 3; human approval per app `CLAUDE.md`) |
+| Observability | **OpenTelemetry → Grafana** | **LangSmith** (self-hosted) for runs/traces — **additive**; OTel→Grafana retained | **Complement** (DL-054 cond. 1) — see §7 | ✅ resolved |
 | Hosting | Heroku + Vercel | Heroku + Vercel | Keep | — |
 | App packaging | (compose only ever held datastores) | App services **run natively**, not Dockerized | Clarify (consistent) | — |
 
@@ -93,11 +93,11 @@ App connects to all backing services over localhost ports.
 
 ## 6. Observability reconciliation (the key governance item)
 
-The ratified profile mandates **OpenTelemetry → Grafana** plus the **Observability Governance** guarantees: governed-output event emission, **two-axis replay**, drift/trust signals, system/queue health, and **≥90-day ops / ≥1-year audit** retention.
+The owner-provided profile mandates **OpenTelemetry → Grafana** plus the **Observability Governance** guarantees: governed-output event emission, **two-axis replay**, drift/trust signals, system/queue health, and retention (**≥90-day ops is ratified; audit retention is a proposed default pending OPEN_TBD C1 — not a requirement**, DL-054 cond. 2).
 
 - **LangSmith covers well:** LLM/agent **run + trace** capture, prompt/response inspection, **agent-execution replay**, and **per-run token/cost** (a strong fit for **cost governance, DL-048**). Each LangGraph run gets a LangSmith trace id.
 - **LangSmith does NOT cover by itself:** system/service **health metrics**, **queue/event-stream** monitoring, the **epistemic two-axis replay of *derivations*** (that is app-level — `CognitionHistoryRecord` + the determinism harness), **governed-output event emission**, **drift/trust signals**, and the mandated **retention** policy.
-- **Proposed resolution (owner to ratify):** LangSmith = the **runs/traces (agent-replay + cost)** layer. The **Observability Governance gate (CI gate 5)** is still satisfied at the **app level**: every governed output emits its events + appends a `CognitionHistoryRecord` that **records provider + model + version** (so the AI-assisted semantic replay tier is reproducible) and **references its LangSmith run id**. A lightweight system-metrics/health path (minimal OTel exporter or Prometheus, or LangSmith's own metrics) is retained to meet health-monitoring + retention. → **Decision needed: does LangSmith *replace* or *complement* OTel→Grafana?**
+- **Proposed resolution (owner to ratify):** LangSmith = the **runs/traces (agent-replay + cost)** layer. The **Observability Governance gate (CI gate 5)** is still satisfied at the **app level**: every governed output emits its events + appends a `CognitionHistoryRecord` that **records provider + model + version** (so the AI-assisted semantic replay tier is reproducible) and **references its LangSmith run id**. A lightweight system-metrics/health path (minimal OTel exporter or Prometheus, or LangSmith's own metrics) is retained to meet health-monitoring + retention. → **Resolved (DL-054 cond. 1): LangSmith *complements* OTel→Grafana — OTel→Grafana is retained for service-health, queue/event-stream monitoring, and retention; LangSmith adds runs/traces/cost.**
 
 ---
 
@@ -153,7 +153,7 @@ LANGSMITH_LICENSE_KEY= # self-host license; secret store
 - **Step 4 (services up):** "five datastores healthy" → **Supabase stack + Neo4j + Redis + LangSmith healthy** (four backing stacks); **MongoDB and Qdrant removed**.
 - **Step 5 (scaffold):** code-tree unchanged (cognitive-spine modules, no `/authority`); add `supabase/migrations/` for the append-only canonical schema; `/services/llm_provider` = the Pydantic AI + adapter layer; `/services/persistence` = Supabase + Neo4j + Redis repository interfaces.
 - **Step 7 (schema):** canonical append-only tables + RLS in **Supabase migrations**; embeddings via pgvector extension; derived projections in `jsonb`.
-- **Step 8 (observability):** LangSmith self-host instead of (or alongside) OTel→Grafana — pending §6 decision.
+- **Step 8 (observability):** LangSmith self-host **alongside** OTel→Grafana (DL-054 cond. 1: complement, not replace).
 
 ---
 
@@ -187,11 +187,11 @@ Supabase-local and LangSmith-local are **dev-only**. Production must resolve to 
 
 1. **Amend `RUNTIME_ENVIRONMENT_CONSTRAINT_PROFILE_V1`** for: Supabase (Postgres+Auth+pgvector+Storage), **remove MongoDB**, **remove Qdrant**, **LangSmith** for observability, native (non-Docker) app execution.
 2. **Update the Database Ownership Matrix** (§5 mapping).
-3. **Resolve §6:** LangSmith *replaces* vs *complements* OTel→Grafana; confirm gate-5 coverage + retention.
+3. **Resolved (DL-054 cond. 1):** LangSmith *complements* OTel→Grafana (additive); gate-5 satisfied at app level; audit retention per OPEN_TBD C1 (cond. 2).
 4. **Approve the LLM provider/adapter** choice (Pydantic AI + OSS adapter) — app `CLAUDE.md` requires human approval for LLM provider/routing.
 5. **Acknowledge §10** production topology direction.
 
 **Recommended next step:** route ENV-REV-001 through Framework 001 (Proposal → Review → Decision). On owner ratification, update the Environment Profile + Database Ownership Matrix + starter-kit templates (`docker-compose`, `.env`, `ci.yml`) accordingly. Until then, the ratified profile remains in force.
 
 ---
-*Non-canonical engineering decision candidate. Synthesized against the ratified Runtime Environment Constraint Profile, the Logical Data Model, Deployment & Observability Governance, and DL-043/044/048. Where this differs from a ratified/owner-provided source, the source wins until the owner ratifies this revision.*
+*Non-canonical engineering decision candidate. Synthesized against the owner-provided Runtime Environment Constraint Profile, the Logical Data Model, Deployment & Observability Governance, and DL-043/044/048. **Ratified with conditions as DL-054 (2026-06-10); profile amended via CHG-083.** Where this differs from an owner-provided source, the source wins.*
