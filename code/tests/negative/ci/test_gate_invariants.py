@@ -87,6 +87,11 @@ def test_nested_authority_dir_detected(tmp_path: Path) -> None:
         ("DELETE FROM cognition_history_record WHERE id = '1';", "DELETE"),
         ("DROP TABLE user_acceptance_record;", "DROP"),
         ("ALTER TABLE history_record DROP COLUMN payload;", "ALTER"),
+        # DTM-0007: artifact is a canonical append-only evidence anchor (LDM §2.3)
+        ("UPDATE artifact SET body_ref = 'x';", "UPDATE"),
+        ("DELETE FROM artifact WHERE artifact_id = '1';", "DELETE"),
+        ("DROP TABLE artifact;", "DROP"),
+        ("ALTER TABLE artifact DROP COLUMN provenance;", "ALTER"),
     ],
 )
 def test_each_mutation_verb_on_canonical_table_rejected(sql: str, verb: str) -> None:

@@ -13,7 +13,8 @@ b. **No Authority module** — a directory named ``authority`` anywhere under
 c. **Migration linter** — ``.sql`` files under ``code/supabase/migrations/`` must
    not contain ``UPDATE`` / ``DELETE`` / ``DROP TABLE`` / ``ALTER TABLE``
    statements TARGETING a canonical table (``attested_assertion``,
-   ``cognition_history_record``, ``user_acceptance_record``, ``history_record``).
+   ``cognition_history_record``, ``user_acceptance_record``, ``history_record``,
+   ``artifact`` — the DTM-0007 append-only evidence anchor, LDM §2.3).
    ``CREATE`` / ``GRANT`` / ``REVOKE`` (including ``REVOKE UPDATE, DELETE``) /
    ``CREATE TRIGGER ... BEFORE UPDATE OR DELETE`` are fine — the linter is
    statement-aware, not keyword-grep. Dollar-quoted function bodies and SQL
@@ -44,12 +45,15 @@ SCAN_ROOTS: tuple[str, ...] = ("backend", "shared")
 FORBIDDEN_DIR_NAME = "authority"
 
 # (c) Append-only canonical tables (LDM §2; decision #4).
+# DTM-0007 (IC-WA-001): + 'artifact' — the append-only evidence anchor
+# (LDM §2.3). promotion_candidate is transient/mutable and deliberately absent.
 CANONICAL_TABLES: frozenset[str] = frozenset(
     {
         "attested_assertion",
         "cognition_history_record",
         "user_acceptance_record",
         "history_record",
+        "artifact",
     }
 )
 

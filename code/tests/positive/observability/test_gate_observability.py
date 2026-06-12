@@ -12,6 +12,8 @@ from pathlib import Path
 
 from ci.gate_observability import (
     EXPECTED_EVENT_NAMES,
+    EXPECTED_EVENT_NAMES_WA00R,
+    EXPECTED_EVENT_NAMES_WA001,
     check_append_event_pairing,
     check_event_vocabulary,
     check_replay_harness,
@@ -20,7 +22,11 @@ from ci.gate_observability import (
     module_emits_append_event,
     run_all_checks,
 )
-from backend.services.observability.events import EVENT_NAMES
+from backend.services.observability.events import (
+    EVENT_NAMES,
+    EVENT_NAMES_WA00R,
+    EVENT_NAMES_WA001,
+)
 
 CODE_ROOT = Path(__file__).resolve().parents[3]
 
@@ -38,8 +44,15 @@ def test_cli_exits_zero_on_real_tree(capsys) -> None:
 
 
 def test_expected_vocabulary_matches_the_live_seam() -> None:
-    """The gate's pinned list and the runtime seam can never drift apart."""
+    """The gate's pinned lists and the runtime seam can never drift apart."""
+    assert EXPECTED_EVENT_NAMES_WA00R == EVENT_NAMES_WA00R
+    assert EXPECTED_EVENT_NAMES_WA001 == EVENT_NAMES_WA001
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
+    # Union consistency: the alias is exactly the per-contract concatenation.
+    assert EVENT_NAMES == EVENT_NAMES_WA00R + EVENT_NAMES_WA001
+    # stale_detected lives in the WA00R set only — referenced, never duplicated.
+    assert "stale_detected" in EVENT_NAMES_WA00R
+    assert "stale_detected" not in EVENT_NAMES_WA001
 
 
 def test_detection_finds_the_real_retain_stage_call_site() -> None:

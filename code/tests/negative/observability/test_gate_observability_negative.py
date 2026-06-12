@@ -20,7 +20,7 @@ from ci.gate_observability import (
 )
 
 GOOD_EVENTS_PY = '''
-EVENT_NAMES: tuple[str, ...] = (
+EVENT_NAMES_WA00R: tuple[str, ...] = (
     "stale_detected",
     "reanalysis_triggered",
     "recompute_started",
@@ -29,6 +29,19 @@ EVENT_NAMES: tuple[str, ...] = (
     "recompute_failed",
     "state_transition_occurred",
 )
+
+EVENT_NAMES_WA001: tuple[str, ...] = (
+    "artifact_received",
+    "artifact_normalizing",
+    "artifact_normalized",
+    "promotion_candidate_ready",
+    "promotion_readiness_failed",
+    "user_acceptance_captured",
+    "context_signal_received",
+    "artifact_modified",
+)
+
+EVENT_NAMES: tuple[str, ...] = EVENT_NAMES_WA00R + EVENT_NAMES_WA001
 '''
 
 PAIRED_MODULE = '''
@@ -116,12 +129,20 @@ def test_empty_replay_dir_fails(tmp_path) -> None:
     assert "no test_*.py" in violations[0]
 
 
-def test_renamed_event_fails_vocabulary_check(tmp_path) -> None:
+def test_renamed_wa00r_event_fails_vocabulary_check(tmp_path) -> None:
     tampered = GOOD_EVENTS_PY.replace("recompute_failed", "recompute_errored")
     root = _make_tree(tmp_path, events_src=tampered)
     violations = check_event_vocabulary(root)
     assert len(violations) == 1
-    assert "EVENT_NAMES != the IC-WA-00R A6 vocabulary" in violations[0]
+    assert "EVENT_NAMES_WA00R != the IC-WA-00R A6 vocabulary" in violations[0]
+
+
+def test_renamed_wa001_event_fails_vocabulary_check(tmp_path) -> None:
+    tampered = GOOD_EVENTS_PY.replace("artifact_modified", "artifact_changed")
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "EVENT_NAMES_WA001 != the IC-WA-001 A6 vocabulary" in violations[0]
 
 
 def test_extra_event_fails_vocabulary_check(tmp_path) -> None:
@@ -133,17 +154,49 @@ def test_extra_event_fails_vocabulary_check(tmp_path) -> None:
     assert check_event_vocabulary(root) != []
 
 
+def test_duplicated_stale_detected_in_wa001_fails(tmp_path) -> None:
+    """stale_detected belongs to WA00R; duplicating it in WA001 is a tamper."""
+    tampered = GOOD_EVENTS_PY.replace(
+        '"artifact_modified",',
+        '"artifact_modified",\n    "stale_detected",',
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert any("EVENT_NAMES_WA001" in v for v in violations)
+
+
 def test_missing_event_names_assignment_fails(tmp_path) -> None:
     root = _make_tree(tmp_path, events_src="OTHER = 1\n")
     violations = check_event_vocabulary(root)
-    assert len(violations) == 1
-    assert "EVENT_NAMES not found" in violations[0]
+    assert len(violations) == 3  # both contract tuples AND the union missing
+    assert any("EVENT_NAMES_WA00R not found" in v for v in violations)
+    assert any("EVENT_NAMES_WA001 not found" in v for v in violations)
+    assert any("EVENT_NAMES not found" in v for v in violations)
 
 
-def test_non_literal_vocabulary_fails(tmp_path) -> None:
-    root = _make_tree(
-        tmp_path, events_src="EVENT_NAMES = tuple(sorted(build_names()))\n"
+def test_non_literal_contract_vocabulary_fails(tmp_path) -> None:
+    tampered = GOOD_EVENTS_PY.replace(
+        'EVENT_NAMES_WA001: tuple[str, ...] = (\n'
+        '    "artifact_received",',
+        'EVENT_NAMES_WA001: tuple[str, ...] = tuple(sorted((\n'
+        '    "artifact_received",',
+    ).replace(
+        '    "artifact_modified",\n)',
+        '    "artifact_modified",\n)))',
     )
+    root = _make_tree(tmp_path, events_src=tampered)
     violations = check_event_vocabulary(root)
     assert len(violations) == 1
     assert "statically pinned" in violations[0]
+
+
+def test_inconsistent_union_fails(tmp_path) -> None:
+    """EVENT_NAMES must be exactly WA00R + WA001 — a drifted alias fails."""
+    tampered = GOOD_EVENTS_PY.replace(
+        "EVENT_NAMES: tuple[str, ...] = EVENT_NAMES_WA00R + EVENT_NAMES_WA001",
+        "EVENT_NAMES: tuple[str, ...] = EVENT_NAMES_WA001 + EVENT_NAMES_WA00R",
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "union of the per-contract vocabularies" in violations[0]

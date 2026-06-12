@@ -1,5 +1,12 @@
 """Persistence — repository interfaces over Supabase (PG/Storage/pgvector), Neo4j, Redis. Canonical stores append-only."""
 
 from backend.services.persistence.client import get_supabase_client
+from backend.services.persistence.intake_store import SupabaseIntakeStore
+from backend.services.persistence.storage import ARTIFACTS_BUCKET, ArtifactBodyStore
 
-__all__ = ["get_supabase_client"]
+__all__ = [
+    "ARTIFACTS_BUCKET",
+    "ArtifactBodyStore",
+    "SupabaseIntakeStore",
+    "get_supabase_client",
+]

@@ -36,6 +36,24 @@ CREATE TRIGGER attested_assertion_append_only
     FOR EACH ROW EXECUTE FUNCTION reject_mutation();
 """
 
+# DTM-0007 (IC-WA-001) intake DDL shapes — artifact is canonical (append-only,
+# belt-and-braces) and promotion_candidate is transient/mutable; the linter
+# must not flag either (CREATE/REVOKE/TRIGGER are lawful; candidate mutations
+# are on a NON-canonical table).
+_LAWFUL_INTAKE_SQL = """
+CREATE TABLE public.artifact (artifact_id uuid PRIMARY KEY, dedup_key text UNIQUE);
+CREATE TABLE public.promotion_candidate (candidate_id uuid PRIMARY KEY, readiness_state text);
+
+REVOKE UPDATE, DELETE, TRUNCATE ON public.artifact FROM anon, authenticated, service_role;
+
+CREATE TRIGGER artifact_append_only
+    BEFORE UPDATE OR DELETE ON public.artifact
+    FOR EACH STATEMENT EXECUTE FUNCTION public.enforce_append_only();
+
+-- promotion_candidate is mutable (readiness_state pending -> ready|failed)
+UPDATE promotion_candidate SET readiness_state = 'ready';
+"""
+
 
 def _make_code_root(tmp_path: Path) -> Path:
     """Minimal clean app tree: scan roots present, no migrations, no allowlist."""
@@ -97,6 +115,15 @@ def test_lawful_canonical_ddl_passes(tmp_path: Path) -> None:
     (migrations / "0001_canonical.sql").write_text(
         _LAWFUL_CANONICAL_SQL, encoding="utf-8"
     )
+    assert lint_migrations(code_root) == []
+
+
+def test_lawful_intake_ddl_passes(tmp_path: Path) -> None:
+    """DTM-0007 — artifact (append-only) + mutable promotion_candidate are lawful."""
+    code_root = _make_code_root(tmp_path)
+    migrations = code_root / MIGRATIONS_RELPATH
+    migrations.mkdir(parents=True)
+    (migrations / "0002_intake.sql").write_text(_LAWFUL_INTAKE_SQL, encoding="utf-8")
     assert lint_migrations(code_root) == []
 
 

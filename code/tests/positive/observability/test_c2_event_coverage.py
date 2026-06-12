@@ -21,7 +21,11 @@ except ImportError:  # pragma: no cover - CI venv without supabase-py
 
 from backend.orchestration import runner
 from backend.responsibilities.retain import ChrRepository
-from backend.services.observability.events import EVENT_NAMES, CollectingEventEmitter
+from backend.services.observability.events import (
+    EVENT_NAMES,
+    EVENT_NAMES_WA00R,
+    CollectingEventEmitter,
+)
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
@@ -143,8 +147,9 @@ def test_failed_run_emits_exactly_the_expected_c2_sequence(
 
 
 def test_c2_list_is_exactly_the_seven_a6_names() -> None:
-    """Contract pin (pure): the C2 observable-event list == A6, verbatim."""
-    assert EVENT_NAMES == (
+    """Contract pin (pure): the OBS-WA-00R C2 list == A6, verbatim (DTM-0007:
+    the per-contract tuple is EVENT_NAMES_WA00R; EVENT_NAMES is the union)."""
+    assert EVENT_NAMES_WA00R == (
         "stale_detected",
         "reanalysis_triggered",
         "recompute_started",

@@ -16,10 +16,14 @@ a. **Append↔event pairing** — every CHR-append call-site under ``code/backen
    a docstring/comment mention of the event name does NOT count; red-proven).
    Plain ``list.append`` receivers never match — only CHR-repo receivers do.
 
-b. **A6 vocabulary pinned** — ``backend/services/observability/events.py``
-   must define ``EVENT_NAMES`` as EXACTLY the seven IC-WA-00R A6 names, in
-   contract order. Any rename/addition/removal fails (events are contract
-   surface; the OBS-WA-00R C2 list == A6).
+b. **A6 vocabularies pinned per contract** (DTM-0007, decision #1) —
+   ``backend/services/observability/events.py`` must define
+   ``EVENT_NAMES_WA00R`` as EXACTLY the seven IC-WA-00R A6 names and
+   ``EVENT_NAMES_WA001`` as EXACTLY the eight IC-WA-001 A6 names, each a
+   literal tuple in contract order, plus ``EVENT_NAMES`` as their consistent
+   union (the literal concatenation, or the ``WA00R + WA001`` name
+   concatenation). Any rename/addition/removal fails (events are contract
+   surface; OBS C2 lists == A6 lists; ``stale_detected`` lives in WA00R only).
 
 c. **Replay harness present** — ``tests/replay/`` exists and contains at least
    one ``test_*.py`` (the two-axis determinism harness, OBS-WA-00R C5). The
@@ -35,8 +39,8 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-# (b) The IC-WA-00R A6 vocabulary — verbatim, in contract order (C2 == A6).
-EXPECTED_EVENT_NAMES: tuple[str, ...] = (
+# (b) The per-contract A6 vocabularies — verbatim, in contract order (C2 == A6).
+EXPECTED_EVENT_NAMES_WA00R: tuple[str, ...] = (
     "stale_detected",
     "reanalysis_triggered",
     "recompute_started",
@@ -44,6 +48,29 @@ EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     "recompute_completed",
     "recompute_failed",
     "state_transition_occurred",
+)
+
+# IC-WA-001 A6 (stale_detected is in the WA00R set, never duplicated).
+EXPECTED_EVENT_NAMES_WA001: tuple[str, ...] = (
+    "artifact_received",
+    "artifact_normalizing",
+    "artifact_normalized",
+    "promotion_candidate_ready",
+    "promotion_readiness_failed",
+    "user_acceptance_captured",
+    "context_signal_received",
+    "artifact_modified",
+)
+
+# The union the emitters must accept (back-compat alias in events.py).
+EXPECTED_EVENT_NAMES: tuple[str, ...] = (
+    EXPECTED_EVENT_NAMES_WA00R + EXPECTED_EVENT_NAMES_WA001
+)
+
+# (contract-tuple variable name, expected value, contract label) for check (b).
+_CONTRACT_VOCABULARIES: tuple[tuple[str, tuple[str, ...], str], ...] = (
+    ("EVENT_NAMES_WA00R", EXPECTED_EVENT_NAMES_WA00R, "IC-WA-00R A6"),
+    ("EVENT_NAMES_WA001", EXPECTED_EVENT_NAMES_WA001, "IC-WA-001 A6"),
 )
 
 APPEND_EVENT = "cognition_history_record_appended"
@@ -142,48 +169,88 @@ def check_append_event_pairing(code_root: Path) -> list[str]:
     return violations
 
 
-def _event_names_value_node(tree: ast.Module) -> ast.expr | None:
-    """The value expression assigned to EVENT_NAMES (Assign or AnnAssign form)."""
+def _assigned_value_node(tree: ast.Module, name: str) -> ast.expr | None:
+    """The value expression assigned to ``name`` (Assign or AnnAssign form)."""
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign) and any(
-            isinstance(t, ast.Name) and t.id == "EVENT_NAMES" for t in node.targets
+            isinstance(t, ast.Name) and t.id == name for t in node.targets
         ):
             return node.value
         if (
             isinstance(node, ast.AnnAssign)
             and isinstance(node.target, ast.Name)
-            and node.target.id == "EVENT_NAMES"
+            and node.target.id == name
             and node.value is not None
         ):
             return node.value
     return None
 
 
-def check_event_vocabulary(code_root: Path) -> list[str]:
-    """(b) EVENT_NAMES in events.py == the seven A6 names, exactly, in order."""
-    events_path = code_root / EVENTS_MODULE_RELPATH
-    if not events_path.is_file():
-        return [f"{EVENTS_MODULE_RELPATH}: missing — the A6 event seam is mandatory"]
-    value = _event_names_value_node(ast.parse(events_path.read_text(encoding="utf-8")))
+def _check_contract_tuple(
+    tree: ast.Module, name: str, expected: tuple[str, ...], contract: str
+) -> list[str]:
+    """One per-contract tuple: present, literal, and verbatim in contract order."""
+    value = _assigned_value_node(tree, name)
     if value is None:
         return [
-            f"{EVENTS_MODULE_RELPATH}: EVENT_NAMES not found — the A6 "
+            f"{EVENTS_MODULE_RELPATH}: {name} not found — the {contract} "
             "vocabulary must be pinned"
         ]
     try:
         actual = tuple(ast.literal_eval(value))
     except (ValueError, TypeError):
         return [
-            f"{EVENTS_MODULE_RELPATH}: EVENT_NAMES is not a literal tuple of "
+            f"{EVENTS_MODULE_RELPATH}: {name} is not a literal tuple of "
             "names — the vocabulary must be statically pinned"
         ]
-    if actual != EXPECTED_EVENT_NAMES:
+    if actual != expected:
         return [
-            f"{EVENTS_MODULE_RELPATH}: EVENT_NAMES != the IC-WA-00R A6 "
-            f"vocabulary — expected {EXPECTED_EVENT_NAMES}, found {actual} "
+            f"{EVENTS_MODULE_RELPATH}: {name} != the {contract} "
+            f"vocabulary — expected {expected}, found {actual} "
             "(invent no event types; Event Model names verbatim)"
         ]
     return []
+
+
+def _union_is_consistent(value: ast.expr) -> bool:
+    """EVENT_NAMES is the WA00R+WA001 concatenation (by name) or the literal union."""
+    if (
+        isinstance(value, ast.BinOp)
+        and isinstance(value.op, ast.Add)
+        and isinstance(value.left, ast.Name)
+        and isinstance(value.right, ast.Name)
+        and value.left.id == "EVENT_NAMES_WA00R"
+        and value.right.id == "EVENT_NAMES_WA001"
+    ):
+        return True
+    try:
+        return tuple(ast.literal_eval(value)) == EXPECTED_EVENT_NAMES
+    except (ValueError, TypeError):
+        return False
+
+
+def check_event_vocabulary(code_root: Path) -> list[str]:
+    """(b) Per-contract vocabularies verbatim + EVENT_NAMES union consistency."""
+    events_path = code_root / EVENTS_MODULE_RELPATH
+    if not events_path.is_file():
+        return [f"{EVENTS_MODULE_RELPATH}: missing — the A6 event seam is mandatory"]
+    tree = ast.parse(events_path.read_text(encoding="utf-8"))
+    violations: list[str] = []
+    for name, expected, contract in _CONTRACT_VOCABULARIES:
+        violations.extend(_check_contract_tuple(tree, name, expected, contract))
+    union_value = _assigned_value_node(tree, "EVENT_NAMES")
+    if union_value is None:
+        violations.append(
+            f"{EVENTS_MODULE_RELPATH}: EVENT_NAMES not found — the union "
+            "vocabulary (back-compat alias) must be pinned"
+        )
+    elif not _union_is_consistent(union_value):
+        violations.append(
+            f"{EVENTS_MODULE_RELPATH}: EVENT_NAMES != the union of the "
+            "per-contract vocabularies (EVENT_NAMES_WA00R + EVENT_NAMES_WA001) "
+            "— the emitters must accept exactly the contract sets"
+        )
+    return violations
 
 
 def check_replay_harness(code_root: Path) -> list[str]:
@@ -232,8 +299,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     print(
         "[gate-5 observability] PASS: every CHR-append call-site emits "
-        f"'{APPEND_EVENT}', the A6 vocabulary is pinned verbatim, and the "
-        "two-axis replay harness is present."
+        f"'{APPEND_EVENT}', the per-contract A6 vocabularies are pinned "
+        "verbatim (union consistent), and the replay harness is present."
     )
     return 0
 

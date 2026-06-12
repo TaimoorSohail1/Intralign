@@ -37,7 +37,7 @@ from backend.orchestration.state import GraphState
 from backend.responsibilities.adapt.triggers import TriggerValidationError
 from backend.responsibilities.retain import ChrRepository
 from backend.services.observability.events import (
-    EVENT_NAMES,
+    EVENT_NAMES_WA00R,
     CollectingEventEmitter,
     UnknownEventError,
 )
@@ -230,8 +230,10 @@ def test_b3_5_no_derived_to_attested_write_path_static_scan() -> None:
 
 
 def test_event_seam_rejects_unknown_event_names() -> None:
-    """A6 — the seam accepts exactly the 7 contract events, nothing invented."""
-    assert EVENT_NAMES == (
+    """A6 — the backbone contract set is exactly these 7; nothing invented
+    (DTM-0007: pinned per contract as EVENT_NAMES_WA00R; emitters accept the
+    union, but an unknown name is still rejected loudly)."""
+    assert EVENT_NAMES_WA00R == (
         "stale_detected",
         "reanalysis_triggered",
         "recompute_started",
