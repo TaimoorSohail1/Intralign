@@ -12,12 +12,15 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from backend.api.v1 import router as v1_router
+from backend.services.observability.setup import configure_observability
 
 app = FastAPI(
     title="OSLO Release 1 API",
     version="0.1.0",
     description="REST command/query surface over the Release 1 architecture (Data Model v1.2 entities).",
 )
+
+configure_observability(app)  # env-driven (DTM-0003); degrades to a warning when OTLP is off
 
 app.include_router(v1_router)
 

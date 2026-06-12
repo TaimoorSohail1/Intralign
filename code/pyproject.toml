@@ -15,6 +15,8 @@ dependencies = [
     "neo4j>=5.20",             # knowledge graph
     "redis>=5.0",              # sessions / cache / event buffers
     "opentelemetry-sdk>=1.25", # observability (retained)
+    "opentelemetry-instrumentation-fastapi>=0.46b0",  # FastAPI auto-instrumentation (DTM-0003 approved)
+    "opentelemetry-exporter-otlp>=1.25",              # OTLP exporter → otel-lgtm/Grafana (DTM-0003 approved)
     "langsmith>=0.1",          # observability complement (DL-054)
 ]
 

@@ -15,21 +15,29 @@ knowledge-base zones (`00_owner/`, `30_engineering/`, `20_handoff/`).
 - **Stores:** Supabase (Postgres + Auth/GoTrue + RLS + pgvector + Storage) · Neo4j · Redis
 - **Observability:** OpenTelemetry → Grafana · LangSmith (complement)
 
-## Local bring-up (Phase I)
+## Local bring-up (Phase I) — verified commands
 
 ```bash
 cp .env.example .env            # fill from owner-provided secrets; never commit .env
 
 # 1. Supabase (Postgres + Auth + pgvector + Storage) — via the Supabase CLI
-supabase start                  # writes local URL + keys into .env
+supabase start                  # then: supabase status → copy URL + keys into .env
+# NOTE (DL-054): use the ports `supabase status` PRINTS, not the CLI defaults — on this
+# machine they are shifted (API http://127.0.0.1:54331, DB 127.0.0.1:54332).
 
-# 2. The other backing services
-docker compose up -d            # Neo4j + Redis; confirm health
+# 2. The other backing services (Neo4j + Redis) + local observability (dev-only)
+docker compose --profile observability up -d
+#   otel-lgtm = OTLP collector (4317 gRPC / 4318 HTTP) + Grafana UI at http://localhost:3000
+#   omit `--profile observability` to run without the observability stack
 
 # 3. Backend (native) — Python project is rooted at code/
-pip install -e ".[dev]" && uvicorn backend.api.app:app --reload
+pip install -e ".[dev]"
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 OTEL_SERVICE_NAME=oslo-backend \
+  uvicorn backend.api.app:app --reload
+# /health → 200; the trace appears in Grafana (http://localhost:3000) under Tempo,
+# service `oslo-backend`. Unset OTEL_EXPORTER_OTLP_ENDPOINT → app still boots (warns).
 
-# 4. Frontend (native)
+# 4. Frontend (native) — backend must be serving /openapi.json first
 cd frontend && npm install && npm run api:gen && npm run dev
 ```
 

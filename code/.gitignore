@@ -14,7 +14,7 @@ __pycache__/
 # Node / frontend
 node_modules/
 dist/
-src/api/generated/
+frontend/src/api/generated/
 *.tsbuildinfo
 
 # Supabase local

@@ -35,9 +35,23 @@ services:
       timeout: 5s
       retries: 5
 
+  # --- otel-lgtm: dev-only observability stack (DTM-0003) — OTLP collector + Grafana/Tempo ---
+  # Opt-in profile:  docker compose --profile observability up -d
+  # Staging swaps in owner-provisioned Grafana via the same OTEL_EXPORTER_OTLP_ENDPOINT.
+  otel-lgtm:
+    image: grafana/otel-lgtm
+    profiles: ["observability"]
+    ports:
+      - "4317:4317"   # OTLP gRPC (OTEL_EXPORTER_OTLP_ENDPOINT)
+      - "4318:4318"   # OTLP HTTP
+      - "3000:3000"   # Grafana UI
+    volumes:
+      - otel_lgtm_data:/data
+
 volumes:
   neo4j_data:
   redis_data:
+  otel_lgtm_data:
 
 # NOTE (DL-054): MongoDB and Qdrant are REMOVED. Artifact bodies → Supabase Storage,
 # embeddings → Supabase pgvector, relational + auth → Supabase Postgres + GoTrue/RLS.
