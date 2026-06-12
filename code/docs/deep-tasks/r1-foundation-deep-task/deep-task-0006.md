@@ -1,6 +1,6 @@
 # DTM-0006 — OBS-WA-00R: events, audit, two-axis replay; CI gate-5 goes real
 
-**Status:** Ready for review · **Module:** DTM-0006 · **Phase:** II (Wave A) · **Contract:** **IC-WA-00R / OBS-WA-00R** · **Depends:** DTM-0005
+**Status:** Approved · **Module:** DTM-0006 · **Phase:** II (Wave A) · **Contract:** **IC-WA-00R / OBS-WA-00R** · **Depends:** DTM-0005
 
 ## Goal / observable behavior
 
