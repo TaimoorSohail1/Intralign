@@ -26,6 +26,7 @@ from typing import Any
 from backend.orchestration.state import GraphState
 from backend.responsibilities.retain import ChrRepository, CognitionHistoryRecord
 from backend.services.observability.events import EventEmitter
+from backend.services.observability.langsmith_linkage import langsmith_run_linkage
 
 # Contract chain order (IC-WA-00R A3.3).
 CHAIN_STAGE_ORDER: tuple[str, ...] = ("retain", "infer", "evaluate", "advise")
@@ -58,8 +59,21 @@ def retain_stage(state: GraphState, ctx: StageContext) -> dict[str, Any]:
             "no repository was wired (orchestration builds the graph with one)"
         )
     trigger = state.trigger or {}
+    # DTM-0006 / DL-054 cond.1: when LANGSMITH_TRACING=true and a run id
+    # exists, the appended CHR carries langsmith_run_id inside
+    # model_or_rule_version (additive merge; provider/model identity wins on
+    # collision). {} when tracing is off / no run id — dev-allowed (A3).
+    linkage = langsmith_run_linkage(state.run_id)
     appended: list[str] = []
     for spec in state.emissions:
+        if linkage:
+            spec = {
+                **spec,
+                "model_or_rule_version": {
+                    **linkage,
+                    **spec.get("model_or_rule_version", {}),
+                },
+            }
         record = CognitionHistoryRecord(
             project_id=state.project_id,
             recompute_trigger=trigger.get("trigger_type"),

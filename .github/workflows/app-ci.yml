@@ -87,14 +87,18 @@ jobs:
       - name: "Gate 4 — epistemic-invariant gate"
         run: python -m ci.gate_invariants
 
-      # --- Gate 5: Observability (scaffold) ---
-      # Real check (governed outputs emit events + CognitionHistoryRecord,
-      # two-axis replay hooks) lands with Wave A — DTM-0006 upgrades this step.
-      # Until then: assert the observability service scaffold exists (can fail).
-      - name: "Gate 5 — observability (scaffold until DTM-0006)"
+      # --- Gate 5: Observability (REAL — DTM-0006, OBS-WA-00R) ---
+      # Static checks: every CHR-append call-site emits
+      # cognition_history_record_appended (a governed emission without its
+      # event fails the build, DL-054 cond.1); the A6 vocabulary is pinned
+      # verbatim in events.py; the two-axis replay harness exists. Then the
+      # replay suite runs (its live axes skip without a local Supabase stack;
+      # the pure tamper-detection axes always run — an empty/missing suite
+      # fails via pytest exit 4/5).
+      - name: "Gate 5 — observability (governed-output events + two-axis replay)"
         run: |
-          test -f backend/services/observability/__init__.py
-          echo "Observability scaffold present. Real governed-output event check lands with Wave A (DTM-0006)."
+          python -m ci.gate_observability
+          python -m pytest tests/replay
 
       # --- Gate 6: Security (secret-scan + dependency audits; findings FAIL) ---
       - name: "Gate 6 — secret scan (gitleaks)"

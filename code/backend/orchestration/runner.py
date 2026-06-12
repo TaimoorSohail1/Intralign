@@ -30,6 +30,7 @@ from backend.orchestration.stages import StageFn
 from backend.orchestration.state import GraphState
 from backend.responsibilities.adapt.states import CognitionState, CognitionStateMachine
 from backend.responsibilities.adapt.triggers import TriggerClaim, validate_trigger
+from backend.services.observability.emitters import ObservedEventEmitter
 from backend.services.observability.events import CollectingEventEmitter, EventEmitter
 
 
@@ -96,7 +97,12 @@ def run(
     The checkpointer defaults to the durable Supabase-Postgres saver
     (durable-by-default); run lifecycle events go through the same A6 seam.
     """
-    seam = emitter if emitter is not None else CollectingEventEmitter()
+    # DTM-0006 (C2): observe the seam — structured log + OTel span events.
+    # ObservedEventEmitter.wrap is idempotent and DELEGATES to the given
+    # emitter, so a caller's CollectingEventEmitter still collects.
+    seam = ObservedEventEmitter.wrap(
+        emitter if emitter is not None else CollectingEventEmitter()
+    )
     saver = checkpointer if checkpointer is not None else build_checkpointer()
     factory = registry.get(graph_name)
     graph = factory(
@@ -157,7 +163,11 @@ def submit_trigger(
     stale-again is marked and AT MOST ONE follow-up stays queued; the follow-up
     runs (and is reported on the outcome) after the active run finishes.
     """
-    seam = emitter if emitter is not None else CollectingEventEmitter()
+    # DTM-0006 (C2): same observed seam as run() — wrap is idempotent, so the
+    # seam handed down to run() is not double-observed.
+    seam = ObservedEventEmitter.wrap(
+        emitter if emitter is not None else CollectingEventEmitter()
+    )
     claim = validate_trigger(trigger)  # rejection path: nothing emitted, nothing runs
     project_id = claim.project_id
 
