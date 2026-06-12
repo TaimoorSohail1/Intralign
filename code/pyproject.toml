@@ -1,0 +1,33 @@
+[project]
+name = "oslo"
+version = "0.1.0"
+description = "OSLO Release 1 — cognition backend + shared epistemic types (ratified code-tree)"
+requires-python = ">=3.11"
+
+# Ratified stack only (DL-043 + DL-054). No new dependency/technology without human approval.
+dependencies = [
+    "fastapi>=0.111",          # transport layer (api/); emits the OpenAPI consumed by Orval
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",           # epistemic types + contract schemas
+    "pydantic-ai>=0.0.14",     # LLM provider abstraction (DL-054 §5)
+    "langgraph>=0.2",          # ratified orchestration — domain-specific StateGraphs + subgraphs
+    "supabase>=2.5",           # Supabase Postgres + Auth/GoTrue + Storage (DL-054)
+    "neo4j>=5.20",             # knowledge graph
+    "redis>=5.0",              # sessions / cache / event buffers
+    "opentelemetry-sdk>=1.25", # observability (retained)
+    "langsmith>=0.1",          # observability complement (DL-054)
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.2", "pytest-asyncio>=0.23", "ruff>=0.5", "mypy>=1.10"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend", "shared"]   # ratified root-level packages
+
+[tool.pytest.ini_options]
+pythonpath = ["."]                  # backend/ and shared/ import as top-level packages
+testpaths = ["tests/positive", "tests/negative"]   # positive AND negative are mandatory
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
