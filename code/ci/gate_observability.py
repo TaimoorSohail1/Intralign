@@ -16,12 +16,13 @@ a. **Append↔event pairing** — every CHR-append call-site under ``code/backen
    a docstring/comment mention of the event name does NOT count; red-proven).
    Plain ``list.append`` receivers never match — only CHR-repo receivers do.
 
-b. **A6 vocabularies pinned per contract** (DTM-0007, decision #1) —
+b. **A6 vocabularies pinned per contract** (DTM-0007, decision #1; DTM-0008) —
    ``backend/services/observability/events.py`` must define
-   ``EVENT_NAMES_WA00R`` as EXACTLY the seven IC-WA-00R A6 names and
-   ``EVENT_NAMES_WA001`` as EXACTLY the eight IC-WA-001 A6 names, each a
+   ``EVENT_NAMES_WA00R`` as EXACTLY the seven IC-WA-00R A6 names,
+   ``EVENT_NAMES_WA001`` as EXACTLY the eight IC-WA-001 A6 names, and
+   ``EVENT_NAMES_WA002`` as EXACTLY the five IC-WA-002 A6 names, each a
    literal tuple in contract order, plus ``EVENT_NAMES`` as their consistent
-   union (the literal concatenation, or the ``WA00R + WA001`` name
+   union (the literal concatenation, or the ``WA00R + WA001 + WA002`` name
    concatenation). Any rename/addition/removal fails (events are contract
    surface; OBS C2 lists == A6 lists; ``stale_detected`` lives in WA00R only).
 
@@ -62,15 +63,34 @@ EXPECTED_EVENT_NAMES_WA001: tuple[str, ...] = (
     "artifact_modified",
 )
 
+# IC-WA-002 A6 (DTM-0008 — the five retention events, contract order).
+EXPECTED_EVENT_NAMES_WA002: tuple[str, ...] = (
+    "knowledge_promoted",
+    "knowledge_versioned",
+    "knowledge_superseded",
+    "knowledge_archived",
+    "knowledge_mutation_recorded",
+)
+
 # The union the emitters must accept (back-compat alias in events.py).
 EXPECTED_EVENT_NAMES: tuple[str, ...] = (
-    EXPECTED_EVENT_NAMES_WA00R + EXPECTED_EVENT_NAMES_WA001
+    EXPECTED_EVENT_NAMES_WA00R
+    + EXPECTED_EVENT_NAMES_WA001
+    + EXPECTED_EVENT_NAMES_WA002
 )
 
 # (contract-tuple variable name, expected value, contract label) for check (b).
 _CONTRACT_VOCABULARIES: tuple[tuple[str, tuple[str, ...], str], ...] = (
     ("EVENT_NAMES_WA00R", EXPECTED_EVENT_NAMES_WA00R, "IC-WA-00R A6"),
     ("EVENT_NAMES_WA001", EXPECTED_EVENT_NAMES_WA001, "IC-WA-001 A6"),
+    ("EVENT_NAMES_WA002", EXPECTED_EVENT_NAMES_WA002, "IC-WA-002 A6"),
+)
+
+# The union must be the per-contract names concatenated in this exact order.
+_UNION_NAME_ORDER: tuple[str, ...] = (
+    "EVENT_NAMES_WA00R",
+    "EVENT_NAMES_WA001",
+    "EVENT_NAMES_WA002",
 )
 
 APPEND_EVENT = "cognition_history_record_appended"
@@ -212,16 +232,21 @@ def _check_contract_tuple(
     return []
 
 
+def _flatten_name_concatenation(value: ast.expr) -> tuple[str, ...] | None:
+    """Flatten a left-folded ``Name + Name + ...`` expression to its name chain."""
+    if isinstance(value, ast.Name):
+        return (value.id,)
+    if isinstance(value, ast.BinOp) and isinstance(value.op, ast.Add):
+        left = _flatten_name_concatenation(value.left)
+        right = _flatten_name_concatenation(value.right)
+        if left is not None and right is not None:
+            return left + right
+    return None
+
+
 def _union_is_consistent(value: ast.expr) -> bool:
-    """EVENT_NAMES is the WA00R+WA001 concatenation (by name) or the literal union."""
-    if (
-        isinstance(value, ast.BinOp)
-        and isinstance(value.op, ast.Add)
-        and isinstance(value.left, ast.Name)
-        and isinstance(value.right, ast.Name)
-        and value.left.id == "EVENT_NAMES_WA00R"
-        and value.right.id == "EVENT_NAMES_WA001"
-    ):
+    """EVENT_NAMES is the WA00R+WA001+WA002 concatenation (by name) or the literal union."""
+    if _flatten_name_concatenation(value) == _UNION_NAME_ORDER:
         return True
     try:
         return tuple(ast.literal_eval(value)) == EXPECTED_EVENT_NAMES
@@ -247,8 +272,9 @@ def check_event_vocabulary(code_root: Path) -> list[str]:
     elif not _union_is_consistent(union_value):
         violations.append(
             f"{EVENTS_MODULE_RELPATH}: EVENT_NAMES != the union of the "
-            "per-contract vocabularies (EVENT_NAMES_WA00R + EVENT_NAMES_WA001) "
-            "— the emitters must accept exactly the contract sets"
+            "per-contract vocabularies (EVENT_NAMES_WA00R + EVENT_NAMES_WA001 "
+            "+ EVENT_NAMES_WA002) — the emitters must accept exactly the "
+            "contract sets"
         )
     return violations
 

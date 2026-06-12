@@ -14,6 +14,7 @@ from ci.gate_observability import (
     EXPECTED_EVENT_NAMES,
     EXPECTED_EVENT_NAMES_WA00R,
     EXPECTED_EVENT_NAMES_WA001,
+    EXPECTED_EVENT_NAMES_WA002,
     check_append_event_pairing,
     check_event_vocabulary,
     check_replay_harness,
@@ -26,6 +27,7 @@ from backend.services.observability.events import (
     EVENT_NAMES,
     EVENT_NAMES_WA00R,
     EVENT_NAMES_WA001,
+    EVENT_NAMES_WA002,
 )
 
 CODE_ROOT = Path(__file__).resolve().parents[3]
@@ -47,12 +49,25 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
     """The gate's pinned lists and the runtime seam can never drift apart."""
     assert EXPECTED_EVENT_NAMES_WA00R == EVENT_NAMES_WA00R
     assert EXPECTED_EVENT_NAMES_WA001 == EVENT_NAMES_WA001
+    assert EXPECTED_EVENT_NAMES_WA002 == EVENT_NAMES_WA002
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
     # Union consistency: the alias is exactly the per-contract concatenation.
-    assert EVENT_NAMES == EVENT_NAMES_WA00R + EVENT_NAMES_WA001
+    assert EVENT_NAMES == EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002
     # stale_detected lives in the WA00R set only — referenced, never duplicated.
     assert "stale_detected" in EVENT_NAMES_WA00R
     assert "stale_detected" not in EVENT_NAMES_WA001
+    assert "stale_detected" not in EVENT_NAMES_WA002
+
+
+def test_wa002_vocabulary_is_the_five_ic_wa_002_a6_names_verbatim() -> None:
+    """DTM-0008 — the IC-WA-002 A6 list, exactly, in contract order."""
+    assert EVENT_NAMES_WA002 == (
+        "knowledge_promoted",
+        "knowledge_versioned",
+        "knowledge_superseded",
+        "knowledge_archived",
+        "knowledge_mutation_recorded",
+    )
 
 
 def test_detection_finds_the_real_retain_stage_call_site() -> None:

@@ -13,6 +13,8 @@ The vocabulary is pinned PER CONTRACT (deep-task decision #1, DTM-0007):
 - ``EVENT_NAMES_WA001`` — EXACTLY the eight IC-WA-001 A6 names, in contract
   order. ``stale_detected`` belongs to the WA00R set and is referenced, never
   duplicated (IC-WA-001 A6 "Artifact Modified / Stale Detected").
+- ``EVENT_NAMES_WA002`` — EXACTLY the five IC-WA-002 A6 names, in contract
+  order (DTM-0008; OBS-WA-002 C2 == A6).
 - ``EVENT_NAMES`` — the union (concatenation) the emitters accept; kept as the
   back-compat alias for existing consumers.
 
@@ -49,8 +51,17 @@ EVENT_NAMES_WA001: tuple[str, ...] = (
     "artifact_modified",
 )
 
+# IC-WA-002 A6 — the five retention events, exactly (OBS-WA-002 C2).
+EVENT_NAMES_WA002: tuple[str, ...] = (
+    "knowledge_promoted",
+    "knowledge_versioned",
+    "knowledge_superseded",
+    "knowledge_archived",
+    "knowledge_mutation_recorded",
+)
+
 # Union vocabulary accepted by emitters (back-compat alias for consumers).
-EVENT_NAMES: tuple[str, ...] = EVENT_NAMES_WA00R + EVENT_NAMES_WA001
+EVENT_NAMES: tuple[str, ...] = EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002
 
 _EVENT_NAME_SET: frozenset[str] = frozenset(EVENT_NAMES)
 
@@ -81,7 +92,8 @@ class CollectingEventEmitter:
         if event_name not in _EVENT_NAME_SET:
             raise UnknownEventError(
                 f"unknown contract event {event_name!r} — the vocabulary is "
-                f"exactly IC-WA-00R A6 + IC-WA-001 A6: {', '.join(EVENT_NAMES)}"
+                f"exactly IC-WA-00R A6 + IC-WA-001 A6 + IC-WA-002 A6: "
+                f"{', '.join(EVENT_NAMES)}"
             )
         self.events.append((event_name, dict(payload)))
 
