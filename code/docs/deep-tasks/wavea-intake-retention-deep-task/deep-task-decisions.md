@@ -72,6 +72,15 @@ contract id (these tasks: `IC-WA-001` / `IC-WA-002`).
 
 - No new packages anticipated. supabase-py covers Storage. **Anything else = stop and ask.**
 
+## Owner review fences (PR #21, 2026-06-13)
+
+- **No-unarchive-in-R1 CONFLICTS with ratified UP-3** (archive specified as *reversible*;
+  Free-tier cap resolution). Owner adjudicates **before any M6 work starts** — do NOT
+  build M6 prompt/cap behavior against either assumption until ruled.
+- Attribution-missing hard-reject and `failed→stale` recovery: queued owner decisions;
+  PR #21 merge does not ratify them.
+- ADR-0001 (monorepo placement): provisional until owner dispositions; merge ≠ ratification.
+
 ## Open conflicts / notes
 
 - 002's original A4.1/A5/A8/A10.1 mention Authority — **superseded by its own DL-043
