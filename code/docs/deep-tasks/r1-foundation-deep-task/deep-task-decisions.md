@@ -44,6 +44,13 @@ the first ratified contract, IC-WA-00R (Recompute & Stale Backbone).
 - A2. Worker machines have Docker + Supabase CLI available; if not, tasks record exact commands as manual checks and the EM runs them.
 - A3. LangSmith is config-only in Phase I (env keys, wiring point); a self-hosted instance is owner-provisioned later.
 
+## Owner gates
+
+- **Phase II (Wave A 00R) start AUTHORIZED by owner, 2026-06-12** (DL-044 condition 2).
+  Phase I items 3 (live red-proof) and 5 (Staging) remain open in parallel — owner to
+  provide Heroku/Vercel accounts + push/PR for live CI.
+- Wave A 001/002 deep-tasks to be authored after 00R approval (plan against real code).
+
 ## Open conflicts / blocked items
 
 - **Staging (Heroku/Vercel) + Production lock** — blocked on owner Day-0 accounts (kickoff §1). PARKED: not a worker task; exit-gate item 5 needs owner action. Phase I owner sign-off will be partial until then.

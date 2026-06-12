@@ -17,8 +17,10 @@ from pydantic import BaseModel, Field
 class EpistemicState(str, Enum):
     """Whether an entity is an attested receipt or a recomputable derivation."""
 
-    ATTESTED_INTAKE = "attested-intake"          # user/system-provided fact (receipt)
-    ATTESTED_ACCEPTANCE = "attested-acceptance"  # user-attested acceptance (UserAcceptanceRecord)
+    # LDM §1 universal-field vocabulary (the DB CHECK constraints use these three).
+    ATTESTED_EVIDENCE = "attested-evidence"      # evidence-attested (from an artifact)
+    ATTESTED_OSLO = "attested-oslo"              # OSLO-self-attested (CognitionHistoryRecord)
+    ATTESTED_USER = "attested-user"              # user-attested (UserAcceptanceRecord / Plan Fact)
     DERIVED = "derived"                          # recomputable cognition (Finding/Issue/Recommendation)
 
 
