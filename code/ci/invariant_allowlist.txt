@@ -1,0 +1,12 @@
+# Gate-4 forbidden-token allowlist (ci/gate_invariants.py check a).
+#
+# ONLY prose mentions of the forbidden vocabulary (e.g. comments restating the
+# "No Authority engine" rule) may be listed here — NEVER identifiers. Every
+# addition is reviewed under gate 7 (human review).
+#
+# Format, one entry per line:
+#   <path relative to code/, posix> :: <substring that must appear in the line>
+# A flagged line is exempt iff its file path equals the entry path AND the
+# substring occurs in the line. Blank lines and '#' comments are ignored.
+
+shared/epistemic.py :: Forbidden in new code: GovernanceDecision, Authority*

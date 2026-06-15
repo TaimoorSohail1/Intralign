@@ -1,0 +1,22 @@
+# Secrets — never commit (Deployment Governance §7)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Node / frontend
+node_modules/
+dist/
+frontend/src/api/generated/
+*.tsbuildinfo
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
