@@ -698,6 +698,13 @@ Each changelog entry contains:
 - **Change Summary:** Defined **Start From Template** for Release 1: selecting a template **instantiates a populated sample project** from a **fully worked fictitious sample plan** (one editable Artifact, `source="template"`, project flagged a **sample**), analyzed on the standard Fast Pass path → Project MRI in ~60s, then editable into the user's own project. **Owner-curated catalog of five** (Office Relocation, "Pulse" launch, "Brew & Co" campaign, "DevNorth 2026" event, EU expansion OKR); owner-curated only; `project_type` pre-filled, non-gating; **no system generation** — instantiation is copying static pre-authored content (OB-C3 preserved). **Guided Intake deferred to Release 2.** Reconciled Onboarding §L (templates Deferred → in scope) and Capability Matrix §22 (#3 resolved, #4 → R2). *(Note: the `Project.is_sample` flag is recorded as a build-detail in the spec; no Project field schema was invented in the data model.)*
 - **Supersession Reference:** Supersedes the prior template deferral in `ONBOARDING_AND_PROJECT_CREATION_EXPERIENCE_SPECIFICATION_V1` §L. Preserves the deferral of AI-generated starting content.
 
+### CHG-088 — DL-061: Project MRI definition (C-1) — adopt R1 per-project MRI; rename portfolio concept
+
+- **Date:** 2026-06-16 · **Authorizing Decision:** DL-061.
+- **Affected Artifacts:** `00_owner/decisions/decision_log.md` (DL-061 recorded + Governance-Notes summary line added); `00_owner/changelog/changelog.md` (this entry). *(Propagation into `OSLO_RELEASE_1_MASTER_SPEC.md`, `OSLO_CAPABILITY_MATRIX_V2.md`, and the glossary Disambiguation Register is a resulting action under DL-061, landed as a separate owner/engineering-authored change.)*
+- **Change Summary:** Recorded the owner ruling resolving **C-1**, the "Project MRI" flagship-term conflict. **Adopted** the Master Spec **per-project** "Project MRI" (R1 core: the per-project understanding visualization) as the canonical R1 meaning. The **whole-portfolio integrity-scan** concept (Baseline / Capability Matrix, I14 / Wave 3) is **renamed** to a distinct term (proposed **Portfolio Integrity Scan**, final term owner-confirmed) to remove the collision; a **Disambiguation Register** entry + doc-integrity regression guard will track the split (per DL-053). **MRI validation is held until the rename lands.** Unblocks Phase 1 MRI work (cross-refs DL-059 / the P-4 exit-gate track). This entry records the decision only; the spec edits are a resulting action, not yet applied.
+- **Supersession Reference:** None. Resolves the open C-1 owner-action item.
+
 ---
 
 ## Governance Notes
