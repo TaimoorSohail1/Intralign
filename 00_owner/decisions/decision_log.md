@@ -726,6 +726,17 @@ Each decision entry contains:
 - **Source:** PR #21 (`foundation-phase-1` → Wave A); ADR-0001.
 - **Affected artifacts:** `ZONE_GROUNDING_RULES.md`, `CODEOWNERS.proposed` → `CODEOWNERS` (with `/code/` rule), `.github/workflows/doc-integrity.yml` (verify/exclude), `code/docs/adr/0001-…` (status → Accepted), changelog (CHG-###).
 
+### DL-059 — Phase 1 "Prove Understanding": Ratify a Falsifiable Exit Criterion (P-4)
+
+- **Date:** 2026-06-16 · **Status:** Ratified
+- **Layer:** Implementation Spec / Delivery governance (Phase 1 sign-off gate). No doctrine/constitution change.
+- **Source:** Owner ruling 2026-06-16 (Founder Console Decide lane → OSLO governance handoff); `note_to_eng_phase1_signoff.md`; `MASTER_SPEC_ALIGNMENT_REVIEW.md` (pattern P-4).
+- **Decision:** The owner directs that Phase 1 "Prove Understanding" be governed by a **falsifiable, explicit pass/fail exit criterion**, ratified via Framework 001. Engineering's revised Phase 1 sign-off date is **pinned to** that ratified gate — no sign-off against an undefined criterion.
+- **Rationale:** Phase 1 sign-off was blocked because its exit criterion was unfalsifiable (P-4): engineering cannot validate against a gate that states no pass/fail line. Defining the gate is the upstream unblocker for the ~7-day slip.
+- **Conditions / Resulting actions:** (1) Author the concrete falsifiable Phase 1 pass/fail gate (explicit, measurable) — **owner-authored canon; not inferred** — and land it under Framework 001. (2) Ask Kashif (mkashifse) for a revised sign-off date pinned to that gate. (3) This entry records the owner disposition; the gate text itself is the deliverable it authorizes.
+- **Supersedes:** none (resolves the open owner-action item P-4).
+- **Affected artifacts:** `00_owner/decisions/decision_log.md` (this entry); `note_to_eng_phase1_signoff.md`; the Phase 1 gate spec to be authored.
+- **Provenance:** Founder Console Decide log, decided 2026-06-16 by Idris.
 
 ---
 
