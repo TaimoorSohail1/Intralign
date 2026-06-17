@@ -834,5 +834,6 @@ The following appear in `03_implementation_specs/14_open_questions_design_risks.
 _One file per decision per DL-065. Generated — do not hand-edit._
 
 - DL-065 — Decision-Recording Discipline (sequencing & conflict elimination) → `00_owner/decisions/records/DL-065-decision-recording-discipline.md`
+- DL-066 — Resolve the DL-060 Numbering Gap (retire as reserved-unused; folded into DL-059) → `00_owner/decisions/records/DL-066-resolve-dl-060-gap.md`
 
 <!-- RECORDS-INDEX:END -->

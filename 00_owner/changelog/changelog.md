@@ -747,6 +747,13 @@ Each changelog entry contains:
 - **Change Summary:** Adopted the **decision-recording discipline** that makes the 2026-06-16 sequencing tangle structurally impossible: **R1** one file per decision (DL-065+) with `decision_log.md` frozen through DL-064 and an auto-generated index; **R2** number-at-merge (DL-PENDING until landing); **R3** one canon PR in flight, merged linearly; **R4** a doc-integrity guard over the records regime; **R5** the Founder Console as sole serializer. Freeze-not-migrate: legacy entries are untouched and grandfathered. doc-integrity passes (0 errors).
 - **Supersession Reference:** None. Amends the decision-recording mechanics of Framework 001 (additive). Framework 001 doc gets the formal R1–R5 amendment as a follow-on.
 
+### CHG-095 — DL-066: resolve the DL-060 numbering gap (first decision under the new discipline)
+
+- **Date:** 2026-06-16 · **Authorizing Decision:** DL-066.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-066-resolve-dl-060-gap.md` (new — first record authored via the DL-065 number-at-merge flow); `00_owner/decisions/decision_log.md` (records index regenerated to include DL-066).
+- **Change Summary:** Retired **DL-060** as **reserved-but-unused (void)** — no content was ever ratified under it, and DL-059 (the Phase-1 falsifiable exit *criterion*) already governs sign-off. The number is recorded as an explicit void marker so the DL-059→DL-061 gap is intentional, not an omission. This is the **first decision processed end-to-end under DL-065**: drafted as `DL-PENDING`, numbered at merge (`dl_records.py next` → DL-066), index regenerated, and the records guard green.
+- **Supersession Reference:** None. Closes the parked DL-060 item.
+
 ---
 
 ## Governance Notes
