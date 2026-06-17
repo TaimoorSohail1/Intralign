@@ -754,6 +754,13 @@ Each changelog entry contains:
 - **Change Summary:** Retired **DL-060** as **reserved-but-unused (void)** — no content was ever ratified under it, and DL-059 (the Phase-1 falsifiable exit *criterion*) already governs sign-off. The number is recorded as an explicit void marker so the DL-059→DL-061 gap is intentional, not an omission. This is the **first decision processed end-to-end under DL-065**: drafted as `DL-PENDING`, numbered at merge (`dl_records.py next` → DL-066), index regenerated, and the records guard green.
 - **Supersession Reference:** None. Closes the parked DL-060 item.
 
+### CHG-096 — DL-067: Console-driven DL landing (scope + design)
+
+- **Date:** 2026-06-16 · **Authorizing Decision:** DL-067.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-067-console-driven-dl-landing.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated to include DL-067).
+- **Change Summary:** Ratified the **scope + design** for making the Founder Console Decide lane the one-click front door for landing decisions, by automating the DL-065 flow as a **server-side GitHub Actions workflow** (`dl-land.yml`) — author + number-at-merge + index + changelog + gate + open PR — with **the owner's merge kept as the explicit human step** (never auto-merge canon; fail-closed on the gate; R3/R5 preserved). Server-side execution avoids the local-sandbox credential/`.git/index.lock` and stale-clone mis-numbering problems. The engineering **build** (`dl-land.yml` + Console button wiring) is the follow-on realization.
+- **Supersession Reference:** None. Realizes DL-063 R5 atop DL-065; additive.
+
 ---
 
 ## Governance Notes
