@@ -268,9 +268,10 @@ All entries cite their source location.
 
 ### Project MRI
 
-**Status:** Proposed
-**Source:** `repository_manifest.md` (section `04_project_mri`); referenced as a PLG moment in `00_raw_transcript/00_transcript_index.md` and in `03_implementation_specs/02_plg_60_second_flow_wireframes.md`
-**Definition:** *Manifest scope only — a structural intelligence surface that helps users understand ambiguity, fragility, confidence, outcome integrity risk, understanding gaps, and interpretation drift exposure. Subsystem remains under active development.*
+**Status:** Canonical (Release 1) — ratified DL-061 (2026-06-16), promoted from Proposed
+**Source:** `OSLO_RELEASE_1_MASTER_SPEC.md` §7/§15C/§21 (per-project definition); `repository_manifest.md` (section `04_project_mri`)
+**Definition:** The **continuously evolving, per-project visualization of OSLO's current understanding of project reality** — synthesizing the planning artifacts (Intent/Context/Scope/Requirements/WBS/Resources/Schedule) together with CAF, Confidence, Issues, Recommendations, and CRR status into one per-project understanding model. CAF drives MRI; MRI always exists (entering an Interpretation-Unstable state under low clarity). It is an **understanding** surface — **not** the workspace, editing, collaboration, or recommendation surface.
+**Scope note (DL-061):** Project MRI is **per-project only**. The earlier "whole-portfolio outcome integrity scan" framing (non-canonical Baseline V1) is **not** Project MRI; it is a distinct provisional, post-Alpha capability — **Portfolio Integrity Scan** — under Portfolio Cognition (DL-034), out of R1 scope (Master Spec §13).
 
 ---
 

@@ -1,7 +1,7 @@
 # Experience-Surface ↔ Responsibility Crosswalk v1 (the §0 crosswalk)
 
 **Type:** Co-governed seam artifact (`20_handoff`) — traceability/interface mapping. · **Status:** Ratified — DL-064 (2026-06-16). To be incorporated as **§0** of `OSLO_ARCHITECTURE_BASELINE_V2` when authored.
-**Resolves:** C-3 (`MASTER_SPEC_ALIGNMENT_REVIEW.md`) — the missing mapping between the Master Spec's *experience* vocabulary and the engineering *architecture* vocabulary. C-3 was a **gap, not a contradiction.**
+**Resolves:** C-3 (MASTER_SPEC_ALIGNMENT_REVIEW — owner working-doc, non-repo) — the missing mapping between the Master Spec's *experience* vocabulary and the engineering *architecture* vocabulary. C-3 was a **gap, not a contradiction.**
 
 > **Orientation, primary axis (DL-043 / glossary).** The canonical architecture model is **responsibility-primary** — the seven cognitive responsibilities (`Perceive · Retain · Infer · Evaluate · Advise · Disclose · Act/Adapt`, with `Render` a non-cognitive service). The legacy seven-**layer** names (Context Plane, Knowledge Layer, Reasoning, Judgment, Governance, Communication, Execution Coordination) are **banned as primary identifiers** (`CANONICAL_GLOSSARY.md`, DL-053) and are shown here **only as a deprecated secondary column for orientation**. Map work to responsibilities, not layers.
 

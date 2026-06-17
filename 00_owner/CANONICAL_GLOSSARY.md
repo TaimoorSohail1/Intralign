@@ -109,6 +109,7 @@ qualified canonical form below.** (This register *qualifies* — it does not red
 | **Model** | **Domain Model** (`CONFIDENCE_MODEL` — conceptual, no formula) | **Data Model** (schema) · **Scoring Model** (formula) · **LLM model** | bare "Model" banned in specs; qualify which |
 | **Attested / Derived** | doctrine concepts (truth vs interpretation) | the `epistemic_state` field value | concept stays capitalized; the column is `epistemic_state` |
 | **Dimension** (confidence) | **first-class confidence dimension** = **CAF** only — Clarity / Alignment / Feasibility (DL-062) | Reliability sub-axis (Coverage / Evidence Availability / Assessability) · Doctrine-06 driver/contributor | "first-class dimension" = CAF; never call a Reliability axis or a folded driver a "dimension"; drivers stay decomposable in the confidence basis |
+| **MRI / Project MRI** | **Project MRI** = per-project understanding surface (R1 canonical, DL-061) | whole-portfolio scan → **Portfolio Integrity Scan** (provisional, post-Alpha, DL-034) | "Project MRI" / "MRI" = per-project only; portfolio-scope scanning is the separate deferred term |
 
 > **Structural reinforcement (DL-053):** the product Authority-Plane governance artifact is named
 > `AUTHORITY_PLANE_MODEL_V1` (renamed from `GOVERNANCE_MODEL_V1`) so the product sense is unmistakable; the

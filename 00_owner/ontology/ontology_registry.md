@@ -195,7 +195,7 @@ The DL-034 reframings of *Execution Maturity Phases* and *Product Evolution Stag
 | Companion Intelligence Panel | Canonical | `01_governance/constitution/03_workspace_constitution.md` Article 18 |
 | Attention Queue | Proposed | `01_governance/doctrine/05_workspace_navigation_doctrine.md`; `03_implementation_specs/03_outcome_space_workspace_wireframes.md` |
 | Adaptive Workspace | Canonical | `01_governance/constitution/03_workspace_constitution.md` Article 16 |
-| Project MRI | Proposed | `repository_manifest.md`; `03_implementation_specs/02_plg_60_second_flow_wireframes.md` |
+| Project MRI | Canonical (R1, DL-061) | `OSLO_RELEASE_1_MASTER_SPEC.md` §7/§15C/§21 (per-project); `repository_manifest.md` |
 
 ### Relationships
 
@@ -304,7 +304,7 @@ The following registry entries operate without a doctrinally grounded authoritat
 |---|---|---|---|
 | Artifact | Proposed | No defining statement in any source | RB-014 |
 | Attention Queue | Proposed | Two conflicting framings (doctrinal "persistent operational intelligence surface" vs spec "queue sorted by outcome impact") | RB-013 |
-| Project MRI | Proposed | Manifest scope only (non-doctrinal); subsystem stub | RB-015 (partially unblocked by DL-034) |
+| Project MRI | Canonical (R1, DL-061) | Per-project understanding surface (Master Spec §7); portfolio scope renamed Portfolio Integrity Scan, deferred (DL-034) | RB-015 resolved for R1 by DL-061 |
 | Outcome Space | Canonical (Constitutional) | Defined in Article 13 only; lacks doctrinal anchor | RB-004 (general doctrine stubs) |
 
 ---

@@ -733,6 +733,13 @@ Each changelog entry contains:
 - **Change Summary:** Resolved **C-3** (missing experience→layer mapping) by ratifying a **responsibility-primary** crosswalk: every Master Spec experience surface maps to one of the seven canonical responsibilities; commodity surfaces map to none (DL-043 C/E/F). Legacy layer names deprecated/secondary per DL-043 + DL-053. Every mapping traces to ratified canon — none inferred. The artifact is the source for §0 of Architecture Baseline V2.
 - **Supersession Reference:** None. C-3 was a gap, not a contradiction; documentation close-out.
 
+### CHG-093 — DL-061 realization completion + doc-integrity fix (post-catchup cleanup)
+
+- **Date:** 2026-06-16 · **Authorizing Decision:** DL-061 (realization of its already-ratified resulting actions, which PR #27 recorded but did not apply).
+- **Affected Artifacts:** `00_owner/canonical_definitions/canonical_definitions.md` (Project MRI **Proposed → Canonical (R1)** + per-project definition + scope note); `00_owner/ontology/ontology_registry.md` (Project MRI status promoted, 2 entries); `00_owner/CANONICAL_GLOSSARY.md` (Disambiguation Register: MRI / Project MRI); `90_research/historical_artifacts/OSLO_ARCHITECTURE_BASELINE_V1.md` (portfolio-MRI row superseded-for-R1, non-binding); `20_handoff/traceability/EXPERIENCE_SURFACE_RESPONSIBILITY_CROSSWALK_V1.md` (doc-integrity fix — de-linked the non-repo `MASTER_SPEC_ALIGNMENT_REVIEW` reference).
+- **Change Summary:** Completed the **DL-061 realization edits** that PR #27 recorded but left unapplied (Project MRI was still "Proposed" on `main`): promoted Project MRI to **Canonical (R1)** with the per-project definition, added the MRI Disambiguation-Register entry, and marked the Baseline portfolio-MRI line superseded-for-R1. Also fixed the lone doc-integrity broken-link error from the governance-catchup PR (#31). doc-integrity now passes (errors = 0).
+- **Supersession Reference:** None. Realizes DL-061; closes the broken-link error on `main`.
+
 ---
 
 ## Governance Notes
