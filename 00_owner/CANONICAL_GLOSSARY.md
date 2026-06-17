@@ -108,6 +108,7 @@ qualified canonical form below.** (This register *qualifies* — it does not red
 | **Drift** | **Outcome Drift** — understanding changed, *surfaced as value* (feature) | **Determinism Drift** — *a bug that fails the build* | bare "Drift" banned; always qualify |
 | **Model** | **Domain Model** (`CONFIDENCE_MODEL` — conceptual, no formula) | **Data Model** (schema) · **Scoring Model** (formula) · **LLM model** | bare "Model" banned in specs; qualify which |
 | **Attested / Derived** | doctrine concepts (truth vs interpretation) | the `epistemic_state` field value | concept stays capitalized; the column is `epistemic_state` |
+| **Dimension** (confidence) | **first-class confidence dimension** = **CAF** only — Clarity / Alignment / Feasibility (DL-062) | Reliability sub-axis (Coverage / Evidence Availability / Assessability) · Doctrine-06 driver/contributor | "first-class dimension" = CAF; never call a Reliability axis or a folded driver a "dimension"; drivers stay decomposable in the confidence basis |
 
 > **Structural reinforcement (DL-053):** the product Authority-Plane governance artifact is named
 > `AUTHORITY_PLANE_MODEL_V1` (renamed from `GOVERNANCE_MODEL_V1`) so the product sense is unmistakable; the

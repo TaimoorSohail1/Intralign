@@ -366,6 +366,8 @@ OSLO's intelligence is organized around three primary confidence drivers, each p
 
 ### Composite Confidence
 
+> **SUPERSEDED-FOR-R1 (DL-062, 2026-06-16) — non-binding.** The multi-/"nine"-peer-dimension composite below is **not** the R1 model. For Release 1 the **first-class confidence dimensions are CAF (Clarity / Alignment / Feasibility)**; Reliability (Coverage / Evidence Availability / Assessability) qualifies; the other drivers are preserved as Reliability sub-axes or inspectable CAF contributors (decomposability required). Non-canonical Source Material; see the V2 scoring models and DL-062.
+
 Per Doctrine 06 (Confidence & Understanding), composite confidence aggregates the three driver scores plus additional dimensions:
 
 - Clarity
