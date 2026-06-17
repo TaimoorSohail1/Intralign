@@ -768,6 +768,13 @@ Each changelog entry contains:
 - **Change Summary:** Built the **`dl-land` GitHub Actions workflow** (workflow_dispatch: `title`/`body`/`slug`/`class`/`decided_by`) that realizes DL-067: it numbers the decision off current `main` (no stale-clone risk), writes the record, regenerates the index, appends the changelog, runs the **fail-closed** doc-integrity gate, refuses to start if a `decision/*` PR is already open (R3), pushes a branch, and **opens a PR — never merges** (owner-gated). `dl_records.py land` centralizes the record/index/changelog logic and is unit-tested in isolation. **Follow-on:** wire the Founder Console "Approve & Land" button to dispatch this workflow.
 - **Supersession Reference:** None. Engineering realization of DL-067.
 
+### CHG-098 — DL-068: Wave A sign-off + Wave B authorization
+
+- **Date:** 2026-06-17 · **Authorizing Decision:** DL-068.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-068-wave-a-signoff-wave-b-authorization.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Wave A sign-off + Wave B authorization. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

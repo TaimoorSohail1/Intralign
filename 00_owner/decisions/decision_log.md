@@ -836,5 +836,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-065 — Decision-Recording Discipline (sequencing & conflict elimination) → `00_owner/decisions/records/DL-065-decision-recording-discipline.md`
 - DL-066 — Resolve the DL-060 Numbering Gap (retire as reserved-unused; folded into DL-059) → `00_owner/decisions/records/DL-066-resolve-dl-060-gap.md`
 - DL-067 — Console-Driven DL Landing (automate the DL-065 flow server-side) → `00_owner/decisions/records/DL-067-console-driven-dl-landing.md`
+- DL-068 — Wave A sign-off + Wave B authorization → `00_owner/decisions/records/DL-068-wave-a-signoff-wave-b-authorization.md`
 
 <!-- RECORDS-INDEX:END -->

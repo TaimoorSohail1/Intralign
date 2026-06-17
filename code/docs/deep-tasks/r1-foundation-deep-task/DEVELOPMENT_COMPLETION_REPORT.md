@@ -100,22 +100,25 @@ dependency). Recommend authorizing Wave B start (DL-044) only after §3.1–§3.
 
 ## 7. Status
 
-**COMPLETE — pending owner approval.** Code delivered, contracts cited, 327 tests green, canonical
-append-only proven at the DB. No epistemic invariant violated. Blocking items are governance
-(§3.1, §4), not engineering.
+**COMPLETE — owner-approved (DL-068, 2026-06-17).** Code delivered, contracts cited, 327 tests green,
+canonical append-only proven at the DB. No epistemic invariant violated. Prior blocking items
+(psycopg[binary], Gate-6 form-data advisory) cleared via PR #37 (merge `9d0849d`).
 
 ---
 
 ## 8. Owner decision (only the repository owner completes this)
 
 ```
-Decision:        [ ] Approve   [ ] Approve with conditions   [ ] Reject / return
-Monorepo override (ADR-0001):  [ ] Ratify   [ ] Defer
-psycopg[binary] dependency:    [ ] Approve add to pyproject   [ ] Defer
-Authorize Wave B start (DL-044): [ ] Yes   [ ] Not yet
-Conditions / notes:
+Decision:        [x] Approve   [ ] Approve with conditions   [ ] Reject / return
+Monorepo override (ADR-0001):  [x] Ratify (DL-057)   [ ] Defer
+psycopg[binary] dependency:    [x] Approve add to pyproject (landed PR #37)   [ ] Defer
+Authorize Wave B start (DL-044): [x] Yes   [ ] Not yet
+Conditions / notes: Ratified via DL-068 (CHG-098). psycopg[binary] + Gate-6 form-data fix
+landed in PR #37 (merge 9d0849d); ADR-0001 ratified (DL-057); unarchive (DL-058) folded
+into Wave B. Wave B build order: Synthesis (IC-WS-SYNTH) → Infer (IC-WB-INFER) → Evaluate
+(IC-WB-EVAL), with the C-2 decomposability negative test; owner gate required before Phase IV.
 
-Owner signature: ______________________    Date: __________
+Owner signature: Idris (idris@intralign.ai) — Founder Console / DL-068    Date: 2026-06-17
 ```
 
 > On approval, record a Decision Log entry and a Traceability Record per Framework 001
