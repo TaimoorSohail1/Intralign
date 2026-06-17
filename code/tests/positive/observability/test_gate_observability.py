@@ -12,9 +12,11 @@ from pathlib import Path
 
 from ci.gate_observability import (
     EXPECTED_EVENT_NAMES,
+    EXPECTED_EVENT_NAMES_COST,
     EXPECTED_EVENT_NAMES_WA00R,
     EXPECTED_EVENT_NAMES_WA001,
     EXPECTED_EVENT_NAMES_WA002,
+    EXPECTED_EVENT_NAMES_WS,
     check_append_event_pairing,
     check_event_vocabulary,
     check_replay_harness,
@@ -25,9 +27,11 @@ from ci.gate_observability import (
 )
 from backend.services.observability.events import (
     EVENT_NAMES,
+    EVENT_NAMES_COST,
     EVENT_NAMES_WA00R,
     EVENT_NAMES_WA001,
     EVENT_NAMES_WA002,
+    EVENT_NAMES_WS,
 )
 
 CODE_ROOT = Path(__file__).resolve().parents[3]
@@ -50,13 +54,36 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
     assert EXPECTED_EVENT_NAMES_WA00R == EVENT_NAMES_WA00R
     assert EXPECTED_EVENT_NAMES_WA001 == EVENT_NAMES_WA001
     assert EXPECTED_EVENT_NAMES_WA002 == EVENT_NAMES_WA002
+    assert EXPECTED_EVENT_NAMES_WS == EVENT_NAMES_WS
+    assert EXPECTED_EVENT_NAMES_COST == EVENT_NAMES_COST
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
-    # Union consistency: the alias is exactly the per-contract concatenation.
-    assert EVENT_NAMES == EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002
+    # Union consistency: the alias is exactly the 5-way per-contract concatenation
+    # (DTM-0009 — WS + COST added; the union grows, never reorders).
+    assert EVENT_NAMES == (
+        EVENT_NAMES_WA00R
+        + EVENT_NAMES_WA001
+        + EVENT_NAMES_WA002
+        + EVENT_NAMES_WS
+        + EVENT_NAMES_COST
+    )
     # stale_detected lives in the WA00R set only — referenced, never duplicated.
     assert "stale_detected" in EVENT_NAMES_WA00R
     assert "stale_detected" not in EVENT_NAMES_WA001
     assert "stale_detected" not in EVENT_NAMES_WA002
+
+
+def test_ws_and_cost_vocabularies_are_the_a6_names_verbatim() -> None:
+    """DTM-0009 — the four IC-WS-SYNTH A6 names + the one DL-048 cost event."""
+    assert EVENT_NAMES_WS == (
+        "claim_extracted",
+        "planning_artifact_generated",
+        "planning_artifact_regenerated",
+        "synthesized_model_updated",
+    )
+    assert EVENT_NAMES_COST == ("ai_spend_recorded",)
+    # cognition_history_record_appended is REUSED from WA00R, never duplicated here.
+    assert "cognition_history_record_appended" in EVENT_NAMES_WA00R
+    assert "cognition_history_record_appended" not in EVENT_NAMES_WS
 
 
 def test_wa002_vocabulary_is_the_five_ic_wa_002_a6_names_verbatim() -> None:

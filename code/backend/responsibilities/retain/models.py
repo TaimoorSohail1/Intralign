@@ -4,7 +4,7 @@ Field source is RELEASE_1_LOGICAL_DATA_MODEL_V1.md §2.2 verbatim, plus the LDM
 §1 universal fields the live ``cognition_history_record`` table carries
 (migration 20260612090000). Constraints, not mechanics:
 
-- The value lists for ``output_kind`` (12) and ``recompute_trigger`` (5) mirror
+- The value lists for ``output_kind`` (14) and ``recompute_trigger`` (5) mirror
   the table CHECK constraints exactly — Pydantic rejects before the DB would.
 - ``epistemic_state`` is PINNED to ``attested-oslo``: a CHR is OSLO-self-attested
   by definition (LDM §2.2); any other state is a validation error.
@@ -38,6 +38,11 @@ OutputKind = Literal[
     "alignment",
     "feasibility",
     "risk",
+    # DTM-0009 / Wave S (DL-047) — owner-approved 2026-06-17 (the two Derived
+    # kinds persisted via the generic CHR; migration 20260617120000 widens the
+    # matching table CHECK by exactly these two values).
+    "synthesized_planning_model",
+    "planning_artifact",
 ]
 
 RecomputeTrigger = Literal[

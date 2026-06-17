@@ -122,6 +122,59 @@ def test_mutation_after_lawful_statements_still_rejected() -> None:
     assert "DELETE" in violations[0]
 
 
+# --- (c) reviewed ALTER allowlist stays TIGHT (DTM-0009, owner-approved) ---
+
+_DTM0009_RELPATH = (
+    f"{MIGRATIONS_RELPATH}/20260617120000_chr_output_kind_wave_s.sql"
+)
+# The exact substrings shipped in ci/invariant_allowlist.txt for DTM-0009.
+_DTM0009_ALLOWLIST = [
+    (
+        _DTM0009_RELPATH,
+        "drop constraint if exists cognition_history_record_output_kind_check",
+    ),
+    (
+        _DTM0009_RELPATH,
+        "add constraint cognition_history_record_output_kind_check check (output_kind in",
+    ),
+]
+
+
+def test_allowlist_never_exempts_update_delete_drop() -> None:
+    # Even with the DTM-0009 allowlist active, real data mutations still fail —
+    # the exemption only ever short-circuits an ALTER.
+    assert lint_migration_sql(
+        "UPDATE cognition_history_record SET output_kind = 'x';",
+        _DTM0009_RELPATH,
+        _DTM0009_ALLOWLIST,
+    )
+    assert lint_migration_sql(
+        "DELETE FROM cognition_history_record;", _DTM0009_RELPATH, _DTM0009_ALLOWLIST
+    )
+    assert lint_migration_sql(
+        "DROP TABLE cognition_history_record;", _DTM0009_RELPATH, _DTM0009_ALLOWLIST
+    )
+
+
+def test_allowlist_does_not_exempt_other_canonical_alter() -> None:
+    # A DIFFERENT ALTER on the same canonical table (not in the allowlist) fails.
+    assert lint_migration_sql(
+        "ALTER TABLE cognition_history_record DROP COLUMN output_payload;",
+        _DTM0009_RELPATH,
+        _DTM0009_ALLOWLIST,
+    )
+
+
+def test_allowlist_is_path_scoped() -> None:
+    # The allowlisted ALTER text on a DIFFERENT migration path is NOT exempt.
+    assert lint_migration_sql(
+        "alter table cognition_history_record "
+        "drop constraint if exists cognition_history_record_output_kind_check;",
+        f"{MIGRATIONS_RELPATH}/other.sql",
+        _DTM0009_ALLOWLIST,
+    )
+
+
 def test_bad_migration_file_fails_lint(tmp_path: Path) -> None:
     code_root = _make_code_root(tmp_path)
     migrations = code_root / MIGRATIONS_RELPATH

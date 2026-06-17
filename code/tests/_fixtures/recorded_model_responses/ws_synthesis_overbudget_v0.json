@@ -1,0 +1,61 @@
+{
+  "name": "ws_synthesis_overbudget_v0",
+  "model_version": "gpt-4.1-mini@ws-synth-llm-v0",
+  "config": {
+    "tier": "free",
+    "stage": "synthesis-generation",
+    "temperature": 0,
+    "routing": "synthesis/generation->mini",
+    "note": "large recorded token counts to exercise the DL-048 over-budget degrade path deterministically"
+  },
+  "responses": [
+    {
+      "key": "synthesis",
+      "tokens_in": 60000,
+      "tokens_out": 20000,
+      "text": "{\"intent_summary\": \"Ship the billing rollout by Q3 on a monthly cadence.\", \"scope_summary\": \"Deliver billing integrated with the payments service within Q3.\", \"assumptions\": [{\"statement\": \"Headcount stays flat through the rollout.\", \"covers_gap\": \"No staffing evidence was attested.\"}]}"
+    },
+    {
+      "key": "intent",
+      "tokens_in": 40000,
+      "tokens_out": 15000,
+      "text": "{\"title\": \"Intent\", \"body\": \"Deliver the billing rollout by Q3.\"}"
+    },
+    {
+      "key": "context",
+      "tokens_in": 40000,
+      "tokens_out": 15000,
+      "text": "{\"title\": \"Context\", \"body\": \"Monthly delivery cadence; billing depends on payments.\"}"
+    },
+    {
+      "key": "scope",
+      "tokens_in": 40000,
+      "tokens_out": 15000,
+      "text": "{\"title\": \"Scope\", \"body\": \"Billing integrated with the payments service within Q3.\"}"
+    },
+    {
+      "key": "requirements",
+      "tokens_in": 40000,
+      "tokens_out": 15000,
+      "text": "{\"title\": \"Requirements\", \"body\": \"Rollout must finish by Q3; integrate the payments service.\"}"
+    },
+    {
+      "key": "wbs",
+      "tokens_in": 40000,
+      "tokens_out": 15000,
+      "text": "{\"title\": \"Work Breakdown\", \"body\": \"1. Integrate payments. 2. Build billing. 3. Roll out.\"}"
+    },
+    {
+      "key": "resources",
+      "tokens_in": 40000,
+      "tokens_out": 15000,
+      "text": "{\"title\": \"Resources\", \"body\": \"Current team (assumed flat headcount).\"}"
+    },
+    {
+      "key": "schedule",
+      "tokens_in": 40000,
+      "tokens_out": 15000,
+      "text": "{\"title\": \"Schedule\", \"body\": \"Monthly milestones culminating before end of Q3.\"}"
+    }
+  ]
+}

@@ -15,6 +15,10 @@ The vocabulary is pinned PER CONTRACT (deep-task decision #1, DTM-0007):
   duplicated (IC-WA-001 A6 "Artifact Modified / Stale Detected").
 - ``EVENT_NAMES_WA002`` — EXACTLY the five IC-WA-002 A6 names, in contract
   order (DTM-0008; OBS-WA-002 C2 == A6).
+- ``EVENT_NAMES_WS`` — EXACTLY the four IC/OBS-WS-SYNTH A6 names (DTM-0009;
+  decision #9), in contract order.
+- ``EVENT_NAMES_COST`` — the single shared DL-048 spend event
+  (``ai_spend_recorded``), introduced in DTM-0009 and reused by Wave B.
 - ``EVENT_NAMES`` — the union (concatenation) the emitters accept; kept as the
   back-compat alias for existing consumers.
 
@@ -60,8 +64,30 @@ EVENT_NAMES_WA002: tuple[str, ...] = (
     "knowledge_mutation_recorded",
 )
 
+# IC/OBS-WS-SYNTH A6 — the four synthesis-engine events, exactly (decision #9).
+# Pinned verbatim against OBS-WS-SYNTH §3 / A6 ("Claim Extracted", "Planning
+# Artifact Generated/Regenerated", "Synthesized Model Updated"). The
+# per-emission ``cognition_history_record_appended`` is reused from the WA00R
+# set (never duplicated). DTM-0009 / Wave S.
+EVENT_NAMES_WS: tuple[str, ...] = (
+    "claim_extracted",
+    "planning_artifact_generated",
+    "planning_artifact_regenerated",
+    "synthesized_model_updated",
+)
+
+# DL-048 cost-governance — the single shared spend event (decision #9),
+# introduced in DTM-0009 and reused by Wave B. "AI Spend Recorded" (OBS §3).
+EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
+
 # Union vocabulary accepted by emitters (back-compat alias for consumers).
-EVENT_NAMES: tuple[str, ...] = EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002
+EVENT_NAMES: tuple[str, ...] = (
+    EVENT_NAMES_WA00R
+    + EVENT_NAMES_WA001
+    + EVENT_NAMES_WA002
+    + EVENT_NAMES_WS
+    + EVENT_NAMES_COST
+)
 
 _EVENT_NAME_SET: frozenset[str] = frozenset(EVENT_NAMES)
 
@@ -92,8 +118,8 @@ class CollectingEventEmitter:
         if event_name not in _EVENT_NAME_SET:
             raise UnknownEventError(
                 f"unknown contract event {event_name!r} — the vocabulary is "
-                f"exactly IC-WA-00R A6 + IC-WA-001 A6 + IC-WA-002 A6: "
-                f"{', '.join(EVENT_NAMES)}"
+                "exactly IC-WA-00R A6 + IC-WA-001 A6 + IC-WA-002 A6 + "
+                f"IC-WS-SYNTH A6 + DL-048 cost: {', '.join(EVENT_NAMES)}"
             )
         self.events.append((event_name, dict(payload)))
 

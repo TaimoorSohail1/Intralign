@@ -123,17 +123,19 @@ restate it. **Branch:** `feat/phase3-waveb-understanding` (ADRs already committe
 
 ## Open conflicts / escalations (must resolve before the affected slice codes)
 
-- **OWNER GATE — Wave B start (DL-044 cond. 2):** per-wave coding is owner-authorized + a
-  readiness gate. **These task files are planning; spawning the DTM-0009 worker is BLOCKED
-  until the owner authorizes Wave B start.** (ADR-0005 records the same.)
+- **OWNER GATE — Wave B start (DL-044 cond. 2): CLEARED — owner authorized 2026-06-17.**
+  DTM-0009 coding proceeds; DTM-0010/0011 remain sequentially gated on prior-slice approval.
 - **LLM keys (Day-0):** dev + nightly need `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`; PR CI does
   not. Owner provisioning is parallel, not blocking PR CI (fixtures cover it).
-- **Schema for Derived types (SCHEMA — owner approval required):** whether Finding / Issue /
-  Confidence / CAF / OutcomeConfidence / SynthesizedPlanningModel / PlanningArtifact persist
-  as the **generic `derived` projection + CHR payload** (default — no new migration) or need
-  **dedicated typed tables** (new migration ⇒ owner approval, CLAUDE.md). **Default: reuse
-  generic projection + CHR `output_kind`/`output_payload`.** If a worker finds a typed table
-  is required, **STOP and escalate** — do not author a migration.
+- **Schema for Derived types (SCHEMA):** persist via the **generic CHR `output_kind`/
+  `output_payload`** (no typed tables). **RESOLVED for Wave S — owner approved 2026-06-17:**
+  the canonical CHR `output_kind` CHECK + `retain/models.py` `OutputKind` Literal are widened
+  by **exactly two** values (`synthesized_planning_model`, `planning_artifact`) via a new
+  append-only-preserving migration (DTM-0002 predates needing them; append-only discipline
+  unchanged). This authorizes DTM-0009 to add that migration + the 2 Literal values **only**.
+  Wave B kinds (finding/issue/confidence/caf/outcome_confidence/…) already exist in the CHECK
+  — no migration needed for DTM-0010/0011. Any **further** typed-table or kind beyond these
+  two ⇒ STOP and escalate.
 - **Open-TBD (non-blocking, scaffold-only):** Fast/Deep p50/p95 + project-size envelope (A2/A1)
   and the v0 calibration table (F1) are owner-deferred — scaffold the gate/harness, assert no
   numeric pass/fail (Anti-Assumption). The `<60s` ceiling itself is ratified (assert it as the

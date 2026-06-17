@@ -4,7 +4,9 @@ Synthetic trees prove each failure mode independently:
 - a CHR append call-site whose module does NOT emit the append event;
 - a direct retain_stage() call in an event-less module;
 - a missing / empty tests/replay harness;
-- a tampered A6 vocabulary (renamed, extra, or non-literal EVENT_NAMES).
+- a tampered A6 vocabulary (renamed, extra, or non-literal EVENT_NAMES) across
+  every per-contract tuple — WA00R / WA001 / WA002 / WS / COST (DTM-0009) — plus
+  a drifted or short (old 3-way) 5-way union.
 """
 
 from __future__ import annotations
@@ -49,7 +51,22 @@ EVENT_NAMES_WA002: tuple[str, ...] = (
     "knowledge_mutation_recorded",
 )
 
-EVENT_NAMES: tuple[str, ...] = EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002
+EVENT_NAMES_WS: tuple[str, ...] = (
+    "claim_extracted",
+    "planning_artifact_generated",
+    "planning_artifact_regenerated",
+    "synthesized_model_updated",
+)
+
+EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
+
+EVENT_NAMES: tuple[str, ...] = (
+    EVENT_NAMES_WA00R
+    + EVENT_NAMES_WA001
+    + EVENT_NAMES_WA002
+    + EVENT_NAMES_WS
+    + EVENT_NAMES_COST
+)
 '''
 
 PAIRED_MODULE = '''
@@ -194,8 +211,8 @@ def test_missing_wa002_tuple_fails_vocabulary_check(tmp_path) -> None:
         ')\n\n',
         "",
     ).replace(
-        "EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002",
-        "EVENT_NAMES_WA00R + EVENT_NAMES_WA001",
+        "    + EVENT_NAMES_WA002\n",
+        "",
     )
     root = _make_tree(tmp_path, events_src=tampered)
     violations = check_event_vocabulary(root)
@@ -203,13 +220,71 @@ def test_missing_wa002_tuple_fails_vocabulary_check(tmp_path) -> None:
     assert any("union of the per-contract vocabularies" in v for v in violations)
 
 
+def test_renamed_ws_event_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0009 — tampering the IC-WS-SYNTH A6 vocabulary fails the gate."""
+    tampered = GOOD_EVENTS_PY.replace(
+        "synthesized_model_updated", "synthesized_model_changed"
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "EVENT_NAMES_WS != the IC-WS-SYNTH A6 vocabulary" in violations[0]
+
+
+def test_renamed_cost_event_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0009 — renaming the DL-048 cost event fails the gate."""
+    tampered = GOOD_EVENTS_PY.replace("ai_spend_recorded", "ai_cost_logged")
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "EVENT_NAMES_COST != the DL-048 cost vocabulary" in violations[0]
+
+
+def test_missing_ws_tuple_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0009 — dropping the WS tuple (and its union leg) fails both checks."""
+    tampered = GOOD_EVENTS_PY.replace(
+        'EVENT_NAMES_WS: tuple[str, ...] = (\n'
+        '    "claim_extracted",\n'
+        '    "planning_artifact_generated",\n'
+        '    "planning_artifact_regenerated",\n'
+        '    "synthesized_model_updated",\n'
+        ')\n\n',
+        "",
+    ).replace(
+        "    + EVENT_NAMES_WS\n",
+        "",
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert any("EVENT_NAMES_WS not found" in v for v in violations)
+    assert any("union of the per-contract vocabularies" in v for v in violations)
+
+
+def test_missing_cost_tuple_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0009 — dropping the COST tuple (and its union leg) fails both checks."""
+    tampered = GOOD_EVENTS_PY.replace(
+        'EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)\n\n',
+        "",
+    ).replace(
+        "    + EVENT_NAMES_COST\n",
+        "",
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert any("EVENT_NAMES_COST not found" in v for v in violations)
+    assert any("union of the per-contract vocabularies" in v for v in violations)
+
+
 def test_missing_event_names_assignment_fails(tmp_path) -> None:
     root = _make_tree(tmp_path, events_src="OTHER = 1\n")
     violations = check_event_vocabulary(root)
-    assert len(violations) == 4  # all three contract tuples AND the union missing
+    # all five contract tuples (WA00R/WA001/WA002/WS/COST) AND the union missing.
+    assert len(violations) == 6
     assert any("EVENT_NAMES_WA00R not found" in v for v in violations)
     assert any("EVENT_NAMES_WA001 not found" in v for v in violations)
     assert any("EVENT_NAMES_WA002 not found" in v for v in violations)
+    assert any("EVENT_NAMES_WS not found" in v for v in violations)
+    assert any("EVENT_NAMES_COST not found" in v for v in violations)
     assert any("EVENT_NAMES not found" in v for v in violations)
 
 
@@ -230,10 +305,30 @@ def test_non_literal_contract_vocabulary_fails(tmp_path) -> None:
 
 
 def test_inconsistent_union_fails(tmp_path) -> None:
-    """EVENT_NAMES must be exactly WA00R + WA001 + WA002 — a drifted alias fails."""
+    """EVENT_NAMES must be the exact 5-way concatenation — a drifted alias fails."""
     tampered = GOOD_EVENTS_PY.replace(
-        "EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002",
-        "EVENT_NAMES_WA001 + EVENT_NAMES_WA00R + EVENT_NAMES_WA002",
+        "    EVENT_NAMES_WA00R\n    + EVENT_NAMES_WA001\n",
+        "    EVENT_NAMES_WA001\n    + EVENT_NAMES_WA00R\n",
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "union of the per-contract vocabularies" in violations[0]
+
+
+def test_union_dropping_ws_and_cost_legs_fails(tmp_path) -> None:
+    """DTM-0009 — a union that omits the WS/COST legs (the old 3-way form) fails."""
+    tampered = GOOD_EVENTS_PY.replace(
+        "EVENT_NAMES: tuple[str, ...] = (\n"
+        "    EVENT_NAMES_WA00R\n"
+        "    + EVENT_NAMES_WA001\n"
+        "    + EVENT_NAMES_WA002\n"
+        "    + EVENT_NAMES_WS\n"
+        "    + EVENT_NAMES_COST\n"
+        ")",
+        "EVENT_NAMES: tuple[str, ...] = (\n"
+        "    EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002\n"
+        ")",
     )
     root = _make_tree(tmp_path, events_src=tampered)
     violations = check_event_vocabulary(root)
