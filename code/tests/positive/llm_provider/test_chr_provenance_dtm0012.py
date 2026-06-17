@@ -47,7 +47,7 @@ def test_synthesis_chr_records_internal_provider_and_gemma_id() -> None:
         assertion_ids=[f"a{i}" for i in range(4)],
         ctx=ctx,
         input_attestation_version="v1",
-        recompute_trigger=None,
+        recompute_trigger="knowledge-change",
         is_recompute=False,
     )
     gemma = internal_model_id()
@@ -73,7 +73,7 @@ def test_finding_chr_records_internal_provider_and_gemma_id() -> None:
         assertion_ids=F_IDS,
         ctx=ctx,
         input_attestation_version="v1",
-        recompute_trigger=None,
+        recompute_trigger="knowledge-change",
         is_recompute=False,
         model=f_synth_model(),
         declared_outcome=DECLARED_OUTCOME,

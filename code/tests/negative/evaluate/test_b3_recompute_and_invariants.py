@@ -26,7 +26,7 @@ def _run(ctx, **kw):
                       confidence_stage=kw.pop("confidence_stage", "orientation")),
         project_id=PROJECT, ctx=ctx,
         input_attestation_version=kw.pop("version", "v1"),
-        recompute_trigger=kw.pop("trigger", None),
+        recompute_trigger=kw.pop("trigger", "knowledge-change"),
         is_recompute=kw.pop("is_recompute", False),
         model=kw.pop("model", synthesized_model()),
         findings=kw.pop("findings", [risk()]),

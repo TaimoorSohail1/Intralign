@@ -32,7 +32,7 @@ from tests.positive.synthesis.helpers import (
 )
 
 
-def _run_stage(*, is_recompute: bool = False, recompute_trigger=None):
+def _run_stage(*, is_recompute: bool = False, recompute_trigger="knowledge-change"):
     engine, session = synthesis_engine()
     ctx = FakeStageContext()
     drafts = sample_drafts()

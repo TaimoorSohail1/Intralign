@@ -56,7 +56,7 @@ def test_b3_stage_persistence_is_chr_only_never_attested_assertion() -> None:
         assertion_ids=[f"a{i}" for i in range(4)],
         ctx=ctx,
         input_attestation_version="v1",
-        recompute_trigger=None,
+        recompute_trigger="knowledge-change",
         is_recompute=False,
     )
     # Every persisted row is a Wave-S CHR (a receipt) — none is an Attested assertion.
@@ -78,7 +78,7 @@ def test_b3_stage_never_emits_a_retain_admission_event() -> None:
         assertion_ids=[f"a{i}" for i in range(4)],
         ctx=ctx,
         input_attestation_version="v1",
-        recompute_trigger=None,
+        recompute_trigger="knowledge-change",
         is_recompute=False,
     )
     emitted = set(ctx.emitter.names)

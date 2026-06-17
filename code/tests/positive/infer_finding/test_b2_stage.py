@@ -31,7 +31,7 @@ from tests.positive.synthesis.fakes import FakeStageContext
 
 
 def _run(ctx, *, mode="fast", confidence_stage="orientation", is_recompute=False,
-         trigger=None, version="v1", prior_chr_id_for=None):
+         trigger="knowledge-change", version="v1", prior_chr_id_for=None):
     engine, _ = finding_engine(mode=mode, confidence_stage=confidence_stage)
     return run_finding_stage(
         engine=engine,
@@ -158,7 +158,7 @@ def test_b2_confidence_stage_matures_orientation_to_validated_via_recompute() ->
         run_finding_stage(
             engine=engine, project_id=PROJECT, assertions=sample_drafts(),
             assertion_ids=ASSERTION_IDS, ctx=ctx, input_attestation_version="v",
-            recompute_trigger="reanalysis" if recompute else None,
+            recompute_trigger="reanalysis" if recompute else "knowledge-change",
             is_recompute=recompute, model=synthesized_model(mode="deep"),
             declared_outcome=DECLARED_OUTCOME, outcome_anchor=OUTCOME_ANCHOR,
         )

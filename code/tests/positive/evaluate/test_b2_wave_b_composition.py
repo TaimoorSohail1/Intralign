@@ -46,6 +46,9 @@ class _State:
             "declared_outcome": DECLARED_OUTCOME,
             "outcome_anchor": OUTCOME_ANCHOR,
             "input_attestation_version": "v1",
+            # The CHR recompute_trigger (LDM §2.2) — the trigger that fired this
+            # run; never null (the live wiring carries it from the trigger).
+            "recompute_trigger": "knowledge-change",
         }
 
 

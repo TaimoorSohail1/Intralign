@@ -45,6 +45,7 @@ from backend.responsibilities.infer.synthesis import (
     SynthesisEngine,
     SynthesisResult,
 )
+from backend.responsibilities.retain import CognitionHistoryRecord
 from backend.services.llm_provider import LLMProvider, RunBudget
 from shared.epistemic import PlanningArtifact, SynthesizedPlanningModel
 
@@ -235,7 +236,15 @@ def _append_chr(
             "infer stage needs a ChrRepository to append synthesis CHRs (A3.5) "
             "— orchestration builds the graph with one"
         )
-    persisted = ctx.chr_repo.append({"project_id": project_id, **spec})
+    # The Retain-owned repo persists a CognitionHistoryRecord MODEL (it calls
+    # ``record.model_dump(...)``); construct it here, mirroring retain_stage —
+    # the spec already carries the LDM §2.2 CHR fields incl. recompute_trigger.
+    record = CognitionHistoryRecord(
+        project_id=project_id,
+        provenance_ref={"emitted_by": "infer.synthesis"},
+        **spec,
+    )
+    persisted = ctx.chr_repo.append(record)
     chr_id = _persisted_chr_id(persisted)
     emitter.emit(
         "cognition_history_record_appended",

@@ -13,25 +13,36 @@ place.
 from __future__ import annotations
 
 import copy
-import uuid
 from typing import Any
 
+from backend.responsibilities.retain import CognitionHistoryRecord
 from backend.services.observability.events import CollectingEventEmitter
 
 
 class AppendOnlyFakeChrRepo:
-    """Append + read only — no mutation surface (mirrors ChrRepository, A4.2)."""
+    """Append + read only — no mutation surface (mirrors ChrRepository, A4.2).
+
+    Matches the REAL ``ChrRepository.append`` contract (DTM-0013): it takes a
+    ``CognitionHistoryRecord`` MODEL — NOT a bare dict — and, like the real repo,
+    ``model_dump``s it to a stored row and returns a re-validated model carrying
+    the server-shaped fields. A stage that passes a dict (the DTM-0013 defect)
+    now raises here, so the offline suite catches the live failure mode.
+    """
 
     def __init__(self) -> None:
         self.rows: list[dict[str, Any]] = []
 
-    def append(self, record: dict[str, Any]) -> dict[str, Any]:
-        persisted = {
-            "chr_id": str(uuid.uuid4()),
-            **copy.deepcopy(dict(record)),
-        }
-        self.rows.append(persisted)
-        return copy.deepcopy(persisted)
+    def append(self, record: CognitionHistoryRecord) -> CognitionHistoryRecord:
+        if not isinstance(record, CognitionHistoryRecord):
+            raise TypeError(
+                "ChrRepository.append takes a CognitionHistoryRecord model, not "
+                f"a {type(record).__name__} — the real repo calls "
+                "record.model_dump(...) (DTM-0013)"
+            )
+        # Mirror the real repo: persist the model_dump row; return a model.
+        row = record.model_dump(mode="json", exclude_none=True)
+        self.rows.append(row)
+        return CognitionHistoryRecord.model_validate(row)
 
     def rows_for_kind(self, output_kind: str) -> list[dict[str, Any]]:
         return [copy.deepcopy(r) for r in self.rows if r.get("output_kind") == output_kind]

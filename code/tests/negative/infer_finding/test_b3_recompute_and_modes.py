@@ -17,6 +17,7 @@ from backend.responsibilities.infer.finding_stage import (
     OUTPUT_KIND_FINDING,
     run_finding_stage,
 )
+from backend.responsibilities.retain import CognitionHistoryRecord
 from shared.epistemic import Finding
 from tests.positive.infer_finding.helpers import (
     ASSERTION_IDS,
@@ -38,7 +39,7 @@ def _run(ctx, **kw):
     return run_finding_stage(
         engine=engine, project_id=PROJECT, assertions=sample_drafts(),
         assertion_ids=ASSERTION_IDS, ctx=ctx, input_attestation_version=kw.pop("version", "v"),
-        recompute_trigger=kw.pop("trigger", None), is_recompute=kw.pop("is_recompute", False),
+        recompute_trigger=kw.pop("trigger", "knowledge-change"), is_recompute=kw.pop("is_recompute", False),
         model=synthesized_model(), declared_outcome=DECLARED_OUTCOME,
         outcome_anchor=OUTCOME_ANCHOR, **kw,
     )
@@ -62,13 +63,25 @@ def test_b3_recompute_appends_never_reduces_history() -> None:
 
 
 def test_b3_appended_finding_chr_cannot_be_overwritten_via_returned_row() -> None:
-    """A returned 'persisted' row is a deep copy — mutating it never touches storage."""
+    """The returned record is independent — mutating it never touches storage.
+
+    The real repo (and the fake) re-validate a NEW model from the stored row;
+    mutating the returned model's payload must not reach the stored row.
+    """
     repo = AppendOnlyFakeChrRepo()
     persisted = repo.append(
-        {"project_id": PROJECT, "output_kind": OUTPUT_KIND_FINDING,
-         "output_payload": {"summary": "original"}}
+        CognitionHistoryRecord(
+            project_id=PROJECT,
+            output_kind=OUTPUT_KIND_FINDING,
+            output_payload={"summary": "original"},
+            input_attestation_version="v1",
+            model_or_rule_version={"model_version": "v0"},
+            upstream_lineage={},
+            recompute_trigger="knowledge-change",
+            provenance_ref={"emitted_by": "test"},
+        )
     )
-    persisted["output_payload"]["summary"] = "tampered"
+    persisted.output_payload["summary"] = "tampered"
     stored = repo.rows_for_kind(OUTPUT_KIND_FINDING)[0]
     assert stored["output_payload"]["summary"] == "original"
 

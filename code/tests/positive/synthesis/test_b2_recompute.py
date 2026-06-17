@@ -33,7 +33,7 @@ def _ids() -> list[str]:
     return [f"assertion-{i}" for i in range(4)]
 
 
-def _run(ctx, *, is_recompute, version, trigger=None):
+def _run(ctx, *, is_recompute, version, trigger="knowledge-change"):
     engine, _ = synthesis_engine()
     return run_synthesis_stage(
         engine=engine,

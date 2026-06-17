@@ -57,7 +57,7 @@ def test_b3_spend_event_is_always_emitted_no_silent_run() -> None:
     ctx = FakeStageContext()
     run_evaluate_stage(
         engine=engine(), project_id=PROJECT, findings=[risk()], ctx=ctx,
-        input_attestation_version="v1", recompute_trigger=None, is_recompute=False,
+        input_attestation_version="v1", recompute_trigger="knowledge-change", is_recompute=False,
         model=synthesized_model(), mode="fast",
     )
     assert ctx.emitter.names.count("ai_spend_recorded") == 1

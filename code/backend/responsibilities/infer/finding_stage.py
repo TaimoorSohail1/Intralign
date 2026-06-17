@@ -39,6 +39,7 @@ from backend.responsibilities.infer.finding import (
     FindingEngine,
     FindingResult,
 )
+from backend.responsibilities.retain import CognitionHistoryRecord
 from backend.services.llm_provider import LLMProvider, RunBudget
 from shared.epistemic import Finding
 
@@ -205,7 +206,15 @@ def _append_chr(
             "infer Finding stage needs a ChrRepository to append Finding CHRs "
             "(A3.5) — orchestration builds the graph with one"
         )
-    persisted = ctx.chr_repo.append({"project_id": project_id, **spec})
+    # The Retain-owned repo persists a CognitionHistoryRecord MODEL (it calls
+    # ``record.model_dump(...)``); construct it here, mirroring retain_stage —
+    # the spec already carries the LDM §2.2 CHR fields incl. recompute_trigger.
+    record = CognitionHistoryRecord(
+        project_id=project_id,
+        provenance_ref={"emitted_by": "infer.finding"},
+        **spec,
+    )
+    persisted = ctx.chr_repo.append(record)
     chr_id = _persisted_chr_id(persisted)
     emitter.emit(
         "cognition_history_record_appended",

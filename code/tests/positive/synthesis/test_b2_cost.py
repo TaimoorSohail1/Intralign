@@ -75,7 +75,7 @@ def test_b2_over_budget_emits_ai_spend_recorded_with_the_trust_signal() -> None:
         assertion_ids=_ids(),
         ctx=ctx,
         input_attestation_version="v1",
-        recompute_trigger=None,
+        recompute_trigger="knowledge-change",
         is_recompute=False,
     )
     spend = [p for n, p in ctx.emitter.events if n == "ai_spend_recorded"]

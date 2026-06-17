@@ -128,6 +128,24 @@ def _infer_inputs_from_state(state):
     inputs.setdefault("assertion_ids", ASSERTION_IDS)
     inputs.setdefault("declared_outcome", DECLARED_OUTCOME)
     inputs.setdefault("outcome_anchor", OUTCOME_ANCHOR)
+    # The recompute trigger that fired this run IS the CHR's recompute_trigger
+    # (LDM §2.2) — carried from the validated trigger, mirroring retain_stage
+    # (which reads trigger.trigger_type). Without it the CHR model rejects a
+    # null recompute_trigger and the live append fails.
+    #
+    # The TriggerClaim only carries trigger_type/project_id/information_changed/
+    # source/emissions — not free-form inputs — so the per-run input set is
+    # reconstructed HERE from the surviving trigger_type (the live wiring): the
+    # first admit (`knowledge-change`) reads the v1 Attested set; a recompute
+    # (`reanalysis`) reads the superseding v2 set. This keeps the two generations'
+    # input_attestation_version distinct + reconstructable from CHR lineage.
+    trigger = state.trigger or {}
+    trigger_type = trigger.get("trigger_type")
+    if trigger_type:
+        inputs.setdefault("recompute_trigger", trigger_type)
+        is_recompute = trigger_type == "reanalysis"
+        inputs.setdefault("is_recompute", is_recompute)
+        inputs.setdefault("input_attestation_version", "v2" if is_recompute else "v1")
     return inputs
 
 

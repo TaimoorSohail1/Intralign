@@ -25,8 +25,25 @@ from backend.responsibilities.infer.stage import (
     OUTPUT_KIND_PLANNING_ARTIFACT,
     run_synthesis_stage,
 )
+from backend.responsibilities.retain import CognitionHistoryRecord
 from tests.positive.synthesis.fakes import AppendOnlyFakeChrRepo, FakeStageContext
 from tests.positive.synthesis.helpers import PROJECT, sample_drafts, synthesis_engine
+
+
+def _chr(**overrides) -> CognitionHistoryRecord:
+    """A valid CHR model (the real ChrRepository.append contract — DTM-0013)."""
+    fields: dict = {
+        "project_id": PROJECT,
+        "output_kind": OUTPUT_KIND_PLANNING_ARTIFACT,
+        "output_payload": {"body": "original"},
+        "input_attestation_version": "v1",
+        "model_or_rule_version": {"model_version": "v0"},
+        "upstream_lineage": {},
+        "recompute_trigger": "knowledge-change",
+        "provenance_ref": {"emitted_by": "test"},
+    }
+    fields.update(overrides)
+    return CognitionHistoryRecord(**fields)
 
 
 def _artifact(**overrides):
@@ -107,13 +124,15 @@ def test_b3_chr_repo_has_no_overwrite_surface() -> None:
 
 
 def test_b3_appended_chr_cannot_be_overwritten_via_a_returned_row() -> None:
-    """A returned 'persisted' row is a deep copy — mutating it never touches storage."""
+    """The returned record is independent — mutating it never touches storage.
+
+    The real repo re-validates a NEW model from the stored row (independent of
+    the persisted row); the fake mirrors that. Mutating the returned model's
+    payload must not reach the stored row.
+    """
     repo = AppendOnlyFakeChrRepo()
-    persisted = repo.append(
-        {"project_id": PROJECT, "output_kind": OUTPUT_KIND_PLANNING_ARTIFACT,
-         "output_payload": {"body": "original"}}
-    )
-    persisted["output_payload"]["body"] = "tampered"
+    persisted = repo.append(_chr(output_payload={"body": "original"}))
+    persisted.output_payload["body"] = "tampered"
     stored = repo.rows_for_kind(OUTPUT_KIND_PLANNING_ARTIFACT)[0]
     assert stored["output_payload"]["body"] == "original"  # storage is intact
 
@@ -126,7 +145,7 @@ def test_b3_stage_appends_never_reduce_history_on_recompute() -> None:
     run_synthesis_stage(
         engine=engine, project_id=PROJECT, assertions=sample_drafts(),
         assertion_ids=ids, ctx=ctx, input_attestation_version="v1",
-        recompute_trigger=None, is_recompute=False,
+        recompute_trigger="knowledge-change", is_recompute=False,
     )
     before = len(ctx.chr_repo.rows)
     run_synthesis_stage(

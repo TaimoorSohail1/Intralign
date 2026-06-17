@@ -40,6 +40,7 @@ from backend.responsibilities.evaluate.engine import (
     EvaluationResult,
 )
 from backend.responsibilities.evaluate.scoring import CAF_RULE_VERSION
+from backend.responsibilities.retain import CognitionHistoryRecord
 from backend.services.llm_provider import estimate_cost_usd, routing_for_tier
 from shared.epistemic import (
     CAFAssessment,
@@ -384,7 +385,14 @@ def _append_chr(
         "recompute_trigger": recompute_trigger,
         "supersedes_chr_id": supersedes_chr_id,
     }
-    persisted = ctx.chr_repo.append({"project_id": project_id, **spec})
+    # The Retain-owned repo persists a CognitionHistoryRecord MODEL (it calls
+    # ``record.model_dump(...)``); construct it here, mirroring retain_stage.
+    record = CognitionHistoryRecord(
+        project_id=project_id,
+        provenance_ref={"emitted_by": "evaluate"},
+        **spec,
+    )
+    persisted = ctx.chr_repo.append(record)
     chr_id = _persisted_chr_id(persisted)
     ctx.emitter.emit(
         "cognition_history_record_appended",

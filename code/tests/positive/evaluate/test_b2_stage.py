@@ -27,7 +27,7 @@ from tests.positive.synthesis.fakes import FakeStageContext
 
 
 def _run(ctx, *, findings, mode="fast", confidence_stage="orientation",
-         is_recompute=False, trigger=None, version="v1", model=None,
+         is_recompute=False, trigger="knowledge-change", version="v1", model=None,
          prior_chr_id_for=None, prior_state=None):
     eng = engine(mode=mode, confidence_stage=confidence_stage)
     return run_evaluate_stage(
