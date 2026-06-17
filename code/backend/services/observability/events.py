@@ -19,6 +19,10 @@ The vocabulary is pinned PER CONTRACT (deep-task decision #1, DTM-0007):
   decision #9), in contract order.
 - ``EVENT_NAMES_WB_INFER`` — EXACTLY the two IC/OBS-WB-INFER A6 names (DTM-0010;
   decision #9), in contract order.
+- ``EVENT_NAMES_WB_EVAL`` — EXACTLY the five IC/OBS-WB-EVAL A6 names (DTM-0011;
+  decision #9), in contract order — the three OBS-WB-EVAL §2.3 events
+  (Issue Generated / CAF Assessed / Outcome Confidence Computed) plus the two
+  DL-047 trust signals (Understanding State Changed / false-confidence flag).
 - ``EVENT_NAMES_COST`` — the single shared DL-048 spend event
   (``ai_spend_recorded``), introduced in DTM-0009 and reused by Wave B.
 - ``EVENT_NAMES`` — the union (concatenation) the emitters accept; kept as the
@@ -87,6 +91,20 @@ EVENT_NAMES_WB_INFER: tuple[str, ...] = (
     "finding_superseded",
 )
 
+# IC/OBS-WB-EVAL A6 — the five Evaluate events, exactly (decision #9; DTM-0011).
+# Pinned verbatim against OBS-WB-EVAL §2.3 / A6 ("Issue Generated"; "CAF
+# Assessed"; "Outcome Confidence Computed") plus the DL-047 additions
+# ("Understanding State Changed"; the false-confidence flag event, CONF-06). The
+# per-emission ``cognition_history_record_appended`` is reused from the WA00R
+# set (never duplicated). Wave B / Evaluate.
+EVENT_NAMES_WB_EVAL: tuple[str, ...] = (
+    "issue_generated",
+    "caf_assessed",
+    "outcome_confidence_computed",
+    "understanding_state_changed",
+    "false_confidence_flagged",
+)
+
 # DL-048 cost-governance — the single shared spend event (decision #9),
 # introduced in DTM-0009 and reused by Wave B. "AI Spend Recorded" (OBS §3).
 EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
@@ -98,6 +116,7 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_WA002
     + EVENT_NAMES_WS
     + EVENT_NAMES_WB_INFER
+    + EVENT_NAMES_WB_EVAL
     + EVENT_NAMES_COST
 )
 
@@ -131,7 +150,7 @@ class CollectingEventEmitter:
             raise UnknownEventError(
                 f"unknown contract event {event_name!r} — the vocabulary is "
                 "exactly IC-WA-00R A6 + IC-WA-001 A6 + IC-WA-002 A6 + "
-                "IC-WS-SYNTH A6 + IC-WB-INFER A6 + DL-048 cost: "
+                "IC-WS-SYNTH A6 + IC-WB-INFER A6 + IC-WB-EVAL A6 + DL-048 cost: "
                 f"{', '.join(EVENT_NAMES)}"
             )
         self.events.append((event_name, dict(payload)))

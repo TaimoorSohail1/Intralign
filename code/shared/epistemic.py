@@ -277,3 +277,230 @@ class Finding(CognitionEntity):
         default=EpistemicState.DERIVED,
         description="Pinned derived — a Finding is never Attested-as-truth.",
     )
+
+
+# =============================================================================
+# Wave B (DTM-0011, IC-WB-EVAL) — the Evaluate cognition types. Evaluate is the
+# SINGLE producer (one-producer rule #1) of: Issue (Core), the Severity/
+# Confidence/Reliability attributes, the CAFAssessment (Core, derived), and the
+# OutcomeConfidence (Core, derived aggregate). ALL are DERIVED Cognition
+# (recomputable; never written to the canonical store as Attested — hard rule
+# #2). Evaluate reads Findings (Infer) + Attested knowledge; it does NOT
+# generate Findings (Infer's), recommendations/clarifications (Advise's),
+# resolve a conflict, accept an interpretation, govern exposure, or change any
+# value outside recompute.
+#
+# Scoring is the v0 CAF/Confidence formula (ADR-0006; CAF_CONFIDENCE_V0):
+# per-dimension index = 100·Π(1−impactᵢ); the three co-equal dims consolidate
+# via a power-mean (p≤1) with a floor ε; bands 0–49 / 50–74 / 75–100 with a ±3
+# edge guard. RELIABILITY is a SEPARATE qualifier label, NEVER multiplied into
+# the number (Reliability Model v2). Confidence = trust in UNDERSTANDING, NEVER
+# project health / readiness / probability / a bare score — it reduces to its
+# basis (band + reliability qualifier + the basis it was computed over).
+#
+# mode / confidence_stage / understanding_state are ATTRIBUTES, not objects
+# (DL-046 / DL-047 AE-04); carried on each emission and (downstream) its CHR.
+# They change ONLY via recompute.
+# =============================================================================
+
+# IC-WB-EVAL — Severity is an ATTRIBUTE of an Issue (Object Model §8), not a
+# standalone object. The label set is the analysis-state severity, NOT a numeric
+# score (no number leaks out as "the score" — that would be project health).
+Severity = Literal["info", "low", "moderate", "high", "critical"]
+
+# Reliability is a SEPARATE qualifier label (Reliability Model v2) — a source-
+# trust attribute, NEVER arithmetically combined into Confidence. Three levels.
+ReliabilityLevel = Literal["low", "moderate", "high"]
+
+# Confidence band (Calibration §2): 0–49 Low / 50–74 Medium / 75–100 High, with
+# the ±3 edge guard applied at computation (a value within 3 pts of a boundary
+# is the LOWER band — never overstate). A BAND, never a bare number to the user.
+ConfidenceBand = Literal["low", "medium", "high"]
+
+# The CAF dimensions (Calibration Decision 001 D5 — co-equal, no hierarchy).
+CAFDimension = Literal["clarity", "alignment", "feasibility"]
+
+
+class Reliability(CognitionEntity):
+    """A source-trust qualifier (Reliability Model v2) — a label, never a number.
+
+    Reliability QUALIFIES Confidence; it is NEVER multiplied into the confidence
+    arithmetic (Doctrine; v0 §3). It carries the basis it was judged on (e.g.
+    coverage / evidence support) for explainability, but exposes no score.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    level: ReliabilityLevel = Field(..., description="low | moderate | high (a label).")
+    basis: str = Field(
+        ..., description="Why this reliability level (coverage / evidence support)."
+    )
+    model_or_rule_version: str = Field(..., description="rule/model version stamp.")
+    mode: Mode
+    confidence_stage: ConfidenceStage = "orientation"
+    understanding_state: UnderstandingState = "initial"
+    epistemic_state: Literal[EpistemicState.DERIVED] = Field(
+        default=EpistemicState.DERIVED,
+        description="Pinned derived — Reliability is never Attested-as-truth.",
+    )
+
+
+class Confidence(CognitionEntity):
+    """Trust in OSLO's UNDERSTANDING — banded, reliability-qualified (IC-WB-EVAL).
+
+    Confidence is NEVER project health / readiness / probability / a score
+    (negative tests enforce). It reduces to its BASIS: a band, the reliability
+    qualifier, and the inputs it was computed over. The raw 0–100 ``index`` is
+    retained for explainability + determinism (exact rule replay) but the
+    USER-FACING value is the ``band`` (a value within ±3 of a boundary is the
+    lower band — never overstate). The shape carries NO ``score`` / ``health`` /
+    ``probability`` field (``extra='forbid'`` makes that structurally impossible).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    # The computed 0–100 understanding-maturity index (explainability + exact
+    # replay). NOT rendered to the user as a probability/health number.
+    index: float = Field(..., ge=0.0, le=100.0, description="0–100 maturity index.")
+    band: ConfidenceBand = Field(..., description="low | medium | high (±3 edge guard).")
+    reliability_qualifier: ReliabilityLevel = Field(
+        ..., description="The separate reliability label (never multiplied in)."
+    )
+    basis: tuple[str, ...] = Field(
+        ..., min_length=1,
+        description="The basis this confidence reduces to (never a bare number).",
+    )
+    model_or_rule_version: str = Field(..., description="rule/model version stamp.")
+    mode: Mode
+    confidence_stage: ConfidenceStage = "orientation"
+    understanding_state: UnderstandingState = "initial"
+    epistemic_state: Literal[EpistemicState.DERIVED] = Field(
+        default=EpistemicState.DERIVED,
+        description="Pinned derived — Confidence is never Attested-as-truth.",
+    )
+
+
+class CAFDimensionScore(BaseModel):
+    """One CAF dimension: integrity index · band · per-dimension reliability.
+
+    Each dimension is co-equal (no static weight, no hierarchy). The ``index``
+    is the v0 per-dimension score (100·Π(1−impactᵢ), clamped [0,100]); the
+    ``band`` applies the same ±3 edge guard; ``reliability`` is the per-dimension
+    qualifier label (separate, never multiplied in).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    dimension: CAFDimension
+    index: float = Field(..., ge=0.0, le=100.0)
+    band: ConfidenceBand
+    reliability: ReliabilityLevel
+
+
+class CAFAssessment(CognitionEntity):
+    """Clarity / Alignment / Feasibility — three co-equal dimensions (IC-WB-EVAL).
+
+    A Derived aggregate: each dimension a (index · band · per-dimension
+    reliability) triple. No dimension dominates by default; weakness is felt
+    (power-mean aggregation lives in the OutcomeConfidence, not here). Carries no
+    standalone severity/score field beyond the per-dimension indices.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    clarity: CAFDimensionScore
+    alignment: CAFDimensionScore
+    feasibility: CAFDimensionScore
+    model_or_rule_version: str = Field(..., description="rule/model version stamp.")
+    derived_from_findings: tuple[str, ...] = Field(
+        default=(), description="Lineage: the Finding ids this assessment reduced."
+    )
+    mode: Mode
+    confidence_stage: ConfidenceStage = "orientation"
+    understanding_state: UnderstandingState = "initial"
+    epistemic_state: Literal[EpistemicState.DERIVED] = Field(
+        default=EpistemicState.DERIVED,
+        description="Pinned derived — a CAFAssessment is never Attested-as-truth.",
+    )
+
+    def dimensions(self) -> tuple[CAFDimensionScore, ...]:
+        return (self.clarity, self.alignment, self.feasibility)
+
+
+class OutcomeConfidence(CognitionEntity):
+    """Aggregate alignment between current state and the declared outcome (IC-WB-EVAL).
+
+    The Derived aggregate the MRI shows: the three CAF dimensions consolidated
+    through the v0 power-mean (between an average and a minimum), banded and
+    reliability-qualified. Like ``Confidence`` it is trust in UNDERSTANDING, NEVER
+    project health / probability. ``false_confidence_flagged`` is the CONF-06
+    trust signal (high band on low reliability). Reduces to its basis (never a
+    bare number; the ``index`` is for explainability + exact replay only).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    index: float = Field(..., ge=0.0, le=100.0, description="0–100 aggregate index.")
+    band: ConfidenceBand
+    reliability_qualifier: ReliabilityLevel = Field(
+        ..., description="The separate reliability label (never multiplied in)."
+    )
+    # CONF-06: high band built on low reliability/coverage — the dangerous 4th
+    # state. A trust signal surfaced HERE (and evented), never silently dropped.
+    false_confidence_flagged: bool = Field(
+        default=False,
+        description="CONF-06 — high confidence on low-reliability understanding.",
+    )
+    basis: tuple[str, ...] = Field(
+        ..., min_length=1, description="The basis it reduces to (never a bare number)."
+    )
+    model_or_rule_version: str = Field(..., description="rule/model version stamp.")
+    derived_from_findings: tuple[str, ...] = Field(
+        default=(), description="Lineage: the Finding ids this aggregate reduced."
+    )
+    mode: Mode
+    confidence_stage: ConfidenceStage = "orientation"
+    understanding_state: UnderstandingState = "initial"
+    epistemic_state: Literal[EpistemicState.DERIVED] = Field(
+        default=EpistemicState.DERIVED,
+        description="Pinned derived — OutcomeConfidence is never Attested-as-truth.",
+    )
+
+
+class Issue(CognitionEntity):
+    """A prioritized Finding (IC-WB-EVAL) — Severity assigned by Evaluate; Derived.
+
+    Evaluate forms an Issue FROM a Finding by assigning a ``severity`` attribute
+    (Object Model §8 — Severity is an attribute, not a standalone object). The
+    Issue carries the source Finding lineage (the audit answer to "which Finding
+    became this Issue"). Derived/recomputable; never Attested-as-truth (rule #2).
+
+    Forbidden surface (``extra='forbid'``): an Issue carries NO recommendation /
+    clarification / resolution / confidence-as-health field — those belong to
+    Advise (recommendations) and Evaluate's separate Confidence (trust, not
+    health). Severity is a LABEL, never a leaked probability/score.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    issue_id: str = Field(..., description="Stable identity (recompute supersedes same id).")
+    finding_id: str = Field(..., description="Lineage: the source Finding this prioritizes.")
+    finding_type: FindingType = Field(..., description="The source Finding's type (label).")
+    severity: Severity = Field(..., description="The assigned severity attribute (a label).")
+    summary: str = Field(..., description="The prioritized issue, stated plainly.")
+    evidence_anchors: tuple[str, ...] = Field(
+        ..., min_length=1, description="Lineage carried from the source Finding."
+    )
+    model_or_rule_version: str = Field(..., description="rule/model version stamp.")
+    mode: Mode
+    confidence_stage: ConfidenceStage = "orientation"
+    understanding_state: UnderstandingState = "initial"
+    epistemic_state: Literal[EpistemicState.DERIVED] = Field(
+        default=EpistemicState.DERIVED,
+        description="Pinned derived — an Issue is never Attested-as-truth.",
+    )

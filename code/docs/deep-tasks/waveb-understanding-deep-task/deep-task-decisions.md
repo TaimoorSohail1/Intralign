@@ -120,6 +120,12 @@ restate it. **Branch:** `feat/phase3-waveb-understanding` (ADRs already committe
   `state.py`, `runner.py`, `checkpointer.py` are **read-only** (a topology/state change ⇒
   STOP and escalate). Existing `retain`/`perceive`/`adapt` modules are read-only except the
   additive `ClaimExtractor` implementation point (DTM-0009).
+- **Infer-node fusion (EM ruling 2026-06-17):** the single `infer` chain node holds one fn,
+  but Infer now spans synthesis (DTM-0009) + finding (DTM-0010), each proven at stage-fn
+  level. Resolution: DTM-0011 adds an **additive** `orchestration/wave_b.py` that composes a
+  single `infer` stage (synthesis→finding, by *calling* the frozen stage fns) and registers
+  `evaluate`, then proves one live end-to-end. No edit to the frozen stage files or graph
+  topology. This is the only orchestration-write authorized for Wave B.
 
 ## Open conflicts / escalations (must resolve before the affected slice codes)
 
