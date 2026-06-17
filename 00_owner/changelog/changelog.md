@@ -705,6 +705,34 @@ Each changelog entry contains:
 - **Change Summary:** Recorded the owner ruling resolving **C-1**, the "Project MRI" flagship-term conflict. **Adopted** the Master Spec **per-project** "Project MRI" (R1 core: the per-project understanding visualization) as the canonical R1 meaning. The **whole-portfolio integrity-scan** concept (Baseline / Capability Matrix, I14 / Wave 3) is **renamed** to a distinct term (proposed **Portfolio Integrity Scan**, final term owner-confirmed) to remove the collision; a **Disambiguation Register** entry + doc-integrity regression guard will track the split (per DL-053). **MRI validation is held until the rename lands.** Unblocks Phase 1 MRI work (cross-refs DL-059 / the P-4 exit-gate track). This entry records the decision only; the spec edits are a resulting action, not yet applied.
 - **Supersession Reference:** None. Resolves the open C-1 owner-action item.
 
+### CHG-089 — DL-058: archive reversibility in R1 (UP-3 affirmed)
+
+- **Date:** 2026-06-16 · **Authorizing Decision:** DL-058.
+- **Affected Artifacts:** `00_owner/decisions/decision_log.md` (DL-058 recorded in numeric slot + Governance-Notes summary).
+- **Change Summary:** Recorded the owner ruling that **archive is reversible in R1** (UP-3 holds); the PR #21 "no unarchive in R1" nod is rejected. Unarchive-in-R1 is a plan-vs-build gap to implement in Wave B; M6 hold lifted. (Re-landed clean via the governance-catchup PR after the original PR #25 was closed.)
+- **Supersession Reference:** Supersedes the "no unarchive in R1" implementation nod from PR #21.
+
+### CHG-090 — DL-062: confidence-dimension reconciliation — CAF first-class (C-2)
+
+- **Date:** 2026-06-16 · **Authorizing Decision:** DL-062.
+- **Affected Artifacts:** `00_owner/decisions/decision_log.md` (DL-062); `00_owner/CANONICAL_GLOSSARY.md` (Disambiguation Register: first-class confidence dimension = CAF); `90_research/historical_artifacts/OSLO_ARCHITECTURE_BASELINE_V1.md` (§4 Composite Confidence marked superseded-for-R1, non-binding). Affirms (no change) the V2 scoring models.
+- **Change Summary:** Affirmed **CAF (Clarity/Alignment/Feasibility) as the first-class confidence dimensions** for R1, with **Reliability** (Coverage/Evidence Availability/Assessability) as the qualifier. Doctrine-06 drivers preserved as Reliability sub-axes or inspectable CAF contributors; **decomposability is a binding condition** (no opaque Clarity rollup; QA negative test required). The "nine peer dimensions" claim (only in non-canonical Baseline V1 §4) is marked superseded-for-R1. Numeric calibration remains Open-TBD F1.
+- **Supersession Reference:** None canonical. Marks Baseline-V1 §4 superseded-for-R1.
+
+### CHG-091 — DL-063: Governance v2 — Risk-Tiered Routing (Class-A; model ratified, delegation staged)
+
+- **Date:** 2026-06-16 · **Authorizing Decision:** DL-063.
+- **Affected Artifacts:** `00_owner/decisions/decision_log.md` (DL-063 + Governance Notes); `00_owner/decisions/PROPOSAL_GOVERNANCE_V2_RISK_TIERED_ROUTING.md` + `REVIEW_GOVERNANCE_V2_RISK_TIERED_ROUTING.md` (copied into repo). **Follow-on:** Framework 001 doc amendment encoding the §4 table; CODEOWNERS re-scope + Class-D flip (Stage 3, on EM-seat activation).
+- **Change Summary:** Ratified **Governance v2 Risk-Tiered Routing** — the 5-class model (A Canon · B Seam · C Product · D Engineering · E Operational), role seats (Owner = governance + product lead; EM = Hamza; Developer = Kashif), and the delegation safety rail. **Class-D delegation staged behind the per-gate red-proof; EM-seat activation deferred ~3 weeks** (owner remains Class-D approver in the interim; absent EM not set as required CODEOWNER until activation). §7/§10 activate now.
+- **Supersession Reference:** None. Amends Framework 001 routing; narrows the uniform-gating default without removing it.
+
+### CHG-092 — DL-064: C-3 experience↔architecture crosswalk (responsibility-primary §0)
+
+- **Date:** 2026-06-16 · **Authorizing Decision:** DL-064.
+- **Affected Artifacts:** `20_handoff/traceability/EXPERIENCE_SURFACE_RESPONSIBILITY_CROSSWALK_V1.md` (new — the §0 crosswalk); `00_owner/decisions/decision_log.md` (DL-064).
+- **Change Summary:** Resolved **C-3** (missing experience→layer mapping) by ratifying a **responsibility-primary** crosswalk: every Master Spec experience surface maps to one of the seven canonical responsibilities; commodity surfaces map to none (DL-043 C/E/F). Legacy layer names deprecated/secondary per DL-043 + DL-053. Every mapping traces to ratified canon — none inferred. The artifact is the source for §0 of Architecture Baseline V2.
+- **Supersession Reference:** None. C-3 was a gap, not a contradiction; documentation close-out.
+
 ---
 
 ## Governance Notes
