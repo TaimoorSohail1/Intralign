@@ -761,6 +761,13 @@ Each changelog entry contains:
 - **Change Summary:** Ratified the **scope + design** for making the Founder Console Decide lane the one-click front door for landing decisions, by automating the DL-065 flow as a **server-side GitHub Actions workflow** (`dl-land.yml`) — author + number-at-merge + index + changelog + gate + open PR — with **the owner's merge kept as the explicit human step** (never auto-merge canon; fail-closed on the gate; R3/R5 preserved). Server-side execution avoids the local-sandbox credential/`.git/index.lock` and stale-clone mis-numbering problems. The engineering **build** (`dl-land.yml` + Console button wiring) is the follow-on realization.
 - **Supersession Reference:** None. Realizes DL-063 R5 atop DL-065; additive.
 
+### CHG-097 — DL-067 realization: the `dl-land` workflow + helper
+
+- **Date:** 2026-06-16 · **Authorizing Decision:** DL-067.
+- **Affected Artifacts:** `.github/workflows/dl-land.yml` (new — server-side DL landing); `tools/dl_records.py` (new `land` + `next-chg` subcommands; GITHUB_OUTPUT integration); `00_owner/decisions/records/README.md` (preferred-landing-path section).
+- **Change Summary:** Built the **`dl-land` GitHub Actions workflow** (workflow_dispatch: `title`/`body`/`slug`/`class`/`decided_by`) that realizes DL-067: it numbers the decision off current `main` (no stale-clone risk), writes the record, regenerates the index, appends the changelog, runs the **fail-closed** doc-integrity gate, refuses to start if a `decision/*` PR is already open (R3), pushes a branch, and **opens a PR — never merges** (owner-gated). `dl_records.py land` centralizes the record/index/changelog logic and is unit-tested in isolation. **Follow-on:** wire the Founder Console "Approve & Land" button to dispatch this workflow.
+- **Supersession Reference:** None. Engineering realization of DL-067.
+
 ---
 
 ## Governance Notes

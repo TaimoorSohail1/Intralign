@@ -116,13 +116,67 @@ def regenerate_index():
     else:
         new = text.rstrip() + "\n\n---\n\n" + block + "\n"
     LEGACY_LOG.write_text(new, encoding="utf-8")
-    print(f"index: wrote {len(record_files())} record(s) into {LEGACY_LOG.relative_to(ROOT)}")
+    try:
+        where = LEGACY_LOG.relative_to(ROOT)
+    except ValueError:
+        where = LEGACY_LOG
+    n = len([r for r in record_files() if not r.name.startswith("DL-PENDING")])
+    print(f"index: wrote {n} record(s) into {where}")
+
+
+CHANGELOG = ROOT / "00_owner/changelog/changelog.md"
+
+
+def next_chg():
+    if not CHANGELOG.exists():
+        return 1
+    nums = [int(n) for n in re.findall(r"^###\s*CHG-(\d{3,})\b",
+            CHANGELOG.read_text(encoding="utf-8", errors="ignore"), re.M)]
+    return (max(nums) + 1) if nums else 1
+
+
+def _slugify(s):
+    s = re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
+    return s or "decision"
+
+
+def land(slug, title, body, decided_by, klass, date=None):
+    """Create a numbered record from inputs, regenerate the index, append a CHG.
+    Returns (dl_number, chg_number). Used by the dl-land workflow (DL-067)."""
+    import datetime
+    date = date or datetime.date.today().isoformat()
+    slug = _slugify(slug)
+    dl = next_number()
+    chg = next_chg()
+    RECORDS.mkdir(parents=True, exist_ok=True)
+    rec = RECORDS / f"DL-{dl:03d}-{slug}.md"
+    header = (f"# DL-{dl:03d} — {title}\n\n"
+              f"- **Date:** {date} · **Status:** Ratified · **Decided by:** {decided_by}\n"
+              f"- **Class:** {klass}\n\n")
+    rec.write_text(header + body.strip() + "\n", encoding="utf-8")
+    regenerate_index()
+    chg_block = (f"### CHG-{chg:03d} — DL-{dl:03d}: {title}\n\n"
+                 f"- **Date:** {date} · **Authorizing Decision:** DL-{dl:03d}.\n"
+                 f"- **Affected Artifacts:** `00_owner/decisions/records/{rec.name}` (new); "
+                 f"`00_owner/decisions/decision_log.md` (records index regenerated).\n"
+                 f"- **Change Summary:** {title}. Landed via the dl-land workflow (DL-067).\n"
+                 f"- **Supersession Reference:** None.\n")
+    ctext = CHANGELOG.read_text(encoding="utf-8", errors="ignore")
+    marker = "\n---\n\n## Governance Notes"
+    if marker in ctext:
+        ctext = ctext.replace(marker, "\n" + chg_block + marker, 1)
+    else:
+        ctext = ctext.rstrip() + "\n\n" + chg_block
+    CHANGELOG.write_text(ctext, encoding="utf-8")
+    return dl, chg, slug
 
 
 def main(argv):
     cmd = argv[1] if len(argv) > 1 else ""
     if cmd == "next":
         print(f"DL-{next_number():03d}")
+    elif cmd == "next-chg":
+        print(f"CHG-{next_chg():03d}")
     elif cmd == "index":
         regenerate_index()
     elif cmd == "check":
@@ -131,6 +185,24 @@ def main(argv):
             print("ERROR " + e)
         print("PASS" if not errs else f"FAIL ({len(errs)} record error(s))")
         return 1 if errs else 0
+    elif cmd == "land":
+        import argparse
+        p = argparse.ArgumentParser(prog="dl_records.py land")
+        p.add_argument("--slug", required=True)
+        p.add_argument("--title", required=True)
+        p.add_argument("--body-file", required=True)
+        p.add_argument("--decided-by", default="Idris (Founder Console)")
+        p.add_argument("--class", dest="klass", default="A")
+        p.add_argument("--date", default=None)
+        a = p.parse_args(argv[2:])
+        body = Path(a.body_file).read_text(encoding="utf-8")
+        dl, chg, slug = land(a.slug, a.title, body, a.decided_by, a.klass, a.date)
+        print(f"landed DL-{dl:03d} (CHG-{chg:03d}) — records/DL-{dl:03d}-{slug}.md")
+        import os
+        gho = os.environ.get("GITHUB_OUTPUT")
+        if gho:
+            with open(gho, "a", encoding="utf-8") as f:
+                f.write(f"dl={dl:03d}\nchg={chg:03d}\nslug={slug}\nbranch=decision/dl-{dl:03d}-{slug}\n")
     else:
         print(__doc__)
         return 2
