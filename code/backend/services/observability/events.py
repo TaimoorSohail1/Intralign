@@ -17,6 +17,8 @@ The vocabulary is pinned PER CONTRACT (deep-task decision #1, DTM-0007):
   order (DTM-0008; OBS-WA-002 C2 == A6).
 - ``EVENT_NAMES_WS`` — EXACTLY the four IC/OBS-WS-SYNTH A6 names (DTM-0009;
   decision #9), in contract order.
+- ``EVENT_NAMES_WB_INFER`` — EXACTLY the two IC/OBS-WB-INFER A6 names (DTM-0010;
+  decision #9), in contract order.
 - ``EVENT_NAMES_COST`` — the single shared DL-048 spend event
   (``ai_spend_recorded``), introduced in DTM-0009 and reused by Wave B.
 - ``EVENT_NAMES`` — the union (concatenation) the emitters accept; kept as the
@@ -76,6 +78,15 @@ EVENT_NAMES_WS: tuple[str, ...] = (
     "synthesized_model_updated",
 )
 
+# IC/OBS-WB-INFER A6 — the two Finding events, exactly (decision #9; DTM-0010).
+# Pinned verbatim against OBS-WB-INFER §1.3 / A6 ("Finding Detected/Superseded";
+# C2 == A6). The per-emission ``cognition_history_record_appended`` is reused
+# from the WA00R set (never duplicated). Wave B / Infer.
+EVENT_NAMES_WB_INFER: tuple[str, ...] = (
+    "finding_detected",
+    "finding_superseded",
+)
+
 # DL-048 cost-governance — the single shared spend event (decision #9),
 # introduced in DTM-0009 and reused by Wave B. "AI Spend Recorded" (OBS §3).
 EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
@@ -86,6 +97,7 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_WA001
     + EVENT_NAMES_WA002
     + EVENT_NAMES_WS
+    + EVENT_NAMES_WB_INFER
     + EVENT_NAMES_COST
 )
 
@@ -119,7 +131,8 @@ class CollectingEventEmitter:
             raise UnknownEventError(
                 f"unknown contract event {event_name!r} — the vocabulary is "
                 "exactly IC-WA-00R A6 + IC-WA-001 A6 + IC-WA-002 A6 + "
-                f"IC-WS-SYNTH A6 + DL-048 cost: {', '.join(EVENT_NAMES)}"
+                "IC-WS-SYNTH A6 + IC-WB-INFER A6 + DL-048 cost: "
+                f"{', '.join(EVENT_NAMES)}"
             )
         self.events.append((event_name, dict(payload)))
 

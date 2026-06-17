@@ -5,8 +5,8 @@ Synthetic trees prove each failure mode independently:
 - a direct retain_stage() call in an event-less module;
 - a missing / empty tests/replay harness;
 - a tampered A6 vocabulary (renamed, extra, or non-literal EVENT_NAMES) across
-  every per-contract tuple — WA00R / WA001 / WA002 / WS / COST (DTM-0009) — plus
-  a drifted or short (old 3-way) 5-way union.
+  every per-contract tuple — WA00R / WA001 / WA002 / WS / WB_INFER (DTM-0010) /
+  COST — plus a drifted or short 6-way union.
 """
 
 from __future__ import annotations
@@ -58,6 +58,11 @@ EVENT_NAMES_WS: tuple[str, ...] = (
     "synthesized_model_updated",
 )
 
+EVENT_NAMES_WB_INFER: tuple[str, ...] = (
+    "finding_detected",
+    "finding_superseded",
+)
+
 EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
 
 EVENT_NAMES: tuple[str, ...] = (
@@ -65,6 +70,7 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_WA001
     + EVENT_NAMES_WA002
     + EVENT_NAMES_WS
+    + EVENT_NAMES_WB_INFER
     + EVENT_NAMES_COST
 )
 '''
@@ -275,15 +281,43 @@ def test_missing_cost_tuple_fails_vocabulary_check(tmp_path) -> None:
     assert any("union of the per-contract vocabularies" in v for v in violations)
 
 
+def test_renamed_wb_infer_event_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0010 — tampering the IC-WB-INFER A6 vocabulary fails the gate."""
+    tampered = GOOD_EVENTS_PY.replace("finding_superseded", "finding_replaced")
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "EVENT_NAMES_WB_INFER != the IC-WB-INFER A6 vocabulary" in violations[0]
+
+
+def test_missing_wb_infer_tuple_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0010 — dropping the WB_INFER tuple (and its union leg) fails both checks."""
+    tampered = GOOD_EVENTS_PY.replace(
+        'EVENT_NAMES_WB_INFER: tuple[str, ...] = (\n'
+        '    "finding_detected",\n'
+        '    "finding_superseded",\n'
+        ')\n\n',
+        "",
+    ).replace(
+        "    + EVENT_NAMES_WB_INFER\n",
+        "",
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert any("EVENT_NAMES_WB_INFER not found" in v for v in violations)
+    assert any("union of the per-contract vocabularies" in v for v in violations)
+
+
 def test_missing_event_names_assignment_fails(tmp_path) -> None:
     root = _make_tree(tmp_path, events_src="OTHER = 1\n")
     violations = check_event_vocabulary(root)
-    # all five contract tuples (WA00R/WA001/WA002/WS/COST) AND the union missing.
-    assert len(violations) == 6
+    # all six contract tuples (WA00R/WA001/WA002/WS/WB_INFER/COST) AND the union.
+    assert len(violations) == 7
     assert any("EVENT_NAMES_WA00R not found" in v for v in violations)
     assert any("EVENT_NAMES_WA001 not found" in v for v in violations)
     assert any("EVENT_NAMES_WA002 not found" in v for v in violations)
     assert any("EVENT_NAMES_WS not found" in v for v in violations)
+    assert any("EVENT_NAMES_WB_INFER not found" in v for v in violations)
     assert any("EVENT_NAMES_COST not found" in v for v in violations)
     assert any("EVENT_NAMES not found" in v for v in violations)
 
@@ -317,13 +351,14 @@ def test_inconsistent_union_fails(tmp_path) -> None:
 
 
 def test_union_dropping_ws_and_cost_legs_fails(tmp_path) -> None:
-    """DTM-0009 — a union that omits the WS/COST legs (the old 3-way form) fails."""
+    """DTM-0010 — a union that omits the WS/WB_INFER/COST legs (an old form) fails."""
     tampered = GOOD_EVENTS_PY.replace(
         "EVENT_NAMES: tuple[str, ...] = (\n"
         "    EVENT_NAMES_WA00R\n"
         "    + EVENT_NAMES_WA001\n"
         "    + EVENT_NAMES_WA002\n"
         "    + EVENT_NAMES_WS\n"
+        "    + EVENT_NAMES_WB_INFER\n"
         "    + EVENT_NAMES_COST\n"
         ")",
         "EVENT_NAMES: tuple[str, ...] = (\n"

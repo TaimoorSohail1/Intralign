@@ -200,3 +200,80 @@ class PlanningArtifact(CognitionEntity):
         default=EpistemicState.DERIVED,
         description="Pinned derived — a generated artifact is never Attested-as-truth.",
     )
+
+
+# =============================================================================
+# Wave B (DTM-0010, IC-WB-INFER) — the Finding cognition type. Infer is the
+# SINGLE producer of Findings (one-producer rule #1). A Finding is DERIVED
+# Cognition (recomputable; never written to the canonical store as Attested,
+# hard rule #2) of one of three types — Gap, Conflict, Risk Signal — and is
+# ANCHORED to the AttestedAssertion(s) it derives from (evidence_anchors;
+# missing anchor = Major contract failure, IC-WB-INFER 1.1). Infer does NOT
+# compute severity/confidence (Evaluate's, DTM-0011), generate recommendations/
+# clarifications (Advise's), or resolve a conflict into canonical truth — a
+# conflict is SURFACED as a Finding, never collapsed.
+#
+# mode / confidence_stage are ATTRIBUTES, not objects (DL-046): carried on each
+# emission and (downstream) its CHR. confidence_stage matures ONLY via recompute.
+# =============================================================================
+
+# IC-WB-INFER — the three Finding types (Object Model §8: Gap/Conflict/Risk are
+# Finding TYPES, not standalone objects).
+FindingType = Literal["gap", "conflict", "risk"]
+
+# The structural sub-kinds a Gap can take (IC-WB-INFER 1.1 required-behavior #1:
+# gaps of alignment/coverage/quality/SMART). Recorded for audit only — it is a
+# descriptive attribute of a gap Finding, NOT a severity/score (which is
+# Evaluate's). ``None`` for conflict/risk Findings.
+GapKind = Literal["alignment", "coverage", "quality", "smart"]
+
+
+class Finding(CognitionEntity):
+    """A Derived structural implication of the Attested knowledge (IC-WB-INFER).
+
+    One of three types — Gap (alignment/coverage/quality/SMART), Conflict
+    (contradiction among Attested assertions), or Risk Signal (feasibility) —
+    derived by Infer from Attested knowledge + the synthesized model + the
+    declared-outcome reference. ALWAYS anchored to the AttestedAssertion id(s)
+    it derives from (``evidence_anchors`` — non-empty; a missing anchor is a
+    Major failure, IC-WB-INFER). Derived/recomputable; never Attested-as-truth
+    (hard rule #2). A conflict Finding SURFACES the contradiction; it never
+    resolves it into canonical truth.
+
+    Forbidden surface (``extra='forbid'``): a Finding carries NO severity /
+    confidence / score / recommendation field — those belong to Evaluate
+    (DTM-0011) and Advise. Infer owns ONLY the typed, anchored Finding.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    finding_type: FindingType
+    finding_id: str = Field(
+        ..., description="Stable identity (recompute supersedes the SAME id)."
+    )
+    summary: str = Field(..., description="The structural implication, stated plainly.")
+    # MANDATORY lineage: the AttestedAssertion ids this Finding derived from.
+    # A Finding with no anchor is rejected at construction (Major failure made
+    # structurally impossible — IC-WB-INFER invariant "anchored to Attested").
+    evidence_anchors: tuple[str, ...] = Field(
+        ..., min_length=1,
+        description="Lineage: the AttestedAssertion id(s) this Finding derives from.",
+    )
+    # Descriptive sub-kind for gap Findings (audit only; never a score). None
+    # for conflict/risk.
+    gap_kind: GapKind | None = Field(
+        default=None, description="For gap Findings: the structural sub-kind (audit only)."
+    )
+    model_or_rule_version: str = Field(
+        ..., description="model/prompt/rule version stamp (audit + determinism)."
+    )
+    # DL-046 attributes (not objects). confidence_stage matures ONLY via recompute.
+    mode: Mode
+    confidence_stage: ConfidenceStage = "orientation"
+    understanding_state: UnderstandingState = "initial"
+    # Pinned: a Finding is DERIVED cognition — never Attested-as-truth (rule #2).
+    epistemic_state: Literal[EpistemicState.DERIVED] = Field(
+        default=EpistemicState.DERIVED,
+        description="Pinned derived — a Finding is never Attested-as-truth.",
+    )

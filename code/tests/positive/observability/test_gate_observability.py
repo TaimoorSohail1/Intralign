@@ -16,6 +16,7 @@ from ci.gate_observability import (
     EXPECTED_EVENT_NAMES_WA00R,
     EXPECTED_EVENT_NAMES_WA001,
     EXPECTED_EVENT_NAMES_WA002,
+    EXPECTED_EVENT_NAMES_WB_INFER,
     EXPECTED_EVENT_NAMES_WS,
     check_append_event_pairing,
     check_event_vocabulary,
@@ -31,6 +32,7 @@ from backend.services.observability.events import (
     EVENT_NAMES_WA00R,
     EVENT_NAMES_WA001,
     EVENT_NAMES_WA002,
+    EVENT_NAMES_WB_INFER,
     EVENT_NAMES_WS,
 )
 
@@ -55,15 +57,17 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
     assert EXPECTED_EVENT_NAMES_WA001 == EVENT_NAMES_WA001
     assert EXPECTED_EVENT_NAMES_WA002 == EVENT_NAMES_WA002
     assert EXPECTED_EVENT_NAMES_WS == EVENT_NAMES_WS
+    assert EXPECTED_EVENT_NAMES_WB_INFER == EVENT_NAMES_WB_INFER
     assert EXPECTED_EVENT_NAMES_COST == EVENT_NAMES_COST
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
-    # Union consistency: the alias is exactly the 5-way per-contract concatenation
-    # (DTM-0009 — WS + COST added; the union grows, never reorders).
+    # Union consistency: the alias is exactly the 6-way per-contract concatenation
+    # (DTM-0010 — WB_INFER added between WS and COST; the union grows, never reorders).
     assert EVENT_NAMES == (
         EVENT_NAMES_WA00R
         + EVENT_NAMES_WA001
         + EVENT_NAMES_WA002
         + EVENT_NAMES_WS
+        + EVENT_NAMES_WB_INFER
         + EVENT_NAMES_COST
     )
     # stale_detected lives in the WA00R set only — referenced, never duplicated.
@@ -84,6 +88,16 @@ def test_ws_and_cost_vocabularies_are_the_a6_names_verbatim() -> None:
     # cognition_history_record_appended is REUSED from WA00R, never duplicated here.
     assert "cognition_history_record_appended" in EVENT_NAMES_WA00R
     assert "cognition_history_record_appended" not in EVENT_NAMES_WS
+
+
+def test_wb_infer_vocabulary_is_the_two_ic_wb_infer_a6_names_verbatim() -> None:
+    """DTM-0010 — the IC-WB-INFER A6 list, exactly, in contract order."""
+    assert EVENT_NAMES_WB_INFER == ("finding_detected", "finding_superseded")
+    # The per-emission append event is REUSED from WA00R, never duplicated here.
+    assert "cognition_history_record_appended" not in EVENT_NAMES_WB_INFER
+    # finding events live in the WB_INFER set only — never leaking into WS/COST.
+    assert "finding_detected" not in EVENT_NAMES_WS
+    assert "finding_detected" not in EVENT_NAMES_COST
 
 
 def test_wa002_vocabulary_is_the_five_ic_wa_002_a6_names_verbatim() -> None:
