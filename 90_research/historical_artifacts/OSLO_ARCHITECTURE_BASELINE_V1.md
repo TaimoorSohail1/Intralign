@@ -412,7 +412,7 @@ Composite confidence is the headline OSLO output — the explainable, evidence-b
 | Recompute Triggers | Planned | Always-on recompute on mutation or signal. Execution–Reasoning Trigger Contract defined. |
 | Audit & Replay | Partial | Deterministic replay of governance decisions and reasoning. Determinism hashes specified; replay infrastructure pending. |
 | 60-Second Orientation | Planned | First-time experience producing core outcome understanding in 60 seconds. Workflow specified; implementation pending. |
-| Project MRI | Planned | Whole-portfolio outcome integrity scan. Subsystem stub; doctrinal scoping pending (RB-015 partial unblock per DL-034). |
+| Project MRI | Planned | ~~Whole-portfolio outcome integrity scan.~~ **SUPERSEDED-FOR-R1 (DL-061, non-binding):** Project MRI is the **per-project** understanding surface (Master Spec §7); the whole-portfolio scan is renamed **Portfolio Integrity Scan** and deferred post-Alpha (DL-034). |
 
 ---
 
