@@ -9,7 +9,7 @@ expands; the user is never blocked on it.
 
 from __future__ import annotations
 
-from backend.services.llm_provider import RunBudget
+from backend.services.llm_provider import RunBudget, internal_model_id
 from tests.positive.infer_finding.helpers import (
     ASSERTION_IDS,
     DECLARED_OUTCOME,
@@ -65,8 +65,10 @@ def test_b2_spend_payload_records_degraded_and_mode() -> None:
     assert "tokens_in" in result.spend_payload
 
 
-def test_b2_free_tier_routes_finding_passes_to_the_cheap_model() -> None:
-    """DL-048 §4c — Free tier routes synthesis/eval to mini, not a full model."""
+def test_b2_free_tier_routes_finding_passes_to_the_internal_primary() -> None:
+    """DL-059 — Free routes synthesis to the internal gemma primary, not a full model."""
     engine, _ = finding_engine(tier="free")
     resolved = engine.provider.resolve(tier="free", stage="synthesis")
-    assert resolved.model_name == "gpt-4.1-mini"
+    assert resolved.provider == "internal"
+    assert resolved.model_name == internal_model_id()
+    assert resolved.model_name != "gpt-4.1"

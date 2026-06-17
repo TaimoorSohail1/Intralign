@@ -1,4 +1,4 @@
-"""LLM provider abstraction (DL-054 §5): Pydantic AI + adapter; OpenAI primary / Anthropic fallback. Preserves routing/quota/audit (DL-054 cond. 3).
+"""LLM provider abstraction (DL-054 §5): Pydantic AI + adapter; PRIMARY = internal gemma on a local Llama runtime (OpenAI-compatible), OpenAI/Anthropic a disabled fallback (DL-059 / ADR-0007). Preserves routing/quota/audit (DL-054 cond. 3).
 
 Public surface (DTM-0009 / Wave S):
 
@@ -11,6 +11,7 @@ Public surface (DTM-0009 / Wave S):
 """
 
 from backend.services.llm_provider.adapter import (
+    INTERNAL_BASE_URL_ENV,
     LIVE_ENV_FLAG,
     LiveCallsDisabledError,
     LLMProvider,
@@ -20,13 +21,19 @@ from backend.services.llm_provider.adapter import (
 )
 from backend.services.llm_provider.budget import RunBudget, spend_event_payload
 from backend.services.llm_provider.config import (
+    DEFAULT_INTERNAL_MODEL,
+    INTERNAL_MODEL_ENV,
     ModelRef,
     budget_for_tier,
     estimate_cost_usd,
+    internal_model_id,
     routing_for_tier,
 )
 
 __all__ = [
+    "DEFAULT_INTERNAL_MODEL",
+    "INTERNAL_BASE_URL_ENV",
+    "INTERNAL_MODEL_ENV",
     "LIVE_ENV_FLAG",
     "LLMProvider",
     "LiveCallsDisabledError",
@@ -35,6 +42,7 @@ __all__ = [
     "RunBudget",
     "budget_for_tier",
     "estimate_cost_usd",
+    "internal_model_id",
     "live_calls_enabled",
     "routing_for_tier",
     "spend_event_payload",

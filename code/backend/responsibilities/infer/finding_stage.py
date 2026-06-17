@@ -58,6 +58,7 @@ def finding_chr_spec(
     input_attestation_version: str,
     recompute_trigger: str | None,
     supersedes_chr_id: str | None,
+    model_identity: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build the CHR spec for one Finding emission (the contracted CHR shape).
 
@@ -65,12 +66,17 @@ def finding_chr_spec(
     version stamp, the upstream lineage (the Attested assertion ids the Finding
     derived from — the audit answer to "which assertions"), and, on a recompute,
     the ``supersedes_chr_id`` of the prior Finding CHR (lineage; never a mutation).
+
+    ``model_or_rule_version`` records the RESOLVED provider/model actually used
+    (``model_identity`` = ``provider.resolve(...).model_ref.as_dict()``) merged
+    with the Finding rule version, so the CHR audits the real model consumed
+    (DL-054 cond. 3 / DL-059 cond. 2) — not a hardcoded provider.
     """
     return {
         "output_kind": OUTPUT_KIND_FINDING,
         "output_payload": _finding_payload(finding),
         "input_attestation_version": input_attestation_version,
-        "model_or_rule_version": {"provider": "openai", "model_version": FINDING_VERSION},
+        "model_or_rule_version": {**(model_identity or {}), "model_version": FINDING_VERSION},
         "upstream_lineage": {
             "finding_id": finding.finding_id,
             "finding_type": finding.finding_type,
@@ -131,6 +137,13 @@ def run_finding_stage(
     )
     latency_ms = (time.perf_counter() - started) * 1000.0
     emitter = ctx.emitter
+    # Resolved model identity for CHR provenance (the ACTUAL provider/model the
+    # Finding engine routes — DL-059 cond. 2 auditability). Findings route via
+    # the synthesis stage (finding.py uses stage="synthesis").
+    finding_identity = engine.provider.resolve(
+        tier=engine.tier,  # type: ignore[arg-type]
+        stage="synthesis",
+    ).model_ref.as_dict()
 
     for finding in result.findings:
         prior_chr_id = (
@@ -146,6 +159,7 @@ def run_finding_stage(
                 input_attestation_version=input_attestation_version,
                 recompute_trigger=recompute_trigger,
                 supersedes_chr_id=prior_chr_id,
+                model_identity=finding_identity,
             ),
             project_id=project_id,
             supersedes_chr_id=prior_chr_id,

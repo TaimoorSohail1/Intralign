@@ -65,6 +65,7 @@ def planning_chr_spec(
     input_attestation_version: str,
     upstream_lineage: dict[str, Any],
     recompute_trigger: str | None,
+    model_identity: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build the CHR spec for a Wave-S generation (the contracted CHR shape).
 
@@ -72,12 +73,18 @@ def planning_chr_spec(
     ``output_kind`` and the model/prompt/rule version stamp. Kept as a plain
     dict so the append target (a repo) validates it — the canonical model
     currently rejects the Wave-S output_kind (ESCALATION).
+
+    ``model_or_rule_version`` records the RESOLVED provider/model actually used
+    (``model_identity`` = ``provider.resolve(...).model_ref.as_dict()``) merged
+    with the synthesis prompt version, so the CHR audits the real model consumed
+    (DL-054 cond. 3 / DL-059 cond. 2 model-consumption auditability) — not a
+    hardcoded provider.
     """
     return {
         "output_kind": output_kind,
         "output_payload": output_payload,
         "input_attestation_version": input_attestation_version,
-        "model_or_rule_version": {"provider": "openai", "model_version": SYNTHESIS_VERSION},
+        "model_or_rule_version": {**(model_identity or {}), "model_version": SYNTHESIS_VERSION},
         "upstream_lineage": upstream_lineage,
         "recompute_trigger": recompute_trigger,
     }
@@ -141,6 +148,18 @@ def run_synthesis_stage(
         budget=budget,
     )
     emitter = ctx.emitter
+    # Resolved model identity for CHR provenance (the ACTUAL provider/model the
+    # engine routes — DL-059 cond. 2 auditability). Synthesis + generation share
+    # one routed model in the internal-primary routing; resolve the synthesis
+    # stage as the representative routed identity.
+    synthesis_identity = engine.provider.resolve(
+        tier=engine.tier,  # type: ignore[arg-type]
+        stage="synthesis",
+    ).model_ref.as_dict()
+    generation_identity = engine.provider.resolve(
+        tier=engine.tier,  # type: ignore[arg-type]
+        stage="generation",
+    ).model_ref.as_dict()
     base_attrs = {
         "project_id": project_id,
         "mode": result.model.mode,
@@ -157,6 +176,7 @@ def run_synthesis_stage(
             input_attestation_version=input_attestation_version,
             upstream_lineage={"assertion_ids": list(result.model.derived_from_assertions)},
             recompute_trigger=recompute_trigger,
+            model_identity=synthesis_identity,
         ),
         project_id=project_id,
         emitter=emitter,
@@ -182,6 +202,7 @@ def run_synthesis_stage(
                     "synthesized_model_version": artifact.synthesized_model_version,
                 },
                 recompute_trigger=recompute_trigger,
+                model_identity=generation_identity,
             ),
             project_id=project_id,
             emitter=emitter,

@@ -1,8 +1,10 @@
 """Pydantic AI adapter — the single LLM seam (DL-054 §5; DL-048 §4c routing).
 
-OpenAI primary / Anthropic fallback, tier-keyed routing from config. This is
-the ONLY place a provider is constructed, preserving routing/quota/audit
-(DL-054 cond. 3).
+PRIMARY = internal gemma on a local Llama runtime (OpenAI-compatible endpoint),
+reached via pydantic-ai's ``OpenAIChatModel`` against an env ``base_url`` — no
+new dependency (DL-059 / ADR-0007). OpenAI/Anthropic are a defined-but-disabled
+fallback. Tier-keyed routing comes from config. This is the ONLY place a
+provider is constructed, preserving routing/quota/audit (DL-054 cond. 3).
 
 Determinism / cost discipline (ADR-0004; decisions #2/#11): a **real provider
 call happens ONLY when the live env flag is set** (``OSLO_LLM_LIVE=1`` — dev +
@@ -40,6 +42,12 @@ if TYPE_CHECKING:  # pragma: no cover - typing only, never imported at runtime
 # The env flag that authorizes a real provider call (dev + nightly only).
 LIVE_ENV_FLAG = "OSLO_LLM_LIVE"
 _TRUTHY = {"1", "true", "yes", "on"}
+
+# The internal (primary) LLM endpoint config (DL-059 / ADR-0007). The local
+# Llama runtime's OpenAI-compatible base_url is read from env — never hardcoded
+# (ANTI_ASSUMPTION); the owner sets the live value (placeholder in .env.example).
+INTERNAL_BASE_URL_ENV = "OSLO_LLM_BASE_URL"
+INTERNAL_API_KEY_ENV = "OSLO_LLM_API_KEY"  # optional; the local server ignores it
 
 
 def live_calls_enabled() -> bool:
@@ -119,6 +127,30 @@ class LLMProvider:
         running pytest pulls in a provider SDK (DTM-0009 guardrail).
         """
         provider = model_ref.provider
+        if provider == "internal":
+            # PRIMARY (DL-059 / ADR-0007): the internal gemma model on a local
+            # Llama runtime exposed over an OpenAI-compatible endpoint. We reuse
+            # pydantic-ai's OpenAIChatModel against a local base_url (read from
+            # env) — NO new dependency. The base_url is config, never hardcoded
+            # (ANTI_ASSUMPTION); api_key is a dummy the local server ignores.
+            from pydantic_ai.models.openai import OpenAIChatModel
+            from pydantic_ai.providers.openai import OpenAIProvider
+
+            base_url = os.environ.get(INTERNAL_BASE_URL_ENV, "").strip()
+            if not base_url:
+                raise LiveCallsDisabledError(
+                    f"{INTERNAL_BASE_URL_ENV} is not set — the internal LLM "
+                    "(local Llama runtime, OpenAI-compatible) needs its base_url "
+                    "from env before a live call (DL-059; .env.example documents "
+                    "the placeholder)."
+                )
+            return OpenAIChatModel(
+                model_ref.model,
+                provider=OpenAIProvider(
+                    base_url=base_url,
+                    api_key=os.environ.get(INTERNAL_API_KEY_ENV, "").strip() or "not-needed",
+                ),
+            )
         if provider == "openai":
             from pydantic_ai.models.openai import OpenAIChatModel
 
@@ -128,8 +160,8 @@ class LLMProvider:
 
             return AnthropicModel(model_ref.model)
         raise ValueError(
-            f"unknown provider {provider!r} — routing is OpenAI primary / "
-            "Anthropic fallback (DL-054)"
+            f"unknown provider {provider!r} — routing is internal (primary, "
+            "DL-059) with OpenAI/Anthropic a disabled fallback (DL-054)"
         )
 
 

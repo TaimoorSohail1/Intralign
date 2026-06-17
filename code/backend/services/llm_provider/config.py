@@ -27,8 +27,21 @@ config the owner tunes; the *enforcement* is contracted (DL-048).
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Literal
+
+# The internal model id (the local Llama runtime's gemma model). Owner-given
+# default is ``gemma4`` (DL-059 / ADR-0007); read from env so the exact id is
+# config, not a hardcoded constant (ANTI_ASSUMPTION). The live base_url is read
+# in the adapter from ``OSLO_LLM_BASE_URL`` (placeholder in .env.example).
+INTERNAL_MODEL_ENV = "OSLO_LLM_MODEL"
+DEFAULT_INTERNAL_MODEL = "gemma4"
+
+
+def internal_model_id() -> str:
+    """The internal (gemma) model id from env, defaulting to ``gemma4``."""
+    return os.environ.get(INTERNAL_MODEL_ENV, "").strip() or DEFAULT_INTERNAL_MODEL
 
 # The model-routing *stages* the engine routes (Wave S: extraction +
 # synthesis/generation). Each maps to a routed model per tier.
@@ -82,6 +95,9 @@ class TierRouting:
 # Cost basis (Calibration §4c "Cost basis", June 2026 verified) — USD per 1M
 # tokens, (input, output). Used to estimate est_cost for ai_spend_recorded.
 COST_PER_MILLION: dict[str, tuple[float, float]] = {
+    # Internal gemma on the local Llama runtime — local inference is un-metered,
+    # so est_cost is 0 (tokens are still recorded). DL-059 / ADR-0007.
+    DEFAULT_INTERNAL_MODEL: (0.0, 0.0),
     "gpt-4.1": (2.0, 8.0),
     "gpt-4.1-mini": (0.40, 1.60),
     "gpt-4.1-nano": (0.10, 0.40),
@@ -89,9 +105,25 @@ COST_PER_MILLION: dict[str, tuple[float, float]] = {
     "claude-haiku-4.5": (1.0, 5.0),
 }
 
-# Free-tier routing (Calibration §4c): extraction -> nano, synthesis/generation
-# -> mini, Haiku fallback. OpenAI primary / Anthropic fallback (DL-054).
-_FREE_ROUTING = TierRouting(
+# Internal/primary routing (DL-059 / ADR-0007): all stages route to the internal
+# gemma model on the local Llama runtime (OpenAI-compatible). This is the PRIMARY
+# routing the engines resolve. The internal model id is config (env, default
+# ``gemma4``) — built lazily so an env change at run time is honored. The OpenAI
+# fallback ModelRef is kept defined but non-primary (disabled-by-default).
+def _internal_routing() -> TierRouting:
+    internal = ModelRef("internal", internal_model_id())
+    return TierRouting(
+        extraction=internal,
+        synthesis=internal,
+        generation=internal,
+        fallback=ModelRef("openai", "gpt-4.1-mini"),
+    )
+
+
+# OpenAI/Anthropic routing — the DEMOTED, disabled-by-default fallback (DL-059):
+# kept defined (the §4c Free routing) so a config flip can re-enable it, but it
+# is NOT the primary the engines resolve. (Was the primary pre-DL-059.)
+_OPENAI_FALLBACK_ROUTING = TierRouting(
     extraction=ModelRef("openai", "gpt-4.1-nano"),
     synthesis=ModelRef("openai", "gpt-4.1-mini"),
     generation=ModelRef("openai", "gpt-4.1-mini"),
@@ -107,21 +139,28 @@ _FREE_BUDGET = TierBudget(
     monthly_per_user=4_000_000,
 )
 
-# Only the Free tier is owner-pinned in §4c. Paid/internal rows are
-# owner-deferred (Open-TBD A1/E3) — DO NOT invent their numbers
-# (ANTI_ASSUMPTION). They fall back to the Free config until the owner sets
-# them; a wrong-tier-routing test asserts Free never routes a full model.
-_ROUTING_BY_TIER: dict[str, TierRouting] = {"free": _FREE_ROUTING}
-_BUDGET_BY_TIER: dict[str, TierBudget] = {"free": _FREE_BUDGET}
+# Budgets stay §4c-pinned (Free). The internal tier reuses the Free TierBudget
+# as a soft/observability bound — local inference is un-metered, so we do NOT
+# invent new budget numbers (ANTI_ASSUMPTION; DL-059 cond. budget). Paid rows
+# remain owner-deferred (Open-TBD A1/E3).
+_BUDGET_BY_TIER: dict[str, TierBudget] = {"free": _FREE_BUDGET, "internal": _FREE_BUDGET}
 
 
 def routing_for_tier(tier: Tier) -> TierRouting:
-    """The model routing for ``tier`` (Free is the only §4c-pinned tier)."""
-    return _ROUTING_BY_TIER.get(tier, _FREE_ROUTING)
+    """The model routing for ``tier``.
+
+    PRIMARY (DL-059 / ADR-0007): the internal gemma model on the local Llama
+    runtime serves every tier/stage — ``free``, ``internal``, and any unknown
+    tier all resolve to the internal routing (the default). OpenAI/Anthropic are
+    a defined-but-disabled fallback (``_OPENAI_FALLBACK_ROUTING``), not the
+    primary the engines resolve. Built fresh so an env change to the model id is
+    honored without a reimport.
+    """
+    return _internal_routing()
 
 
 def budget_for_tier(tier: Tier) -> TierBudget:
-    """The token budgets for ``tier`` (Free is the only §4c-pinned tier)."""
+    """The token budgets for ``tier`` (Free §4c; internal reuses the Free bound)."""
     return _BUDGET_BY_TIER.get(tier, _FREE_BUDGET)
 
 

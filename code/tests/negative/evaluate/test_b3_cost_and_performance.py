@@ -13,6 +13,7 @@ import inspect
 
 from backend.responsibilities.evaluate import stage as stage_mod
 from backend.responsibilities.evaluate.stage import _spend_payload, run_evaluate_stage
+from backend.services.llm_provider import internal_model_id
 from tests.positive.evaluate.helpers import PROJECT, engine, risk, synthesized_model
 from tests.positive.evaluate.test_b2_performance_gate import (
     TIME_TO_FIRST_MRI_CEILING_SECONDS,
@@ -32,16 +33,23 @@ def test_b3_a_simulated_over_ceiling_latency_would_breach_the_gate() -> None:
     assert under < TIME_TO_FIRST_MRI_CEILING_SECONDS       # passes
 
 
-def test_b3_spend_records_the_configured_free_tier_model_not_a_full_model() -> None:
-    """Wrong-tier routing is rejected: Free records the cheap routed model (mini)."""
+def test_b3_spend_records_the_configured_primary_model_not_a_full_model() -> None:
+    """Wrong-tier routing is rejected: Free records the configured PRIMARY model.
+
+    Post-DL-059 the primary is the internal gemma (local Llama, OpenAI-compatible
+    endpoint); the spend payload records that routed model id, never an external
+    full-quality model (gpt-4.1).
+    """
     payload = _spend_payload(
         tier="free", user="u", mode="fast",
         confidence_stage="orientation", understanding_state="partial",
         time_to_first_mri_ms=1.0,
     )
-    # Free synthesis/eval routes to mini (Calibration §4c) — never a full model.
-    assert payload["model"] == "gpt-4.1-mini"
+    # Free routes to the internal primary (DL-059) — never an external full model.
+    assert payload["model"] == internal_model_id()
     assert payload["model"] != "gpt-4.1"  # the full-quality model is wrong-tier
+    # Local inference is un-metered → est_cost 0 (tokens still recorded elsewhere).
+    assert payload["est_cost"] == 0.0
 
 
 def test_b3_spend_event_is_always_emitted_no_silent_run() -> None:

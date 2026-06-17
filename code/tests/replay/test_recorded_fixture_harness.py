@@ -86,6 +86,24 @@ def test_offline_provider_refuses_a_live_model() -> None:
 
 
 def test_no_provider_sdk_imported_by_importing_llm_provider() -> None:
-    """Importing the seam never pulls a provider SDK (DTM-0009 guardrail)."""
-    assert "pydantic_ai.models.openai" not in sys.modules
-    assert "pydantic_ai.models.anthropic" not in sys.modules
+    """Importing the seam never pulls a provider SDK (DTM-0009 guardrail).
+
+    Checked in a FRESH interpreter so the invariant is order-independent: other
+    suites legitimately exercise the live branch (which lazily imports the SDK by
+    design — DTM-0012), polluting this process's ``sys.modules``. The guarded
+    invariant — *importing the seam* pulls no SDK — is only meaningful in a clean
+    interpreter.
+    """
+    import subprocess
+
+    code = (
+        "import sys; import backend.services.llm_provider as _; "
+        "assert 'pydantic_ai.models.openai' not in sys.modules; "
+        "assert 'pydantic_ai.models.anthropic' not in sys.modules"
+    )
+    proc = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stderr

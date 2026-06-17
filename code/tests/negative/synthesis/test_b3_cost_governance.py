@@ -14,8 +14,11 @@ wrong-tier routing. Each is a test:
 from __future__ import annotations
 
 from backend.services.llm_provider import (
+    DEFAULT_INTERNAL_MODEL,
     LLMProvider,
+    ModelRef,
     RunBudget,
+    internal_model_id,
     routing_for_tier,
 )
 from shared.epistemic import PLANNING_ARTIFACT_TYPES
@@ -62,17 +65,26 @@ def test_b3_runaway_regeneration_is_bounded_by_the_cap() -> None:
     assert budget.spent <= budget.cap + 60_000  # one last in-flight call, then stop
 
 
-def test_b3_free_tier_routes_synthesis_to_mini_not_a_full_model() -> None:
-    """CRITICAL (wrong-tier routing) — Free synthesis/generation -> mini (§4c)."""
+def test_b3_free_tier_routes_synthesis_to_internal_not_a_full_model() -> None:
+    """CRITICAL (wrong-tier routing) — primary routing is internal gemma (DL-059).
+
+    Post-DL-059 the PRIMARY model behind the seam is the internal gemma on the
+    local Llama runtime; Free resolves to it for every stage. An external
+    full-quality model (gpt-4.1) is still NOT what Free routes to (wrong-tier).
+    """
+    gemma = internal_model_id()
+    assert gemma == DEFAULT_INTERNAL_MODEL  # env default is gemma4
     routing = routing_for_tier("free")
-    assert routing.synthesis.model == "gpt-4.1-mini"
-    assert routing.generation.model == "gpt-4.1-mini"
-    assert routing.extraction.model == "gpt-4.1-nano"
-    # A full-quality model is NOT what Free synthesis routes to.
+    assert routing.synthesis == ModelRef("internal", gemma)
+    assert routing.generation == ModelRef("internal", gemma)
+    assert routing.extraction == ModelRef("internal", gemma)
+    # A full-quality external model is NOT what Free synthesis routes to.
     assert routing.synthesis.model != "gpt-4.1"
+    assert routing.synthesis.provider != "openai"
     provider = LLMProvider()
-    assert provider.resolve(tier="free", stage="synthesis").model_name == "gpt-4.1-mini"
-    assert provider.resolve(tier="free", stage="extraction").model_name == "gpt-4.1-nano"
+    assert provider.resolve(tier="free", stage="synthesis").provider == "internal"
+    assert provider.resolve(tier="free", stage="synthesis").model_name == gemma
+    assert provider.resolve(tier="free", stage="extraction").model_name == gemma
 
 
 def test_b3_over_budget_run_cannot_emit_a_clean_spend_signal() -> None:
