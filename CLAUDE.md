@@ -66,6 +66,16 @@ Every Review produces exactly five outputs:
 - **Recommendation**
 - **Status**
 
+## Decision-Recording Discipline (DL-065)
+
+Decisions are recorded to prevent the sequencing/conflict failures of a shared log:
+
+1. **One file per decision.** New decisions (DL-065+) are individual files at `00_owner/decisions/records/DL-<NNNN>-<slug>.md`. `decision_log.md` is **frozen through DL-064** and carries a **generated** records index — never hand-edit the index, and never append new `### DL-###` entries to the monolith.
+2. **Number at merge, not at draft.** Draft as `records/DL-PENDING-<slug>.md`; assign the number only at landing with `python3 tools/dl_records.py next`. (A `DL-PENDING` record on `main` fails the gate.)
+3. **One canon PR in flight, merged linearly.** Branch from fresh `main`; merge → `pull` → next. Do not stack open canon PRs.
+4. **CI guard.** `tools/doc_integrity_check.py` validates the records regime (naming, header↔filename match, required fields **Decision**/**Status**, uniqueness, no `DL-PENDING`). Run `python3 tools/dl_records.py index` to regenerate the index.
+5. **One serializer.** The Founder Console is the sole path that authors, numbers, and releases decisions to `main`. No parallel stream merges canon.
+
 ## Conflict Resolution
 
 Conflicts between repository layers are resolved through governance proposals, not direct edits.

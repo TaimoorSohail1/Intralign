@@ -139,6 +139,18 @@ for f in MD:
         if old in text:
             warns.append(f"[renamed-term] {rel(f)} uses retired '{old}' → use '{new}' (DL-053)")
 
+# ---- 6: decision-record discipline guard (DL-065) --------------------------
+# Validates the records/ regime ONLY (DL-065+): naming, header↔filename match,
+# required fields, uniqueness, and no DL-PENDING on main. The frozen legacy
+# decision_log (DL-029..DL-064) is grandfathered and not re-validated here.
+try:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from dl_records import check_records
+    for e in check_records(ROOT):
+        errors.append(e)
+except Exception as ex:
+    warns.append(f"[records-guard] could not run records check: {ex}")
+
 # ---- report ----------------------------------------------------------------
 print(f"OSLO doc-integrity: {len(MD)} docs · {len(errors)} errors · {len(warns)} warnings\n")
 for e in errors: print("ERROR  " + e)
