@@ -740,6 +740,13 @@ Each changelog entry contains:
 - **Change Summary:** Completed the **DL-061 realization edits** that PR #27 recorded but left unapplied (Project MRI was still "Proposed" on `main`): promoted Project MRI to **Canonical (R1)** with the per-project definition, added the MRI Disambiguation-Register entry, and marked the Baseline portfolio-MRI line superseded-for-R1. Also fixed the lone doc-integrity broken-link error from the governance-catchup PR (#31). doc-integrity now passes (errors = 0).
 - **Supersession Reference:** None. Realizes DL-061; closes the broken-link error on `main`.
 
+### CHG-094 — DL-065: Decision-Recording Discipline (one-file records + CI guard)
+
+- **Date:** 2026-06-16 · **Authorizing Decision:** DL-065.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-065-decision-recording-discipline.md` (new — first record under the new discipline) + `00_owner/decisions/records/README.md` (new); `tools/dl_records.py` (new — `next`/`index`/`check`); `tools/doc_integrity_check.py` (new check #6 — records-regime guard); `00_owner/decisions/decision_log.md` (frozen-through-DL-064 note + generated records index); `CLAUDE.md` (Decision-Recording Discipline section, R1–R5).
+- **Change Summary:** Adopted the **decision-recording discipline** that makes the 2026-06-16 sequencing tangle structurally impossible: **R1** one file per decision (DL-065+) with `decision_log.md` frozen through DL-064 and an auto-generated index; **R2** number-at-merge (DL-PENDING until landing); **R3** one canon PR in flight, merged linearly; **R4** a doc-integrity guard over the records regime; **R5** the Founder Console as sole serializer. Freeze-not-migrate: legacy entries are untouched and grandfathered. doc-integrity passes (0 errors).
+- **Supersession Reference:** None. Amends the decision-recording mechanics of Framework 001 (additive). Framework 001 doc gets the formal R1–R5 amendment as a follow-on.
+
 ---
 
 ## Governance Notes
