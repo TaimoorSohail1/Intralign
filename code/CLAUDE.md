@@ -1,8 +1,9 @@
 # CLAUDE.md — OSLO Application Code (`code/`)
 
 > **Where this is:** the OSLO application lives in `code/` inside the knowledge base
-> (monorepo override — recorded as a decision/ADR, pending owner ratification; the
-> ratified default is a separate `oslo` app repo). **Claude Code reads this file before
+> (monorepo override — **ratified with conditions for R1 as a time-boxed deviation**,
+> DL-057 / ADR-0001; the separate `oslo` app repo remains the destination, with a binding
+> extraction trigger at R1 exit or a second committer). **Claude Code reads this file before
 > touching code here.** It is a digest. **If this and an authoritative knowledge-base
 > source differ, the source wins.**
 

@@ -52,3 +52,54 @@ _Avoid_: model, record (ambiguous with CHR).
 **Backing service**:
 A datastore the app runs against: Supabase (Postgres + Auth + pgvector + Storage), Neo4j,
 Redis. The app runs natively; only backing services are containerised (DL-054).
+
+## Wave B — Understanding (Infer · Evaluate)
+
+**Synthesized planning model**:
+`SynthesizedPlanningModel` — OSLO's recomputable, Derived model built by Infer from Attested
+content; backs the generated `PlanningArtifact`s (Intent/Context/Scope/Requirements/WBS/
+Resources/Schedule). Derived, CHR-per-generation, user-editable, never Attested-as-truth.
+_Avoid_: plan, project model (ambiguous).
+
+**Finding**:
+The single governed output of Infer — a derived gap / conflict / risk anchored to Attested
+evidence. Conflicts are **surfaced, not resolved**. Derived, never Attested.
+
+**Confidence**:
+The Evaluate output meaning **trust in OSLO's understanding** — banded (0–49/50–74/75–100,
+±3 edge guard), reliability-qualified, reduces to its basis (never a bare number). It is
+**never project health, readiness, probability, or a score** (negative tests enforce).
+_Avoid_: score, health, probability, certainty.
+
+**CAF / Outcome Confidence**:
+`CAFAssessment` — Clarity / Alignment / Feasibility, three co-equal dimensions, each a
+(integrity index · band · per-dimension reliability) triple. `OutcomeConfidence` —
+alignment between current state and the declared outcome. Both Derived, both Evaluate-owned.
+
+**Fast Pass / Deep Pass**:
+The two mandatory analysis modes (DL-046). **Fast Pass** is synchronous and latency-bound —
+delivers Orientation Confidence + initial MRI/findings within the **&lt;60s Time-to-First-MRI**
+budget; the user is never blocked on Deep. **Deep Pass** is the async, event-triggered
+expansion that runs via the 00R backbone after orientation. Emissions carry `mode` +
+`confidence_stage` (Orientation → Expanded → Validated) as attributes — no new entity.
+_Avoid_: quick/full scan, sync/async analysis (use the canonical names).
+
+## Determinism & test doubles (Disambiguation Register — DL-053 discipline)
+
+**Determinism baseline**:
+The pinned reference a replayed/recomputed output is checked against — the
+**(configuration × fixture × model-version)** triple (Determinism Note DT-5/DT-10). A
+difference in the model-version component is a **new baseline, not a regression** (DT-6).
+
+**Recorded model-response fixture**:
+A captured, version-stamped LLM output used as the model/fixture component of the
+determinism baseline so CI exercises AI offline and deterministically (ADR-0004). The live
+model runs only in dev and a nightly baseline-update check.
+_Avoid_: **"replay", "cassette"** — `replay` is reserved (see below); `cassette` is not
+canon.
+
+**Replay** (RESERVED — do not reuse):
+Canonically (Determinism Note §5; DT-3; REPLAY-T1…T6) the reconstruction of state from the
+append-only event log that **explicitly does NOT re-run the LLM**. The LLM test-double is a
+*recorded model-response fixture*, **not** a replay. Keep the two strictly separate in code
+and test names.
