@@ -278,6 +278,15 @@ _Added 2026-06-17 by explicit owner direction. These three items were surfaced b
 - **Dependencies:** None (owner-initiated when OD-005 is taken up).
 - **Status:** Proposed (deferred — owner-initiated).
 
+### RB-024 — Wave B exit-gate review before Phase IV (DL-044 per-wave sign-off)
+
+- **Source Finding:** DL-068 authorized Wave B (Understanding); DL-044 requires an **owner per-wave exit-gate review before Phase IV**. PR #39 (`feat/phase3-waveb-understanding`: Synthesis IC-WS-SYNTH → Infer IC-WB-INFER → Evaluate IC-WB-EVAL) is the Wave B realization — once it merges, this gate is the next governance checkpoint. Surfaced 2026-06-17 during the PR #39 review.
+- **Affected Layer(s):** Build Governance (delivery); `00_owner` (decision/exit-gate).
+- **Affected Concepts:** DL-044 wave-authorization / exit gate; Wave B (Understanding); Phase IV; DL-046 (Fast/Deep + <60s Time-to-First-MRI); DL-062 (CAF decomposability).
+- **Proposal Scope:** Define and run the Wave B exit-gate review (Framework 001A five outputs — Findings / Concerns / Dependencies / Recommendation / Status) against the DL-068 authorized scope, the DL-046 NFR obligations, and the DL-062 decomposability condition (including the still-open CAF driver-level decomposability test flagged in the PR #39 review). Owner sign-off required; **no Phase IV start without it.**
+- **Dependencies:** Blocked by PR #39 merge (Wave B landed). Relates to DL-068, DL-044, DL-046, DL-062.
+- **Status:** Proposed (owner-gated; due at Wave B completion).
+
 ---
 
 ## Governance Notes
