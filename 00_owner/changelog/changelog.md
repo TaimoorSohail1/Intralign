@@ -782,6 +782,13 @@ Each changelog entry contains:
 - **Change Summary:** Internal Gemma (local Llama runtime) as the primary LLM (amends DL-054 §5). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-100 — DL-070: Ratify the Phase 1 "Prove Understanding" falsifiable exit gate (P-4 / DL-059 realization)
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-070.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-070-phase1-prove-understanding-exit-gate.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Ratify the Phase 1 "Prove Understanding" falsifiable exit gate (P-4 / DL-059 realization). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

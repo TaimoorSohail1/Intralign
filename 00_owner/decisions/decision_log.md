@@ -838,5 +838,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-067 — Console-Driven DL Landing (automate the DL-065 flow server-side) → `00_owner/decisions/records/DL-067-console-driven-dl-landing.md`
 - DL-068 — Wave A sign-off + Wave B authorization → `00_owner/decisions/records/DL-068-wave-a-signoff-wave-b-authorization.md`
 - DL-069 — Internal Gemma (local Llama runtime) as the primary LLM (amends DL-054 §5) → `00_owner/decisions/records/DL-069-internal-gemma-primary-llm.md`
+- DL-070 — Ratify the Phase 1 "Prove Understanding" falsifiable exit gate (P-4 / DL-059 realization) → `00_owner/decisions/records/DL-070-phase1-prove-understanding-exit-gate.md`
 
 <!-- RECORDS-INDEX:END -->
