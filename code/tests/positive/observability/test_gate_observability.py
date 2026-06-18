@@ -18,6 +18,7 @@ from ci.gate_observability import (
     EXPECTED_EVENT_NAMES_WA002,
     EXPECTED_EVENT_NAMES_WB_EVAL,
     EXPECTED_EVENT_NAMES_WB_INFER,
+    EXPECTED_EVENT_NAMES_WC_ADVISE,
     EXPECTED_EVENT_NAMES_WS,
     check_append_event_pairing,
     check_event_vocabulary,
@@ -35,6 +36,7 @@ from backend.services.observability.events import (
     EVENT_NAMES_WA002,
     EVENT_NAMES_WB_EVAL,
     EVENT_NAMES_WB_INFER,
+    EVENT_NAMES_WC_ADVISE,
     EVENT_NAMES_WS,
 )
 
@@ -61,10 +63,11 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
     assert EXPECTED_EVENT_NAMES_WS == EVENT_NAMES_WS
     assert EXPECTED_EVENT_NAMES_WB_INFER == EVENT_NAMES_WB_INFER
     assert EXPECTED_EVENT_NAMES_WB_EVAL == EVENT_NAMES_WB_EVAL
+    assert EXPECTED_EVENT_NAMES_WC_ADVISE == EVENT_NAMES_WC_ADVISE
     assert EXPECTED_EVENT_NAMES_COST == EVENT_NAMES_COST
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
-    # Union consistency: the alias is exactly the 7-way per-contract concatenation
-    # (DTM-0011 — WB_EVAL added between WB_INFER and COST; the union grows, never reorders).
+    # Union consistency: the alias is exactly the 8-way per-contract concatenation
+    # (DTM-0014 — WC_ADVISE added between WB_EVAL and COST; the union grows, never reorders).
     assert EVENT_NAMES == (
         EVENT_NAMES_WA00R
         + EVENT_NAMES_WA001
@@ -72,6 +75,7 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
         + EVENT_NAMES_WS
         + EVENT_NAMES_WB_INFER
         + EVENT_NAMES_WB_EVAL
+        + EVENT_NAMES_WC_ADVISE
         + EVENT_NAMES_COST
     )
     # stale_detected lives in the WA00R set only — referenced, never duplicated.
@@ -123,6 +127,24 @@ def test_wb_eval_vocabulary_is_the_five_ic_wb_eval_a6_names_verbatim() -> None:
         assert name not in EVENT_NAMES_COST
     # The single ai_spend_recorded is the COST event, reused — not a WB_EVAL event.
     assert "ai_spend_recorded" not in EVENT_NAMES_WB_EVAL
+
+
+def test_wc_advise_vocabulary_is_the_two_ic_wc_advise_a6_names_verbatim() -> None:
+    """DTM-0014 — the IC-WC-ADVISE A6 list, exactly, in contract order."""
+    assert EVENT_NAMES_WC_ADVISE == (
+        "recommendation_generated",
+        "clarification_requested",
+    )
+    # The per-emission append event is REUSED from WA00R, never duplicated here.
+    assert "cognition_history_record_appended" not in EVENT_NAMES_WC_ADVISE
+    # Advise events live in the WC_ADVISE set only — never leaking into other sets.
+    for name in EVENT_NAMES_WC_ADVISE:
+        assert name not in EVENT_NAMES_WS
+        assert name not in EVENT_NAMES_WB_INFER
+        assert name not in EVENT_NAMES_WB_EVAL
+        assert name not in EVENT_NAMES_COST
+    # The single ai_spend_recorded is the COST event, reused — not a WC_ADVISE event.
+    assert "ai_spend_recorded" not in EVENT_NAMES_WC_ADVISE
 
 
 def test_wa002_vocabulary_is_the_five_ic_wa_002_a6_names_verbatim() -> None:

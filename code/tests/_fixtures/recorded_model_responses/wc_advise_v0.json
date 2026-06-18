@@ -1,0 +1,42 @@
+{
+  "name": "wc_advise_v0",
+  "model_version": "gemma4@wc-advise-v0",
+  "config": {
+    "tier": "free",
+    "stage": "advise",
+    "temperature": 0,
+    "routing": "advise->internal-gemma"
+  },
+  "responses": [
+    {
+      "key": "recommendation",
+      "tokens_in": 340,
+      "tokens_out": 120,
+      "text": "[{\"summary\": \"Attest the missing constraint evidence so the plan's clarity gap is closed.\", \"anchor\": \"gap-coverage-1\", \"type\": \"suggested_action\"}, {\"summary\": \"Alternatively, narrow scope to defer the un-attested constraint to a later phase.\", \"anchor\": \"gap-coverage-1\", \"type\": \"candidate_improvement\"}, {\"summary\": \"Mitigate the feasibility risk by validating the payments-service stability before the Q3 rollout.\", \"anchor\": \"risk-1\", \"type\": \"suggested_action\"}]"
+    },
+    {
+      "key": "clarification",
+      "tokens_in": 280,
+      "tokens_out": 70,
+      "text": "[{\"question\": \"The attested assertions about the Q3 finish date contradict each other — which is authoritative?\", \"anchor\": \"conflict-1\"}]"
+    },
+    {
+      "key": "recommendation_unanchored",
+      "tokens_in": 120,
+      "tokens_out": 40,
+      "text": "[{\"summary\": \"A free-floating recommendation with no resolvable anchor.\", \"anchor\": \"nonexistent-id\", \"type\": \"suggested_action\"}]"
+    },
+    {
+      "key": "recommendation_empty",
+      "tokens_in": 80,
+      "tokens_out": 10,
+      "text": "[]"
+    },
+    {
+      "key": "clarification_empty",
+      "tokens_in": 80,
+      "tokens_out": 10,
+      "text": "[]"
+    }
+  ]
+}

@@ -504,3 +504,133 @@ class Issue(CognitionEntity):
         default=EpistemicState.DERIVED,
         description="Pinned derived — an Issue is never Attested-as-truth.",
     )
+
+
+# =============================================================================
+# Wave C (DTM-0014, IC-WC-ADVISE) — the Advise cognition types. Advise is the
+# SINGLE producer (one-producer rule #1) of Recommendation + ClarificationRequest.
+# Both are DERIVED Cognition (recomputable; never written to the canonical store
+# as Attested — hard rule #2). Advise READS Findings (Infer) + Issues/assessment
+# (Evaluate) + Attested knowledge and PROPOSES candidate responses; it does NOT
+# evaluate/score (Evaluate's), generate Findings (Infer's), write canonical /
+# promote to Attested, govern/authorize/execute, ACCEPT its own output
+# (acceptance is the user's — DL-055; Wave U), or change an assessment outside
+# recompute.
+#
+# Recommendation is ALWAYS anchored to a Finding/Issue (``anchor`` — never
+# standalone; a missing anchor is a Major contract failure, IC-WC-ADVISE 1.1,
+# made structurally impossible by the non-empty ``anchor`` field). Multiple
+# alternatives persist as MULTIPLE Recommendations — there is NO standalone
+# Resolution-Path object (Resolution Paths are presentation-only, AMB-1/Wave E;
+# emitting one is a rejected negative). Advise emits Recommendations in the
+# ``Generated`` state ONLY (DL-055): Accept/Defer/Reject/Apply are user actions
+# recorded by Wave U, never produced here.
+#
+# mode / confidence_stage are ATTRIBUTES, not objects (DL-046); carried on each
+# emission and (downstream) its CHR. They change ONLY via recompute.
+# =============================================================================
+
+# IC-WC-ADVISE — the two Recommendation types (C1: Suggested Action, Candidate
+# Improvement). A LABEL describing the KIND of candidate response — never a
+# severity/score (that is Evaluate's) and never an executed action (Advise
+# proposes, never disposes).
+RecommendationType = Literal["suggested_action", "candidate_improvement"]
+
+# DL-055 — the Recommendation lifecycle state. Advise produces the ``generated``
+# state ONLY; {accepted, rejected, deferred, implemented, superseded} are
+# user-owned transitions recorded by Wave U (NOT produced here). Pinned on the
+# Recommendation so a non-``generated`` state out of Advise is structurally
+# impossible (self-accept made impossible — IC-WC-ADVISE forbidden, Critical).
+RecommendationState = Literal["generated"]
+
+
+class Recommendation(CognitionEntity):
+    """A Derived, governable candidate response (IC-WC-ADVISE) — anchored, advisory.
+
+    Produced by Advise from the Findings/Issues that motivate it; ALWAYS anchored
+    to a Finding/Issue (``anchor`` — non-empty; a standalone/unanchored
+    Recommendation is a Major failure made structurally impossible). One of two
+    types — Suggested Action or Candidate Improvement. Derived/recomputable;
+    never Attested-as-truth (hard rule #2). Advise PROPOSES; it never evaluates,
+    scores, governs, accepts, authorizes, or executes — the ``state`` is pinned to
+    ``generated`` (DL-055: acceptance is the user's, recorded by Wave U).
+
+    Multiple alternatives are MULTIPLE Recommendations (no Resolution-Path
+    object). Forbidden surface (``extra='forbid'``): a Recommendation carries NO
+    severity / confidence / score field (Evaluate's), NO accept/approve/execute
+    field, and NO resolution-path-object field — those are not Advise's to hold.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    recommendation_id: str = Field(
+        ..., description="Stable identity (recompute supersedes the SAME id)."
+    )
+    recommendation_type: RecommendationType = Field(
+        ..., description="suggested_action | candidate_improvement (a kind label)."
+    )
+    # MANDATORY anchor: the Finding/Issue id this Recommendation responds to. A
+    # Recommendation with no anchor is rejected at construction (the
+    # "Recommendation-only-in-Finding-context" invariant made structurally
+    # impossible — IC-WC-ADVISE 1.1; standalone = Major failure).
+    anchor: str = Field(
+        ..., min_length=1,
+        description="Lineage: the Finding/Issue id this Recommendation is anchored to.",
+    )
+    summary: str = Field(
+        ..., description="The candidate response, stated plainly (AI-text; semantic tier)."
+    )
+    model_or_rule_version: str = Field(..., description="model/rule version stamp.")
+    # DL-055: Advise emits the Generated state ONLY (never accepts its own output).
+    state: RecommendationState = Field(
+        default="generated",
+        description="Pinned generated — acceptance is the user's (DL-055; Wave U).",
+    )
+    # DL-046 attributes (not objects). confidence_stage matures ONLY via recompute.
+    mode: Mode
+    confidence_stage: ConfidenceStage = "orientation"
+    understanding_state: UnderstandingState = "initial"
+    # Pinned: a Recommendation is DERIVED cognition — never Attested-as-truth.
+    epistemic_state: Literal[EpistemicState.DERIVED] = Field(
+        default=EpistemicState.DERIVED,
+        description="Pinned derived — a Recommendation is never Attested-as-truth.",
+    )
+
+
+class ClarificationRequest(CognitionEntity):
+    """A Derived request for user input on blocking ambiguity (IC-WC-ADVISE).
+
+    Produced by Advise when ambiguity blocks understanding — an INFORMATION
+    request (a question), NOT an action and NOT a Recommendation. Anchored to the
+    Finding/Issue whose ambiguity it surfaces (``anchor`` — non-empty).
+    Derived/recomputable; never Attested-as-truth. Advise never resolves the
+    ambiguity itself or accepts an answer — it asks; the user answers (the answer
+    re-enters through Retain admission and triggers recompute, never an in-place
+    mutation here).
+
+    Forbidden surface (``extra='forbid'``): a Clarification carries NO severity /
+    score / answer / acceptance field — it is purely the question + its anchor.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    clarification_id: str = Field(
+        ..., description="Stable identity (recompute supersedes the SAME id)."
+    )
+    anchor: str = Field(
+        ..., min_length=1,
+        description="Lineage: the Finding/Issue id whose ambiguity this surfaces.",
+    )
+    question: str = Field(
+        ..., description="The information request (AI-text; semantic tier)."
+    )
+    model_or_rule_version: str = Field(..., description="model/rule version stamp.")
+    mode: Mode
+    confidence_stage: ConfidenceStage = "orientation"
+    understanding_state: UnderstandingState = "initial"
+    epistemic_state: Literal[EpistemicState.DERIVED] = Field(
+        default=EpistemicState.DERIVED,
+        description="Pinned derived — a ClarificationRequest is never Attested-as-truth.",
+    )

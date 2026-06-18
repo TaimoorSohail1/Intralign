@@ -44,8 +44,9 @@ def internal_model_id() -> str:
     return os.environ.get(INTERNAL_MODEL_ENV, "").strip() or DEFAULT_INTERNAL_MODEL
 
 # The model-routing *stages* the engine routes (Wave S: extraction +
-# synthesis/generation). Each maps to a routed model per tier.
-RoutingStage = Literal["extraction", "synthesis", "generation"]
+# synthesis/generation; Wave C adds advise — recommendation text is AI-text).
+# Each maps to a routed model per tier.
+RoutingStage = Literal["extraction", "synthesis", "generation", "advise"]
 
 # Subscription tier (Free is the only §4c-pinned tier; paid is owner-deferred).
 Tier = Literal["free", "paid", "internal"]
@@ -86,6 +87,10 @@ class TierRouting:
     extraction: ModelRef
     synthesis: ModelRef
     generation: ModelRef
+    # Wave C (DTM-0014): Advise routes its recommendation/clarification text
+    # generation here. Internal gemma primary (DL-069), mirroring the other
+    # stages — recommendations are AI-text, driven by recorded fixtures in CI.
+    advise: ModelRef
     fallback: ModelRef
 
     def model_for(self, stage: RoutingStage) -> ModelRef:
@@ -116,6 +121,7 @@ def _internal_routing() -> TierRouting:
         extraction=internal,
         synthesis=internal,
         generation=internal,
+        advise=internal,
         fallback=ModelRef("openai", "gpt-4.1-mini"),
     )
 
@@ -127,6 +133,7 @@ _OPENAI_FALLBACK_ROUTING = TierRouting(
     extraction=ModelRef("openai", "gpt-4.1-nano"),
     synthesis=ModelRef("openai", "gpt-4.1-mini"),
     generation=ModelRef("openai", "gpt-4.1-mini"),
+    advise=ModelRef("openai", "gpt-4.1-mini"),
     fallback=ModelRef("anthropic", "claude-haiku-4.5"),
 )
 

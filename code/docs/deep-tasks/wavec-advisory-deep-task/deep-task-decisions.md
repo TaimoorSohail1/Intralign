@@ -89,9 +89,10 @@ Two slices (DTM-0014, DTM-0015). **Branch:** `feat/phase4-wavec-advisory` (do NO
 
 ## Open items
 
-- **GATE — Wave C coding is BLOCKED on:** (a) the **Wave B owner exit-gate** (PR #39 merge /
-  DL-044 per-wave sign-off), and (b) per-wave authorization + readiness gate. **These task files
-  are planning only; no worker is spawned until the owner authorizes Wave C start.**
+- **GATE — owner authorized Wave C start 2026-06-18.** DTM-0014 coding proceeds; DTM-0015 stays
+  sequentially gated on DTM-0014 approval. (Note: the Wave B PR #39 exit-gate sign-off on `main`
+  is still pending; the owner directed Wave C start regardless, and this branch already carries
+  the approved Wave B + DTM-0013 code.)
 - **Residual (minor, scaffold-safe):** exact OBS-WC event snake_case — worker pins verbatim vs
   OBS-WC C3 / the DL-047 OBS line. SuggestedFix/Validation persist on the existing
   `recommendation` kind + a payload `type` discriminator (no new kind); a *new* kind ⇒ STOP.
