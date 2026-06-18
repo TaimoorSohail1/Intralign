@@ -25,11 +25,11 @@ This file enumerates the major ontology entities, their relationships, and their
 
 | Entity | Status | Primary Source |
 |---|---|---|
-| Intended Reality | Canonical | `01_governance/doctrine/04_outcome_integrity_framework.md` |
-| Current Reality | Canonical | `01_governance/doctrine/04_outcome_integrity_framework.md` |
-| Integrity Gap | Canonical | `01_governance/doctrine/04_outcome_integrity_framework.md` |
-| Outcome Integrity | Canonical | `01_governance/doctrine/01_core_philosophical_doctrine.md`; `01_governance/constitution/01_foundational_constitutional_doctrine.md` Article 3 |
-| Outcome Integrity States | Conflicting | `01_governance/doctrine/04_outcome_integrity_framework.md`; `01_governance/constitution/06_confidence_integrity_constitution.md` Article 33; `03_implementation_specs/08_state_logic_state_machines.md` |
+| Intended Reality | Canonical | `00_owner/doctrine/04_outcome_integrity_framework.md` |
+| Current Reality | Canonical | `00_owner/doctrine/04_outcome_integrity_framework.md` |
+| Integrity Gap | Canonical | `00_owner/doctrine/04_outcome_integrity_framework.md` |
+| Outcome Integrity | Canonical | `00_owner/doctrine/01_core_philosophical_doctrine.md`; `00_owner/constitution/01_foundational_constitutional_doctrine.md` Article 3 |
+| Outcome Integrity States | Conflicting | `00_owner/doctrine/04_outcome_integrity_framework.md`; `00_owner/constitution/06_confidence_integrity_constitution.md` Article 33; `03_implementation_specs/08_state_logic_state_machines.md` |
 
 ### Relationships
 
@@ -45,17 +45,17 @@ This file enumerates the major ontology entities, their relationships, and their
 
 | Entity | Status | Primary Source |
 |---|---|---|
-| Dynamic Epistemic Synthesis | Canonical | `01_governance/doctrine/03_epistemic_system_model.md`; `01_governance/constitution/02_epistemic_constitution.md` Article 7 |
-| Fact | Canonical | `01_governance/doctrine/03_epistemic_system_model.md` |
-| Inference | Canonical | `01_governance/doctrine/03_epistemic_system_model.md` |
-| Assumption | Canonical | `01_governance/doctrine/03_epistemic_system_model.md` |
-| Recommendation | Canonical | `01_governance/doctrine/03_epistemic_system_model.md` |
-| Conflict | Canonical | `01_governance/doctrine/03_epistemic_system_model.md` |
-| Ambiguity | Canonical | `01_governance/doctrine/03_epistemic_system_model.md` |
-| Understanding Boundary | Canonical | `01_governance/doctrine/03_epistemic_system_model.md`; `01_governance/constitution/02_epistemic_constitution.md` Article 9 |
-| Progressive Epistemic Depth | Canonical | `01_governance/constitution/02_epistemic_constitution.md` Article 10 |
-| Organizational Epistemic Memory | Canonical | `01_governance/doctrine/03_epistemic_system_model.md`; `01_governance/constitution/02_epistemic_constitution.md` Article 11 |
-| Understanding Evolution | Canonical | `01_governance/doctrine/06_confidence_understanding_model.md` |
+| Dynamic Epistemic Synthesis | Canonical | `00_owner/doctrine/03_epistemic_system_model.md`; `00_owner/constitution/02_epistemic_constitution.md` Article 7 |
+| Fact | Canonical | `00_owner/doctrine/03_epistemic_system_model.md` |
+| Inference | Canonical | `00_owner/doctrine/03_epistemic_system_model.md` |
+| Assumption | Canonical | `00_owner/doctrine/03_epistemic_system_model.md` |
+| Recommendation | Canonical | `00_owner/doctrine/03_epistemic_system_model.md` |
+| Conflict | Canonical | `00_owner/doctrine/03_epistemic_system_model.md` |
+| Ambiguity | Canonical | `00_owner/doctrine/03_epistemic_system_model.md` |
+| Understanding Boundary | Canonical | `00_owner/doctrine/03_epistemic_system_model.md`; `00_owner/constitution/02_epistemic_constitution.md` Article 9 |
+| Progressive Epistemic Depth | Canonical | `00_owner/constitution/02_epistemic_constitution.md` Article 10 |
+| Organizational Epistemic Memory | Canonical | `00_owner/doctrine/03_epistemic_system_model.md`; `00_owner/constitution/02_epistemic_constitution.md` Article 11 |
+| Understanding Evolution | Canonical | `00_owner/doctrine/06_confidence_understanding_model.md` |
 
 ### Relationships
 
@@ -76,9 +76,9 @@ This file enumerates the major ontology entities, their relationships, and their
 
 | Entity | Status | Primary Source |
 |---|---|---|
-| Confidence | Canonical | `01_governance/doctrine/06_confidence_understanding_model.md`; `01_governance/constitution/06_confidence_integrity_constitution.md` Article 30 |
-| Confidence Maturity | Canonical | `01_governance/constitution/06_confidence_integrity_constitution.md` Article 32 |
-| Confidence Drivers | Conflicting | `01_governance/doctrine/06_confidence_understanding_model.md`; `03_implementation_specs/09_confidence_integrity_logic.md` |
+| Confidence | Canonical | `00_owner/doctrine/06_confidence_understanding_model.md`; `00_owner/constitution/06_confidence_integrity_constitution.md` Article 30 |
+| Confidence Maturity | Canonical | `00_owner/constitution/06_confidence_integrity_constitution.md` Article 32 |
+| Confidence Drivers | Conflicting | `00_owner/doctrine/06_confidence_understanding_model.md`; `03_implementation_specs/09_confidence_integrity_logic.md` |
 | Confidence Maturity Progression | Canonical | Same as above; `03_implementation_specs/08_state_logic_state_machines.md` |
 
 ### Relationships
@@ -100,15 +100,15 @@ The driver list differs by two dimensions between doctrine and spec. Reconciliat
 
 | Entity | Status | Primary Source |
 |---|---|---|
-| Governance | Canonical | `01_governance/doctrine/07_governance_policy_doctrine.md`; `01_governance/constitution/04_governance_constitution.md` Article 19 |
-| Outcome Integrity Policy | Canonical | `01_governance/doctrine/07_governance_policy_doctrine.md`; `01_governance/constitution/04_governance_constitution.md` Article 20 |
-| Human Override | Canonical | `01_governance/constitution/04_governance_constitution.md` Article 21 |
-| Governance Escalation | Canonical | `01_governance/constitution/04_governance_constitution.md` Article 22 |
-| Disagreement Handling | Canonical | `01_governance/doctrine/07_governance_policy_doctrine.md`; `01_governance/constitution/04_governance_constitution.md` Article 23 |
-| Intended Reality Governance | Canonical | `01_governance/constitution/04_governance_constitution.md` Article 24 |
+| Governance | Canonical | `00_owner/doctrine/07_governance_policy_doctrine.md`; `00_owner/constitution/04_governance_constitution.md` Article 19 |
+| Outcome Integrity Policy | Canonical | `00_owner/doctrine/07_governance_policy_doctrine.md`; `00_owner/constitution/04_governance_constitution.md` Article 20 |
+| Human Override | Canonical | `00_owner/constitution/04_governance_constitution.md` Article 21 |
+| Governance Escalation | Canonical | `00_owner/constitution/04_governance_constitution.md` Article 22 |
+| Disagreement Handling | Canonical | `00_owner/doctrine/07_governance_policy_doctrine.md`; `00_owner/constitution/04_governance_constitution.md` Article 23 |
+| Intended Reality Governance | Canonical | `00_owner/constitution/04_governance_constitution.md` Article 24 |
 | Override State Model | Conflicting | `03_implementation_specs/08_state_logic_state_machines.md`; `03_implementation_specs/11_governance_override_logic.md` |
 | Collaboration Role Model | Proposed | `03_implementation_specs/10_collaboration_sharing_logic.md` |
-| Agent Governance | Proposed | `01_governance/doctrine/02_organizational_cognition_model.md`; `03_implementation_specs/12_freemium_tier_behavior_logic.md` |
+| Agent Governance | Proposed | `00_owner/doctrine/02_organizational_cognition_model.md`; `03_implementation_specs/12_freemium_tier_behavior_logic.md` |
 
 ### Relationships
 
@@ -135,13 +135,13 @@ The canonical progression taxonomy for this plane is the **OSLO Evolution Framew
 
 | Entity | Status | Primary Source |
 |---|---|---|
-| OSLO Evolution Framework | Canonical | DL-034; `01_governance/decisions/rb_003_disposition.md` |
-| Cognition Scope (Axis A) | Canonical | `01_governance/doctrine/02_organizational_cognition_model.md` (canonical); DL-034 |
-| Product Identity (Axis B) | Canonical | `01_governance/doctrine/09_plg_product_evolution_strategy.md` (canonical); DL-034 |
-| Trust Gradient (Axis C) | Canonical | `01_governance/doctrine/09_plg_product_evolution_strategy.md` (canonical); `01_governance/constitution/08_product_evolution_constitution.md` Article 41 (aligned); DL-034 |
-| Execution Depth (Axis D) | Canonical | `01_governance/doctrine/10_execution_orchestration_maturity.md` (canonical); `01_governance/constitution/08_product_evolution_constitution.md` Article 43 (aligned); DL-034 |
-| Portfolio Cognition | Provisional (long-term capability, not a ratified stage) | `01_governance/doctrine/10_execution_orchestration_maturity.md` Long-Term Direction; `01_governance/constitution/08_product_evolution_constitution.md` Article 44 (Article 44's stage-promotion is provisional under DL-034) |
-| Long-Term Direction items (organizational systems cognition; cascading dependency awareness; organizational drift analysis; cross-initiative consequence modeling) | Provisional | `01_governance/doctrine/10_execution_orchestration_maturity.md` |
+| OSLO Evolution Framework | Canonical | DL-034; `00_owner/decisions/rb_003_disposition.md` |
+| Cognition Scope (Axis A) | Canonical | `00_owner/doctrine/02_organizational_cognition_model.md` (canonical); DL-034 |
+| Product Identity (Axis B) | Canonical | `00_owner/doctrine/09_plg_product_evolution_strategy.md` (canonical); DL-034 |
+| Trust Gradient (Axis C) | Canonical | `00_owner/doctrine/09_plg_product_evolution_strategy.md` (canonical); `00_owner/constitution/08_product_evolution_constitution.md` Article 41 (aligned); DL-034 |
+| Execution Depth (Axis D) | Canonical | `00_owner/doctrine/10_execution_orchestration_maturity.md` (canonical); `00_owner/constitution/08_product_evolution_constitution.md` Article 43 (aligned); DL-034 |
+| Portfolio Cognition | Provisional (long-term capability, not a ratified stage) | `00_owner/doctrine/10_execution_orchestration_maturity.md` Long-Term Direction; `00_owner/constitution/08_product_evolution_constitution.md` Article 44 (Article 44's stage-promotion is provisional under DL-034) |
+| Long-Term Direction items (organizational systems cognition; cascading dependency awareness; organizational drift analysis; cross-initiative consequence modeling) | Provisional | `00_owner/doctrine/10_execution_orchestration_maturity.md` |
 
 ### Deprecated Predecessor Entries (per DL-036 R5)
 
@@ -149,9 +149,9 @@ The following entries are formally deprecated as Duplicate-status predecessor na
 
 | Predecessor Name | Status | Canonical Name | Ratifying Decision | Historical Source |
 |---|---|---|---|---|
-| Strategic Arc | Duplicate | Cognition Scope (Axis A) | DL-034 | `01_governance/doctrine/02_organizational_cognition_model.md` |
-| Organizational Cognition Arc | Duplicate | Cognition Scope (Axis A) | DL-034 (extended by DL-036 R5 per Clarification #7) | `01_governance/doctrine/02_organizational_cognition_model.md` |
-| Trust Evolution | Duplicate | Trust Gradient (Axis C) | DL-034 | `01_governance/doctrine/09_plg_product_evolution_strategy.md` |
+| Strategic Arc | Duplicate | Cognition Scope (Axis A) | DL-034 | `00_owner/doctrine/02_organizational_cognition_model.md` |
+| Organizational Cognition Arc | Duplicate | Cognition Scope (Axis A) | DL-034 (extended by DL-036 R5 per Clarification #7) | `00_owner/doctrine/02_organizational_cognition_model.md` |
+| Trust Evolution | Duplicate | Trust Gradient (Axis C) | DL-034 | `00_owner/doctrine/09_plg_product_evolution_strategy.md` |
 
 The DL-034 reframings of *Execution Maturity Phases* and *Product Evolution Stages* remain as reframings (now the Execution Depth and Product Identity axes respectively); they are not in DL-036 R5's formal deprecation table.
 
@@ -186,15 +186,15 @@ The DL-034 reframings of *Execution Maturity Phases* and *Product Evolution Stag
 
 | Entity | Status | Primary Source |
 |---|---|---|
-| Outcome Space | Canonical | `01_governance/constitution/03_workspace_constitution.md` Article 13; `01_governance/constitution/10_canonical_definitions.md` |
-| Understanding (workspace center) | Canonical | `01_governance/constitution/03_workspace_constitution.md` Article 12 |
-| What OSLO Understands | Canonical | `01_governance/constitution/03_workspace_constitution.md` Article 14 |
-| Artifact | Proposed | `01_governance/constitution/03_workspace_constitution.md` Article 15 |
-| Artifact Domains | Canonical | Intent, Context, Execution, Schedule, Resources — `01_governance/doctrine/05_workspace_navigation_doctrine.md`; Article 15 |
-| Persistent Confidence Shell | Canonical | `01_governance/constitution/03_workspace_constitution.md` Article 17 |
-| Companion Intelligence Panel | Canonical | `01_governance/constitution/03_workspace_constitution.md` Article 18 |
-| Attention Queue | Proposed | `01_governance/doctrine/05_workspace_navigation_doctrine.md`; `03_implementation_specs/03_outcome_space_workspace_wireframes.md` |
-| Adaptive Workspace | Canonical | `01_governance/constitution/03_workspace_constitution.md` Article 16 |
+| Outcome Space | Canonical | `00_owner/constitution/03_workspace_constitution.md` Article 13; `00_owner/constitution/10_canonical_definitions.md` |
+| Understanding (workspace center) | Canonical | `00_owner/constitution/03_workspace_constitution.md` Article 12 |
+| What OSLO Understands | Canonical | `00_owner/constitution/03_workspace_constitution.md` Article 14 |
+| Artifact | Proposed | `00_owner/constitution/03_workspace_constitution.md` Article 15 |
+| Artifact Domains | Canonical | Intent, Context, Execution, Schedule, Resources — `00_owner/doctrine/05_workspace_navigation_doctrine.md`; Article 15 |
+| Persistent Confidence Shell | Canonical | `00_owner/constitution/03_workspace_constitution.md` Article 17 |
+| Companion Intelligence Panel | Canonical | `00_owner/constitution/03_workspace_constitution.md` Article 18 |
+| Attention Queue | Proposed | `00_owner/doctrine/05_workspace_navigation_doctrine.md`; `03_implementation_specs/03_outcome_space_workspace_wireframes.md` |
+| Adaptive Workspace | Canonical | `00_owner/constitution/03_workspace_constitution.md` Article 16 |
 | Project MRI | Canonical (R1, DL-061) | `OSLO_RELEASE_1_MASTER_SPEC.md` §7/§15C/§21 (per-project); `repository_manifest.md` |
 
 ### Relationships
@@ -213,11 +213,11 @@ The DL-034 reframings of *Execution Maturity Phases* and *Product Evolution Stag
 
 | Entity | Status | Primary Source |
 |---|---|---|
-| Calm Strategic Augmentation | Canonical | `01_governance/constitution/09_emotional_interaction_constitution.md` Article 45 |
-| Progressive Visibility | Canonical | `01_governance/constitution/05_intelligence_visibility_constitution.md` Article 25 |
-| Workspace-Native Intelligence | Canonical | `01_governance/constitution/05_intelligence_visibility_constitution.md` Article 26 |
-| Explainability | Canonical | `01_governance/constitution/05_intelligence_visibility_constitution.md` Article 28 |
-| Consequence Illumination | Canonical | `01_governance/constitution/05_intelligence_visibility_constitution.md` Article 29 |
+| Calm Strategic Augmentation | Canonical | `00_owner/constitution/09_emotional_interaction_constitution.md` Article 45 |
+| Progressive Visibility | Canonical | `00_owner/constitution/05_intelligence_visibility_constitution.md` Article 25 |
+| Workspace-Native Intelligence | Canonical | `00_owner/constitution/05_intelligence_visibility_constitution.md` Article 26 |
+| Explainability | Canonical | `00_owner/constitution/05_intelligence_visibility_constitution.md` Article 28 |
+| Consequence Illumination | Canonical | `00_owner/constitution/05_intelligence_visibility_constitution.md` Article 29 |
 
 ### Relationships
 
@@ -241,15 +241,15 @@ The following nine canonical doctrinal concepts are registered using existing Do
 
 | Concept | Status | Doctrinal Source | Plane |
 |---|---|---|---|
-| Dynamic Systems Orientation | Canonical | `01_governance/doctrine/01_core_philosophical_doctrine.md` (Dynamic Systems Orientation section) | Reality / Epistemic |
-| Constitutional Principle (Design Tradeoff Test) | Canonical | `01_governance/doctrine/01_core_philosophical_doctrine.md` (closing section) | Cross-plane (foundational test) |
-| Epistemic Governance | Canonical | `01_governance/doctrine/02_organizational_cognition_model.md` (Governed Organizational Cognition section) | Governance / Cognition |
-| Flawed Intended Reality Handling | Canonical | `01_governance/doctrine/07_governance_policy_doctrine.md` (Flawed Intended Reality Handling section) | Governance / Reality |
-| Stability vs Movement | Canonical | `01_governance/doctrine/06_confidence_understanding_model.md` (Stability vs Movement section) | Emotional and Visibility |
-| Shared Cognition Principle | Canonical | `01_governance/doctrine/08_collaboration_shared_cognition.md` (Shared Cognition Principle section) | Cognition |
-| Narrative Views | Canonical | `01_governance/doctrine/08_collaboration_shared_cognition.md` (Narrative Views section) | Workspace / Collaboration |
-| Freemium Doctrine | Canonical | `01_governance/doctrine/09_plg_product_evolution_strategy.md` (Freemium Doctrine section) | Cognition and Progression |
-| Strategic UX Doctrine | Canonical | `01_governance/doctrine/11_emotional_interaction_philosophy.md` (Strategic UX Doctrine section) | Emotional and Visibility |
+| Dynamic Systems Orientation | Canonical | `00_owner/doctrine/01_core_philosophical_doctrine.md` (Dynamic Systems Orientation section) | Reality / Epistemic |
+| Constitutional Principle (Design Tradeoff Test) | Canonical | `00_owner/doctrine/01_core_philosophical_doctrine.md` (closing section) | Cross-plane (foundational test) |
+| Epistemic Governance | Canonical | `00_owner/doctrine/02_organizational_cognition_model.md` (Governed Organizational Cognition section) | Governance / Cognition |
+| Flawed Intended Reality Handling | Canonical | `00_owner/doctrine/07_governance_policy_doctrine.md` (Flawed Intended Reality Handling section) | Governance / Reality |
+| Stability vs Movement | Canonical | `00_owner/doctrine/06_confidence_understanding_model.md` (Stability vs Movement section) | Emotional and Visibility |
+| Shared Cognition Principle | Canonical | `00_owner/doctrine/08_collaboration_shared_cognition.md` (Shared Cognition Principle section) | Cognition |
+| Narrative Views | Canonical | `00_owner/doctrine/08_collaboration_shared_cognition.md` (Narrative Views section) | Workspace / Collaboration |
+| Freemium Doctrine | Canonical | `00_owner/doctrine/09_plg_product_evolution_strategy.md` (Freemium Doctrine section) | Cognition and Progression |
+| Strategic UX Doctrine | Canonical | `00_owner/doctrine/11_emotional_interaction_philosophy.md` (Strategic UX Doctrine section) | Emotional and Visibility |
 
 ---
 
@@ -257,7 +257,7 @@ The following nine canonical doctrinal concepts are registered using existing Do
 
 | Predecessor Name | Status | Canonical Name | Ratifying Decision | Historical Source |
 |---|---|---|---|---|
-| Intelligence Visibility Doctrine | Duplicate | Progressive Visibility | DL-016 (Stated, grandfathered per DL-032; substantively aligned with Article 25) per DL-036 Clarification #4 | `01_governance/doctrine/11_emotional_interaction_philosophy.md` (Intelligence Visibility Doctrine section) |
+| Intelligence Visibility Doctrine | Duplicate | Progressive Visibility | DL-016 (Stated, grandfathered per DL-032; substantively aligned with Article 25) per DL-036 Clarification #4 | `00_owner/doctrine/11_emotional_interaction_philosophy.md` (Intelligence Visibility Doctrine section) |
 
 ---
 
@@ -268,7 +268,7 @@ The following are referenced in canonical or specification material without onto
 - Working Memory (`03_implementation_specs/13_implementation_backlog.md`)
 - Outcome Map (`03_implementation_specs/13_implementation_backlog.md`)
 - Alternative Outcome Models (`03_implementation_specs/13_implementation_backlog.md`)
-- Assumption Expiration (`01_governance/doctrine/07_governance_policy_doctrine.md`)
+- Assumption Expiration (`00_owner/doctrine/07_governance_policy_doctrine.md`)
 - Policy DSL / Policy Grammar (implied)
 - Scenario / Simulation (`03_implementation_specs/03_outcome_space_workspace_wireframes.md`; `03_implementation_specs/07_workflow_specifications.md`)
 - Shared View (`03_implementation_specs/05_component_system_specification.md`; `03_implementation_specs/10_collaboration_sharing_logic.md`)
