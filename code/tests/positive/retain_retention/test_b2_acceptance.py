@@ -13,29 +13,41 @@ from datetime import UTC, datetime
 from backend.responsibilities.perceive.acceptance_capture import capture_acceptance
 from backend.responsibilities.retain.acceptance import record_acceptance
 from backend.services.observability.events import CollectingEventEmitter
-from tests.positive.retain_retention.fakes import InMemoryRetentionStore
+from tests.positive.retain_retention.fakes import (
+    InMemoryChrReader,
+    InMemoryRetentionStore,
+)
 
 USER = str(uuid.uuid4())
 PIN = str(uuid.uuid4())
 PROJECT = str(uuid.uuid4())
 
 
-def _capture():
+def _capture(action: str = "accept"):
     return capture_acceptance(
         {
             "user_id": USER,
             "target_kind": "recommendation",
             "version_pin": PIN,
-            "action": "accept",
+            "action": action,
             "project_id": PROJECT,
         },
         emitter=CollectingEventEmitter(),
     )
 
 
+def _reader() -> InMemoryChrReader:
+    """A CHR reader pinned to PIN — the accepted recommendation's payload."""
+    reader = InMemoryChrReader()
+    reader.seed(PIN, {"summary": "Adopt the proposed milestone plan."})
+    return reader
+
+
 def test_b_plus_3_uar_row_is_version_pinned_and_user_attested() -> None:
     store = InMemoryRetentionStore()
-    result = record_acceptance(_capture(), project_id=PROJECT, store=store)
+    result = record_acceptance(
+        _capture(), project_id=PROJECT, store=store, chr_reader=_reader()
+    )
 
     row = store.get_acceptance(result.uar_id)
     assert row["user_id"] == USER
@@ -52,9 +64,18 @@ def test_b_plus_3_uar_row_is_version_pinned_and_user_attested() -> None:
 
 def test_b_plus_3_acceptance_recorded_history_entry_appended() -> None:
     store = InMemoryRetentionStore()
-    result = record_acceptance(_capture(), project_id=PROJECT, store=store)
+    result = record_acceptance(
+        _capture(), project_id=PROJECT, store=store, chr_reader=_reader()
+    )
 
-    entries = [h for h in store.history if h["event_type"] == "acceptance-recorded"]
+    # The UAR's history entry (DTM-0016: the plan-fact entry reuses the same
+    # event_type, discriminated by subject_ref.record == 'plan_fact').
+    entries = [
+        h
+        for h in store.history
+        if h["event_type"] == "acceptance-recorded"
+        and h["subject_ref"].get("record") != "plan_fact"
+    ]
     assert len(entries) == 1
     entry = entries[0]
     assert entry["history_id"] == result.history_id
@@ -65,9 +86,14 @@ def test_b_plus_3_acceptance_recorded_history_entry_appended() -> None:
 
 
 def test_uar_write_touches_only_its_two_tables() -> None:
-    """Decoupled (DL-043): the accepted item is never touched by recording."""
+    """Decoupled (DL-043): the accepted item is never touched by recording.
+
+    A reject records the UAR only (DTM-0016: no plan fact on reject/defer), so
+    the write footprint is exactly the two UAR tables — proving the accepted
+    item (assertion/CHR) is never mutated by acceptance recording.
+    """
     store = InMemoryRetentionStore()
-    record_acceptance(_capture(), project_id=PROJECT, store=store)
+    record_acceptance(_capture("reject"), project_id=PROJECT, store=store)
     assert store.tables_written == ["user_acceptance_record", "history_record"]
     assert store.assertions == []  # no attested_assertion written or changed
 
@@ -93,7 +119,9 @@ def test_b_plus_3_uar_row_inserts_into_the_real_table_live() -> None:
     from backend.services.persistence.retention_store import SupabaseRetentionStore
 
     store = SupabaseRetentionStore(create_client(url, key))
-    result = record_acceptance(_capture(), project_id=PROJECT, store=store)
+    result = record_acceptance(
+        _capture(), project_id=PROJECT, store=store, chr_reader=_reader()
+    )
     row = store.get_acceptance(result.uar_id)
     assert row is not None
     assert row["version_pin"] == PIN
@@ -101,6 +129,14 @@ def test_b_plus_3_uar_row_inserts_into_the_real_table_live() -> None:
     assert row["epistemic_state"] == "attested-user"
     # Record-exact (C+): the re-read row is the stored fact, verbatim.
     assert store.get_acceptance(result.uar_id) == row
+    # DTM-0016 — accept ALSO wrote a user-attested plan fact into the real
+    # attested_assertion table (attested-user; the user is the attesting source).
+    assert result.plan_fact_id is not None
+    plan_fact = store.get_assertion(result.plan_fact_id)
+    assert plan_fact is not None
+    assert plan_fact["epistemic_state"] == "attested-user"
+    assert plan_fact["attesting_source"] == USER
+    assert store.get_assertion(result.plan_fact_id) == plan_fact  # record-exact
 
 
 def test_capture_timestamp_is_preserved_as_confirmed_at() -> None:

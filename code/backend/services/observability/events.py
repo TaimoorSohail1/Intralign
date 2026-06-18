@@ -32,6 +32,11 @@ The vocabulary is pinned PER CONTRACT (deep-task decision #1, DTM-0007):
   ``recommendation`` CHR output_kind; its CHR-append pairs with the reused
   ``cognition_history_record_appended``. Application is observed as a USER edit +
   recompute (commodity / Wave I) — NOT an Advise event.
+- ``EVENT_NAMES_WU_ACCEPT`` — EXACTLY the two IC/OBS-WU-ACCEPT C3 acceptance-
+  recording events (DTM-0016), in contract order — "User Acceptance Record
+  appended" / "Plan-Fact recorded". The capture event ``user_acceptance_captured``
+  is reused from the WA001 set (Perceive's); the Acceptance-Impact event is
+  DTM-0017, not here.
 - ``EVENT_NAMES_COST`` — the single shared DL-048 spend event
   (``ai_spend_recorded``), introduced in DTM-0009 and reused by Wave B/C.
 - ``EVENT_NAMES`` — the union (concatenation) the emitters accept; kept as the
@@ -132,6 +137,16 @@ EVENT_NAMES_WC_FIX: tuple[str, ...] = (
     "suggested_fix_offered",
 )
 
+# IC/OBS-WU-ACCEPT C3 — the two acceptance-recording events, exactly (DTM-0016).
+# Pinned verbatim against OBS-WU-ACCEPT C3 / U3 ("User Acceptance Record
+# appended"; "Plan-Fact recorded"). The capture event ``user_acceptance_captured``
+# is REUSED from the WA001 set (Perceive's, never duplicated); the
+# Acceptance-Impact event is DTM-0017's, not here. Wave U / Retain.
+EVENT_NAMES_WU_ACCEPT: tuple[str, ...] = (
+    "user_acceptance_record_appended",
+    "plan_fact_recorded",
+)
+
 # DL-048 cost-governance — the single shared spend event (decision #9),
 # introduced in DTM-0009 and reused by Wave B/C. "AI Spend Recorded" (OBS §3).
 EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
@@ -146,6 +161,7 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_WB_EVAL
     + EVENT_NAMES_WC_ADVISE
     + EVENT_NAMES_WC_FIX
+    + EVENT_NAMES_WU_ACCEPT
     + EVENT_NAMES_COST
 )
 
@@ -180,7 +196,8 @@ class CollectingEventEmitter:
                 f"unknown contract event {event_name!r} — the vocabulary is "
                 "exactly IC-WA-00R A6 + IC-WA-001 A6 + IC-WA-002 A6 + "
                 "IC-WS-SYNTH A6 + IC-WB-INFER A6 + IC-WB-EVAL A6 + "
-                "IC-WC-ADVISE A6 + DL-047 SuggestedFix + DL-048 cost: "
+                "IC-WC-ADVISE A6 + DL-047 SuggestedFix + IC-WU-ACCEPT C3 + "
+                "DL-048 cost: "
                 f"{', '.join(EVENT_NAMES)}"
             )
         self.events.append((event_name, dict(payload)))

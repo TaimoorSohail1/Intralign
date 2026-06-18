@@ -6,8 +6,8 @@ Synthetic trees prove each failure mode independently:
 - a missing / empty tests/replay harness;
 - a tampered A6 vocabulary (renamed, extra, or non-literal EVENT_NAMES) across
   every per-contract tuple — WA00R / WA001 / WA002 / WS / WB_INFER (DTM-0010) /
-  WB_EVAL (DTM-0011) / WC_ADVISE (DTM-0014) / WC_FIX (DTM-0015) / COST — plus a
-  drifted or short 9-way union.
+  WB_EVAL (DTM-0011) / WC_ADVISE (DTM-0014) / WC_FIX (DTM-0015) /
+  WU_ACCEPT (DTM-0016) / COST — plus a drifted or short 10-way union.
 """
 
 from __future__ import annotations
@@ -81,6 +81,11 @@ EVENT_NAMES_WC_FIX: tuple[str, ...] = (
     "suggested_fix_offered",
 )
 
+EVENT_NAMES_WU_ACCEPT: tuple[str, ...] = (
+    "user_acceptance_record_appended",
+    "plan_fact_recorded",
+)
+
 EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
 
 EVENT_NAMES: tuple[str, ...] = (
@@ -92,6 +97,7 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_WB_EVAL
     + EVENT_NAMES_WC_ADVISE
     + EVENT_NAMES_WC_FIX
+    + EVENT_NAMES_WU_ACCEPT
     + EVENT_NAMES_COST
 )
 '''
@@ -412,12 +418,39 @@ def test_missing_wc_fix_tuple_fails_vocabulary_check(tmp_path) -> None:
     assert any("union of the per-contract vocabularies" in v for v in violations)
 
 
+def test_renamed_wu_accept_event_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0016 — tampering the IC-WU-ACCEPT C3 vocabulary fails the gate."""
+    tampered = GOOD_EVENTS_PY.replace("plan_fact_recorded", "plan_fact_written")
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "EVENT_NAMES_WU_ACCEPT != the IC-WU-ACCEPT C3 vocabulary" in violations[0]
+
+
+def test_missing_wu_accept_tuple_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0016 — dropping the WU_ACCEPT tuple (and its union leg) fails both checks."""
+    tampered = GOOD_EVENTS_PY.replace(
+        'EVENT_NAMES_WU_ACCEPT: tuple[str, ...] = (\n'
+        '    "user_acceptance_record_appended",\n'
+        '    "plan_fact_recorded",\n'
+        ')\n\n',
+        "",
+    ).replace(
+        "    + EVENT_NAMES_WU_ACCEPT\n",
+        "",
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert any("EVENT_NAMES_WU_ACCEPT not found" in v for v in violations)
+    assert any("union of the per-contract vocabularies" in v for v in violations)
+
+
 def test_missing_event_names_assignment_fails(tmp_path) -> None:
     root = _make_tree(tmp_path, events_src="OTHER = 1\n")
     violations = check_event_vocabulary(root)
-    # all nine contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/WC_ADVISE/
-    # WC_FIX/COST) AND the union.
-    assert len(violations) == 10
+    # all ten contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/WC_ADVISE/
+    # WC_FIX/WU_ACCEPT/COST) AND the union.
+    assert len(violations) == 11
     assert any("EVENT_NAMES_WA00R not found" in v for v in violations)
     assert any("EVENT_NAMES_WA001 not found" in v for v in violations)
     assert any("EVENT_NAMES_WA002 not found" in v for v in violations)
@@ -426,6 +459,7 @@ def test_missing_event_names_assignment_fails(tmp_path) -> None:
     assert any("EVENT_NAMES_WB_EVAL not found" in v for v in violations)
     assert any("EVENT_NAMES_WC_ADVISE not found" in v for v in violations)
     assert any("EVENT_NAMES_WC_FIX not found" in v for v in violations)
+    assert any("EVENT_NAMES_WU_ACCEPT not found" in v for v in violations)
     assert any("EVENT_NAMES_COST not found" in v for v in violations)
     assert any("EVENT_NAMES not found" in v for v in violations)
 
@@ -459,7 +493,7 @@ def test_inconsistent_union_fails(tmp_path) -> None:
 
 
 def test_union_dropping_ws_and_cost_legs_fails(tmp_path) -> None:
-    """DTM-0015 — a union that omits the WS/WB_INFER/WB_EVAL/WC_ADVISE/WC_FIX/COST legs (an old form) fails."""
+    """DTM-0016 — a union that omits the WS/WB_INFER/WB_EVAL/WC_ADVISE/WC_FIX/WU_ACCEPT/COST legs (an old form) fails."""
     tampered = GOOD_EVENTS_PY.replace(
         "EVENT_NAMES: tuple[str, ...] = (\n"
         "    EVENT_NAMES_WA00R\n"
@@ -470,6 +504,7 @@ def test_union_dropping_ws_and_cost_legs_fails(tmp_path) -> None:
         "    + EVENT_NAMES_WB_EVAL\n"
         "    + EVENT_NAMES_WC_ADVISE\n"
         "    + EVENT_NAMES_WC_FIX\n"
+        "    + EVENT_NAMES_WU_ACCEPT\n"
         "    + EVENT_NAMES_COST\n"
         ")",
         "EVENT_NAMES: tuple[str, ...] = (\n"

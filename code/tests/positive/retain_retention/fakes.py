@@ -107,3 +107,25 @@ class InMemoryRetentionStore:
             for row in self.history
             if row["subject_ref"].get("assertion_id") == assertion_id
         ]
+
+
+class InMemoryChrReader:
+    """Read-only CHR-by-id seam for the DTM-0016 plan-fact-on-accept tests.
+
+    Satisfies the ``ChrReader`` protocol (``get(chr_id) -> mapping | None``); the
+    plan-fact content for an accepted recommendation is a DATA read of the pinned
+    CHR's ``output_payload`` (no LLM). Seed records by version-pin id.
+    """
+
+    def __init__(self) -> None:
+        self._records: dict[str, dict[str, Any]] = {}
+
+    def seed(self, chr_id: str, output_payload: Mapping[str, Any]) -> None:
+        self._records[str(chr_id)] = {
+            "chr_id": str(chr_id),
+            "output_payload": copy.deepcopy(dict(output_payload)),
+        }
+
+    def get(self, chr_id: Any) -> dict[str, Any] | None:
+        record = self._records.get(str(chr_id))
+        return copy.deepcopy(record) if record is not None else None

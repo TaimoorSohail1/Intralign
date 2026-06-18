@@ -51,12 +51,20 @@ def test_b3_7_only_versioning_writes_a_supersedes_link() -> None:
     """AST: across ALL retain modules, the only insert_assertion call that
     carries a supersedes_id is the one inside version_assertion."""
     calls = _insert_assertion_call_modules()
-    # The write surfaces are exactly admission (v1) and versioning (vN+1).
-    assert set(calls) == {"admission.py", "versioning.py"}
+    # The insert_assertion surfaces are admission (v1), versioning (vN+1), and
+    # acceptance (the DTM-0016 plan fact — a NEW append-only row, never a
+    # supersession).
+    assert set(calls) == {"admission.py", "versioning.py", "acceptance.py"}
     for source in calls["admission.py"]:
         assert "supersedes_id" not in source, (
             "admission must never write a superseding row — initial versions "
             "only (B3.7: supersession has exactly one, evented, path)"
+        )
+    for source in calls["acceptance.py"]:
+        assert "supersedes_id" not in source, (
+            "the plan-fact write must never carry a supersedes_id — a plan fact "
+            "is an append-only NEW row, never an overwrite (DTM-0016; B3.7: "
+            "supersession has exactly one, evented, path)"
         )
     assert any("supersedes_id" in source for source in calls["versioning.py"])
 

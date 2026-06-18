@@ -154,7 +154,9 @@ def test_b3_4_capture_marks_nothing_true_or_approved() -> None:
         },
         emitter=emitter,
     )
-    # The handoff shape CANNOT carry a truth/approval marker.
+    # The handoff shape CANNOT carry a truth/approval marker. (DTM-0016 added
+    # ``edit_content`` — the user's direct-edit content, NOT a truth/approval
+    # marker; the forbidden-marker rejection below still holds.)
     assert set(AcceptanceCapture.model_fields) == {
         "user_id",
         "target_kind",
@@ -162,6 +164,7 @@ def test_b3_4_capture_marks_nothing_true_or_approved() -> None:
         "action",
         "project_id",
         "captured_at",
+        "edit_content",
     }
     with pytest.raises(pydantic.ValidationError):
         AcceptanceCapture(

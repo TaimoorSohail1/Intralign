@@ -90,9 +90,10 @@ another).
 
 ## Open items / residuals (minor — none blocking)
 
-- **GATE — Wave U coding is BLOCKED on:** the **Phase IV exit-gate** (PR #46 merge / DL-044
-  sign-off) + per-wave authorization + readiness gate. **These files are planning only; no
-  worker is spawned until the owner authorizes Wave U start.**
+- **GATE — owner authorized Phase V / Wave U start 2026-06-18.** DTM-0016 coding proceeds;
+  DTM-0017 stays sequentially gated on DTM-0016 approval. (Note: Phase IV PR #46 + the gate-3
+  fix sync to `main` remain pending; the owner directed Wave U start regardless, and this branch
+  carries the approved Wave A + Wave B + Wave C code it builds on.)
 - Exact OBS-WU event snake_case — worker pins verbatim vs OBS-WU C3.
 - Reconcile wiring (extend evaluate stage vs new `wave_u.py`) — least-invasive, no frozen-core
   edit (locked #6); worker picks within that bound.
