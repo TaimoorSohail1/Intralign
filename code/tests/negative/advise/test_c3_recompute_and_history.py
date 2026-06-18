@@ -31,6 +31,15 @@ def _run(ctx, **kw):
     )
 
 
+def _recommendation_rows(ctx):
+    """Recommendation CHRs excluding SuggestedFix rows (DTM-0015 rides the same
+    'recommendation' output_kind with a payload type=suggested_fix)."""
+    return [
+        r for r in ctx.chr_repo.rows_for_kind(OUTPUT_KIND_RECOMMENDATION)
+        if r["output_payload"].get("type") != "suggested_fix"
+    ]
+
+
 def test_c3_recommendation_is_frozen_no_change_outside_recompute() -> None:
     """CRITICAL — a Recommendation cannot be mutated in place (frozen model).
 
@@ -56,7 +65,7 @@ def test_c3_history_overwrite_is_impossible_recompute_appends() -> None:
     _run(ctx, findings=[coverage_gap(), risk()],
          input_attestation_version="v1", recompute_trigger="knowledge-change",
          is_recompute=False)
-    first_rows = ctx.chr_repo.rows_for_kind(OUTPUT_KIND_RECOMMENDATION)
+    first_rows = _recommendation_rows(ctx)
     first_snapshot = {r["output_payload"]["recommendation_id"]: dict(r)
                       for r in first_rows}
     prior_map = {rid: r["chr_id"] for rid, r in first_snapshot.items()}
@@ -65,7 +74,7 @@ def test_c3_history_overwrite_is_impossible_recompute_appends() -> None:
          input_attestation_version="v2", recompute_trigger="reanalysis",
          is_recompute=True, prior_chr_id_for=prior_map.get)
 
-    all_rows = ctx.chr_repo.rows_for_kind(OUTPUT_KIND_RECOMMENDATION)
+    all_rows = _recommendation_rows(ctx)
     # Append-only: count strictly grew (no row replaced).
     assert len(all_rows) == 2 * len(first_rows)
     # Each original v1 row is still present, byte-for-byte (chr_id + payload).

@@ -53,12 +53,17 @@ def test_advise_derivation_runs_entirely_on_recorded_responses() -> None:
                         "Attested assertions contradict (surfaced, not resolved).",
                         ("assertion-0", "assertion-1"))
     result = engine.derive(project_id=_PROJECT, findings=[gap, conflict])
-    # Both AI passes (recommendation + clarification) were served by the fixture.
-    assert session.call_count == 2
-    assert set(session.served_keys) == {"recommendation", "clarification"}
+    # All AI passes were served by the fixture (DTM-0014 recommendation +
+    # clarification; DTM-0015 ADDS validation + suggested_fix) — zero live calls.
+    assert session.call_count == 4
+    assert set(session.served_keys) == {
+        "recommendation", "validation", "suggested_fix", "clarification",
+    }
     # Record-exact axis: the emission surface (anchor) resolves to the findings.
     assert {r.anchor for r in result.recommendations} <= {"gap-coverage-1", "conflict-1"}
     assert all(c.anchor == "conflict-1" for c in result.clarifications)
+    # DTM-0015: SuggestedFixes ride the same fixture, anchored to a real Finding.
+    assert all(f.anchor in {"gap-coverage-1", "conflict-1"} for f in result.suggested_fixes)
     # No provider SDK imported by exercising the harness.
     newly = set(sys.modules) - before
     assert not any(

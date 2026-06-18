@@ -63,6 +63,7 @@ from shared.epistemic import (
     Mode,
     Recommendation,
     RecommendationType,
+    SuggestedFix,
     UnderstandingState,
 )
 
@@ -98,13 +99,49 @@ _CLARIFICATION_INSTRUCTIONS = (
     "score, or resolve the ambiguity yourself."
 )
 
+# DL-047 REC-04 — SuggestedFix: a CANDIDATE EDIT to a named artifact. The model
+# only PROPOSES the edit text; OSLO never applies it (applying is the user's,
+# Wave I). The anchor (a Finding id) + the target artifact are EXACT (the engine
+# admits a fix only when its anchor resolves to a real Finding it was given).
+_SUGGESTED_FIX_INSTRUCTIONS = (
+    "You PROPOSE a candidate EDIT to a named project artifact that would address "
+    "a finding. Return ONLY a JSON array; each item is "
+    "{\"candidate_edit\": str, \"target_artifact\": str, \"anchor\": str}. Anchor "
+    "every fix to the exact finding id it addresses, and name the artifact the "
+    "edit targets. PROPOSE the edit text ONLY — do NOT apply, write, or commit "
+    "anything; applying a fix is the user's action, never yours. Do NOT assign a "
+    "severity or score. Use only the provided findings."
+)
+
+# DL-047 REC-05 — Validation Recommendation: a Recommendation that seeks
+# STAKEHOLDER CONFIRMATION (validate an expectation / confirm a criterion or
+# ownership / review an inferred requirement). It rides the ``recommendation``
+# output and carries ``type=validation``; on a USER action it routes to a CAF
+# Review Request (a user action, never an OSLO write).
+_VALIDATION_INSTRUCTIONS = (
+    "You generate VALIDATION recommendations: each asks a STAKEHOLDER to CONFIRM "
+    "an expectation, criterion, ownership, or inferred requirement tied to a "
+    "finding/issue. Return ONLY a JSON array; each item is "
+    "{\"summary\": str, \"anchor\": str}. Anchor every validation to the exact "
+    "finding/issue id it seeks confirmation about. You only PROPOSE that the user "
+    "validate — do NOT confirm, accept, or resolve anything yourself; do NOT "
+    "assign a score."
+)
+
 
 @dataclass(frozen=True)
 class AdviseResult:
-    """The output of an Advise run (Derived; plus the spend payload)."""
+    """The output of an Advise run (Derived; plus the spend payload).
+
+    ``recommendations`` includes both the C1 Suggested-Action / Candidate-
+    Improvement types AND the DL-047 REC-05 ``validation`` type (a Validation
+    rides the ``recommendation`` output). ``suggested_fixes`` are the DL-047
+    REC-04 candidate edits — PROPOSALS only; OSLO never applies them.
+    """
 
     recommendations: tuple[Recommendation, ...]
     clarifications: tuple[ClarificationRequest, ...]
+    suggested_fixes: tuple[SuggestedFix, ...]
     degraded: bool
     spend_payload: dict[str, Any]
 
@@ -136,6 +173,24 @@ def _clarification_id(project_id: str, anchor: str, question: str) -> str:
         ensure_ascii=False,
     )
     return "clr-" + hashlib.sha256(basis.encode("utf-8")).hexdigest()[:16]
+
+
+def _suggested_fix_id(
+    project_id: str, anchor: str, target_artifact: str, candidate_edit: str
+) -> str:
+    """A stable structural identity for a SuggestedFix (recompute supersedes it).
+
+    Hash over (project, anchor, target_artifact, candidate_edit) so the SAME
+    structural input re-derives the SAME id — supersession targets it. Anchor +
+    target_artifact are EXACT; the SEMANTIC candidate_edit is normalized
+    (casefold/strip) so trivial whitespace/case variation does not fork identity.
+    """
+    basis = json.dumps(
+        [project_id, anchor, target_artifact.strip(), candidate_edit.strip().casefold()],
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+    return "fix-" + hashlib.sha256(basis.encode("utf-8")).hexdigest()[:16]
 
 
 @dataclass
@@ -206,6 +261,23 @@ class AdviseEngine:
             understanding_state=self.understanding_state,
         )
 
+    def _build_suggested_fix(
+        self, *, project_id: str, anchor: str, target_artifact: str, candidate_edit: str
+    ) -> SuggestedFix:
+        return SuggestedFix(
+            project_id=project_id,
+            suggested_fix_id=_suggested_fix_id(
+                project_id, anchor, target_artifact, candidate_edit
+            ),
+            anchor=anchor,
+            target_artifact=target_artifact,
+            candidate_edit=candidate_edit,
+            model_or_rule_version=ADVISE_VERSION,
+            mode=self.mode,
+            confidence_stage=self.confidence_stage,
+            understanding_state=self.understanding_state,
+        )
+
     # -- AI passes (SEMANTIC text; anchor/type EXACT; budget-gated) -----------
 
     def derive_recommendations_ai(
@@ -266,6 +338,74 @@ class AdviseEngine:
             budget=budget,
         )
         return self._parse_clarifications(
+            project_id=project_id, raw=raw, valid_anchors=valid_anchors
+        )
+
+    def derive_validations_ai(
+        self,
+        *,
+        project_id: str,
+        findings: Sequence[Finding],
+        issues: Sequence[Issue],
+        valid_anchors: Sequence[str],
+        budget: RunBudget,
+    ) -> list[Recommendation]:
+        """SEMANTIC Validation recommendations (REC-05) anchored to Findings/Issues.
+
+        A Validation rides the ``recommendation`` output with
+        ``recommendation_type='validation'`` — it seeks stakeholder confirmation;
+        on a USER action it routes to a CAF Review Request (a user action, never
+        an OSLO write). Anchored exactly; unanchored items are DROPPED.
+        """
+        if not valid_anchors:
+            return []
+        prompt = (
+            "Findings/Issues to seek stakeholder confirmation about:\n"
+            + "\n".join(self._anchor_lines(findings, issues))
+            + f"\nValid anchor ids: {list(valid_anchors)}"
+        )
+        raw = self._run_ai(
+            step_key="validation",
+            instructions=_VALIDATION_INSTRUCTIONS,
+            prompt=prompt,
+            budget=budget,
+        )
+        return self._parse_validations(
+            project_id=project_id, raw=raw, valid_anchors=valid_anchors
+        )
+
+    def derive_suggested_fixes_ai(
+        self,
+        *,
+        project_id: str,
+        findings: Sequence[Finding],
+        valid_anchors: Sequence[str],
+        budget: RunBudget,
+    ) -> list[SuggestedFix]:
+        """SEMANTIC SuggestedFixes (REC-04) — candidate edits anchored to Findings.
+
+        A SuggestedFix is a PROPOSED edit to a named artifact; the engine only
+        builds the proposal object. It NEVER writes/applies the edit — applying
+        is the user's (Wave I) → recompute. A fix whose anchor does not resolve
+        to a real Finding id is DROPPED (never admitted standalone — REC-04).
+        """
+        if not valid_anchors:
+            return []
+        prompt = (
+            "Findings to propose a candidate artifact edit for:\n"
+            + "\n".join(
+                f"- id={f.finding_id} type={f.finding_type} :: {f.summary}"
+                for f in findings
+            )
+            + f"\nValid anchor ids: {list(valid_anchors)}"
+        )
+        raw = self._run_ai(
+            step_key="suggested_fix",
+            instructions=_SUGGESTED_FIX_INSTRUCTIONS,
+            prompt=prompt,
+            budget=budget,
+        )
+        return self._parse_suggested_fixes(
             project_id=project_id, raw=raw, valid_anchors=valid_anchors
         )
 
@@ -330,6 +470,62 @@ class AdviseEngine:
             out.append(clr)
         return out
 
+    def _parse_validations(
+        self, *, project_id: str, raw: str, valid_anchors: Sequence[str]
+    ) -> list[Recommendation]:
+        """Build Validation Recommendations (type=validation), dropping unanchored.
+
+        A Validation rides the ``recommendation`` output; its ``type`` is EXACT
+        (``validation``, never model-chosen). An item whose anchor does not
+        resolve to a real Finding/Issue id is DROPPED (never admitted standalone).
+        """
+        valid = set(valid_anchors)
+        out: list[Recommendation] = []
+        seen: set[str] = set()
+        for item in _parse_json_array(raw):
+            summary = str(item.get("summary", "")).strip()
+            anchor = str(item.get("anchor", "")).strip()
+            if not summary or anchor not in valid:
+                continue
+            rec = self._build_recommendation(
+                project_id=project_id, anchor=anchor,
+                rec_type="validation", summary=summary,
+            )
+            if rec.recommendation_id in seen:
+                continue
+            seen.add(rec.recommendation_id)
+            out.append(rec)
+        return out
+
+    def _parse_suggested_fixes(
+        self, *, project_id: str, raw: str, valid_anchors: Sequence[str]
+    ) -> list[SuggestedFix]:
+        """Build SuggestedFixes from an AI pass, dropping any with no valid anchor.
+
+        A model-returned fix whose anchor does not resolve to a real Finding id is
+        DROPPED (never admitted standalone — REC-04). A fix missing its edit text
+        or its target artifact is also dropped (an empty proposal is not a fix).
+        Building the object NEVER writes/applies the edit.
+        """
+        valid = set(valid_anchors)
+        out: list[SuggestedFix] = []
+        seen: set[str] = set()
+        for item in _parse_json_array(raw):
+            candidate_edit = str(item.get("candidate_edit", "")).strip()
+            target_artifact = str(item.get("target_artifact", "")).strip()
+            anchor = str(item.get("anchor", "")).strip()
+            if not candidate_edit or not target_artifact or anchor not in valid:
+                continue  # never admit an empty or unanchored SuggestedFix
+            fix = self._build_suggested_fix(
+                project_id=project_id, anchor=anchor,
+                target_artifact=target_artifact, candidate_edit=candidate_edit,
+            )
+            if fix.suggested_fix_id in seen:
+                continue
+            seen.add(fix.suggested_fix_id)
+            out.append(fix)
+        return out
+
     # -- orchestrated run with cost governance --------------------------------
 
     def derive(
@@ -350,10 +546,12 @@ class AdviseEngine:
         """
         budget = budget or RunBudget.for_run(tier=self.tier, mode=self.mode)
         valid_anchors = [f.finding_id for f in findings] + [i.issue_id for i in issues]
+        fix_anchors = [f.finding_id for f in findings]  # REC-04 anchors to Findings
         blocking = [f for f in findings if f.finding_type == "conflict"]
 
         recommendations: list[Recommendation] = []
         clarifications: list[ClarificationRequest] = []
+        suggested_fixes: list[SuggestedFix] = []
         deferred = False
 
         if budget.can_afford(_AI_PASS_TOKEN_ESTIMATE):
@@ -366,6 +564,33 @@ class AdviseEngine:
             )
         else:
             deferred = True
+
+        # DL-047 REC-05 — Validation recommendations (ride the recommendation
+        # output; type=validation). Budget-gated like the other AI passes.
+        if valid_anchors:
+            if budget.can_afford(_AI_PASS_TOKEN_ESTIMATE):
+                recommendations += self.derive_validations_ai(
+                    project_id=project_id,
+                    findings=findings,
+                    issues=issues,
+                    valid_anchors=valid_anchors,
+                    budget=budget,
+                )
+            else:
+                deferred = True
+
+        # DL-047 REC-04 — SuggestedFixes (candidate edits anchored to Findings).
+        # PROPOSALS only; OSLO never applies them (the user does, Wave I).
+        if fix_anchors:
+            if budget.can_afford(_AI_PASS_TOKEN_ESTIMATE):
+                suggested_fixes += self.derive_suggested_fixes_ai(
+                    project_id=project_id,
+                    findings=findings,
+                    valid_anchors=fix_anchors,
+                    budget=budget,
+                )
+            else:
+                deferred = True
 
         if blocking:
             if budget.can_afford(_AI_PASS_TOKEN_ESTIMATE):
@@ -389,6 +614,7 @@ class AdviseEngine:
         return AdviseResult(
             recommendations=tuple(recommendations),
             clarifications=tuple(clarifications),
+            suggested_fixes=tuple(suggested_fixes),
             degraded=deferred,
             spend_payload=payload,
         )

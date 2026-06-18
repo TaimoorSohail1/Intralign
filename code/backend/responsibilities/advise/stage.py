@@ -17,6 +17,11 @@ re-wired). The stage:
 - on a recompute RE-DERIVES and SUPERSEDES the prior emission (live replaced;
   history APPENDED — the prior CHR stays byte-intact; supersession keyed by the
   stable recommendation/clarification id),
+- (DTM-0015 / DL-047 REC-04) also APPENDS one CHR per **SuggestedFix** on the
+  SAME ``recommendation`` output_kind (payload ``type=suggested_fix``
+  discriminator — NO new kind, NO migration) and emits ``suggested_fix_offered``
+  per fix. DL-047 REC-05 **Validation** recommendations ride the recommendation
+  output (``recommendation_type=validation``) → ``recommendation_generated``,
 - emits ``recommendation_generated`` / ``clarification_requested`` per emission,
   each carrying ``mode`` + ``confidence_stage`` (DL-046), and
 - emits one ``ai_spend_recorded`` (DL-048) carrying the advise spend.
@@ -27,6 +32,12 @@ Attested, NEVER evaluates/scores (Evaluate's), NEVER generates Findings
 (Infer's), NEVER governs/authorizes/executes, NEVER ACCEPTS its own output
 (acceptance is the user's — DL-055; Wave U; the Recommendation ``state`` is
 pinned ``generated``), and NEVER changes an assessment outside recompute.
+
+THE HEADLINE CRITICAL INVARIANT (DTM-0015 / DL-047): OSLO NEVER autonomously
+writes/applies a SuggestedFix to an artifact. This stage builds + offers the
+fix PROPOSAL (a CHR + an event) — it mutates NO artifact and emits NO write
+event. Applying is a user-initiated artifact edit (Wave I / commodity) →
+recompute; there is no artifact-writer imported or called from advise/.
 """
 
 from __future__ import annotations
@@ -41,7 +52,7 @@ from backend.responsibilities.advise.engine import (
     AdviseResult,
 )
 from backend.responsibilities.retain import CognitionHistoryRecord
-from shared.epistemic import ClarificationRequest, Recommendation
+from shared.epistemic import ClarificationRequest, Recommendation, SuggestedFix
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from backend.orchestration.stages import StageContext
@@ -52,6 +63,13 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 # already exist").
 OUTPUT_KIND_RECOMMENDATION = "recommendation"
 OUTPUT_KIND_CLARIFICATION = "clarification"
+
+# DTM-0015 (DL-047 REC-04) — a SuggestedFix persists on the EXISTING
+# ``recommendation`` output_kind with a payload ``type`` discriminator (NO new
+# output_kind, NO migration). The payload's ``type`` distinguishes a fix proposal
+# from a plain recommendation in the same kind.
+OUTPUT_KIND_SUGGESTED_FIX = OUTPUT_KIND_RECOMMENDATION
+SUGGESTED_FIX_PAYLOAD_TYPE = "suggested_fix"
 
 
 # -- CHR payload shapes (the emitted value snapshots, LDM §2.2) ---------------
@@ -80,6 +98,27 @@ def _clarification_payload(clr: ClarificationRequest) -> dict[str, Any]:
         "mode": clr.mode,
         "confidence_stage": clr.confidence_stage,
         "understanding_state": clr.understanding_state,
+    }
+
+
+def _suggested_fix_payload(fix: SuggestedFix) -> dict[str, Any]:
+    """The CHR payload snapshot for a SuggestedFix.
+
+    Carries ``type=suggested_fix`` — the discriminator that lets the EXISTING
+    ``recommendation`` output_kind hold a fix proposal (NO new kind). It records
+    the PROPOSED edit; it never records that an edit was applied (OSLO never
+    applies — Wave I).
+    """
+    return {
+        "type": SUGGESTED_FIX_PAYLOAD_TYPE,
+        "suggested_fix_id": fix.suggested_fix_id,
+        "anchor": fix.anchor,
+        "target_artifact": fix.target_artifact,
+        "candidate_edit": fix.candidate_edit,
+        "epistemic_state": fix.epistemic_state.value,
+        "mode": fix.mode,
+        "confidence_stage": fix.confidence_stage,
+        "understanding_state": fix.understanding_state,
     }
 
 
@@ -177,6 +216,44 @@ def run_advise_stage(
                 "anchor": clr.anchor,
                 "mode": clr.mode,
                 "confidence_stage": clr.confidence_stage,
+                "supersedes_chr_id": prior,
+            },
+        )
+
+    # --- SuggestedFixes (REC-04): one CHR + suggested_fix_offered per fix ------
+    # A SuggestedFix is a PROPOSAL only — appending its CHR + emitting the offer
+    # event mutate NO artifact and emit NO write event. Applying is the user's
+    # (Wave I) → recompute, NEVER an OSLO write here.
+    for fix in result.suggested_fixes:
+        prior = (
+            prior_chr_id_for(fix.suggested_fix_id)
+            if (is_recompute and prior_chr_id_for) else None
+        )
+        _append_chr(
+            ctx,
+            output_kind=OUTPUT_KIND_SUGGESTED_FIX,  # existing 'recommendation' kind
+            output_payload=_suggested_fix_payload(fix),
+            input_attestation_version=input_attestation_version,
+            upstream_lineage={
+                "suggested_fix_id": fix.suggested_fix_id,
+                "anchor": fix.anchor,
+                "target_artifact": fix.target_artifact,
+                "type": SUGGESTED_FIX_PAYLOAD_TYPE,
+            },
+            recompute_trigger=recompute_trigger,
+            supersedes_chr_id=prior,
+            project_id=project_id,
+            model_identity=model_identity,
+        )
+        emitter.emit(
+            "suggested_fix_offered",
+            {
+                "project_id": project_id,
+                "suggested_fix_id": fix.suggested_fix_id,
+                "anchor": fix.anchor,
+                "target_artifact": fix.target_artifact,
+                "mode": fix.mode,
+                "confidence_stage": fix.confidence_stage,
                 "supersedes_chr_id": prior,
             },
         )
@@ -307,6 +384,9 @@ def build_advise_stage(
                     r.recommendation_type for r in result.recommendations
                 ],
                 "clarification_ids": [c.clarification_id for c in result.clarifications],
+                "suggested_fix_ids": [
+                    f.suggested_fix_id for f in result.suggested_fixes
+                ],
                 "advise_degraded": result.degraded,
             }
         }

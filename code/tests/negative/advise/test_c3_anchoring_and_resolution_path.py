@@ -18,7 +18,12 @@ from pydantic import ValidationError
 from backend.responsibilities.advise import engine as engine_mod
 from backend.responsibilities.advise import stage as stage_mod
 from shared.epistemic import Recommendation
-from tests.positive.advise.helpers import PROJECT, advise_engine, coverage_gap
+from tests.positive.advise.helpers import (
+    COVERAGE_GAP_ID,
+    PROJECT,
+    advise_engine,
+    coverage_gap,
+)
 
 
 def test_c3_standalone_recommendation_is_structurally_impossible() -> None:
@@ -51,8 +56,14 @@ def test_c3_model_returned_unanchored_recommendation_is_dropped() -> None:
     """
     engine, _ = advise_engine(step_to_key={"recommendation": "recommendation_unanchored"})
     result = engine.derive(project_id=PROJECT, findings=[coverage_gap()])
-    # The fixture's only item anchors to "nonexistent-id" → dropped → none admitted.
-    assert result.recommendations == ()
+    # The recommendation pass's only item anchors to "nonexistent-id" → dropped:
+    # NO suggested_action/candidate_improvement is admitted. (DTM-0015's separate
+    # 'validation' pass anchors legitimately and is additive — not from this pass.)
+    c1 = [r for r in result.recommendations
+          if r.recommendation_type in ("suggested_action", "candidate_improvement")]
+    assert c1 == []
+    # Every admitted recommendation is still anchored to a REAL id (never standalone).
+    assert all(r.anchor == COVERAGE_GAP_ID for r in result.recommendations)
 
 
 def test_c3_advise_builds_no_standalone_resolution_path_object() -> None:

@@ -166,6 +166,12 @@ def _rows_for_kind(client, project_id: str, output_kind: str):
     return resp.data
 
 
+def _plain_recommendation_rows(rows):
+    """Recommendation rows that are NOT SuggestedFix rows (DTM-0015 rides the
+    same 'recommendation' output_kind with a payload type=suggested_fix)."""
+    return [r for r in rows if r["output_payload"].get("type") != "suggested_fix"]
+
+
 @pytest.fixture
 def _restore_registry():
     from backend.orchestration import stages as stages_mod
@@ -219,16 +225,41 @@ def test_c2_live_chain_admit_infer_evaluate_advise_and_recompute_supersedes(
     assert "issue_generated" in emitter.names
     assert "recommendation_generated" in emitter.names
     assert "clarification_requested" in emitter.names
+    # DTM-0015 — the Advise additions also emitted on the live chain.
+    assert "suggested_fix_offered" in emitter.names
 
-    # Recommendation CHRs this run appended (the DELTA), each ANCHORED.
-    rec_rows = [
+    # Recommendation CHRs this run appended (the DELTA). DTM-0015: SuggestedFixes
+    # ride the SAME 'recommendation' output_kind (payload type=suggested_fix), so
+    # split them out before the recommendation-shaped assertions.
+    rec_kind_rows = [
         r for r in _rows_for_kind(client, project_id, OUTPUT_KIND_RECOMMENDATION)
         if r["chr_id"] not in before_rec_ids
+    ]
+    rec_rows = _plain_recommendation_rows(rec_kind_rows)
+    fix_rows = [
+        r for r in rec_kind_rows
+        if r["output_payload"].get("type") == "suggested_fix"
     ]
     assert rec_rows
     for row in rec_rows:
         assert row["upstream_lineage"]["anchor"]
         assert row["output_payload"]["state"] == "generated"  # DL-055: not self-accepted
+        assert row["provenance_ref"]["emitted_by"] == "advise"
+    # A Validation recommendation (REC-05) rode the recommendation output.
+    assert any(
+        r["output_payload"]["recommendation_type"] == "validation" for r in rec_rows
+    )
+    # SuggestedFix CHRs (REC-04) — NO new output_kind; anchored; a candidate edit;
+    # and the headline Critical invariant: the fix is OFFERED, never APPLIED —
+    # there is NO 'applied'/'written' marker on the persisted payload.
+    assert fix_rows
+    for row in fix_rows:
+        assert row["output_kind"] == "recommendation"  # rides existing kind
+        assert row["upstream_lineage"]["anchor"]
+        assert row["output_payload"]["target_artifact"]
+        assert row["output_payload"]["candidate_edit"]
+        assert "applied" not in row["output_payload"]
+        assert "written" not in row["output_payload"]
         assert row["provenance_ref"]["emitted_by"] == "advise"
     # A clarification CHR this run appended, anchored to the conflict finding.
     clr_rows = [
@@ -277,8 +308,11 @@ def test_c2_live_chain_admit_infer_evaluate_advise_and_recompute_supersedes(
     assert second.status == "completed"
 
     # The DELTA the recompute appended (rows not present after the first pass).
+    # Filter to PLAIN recommendation rows (DTM-0015 SuggestedFixes ride this kind
+    # too) so the count compares like-for-like against the first pass.
     recompute_rows = [
-        r for r in _rows_for_kind(client, project_id, OUTPUT_KIND_RECOMMENDATION)
+        r for r in _plain_recommendation_rows(
+            _rows_for_kind(client, project_id, OUTPUT_KIND_RECOMMENDATION))
         if r["chr_id"] not in after_first_rec_ids
     ]
     # APPEND, never overwrite — the recompute appended a fresh generation…

@@ -42,14 +42,28 @@ def _run(ctx, *, findings, issues=(), mode="fast", confidence_stage="orientation
     )
 
 
+def _recommendation_rows(ctx):
+    """Recommendation CHRs that are NOT SuggestedFix rows (DTM-0015 rides the
+    same 'recommendation' output_kind with a payload type=suggested_fix)."""
+    return [
+        r for r in ctx.chr_repo.rows_for_kind(OUTPUT_KIND_RECOMMENDATION)
+        if r["output_payload"].get("type") != "suggested_fix"
+    ]
+
+
 def test_c2_one_chr_per_emission_paired_with_append_event() -> None:
     ctx = FakeStageContext()
     result = _run(ctx, findings=[coverage_gap(), conflict(), risk()])
-    rec_chrs = ctx.chr_repo.rows_for_kind(OUTPUT_KIND_RECOMMENDATION)
+    rec_chrs = _recommendation_rows(ctx)
     clr_chrs = ctx.chr_repo.rows_for_kind(OUTPUT_KIND_CLARIFICATION)
     assert len(rec_chrs) == len(result.recommendations)
     assert len(clr_chrs) == len(result.clarifications)
-    total = len(result.recommendations) + len(result.clarifications)
+    # DTM-0015: SuggestedFixes ride the recommendation kind too — count them all.
+    total = (
+        len(result.recommendations)
+        + len(result.clarifications)
+        + len(result.suggested_fixes)
+    )
     counts = Counter(ctx.emitter.names)
     assert counts["cognition_history_record_appended"] == total
 
@@ -85,7 +99,7 @@ def test_c2_every_chr_carries_input_version_model_version_and_anchor_lineage() -
 def test_c2_recompute_appends_new_emission_keeping_prior_chr_intact() -> None:
     ctx = FakeStageContext()
     first = _run(ctx, findings=[coverage_gap(), risk()], version="v1")
-    first_recs = ctx.chr_repo.rows_for_kind(OUTPUT_KIND_RECOMMENDATION)
+    first_recs = _recommendation_rows(ctx)
     assert first_recs
     prior_map = {
         r["output_payload"]["recommendation_id"]: r["chr_id"] for r in first_recs
@@ -95,7 +109,7 @@ def test_c2_recompute_appends_new_emission_keeping_prior_chr_intact() -> None:
         ctx, findings=[coverage_gap(), risk()], is_recompute=True, version="v2",
         trigger="reanalysis", prior_chr_id_for=prior_map.get,
     )
-    all_recs = ctx.chr_repo.rows_for_kind(OUTPUT_KIND_RECOMMENDATION)
+    all_recs = _recommendation_rows(ctx)
     # APPEND, never overwrite: prior generation + new generation.
     assert len(all_recs) == 2 * len(first_recs)
     # Every prior CHR is byte-intact (still v1) — none mutated.

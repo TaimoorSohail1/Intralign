@@ -530,11 +530,18 @@ class Issue(CognitionEntity):
 # emission and (downstream) its CHR. They change ONLY via recompute.
 # =============================================================================
 
-# IC-WC-ADVISE — the two Recommendation types (C1: Suggested Action, Candidate
-# Improvement). A LABEL describing the KIND of candidate response — never a
-# severity/score (that is Evaluate's) and never an executed action (Advise
-# proposes, never disposes).
-RecommendationType = Literal["suggested_action", "candidate_improvement"]
+# IC-WC-ADVISE — the Recommendation types. C1: Suggested Action, Candidate
+# Improvement. DL-047 REC-05 ADDS ``validation`` — a Recommendation that seeks
+# STAKEHOLDER CONFIRMATION (validate an expectation / confirm a criterion /
+# review an inferred requirement); it routes to a CAF Review Request on USER
+# action (a user action, never an OSLO write). A LABEL describing the KIND of
+# candidate response — never a severity/score (that is Evaluate's) and never an
+# executed action (Advise proposes, never disposes).
+RecommendationType = Literal[
+    "suggested_action",
+    "candidate_improvement",
+    "validation",  # DL-047 REC-05 — seeks stakeholder confirmation
+]
 
 # DL-055 — the Recommendation lifecycle state. Advise produces the ``generated``
 # state ONLY; {accepted, rejected, deferred, implemented, superseded} are
@@ -633,4 +640,79 @@ class ClarificationRequest(CognitionEntity):
     epistemic_state: Literal[EpistemicState.DERIVED] = Field(
         default=EpistemicState.DERIVED,
         description="Pinned derived — a ClarificationRequest is never Attested-as-truth.",
+    )
+
+
+# =============================================================================
+# Wave C (DTM-0015, IC-WC-ADVISE — DL-047 Additions) — the SuggestedFix cognition
+# type (REC-04). A SuggestedFix is a Derived Advise output: a CANDIDATE EDIT to a
+# NAMED artifact, ANCHORED to the Finding it derives from. It is recomputable;
+# never written to the canonical store as Attested (hard rule #2).
+#
+# THE HEADLINE CRITICAL INVARIANT (DL-047; consistent with the no-self-govern
+# rule): OSLO NEVER autonomously writes/applies a fix to an artifact. A
+# SuggestedFix is only a PROPOSED edit — generating it mutates NO artifact and
+# emits NO write. APPLYING
+# a fix is a USER-INITIATED artifact edit (commodity editing / Wave I) that then
+# triggers recompute through the existing Retain admission path — it is NOT this
+# object and NOT produced here. The shape carries NO ``applied`` / ``written`` /
+# ``apply`` field (``extra='forbid'`` makes autonomous application structurally
+# unrepresentable on the object).
+#
+# SuggestedFix persists on the EXISTING CHR ``recommendation`` output_kind with a
+# payload ``type=suggested_fix`` discriminator (NO new output_kind, NO migration).
+#
+# mode / confidence_stage are ATTRIBUTES, not objects (DL-046); carried on each
+# emission and (downstream) its CHR. They change ONLY via recompute.
+# =============================================================================
+
+
+class SuggestedFix(CognitionEntity):
+    """A Derived candidate EDIT to a named artifact, anchored to a Finding (REC-04).
+
+    Produced by Advise from the Finding that motivates it; ALWAYS anchored to a
+    Finding (``anchor`` — non-empty; an unanchored SuggestedFix is rejected at
+    construction). Names the ``target_artifact`` it proposes a ``candidate_edit``
+    for. Derived/recomputable; never Attested-as-truth (hard rule #2).
+
+    Critical (DL-047): OSLO NEVER autonomously applies it. A SuggestedFix is a
+    PROPOSAL only — it holds the proposed edit content; it does NOT (and CANNOT)
+    record that the edit was applied. Applying is a user-initiated artifact edit
+    (Wave I / commodity) → recompute, never an OSLO write. The forbidden surface
+    (``extra='forbid'``) carries NO ``applied`` / ``written`` / ``apply`` /
+    ``severity`` / ``score`` field — autonomous application is structurally
+    unrepresentable on this object.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    suggested_fix_id: str = Field(
+        ..., description="Stable identity (recompute supersedes the SAME id)."
+    )
+    # MANDATORY anchor: the Finding id this fix derives from. A SuggestedFix with
+    # no anchor is rejected at construction (REC-04: anchored to a Finding;
+    # standalone = rejected).
+    anchor: str = Field(
+        ..., min_length=1,
+        description="Lineage: the Finding id this SuggestedFix is anchored to.",
+    )
+    # The NAMED artifact this fix proposes an edit FOR (a reference, not a write).
+    target_artifact: str = Field(
+        ..., min_length=1,
+        description="Reference to the named artifact the candidate edit targets.",
+    )
+    # The PROPOSED edit content (AI-text; semantic tier). A candidate, never
+    # applied by OSLO — applying is the user's (Wave I) → recompute.
+    candidate_edit: str = Field(
+        ..., description="The proposed candidate edit, stated plainly (AI-text)."
+    )
+    model_or_rule_version: str = Field(..., description="model/rule version stamp.")
+    mode: Mode
+    confidence_stage: ConfidenceStage = "orientation"
+    understanding_state: UnderstandingState = "initial"
+    # Pinned: a SuggestedFix is DERIVED cognition — never Attested-as-truth.
+    epistemic_state: Literal[EpistemicState.DERIVED] = Field(
+        default=EpistemicState.DERIVED,
+        description="Pinned derived — a SuggestedFix is never Attested-as-truth.",
     )

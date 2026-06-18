@@ -57,12 +57,13 @@ def test_c2_multiple_alternatives_coexist_as_multiple_recommendations() -> None:
     engine, _ = advise_engine()
     result = engine.derive(project_id=PROJECT, findings=[coverage_gap(), risk()])
     # Two alternatives anchored to the SAME coverage gap (suggested_action +
-    # candidate_improvement) coexist as separate Recommendations.
+    # candidate_improvement) coexist as separate Recommendations. (DTM-0015 may
+    # also anchor a 'validation' recommendation to the same gap — additive; the
+    # two C1 alternatives must still BOTH be present, distinct objects.)
     for_gap = [r for r in result.recommendations if r.anchor == COVERAGE_GAP_ID]
     assert len(for_gap) >= 2
-    assert {r.recommendation_type for r in for_gap} == {
-        "suggested_action",
-        "candidate_improvement",
+    assert {"suggested_action", "candidate_improvement"} <= {
+        r.recommendation_type for r in for_gap
     }
     # Distinct identities — alternatives, not one merged object.
     assert len({r.recommendation_id for r in for_gap}) == len(for_gap)

@@ -21,6 +21,36 @@
       "text": "[{\"question\": \"The attested assertions about the Q3 finish date contradict each other — which is authoritative?\", \"anchor\": \"conflict-1\"}]"
     },
     {
+      "key": "validation",
+      "tokens_in": 300,
+      "tokens_out": 90,
+      "text": "[{\"summary\": \"Ask the project sponsor to confirm the missing constraint is genuinely out of scope, not merely un-attested.\", \"anchor\": \"gap-coverage-1\"}, {\"summary\": \"Have the delivery owner confirm the Q3 rollout date is still the committed target before the risk is acted on.\", \"anchor\": \"risk-1\"}]"
+    },
+    {
+      "key": "suggested_fix",
+      "tokens_in": 320,
+      "tokens_out": 110,
+      "text": "[{\"candidate_edit\": \"Add a Constraints subsection to the Scope artifact recording the attested constraint evidence so the coverage gap is closed.\", \"target_artifact\": \"scope\", \"anchor\": \"gap-coverage-1\"}, {\"candidate_edit\": \"Insert a mitigation note in the Schedule artifact gating the Q3 rollout on a payments-service stability check.\", \"target_artifact\": \"schedule\", \"anchor\": \"risk-1\"}]"
+    },
+    {
+      "key": "suggested_fix_unanchored",
+      "tokens_in": 120,
+      "tokens_out": 40,
+      "text": "[{\"candidate_edit\": \"A free-floating edit with no resolvable anchor.\", \"target_artifact\": \"scope\", \"anchor\": \"nonexistent-id\"}]"
+    },
+    {
+      "key": "suggested_fix_empty",
+      "tokens_in": 80,
+      "tokens_out": 10,
+      "text": "[]"
+    },
+    {
+      "key": "validation_empty",
+      "tokens_in": 80,
+      "tokens_out": 10,
+      "text": "[]"
+    },
+    {
       "key": "recommendation_unanchored",
       "tokens_in": 120,
       "tokens_out": 40,
