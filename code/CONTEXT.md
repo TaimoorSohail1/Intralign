@@ -135,3 +135,27 @@ The lifecycle `Generated → {Accepted | Rejected | Deferred} → Implemented (+
 emits only `Generated`; **Accept/Defer/Reject/Apply are user actions recorded by Wave U**, not
 Advise. "Modify" is not a state — a user edit supersedes via recompute. "Discuss"/"Share For
 Review" are collaboration affordances, not states.
+
+## Wave U — User Acceptance & Reconciliation (additive, non-governance)
+
+**User Acceptance Record (UAR)**:
+The append-only, **user-attested** canonical record that "user U, at time T, took action A
+(accept/reject/defer/direct-edit) on item I at **version-pin** V". **version-pin is mandatory**
+(no valid UAR without it) and pins the exact `CognitionHistoryRecord` accepted. Decoupled — it
+marks no item true/approved. _Avoid_: approval, sign-off, governance decision.
+
+**Plan fact**:
+A **user-attested `AttestedAssertion`** (`attesting_source=user`, `attested-user`) — the
+confirmed content recorded as **factual in the plan, NOT world-truth** (OSLO certifies neither).
+Written on accept / direct-edit (never on reject/defer). The **user** authors it; OSLO never
+auto-promotes its own Derived recommendation. _Avoid_: truth, fact (unqualified), approval.
+
+**Acceptance-Impact Assessment**:
+A **Derived** cognition (Infer/Evaluate) that fires when the value behind a *user-accepted* item
+drifts **≥10 pts or a band change** vs the version-pinned acceptance (Calibration §3) — surfaced
+as "a decision you confirmed is affected". Recomputable, appends a CHR; never canonical.
+
+**Never self-accept** (hard rule #5, DL-043 G):
+The **user is the acceptance authority**; OSLO records and reasons but never accepts on its own.
+Acceptance ≠ world-truth, ≠ OSLO-approval, ≠ governance; a UAR is **not** a Governance Decision;
+OSLO-level acceptance/approval/execution is Future (Outcome Governance, out of R1).
