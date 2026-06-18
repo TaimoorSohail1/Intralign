@@ -30,7 +30,7 @@ belongs in the canonical Disambiguation Register, DL-053 — an owner follow-up)
 ## Status
 
 accepted — owner direction, 2026-06-16. This ADR governs only how AI is exercised under test.
-(Provider routing changed later: **DL-059 / ADR-0007** make internal Gemma the primary live
+(Provider routing changed later: **DL-069 / ADR-0007** make internal Gemma the primary live
 model — this ADR is **unaffected**: PR CI still uses recorded fixtures, and Gemma is now the
 model that records/refreshes them. A local model is still nondeterministic, so the
 recorded-fixture baseline stands.)

@@ -71,7 +71,7 @@ def finding_chr_spec(
     ``model_or_rule_version`` records the RESOLVED provider/model actually used
     (``model_identity`` = ``provider.resolve(...).model_ref.as_dict()``) merged
     with the Finding rule version, so the CHR audits the real model consumed
-    (DL-054 cond. 3 / DL-059 cond. 2) — not a hardcoded provider.
+    (DL-054 cond. 3 / DL-069 cond. 2) — not a hardcoded provider.
     """
     return {
         "output_kind": OUTPUT_KIND_FINDING,
@@ -139,7 +139,7 @@ def run_finding_stage(
     latency_ms = (time.perf_counter() - started) * 1000.0
     emitter = ctx.emitter
     # Resolved model identity for CHR provenance (the ACTUAL provider/model the
-    # Finding engine routes — DL-059 cond. 2 auditability). Findings route via
+    # Finding engine routes — DL-069 cond. 2 auditability). Findings route via
     # the synthesis stage (finding.py uses stage="synthesis").
     finding_identity = engine.provider.resolve(
         tier=engine.tier,  # type: ignore[arg-type]

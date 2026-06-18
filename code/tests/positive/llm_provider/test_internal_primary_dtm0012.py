@@ -1,4 +1,4 @@
-"""DTM-0012 (DL-059 / ADR-0007) — internal gemma is the PRIMARY LLM at the seam.
+"""DTM-0012 (DL-069 / ADR-0007) — internal gemma is the PRIMARY LLM at the seam.
 
 Positive proofs that the internal gemma model on a local Llama runtime
 (OpenAI-compatible endpoint) is the primary the seam resolves, that the adapter

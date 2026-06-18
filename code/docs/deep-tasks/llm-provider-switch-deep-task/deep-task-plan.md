@@ -1,4 +1,4 @@
-# Deep-task plan — Internal Gemma as primary LLM (DL-059 / ADR-0007)
+# Deep-task plan — Internal Gemma as primary LLM (DL-069 / ADR-0007)
 
 Single vertical slice on `feat/phase3-waveb-understanding`. One fresh worker, EM
 review → fix → verify → approve. **Coding gated on owner confirm + the base_url/model-id
@@ -8,7 +8,7 @@ ops item (decisions, Open items).**
 
 | # | Module | Slice (vertical outcome) | Source | Depends on |
 |---|---|---|---|---|
-| 1 | DTM-0012 | Internal `gemma4` (local Llama, OpenAI-compatible) is the primary LLM behind the existing seam: `config.py` internal routing (primary) + `adapter.py` internal branch (`base_url` from env) + CHR provenance reflects the resolved provider/model + `.env.example` vars; recorded-fixture CI unchanged; routing-assertion tests updated. | DL-059, ADR-0007, ADR-0004 | DL-059 ratified ✓; ops base_url/model-id ⏳ |
+| 1 | DTM-0012 | Internal `gemma4` (local Llama, OpenAI-compatible) is the primary LLM behind the existing seam: `config.py` internal routing (primary) + `adapter.py` internal branch (`base_url` from env) + CHR provenance reflects the resolved provider/model + `.env.example` vars; recorded-fixture CI unchanged; routing-assertion tests updated. | DL-069, ADR-0007, ADR-0004 | DL-069 ratified ✓; ops base_url/model-id ⏳ |
 
 ## Test strategy
 
@@ -41,5 +41,5 @@ ops item (decisions, Open items).**
 
 Primary LLM is internal gemma at the seam; CHR provenance is accurate; OpenAI/Anthropic remain
 a disabled fallback (config flip to re-enable); recorded-fixture CI intact; no new
-dependency/Docker; PR cites DL-059 / ADR-0007. `.env.example` documents the env vars with a
+dependency/Docker; PR cites DL-069 / ADR-0007. `.env.example` documents the env vars with a
 placeholder (concrete values owner-set).

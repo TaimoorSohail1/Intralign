@@ -78,7 +78,7 @@ def planning_chr_spec(
     ``model_or_rule_version`` records the RESOLVED provider/model actually used
     (``model_identity`` = ``provider.resolve(...).model_ref.as_dict()``) merged
     with the synthesis prompt version, so the CHR audits the real model consumed
-    (DL-054 cond. 3 / DL-059 cond. 2 model-consumption auditability) — not a
+    (DL-054 cond. 3 / DL-069 cond. 2 model-consumption auditability) — not a
     hardcoded provider.
     """
     return {
@@ -150,7 +150,7 @@ def run_synthesis_stage(
     )
     emitter = ctx.emitter
     # Resolved model identity for CHR provenance (the ACTUAL provider/model the
-    # engine routes — DL-059 cond. 2 auditability). Synthesis + generation share
+    # engine routes — DL-069 cond. 2 auditability). Synthesis + generation share
     # one routed model in the internal-primary routing; resolve the synthesis
     # stage as the representative routed identity.
     synthesis_identity = engine.provider.resolve(

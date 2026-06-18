@@ -2,7 +2,7 @@
 
 PRIMARY = internal gemma on a local Llama runtime (OpenAI-compatible endpoint),
 reached via pydantic-ai's ``OpenAIChatModel`` against an env ``base_url`` — no
-new dependency (DL-059 / ADR-0007). OpenAI/Anthropic are a defined-but-disabled
+new dependency (DL-069 / ADR-0007). OpenAI/Anthropic are a defined-but-disabled
 fallback. Tier-keyed routing comes from config. This is the ONLY place a
 provider is constructed, preserving routing/quota/audit (DL-054 cond. 3).
 
@@ -43,7 +43,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only, never imported at runtime
 LIVE_ENV_FLAG = "OSLO_LLM_LIVE"
 _TRUTHY = {"1", "true", "yes", "on"}
 
-# The internal (primary) LLM endpoint config (DL-059 / ADR-0007). The local
+# The internal (primary) LLM endpoint config (DL-069 / ADR-0007). The local
 # Llama runtime's OpenAI-compatible base_url is read from env — never hardcoded
 # (ANTI_ASSUMPTION); the owner sets the live value (placeholder in .env.example).
 INTERNAL_BASE_URL_ENV = "OSLO_LLM_BASE_URL"
@@ -128,7 +128,7 @@ class LLMProvider:
         """
         provider = model_ref.provider
         if provider == "internal":
-            # PRIMARY (DL-059 / ADR-0007): the internal gemma model on a local
+            # PRIMARY (DL-069 / ADR-0007): the internal gemma model on a local
             # Llama runtime exposed over an OpenAI-compatible endpoint. We reuse
             # pydantic-ai's OpenAIChatModel against a local base_url (read from
             # env) — NO new dependency. The base_url is config, never hardcoded
@@ -141,7 +141,7 @@ class LLMProvider:
                 raise LiveCallsDisabledError(
                     f"{INTERNAL_BASE_URL_ENV} is not set — the internal LLM "
                     "(local Llama runtime, OpenAI-compatible) needs its base_url "
-                    "from env before a live call (DL-059; .env.example documents "
+                    "from env before a live call (DL-069; .env.example documents "
                     "the placeholder)."
                 )
             return OpenAIChatModel(
@@ -161,7 +161,7 @@ class LLMProvider:
             return AnthropicModel(model_ref.model)
         raise ValueError(
             f"unknown provider {provider!r} — routing is internal (primary, "
-            "DL-059) with OpenAI/Anthropic a disabled fallback (DL-054)"
+            "DL-069) with OpenAI/Anthropic a disabled fallback (DL-054)"
         )
 
 

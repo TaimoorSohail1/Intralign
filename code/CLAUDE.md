@@ -68,7 +68,7 @@ but canon requires (the API Contract Spec and env §1 durable runs) — recorded
 LangGraph (domain-specific StateGraphs + reusable subgraphs); **Supabase** (Postgres + Auth/GoTrue +
 RLS + pgvector + Storage — replaces standalone Postgres, MongoDB, Qdrant); **Neo4j** (graph); **Redis**
 (sessions/cache/streams); LLM via **Pydantic AI + adapter** behind `/services/llm_provider` — **primary = internal `gemma4`
-on a local Llama runtime (OpenAI-compatible endpoint), run natively, NOT dockerised (DL-059/ADR-0007);
+on a local Llama runtime (OpenAI-compatible endpoint), run natively, NOT dockerised (DL-069/ADR-0007);
 OpenAI/Anthropic demoted to optional disabled-by-default fallback**; Heroku/Vercel;
 OpenTelemetry→Grafana **+ LangSmith** (complement). App runs natively; only backing services are
 Dockerized. **No new dependency/technology without human approval.**

@@ -1,12 +1,12 @@
-# Deep-task decisions — Internal Gemma as primary LLM (DL-059 / ADR-0007)
+# Deep-task decisions — Internal Gemma as primary LLM (DL-069 / ADR-0007)
 
 Implementation-control record for the LLM provider switch. Cites source-of-truth; does not
-restate it. Single slice (DTM-0012). **Branch:** `feat/phase3-waveb-understanding` (the DL-059 /
+restate it. Single slice (DTM-0012). **Branch:** `feat/phase3-waveb-understanding` (the DL-069 /
 ADR-0007 doc edits already live in this working tree).
 
 ## Source-of-truth docs (binding; read, do not edit from deep-task)
 
-- **DL-059** — `00_owner/decisions/decision_log.md` (amends DL-054 §5): internal `gemma4` on a
+- **DL-069** — `00_owner/decisions/decision_log.md` (amends DL-054 §5): internal `gemma4` on a
   local Llama runtime is the PRIMARY LLM, native/no-docker, behind `/services/llm_provider`;
   OpenAI/Anthropic → optional disabled fallback. Conditions 1–5 govern this task.
 - **ADR-0007** — `code/docs/adr/0007-internal-gemma-primary-llm.md` (the engineering "how").
@@ -30,13 +30,13 @@ ADR-0007 doc edits already live in this working tree).
 - **Provenance hardcode (wrinkle):** `infer/stage.py:80` and `infer/finding_stage.py:73`
   hardcode `model_or_rule_version = {"provider": "openai", "model_version": …}` in the CHR
   spec. After the switch this records the WRONG provider → breaks Profile §5
-  "model-consumption auditability" (DL-054 cond. 3 / DL-059 cond. 2).
+  "model-consumption auditability" (DL-054 cond. 3 / DL-069 cond. 2).
 - Call sites reach the model ONLY via `LLMProvider` (`perceive/extraction.py`,
   `infer/synthesis.py`, `infer/finding.py`); Evaluate uses no LLM.
 
 ## Locked decisions
 
-1. **Seam-only + provenance (DL-059 cond. 1, plus the auditability fix):**
+1. **Seam-only + provenance (DL-069 cond. 1, plus the auditability fix):**
    - `config.py`: add an `internal` `TierRouting` whose stages all resolve to
      `ModelRef("internal", <model-id-from-env>)`, and make **internal the primary** (the
      active/default routing the engines resolve). Keep OpenAI/Anthropic `ModelRef`s present
@@ -57,7 +57,7 @@ ADR-0007 doc edits already live in this working tree).
 3. **Recorded-fixture CI unchanged (ADR-0004):** PR CI makes zero provider calls; the
    `internal` provider is exercised live only under `OSLO_LLM_LIVE=1` (dev/nightly) + as the
    fixture source. No test should newly call a network.
-4. **No new dependency, no Docker** (DL-059 cond. 4/5): reuse `OpenAIChatModel(base_url=…)`. If
+4. **No new dependency, no Docker** (DL-069 cond. 4/5): reuse `OpenAIChatModel(base_url=…)`. If
    the runtime turns out **non-OpenAI-compatible**, a native model class is a separate
    dependency decision ⇒ **STOP and escalate** (do not add an SDK).
 5. **Budgets:** `internal` tier reuses the Free `TierBudget` as a soft/observability bound
@@ -78,7 +78,7 @@ ADR-0007 doc edits already live in this working tree).
   DL-048 "wrong-tier routing" negatives, e.g. `…spend_records_the_configured_free_tier_model…`)
   must be updated to assert **internal gemma is primary** and an external full model is still
   refused. These are additive/edit-in-place, not new contracts.
-- **Branch:** kept on `feat/phase3-waveb-understanding` (the DL-059/ADR-0007 doc edits are
+- **Branch:** kept on `feat/phase3-waveb-understanding` (the DL-069/ADR-0007 doc edits are
   already here). Owner may prefer a dedicated branch — confirm.
 - **GATE — owner says do not start coding until confirmed** (+ resolve the base_url/model-id
   ops item). This file + the plan + DTM-0012 are planning only.

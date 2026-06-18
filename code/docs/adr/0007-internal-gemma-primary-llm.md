@@ -1,11 +1,11 @@
 # Internal Gemma (local Llama runtime) is the primary LLM, behind the existing seam
 
 DL-054 §5 bound the LLM to "Pydantic AI + adapter, OpenAI primary / Anthropic fallback."
-**DL-059 (owner-directed, 2026-06-17) amends that:** the primary LLM — for the application
+**DL-069 (owner-directed, 2026-06-17) amends that:** the primary LLM — for the application
 runtime and as the live/baseline test runtime — is an internal, already-installed `gemma4`
 model served by a **local Llama runtime** (llama.cpp/Ollama-style), run **natively, not
 dockerised**. OpenAI/Anthropic drop to an optional, disabled-by-default fallback. This ADR
-records how that lands in `code/`; DL-059 is the governing decision.
+records how that lands in `code/`; DL-069 is the governing decision.
 
 The change is deliberately confined to the **provider seam**. The local Llama runtime exposes
 an **OpenAI-compatible `/v1` endpoint**, so the seam keeps using Pydantic AI's
@@ -29,14 +29,14 @@ Concretely, the code change (follow-up, docs-first per owner) is:
 
 ## Status
 
-accepted — governed by DL-059 (owner-directed, 2026-06-17). Docs updated first; the
+accepted — governed by DL-069 (owner-directed, 2026-06-17). Docs updated first; the
 seam code change follows.
 
 ## Considered Options
 
 - **Native model class for Ollama/Gemma** — rejected for now: a new provider SDK/class is a
   new dependency (STOP / separate approval). Only taken if the runtime is **not**
-  OpenAI-compatible (DL-059 cond. 4).
+  OpenAI-compatible (DL-069 cond. 4).
 - **OpenAI-compatible local endpoint via `OpenAIChatModel(base_url=…)` (chosen)** — zero new
   dependency, smallest seam change, reuses all routing/budget/audit plumbing.
 - **Keep OpenAI/Anthropic primary** — rejected by owner (external token cost + data egress;
@@ -59,4 +59,4 @@ seam code change follows.
   them is a config flip (and an owner decision), not a rewrite.
 - **One open variable:** the concrete local `base_url` + exact `gemma4` model id are
   ops-confirmed in `.env.example`; if the runtime turns out non-OpenAI-compatible, the native
-  model class is a separate dependency decision (DL-059 cond. 4).
+  model class is a separate dependency decision (DL-069 cond. 4).

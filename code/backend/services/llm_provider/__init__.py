@@ -1,4 +1,4 @@
-"""LLM provider abstraction (DL-054 §5): Pydantic AI + adapter; PRIMARY = internal gemma on a local Llama runtime (OpenAI-compatible), OpenAI/Anthropic a disabled fallback (DL-059 / ADR-0007). Preserves routing/quota/audit (DL-054 cond. 3).
+"""LLM provider abstraction (DL-054 §5): Pydantic AI + adapter; PRIMARY = internal gemma on a local Llama runtime (OpenAI-compatible), OpenAI/Anthropic a disabled fallback (DL-069 / ADR-0007). Preserves routing/quota/audit (DL-054 cond. 3).
 
 Public surface (DTM-0009 / Wave S):
 

@@ -1,10 +1,10 @@
-"""DTM-0012 — CHR provenance records the ACTUAL provider/model (DL-059 cond. 2).
+"""DTM-0012 — CHR provenance records the ACTUAL provider/model (DL-069 cond. 2).
 
 After the switch to the internal gemma primary, each synthesis and Finding CHR
 must stamp ``model_or_rule_version.provider == "internal"`` + the gemma model id
 (merged with the existing prompt/rule version) — NOT the old hardcoded
 ``"openai"``. This is the model-consumption auditability fix (DL-054 cond. 3 /
-DL-059 cond. 2). Offline: driven by recorded fixtures, zero provider calls.
+DL-069 cond. 2). Offline: driven by recorded fixtures, zero provider calls.
 """
 
 from __future__ import annotations

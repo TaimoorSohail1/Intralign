@@ -66,9 +66,9 @@ def test_b3_runaway_regeneration_is_bounded_by_the_cap() -> None:
 
 
 def test_b3_free_tier_routes_synthesis_to_internal_not_a_full_model() -> None:
-    """CRITICAL (wrong-tier routing) — primary routing is internal gemma (DL-059).
+    """CRITICAL (wrong-tier routing) — primary routing is internal gemma (DL-069).
 
-    Post-DL-059 the PRIMARY model behind the seam is the internal gemma on the
+    Post-DL-069 the PRIMARY model behind the seam is the internal gemma on the
     local Llama runtime; Free resolves to it for every stage. An external
     full-quality model (gpt-4.1) is still NOT what Free routes to (wrong-tier).
     """

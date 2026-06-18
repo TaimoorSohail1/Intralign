@@ -66,7 +66,7 @@ def test_b2_spend_payload_records_degraded_and_mode() -> None:
 
 
 def test_b2_free_tier_routes_finding_passes_to_the_internal_primary() -> None:
-    """DL-059 — Free routes synthesis to the internal gemma primary, not a full model."""
+    """DL-069 — Free routes synthesis to the internal gemma primary, not a full model."""
     engine, _ = finding_engine(tier="free")
     resolved = engine.provider.resolve(tier="free", stage="synthesis")
     assert resolved.provider == "internal"

@@ -1,7 +1,7 @@
 # DTM-0012 — Internal Gemma (local Llama) as the primary LLM at the seam
 
 **Status:** **Approved** (EM, 2026-06-17) · **Module:** DTM-0012 · **Contract / governing
-decision:** **DL-059** (amends DL-054 §5) + **ADR-0007** · **Depends:** DL-059 ✓; ADR-0004
+decision:** **DL-069** (amends DL-054 §5) + **ADR-0007** · **Depends:** DL-069 ✓; ADR-0004
 unchanged. · **Ops:** `base_url` is env config (placeholder in `.env.example`; owner sets the
 live value); OpenAI-compatibility confirmed at the pydantic-ai layer.
 
@@ -16,7 +16,7 @@ hardcoded "openai". Recorded-fixture CI (ADR-0004) is unchanged — zero provide
 
 ## Source docs / constraints
 
-- DL-059 (`00_owner/decisions/decision_log.md`) cond. 1–5 — seam-only, Profile §5 controls +
+- DL-069 (`00_owner/decisions/decision_log.md`) cond. 1–5 — seam-only, Profile §5 controls +
   auditability preserved, ADR-0004 intact, no new dependency, no Docker, OpenAI-compatible
   assumed (else STOP).
 - ADR-0007 (`code/docs/adr/0007-…`) — the engineering approach; ADR-0004 (recorded fixtures);
@@ -37,7 +37,7 @@ hardcoded "openai". Recorded-fixture CI (ADR-0004) is unchanged — zero provide
   `infer/finding_stage.py`, replace the hardcoded `{"provider": "openai", "model_version": …}`
   CHR `model_or_rule_version` with the **resolved** identity from
   `provider.resolve(tier, stage)` (provider + model) merged with the existing prompt/rule
-  version. Justified by DL-054 cond. 3 / DL-059 cond. 2 (model-consumption auditability).
+  version. Justified by DL-054 cond. 3 / DL-069 cond. 2 (model-consumption auditability).
 - **Concrete `base_url` + model id = config, never hardcoded** (ANTI_ASSUMPTION). Wire the env
   var; put a commented placeholder (`gemma4`, a localhost `/v1` base_url) in `.env.example`. If
   the runtime is **not** OpenAI-compatible ⇒ **STOP and escalate** (native model class = new
@@ -93,7 +93,7 @@ hardcoded "openai". Recorded-fixture CI (ADR-0004) is unchanged — zero provide
 
 - Internal gemma is the resolved primary at the seam; CHR provenance accurate; OpenAI/Anthropic
   a disabled fallback; recorded-fixture CI intact; no new dependency/Docker; `.env.example`
-  documents the vars (placeholder; real values owner-set); PR cites DL-059 / ADR-0007.
+  documents the vars (placeholder; real values owner-set); PR cites DL-069 / ADR-0007.
 
 ## Worker report
 
@@ -163,10 +163,10 @@ $ python -m ci.gate_observability
 - **OpenAI-compatible assumption — CONFIRMED (no STOP):** pydantic-ai `1.107.0`'s `OpenAIChatModel`
   + `OpenAIProvider(base_url=…, api_key=…)` constructs against a local `/v1` endpoint with no
   network and no new dependency. If a deploy target's runtime is NOT OpenAI-compatible, that is a
-  separate native-SDK dependency decision (DL-059 cond. 4) — escalate then.
+  separate native-SDK dependency decision (DL-069 cond. 4) — escalate then.
 - **Provenance edit to the 2 frozen DTM-0009/0010 files:** the ONLY change is the
   `model_or_rule_version` dict (now resolved identity, was hardcoded `"openai"`) + threading
-  `model_identity` from `provider.resolve(...)`. Justified by DL-054 cond. 3 / DL-059 cond. 2
+  `model_identity` from `provider.resolve(...)`. Justified by DL-054 cond. 3 / DL-069 cond. 2
   (model-consumption auditability). No cognition logic, payloads, events, or topology touched.
 - **Pre-existing test hardening:** the one non-routing test edit (`test_recorded_fixture_harness.py`)
   was forced by the new live-branch construction tests; it preserves the exact same invariant via a
@@ -212,7 +212,7 @@ $ python -m ci.gate_observability
 Status: Approved
 
 Executive summary:
-- DTM-0012 enacts DL-059 / ADR-0007: the internal `gemma4` model on a local Llama runtime
+- DTM-0012 enacts DL-069 / ADR-0007: the internal `gemma4` model on a local Llama runtime
   (OpenAI-compatible endpoint) is the resolved PRIMARY LLM behind the existing
   `/services/llm_provider` seam — config + adapter only, plus a provenance fix so each cognition
   CHR records the actual provider/model (Profile §5 auditability). No new dependency, no Docker,

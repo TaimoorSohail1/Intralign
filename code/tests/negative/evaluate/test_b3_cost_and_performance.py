@@ -36,7 +36,7 @@ def test_b3_a_simulated_over_ceiling_latency_would_breach_the_gate() -> None:
 def test_b3_spend_records_the_configured_primary_model_not_a_full_model() -> None:
     """Wrong-tier routing is rejected: Free records the configured PRIMARY model.
 
-    Post-DL-059 the primary is the internal gemma (local Llama, OpenAI-compatible
+    Post-DL-069 the primary is the internal gemma (local Llama, OpenAI-compatible
     endpoint); the spend payload records that routed model id, never an external
     full-quality model (gpt-4.1).
     """
@@ -45,7 +45,7 @@ def test_b3_spend_records_the_configured_primary_model_not_a_full_model() -> Non
         confidence_stage="orientation", understanding_state="partial",
         time_to_first_mri_ms=1.0,
     )
-    # Free routes to the internal primary (DL-059) — never an external full model.
+    # Free routes to the internal primary (DL-069) — never an external full model.
     assert payload["model"] == internal_model_id()
     assert payload["model"] != "gpt-4.1"  # the full-quality model is wrong-tier
     # Local inference is un-metered → est_cost 0 (tokens still recorded elsewhere).
