@@ -775,6 +775,13 @@ Each changelog entry contains:
 - **Change Summary:** Wave A sign-off + Wave B authorization. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-099 — DL-069: Internal Gemma (local Llama runtime) as the primary LLM (amends DL-054 §5)
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-069.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-069-internal-gemma-primary-llm.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Internal Gemma (local Llama runtime) as the primary LLM (amends DL-054 §5). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
