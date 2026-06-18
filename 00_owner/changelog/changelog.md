@@ -803,6 +803,13 @@ Each changelog entry contains:
 - **Change Summary:** Wave B exit-gate pass (with conditions) + Phase IV/Wave C authorization. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-103 — DL-051: Repair stale `0X_` path references in engineering operational docs (clerical)
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-051 (ownership-zone reorganization; follow-through).
+- **Affected Artifacts:** 12 files under `30_engineering/` — the 8 phase `IMPLEMENTATION_PLAN.md`s + `implementation/README.md` + `PHASE_1_BUILD_KICKOFF_PACKET.md`; `delivery/RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md`; `delivery/RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md`; `delivery/starter_kit/CLAUDE.md` + `AGENTS.md`. 130 stale `01_/02_/03_` references repaired to current ownership-zone paths (`00_owner/` · `10_product/` · `20_handoff/` · `30_engineering/`). **No content change** — reference paths only.
+- **Change Summary:** Bucket 1 of the DL-051 path-migration follow-through (see `00_owner/decisions/PROPOSAL_IMPLEMENTATION_TREE_PATH_MIGRATION_DL051_FOLLOWTHROUGH_DRAFT.md`). Forward-pointing developer-facing references only; every rewritten `.md` path existence-verified as a full path; doc-integrity gate green. Five bare-prefix/historical references in the Handoff Package left for owner review; owner-canon cross-references (Bucket 2) and append-only ledgers / restructure-description docs (Bucket 3) intentionally untouched.
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

@@ -1,7 +1,7 @@
 # Phase III — Wave B: Understanding (Infer · Evaluate)
 
 **Sequence:** After Phase II. · **Status:** Not started · **Owner gate:** required before Phase IV.
-**Contracts:** `IC/QA/OBS-WB-INFER`, `IC/QA/OBS-WB-EVAL` (`03_architecture/contracts/WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING.md`).
+**Contracts:** `IC/QA/OBS-WB-INFER`, `IC/QA/OBS-WB-EVAL` (`20_handoff/contracts/WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING.md`).
 
 ## Goal
 Produce OSLO's **understanding** of the canonical record — Findings (Infer), and Issues with Confidence/Reliability/CAF/Outcome Confidence (Evaluate) — all as **Derived** cognition that is recomputable and history-tracked. This is where OSLO starts to *say something* about a project, with calibrated uncertainty.
@@ -17,25 +17,25 @@ Produce OSLO's **understanding** of the canonical record — Findings (Infer), a
 > Links only; nothing is copied here. The contract below is authoritative — if a plan and a contract differ, the **contract wins**.
 
 ### Phase-specific (Wave B — Infer + Evaluate)
-- **Contract:** `03_architecture/contracts/WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING.md`
-- **Synthesis Engine contract (DL-047, build with/before Wave B):** `03_architecture/contracts/WAVE_S_CONTRACT_PACKAGE_SYNTHESIS_ENGINE.md` (IC/QA/OBS-WS-SYNTH — extraction · synthesis · generation as Derived)
-- **Conformance:** `03_architecture/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§1 WB-INFER/WB-EVAL)
-- **Scoring models (Evaluate):** `02_product/specs/models/CONFIDENCE_MODEL_V2.md` · `…/RELIABILITY_MODEL_V2.md` · `…/CAF_SCORING_MODEL_V2.md`
-- **Drift/band config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§2 bands, §3 drift)
-- **Fixtures + test specs (Finding):** `02_product/specs/testing_fixtures/FINDING_FIXTURE_LIBRARY_SPECIFICATION_V1.md` · `…/FINDING_SUBSYSTEM_TEST_SPECIFICATION_V1.md`
-- **Fixtures + test specs (Confidence/Evaluate):** `02_product/specs/testing_fixtures/RELEASE_1_CONFIDENCE_FIXTURE_LIBRARY_SPECIFICATION.md` · `…/RELEASE_1_CONFIDENCE_SUBSYSTEM_TEST_SPECIFICATION.md` · `…/RELEASE_1_CONFIDENCE_FIXTURE_LIBRARY_REVIEW_001.md`
-- **Analysis modes (Fast / Deep — REQUIRED, not implicit):** `02_product/specs/data_api_nfr/RELEASE_1_ANALYSIS_ENGINE_SPECIFICATION_V1.md` · `02_product/specs/FAST_DEEP_WORKFLOW_PACK/FAST_PASS_STAGE_IO_SPEC.md` · `…/DEEP_PASS_STAGE_IO_SPEC.md` · `…/FAST_VS_DEEP_PASS_COMPARISON.md` · `…/ACCEPTANCE_CRITERIA.md`
-- **Performance NFR (60s):** `02_product/specs/data_api_nfr/RELEASE_1_PERFORMANCE_AND_NFR_SPECIFICATION_V1.md` — **Time-to-First-MRI < 60s** (the only owner-approved numeric target; Master Spec §20 / M1)
+- **Contract:** `20_handoff/contracts/WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING.md`
+- **Synthesis Engine contract (DL-047, build with/before Wave B):** `20_handoff/contracts/WAVE_S_CONTRACT_PACKAGE_SYNTHESIS_ENGINE.md` (IC/QA/OBS-WS-SYNTH — extraction · synthesis · generation as Derived)
+- **Conformance:** `20_handoff/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§1 WB-INFER/WB-EVAL)
+- **Scoring models (Evaluate):** `30_engineering/scoring/CONFIDENCE_MODEL_V2.md` · `…/RELIABILITY_MODEL_V2.md` · `…/CAF_SCORING_MODEL_V2.md`
+- **Drift/band config:** `30_engineering/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§2 bands, §3 drift)
+- **Fixtures + test specs (Finding):** `30_engineering/testing_fixtures/FINDING_FIXTURE_LIBRARY_SPECIFICATION_V1.md` · `…/FINDING_SUBSYSTEM_TEST_SPECIFICATION_V1.md`
+- **Fixtures + test specs (Confidence/Evaluate):** `30_engineering/testing_fixtures/RELEASE_1_CONFIDENCE_FIXTURE_LIBRARY_SPECIFICATION.md` · `…/RELEASE_1_CONFIDENCE_SUBSYSTEM_TEST_SPECIFICATION.md` · `…/RELEASE_1_CONFIDENCE_FIXTURE_LIBRARY_REVIEW_001.md`
+- **Analysis modes (Fast / Deep — REQUIRED, not implicit):** `30_engineering/analysis_engine/RELEASE_1_ANALYSIS_ENGINE_SPECIFICATION_V1.md` · `30_engineering/analysis_engine/FAST_PASS_STAGE_IO_SPEC.md` · `…/DEEP_PASS_STAGE_IO_SPEC.md` · `…/FAST_VS_DEEP_PASS_COMPARISON.md` · `…/ACCEPTANCE_CRITERIA.md`
+- **Performance NFR (60s):** `10_product/acceptance/RELEASE_1_PERFORMANCE_AND_NFR_SPECIFICATION_V1.md` — **Time-to-First-MRI < 60s** (the only owner-approved numeric target; Master Spec §20 / M1)
 
 ### Always-required (every phase)
-- **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
-- **Canonical architecture:** `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
-- **Models:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
-- **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
-- **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
-- **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
-- **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
-- **Observability:** `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
+- **Agent rules:** `30_engineering/delivery/starter_kit/AGENTS.md` · `00_owner/build_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
+- **Canonical architecture:** `30_engineering/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
+- **Models:** `30_engineering/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Standards:** `00_owner/build_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
+- **Numeric config:** `30_engineering/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
+- **Ratified scope:** `00_owner/decisions/decision_log.md` (DL-043, DL-044)
+- **Testing:** `30_engineering/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
+- **Observability:** `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
 
 ## Depends on
 Phase II (Attested store + recompute backbone — understanding is recomputed via 00R and appends CHRs).

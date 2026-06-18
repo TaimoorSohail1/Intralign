@@ -1,7 +1,7 @@
 # Phase VI — Wave E: Disclose Surfaces (Presentation)
 
 **Sequence:** Last. · **Status:** Not started · **Owner gate:** required before Release 1 production readiness.
-**Contracts:** `IC/QA/OBS-WE-DISCLOSE` (`03_architecture/contracts/WAVE_E_CONTRACT_PACKAGES_DISCLOSE_SURFACES.md`).
+**Contracts:** `IC/QA/OBS-WE-DISCLOSE` (`20_handoff/contracts/WAVE_E_CONTRACT_PACKAGES_DISCLOSE_SURFACES.md`).
 
 ## Goal
 Present everything the prior phases produced — **epistemically safely**. Disclose is a **consumer** (presents, never generates); **Render** is its non-cognitive service. Every surface labels uncertainty (Attested/Derived + confidence band + conflict) and shows both current understanding and its history. This is the user-facing layer of Release 1.
@@ -14,20 +14,20 @@ Present everything the prior phases produced — **epistemically safely**. Discl
 > Links only; nothing is copied here. The contract + UX specs below are authoritative — if a plan and a source differ, the **source wins**.
 
 ### Phase-specific (Wave E — Disclose surfaces)
-- **Contract:** `03_architecture/contracts/WAVE_E_CONTRACT_PACKAGES_DISCLOSE_SURFACES.md`
-- **Conformance:** `03_architecture/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§4 WE-DISCLOSE)
-- **UI master:** `02_product/specs/ux/RELEASE_1_UI_SPECIFICATION_V1.md` · `…/UI_SCREEN_INVENTORY.md`
-- **Surface specs:** `02_product/specs/ux/` → `MRI_EXPERIENCE_SPECIFICATION_V1.md` · `FINDING_PANEL_SPECIFICATION_V1.md` · `RECOMMENDATION_PANEL_SPECIFICATION_V1.md` · `PROJECT_OVERVIEW_SCREEN_SPECIFICATION_V1.md` · `UNDERSTANDING_COMPANION_SURFACE_EXPERIENCE_SPECIFICATION_V1.md` · `NOTIFICATION_AND_AWARENESS_SURFACE_SPECIFICATION_V1.md` · `HISTORY_AND_TIMELINE_SURFACE_SPECIFICATION_V1.md` · `EXPORT_AND_SHARE_OUT_EXPERIENCE_SPECIFICATION_V1.md`
+- **Contract:** `20_handoff/contracts/WAVE_E_CONTRACT_PACKAGES_DISCLOSE_SURFACES.md`
+- **Conformance:** `20_handoff/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§4 WE-DISCLOSE)
+- **UI master:** `10_product/experience/RELEASE_1_UI_SPECIFICATION_V1.md` · `…/UI_SCREEN_INVENTORY.md`
+- **Surface specs:** `10_product/experience/` → `MRI_EXPERIENCE_SPECIFICATION_V1.md` · `FINDING_PANEL_SPECIFICATION_V1.md` · `RECOMMENDATION_PANEL_SPECIFICATION_V1.md` · `PROJECT_OVERVIEW_SCREEN_SPECIFICATION_V1.md` · `UNDERSTANDING_COMPANION_SURFACE_EXPERIENCE_SPECIFICATION_V1.md` · `NOTIFICATION_AND_AWARENESS_SURFACE_SPECIFICATION_V1.md` · `HISTORY_AND_TIMELINE_SURFACE_SPECIFICATION_V1.md` · `EXPORT_AND_SHARE_OUT_EXPERIENCE_SPECIFICATION_V1.md`
 
 ### Always-required (every phase)
-- **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
-- **Canonical architecture:** `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
-- **Models:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
-- **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
-- **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
-- **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
-- **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
-- **Observability:** `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
+- **Agent rules:** `30_engineering/delivery/starter_kit/AGENTS.md` · `00_owner/build_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
+- **Canonical architecture:** `30_engineering/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
+- **Models:** `30_engineering/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Standards:** `00_owner/build_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
+- **Numeric config:** `30_engineering/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
+- **Ratified scope:** `00_owner/decisions/decision_log.md` (DL-043, DL-044)
+- **Testing:** `30_engineering/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
+- **Observability:** `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
 
 ## Depends on
 Phases II–V (there is nothing to disclose until the cognition + acceptance records exist).
