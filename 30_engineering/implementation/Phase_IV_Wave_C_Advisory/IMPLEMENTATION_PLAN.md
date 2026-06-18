@@ -1,7 +1,7 @@
 # Phase IV — Wave C: Advisory (Advise)
 
 **Sequence:** After Phase III. · **Status:** Not started · **Owner gate:** required before Phase V.
-**Contracts:** `IC/QA/OBS-WC-ADVISE` (`03_architecture/contracts/WAVE_C_AND_U_CONTRACT_PACKAGES_ADVISORY_AND_ACCEPTANCE.md`, Wave C section).
+**Contracts:** `IC/QA/OBS-WC-ADVISE` (`20_handoff/contracts/WAVE_C_AND_U_CONTRACT_PACKAGES_ADVISORY_AND_ACCEPTANCE.md`, Wave C section).
 
 ## Goal
 Generate **advice** — Recommendations and Clarification Requests anchored to Findings/Issues — as governable candidate *responses*. Advise proposes; it never accepts, governs, or executes. This is the layer that turns understanding into "here's what you might do."
@@ -14,21 +14,21 @@ Generate **advice** — Recommendations and Clarification Requests anchored to F
 > Links only; nothing is copied here. The contract below is authoritative — if a plan and a contract differ, the **contract wins**.
 
 ### Phase-specific (Wave C — Advise)
-- **Contract:** `03_architecture/contracts/WAVE_C_AND_U_CONTRACT_PACKAGES_ADVISORY_AND_ACCEPTANCE.md` (**Wave C section**)
-- **Conformance:** `03_architecture/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§2 WC-ADVISE)
-- **Recommendation model:** `02_product/specs/models/RECOMMENDATION_SYSTEM_SPECIFICATION_V1.md` (Resolution Paths = substructure, no standalone object)
-- **Surface (for shape only):** `02_product/specs/ux/RECOMMENDATION_PANEL_SPECIFICATION_V1.md`
-- **Fixtures + test specs (Recommendation):** `02_product/specs/testing_fixtures/RECOMMENDATION_FIXTURE_LIBRARY_SPECIFICATION_V1.md` · `…/RECOMMENDATION_SUBSYSTEM_TEST_SPECIFICATION_V1.md`
+- **Contract:** `20_handoff/contracts/WAVE_C_AND_U_CONTRACT_PACKAGES_ADVISORY_AND_ACCEPTANCE.md` (**Wave C section**)
+- **Conformance:** `20_handoff/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§2 WC-ADVISE)
+- **Recommendation model:** `10_product/domain/RECOMMENDATION_SYSTEM_SPECIFICATION_V1.md` (Resolution Paths = substructure, no standalone object)
+- **Surface (for shape only):** `10_product/experience/RECOMMENDATION_PANEL_SPECIFICATION_V1.md`
+- **Fixtures + test specs (Recommendation):** `30_engineering/testing_fixtures/RECOMMENDATION_FIXTURE_LIBRARY_SPECIFICATION_V1.md` · `…/RECOMMENDATION_SUBSYSTEM_TEST_SPECIFICATION_V1.md`
 
 ### Always-required (every phase)
-- **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
-- **Canonical architecture:** `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
-- **Models:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
-- **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
-- **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
-- **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
-- **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
-- **Observability:** `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
+- **Agent rules:** `30_engineering/delivery/starter_kit/AGENTS.md` · `00_owner/build_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
+- **Canonical architecture:** `30_engineering/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
+- **Models:** `30_engineering/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Standards:** `00_owner/build_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
+- **Numeric config:** `30_engineering/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
+- **Ratified scope:** `00_owner/decisions/decision_log.md` (DL-043, DL-044)
+- **Testing:** `30_engineering/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
+- **Observability:** `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
 
 ## Depends on
 Phase III (Findings/Issues to anchor to) and Phase II (recompute appends CHRs for advisory emissions too).

@@ -1,7 +1,7 @@
 # Phase II — Wave A: Backbone (Perceive · Retain · Recompute)
 
 **Sequence:** After Phase I. The spine every later phase depends on. · **Status:** Not started · **Owner gate:** required before Phase III.
-**Contracts:** `IC/QA/OBS-WA-00R`, `IC/QA/OBS-WA-001`, `IC/QA/OBS-WA-002` (`03_architecture/contracts/WAVE_A_*`).
+**Contracts:** `IC/QA/OBS-WA-00R`, `IC/QA/OBS-WA-001`, `IC/QA/OBS-WA-002` (`20_handoff/contracts/WAVE_A_*`).
 
 ## Goal
 Build the ingestion → canonical-retention → recompute spine: artifacts come in (integrity-gated), become attested canonical records, and a recompute can re-run the pipeline appending history. This is the foundation the understanding/advisory/disclose waves all sit on.
@@ -16,21 +16,21 @@ Build the ingestion → canonical-retention → recompute spine: artifacts come 
 > Links only; nothing is copied here. The contracts below are authoritative — if a plan and a contract differ, the **contract wins**.
 
 ### Phase-specific (Wave A — build 00R → 001 → 002)
-- **Contracts:** `03_architecture/contracts/WAVE_A_CONTRACT_PACKAGE_00R_RECOMPUTE_STALE_BACKBONE.md` · `…/WAVE_A_CONTRACT_PACKAGE_001_ARTIFACT_INTAKE.md` · `…/WAVE_A_CONTRACT_PACKAGE_002_CANONICAL_KNOWLEDGE_RETENTION.md`
-- **Conformance (must pass review):** `03_architecture/contracts/WAVE_A_CONTRACT_PACKAGE_001_ARTIFACT_INTAKE_CONFORMANCE_REVIEW.md` · `…/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md`
-- **Ownership map:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OWNERSHIP_UPDATE_SPECIFICATION_V1.md`
-- **Inventory:** `03_architecture/contracts/RELEASE_1_CONTRACT_INVENTORY_V1.md`
-- **Analysis modes (this backbone powers Fast/Deep):** `02_product/specs/data_api_nfr/RELEASE_1_ANALYSIS_ENGINE_SPECIFICATION_V1.md` (00R recompute = the **Deep Pass** continuous-expansion engine; intake feeds the **Fast Pass** orientation) · `02_product/specs/data_api_nfr/RELEASE_1_PERFORMANCE_AND_NFR_SPECIFICATION_V1.md` (the **< 60s** Fast-Pass budget the backbone must not block)
+- **Contracts:** `20_handoff/contracts/WAVE_A_CONTRACT_PACKAGE_00R_RECOMPUTE_STALE_BACKBONE.md` · `…/WAVE_A_CONTRACT_PACKAGE_001_ARTIFACT_INTAKE.md` · `…/WAVE_A_CONTRACT_PACKAGE_002_CANONICAL_KNOWLEDGE_RETENTION.md`
+- **Conformance (must pass review):** `20_handoff/contracts/WAVE_A_CONTRACT_PACKAGE_001_ARTIFACT_INTAKE_CONFORMANCE_REVIEW.md` · `…/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md`
+- **Ownership map:** `30_engineering/runtime_models/RELEASE_1_RUNTIME_OWNERSHIP_UPDATE_SPECIFICATION_V1.md`
+- **Inventory:** `20_handoff/contracts/RELEASE_1_CONTRACT_INVENTORY_V1.md`
+- **Analysis modes (this backbone powers Fast/Deep):** `30_engineering/analysis_engine/RELEASE_1_ANALYSIS_ENGINE_SPECIFICATION_V1.md` (00R recompute = the **Deep Pass** continuous-expansion engine; intake feeds the **Fast Pass** orientation) · `10_product/acceptance/RELEASE_1_PERFORMANCE_AND_NFR_SPECIFICATION_V1.md` (the **< 60s** Fast-Pass budget the backbone must not block)
 
 ### Always-required (every phase)
-- **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
-- **Canonical architecture:** `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
-- **Models:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
-- **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
-- **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
-- **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
-- **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
-- **Observability:** `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
+- **Agent rules:** `30_engineering/delivery/starter_kit/AGENTS.md` · `00_owner/build_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
+- **Canonical architecture:** `30_engineering/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
+- **Models:** `30_engineering/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Standards:** `00_owner/build_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
+- **Numeric config:** `30_engineering/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
+- **Ratified scope:** `00_owner/decisions/decision_log.md` (DL-043, DL-044)
+- **Testing:** `30_engineering/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
+- **Observability:** `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
 
 ## Depends on
 Phase I (stores, schema, CI).
