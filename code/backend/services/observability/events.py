@@ -15,6 +15,16 @@ The vocabulary is pinned PER CONTRACT (deep-task decision #1, DTM-0007):
   duplicated (IC-WA-001 A6 "Artifact Modified / Stale Detected").
 - ``EVENT_NAMES_WA002`` — EXACTLY the five IC-WA-002 A6 names, in contract
   order (DTM-0008; OBS-WA-002 C2 == A6).
+- ``EVENT_NAMES_WS`` — EXACTLY the four IC/OBS-WS-SYNTH A6 names (DTM-0009;
+  decision #9), in contract order.
+- ``EVENT_NAMES_WB_INFER`` — EXACTLY the two IC/OBS-WB-INFER A6 names (DTM-0010;
+  decision #9), in contract order.
+- ``EVENT_NAMES_WB_EVAL`` — EXACTLY the five IC/OBS-WB-EVAL A6 names (DTM-0011;
+  decision #9), in contract order — the three OBS-WB-EVAL §2.3 events
+  (Issue Generated / CAF Assessed / Outcome Confidence Computed) plus the two
+  DL-047 trust signals (Understanding State Changed / false-confidence flag).
+- ``EVENT_NAMES_COST`` — the single shared DL-048 spend event
+  (``ai_spend_recorded``), introduced in DTM-0009 and reused by Wave B.
 - ``EVENT_NAMES`` — the union (concatenation) the emitters accept; kept as the
   back-compat alias for existing consumers.
 
@@ -60,8 +70,55 @@ EVENT_NAMES_WA002: tuple[str, ...] = (
     "knowledge_mutation_recorded",
 )
 
+# IC/OBS-WS-SYNTH A6 — the four synthesis-engine events, exactly (decision #9).
+# Pinned verbatim against OBS-WS-SYNTH §3 / A6 ("Claim Extracted", "Planning
+# Artifact Generated/Regenerated", "Synthesized Model Updated"). The
+# per-emission ``cognition_history_record_appended`` is reused from the WA00R
+# set (never duplicated). DTM-0009 / Wave S.
+EVENT_NAMES_WS: tuple[str, ...] = (
+    "claim_extracted",
+    "planning_artifact_generated",
+    "planning_artifact_regenerated",
+    "synthesized_model_updated",
+)
+
+# IC/OBS-WB-INFER A6 — the two Finding events, exactly (decision #9; DTM-0010).
+# Pinned verbatim against OBS-WB-INFER §1.3 / A6 ("Finding Detected/Superseded";
+# C2 == A6). The per-emission ``cognition_history_record_appended`` is reused
+# from the WA00R set (never duplicated). Wave B / Infer.
+EVENT_NAMES_WB_INFER: tuple[str, ...] = (
+    "finding_detected",
+    "finding_superseded",
+)
+
+# IC/OBS-WB-EVAL A6 — the five Evaluate events, exactly (decision #9; DTM-0011).
+# Pinned verbatim against OBS-WB-EVAL §2.3 / A6 ("Issue Generated"; "CAF
+# Assessed"; "Outcome Confidence Computed") plus the DL-047 additions
+# ("Understanding State Changed"; the false-confidence flag event, CONF-06). The
+# per-emission ``cognition_history_record_appended`` is reused from the WA00R
+# set (never duplicated). Wave B / Evaluate.
+EVENT_NAMES_WB_EVAL: tuple[str, ...] = (
+    "issue_generated",
+    "caf_assessed",
+    "outcome_confidence_computed",
+    "understanding_state_changed",
+    "false_confidence_flagged",
+)
+
+# DL-048 cost-governance — the single shared spend event (decision #9),
+# introduced in DTM-0009 and reused by Wave B. "AI Spend Recorded" (OBS §3).
+EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
+
 # Union vocabulary accepted by emitters (back-compat alias for consumers).
-EVENT_NAMES: tuple[str, ...] = EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002
+EVENT_NAMES: tuple[str, ...] = (
+    EVENT_NAMES_WA00R
+    + EVENT_NAMES_WA001
+    + EVENT_NAMES_WA002
+    + EVENT_NAMES_WS
+    + EVENT_NAMES_WB_INFER
+    + EVENT_NAMES_WB_EVAL
+    + EVENT_NAMES_COST
+)
 
 _EVENT_NAME_SET: frozenset[str] = frozenset(EVENT_NAMES)
 
@@ -92,7 +149,8 @@ class CollectingEventEmitter:
         if event_name not in _EVENT_NAME_SET:
             raise UnknownEventError(
                 f"unknown contract event {event_name!r} — the vocabulary is "
-                f"exactly IC-WA-00R A6 + IC-WA-001 A6 + IC-WA-002 A6: "
+                "exactly IC-WA-00R A6 + IC-WA-001 A6 + IC-WA-002 A6 + "
+                "IC-WS-SYNTH A6 + IC-WB-INFER A6 + IC-WB-EVAL A6 + DL-048 cost: "
                 f"{', '.join(EVENT_NAMES)}"
             )
         self.events.append((event_name, dict(payload)))

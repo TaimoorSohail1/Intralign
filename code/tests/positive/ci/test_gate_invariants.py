@@ -127,6 +127,43 @@ def test_lawful_intake_ddl_passes(tmp_path: Path) -> None:
     assert lint_migrations(code_root) == []
 
 
+# DTM-0009 — owner-approved 2026-06-17 append-only-preserving CHECK widening.
+# The reviewed allowlist (gate 7) exempts EXACTLY these two ALTER statements.
+_DTM0009_RELPATH = (
+    f"{MIGRATIONS_RELPATH}/20260617120000_chr_output_kind_wave_s.sql"
+)
+_DTM0009_SQL = """
+alter table public.cognition_history_record
+    drop constraint if exists cognition_history_record_output_kind_check;
+
+alter table public.cognition_history_record
+    add constraint cognition_history_record_output_kind_check
+    check (output_kind in ('finding', 'synthesized_planning_model', 'planning_artifact'));
+"""
+_DTM0009_ALLOWLIST = [
+    (
+        _DTM0009_RELPATH,
+        "drop constraint if exists cognition_history_record_output_kind_check",
+    ),
+    (
+        _DTM0009_RELPATH,
+        "add constraint cognition_history_record_output_kind_check check (output_kind in",
+    ),
+]
+
+
+def test_allowlisted_check_widening_alter_passes() -> None:
+    """DTM-0009: the two owner-approved ALTER lines are exempt when allowlisted."""
+    assert (
+        lint_migration_sql(_DTM0009_SQL, _DTM0009_RELPATH, _DTM0009_ALLOWLIST) == []
+    )
+
+
+def test_allowlisted_check_widening_without_allowlist_still_flags() -> None:
+    """Same SQL with NO allowlist must still produce both ALTER violations."""
+    assert len(lint_migration_sql(_DTM0009_SQL)) == 2
+
+
 def test_mutations_on_non_canonical_tables_pass() -> None:
     sql = (
         "UPDATE derived.projection SET stale = true;\n"

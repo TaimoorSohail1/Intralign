@@ -9,7 +9,12 @@ dependencies = [
     "fastapi>=0.111",          # transport layer (api/); emits the OpenAPI consumed by Orval
     "uvicorn[standard]>=0.30",
     "pydantic>=2.7",           # epistemic types + contract schemas
-    "pydantic-ai>=0.0.14",     # LLM provider abstraction (DL-054 §5)
+    "pydantic-ai>=1.107,<2",   # LLM provider abstraction (DL-054 §5). Pinned to the 1.x line
+                               # (usage = input_tokens/output_tokens, FunctionModel usage carried
+                               # into RunUsage) so CI matches the version Wave B was tested/approved
+                               # on (1.107.0). The old >=0.0.14 floor let CI resolve a version whose
+                               # usage shape zeroed token accounting -> broke DL-048/DL-069 cond.2
+                               # (reproducibility fix; usage_tokens is also made shape-robust).
     "langgraph>=0.2",          # ratified orchestration — domain-specific StateGraphs + subgraphs
     "langgraph-checkpoint-postgres>=2",  # durable PostgresSaver — DTM-0005 approved (brings psycopg)
     "psycopg[binary]>=3.1",    # explicit: bundles libpq so the PostgresSaver boots on a clean machine/CI (reproducibility fix; IC-WA-00R)

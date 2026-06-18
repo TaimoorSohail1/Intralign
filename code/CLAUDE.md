@@ -1,8 +1,9 @@
 # CLAUDE.md — OSLO Application Code (`code/`)
 
 > **Where this is:** the OSLO application lives in `code/` inside the knowledge base
-> (monorepo override — recorded as a decision/ADR, pending owner ratification; the
-> ratified default is a separate `oslo` app repo). **Claude Code reads this file before
+> (monorepo override — **ratified with conditions for R1 as a time-boxed deviation**,
+> DL-057 / ADR-0001; the separate `oslo` app repo remains the destination, with a binding
+> extraction trigger at R1 exit or a second committer). **Claude Code reads this file before
 > touching code here.** It is a digest. **If this and an authoritative knowledge-base
 > source differ, the source wins.**
 
@@ -66,9 +67,11 @@ but canon requires (the API Contract Spec and env §1 durable runs) — recorded
 
 LangGraph (domain-specific StateGraphs + reusable subgraphs); **Supabase** (Postgres + Auth/GoTrue +
 RLS + pgvector + Storage — replaces standalone Postgres, MongoDB, Qdrant); **Neo4j** (graph); **Redis**
-(sessions/cache/streams); LLM via **Pydantic AI + adapter** (OpenAI primary / Anthropic fallback) behind
-`/services/llm_provider`; Heroku/Vercel; OpenTelemetry→Grafana **+ LangSmith** (complement). App runs
-natively; only backing services are Dockerized. **No new dependency/technology without human approval.**
+(sessions/cache/streams); LLM via **Pydantic AI + adapter** behind `/services/llm_provider` — **primary = internal `gemma4`
+on a local Llama runtime (OpenAI-compatible endpoint), run natively, NOT dockerised (DL-069/ADR-0007);
+OpenAI/Anthropic demoted to optional disabled-by-default fallback**; Heroku/Vercel;
+OpenTelemetry→Grafana **+ LangSmith** (complement). App runs natively; only backing services are
+Dockerized. **No new dependency/technology without human approval.**
 
 ## Tests (every increment)
 

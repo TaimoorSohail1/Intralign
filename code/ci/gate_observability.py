@@ -20,11 +20,16 @@ b. **A6 vocabularies pinned per contract** (DTM-0007, decision #1; DTM-0008) —
    ``backend/services/observability/events.py`` must define
    ``EVENT_NAMES_WA00R`` as EXACTLY the seven IC-WA-00R A6 names,
    ``EVENT_NAMES_WA001`` as EXACTLY the eight IC-WA-001 A6 names, and
-   ``EVENT_NAMES_WA002`` as EXACTLY the five IC-WA-002 A6 names, each a
+   ``EVENT_NAMES_WA002`` as EXACTLY the five IC-WA-002 A6 names,
+   ``EVENT_NAMES_WS`` as EXACTLY the four IC/OBS-WS-SYNTH A6 names,
+   ``EVENT_NAMES_WB_INFER`` as EXACTLY the two IC/OBS-WB-INFER A6 names,
+   ``EVENT_NAMES_WB_EVAL`` as EXACTLY the five IC/OBS-WB-EVAL A6 names, and
+   ``EVENT_NAMES_COST`` as EXACTLY the one DL-048 cost event, each a
    literal tuple in contract order, plus ``EVENT_NAMES`` as their consistent
-   union (the literal concatenation, or the ``WA00R + WA001 + WA002`` name
-   concatenation). Any rename/addition/removal fails (events are contract
-   surface; OBS C2 lists == A6 lists; ``stale_detected`` lives in WA00R only).
+   union (the literal concatenation, or the ``WA00R + WA001 + WA002 + WS +
+   WB_INFER + WB_EVAL + COST`` name concatenation). Any rename/addition/removal fails (events are
+   contract surface; OBS C2 lists == A6 lists; ``stale_detected`` lives in
+   WA00R only).
 
 c. **Replay harness present** — ``tests/replay/`` exists and contains at least
    one ``test_*.py`` (the two-axis determinism harness, OBS-WA-00R C5). The
@@ -72,11 +77,41 @@ EXPECTED_EVENT_NAMES_WA002: tuple[str, ...] = (
     "knowledge_mutation_recorded",
 )
 
+# IC/OBS-WS-SYNTH A6 (DTM-0009 — the four synthesis-engine events, decision #9).
+EXPECTED_EVENT_NAMES_WS: tuple[str, ...] = (
+    "claim_extracted",
+    "planning_artifact_generated",
+    "planning_artifact_regenerated",
+    "synthesized_model_updated",
+)
+
+# IC/OBS-WB-INFER A6 (DTM-0010 — the two Finding events, decision #9).
+EXPECTED_EVENT_NAMES_WB_INFER: tuple[str, ...] = (
+    "finding_detected",
+    "finding_superseded",
+)
+
+# IC/OBS-WB-EVAL A6 (DTM-0011 — the five Evaluate events, decision #9).
+EXPECTED_EVENT_NAMES_WB_EVAL: tuple[str, ...] = (
+    "issue_generated",
+    "caf_assessed",
+    "outcome_confidence_computed",
+    "understanding_state_changed",
+    "false_confidence_flagged",
+)
+
+# DL-048 cost-governance — the single shared spend event (DTM-0009; decision #9).
+EXPECTED_EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
+
 # The union the emitters must accept (back-compat alias in events.py).
 EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     EXPECTED_EVENT_NAMES_WA00R
     + EXPECTED_EVENT_NAMES_WA001
     + EXPECTED_EVENT_NAMES_WA002
+    + EXPECTED_EVENT_NAMES_WS
+    + EXPECTED_EVENT_NAMES_WB_INFER
+    + EXPECTED_EVENT_NAMES_WB_EVAL
+    + EXPECTED_EVENT_NAMES_COST
 )
 
 # (contract-tuple variable name, expected value, contract label) for check (b).
@@ -84,6 +119,10 @@ _CONTRACT_VOCABULARIES: tuple[tuple[str, tuple[str, ...], str], ...] = (
     ("EVENT_NAMES_WA00R", EXPECTED_EVENT_NAMES_WA00R, "IC-WA-00R A6"),
     ("EVENT_NAMES_WA001", EXPECTED_EVENT_NAMES_WA001, "IC-WA-001 A6"),
     ("EVENT_NAMES_WA002", EXPECTED_EVENT_NAMES_WA002, "IC-WA-002 A6"),
+    ("EVENT_NAMES_WS", EXPECTED_EVENT_NAMES_WS, "IC-WS-SYNTH A6"),
+    ("EVENT_NAMES_WB_INFER", EXPECTED_EVENT_NAMES_WB_INFER, "IC-WB-INFER A6"),
+    ("EVENT_NAMES_WB_EVAL", EXPECTED_EVENT_NAMES_WB_EVAL, "IC-WB-EVAL A6"),
+    ("EVENT_NAMES_COST", EXPECTED_EVENT_NAMES_COST, "DL-048 cost"),
 )
 
 # The union must be the per-contract names concatenated in this exact order.
@@ -91,6 +130,10 @@ _UNION_NAME_ORDER: tuple[str, ...] = (
     "EVENT_NAMES_WA00R",
     "EVENT_NAMES_WA001",
     "EVENT_NAMES_WA002",
+    "EVENT_NAMES_WS",
+    "EVENT_NAMES_WB_INFER",
+    "EVENT_NAMES_WB_EVAL",
+    "EVENT_NAMES_COST",
 )
 
 APPEND_EVENT = "cognition_history_record_appended"

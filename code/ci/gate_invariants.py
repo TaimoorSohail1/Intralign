@@ -21,6 +21,12 @@ c. **Migration linter** — ``.sql`` files under ``code/supabase/migrations/`` m
    comments are stripped before linting (gate 7 human review backstops what a
    static linter cannot see). A missing or empty migrations dir passes — no
    migrations exist yet in Phase I.
+   **Reviewed-allowlist exemption** — a canonical-table ``ALTER`` whose statement
+   matches an explicit ``(relpath, line-substring)`` entry in the gate-7-reviewed
+   allowlist (``code/ci/invariant_allowlist.txt``) is exempted; this exists ONLY
+   for owner-approved, append-only-preserving CHECK widenings (e.g. DTM-0009
+   adding two ``output_kind`` values). The exemption is TIGHT: it never exempts
+   ``UPDATE`` / ``DELETE`` / ``DROP TABLE``, nor any ALTER not explicitly listed.
 
 Pure logic; the CLI main takes ``--code-root`` (default: this file's parent's
 parent, i.e. ``code/``) and exits 0 (pass) / 1 (fail), printing every violation.
@@ -156,8 +162,19 @@ def _target_table(raw_identifier: str) -> str:
     return cleaned.split(".")[-1].strip('"').lower()
 
 
-def lint_migration_sql(sql: str) -> list[str]:
-    """(c) Return one message per statement that mutates a canonical table."""
+def lint_migration_sql(
+    sql: str,
+    relpath: str = "",
+    allowlist: Sequence[tuple[str, str]] = (),
+) -> list[str]:
+    """(c) Return one message per statement that mutates a canonical table.
+
+    A canonical-table ``ALTER`` is exempted iff ``relpath`` and the (collapsed)
+    statement text match an explicit allowlist entry — reserved for owner-
+    approved, append-only-preserving CHECK widenings (reviewed under gate 7).
+    ``UPDATE`` / ``DELETE`` / ``DROP TABLE`` are NEVER exempted: the allowlist
+    only ever short-circuits the ``alter`` group.
+    """
     violations: list[str] = []
     for statement in _normalize_sql(sql).split(";"):
         match = _FORBIDDEN_STMT.match(statement)
@@ -169,17 +186,29 @@ def lint_migration_sql(sql: str) -> list[str]:
             if value is not None
         )
         table = _target_table(raw_target)
-        if table in CANONICAL_TABLES:
-            violations.append(
-                f"{verb.upper()} statement targets append-only canonical table "
-                f"'{table}' (Deployment Governance §5; DL-043): "
-                f"{' '.join(statement.split())[:120]}"
-            )
+        if table not in CANONICAL_TABLES:
+            continue
+        collapsed = " ".join(statement.split())
+        # TIGHT exemption: ONLY an explicitly-allowlisted ALTER is forgiven.
+        if verb == "alter" and _is_allowlisted(relpath, collapsed, allowlist):
+            continue
+        violations.append(
+            f"{verb.upper()} statement targets append-only canonical table "
+            f"'{table}' (Deployment Governance §5; DL-043): "
+            f"{collapsed[:120]}"
+        )
     return violations
 
 
-def lint_migrations(code_root: Path) -> list[str]:
-    """Lint every .sql migration; a missing or empty migrations dir passes."""
+def lint_migrations(
+    code_root: Path, allowlist: Sequence[tuple[str, str]] = ()
+) -> list[str]:
+    """Lint every .sql migration; a missing or empty migrations dir passes.
+
+    ``allowlist`` (loaded by ``run_all_checks``) exempts only explicitly-listed
+    canonical-table ALTERs — owner-approved, append-only-preserving CHECK
+    widenings reviewed under gate 7.
+    """
     migrations_dir = code_root / MIGRATIONS_RELPATH
     if not migrations_dir.is_dir():
         return []
@@ -188,7 +217,9 @@ def lint_migrations(code_root: Path) -> list[str]:
         relpath = sql_file.relative_to(code_root).as_posix()
         violations.extend(
             f"{relpath}: {message}"
-            for message in lint_migration_sql(sql_file.read_text(encoding="utf-8"))
+            for message in lint_migration_sql(
+                sql_file.read_text(encoding="utf-8"), relpath, allowlist
+            )
         )
     return violations
 
@@ -199,7 +230,7 @@ def run_all_checks(code_root: Path) -> list[str]:
     return [
         *scan_forbidden_tokens(code_root, allowlist),
         *check_authority_dir(code_root),
-        *lint_migrations(code_root),
+        *lint_migrations(code_root, allowlist),
     ]
 
 
