@@ -247,6 +247,39 @@ All entries below are **Proposed**.
 
 ---
 
+## P4 — Build Governance & Tooling (DL-067 follow-ups)
+
+_Added 2026-06-17 by explicit owner direction. These three items were surfaced by real CI failures while landing DL-068 (PR #38) and the psycopg/form-data fix (PR #37). They concern the realization of DL-067 (server-side DL landing) and DL-065 (number-at-merge), not canonical doctrine._
+
+### RB-021 — dl-land workflow cannot carry a multi-line decision body
+
+- **Source Finding:** Landing DL-068 via the `dl-land.yml` `workflow_dispatch` form (2026-06-17). The `body` input is a single-line `<input type="text">`; per the HTML value-sanitization algorithm it strips newlines, so multi-line markdown (the `## Decision` / `## Conditions` sections every record needs) cannot be entered through the Actions UI or the Founder Console "Approve & Land" path. The record had to be landed via a local `dl_records.py land` run instead.
+- **Affected Layer(s):** Build Governance (engineering tooling); realization of DL-067.
+- **Affected Concepts:** Decision-Recording Discipline (DL-065); single-serializer landing (DL-067).
+- **Proposal Scope:** Make the dl-land body input newline-tolerant — e.g. switch to a multi-line input type, accept a sentinel the workflow expands into newlines, or accept the body as an uploaded/committed file path the workflow reads. Goal: the "Approve & Land" path works end-to-end without a manual local fallback.
+- **Dependencies:** Realizes DL-067. No upstream blocker.
+- **Status:** Proposed.
+
+### RB-022 — dl-land PR body fails the Gate 2 contract-traceability check
+
+- **Source Finding:** DL-068 PR #38 (2026-06-17) failed `app-ci` Gate 2 (`gate_contract`) because the PR body cited no approved contract id; the gate scans `PR_BODY` for an `IC-*` id or a `phase-1-infra` label. Pure-governance PRs (a DL record + changelog + index) have no natural contract id, so the auto-generated dl-land PR body will reliably fail this gate. Worked around by hand-editing the PR body to cite IC-WB-INFER / IC-WB-EVAL / IC-WA-00R and pushing an empty commit to re-trigger (a body edit alone does not refresh the frozen event payload).
+- **Affected Layer(s):** Build Governance (CI policy + dl-land realization).
+- **Affected Concepts:** Contract-traceability gate (Deployment Governance §4 Gate 2); DL-067 landing workflow.
+- **Proposal Scope:** Let canon-only PRs pass Gate 2 cleanly — e.g. have dl-land apply a governance-exemption label (analogous to `phase-1-infra`) or inject an appropriate contract/citation into the generated PR body; and/or have Gate 2 recognize `decision/*` branches as governance changes. Owner ratifies the CI-policy intent; engineering proposes the realization.
+- **Dependencies:** Realizes DL-067; related to RB-021.
+- **Status:** Proposed.
+
+### RB-023 — Renumber the dormant OD-005 / Outcome Graph decision record
+
+- **Source Finding:** The `decision/dl-068-outcome-graph-elevation-deferral` branch (the OD-005 Outcome Graph elevation deferral, drafted as DL-068) was never merged; DL-068 was instead assigned at merge to the Wave A sign-off (number-at-merge, DL-065). The dormant branch still hard-codes DL-068 in its filename and header and will fail the records gate (header↔filename vs. next-free number) if landed as-is.
+- **Affected Layer(s):** 00_owner/decisions (records regime).
+- **Affected Concepts:** Outcome Graph elevation (OD-005); number-at-merge (DL-065).
+- **Proposal Scope:** When the owner resumes the OD-005 decision, renumber the record to the next free DL number (rename file + header), rebase onto current `main`, and land via the standard flow. No content change to the decision itself.
+- **Dependencies:** None (owner-initiated when OD-005 is taken up).
+- **Status:** Proposed (deferred — owner-initiated).
+
+---
+
 ## Governance Notes
 
 1. This backlog is a draft. Entries reflect findings from initial repository review, not ratified governance positions.
