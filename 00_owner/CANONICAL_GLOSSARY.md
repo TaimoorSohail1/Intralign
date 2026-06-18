@@ -99,6 +99,8 @@ qualified canonical form below.** (This register *qualifies* — it does not red
 | **Acceptance** | user-attested → **UserAcceptanceRecord** · target met → **NFR Acceptance** | product / build |
 | **State** | product maturity → **Understanding State** · machine status → **run state** (`run_status`) | product / eng |
 | **Policy** | OSLO product policies → **Product Policy** · build constraints → **Build-Policy** | product / build |
+| **Founder Console** | the founder's command surface (GTM cockpit v2 + build / Dev-Readiness v3) → **Intralign Founder Console** *(this is the surface meant by unqualified prior uses; the Dev-Readiness panel renders here)* | company/build (`intralign-founder-console`) |
+| | the OSLO **product's** observability/economics surface → **OSLO Observability Console** *(reserved name; never "Founder Console")* | product (`30_engineering/telemetry/OSLO_RELEASE_1_OBSERVABILITY_AND_ECONOMICS_PLATFORM_SPECIFICATION_V1`) |
 
 **Semantic landmines** (same word, unrelated/opposite meaning):
 

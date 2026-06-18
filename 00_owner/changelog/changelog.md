@@ -789,6 +789,13 @@ Each changelog entry contains:
 - **Change Summary:** Ratify the Phase 1 "Prove Understanding" falsifiable exit gate (P-4 / DL-059 realization). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-101 — DL-071: DL-053 Disambiguation Register: 'Founder Console' (Intralign Founder Console vs OSLO Observability Console)
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-071.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-071-founder-console-disambiguation.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** DL-053 Disambiguation Register: 'Founder Console' (Intralign Founder Console vs OSLO Observability Console). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
