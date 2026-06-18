@@ -168,9 +168,21 @@ class LLMProvider:
 def usage_tokens(usage: Any) -> tuple[int, int]:
     """Extract (tokens_in, tokens_out) from a pydantic-ai run usage object.
 
-    Tolerant of the pydantic-ai usage shape (``input_tokens``/``output_tokens``)
-    so the budget accountant works against real and recorded usage alike.
+    Shape-robust across pydantic-ai versions so token accounting (DL-048 /
+    DL-069 cond.2) never silently zeroes on a version drift: 1.x exposes
+    ``input_tokens``/``output_tokens``; older lines used
+    ``request_tokens``/``response_tokens``. We read the 1.x names first, then
+    fall back to the legacy names (the dependency is pinned to 1.x in
+    pyproject; this fallback is defence-in-depth so CI can never under-count).
     """
-    tokens_in = int(getattr(usage, "input_tokens", 0) or 0)
-    tokens_out = int(getattr(usage, "output_tokens", 0) or 0)
+
+    def _first(*names: str) -> int:
+        for name in names:
+            value = getattr(usage, name, None)
+            if value:
+                return int(value)
+        return 0
+
+    tokens_in = _first("input_tokens", "request_tokens", "prompt_tokens")
+    tokens_out = _first("output_tokens", "response_tokens", "completion_tokens")
     return tokens_in, tokens_out
