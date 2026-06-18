@@ -285,7 +285,28 @@ _Added 2026-06-17 by explicit owner direction. These three items were surfaced b
 - **Affected Concepts:** DL-044 wave-authorization / exit gate; Wave B (Understanding); Phase IV; DL-046 (Fast/Deep + <60s Time-to-First-MRI); DL-062 (CAF decomposability).
 - **Proposal Scope:** Define and run the Wave B exit-gate review (Framework 001A five outputs — Findings / Concerns / Dependencies / Recommendation / Status) against the DL-068 authorized scope, the DL-046 NFR obligations, and the DL-062 decomposability condition (including the still-open CAF driver-level decomposability test flagged in the PR #39 review). Owner sign-off required; **no Phase IV start without it.**
 - **Dependencies:** Blocked by PR #39 merge (Wave B landed). Relates to DL-068, DL-044, DL-046, DL-062.
-- **Status:** Proposed (owner-gated; due at Wave B completion).
+- **Disposition:** Closed — the Wave B exit-gate review was run and ratified as **DL-072** (Pass with conditions; Phase IV/Wave C authorized). The review surfaced three binding conditions, now tracked as RB-025 (unarchive), RB-026 (decomposability test), and a DL-046 live-Gemma latency validation (shared with the DL-070 Phase 1 sign-off).
+- **Closed By:** DL-072.
+- **Date Closed:** 2026-06-18
+- **Status:** Closed.
+
+### RB-025 — Unarchive (DL-058) not built in Wave B; carry into Wave C
+
+- **Source Finding:** The Wave B exit-gate review (DL-072) verified `code/backend/responsibilities/retain/archival.py` on `main` still declares "an explicit unarchive is OUT of scope in R1" — i.e., DL-058 (archive reversible in R1, UP-3 affirmed), which **DL-068 Condition 3 folded into Wave B**, was not delivered.
+- **Affected Layer(s):** `30_engineering` (`code/`); realization of DL-058.
+- **Affected Concepts:** Unarchive / archive reversal (DL-058); Retain responsibility.
+- **Proposal Scope:** Build unarchive in **Wave C or a dedicated near-term slice** — a new reversal event type in the LDM §2.5 vocabulary + the derive-status path, append-only (no destruction), with positive/negative tests. Owner-accepted gap per DL-072 Condition 1.
+- **Dependencies:** DL-058, DL-068 (Cond 3), DL-072 (Cond 1).
+- **Status:** Proposed (binding condition of DL-072).
+
+### RB-026 — DL-062 CAF driver-decomposability negative test missing
+
+- **Source Finding:** The Wave B exit-gate review (DL-072) verified the evaluate negatives (`tests/negative/evaluate/test_b3_confidence_semantics.py`) cover Confidence-isn't-health, Reliability non-collapse, CONF-06, and a non-empty `basis`, but **no test asserts CAF drivers stay individually inspectable** in the confidence basis ("no opaque rollup") — which **DL-062 Condition 1 explicitly requires** as a QA negative test.
+- **Affected Layer(s):** `30_engineering` (`code/` tests); realization of DL-062.
+- **Affected Concepts:** CAF decomposability (DL-062 Cond 1); Confidence basis / inspectability (Doctrine 06).
+- **Proposal Scope:** Add a negative test proving each of Clarity / Alignment / Feasibility decomposes to its inspectable drivers in the basis/explanation; an opaque rollup must fail.
+- **Dependencies:** DL-062 (Cond 1), DL-072 (Cond 2).
+- **Status:** Proposed (binding condition of DL-072).
 
 ---
 

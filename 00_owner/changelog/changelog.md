@@ -796,6 +796,13 @@ Each changelog entry contains:
 - **Change Summary:** DL-053 Disambiguation Register: 'Founder Console' (Intralign Founder Console vs OSLO Observability Console). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-102 — DL-072: Wave B exit-gate pass (with conditions) + Phase IV/Wave C authorization
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-072.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-072-wave-b-exit-gate-wave-c-authorization.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Wave B exit-gate pass (with conditions) + Phase IV/Wave C authorization. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
