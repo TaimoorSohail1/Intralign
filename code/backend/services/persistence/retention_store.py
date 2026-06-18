@@ -86,6 +86,23 @@ class SupabaseRetentionStore:
         )
         return resp.data[0] if resp.data else None
 
+    def acceptances_for_project(self, project_id: str) -> list[dict[str, Any]]:
+        """All user_acceptance_record rows for a project, oldest first (SELECT only).
+
+        The READ the DTM-0017 reconcile scans for ACTIVE version-pinned UARs after
+        a recompute (IC-WU-ACCEPT U1.3). It is a SELECT — the append-only surface
+        is unchanged (no update/delete/upsert added); the reconcile is read-only
+        over the UAR (it never mutates a row).
+        """
+        resp = (
+            self._client.table(ACCEPTANCE_TABLE)
+            .select("*")
+            .eq("project_id", project_id)
+            .order("created_at", desc=False)
+            .execute()
+        )
+        return list(resp.data)
+
     # -- history_record (append-only audit trail) ----------------------------
 
     def insert_history(self, row: Mapping[str, Any]) -> dict[str, Any]:

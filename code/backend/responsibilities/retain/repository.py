@@ -78,6 +78,31 @@ class ChrRepository:
             return None
         return CognitionHistoryRecord.model_validate(resp.data[0])
 
+    def latest_acceptance_impact_for_uar(
+        self, project_id: uuid.UUID, uar_id: str
+    ) -> CognitionHistoryRecord | None:
+        """Latest ``acceptance_impact`` CHR for a given UAR, or None (SELECT only).
+
+        The prior assessment a DTM-0017 recompute supersedes is the most recent
+        ``acceptance_impact`` CHR whose ``upstream_lineage.uar_id`` is this UAR
+        (one assessment per drifted UAR; append-only history — the new CHR carries
+        ``supersedes_chr_id`` pointing here, never a mutation). This is a SELECT —
+        the append-only surface is unchanged.
+        """
+        resp = (
+            self._client.table(_TABLE)
+            .select("*")
+            .eq("project_id", str(project_id))
+            .eq("output_kind", "acceptance_impact")
+            .eq("upstream_lineage->>uar_id", str(uar_id))
+            .order("emitted_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if not resp.data:
+            return None
+        return CognitionHistoryRecord.model_validate(resp.data[0])
+
     def lineage_chain(self, chr_id: uuid.UUID) -> list[CognitionHistoryRecord]:
         """Walk the ``supersedes_chr_id`` ancestry, most recent first.
 

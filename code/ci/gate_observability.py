@@ -26,7 +26,7 @@ b. **A6 vocabularies pinned per contract** (DTM-0007, decision #1; DTM-0008) —
    ``EVENT_NAMES_WB_EVAL`` as EXACTLY the five IC/OBS-WB-EVAL A6 names,
    ``EVENT_NAMES_WC_ADVISE`` as EXACTLY the two IC/OBS-WC-ADVISE A6 names,
    ``EVENT_NAMES_WC_FIX`` as EXACTLY the one DL-047 SuggestedFix OBS name,
-   ``EVENT_NAMES_WU_ACCEPT`` as EXACTLY the two IC-WU-ACCEPT C3 names, and
+   ``EVENT_NAMES_WU_ACCEPT`` as EXACTLY the three IC-WU-ACCEPT C3 names, and
    ``EVENT_NAMES_COST`` as EXACTLY the one DL-048 cost event, each a
    literal tuple in contract order, plus ``EVENT_NAMES`` as their consistent
    union (the literal concatenation, or the ``WA00R + WA001 + WA002 + WS +
@@ -115,10 +115,11 @@ EXPECTED_EVENT_NAMES_WC_FIX: tuple[str, ...] = (
     "suggested_fix_offered",
 )
 
-# IC/OBS-WU-ACCEPT C3 (DTM-0016 — the two acceptance-recording events).
+# IC/OBS-WU-ACCEPT C3 (DTM-0016 + DTM-0017 — the three acceptance events).
 EXPECTED_EVENT_NAMES_WU_ACCEPT: tuple[str, ...] = (
     "user_acceptance_record_appended",
     "plan_fact_recorded",
+    "acceptance_impact_assessed",
 )
 
 # DL-048 cost-governance — the single shared spend event (DTM-0009; decision #9).

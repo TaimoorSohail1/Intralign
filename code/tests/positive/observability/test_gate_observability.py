@@ -173,11 +173,12 @@ def test_wc_fix_vocabulary_is_the_one_dl047_suggested_fix_name_verbatim() -> Non
     assert "ai_spend_recorded" not in EVENT_NAMES_WC_FIX
 
 
-def test_wu_accept_vocabulary_is_the_two_ic_wu_accept_c3_names_verbatim() -> None:
-    """DTM-0016 — the IC-WU-ACCEPT C3 list, exactly, in contract order."""
+def test_wu_accept_vocabulary_is_the_three_ic_wu_accept_c3_names_verbatim() -> None:
+    """DTM-0016 + DTM-0017 — the IC-WU-ACCEPT C3 list, exactly, in contract order."""
     assert EVENT_NAMES_WU_ACCEPT == (
         "user_acceptance_record_appended",
         "plan_fact_recorded",
+        "acceptance_impact_assessed",
     )
     # The per-emission append event is REUSED from WA00R, never duplicated here.
     assert "cognition_history_record_appended" not in EVENT_NAMES_WU_ACCEPT

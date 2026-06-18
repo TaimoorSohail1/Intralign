@@ -40,13 +40,16 @@ _live_db = pytest.mark.skipif(
 # Method names that would constitute a mutation surface (A4.7/A4.8).
 _MUTATION_NAMES = ("update", "delete", "upsert", "remove", "overwrite", "purge")
 
-# The ONLY public surface the retention store may expose (DTM-0008 locked).
+# The ONLY public surface the retention store may expose (DTM-0008 locked;
+# DTM-0017 adds ``acceptances_for_project`` — a SELECT-only READ the
+# Acceptance-Impact reconcile scans, not a mutation path).
 _ALLOWED_PUBLIC = {
     "get_candidate",
     "insert_assertion",
     "get_assertion",
     "insert_acceptance",
     "get_acceptance",
+    "acceptances_for_project",
     "insert_history",
     "history_for_assertion",
 }

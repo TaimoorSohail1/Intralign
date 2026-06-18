@@ -42,8 +42,16 @@ _live_db = pytest.mark.skipif(
 # Method names that would constitute a mutation surface (A4.2: append-only).
 _MUTATION_NAMES = ("update", "delete", "upsert", "remove", "overwrite", "purge")
 
-# The ONLY public surface the repository may expose (task DTM-0004 locked list).
-_ALLOWED_PUBLIC = {"append", "get", "latest_for_output", "lineage_chain"}
+# The ONLY public surface the repository may expose (task DTM-0004 locked list;
+# DTM-0017 adds ``latest_acceptance_impact_for_uar`` — a SELECT-only READ for the
+# Acceptance-Impact supersede lookup, not a mutation path).
+_ALLOWED_PUBLIC = {
+    "append",
+    "get",
+    "latest_for_output",
+    "lineage_chain",
+    "latest_acceptance_impact_for_uar",
+}
 
 
 def _valid_fields() -> dict:

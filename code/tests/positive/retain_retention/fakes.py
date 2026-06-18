@@ -88,6 +88,14 @@ class InMemoryRetentionStore:
                 return copy.deepcopy(row)
         return None
 
+    def acceptances_for_project(self, project_id: str) -> list[dict[str, Any]]:
+        """All UAR rows for a project, oldest first (SELECT only — DTM-0017 read)."""
+        return [
+            copy.deepcopy(row)
+            for row in self.acceptances
+            if row.get("project_id") == project_id
+        ]
+
     # -- history_record -----------------------------------------------------------
 
     def insert_history(self, row: Mapping[str, Any]) -> dict[str, Any]:

@@ -84,6 +84,7 @@ EVENT_NAMES_WC_FIX: tuple[str, ...] = (
 EVENT_NAMES_WU_ACCEPT: tuple[str, ...] = (
     "user_acceptance_record_appended",
     "plan_fact_recorded",
+    "acceptance_impact_assessed",
 )
 
 EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
@@ -433,6 +434,7 @@ def test_missing_wu_accept_tuple_fails_vocabulary_check(tmp_path) -> None:
         'EVENT_NAMES_WU_ACCEPT: tuple[str, ...] = (\n'
         '    "user_acceptance_record_appended",\n'
         '    "plan_fact_recorded",\n'
+        '    "acceptance_impact_assessed",\n'
         ')\n\n',
         "",
     ).replace(
