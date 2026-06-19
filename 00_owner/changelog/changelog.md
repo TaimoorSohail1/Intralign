@@ -852,6 +852,13 @@ Each changelog entry contains:
 - **Change Summary:** Ratify the Outcome-Lifecycle (Planning/Execution/Validation) orientation crosswalk. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-110 — DL-076: Ratify the OSLO release model & Alpha release ladder (R1-R5 reconciled with Alpha/Beta/§20)
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-076.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-076-release-model-alpha-ladder.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Ratify the OSLO release model & Alpha release ladder (R1-R5 reconciled with Alpha/Beta/§20). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
