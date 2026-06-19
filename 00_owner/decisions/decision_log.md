@@ -845,5 +845,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-074 — Hybrid pricing — tier subscription + per-Deep-Pass overage (single-governor / multi-meter); extends DL-048 → `00_owner/decisions/records/DL-074-hybrid-pricing-multi-meter.md`
 - DL-075 — Ratify the Outcome-Lifecycle (Planning/Execution/Validation) orientation crosswalk → `00_owner/decisions/records/DL-075-outcome-lifecycle-orientation-crosswalk.md`
 - DL-076 — Ratify the OSLO release model & Alpha release ladder (R1-R5 reconciled with Alpha/Beta/§20) → `00_owner/decisions/records/DL-076-release-model-alpha-ladder.md`
+- DL-077 — Ratify the planning-artifact model architecture - Option C hybrid core (fixed understanding core + extensible execution-planning layer) → `00_owner/decisions/records/DL-077-planning-artifact-model-hybrid-core.md`
 
 <!-- RECORDS-INDEX:END -->
