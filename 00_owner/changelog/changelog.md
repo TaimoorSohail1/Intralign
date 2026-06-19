@@ -838,6 +838,13 @@ Each changelog entry contains:
 - **Change Summary:** Realizes DL-073 in the canonical onboarding spec. First-time = ingestion-first / deferred-signup / auto-provisioned identity·workspace·project; resume = auth-entry; release-stage auth-gate position (Alpha/Beta front gate → ingestion; GA no front gate); save-to-keep GA signup trigger. Supersedes the single-mode linear flow and OB-C1's account-first journey for the empty case. **Alpha/Beta conformant now**; GA-specific behaviors tagged `[GA-pending]` pending the DL-073 §4.2–4.4 engineering proposals. All §T integrity invariants, epistemic safety, the DL-046 60s definition, and minimum-to-value (name + one artifact) preserved. No doctrine or constitution change.
 - **Supersession Reference:** Amends conformance **OB-C1** and §A/§D/§E/§G/§H/§I/§S of the onboarding spec (per DL-073).
 
+### CHG-108 — DL-074: Hybrid pricing — tier subscription + per-Deep-Pass overage (single-governor / multi-meter); extends DL-048
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-074.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-074-hybrid-pricing-multi-meter.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Hybrid pricing — tier subscription + per-Deep-Pass overage (single-governor / multi-meter); extends DL-048. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
