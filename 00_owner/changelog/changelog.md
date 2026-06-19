@@ -817,6 +817,13 @@ Each changelog entry contains:
 - **Change Summary:** Bucket 2 of the DL-051 path-migration follow-through (live owner-canon cross-references). Every rewritten `.md` path existence-verified as a full path; doc-integrity gate green. Append-only ledgers (changelog, decision_log) and restructure-description docs untouched (Bucket 3). Adjacent live-canon files (`constitution/10_canonical_definitions.md`, `CANONICAL_GLOSSARY.md`, `backlog/revision_backlog.md`, `architecture_decisions/*`, `OPEN_TBD_REGISTER.md`) **deliberately NOT auto-edited** — surfaced for separate owner decision.
 - **Supersession Reference:** None.
 
+### CHG-105 — DL-051: Repair stale `0X_` cross-references in adjacent owner-canon docs (clerical, Bucket 2b — completes follow-through)
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-051 (ownership-zone reorganization; follow-through).
+- **Affected Artifacts:** `00_owner/CANONICAL_GLOSSARY.md` (1), `00_owner/constitution/10_canonical_definitions.md` (1), `00_owner/backlog/revision_backlog.md`, `00_owner/backlog/BACKLOG_FAST_DEEP_CONTRACT_FORMALIZATION_DRAFT.md`, `00_owner/OPEN_TBD_REGISTER.md`, `00_owner/architecture_decisions/ACTIVE_ARCHITECTURE_RECONCILIATION_RECOMMENDATION_001.md`, `00_owner/decisions/PROPOSAL_TOOL_NEUTRAL_AGENT_TERMINOLOGY_DL045_DRAFT.md`. 16 stale `01_/02_/03_` cross-references repaired to current ownership-zone paths. **No content/definitional change** — reference paths only.
+- **Change Summary:** Bucket 2b — completes the DL-051 path-migration follow-through across live owner canon. The **constitution** and **CANONICAL_GLOSSARY** edits are each a single pure path-string swap (governance-tier registry cross-ref; tier-ladder backlog cross-ref) with no definitional change. Every rewritten `.md` path existence-verified; doc-integrity gate green. Remaining `0X_` mentions are bare-prefix prose or the legacy layer dir `03_architecture/components/`, intentionally left. Append-only ledgers + restructure/disposition docs untouched (Bucket 3). **DL-051 path migration now complete** across engineering (CHG-103) and owner canon (CHG-104, CHG-105).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

@@ -33,12 +33,12 @@ All entries below are **Proposed**.
 
 ### RB-001 — Canonical Registry Consolidation
 
-- **Source Finding:** Two canonical-definitions surfaces exist — `01_governance/constitution/10_canonical_definitions.md` is populated; root `canonical_definitions.md` and `ontology_registry.md` were empty until this initial draft. The manifest does not declare which is authoritative.
+- **Source Finding:** Two canonical-definitions surfaces exist — `00_owner/constitution/10_canonical_definitions.md` is populated; root `canonical_definitions.md` and `ontology_registry.md` were empty until this initial draft. The manifest does not declare which is authoritative.
 - **Affected Layer(s):** Constitution; Root Governance.
 - **Affected Concepts:** All canonical definitions; all ontology entries.
 - **Proposal Scope:** Declare a single source of truth for canonical definitions and the ontology registry. Reconcile divergent definitions (Outcome Integrity States, Epistemic Object Types, Confidence Drivers). Establish the relationship between the root registry, the root definitions file, and the Constitution's definitions article.
 - **Dependencies:** Blocks RB-002, RB-003.
-- **Disposition:** Closed — Resolved by DL-036 with disposition Accepted with Conditions. Scope was bounded to Registry Foundation work (Resolutions R1 through R8) per the owner's RB-001 Scope Directive. Ontology conflict reconciliation (the original split-source definitions for Outcome Integrity States, Epistemic Object Types, Confidence Drivers) was explicitly excluded and deferred to RB-006, RB-007, RB-008 respectively. Doctrine stubs were excluded and deferred to RB-004. R1 declared the Surface Authority rule between root `canonical_definitions.md` (Governance-tier orientation) and Constitution Article 10 (Content-tier definitional surface). R2 declared the six-flag status taxonomy. R3 declared status-change rules. R4 registered nine canonical doctrinal concepts using existing Doctrine sources. R5 deprecated four predecessor names. R6 disambiguated "Provisional" terminology. R7 produced Inventories I-A (13 unanchored implementation concept groups) and I-B (4 registry entries lacking authoritative definitions). R8 declared canonical citation paths for the four OSLO Evolution Framework axes. Eight closing-Decision clarifications are recorded in `01_governance/decisions/rb_001_disposition.md`.
+- **Disposition:** Closed — Resolved by DL-036 with disposition Accepted with Conditions. Scope was bounded to Registry Foundation work (Resolutions R1 through R8) per the owner's RB-001 Scope Directive. Ontology conflict reconciliation (the original split-source definitions for Outcome Integrity States, Epistemic Object Types, Confidence Drivers) was explicitly excluded and deferred to RB-006, RB-007, RB-008 respectively. Doctrine stubs were excluded and deferred to RB-004. R1 declared the Surface Authority rule between root `canonical_definitions.md` (Governance-tier orientation) and Constitution Article 10 (Content-tier definitional surface). R2 declared the six-flag status taxonomy. R3 declared status-change rules. R4 registered nine canonical doctrinal concepts using existing Doctrine sources. R5 deprecated four predecessor names. R6 disambiguated "Provisional" terminology. R7 produced Inventories I-A (13 unanchored implementation concept groups) and I-B (4 registry entries lacking authoritative definitions). R8 declared canonical citation paths for the four OSLO Evolution Framework axes. Eight closing-Decision clarifications are recorded in `00_owner/decisions/rb_001_disposition.md`.
 - **Closed By:** DL-036 (Accepted with Conditions).
 - **Date Closed:** 2026-05-29
 - **Status:** Closed.
@@ -62,7 +62,7 @@ All entries below are **Proposed**.
 - **Affected Concepts:** Organizational Cognition Arc; Trust Evolution; Execution Maturity Phases; Product Evolution Stages; Portfolio Cognition.
 - **Proposal Scope:** Reconcile the progressions into a single canonical Progression Model with named axes. Provide mappings showing how each existing progression projects onto it. Resolve the four-stage versus five-stage inconsistency. Do not eliminate any progression without explicit supersession.
 - **Dependencies:** Blocked by RB-001.
-- **Disposition:** Closed — Resolved by DL-034. The OSLO Evolution Framework is ratified as a four-axis taxonomy (Cognition Scope, Product Identity, Trust Gradient, Execution Depth). Doctrine 02 is canonical for Cognition Scope. Doctrine 09 is canonical for Product Identity and Trust Gradient. Doctrine 10 is canonical for Execution Depth. Article 40 Stage 3 label and Article 44 five-stage arc are provisional; doctrinal precedence applies. Portfolio Cognition is dispositioned as a provisional long-term capability, not a ratified stage. Full taxonomy detail recorded in `01_governance/decisions/rb_003_disposition.md`.
+- **Disposition:** Closed — Resolved by DL-034. The OSLO Evolution Framework is ratified as a four-axis taxonomy (Cognition Scope, Product Identity, Trust Gradient, Execution Depth). Doctrine 02 is canonical for Cognition Scope. Doctrine 09 is canonical for Product Identity and Trust Gradient. Doctrine 10 is canonical for Execution Depth. Article 40 Stage 3 label and Article 44 five-stage arc are provisional; doctrinal precedence applies. Portfolio Cognition is dispositioned as a provisional long-term capability, not a ratified stage. Full taxonomy detail recorded in `00_owner/decisions/rb_003_disposition.md`.
 - **Closed By:** DL-034.
 - **Date Closed:** 2026-05-29
 - **Status:** Closed.
@@ -112,7 +112,7 @@ All entries below are **Proposed**.
 
 ### RB-008 — Reconcile Confidence Drivers
 
-- **Source Finding:** `01_governance/doctrine/06_confidence_understanding_model.md` lists seven drivers. `03_implementation_specs/09_confidence_integrity_logic.md` lists nine, adding stakeholder coverage and dependency stability.
+- **Source Finding:** `00_owner/doctrine/06_confidence_understanding_model.md` lists seven drivers. `03_implementation_specs/09_confidence_integrity_logic.md` lists nine, adding stakeholder coverage and dependency stability.
 - **Affected Layer(s):** Doctrine; Implementation Spec.
 - **Affected Concepts:** Confidence; Confidence Drivers.
 - **Proposal Scope:** Ratify a single driver set. If specification needs additional inputs, route them through doctrine before adoption.
@@ -135,7 +135,7 @@ All entries below are **Proposed**.
 - **Affected Concepts:** Constitutional Principles; all Articles.
 - **Proposal Scope:** Decide the disposition of the draft principles. Either supersede them with the Articles, ratify them as a parallel summary, or fold them into the Constitution. Record the disposition.
 - **Dependencies:** Blocked by RB-005.
-- **Disposition:** Closed — Resolved by DL-035. The file `01_doctrine_ontology/12_constitutional_principles_draft.md` is reclassified as non-canonical Source Material and relocated to `00_raw_transcript/05_constitutional_principles_draft.md` with a Historical Artifact header. Draft Principle 17's substantive content remains absorbed by Doctrine 02 per DL-034. The remaining 19 principles are dispositioned by reclassification: 18 are substantively represented by Constitution Articles 1, 2, 3, 5, 6, 7, 10, 11, 12, 18, 19, 21, 24, 25, 28, 31, 35, and 45; Draft Principle 18 is substantively captured by Article 2 and Constitutional Drift Warning 2. Full disposition detail recorded in `01_governance/decisions/rb_010_disposition.md`.
+- **Disposition:** Closed — Resolved by DL-035. The file `01_doctrine_ontology/12_constitutional_principles_draft.md` is reclassified as non-canonical Source Material and relocated to `00_raw_transcript/05_constitutional_principles_draft.md` with a Historical Artifact header. Draft Principle 17's substantive content remains absorbed by Doctrine 02 per DL-034. The remaining 19 principles are dispositioned by reclassification: 18 are substantively represented by Constitution Articles 1, 2, 3, 5, 6, 7, 10, 11, 12, 18, 19, 21, 24, 25, 28, 31, 35, and 45; Draft Principle 18 is substantively captured by Article 2 and Constitutional Drift Warning 2. Full disposition detail recorded in `00_owner/decisions/rb_010_disposition.md`.
 - **Closed By:** DL-035 (final disposition). Prior partial closures recorded by DL-033 (precedence framework) and DL-034 (Draft Principle 17 absorption).
 - **Date Closed:** 2026-05-29 (DL-035 final closure).
 - **Status:** Closed.
@@ -167,7 +167,7 @@ All entries below are **Proposed**.
 
 ### RB-013 — Define the Attention Queue Canonically
 
-- **Source Finding:** `01_governance/doctrine/05_workspace_navigation_doctrine.md` describes Attention Queue as a "persistent operational intelligence surface." Specs describe it as a queue sorted by outcome impact. No single defining statement exists.
+- **Source Finding:** `00_owner/doctrine/05_workspace_navigation_doctrine.md` describes Attention Queue as a "persistent operational intelligence surface." Specs describe it as a queue sorted by outcome impact. No single defining statement exists.
 - **Affected Layer(s):** Doctrine; Constitution; Implementation Spec.
 - **Affected Concepts:** Attention Queue.
 - **Proposal Scope:** Provide a single canonical definition. Reconcile the surface-versus-queue framings.
@@ -204,7 +204,7 @@ All entries below are **Proposed**.
 
 ### RB-017 — Define Assumption Expiration Semantics
 
-- **Source Finding:** `01_governance/doctrine/07_governance_policy_doctrine.md` offers "Assumptions expire after 30 days" as an example policy. No expiration semantics, revival rules, or propagation to confidence are defined.
+- **Source Finding:** `00_owner/doctrine/07_governance_policy_doctrine.md` offers "Assumptions expire after 30 days" as an example policy. No expiration semantics, revival rules, or propagation to confidence are defined.
 - **Affected Layer(s):** Doctrine.
 - **Affected Concepts:** Assumption; Confidence; Outcome Integrity Policy.
 - **Proposal Scope:** Doctrine-stub for assumption lifecycle states and confidence impact. Do not specify thresholds.

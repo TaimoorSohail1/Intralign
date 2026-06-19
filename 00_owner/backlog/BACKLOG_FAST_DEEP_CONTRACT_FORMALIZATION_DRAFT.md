@@ -4,7 +4,7 @@
 
 ## The gap
 
-**Fast Pass and Deep (Analysis) Pass are confirmed Release 1 scope** — `OSLO_CAPABILITY_MATRIX_V2` §4 (AE-01 Fast Pass *Critical*, AE-02 Deep Pass *Active Release 1*), the active `02_product/specs/FAST_DEEP_WORKFLOW_PACK/`, the Analysis Engine spec, and the Performance/NFR spec. The **< 60-second Time-to-First-MRI** is the **only owner-approved numeric target in the entire corpus** (Master Spec §20 / Canonical Scope M1).
+**Fast Pass and Deep (Analysis) Pass are confirmed Release 1 scope** — `OSLO_CAPABILITY_MATRIX_V2` §4 (AE-01 Fast Pass *Critical*, AE-02 Deep Pass *Active Release 1*), the active `30_engineering/analysis_engine/`, the Analysis Engine spec, and the Performance/NFR spec. The **< 60-second Time-to-First-MRI** is the **only owner-approved numeric target in the entire corpus** (Master Spec §20 / Canonical Scope M1).
 
 **However, the ratified responsibility-organized contracts do not name them.** Verified: the Wave A–E contract packages, the Cognitive Responsibility Architecture spec, and the Runtime Object/Behavior models contain **no** explicit "Fast Pass / Deep Pass / extraction / expansion" obligations. The two-pass behavior was abstracted into Perceive → Infer → Evaluate over the 00R recompute backbone; the **Orientation State Model** survives in the Contract Inventory, but the **two-mode behavior and the 60s latency ceiling are not contracted acceptance criteria.**
 
