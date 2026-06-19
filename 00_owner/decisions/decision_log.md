@@ -841,5 +841,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-070 — Ratify the Phase 1 "Prove Understanding" falsifiable exit gate (P-4 / DL-059 realization) → `00_owner/decisions/records/DL-070-phase1-prove-understanding-exit-gate.md`
 - DL-071 — DL-053 Disambiguation Register: 'Founder Console' (Intralign Founder Console vs OSLO Observability Console) → `00_owner/decisions/records/DL-071-founder-console-disambiguation.md`
 - DL-072 — Wave B exit-gate pass (with conditions) + Phase IV/Wave C authorization → `00_owner/decisions/records/DL-072-wave-b-exit-gate-wave-c-authorization.md`
+- DL-073 — Two-mode stage-conditioned onboarding (deferred-signup) + save-to-keep signup trigger → `00_owner/decisions/records/DL-073-two-mode-onboarding-deferred-signup.md`
 
 <!-- RECORDS-INDEX:END -->

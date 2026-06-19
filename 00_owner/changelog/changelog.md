@@ -824,6 +824,13 @@ Each changelog entry contains:
 - **Change Summary:** Bucket 2b — completes the DL-051 path-migration follow-through across live owner canon. The **constitution** and **CANONICAL_GLOSSARY** edits are each a single pure path-string swap (governance-tier registry cross-ref; tier-ladder backlog cross-ref) with no definitional change. Every rewritten `.md` path existence-verified; doc-integrity gate green. Remaining `0X_` mentions are bare-prefix prose or the legacy layer dir `03_architecture/components/`, intentionally left. Append-only ledgers + restructure/disposition docs untouched (Bucket 3). **DL-051 path migration now complete** across engineering (CHG-103) and owner canon (CHG-104, CHG-105).
 - **Supersession Reference:** None.
 
+### CHG-106 — DL-073: Two-mode stage-conditioned onboarding (deferred-signup) + save-to-keep signup trigger
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-073.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-073-two-mode-onboarding-deferred-signup.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Two-mode stage-conditioned onboarding (deferred-signup) + save-to-keep signup trigger. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
