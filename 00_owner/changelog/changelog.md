@@ -887,6 +887,13 @@ Each changelog entry contains:
 - **Change Summary:** Ratify the E4 cognition boundary — a third-party evaluation lens is governed input to first-party cognition, never third-party cognition; it may surface attributed, confidence-qualified considerations but never alters CAF/confidence/scores and never disposes (OB-5; advise proposes never disposes). Reference-only (A) first; governed Derived overlay (B) north-star; Option C (certified scoring contribution) explicitly not adopted and fenced as a separate future doctrine decision; CAF stays first-party. Draws the boundary within the existing epistemic model; affirms (does not alter) the invariants; no new invariant. E4 remains design-only.
 - **Supersession Reference:** None. Resolves the E4 escalation. Option C not adopted (separate future doctrine decision).
 
+### CHG-115 — DL-080: Ratify the GA deferred-signup realization (provisional identity · pre/post-signup gating · retention & privacy)
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-080.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-080-ga-deferred-signup-realization.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated); `00_owner/decisions/PROPOSAL_GA_DEFERRED_SIGNUP_ENGINEERING_REALIZATION_DRAFT.md` (status → ratified-intent); `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` (GA note → ratified); `00_owner/decisions/PROPOSAL_TWO_MODE_ONBOARDING_DEFERRED_SIGNUP_DRAFT.md` (§6.3 authorization → ratified DL-080). **Clerical status reconciliation reflecting the prior DL-078 ratification:** `00_owner/architecture_decisions/ARTIFACT_PROFILE_MECHANISM_REALIZATION_DESIGN_001.md` and `00_owner/architecture_decisions/PLANNING_ARTIFACT_MODEL_EXTENSIBILITY_ESCALATION_001.md` (status → ratified-intent DL-078).
+- **Change Summary:** Ratify the GA deferred-signup realization (DL-073 §Phasing a/b/c) as one decision — provisional `Principal` with claim-as-promotion and full identity/record continuity (OB-5); anonymous gating = one project / Fast Pass only / Free per-run envelope / rate-capped, Deep+persistence behind signup, with pre-signup consumption resetting to the Free governor at claim; pre-signup data Operational-class with a 30-day unclaimed TTL, canonical retention attaching at claim, never-claimed purgeable/non-linkable. Settles the two open owner values (reset-at-claim; 30-day TTL). Realization intent only (engineering authors data model, §4c anonymous row, §4 provisional retention class, purge); GA-gated; no doctrine; epistemic invariants preserved.
+- **Supersession Reference:** None. Realizes DL-073 §Phasing; discharges the two-mode proposal §6.3 authorization.
+
 ---
 
 ## Governance Notes
