@@ -79,5 +79,5 @@ These are underspecified by the direction and are the owner's to settle; the pro
 
 1. Ratify the **two-mode intent** (deferred-signup first-time + auth-entry resume)?
 2. Set the **signup trigger** (Decision 1 options above).
-3. Authorize an **engineering proposal** for provisional identity / persistence / claim-on-signup (Decision 2), and the DL-048 pre/post-signup gating (Decision 3) + retention/privacy (Decision 4).
+3. Authorize an **engineering proposal** for provisional identity / persistence / claim-on-signup (Decision 2), and the DL-048 pre/post-signup gating (Decision 3) + retention/privacy (Decision 4). *(**Authorized 2026-06-19** — drafted as one package in `PROPOSAL_GA_DEFERRED_SIGNUP_ENGINEERING_REALIZATION_DRAFT.md`, Framework 001 Proposal stage, GA-gated, awaiting owner ratification of intent.)*
 4. On ratification, the canonical amendment to `ONBOARDING_AND_PROJECT_CREATION_EXPERIENCE_SPECIFICATION_V1` routes through Framework 001 (proposal → owner-ratified change → changelog), and likely an owner Decision (DL) given it supersedes ratified conformance OB-C1.

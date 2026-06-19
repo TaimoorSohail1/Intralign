@@ -38,7 +38,7 @@ R1/R2 are *early Alpha releases* **below** the gate; the **50+ metric is reached
 ## 4. Access model across the ladder (DL-073)
 
 - **Alpha (R1–R5) + Beta — controlled access:** invite/allowlist, **auth-gated**, ingestion-first landing.
-- **GA — open access:** the deferred-signup model (pending the three GA engineering proposals: provisional identity, DL-048 pre/post-signup gating, retention/privacy).
+- **GA — open access:** the deferred-signup model (pending the three GA engineering proposals: provisional identity, DL-048 pre/post-signup gating, retention/privacy) — now drafted as one package in `00_owner/decisions/PROPOSAL_GA_DEFERRED_SIGNUP_ENGINEERING_REALIZATION_DRAFT.md` (Framework 001 Proposal stage, **GA-gated, awaiting owner ratification**).
 
 ## 5. Where capabilities land (from the growth backlog)
 
