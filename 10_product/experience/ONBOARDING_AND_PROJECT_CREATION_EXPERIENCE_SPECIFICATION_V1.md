@@ -1,7 +1,7 @@
 # Onboarding & Project Creation Experience Specification v1
 
 **Document Type:** Experience Specification (UX / Interaction Model Only)
-**Status:** Draft · Active Release 1 · **Date:** 2026-05-31
+**Status:** Draft · Active Release 1 · **Amended by DL-073** (two-mode, stage-conditioned onboarding), 2026-06-18 — see **§0** · **Date:** 2026-05-31
 **Consistent with and subordinate to (authoritative — must not redefine):** `SIXTY_SECOND_ORIENTATION_WORKFLOW_SPECIFICATION_V1.md` · `PROJECT_OVERVIEW_SCREEN_SPECIFICATION_V1.md` · `MRI_WORKSPACE_SPECIFICATION_V1.md` · `ARTIFACT_WORKSPACE_SPECIFICATION_V1.md` · `ARTIFACT_AUTHORING_AND_EDITING_WORKFLOW_SPECIFICATION_V1.md` · `COLLABORATION_AND_SHARING_EXPERIENCE_SPECIFICATION_V1.md` · `ORIENTATION_STATE_MODEL_V1.md` · CAF Assessment · Reliability v2 · Confidence v2 · Release 1 Tier Definitions.
 
 > **Non-negotiable constraints.** This specification defines **UX architecture, onboarding flow, project creation flow, ingestion flow, and user interaction behavior only**. It must **NOT** define: CAF computation, Reliability computation, Confidence computation, Finding generation, Recommendation generation, governance workflows, execution workflows, agent workflows, automation, APIs, events, database design, implementation details, or styling.
@@ -11,6 +11,35 @@
 > **Preserved invariants.** Artifacts remain the **source of truth**. Findings remain **descriptive**. Recommendations remain **advisory**. MRI remains the **diagnostic discovery** experience. **Only reanalysis changes assessment.** Project understanding remains the **center of gravity**. No governance model. No execution model.
 
 > ✅ **Release 1 defaults — owner-approved (2026-05-31).** The Release 1 resolutions in this spec are **owner-ratified**: **project name required**; **project type and workflow type optional** (non-gating); **empty project creation allowed**; **artifacts optional to create but required for value**; **minimum-to-value = project name + one artifact**; ingestion via **upload / paste / combined sources / template start**; **Start From Template in scope** for Release 1 (DL-056, `RELEASE_1_TEMPLATE_INTAKE_SPECIFICATION_V1`); **AI-generated starting content deferred** (out of Release 1). These were previously spec-defaults; they are now owner-approved (closes audit item UX-O3). *(Template-start scope updated by DL-056, 2026-06-10.)* Project-type / workflow-type taxonomies and whether they ever gate behavior remain deferred (§V).
+
+---
+
+## §0. DL-073 Amendment — Two-Mode, Stage-Conditioned Onboarding (owner-ratified 2026-06-18)
+
+**This amendment governs.** Where it conflicts with the single-mode linear flow in §A, §D, §E, §G, §H, §I, §S, and conformance **OB-C1**, **§0 prevails** (those sections are retained for per-step detail and read as amended here). Ratified by **DL-073**; supporting analysis: `PROPOSAL_TWO_MODE_ONBOARDING_DEFERRED_SIGNUP_DRAFT.md`.
+
+**Two core experiences.**
+- **First-time — ingestion-first, deferred-signup.** Account creation, authentication, workspace initialization, and project creation are **auto-provisioned with no user action**. The user goes **arrive → add artifact → analysis → 60-second orientation**.
+- **Resume — auth-entry.** A returning user **signs in** (§F) and lands on their work (§P).
+
+**Ingestion-first landing invariant.** When there is **nothing to resume** (first-time, or signed-in with zero projects), the landing surface is the **ingestion screen itself** — never an empty-workspace placeholder that gates ingestion behind a "Create project" click. When there **is** work to resume (≥1 project), the user lands on it (project list / last orientation state, §P). *(Supersedes the §G/§H/§R "empty workspace inviting the first project" landing for the empty case.)*
+
+**Release-stage conditioning** (Alpha/Beta vs GA — Master Spec §19/§20):
+
+| Identity state | Alpha / Beta — controlled access | GA — open access |
+|---|---|---|
+| First-time visitor | **Auth gate** (invite/allowlist) → ingestion page | **No gate** — sign up *or* start now → ingestion |
+| Working anonymously (pre-signup) | n/a — everyone is authenticated | Ingest → analyze → 60s orientation; signup deferred; project claimed on signup |
+| Signed in, no projects | Ingestion page (not an empty workspace) | Same |
+| Returning, has projects | Resume — project list / last orientation state | Same |
+
+The auth-gate position is **release-stage config**, not hard-coded; the empty→ingestion / has-work→resume landing logic is **stage-invariant**.
+
+**Signup trigger (GA) = save-to-keep.** The full first run is **anonymous**; sign-up is required only to **save/persist** the project (claimed on sign-up), gating **immediately after the 60-second orientation**, paired with a **light anonymous-usage cap** (a thin slice of the DL-048 free-tier envelope). **Deep Pass** is the later upgrade gate, not the initial sign-up gate.
+
+**Phasing — what is canonical-for-build now.** The **Alpha/Beta** model (front auth gate for controlled access → the stage-invariant ingestion-first landing; resume = auth-entry) is **ratified for build now** and needs no anonymous-identity machinery. The **GA** model (deferred signup, save-to-keep, anonymous identity) is ratified in intent and **pending engineering proposals** for (a) provisional identity / persistence / claim-on-signup, (b) DL-048 pre/post-signup gating + the anonymous cap, (c) pre-signup retention & privacy; the conformance items below tag those parts **[GA-pending]**.
+
+**Preserved.** All §T integrity rules (OB-1…OB-14), epistemic-safety / no-fabricated-assessment, the DL-046 Time-to-First-MRI definition, and minimum-to-value (name + one artifact) are **unchanged** — this amendment removes identity/setup friction only.
 
 ---
 
@@ -41,6 +70,8 @@ Onboarding exists to **remove everything between a user and their first understa
 
 ## D. Experience Architecture
 
+> **Amended by §0 (DL-073).** The single-mode linear flow below is **superseded** by the two-mode, stage-conditioned model in §0: for **first-time** users the Account Creation → Authentication → Workspace Initialization → Project Creation steps are **auto-provisioned** (no user action) and the user lands **ingestion-first**; **resume** enters via authentication. The steps below remain as per-step detail (purpose / visible info / actions), read as auto-provisioned where §0 so specifies.
+
 The canonical Release 1 journey, as a linear flow with explicit states:
 
 ```text
@@ -69,6 +100,8 @@ Each step has **purpose, visible information, allowed actions, transition condit
 
 ## E. Account Creation Experience (Q1)
 
+> **Amended by §0 (DL-073).** Account creation is **no longer a first step**. For **first-time** users it is **auto-provisioned** (GA: deferred until the save-to-keep signup trigger; Alpha/Beta: satisfied by the controlled-access sign-in gate). The fields/flow below apply at the moment signup actually occurs, not before first value.
+
 - **Purpose:** establish the user's identity so projects/workspaces persist.
 - **Visible information:** the minimal fields to create an account (per the product's account mechanism); a clear path to **sign in** instead if returning.
 - **Allowed actions:** create an account; switch to sign-in.
@@ -85,6 +118,8 @@ Each step has **purpose, visible information, allowed actions, transition condit
 
 ## G. First-Time User Experience (Q3)
 
+> **Amended by §0 (DL-073).** The first-time experience is **ingestion-first**: the user is greeted with the ingestion surface (not an empty workspace / welcome gate), with identity/workspace/project **auto-provisioned**. The "welcome → create your first project → empty workspace" framing below is **superseded**; minimum-to-value (name + one artifact) is unchanged.
+
 - **Purpose:** orient a brand-new user just enough to create their first project and reach value.
 - **What is shown:** a brief, **skippable** welcome that points directly at **"create your first project,"** plus the empty workspace (§R). It explains, minimally, that OSLO shows **what it understands about a project and where understanding is weak**, and that the fastest path to value is to add a project with at least one artifact.
 - **Onboarding placement & skippability:** onboarding is **lightweight and interleaved with project creation**, not a long pre-gate. **It is skippable.** A first-time user can go straight to project creation.
@@ -93,12 +128,14 @@ Each step has **purpose, visible information, allowed actions, transition condit
 ## H. Workspace Initialization Experience (Q4)
 
 - **Purpose:** establish the user's **workspace** — the home that holds their projects.
-- **How initialized:** on first sign-in, the workspace is presented in an **empty state** (§R) inviting the first project; on subsequent sign-ins it shows existing projects (§P).
-- **Visible information:** the project list (empty for first-time users) and a primary **"Create project"** affordance.
-- **Allowed actions:** create a project; open an existing project (returning users).
-- **Transition conditions:** **→ Project Creation** on create.
+- **Amended by §0 / DL-073 — auto-provisioned, ingestion-first landing.** The workspace is **auto-provisioned** (no user-facing initialization step). When a user has **no projects** (first-time, or signed-in with zero projects), the landing surface is the **ingestion screen** (§K) — **not** an empty-workspace "Create project" placeholder; the project is auto-created as the user ingests. When the user **has** projects, they land on the project list / last orientation state (§P).
+- **Visible information:** empty case → the ingestion surface; returning case → the existing project list.
+- **Allowed actions:** ingest (empty case); open an existing project (returning).
+- **Transition conditions:** **→ Project Ingestion** (empty case) / **→ Project Overview or resumed state** (returning).
 
 ## I. Project Creation Experience (Q5)
+
+> **Amended by §0 (DL-073).** For first-time users the project is **auto-provisioned as the user ingests** — there is no user-facing "create project" step before ingestion. The name/metadata surface and the active-project Free-tier gate (UP-3) below still apply (name may be auto-derived and editable); a returning user creates additional projects via the normal affordance (§P).
 
 - **Purpose:** create a new project as the container for artifacts and understanding.
 - **Visible information:** the minimal creation surface — **project name** (required) and optional metadata (§J).
@@ -192,7 +229,7 @@ The experience must **distinguish**:
 
 ## S. Progressive Disclosure
 
-- **Immediately visible:** the single primary next step at each stage (create account → create project → add an artifact → start analysis) — the path to value is always the most prominent action.
+- **Immediately visible:** the single primary next step at each stage — for a first-time user (§0/DL-073) this is **add an artifact** directly (identity/workspace/project are auto-provisioned; in Alpha/Beta a controlled-access sign-in precedes it), then **start analysis** — the path to value is always the most prominent action.
 - **In context:** optional metadata, additional ingestion methods, and "add more artifacts" — available but never blocking.
 - **Through expansion:** project details and advanced options.
 - **Through progress/history:** initialization/analysis status and, once analyzed, the orientation and overview.
@@ -219,7 +256,7 @@ The experience must **distinguish**:
 
 A conforming Onboarding & Project Creation experience MUST (objective, structural, **non-numeric**); it **fails** if any forbidden behavior appears:
 
-- **OB-C1.** Provide the complete journey **New User → Account Creation → Workspace Initialization → Project Creation → Project Ingestion → Project Initialization → 60-Second Orientation → Project Overview**, resumable at each step (§D).
+- **OB-C1 (amended by §0 / DL-073).** Provide onboarding in **two modes** (§0): **first-time** = ingestion-first with **auto-provisioned** account/workspace/project (no user-facing account-creation, workspace-initialization, or project-creation steps), reaching **add artifact → analysis → 60-Second Orientation → Project Overview**; **resume** = auth-entry landing on the user's work (§P). Honor the **ingestion-first landing invariant** (empty → ingestion; has-work → resume) and the **release-stage** auth-gate position (Alpha/Beta = front controlled-access gate → ingestion; GA = no front gate). The legacy single-mode journey (New User → Account Creation → Workspace Initialization → …) is **superseded**. **Fail** if the empty case is gated behind a manual "create project" step before ingestion (any stage), or if a first-time GA user is forced through manual account-creation/empty-workspace before reaching ingestion. **[GA-pending]** the deferred-signup / save-to-keep / anonymous-identity behaviors await the DL-073 §4.2–4.4 engineering proposals; **Alpha/Beta** (controlled-access auth → ingestion landing) is conformant now.
 - **OB-C2.** Require **only** a **project name + at least one artifact** to reach first value; keep **project type / workflow type / metadata optional**; allow **empty project creation** (§I, §J; OB-10). **Fail** if optional metadata gates value.
 - **OB-C3.** Support ingestion via **file upload, paste, combining multiple sources, and template start** (curated catalog, DL-056 / Template Intake Spec V1); treat **AI-generated content as deferred/out-of-scope** for Release 1 (§L; OB-2). **Fail** if starting content is **generated** by the system in Release 1 — adopting a pre-authored template is **not** generation.
 - **OB-C4.** **Initiate** analysis and hand off to the **60-Second Orientation** per the orientation specs, without performing or defining analysis (§N; OB-1/OB-5). **Fail** if the experience computes or generates assessment.

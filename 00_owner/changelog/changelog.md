@@ -831,6 +831,13 @@ Each changelog entry contains:
 - **Change Summary:** Two-mode stage-conditioned onboarding (deferred-signup) + save-to-keep signup trigger. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-107 — DL-073: Onboarding spec amendment (§0 two-mode, stage-conditioned model)
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-073.
+- **Affected Artifacts:** `10_product/experience/ONBOARDING_AND_PROJECT_CREATION_EXPERIENCE_SPECIFICATION_V1.md` — amended: new **§0** (governing two-mode / stage-conditioned model + permutation matrix + phasing); status line; cross-reference markers on §A/§D/§E/§G/§H/§I; behavioral edits to §H (auto-provisioned, ingestion-first landing) and §S (disclosure order); **OB-C1** amended to the two-mode journey with `[GA-pending]` tags.
+- **Change Summary:** Realizes DL-073 in the canonical onboarding spec. First-time = ingestion-first / deferred-signup / auto-provisioned identity·workspace·project; resume = auth-entry; release-stage auth-gate position (Alpha/Beta front gate → ingestion; GA no front gate); save-to-keep GA signup trigger. Supersedes the single-mode linear flow and OB-C1's account-first journey for the empty case. **Alpha/Beta conformant now**; GA-specific behaviors tagged `[GA-pending]` pending the DL-073 §4.2–4.4 engineering proposals. All §T integrity invariants, epistemic safety, the DL-046 60s definition, and minimum-to-value (name + one artifact) preserved. No doctrine or constitution change.
+- **Supersession Reference:** Amends conformance **OB-C1** and §A/§D/§E/§G/§H/§I/§S of the onboarding spec (per DL-073).
+
 ---
 
 ## Governance Notes
