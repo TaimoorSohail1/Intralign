@@ -8,18 +8,20 @@
 
 ---
 
-## Alpha / Beta scoping (verified 2026-06-19 against the wave / release plan)
+## Release model + growth-loop scoping (Alpha = 3–5 releases; verified 2026-06-19)
 
-**Owner direction (2026-06-19): G3 and G4 are Alpha scope** — the virality/sharing loops are the **engine for the §20 whole-Alpha graduation metrics** (50+ users + engagement that gate Beta), so they belong in Alpha, not parked for Beta (`RELEASE_1_VIRALITY_K_FACTOR_AUDIT` was P0). They sit **late in Alpha** (after their build deps land — G3 on Wave I, G4 on Wave E), and the **external non-user → convert half stays R2** (DL-049). Verified result:
+**Release model (owner, 2026-06-19): the Alpha stage spans 3–5 releases**, scaling the user base toward the **§20 Alpha→Beta gate (50+ users)**: **R1** = owner + <5 (private validation; manual onboarding) → **R2** = 10–20 → … → **50+ ⇒ graduate to Beta.** R1/R2 are *early Alpha releases* below the gate; the 50+ metric is reached **at the end of Alpha**, not in R1/R2.
 
-| Capability | In Beta? | Ships in Beta | Deferred (with the reason) |
+**G3 and G4 are R2** (the second Alpha release). Their **R1 foundations** are built in R1 — the CRR seam (Wave I `IC-WI-INTERACT`, DL-047) and the Export/Share-Out surface (Wave E Disclose) — so R2 has its dependencies met; the external non-user → convert half was already R2 (DL-049). **R1 has no growth loops** — owner validation is manual (DL-049: "R1 generates + measures invitations only"). The **full G3/G4 loops are built in R2 and drive the scale-up across the later Alpha releases (R3–R5) toward the 50+ §20 Beta gate.** Verified result:
+
+| Capability | Phase | Scope | Foundation / dependency |
 |---|---|---|---|
-| **G3** alignment/CRR loop | **Alpha (late)** | the cohort-internal CRR collaboration loop **+ invitation generation + k-factor measurement** (Wave I `IC-WI-INTERACT`, contracted under DL-047) — built once Wave I lands; positioned to drive §20 graduation | the **external non-user recipient → convert** experience stays **R2** — **DL-049 ratified**: "R1 generates + measures invitations only"; recipient UI / auth / convert-moment / link-security (#339) = R2 |
-| **G4** shareable artifact | **Alpha (late)** | the **branded, epistemic-safe share-out** within the controlled cohort (Disclose Export/Share-Out, Wave E) — a controlled-invite growth loop; built once Wave E lands | the **open no-account public acquisition view + link security** stays **R2** (same recipient-experience build as G3, #339) |
-| **G1** plan→outcome data loop | **Capture only** | instrument **plan + outcome data capture** so the moat starts compounding from day one | the **learning / network-effect** is post-Beta — depends on the Validation/execution-monitoring capability (forward, Pro+), **scale** (no network effect at Beta N), and privacy/consent/doctrine scoping |
-| **G2** benchmarking | **No** | — | **post-Beta** — **cannot honestly benchmark at low N without violating the epistemic-honesty invariant**; depends on G1 + corpus scale + k-anonymity/doctrine scoping |
+| **G3** alignment/CRR loop | **R2** | the full loop — cohort CRR collaboration + invitation generation/measurement **and** the external recipient → convert experience | foundation (CRR seam, Wave I `IC-WI-INTERACT`, DL-047) built in **R1**; "R1 generates + measures invitations only" (DL-049); full loop + recipient UI/auth/convert/link-security (#339) = R2 |
+| **G4** shareable artifact | **R2** | the branded epistemic-safe share-out **and** the open no-account public-acquisition view | foundation (Export/Share-Out, Wave E Disclose) built in **R1**; the public no-account view + link security (#339) = R2 |
+| **G1** plan→outcome data loop | **Alpha = capture only** | instrument **plan + outcome data capture** so the moat starts compounding from day one | the **learning / network-effect** is post-Beta — depends on the Validation/execution-monitoring capability (forward, Pro+), **scale**, and privacy/consent/doctrine scoping |
+| **G2** benchmarking | **post-Alpha / forward** | — | **cannot honestly benchmark at low N** without violating the epistemic-honesty invariant; depends on G1 + corpus scale + k-anonymity/doctrine scoping |
 
-**Alpha set:** G3 (loop + k-factor measurement) · G4 (cohort branded share-out) — both **late-Alpha**, positioned to drive the §20 graduation metrics · **plus** G1 (data-capture foundation). **Still R2:** the external-recipient conversion half of G3/G4 (the ratified DL-049 boundary), G1's learning, and G2. *(Moving G3/G4 to Alpha changes their build **timing**, not the DL-049 R2 external-conversion boundary.)*
+**By Alpha release:** **R1** = cognition + the R1 foundations (CRR seam / Wave I; Export-Share-Out / Wave E) + **G1 data-capture**; **R2** = **G3 + G4 full growth loops** (on the R1 foundations); **R3–R5** = the loops drive the scale toward the **50+ §20 Beta gate**. **Beta+ / forward:** G1's learning, G2 (benchmarking — needs scale + the data loop), G5 (Pro+ connectors), G6. *(G3/G4 are Alpha-stage growth loops at R2 — they drive the §20 graduation across the later Alpha releases, kept whole on completed R1 foundations.)*
 
 ---
 
@@ -105,11 +107,11 @@
 |---|---|---|---|---|---|
 | G1 | Plan→outcome data loop | cognition-adjacent + data infra | data network effect | **capture only** | Validation (DL-075) |
 | G2 | Benchmarking | cognitive — escalate | collaborative network effect | **no (post-Beta)** | G1 + scale |
-| G3 | Alignment-as-viral-loop (CRR) | commodity over contracted seam | collaborative-necessity virality | **Alpha (late)** (ext. convert = R2) | DL-047 / DL-049 |
-| G4 | Shareable artifact acquisition | commodity + Disclose constraint | content-led acquisition | **Alpha (late)** (open view = R2) | DL-073, Export/Share-Out |
+| G3 | Alignment-as-viral-loop (CRR) | commodity over contracted seam | collaborative-necessity virality | **R2** (foundation Wave I in R1) | DL-047 / DL-049 |
+| G4 | Shareable artifact acquisition | commodity + Disclose constraint | content-led acquisition | **R2** (foundation Wave E in R1) | DL-073, Export/Share-Out |
 | G5 | Integration-as-distribution | commodity + forward connectors | switching cost + marketplace distribution | forward (Pro+) | Doctrine 09 P0; exec-monitoring |
 | G6 | Community template gallery | commodity content loop | content virality + cold-start | post-R1 | DL-056 |
 
-**Recommended sequencing:** **Alpha (late)** = G3 (loop + k-factor measurement) · G4 (cohort branded share-out) — positioned to drive the §20 graduation metrics; **plus** G1 (data-capture foundation). **R2** = the external-recipient conversion half of G3/G4 (already DL-049's plan), G1's learning, G2, G6. **Forward (Pro+)** = G5 connectors + G1/G2 at scale. Start *capturing* the plan→outcome data (G1) early — it's the time-compounding moat that answers the displacement risk. G1/G2's learning and G6's open contribution require explicit owner + doctrine/curation scoping before build (privacy, consent, epistemic classification).
+**Recommended sequencing:** **R1 (Alpha)** = G1 (data-capture foundation only) — plus the R1 *foundations* G3/G4 sit on (CRR seam / Wave I; Export-Share-Out / Wave E). **R2** = G3 + G4 (the full growth loops, on those completed foundations) + G1's learning. **Forward (Pro+ / post-R1)** = G2, G5, G6. **Forward (Pro+)** = G5 connectors + G1/G2 at scale. Start *capturing* the plan→outcome data (G1) early — it's the time-compounding moat that answers the displacement risk. G1/G2's learning and G6's open contribution require explicit owner + doctrine/curation scoping before build (privacy, consent, epistemic classification).
 
 *Candidate backlog for owner triage. Introduces no contract, no doctrine, no Release commitment; every item maps to existing canon and is fenced by the epistemic-safety + privacy doctrines.*
