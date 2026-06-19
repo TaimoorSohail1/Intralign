@@ -845,6 +845,13 @@ Each changelog entry contains:
 - **Change Summary:** Hybrid pricing — tier subscription + per-Deep-Pass overage (single-governor / multi-meter); extends DL-048. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-109 — DL-075: Ratify the Outcome-Lifecycle (Planning/Execution/Validation) orientation crosswalk
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-075.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-075-outcome-lifecycle-orientation-crosswalk.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Ratify the Outcome-Lifecycle (Planning/Execution/Validation) orientation crosswalk. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
