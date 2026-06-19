@@ -866,9 +866,19 @@ Each changelog entry contains:
 - **Change Summary:** Ratify the planning-artifact model architecture - Option C hybrid core (fixed understanding core + extensible execution-planning layer). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
----
+### CHG-112 — DL-074: Realize Tiers 3-5 (Pro·Team·Enterprise) + hybrid overage/governor config in Release-1 Calibration Defaults §4c
 
-## Governance Notes
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-074.
+- **Affected Artifacts:** `30_engineering/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§4c — added Pro/Team/Enterprise tier-knob rows; per-Deep-Pass overage + normalized-compute-governor config; forward monitoring/agent meter rows; resolved Open-TBD A1/E3; corrected stale ladder cross-reference path).
+- **Change Summary:** Realize the DL-074 hybrid pricing model as owner-tunable §4c configuration — Tiers 3-5 starting values (re-tunable from `AI Spend Recorded` telemetry) plus the paid-tiers-only per-Deep-Pass overage under a normalized compute governor (tokens × model-tier weight), with forward monitoring/agent meters marked GA-pending. Config realization of a ratified decision; no new decision, no doctrine, epistemic invariants unaffected.
+- **Supersession Reference:** None.
+
+### CHG-113 — DL-078: Ratify the artifact-profile mechanism & registry realization design (DL-077 Option C realization intent)
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-078.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-078-artifact-profile-realization-design.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Ratify the four-surface realization design for the DL-077 hybrid-core planning-artifact model — profile-aware generation generalizing the single Wave S step (Derived/CHR/recompute invariants and the five Critical negatives unchanged), fixed-core boundary (Requirements stays core + additive compliance modules), compositional multi-signal profile resolver (not a domain×methodology matrix), and an owner-governed artifact-profile registry (E6 substrate; first-party→certified→open, build-time-first; admits L2 structure, never L3 cognition — CAF/scoring stay first-party). R1 stays fixed; methodology-cadence is a later separately-escalated sub-phase. Realization intent only; engineering authors the mechanism. No epistemic invariant or doctrine changed.
+- **Supersession Reference:** None. Realizes DL-077; the E4 lens cognition boundary is the separate DL-079.
 
 1. The changelog is operative as of CHG-001. All subsequent canonical changes must be recorded here, authorized by a ratified Decision.
 2. The current schema is provisional pending governance refinement of the Traceability Record (open condition on DL-030).
