@@ -844,5 +844,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-073 — Two-mode stage-conditioned onboarding (deferred-signup) + save-to-keep signup trigger → `00_owner/decisions/records/DL-073-two-mode-onboarding-deferred-signup.md`
 - DL-074 — Hybrid pricing — tier subscription + per-Deep-Pass overage (single-governor / multi-meter); extends DL-048 → `00_owner/decisions/records/DL-074-hybrid-pricing-multi-meter.md`
 - DL-075 — Ratify the Outcome-Lifecycle (Planning/Execution/Validation) orientation crosswalk → `00_owner/decisions/records/DL-075-outcome-lifecycle-orientation-crosswalk.md`
+- DL-076 — Ratify the OSLO release model & Alpha release ladder (R1-R5 reconciled with Alpha/Beta/§20) → `00_owner/decisions/records/DL-076-release-model-alpha-ladder.md`
 
 <!-- RECORDS-INDEX:END -->
