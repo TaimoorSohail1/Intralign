@@ -1,6 +1,6 @@
 # Escalation — Is the Planning-Artifact Model Fixed (Doctrine) or Extensible (Default)?
 
-- **Status:** **OPEN — owner / architecture decision required.** AI analysis + options + recommendation; **the owner decides** (Anti-Assumption: do not resolve an ontology/doctrine question unilaterally; do not introduce doctrine). Routes through Framework 001 — likely a **DL** (it is architecture/doctrine-adjacent and would amend a deferred §V item).
+- **Status:** **RESOLVED — DL-077** (2026-06-19): owner ratified **Option C (hybrid core)** — fixed understanding core (Intent/Context/Scope/Requirements) + extensible execution-planning layer; R1 fixed & scoped to fitting domains; domain-artifact extensibility before methodology-cadence. This document is retained as the decision analysis; the ratified decision is `00_owner/decisions/records/DL-077-planning-artifact-model-hybrid-core.md`.
 - **Source:** 2026-06-19 ecosystem deepening — owner asked whether all domains/methodologies align to the R1 planning sequence (Intent → Context → Scope → Requirements → WBS → Resourcing → Schedule).
 - **Gates:** the ecosystem **L2 domain-pack layer** (`BACKLOG_ECOSYSTEM_MARKETPLACE_AND_CREATOR_PROGRAM` E6), methodology support, and the **R1 validation-cohort** selection (see §5).
 
