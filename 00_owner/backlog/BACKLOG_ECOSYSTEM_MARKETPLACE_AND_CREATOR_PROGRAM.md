@@ -5,6 +5,8 @@
 - **Source:** owner direction 2026-06-19; grounded in DL-056 (templates), DL-074 (pricing), DL-049 (reviewer identity), DL-073 (access), DL-076 (release model), and `BACKLOG_ADOPTION_ACCELERATION_AND_GROWTH_LOOPS` (G3/G5/G6).
 
 > **Governing design principle (load-bearing — read first).** Every contribution is one of two kinds. **(A) Structure / content** (templates, scaffolds, reference packs) = pre-authored content the user *adopts* → an **Attested** user artifact (DL-056: adopting pre-authored content is **not generation**) — epistemically safe. **(B) Cognition / assessment** (anything that changes how OSLO *scores, finds, or recommends*) = touches the **governed epistemic core** and **cannot be third-party-injected ungoverned.** This boundary gates the whole ecosystem; **E4 is the only capability that crosses it** and is therefore governance-gated. The governed boundary is also a *trust differentiator* — "the marketplace that can't manipulate your judgment."
+>
+> **Three levels of customization** (so the layers don't blur): **L1 content** = templates filling the *fixed* artifacts (E1). **L2 schema** = the planning *artifact set itself* — which artifact types exist, per domain/methodology (E6). It is structural (not cognition), but it changes the planning **model**, so it is gated on a prior architecture decision — `PLANNING_ARTIFACT_MODEL_EXTENSIBILITY_ESCALATION_001` (is the 7-artifact model fixed or extensible?). **L3 cognition** = how OSLO *assesses* — evaluation lenses (E4).
 
 ## Prioritization (owner-aligned, 2026-06-19)
 
@@ -12,6 +14,7 @@
 - **North-star:** **E4 Evaluation lenses** — highest outcome value + deepest moat, but **governance-gated** (design the boundary early, build last).
 - **Parallel / forward:** **E5 Connectors** (developer ecosystem — extends G5; rides the Validation/execution-monitoring roadmap).
 - **Folded:** **E3 Knowledge packs** → into E1 templates.
+- **Gated (architecture decision first):** **E6 Domain packs** (custom artifact schema + methodology — the deepest, most defensible layer) — **blocked** on `PLANNING_ARTIFACT_MODEL_EXTENSIBILITY_ESCALATION_001` (is the planning-artifact model fixed or extensible?). A domain pack is the natural *bundling unit*: artifact set (E6) + templates (E1) + reference (E3) + a governed lens (E4) for one domain.
 
 ## Capabilities
 
@@ -45,6 +48,13 @@
 - **Note:** a **developer** ecosystem — distinct audience from E1/E2 PM creators; sequences with execution-monitoring, **not** the creator marketplace.
 - **Stage / gating dependency:** **forward / Pro+**; raise with the execution-monitoring / G5 scoping.
 
+### E6 — Domain packs / custom planning-artifact schema (L2) — *architecture-gated · post-decision*
+- **What:** domain/methodology-specific **planning-artifact sets** (construction adds submittals/RFIs/permits; agile replaces WBS/Schedule with epics/stories/sprints; manufacturing adds BOM/routing) — i.e. extending **which artifact types exist and the planning cadence**, not just content. The natural creator unit is a **domain pack** bundling the artifact set + templates (E1) + reference (E3) + a governed lens (E4).
+- **Why it matters:** the R1 model (Intent→…→Schedule) is **classical-PM-leaning** and does not universally fit; domain packs make OSLO a *platform* (domain-native planning), the deepest moat — but they change the planning **model**.
+- **⚠ GATING DEPENDENCY (architecture/doctrine — resolve first):** `00_owner/architecture_decisions/PLANNING_ARTIFACT_MODEL_EXTENSIBILITY_ESCALATION_001.md` — is the 7-artifact model **fixed (doctrine)** or an **extensible default**? Until the owner ratifies extensibility (and the synthesis/CAF/MRI handle variable artifact sets under the governed epistemic model), E6 is **design-only**.
+- **Governance:** L2 is structural (not cognition-injection), but it touches Infer (synthesis), Evaluate (CAF), Disclose (MRI). Any artifact set must preserve Attested/Derived, CAF, Confidence, recompute; methodology changes cadence → affects drift/Outcome-Integrity.
+- **Stage / dependency:** **post the architecture decision**; deeper than E1. Raise with the extensibility escalation.
+
 ## Defensibility
 
 Stacks a **supply-side network effect** (creators → domain coverage → users → creators) + a **domain content library** competitors can't clone quickly + the **data moat** (per-domain templates/outcomes → per-domain calibration, G1). The **governed-cognition boundary** is itself the trust differentiator.
@@ -58,6 +68,7 @@ Stacks a **supply-side network effect** (creators → domain coverage → users 
 | **E2** affiliate monetization | **post-R1** | DL-074 + G3 |
 | **E4** evaluation lenses | **post-R1+** | **the E4 governance escalation (ratify first)** |
 | **E5** connectors | **forward / Pro+** | G5 + execution-monitoring scoping |
+| **E6** domain packs (artifact schema) | **architecture-gated → post-decision** | the extensibility escalation (resolve first) |
 
 ## Status / routing
 
