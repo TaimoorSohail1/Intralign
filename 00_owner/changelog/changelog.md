@@ -880,6 +880,17 @@ Each changelog entry contains:
 - **Change Summary:** Ratify the four-surface realization design for the DL-077 hybrid-core planning-artifact model — profile-aware generation generalizing the single Wave S step (Derived/CHR/recompute invariants and the five Critical negatives unchanged), fixed-core boundary (Requirements stays core + additive compliance modules), compositional multi-signal profile resolver (not a domain×methodology matrix), and an owner-governed artifact-profile registry (E6 substrate; first-party→certified→open, build-time-first; admits L2 structure, never L3 cognition — CAF/scoring stay first-party). R1 stays fixed; methodology-cadence is a later separately-escalated sub-phase. Realization intent only; engineering authors the mechanism. No epistemic invariant or doctrine changed.
 - **Supersession Reference:** None. Realizes DL-077; the E4 lens cognition boundary is the separate DL-079.
 
+### CHG-114 — DL-079: Ratify the third-party evaluation-lens cognition boundary (E4)
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-079.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-079-e4-lens-cognition-boundary.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated); `00_owner/architecture_decisions/E4_THIRD_PARTY_EVALUATION_LENS_GOVERNANCE_ESCALATION_001.md` (status → RESOLVED); `00_owner/backlog/BACKLOG_ECOSYSTEM_MARKETPLACE_AND_CREATOR_PROGRAM.md` (E4 gate resolved).
+- **Change Summary:** Ratify the E4 cognition boundary — a third-party evaluation lens is governed input to first-party cognition, never third-party cognition; it may surface attributed, confidence-qualified considerations but never alters CAF/confidence/scores and never disposes (OB-5; advise proposes never disposes). Reference-only (A) first; governed Derived overlay (B) north-star; Option C (certified scoring contribution) explicitly not adopted and fenced as a separate future doctrine decision; CAF stays first-party. Draws the boundary within the existing epistemic model; affirms (does not alter) the invariants; no new invariant. E4 remains design-only.
+- **Supersession Reference:** None. Resolves the E4 escalation. Option C not adopted (separate future doctrine decision).
+
+---
+
+## Governance Notes
+
 1. The changelog is operative as of CHG-001. All subsequent canonical changes must be recorded here, authorized by a ratified Decision.
 2. The current schema is provisional pending governance refinement of the Traceability Record (open condition on DL-030).
 3. Entries do not require Proposal-Review-Decision in their own right when they merely record changes authorized by a ratified Decision. The authorizing Decision provides the governance traceability.

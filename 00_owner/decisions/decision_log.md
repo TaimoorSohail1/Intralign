@@ -847,5 +847,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-076 — Ratify the OSLO release model & Alpha release ladder (R1-R5 reconciled with Alpha/Beta/§20) → `00_owner/decisions/records/DL-076-release-model-alpha-ladder.md`
 - DL-077 — Ratify the planning-artifact model architecture - Option C hybrid core (fixed understanding core + extensible execution-planning layer) → `00_owner/decisions/records/DL-077-planning-artifact-model-hybrid-core.md`
 - DL-078 — Ratify the artifact-profile mechanism & registry realization design (DL-077 Option C realization intent) → `00_owner/decisions/records/DL-078-artifact-profile-realization-design.md`
+- DL-079 — Ratify the third-party evaluation-lens cognition boundary (E4): governed input, never silent disposition → `00_owner/decisions/records/DL-079-e4-lens-cognition-boundary.md`
 
 <!-- RECORDS-INDEX:END -->
