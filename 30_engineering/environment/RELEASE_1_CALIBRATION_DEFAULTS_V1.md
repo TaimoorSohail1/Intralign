@@ -115,7 +115,34 @@
 | **Monthly token budget / user (hard rollup)** | **10,000,000** | the binding governor (~12 Deep or ~80 Fast/mo across 3 projects) |
 | Monthly cost @ budget | **~$7.90 worst-case** / ~$2 typical (25% util) | $12 price → 34% worst / ~84% typical margin |
 
-- **Per-tier, not free-vs-paid:** all knobs are **tier rows**. **Tier 1 (Free) and Tier 2 (Basic) are owner-confirmed; Tiers 3–5 (Pro · Team · Enterprise) remain TBD** (Open-TBD A1/E3; ladder draft `01_governance/backlog/BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE.md`) — add rows, not code.
+**Tiers 3–5 — Pro · Team · Enterprise (owner-confirmed via DL-074, 2026-06-19; *starting values, re-tunable* from `AI Spend Recorded`):** Pro adds **model quality** (the upsell above Basic's capacity-only differentiation); Team/Enterprise are **per-seat** with **premium routing** — and per DL-074, *routing quality, not token volume, is the dominant cost driver at the top.*
+
+| Config knob (tier-keyed) | Pro / T3 | Team / T4 (per seat) | Enterprise / T5 |
+|---|---|---|---|
+| Price | **~$39 / mo** | **~$99–149 / seat / mo** | **custom / contract** |
+| Max active projects | **10** | many (per seat) | custom |
+| Model routing | mini + **full-quality (GPT-4.1) fallback** *(the quality upsell)* | **premium — GPT-4.1 synthesis** | premium + dedicated |
+| Project-size envelope | ~80 docs / ~200k words | ~150 / ~400k | custom |
+| Fast Pass per-run cap | ~600,000 *(derived from envelope; tune)* | ~1,000,000 *(derived; tune)* | custom |
+| Deep Pass per-run cap | ~1,500,000 *(derived; tune)* | ~2,000,000 *(derived; tune)* | custom |
+| Deep runs / day | **15** | high / on-demand | custom |
+| Suggested fixes · chat / day | 50 · 200 | high / unmetered | custom |
+| **Monthly token budget / user (governor)** | **25,000,000** | **50,000,000 / seat** | negotiated |
+| Monthly cost @ budget | ~$20 worst | ~$97 worst / seat | — |
+| Forward capability | **+ execution monitoring (Pro+)** | inherits | inherits |
+
+**Hybrid overage + universal governor (DL-074):**
+
+| Config | Value | Note |
+|---|---|---|
+| Universal cost **governor** | **normalized compute unit = tokens × model-tier weight** | absorbs any compute source (Fast/Deep/monitoring/agents); generalizes the monthly-token-budget rollup |
+| Overage **unit** (billing surface) | **per Deep Pass**, under a "usage-based" umbrella | transparent; not abstract credits |
+| Overage **eligibility** | **paid tiers only** (Basic/Pro/Team); **Free upgrades** (no purchase path) | preserves the conversion funnel |
+| **Guardrails** | user-set **spend cap** + threshold **alerts** | no silent overspend / bill shock; reuses honest-limit disclosure (UP-4) |
+| **Forward meters** | execution monitoring = capacity add-on; agents = per-task | added when those capabilities are scoped (DL-074 §4.5) |
+| Per-run caps / per-user rollups | **unchanged** — still degrade / gate | overage is an explicit, priced relaxation, never silent |
+
+- **Per-tier, not free-vs-paid:** all knobs are **tier rows**. **Tiers 1–5 are now owner-confirmed** — Free/Basic (2026-06-05) and **Pro/Team/Enterprise + per-Deep-Pass overage via DL-074 (2026-06-19, starting values)**; Open-TBD A1/E3 resolved by DL-074. Ladder source: `00_owner/backlog/BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE.md`; hybrid model: `00_owner/decisions/records/DL-074-hybrid-pricing-multi-meter.md`. Add rows, not code.
 - **⚠ Confidence note:** these are **estimate-based starting placeholders**, not measured runs. Re-tune from the `AI Spend Recorded` telemetry in the first weeks. Free posture = Balanced (~$3); Basic = $12/mo capacity tier.
 
 **Internal entitlement (non-consumer; test-bypass — `BACKLOG_INTERNAL_TEST_BYPASS_ENTITLEMENT`):** a **designated-test-account** entitlement that **bypasses Free-tier (and all) caps** via config, **not** a code branch — the same DL-048 enforcement runs and reads "unlimited."
