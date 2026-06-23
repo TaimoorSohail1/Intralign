@@ -17,7 +17,7 @@
 | **`oslo-knowledge-base`** (this repo) | Doctrine, constitution, decisions, contracts, specs — the **governance source of truth** | Exists, on GitHub, ratified through DL-044 |
 | **`oslo` application repo** (to be created) | The actual application code Claude Code builds | **Does not exist yet** — created in Phase 1 |
 
-The knowledge base is a *constitutional knowledge system, not a software project* — application code does **not** go in it. The starter-kit files under `03_architecture/engineering/starter_kit/` are **reference templates** that seed the new application repo; they are not run from here.
+The knowledge base is a *constitutional knowledge system, not a software project* — application code does **not** go in it. The starter-kit files under `30_engineering/delivery/starter_kit/` are **reference templates** that seed the new application repo; they are not run from here.
 
 ---
 
@@ -67,7 +67,7 @@ Per the Runtime Environment Constraint Profile:
 > For a contractor: you typically own production accounts and keys; the developer gets Dev (local) and Staging. Nothing production-grade should sit only in the developer's personal accounts.
 
 ### 1.5 (Recommended) Set up Linear and import the work
-The waves/contracts are pre-packaged for Linear import — see `03_architecture/engineering/LINEAR_IMPORT_README.md` and the CSV beside it. Import gives you per-wave visibility and lets Claude Code update issues via the Linear MCP. **Boundary: Linear is the tracker; this repo stays the source of truth.** Linear issues *reference* contracts; they never replace them.
+The waves/contracts are pre-packaged for Linear import — see `30_engineering/delivery/LINEAR_IMPORT_README.md` and the CSV beside it. Import gives you per-wave visibility and lets Claude Code update issues via the Linear MCP. **Boundary: Linear is the tracker; this repo stays the source of truth.** Linear issues *reference* contracts; they never replace them.
 
 ### Phase 0 checklist
 - [ ] Claude Code access model decided (and who pays)
@@ -85,7 +85,7 @@ These are the **developer's** first actions. This is where the environment-profi
 
 1. **Install & authenticate Claude Code** on their machine; sign into the chosen account (or set the API key only where intended).
 2. **Clone both repos.** Point Claude Code at the app repo, with the knowledge base available for reference (the `CLAUDE.md` and Implementation Constraints are read automatically as guardrails).
-3. **Seed the app repo from the starter kit** (`03_architecture/engineering/starter_kit/`): copy in `docker-compose.yml`, `.env.example` (→ `.env`, filled from the secrets you provided), and the CI workflow template (→ `.github/workflows/ci.yml` **in the app repo**).
+3. **Seed the app repo from the starter kit** (`30_engineering/delivery/starter_kit/`): copy in `docker-compose.yml`, `.env.example` (→ `.env`, filled from the secrets you provided), and the CI workflow template (→ `.github/workflows/ci.yml` **in the app repo**).
 4. **Stand up the local stack:** `docker compose up` brings up Postgres, Neo4j, MongoDB, Qdrant, Redis. Scaffold the LangGraph application skeleton.
 5. **Wire the CI pipeline** to implement the Deployment Governance gate sequence (§4 below). Confirm each gate runs and can fail the build.
 6. **Bind the environment profile (R1–R5) and physical schema** to the logical data model — Attested vs Derived stores, append-only canonical tables. (This is task #121; it is *build-time*, correctly not done before handoff.)
@@ -177,7 +177,7 @@ The agent's tests are **not** discarded after merge — they become the permanen
 
 **Division of labor:** Claude Code **authors** the tests (positive **and** negative, tracing each to its contract) and runs them; **standard frameworks** execute them; **CI** enforces the gates; **you** approve. You do **not** need a managed third-party QA service — the suite below plus CI covers Release 1, and much of it (invariant + replay) is custom anyway.
 
-> **Read these first when authoring tests** (they already exist in the repo): `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` (test strategy), `…/DETERMINISM_CALIBRATION_NOTE_001.md` (determinism tiers), and the **fixture-library + subsystem test specs** for Finding, Confidence, and Recommendation in the same folder. These define *what fixtures and golden cases to build*; the populated fixture data + golden files are then generated during the build. Each phase's Context Manifest links the ones relevant to that phase.
+> **Read these first when authoring tests** (they already exist in the repo): `30_engineering/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` (test strategy), `…/DETERMINISM_CALIBRATION_NOTE_001.md` (determinism tiers), and the **fixture-library + subsystem test specs** for Finding, Confidence, and Recommendation in the same folder. These define *what fixtures and golden cases to build*; the populated fixture data + golden files are then generated during the build. Each phase's Context Manifest links the ones relevant to that phase.
 
 | QA validation layer (spec §3) | What it checks | Suggested framework(s) | Who authors |
 |---|---|---|---|

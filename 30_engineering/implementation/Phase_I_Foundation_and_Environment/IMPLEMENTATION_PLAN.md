@@ -18,27 +18,27 @@ Stand up the ratified environment and the enforcement scaffolding so that autono
 > Links only; nothing is copied here. The files below are authoritative in their own locations — if a plan and a source differ, the **source wins**.
 
 ### Phase-specific (Foundation)
-- **Starter kit (seed the app repo):** `03_architecture/engineering/starter_kit/` (`docker-compose.yml`, `.env.example`, `ci-pipeline.yml`, `AGENTS.md`, `README.md`)
-- **Environment binding:** `03_architecture/environment/RUNTIME_ENVIRONMENT_CONSTRAINT_PROFILE_V1.md` (+ `…/RUNTIME_ENVIRONMENT_PROFILE_DL043_RECONCILIATION_001.md`)
-- **Schema source:** `03_architecture/runtime_models/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
-- **Pipeline/gates:** `01_governance/DEPLOYMENT_GOVERNANCE_SPECIFICATION_V1.md`
-- **Code-tree:** `03_architecture/engineering/starter_kit/AGENTS.md` (§ code-tree)
+- **Starter kit (seed the app repo):** `30_engineering/delivery/starter_kit/` (`docker-compose.yml`, `.env.example`, `ci-pipeline.yml`, `AGENTS.md`, `README.md`)
+- **Environment binding:** `30_engineering/environment/RUNTIME_ENVIRONMENT_CONSTRAINT_PROFILE_V1.md` (+ `…/RUNTIME_ENVIRONMENT_PROFILE_DL043_RECONCILIATION_001.md`)
+- **Schema source:** `30_engineering/runtime_models/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Pipeline/gates:** `00_owner/build_governance/DEPLOYMENT_GOVERNANCE_SPECIFICATION_V1.md`
+- **Code-tree:** `30_engineering/delivery/starter_kit/AGENTS.md` (§ code-tree)
 
 ### Always-required (every phase)
-- **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
-- **Canonical architecture:** `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
-- **Models:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
-- **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
-- **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
-- **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
-- **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
-- **Observability:** `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
+- **Agent rules:** `30_engineering/delivery/starter_kit/AGENTS.md` · `00_owner/build_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
+- **Canonical architecture:** `30_engineering/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
+- **Models:** `30_engineering/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Standards:** `00_owner/build_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
+- **Numeric config:** `30_engineering/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
+- **Ratified scope:** `00_owner/decisions/decision_log.md` (DL-043, DL-044)
+- **Testing:** `30_engineering/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
+- **Observability:** `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
 
 ## Depends on
 - Phase 0 owner setup complete (GitHub Pro + protected `main`; cloud accounts; access).
 
 ## Build steps
-1. Seed app repo from `03_architecture/engineering/starter_kit/` (compose, `.env`, CI workflow, `CLAUDE.md`+`AGENTS.md`).
+1. Seed app repo from `30_engineering/delivery/starter_kit/` (compose, `.env`, CI workflow, `CLAUDE.md`+`AGENTS.md`).
 2. `docker compose up` — all five datastores healthy.
 3. Scaffold `/backend/responsibilities/...`, `/services`, `/shared`, `/frontend`, `/tests` per the code-tree.
 4. Wire CI gates; confirm each can **fail** the build.

@@ -1,6 +1,6 @@
 # Canonical Definitions
 
-> **🔎 Two canonical-definitions surfaces exist (KIA2-3 / DL-036).** This is the **Content-tier — authoritative operational expression** (within the Constitution). The companion is the **Governance-tier orientation registry** at `01_governance/canonical_definitions/canonical_definitions.md`. **Where they conflict substantively, Doctrine prevails (DL-036 Clarification #1).** For an operational definition, use this file; for the orientation registry / cross-index, use the governance-tier file.
+> **🔎 Two canonical-definitions surfaces exist (KIA2-3 / DL-036).** This is the **Content-tier — authoritative operational expression** (within the Constitution). The companion is the **Governance-tier orientation registry** at `00_owner/canonical_definitions/canonical_definitions.md`. **Where they conflict substantively, Doctrine prevails (DL-036 Clarification #1).** For an operational definition, use this file; for the orientation registry / cross-index, use the governance-tier file.
 
 ## Outcome Space
 

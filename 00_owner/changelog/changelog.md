@@ -782,6 +782,118 @@ Each changelog entry contains:
 - **Change Summary:** Internal Gemma (local Llama runtime) as the primary LLM (amends DL-054 §5). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-100 — DL-070: Ratify the Phase 1 "Prove Understanding" falsifiable exit gate (P-4 / DL-059 realization)
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-070.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-070-phase1-prove-understanding-exit-gate.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Ratify the Phase 1 "Prove Understanding" falsifiable exit gate (P-4 / DL-059 realization). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
+### CHG-101 — DL-071: DL-053 Disambiguation Register: 'Founder Console' (Intralign Founder Console vs OSLO Observability Console)
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-071.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-071-founder-console-disambiguation.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** DL-053 Disambiguation Register: 'Founder Console' (Intralign Founder Console vs OSLO Observability Console). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
+### CHG-102 — DL-072: Wave B exit-gate pass (with conditions) + Phase IV/Wave C authorization
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-072.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-072-wave-b-exit-gate-wave-c-authorization.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Wave B exit-gate pass (with conditions) + Phase IV/Wave C authorization. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
+### CHG-103 — DL-051: Repair stale `0X_` path references in engineering operational docs (clerical)
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-051 (ownership-zone reorganization; follow-through).
+- **Affected Artifacts:** 12 files under `30_engineering/` — the 8 phase `IMPLEMENTATION_PLAN.md`s + `implementation/README.md` + `PHASE_1_BUILD_KICKOFF_PACKET.md`; `delivery/RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md`; `delivery/RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md`; `delivery/starter_kit/CLAUDE.md` + `AGENTS.md`. 130 stale `01_/02_/03_` references repaired to current ownership-zone paths (`00_owner/` · `10_product/` · `20_handoff/` · `30_engineering/`). **No content change** — reference paths only.
+- **Change Summary:** Bucket 1 of the DL-051 path-migration follow-through (see `00_owner/decisions/PROPOSAL_IMPLEMENTATION_TREE_PATH_MIGRATION_DL051_FOLLOWTHROUGH_DRAFT.md`). Forward-pointing developer-facing references only; every rewritten `.md` path existence-verified as a full path; doc-integrity gate green. Five bare-prefix/historical references in the Handoff Package left for owner review; owner-canon cross-references (Bucket 2) and append-only ledgers / restructure-description docs (Bucket 3) intentionally untouched.
+- **Supersession Reference:** None.
+
+### CHG-104 — DL-051: Repair stale `0X_` cross-references in owner-canon registries (clerical, Bucket 2)
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-051 (ownership-zone reorganization; follow-through).
+- **Affected Artifacts:** `00_owner/canonical_definitions/canonical_definitions.md`, `00_owner/ontology/ontology_registry.md`, `00_owner/build_governance/AUTONOMOUS_IMPLEMENTATION_CONTROL_SYSTEM_V1.md`, `00_owner/build_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`. 168 stale `01_/02_/03_` cross-references repaired to current ownership-zone paths. **No content/definitional change** — reference paths only.
+- **Change Summary:** Bucket 2 of the DL-051 path-migration follow-through (live owner-canon cross-references). Every rewritten `.md` path existence-verified as a full path; doc-integrity gate green. Append-only ledgers (changelog, decision_log) and restructure-description docs untouched (Bucket 3). Adjacent live-canon files (`constitution/10_canonical_definitions.md`, `CANONICAL_GLOSSARY.md`, `backlog/revision_backlog.md`, `architecture_decisions/*`, `OPEN_TBD_REGISTER.md`) **deliberately NOT auto-edited** — surfaced for separate owner decision.
+- **Supersession Reference:** None.
+
+### CHG-105 — DL-051: Repair stale `0X_` cross-references in adjacent owner-canon docs (clerical, Bucket 2b — completes follow-through)
+
+- **Date:** 2026-06-18 · **Authorizing Decision:** DL-051 (ownership-zone reorganization; follow-through).
+- **Affected Artifacts:** `00_owner/CANONICAL_GLOSSARY.md` (1), `00_owner/constitution/10_canonical_definitions.md` (1), `00_owner/backlog/revision_backlog.md`, `00_owner/backlog/BACKLOG_FAST_DEEP_CONTRACT_FORMALIZATION_DRAFT.md`, `00_owner/OPEN_TBD_REGISTER.md`, `00_owner/architecture_decisions/ACTIVE_ARCHITECTURE_RECONCILIATION_RECOMMENDATION_001.md`, `00_owner/decisions/PROPOSAL_TOOL_NEUTRAL_AGENT_TERMINOLOGY_DL045_DRAFT.md`. 16 stale `01_/02_/03_` cross-references repaired to current ownership-zone paths. **No content/definitional change** — reference paths only.
+- **Change Summary:** Bucket 2b — completes the DL-051 path-migration follow-through across live owner canon. The **constitution** and **CANONICAL_GLOSSARY** edits are each a single pure path-string swap (governance-tier registry cross-ref; tier-ladder backlog cross-ref) with no definitional change. Every rewritten `.md` path existence-verified; doc-integrity gate green. Remaining `0X_` mentions are bare-prefix prose or the legacy layer dir `03_architecture/components/`, intentionally left. Append-only ledgers + restructure/disposition docs untouched (Bucket 3). **DL-051 path migration now complete** across engineering (CHG-103) and owner canon (CHG-104, CHG-105).
+- **Supersession Reference:** None.
+
+### CHG-106 — DL-073: Two-mode stage-conditioned onboarding (deferred-signup) + save-to-keep signup trigger
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-073.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-073-two-mode-onboarding-deferred-signup.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Two-mode stage-conditioned onboarding (deferred-signup) + save-to-keep signup trigger. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
+### CHG-107 — DL-073: Onboarding spec amendment (§0 two-mode, stage-conditioned model)
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-073.
+- **Affected Artifacts:** `10_product/experience/ONBOARDING_AND_PROJECT_CREATION_EXPERIENCE_SPECIFICATION_V1.md` — amended: new **§0** (governing two-mode / stage-conditioned model + permutation matrix + phasing); status line; cross-reference markers on §A/§D/§E/§G/§H/§I; behavioral edits to §H (auto-provisioned, ingestion-first landing) and §S (disclosure order); **OB-C1** amended to the two-mode journey with `[GA-pending]` tags.
+- **Change Summary:** Realizes DL-073 in the canonical onboarding spec. First-time = ingestion-first / deferred-signup / auto-provisioned identity·workspace·project; resume = auth-entry; release-stage auth-gate position (Alpha/Beta front gate → ingestion; GA no front gate); save-to-keep GA signup trigger. Supersedes the single-mode linear flow and OB-C1's account-first journey for the empty case. **Alpha/Beta conformant now**; GA-specific behaviors tagged `[GA-pending]` pending the DL-073 §4.2–4.4 engineering proposals. All §T integrity invariants, epistemic safety, the DL-046 60s definition, and minimum-to-value (name + one artifact) preserved. No doctrine or constitution change.
+- **Supersession Reference:** Amends conformance **OB-C1** and §A/§D/§E/§G/§H/§I/§S of the onboarding spec (per DL-073).
+
+### CHG-108 — DL-074: Hybrid pricing — tier subscription + per-Deep-Pass overage (single-governor / multi-meter); extends DL-048
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-074.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-074-hybrid-pricing-multi-meter.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Hybrid pricing — tier subscription + per-Deep-Pass overage (single-governor / multi-meter); extends DL-048. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
+### CHG-109 — DL-075: Ratify the Outcome-Lifecycle (Planning/Execution/Validation) orientation crosswalk
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-075.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-075-outcome-lifecycle-orientation-crosswalk.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Ratify the Outcome-Lifecycle (Planning/Execution/Validation) orientation crosswalk. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
+### CHG-110 — DL-076: Ratify the OSLO release model & Alpha release ladder (R1-R5 reconciled with Alpha/Beta/§20)
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-076.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-076-release-model-alpha-ladder.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Ratify the OSLO release model & Alpha release ladder (R1-R5 reconciled with Alpha/Beta/§20). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
+### CHG-111 — DL-077: Ratify the planning-artifact model architecture - Option C hybrid core (fixed understanding core + extensible execution-planning layer)
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-077.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-077-planning-artifact-model-hybrid-core.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Ratify the planning-artifact model architecture - Option C hybrid core (fixed understanding core + extensible execution-planning layer). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
+### CHG-112 — DL-074: Realize Tiers 3-5 (Pro·Team·Enterprise) + hybrid overage/governor config in Release-1 Calibration Defaults §4c
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-074.
+- **Affected Artifacts:** `30_engineering/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§4c — added Pro/Team/Enterprise tier-knob rows; per-Deep-Pass overage + normalized-compute-governor config; forward monitoring/agent meter rows; resolved Open-TBD A1/E3; corrected stale ladder cross-reference path).
+- **Change Summary:** Realize the DL-074 hybrid pricing model as owner-tunable §4c configuration — Tiers 3-5 starting values (re-tunable from `AI Spend Recorded` telemetry) plus the paid-tiers-only per-Deep-Pass overage under a normalized compute governor (tokens × model-tier weight), with forward monitoring/agent meters marked GA-pending. Config realization of a ratified decision; no new decision, no doctrine, epistemic invariants unaffected.
+- **Supersession Reference:** None.
+
+### CHG-113 — DL-078: Ratify the artifact-profile mechanism & registry realization design (DL-077 Option C realization intent)
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-078.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-078-artifact-profile-realization-design.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Ratify the four-surface realization design for the DL-077 hybrid-core planning-artifact model — profile-aware generation generalizing the single Wave S step (Derived/CHR/recompute invariants and the five Critical negatives unchanged), fixed-core boundary (Requirements stays core + additive compliance modules), compositional multi-signal profile resolver (not a domain×methodology matrix), and an owner-governed artifact-profile registry (E6 substrate; first-party→certified→open, build-time-first; admits L2 structure, never L3 cognition — CAF/scoring stay first-party). R1 stays fixed; methodology-cadence is a later separately-escalated sub-phase. Realization intent only; engineering authors the mechanism. No epistemic invariant or doctrine changed.
+- **Supersession Reference:** None. Realizes DL-077; the E4 lens cognition boundary is the separate DL-079.
+
+### CHG-114 — DL-079: Ratify the third-party evaluation-lens cognition boundary (E4)
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-079.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-079-e4-lens-cognition-boundary.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated); `00_owner/architecture_decisions/E4_THIRD_PARTY_EVALUATION_LENS_GOVERNANCE_ESCALATION_001.md` (status → RESOLVED); `00_owner/backlog/BACKLOG_ECOSYSTEM_MARKETPLACE_AND_CREATOR_PROGRAM.md` (E4 gate resolved).
+- **Change Summary:** Ratify the E4 cognition boundary — a third-party evaluation lens is governed input to first-party cognition, never third-party cognition; it may surface attributed, confidence-qualified considerations but never alters CAF/confidence/scores and never disposes (OB-5; advise proposes never disposes). Reference-only (A) first; governed Derived overlay (B) north-star; Option C (certified scoring contribution) explicitly not adopted and fenced as a separate future doctrine decision; CAF stays first-party. Draws the boundary within the existing epistemic model; affirms (does not alter) the invariants; no new invariant. E4 remains design-only.
+- **Supersession Reference:** None. Resolves the E4 escalation. Option C not adopted (separate future doctrine decision).
+
+### CHG-115 — DL-080: Ratify the GA deferred-signup realization (provisional identity · pre/post-signup gating · retention & privacy)
+
+- **Date:** 2026-06-19 · **Authorizing Decision:** DL-080.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-080-ga-deferred-signup-realization.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated); `00_owner/decisions/PROPOSAL_GA_DEFERRED_SIGNUP_ENGINEERING_REALIZATION_DRAFT.md` (status → ratified-intent); `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` (GA note → ratified); `00_owner/decisions/PROPOSAL_TWO_MODE_ONBOARDING_DEFERRED_SIGNUP_DRAFT.md` (§6.3 authorization → ratified DL-080). **Clerical status reconciliation reflecting the prior DL-078 ratification:** `00_owner/architecture_decisions/ARTIFACT_PROFILE_MECHANISM_REALIZATION_DESIGN_001.md` and `00_owner/architecture_decisions/PLANNING_ARTIFACT_MODEL_EXTENSIBILITY_ESCALATION_001.md` (status → ratified-intent DL-078).
+- **Change Summary:** Ratify the GA deferred-signup realization (DL-073 §Phasing a/b/c) as one decision — provisional `Principal` with claim-as-promotion and full identity/record continuity (OB-5); anonymous gating = one project / Fast Pass only / Free per-run envelope / rate-capped, Deep+persistence behind signup, with pre-signup consumption resetting to the Free governor at claim; pre-signup data Operational-class with a 30-day unclaimed TTL, canonical retention attaching at claim, never-claimed purgeable/non-linkable. Settles the two open owner values (reset-at-claim; 30-day TTL). Realization intent only (engineering authors data model, §4c anonymous row, §4 provisional retention class, purge); GA-gated; no doctrine; epistemic invariants preserved.
+- **Supersession Reference:** None. Realizes DL-073 §Phasing; discharges the two-mode proposal §6.3 authorization.
+
 ---
 
 ## Governance Notes

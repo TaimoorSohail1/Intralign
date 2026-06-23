@@ -171,8 +171,9 @@ def usage_tokens(usage: Any) -> tuple[int, int]:
     Shape-robust across pydantic-ai versions so token accounting (DL-048 /
     DL-069 cond.2) never silently zeroes on a version drift: 1.x exposes
     ``input_tokens``/``output_tokens``; older lines used
-    ``request_tokens``/``response_tokens``. Read the 1.x names first, then fall
-    back (the dependency is pinned to 1.x in pyproject; this is defence-in-depth).
+    ``request_tokens``/``response_tokens``. We read the 1.x names first, then
+    fall back to the legacy names (the dependency is pinned to 1.x in
+    pyproject; this fallback is defence-in-depth so CI can never under-count).
     """
 
     def _first(*names: str) -> int:

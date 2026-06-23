@@ -14,7 +14,7 @@ Generalize tool-specific naming to **"autonomous coding agent"** (with Claude Co
 
 - **(A) `CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1`** — add a scope note that the standard governs **any** autonomous coding agent; replace "Claude Code MUST / MAY …" phrasing with "the autonomous coding agent MUST / MAY …". *Filename retained* (to avoid reference churn across the repo); an alias line documents the generalized scope. The doc already operationalizes the (vendor-neutral) Autonomous Implementation Control System.
 - **(B) `DEPLOYMENT_GOVERNANCE_SPECIFICATION_V1` §9** — retitle "Claude Code at the Deployment Boundary (STOP conditions)" → "Autonomous coding agent at the Deployment Boundary (STOP conditions)"; same generalization of the MUST-STOP / MAY phrasing. The human-only-production rule is unchanged.
-- **(C) Record the AGENTS.md convention** — note that `AGENTS.md` is the tool-neutral twin of `CLAUDE.md`: an `AGENTS.md` at the knowledge-base root and one seeded into the application repo (`03_architecture/engineering/starter_kit/AGENTS.md`) carry the same guardrails to Codex and other AGENTS.md-aware agents. (These two files already exist as non-canonical enablement artifacts; this constituent records them as the sanctioned mechanism.)
+- **(C) Record the AGENTS.md convention** — note that `AGENTS.md` is the tool-neutral twin of `CLAUDE.md`: an `AGENTS.md` at the knowledge-base root and one seeded into the application repo (`30_engineering/delivery/starter_kit/AGENTS.md`) carry the same guardrails to Codex and other AGENTS.md-aware agents. (These two files already exist as non-canonical enablement artifacts; this constituent records them as the sanctioned mechanism.)
 
 ## What does NOT change
 
