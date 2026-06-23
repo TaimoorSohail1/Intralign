@@ -103,3 +103,35 @@ Canonically (Determinism Note §5; DT-3; REPLAY-T1…T6) the reconstruction of s
 append-only event log that **explicitly does NOT re-run the LLM**. The LLM test-double is a
 *recorded model-response fixture*, **not** a replay. Keep the two strictly separate in code
 and test names.
+
+## Wave C — Advisory (Advise)
+
+**Recommendation**:
+A Derived, governable **candidate response** produced by Advise, **anchored to a Finding/Issue**
+(never standalone — "Recommendation-only-in-Finding-context"). Types: suggested-action,
+candidate-improvement. Advise *proposes*; it never accepts, scores, governs, or executes.
+Multiple alternatives are *multiple Recommendations*, not a separate object.
+_Avoid_: action, decision, resolution-path-object.
+
+**Clarification request**:
+A Derived Advise output that **requests user input** to resolve blocking ambiguity (an
+information request, not an action); the answer feeds Perceive → recompute.
+
+**Suggested fix**:
+A Derived Advise **candidate edit** to a named artifact, anchored to a Finding. OSLO **never
+applies it autonomously** (Critical invariant) — applying is a user-initiated artifact edit that
+triggers recompute. _Avoid_: auto-fix, patch.
+
+**Validation recommendation**:
+A Recommendation type seeking **stakeholder confirmation** (validate an expectation / confirm a
+criterion); routes to a CAF Review Request on user action. Derived.
+
+**Resolution path** (presentation-only):
+The rendering of *multiple Recommendations* as paths — a **presentation substructure**, never a
+canonical object. Emitting a standalone Resolution-Path object is a rejected negative.
+
+**Recommendation state** (user-owned, DL-055):
+The lifecycle `Generated → {Accepted | Rejected | Deferred} → Implemented (+ Superseded)`. Advise
+emits only `Generated`; **Accept/Defer/Reject/Apply are user actions recorded by Wave U**, not
+Advise. "Modify" is not a state — a user edit supersedes via recompute. "Discuss"/"Share For
+Review" are collaboration affordances, not states.

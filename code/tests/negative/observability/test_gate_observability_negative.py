@@ -6,7 +6,8 @@ Synthetic trees prove each failure mode independently:
 - a missing / empty tests/replay harness;
 - a tampered A6 vocabulary (renamed, extra, or non-literal EVENT_NAMES) across
   every per-contract tuple — WA00R / WA001 / WA002 / WS / WB_INFER (DTM-0010) /
-  WB_EVAL (DTM-0011) / COST — plus a drifted or short 7-way union.
+  WB_EVAL (DTM-0011) / WC_ADVISE (DTM-0014) / WC_FIX (DTM-0015) / COST — plus a
+  drifted or short 9-way union.
 """
 
 from __future__ import annotations
@@ -71,6 +72,15 @@ EVENT_NAMES_WB_EVAL: tuple[str, ...] = (
     "false_confidence_flagged",
 )
 
+EVENT_NAMES_WC_ADVISE: tuple[str, ...] = (
+    "recommendation_generated",
+    "clarification_requested",
+)
+
+EVENT_NAMES_WC_FIX: tuple[str, ...] = (
+    "suggested_fix_offered",
+)
+
 EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
 
 EVENT_NAMES: tuple[str, ...] = (
@@ -80,6 +90,8 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_WS
     + EVENT_NAMES_WB_INFER
     + EVENT_NAMES_WB_EVAL
+    + EVENT_NAMES_WC_ADVISE
+    + EVENT_NAMES_WC_FIX
     + EVENT_NAMES_COST
 )
 '''
@@ -347,17 +359,73 @@ def test_missing_wb_eval_tuple_fails_vocabulary_check(tmp_path) -> None:
     assert any("union of the per-contract vocabularies" in v for v in violations)
 
 
+def test_renamed_wc_advise_event_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0014 — tampering the IC-WC-ADVISE A6 vocabulary fails the gate."""
+    tampered = GOOD_EVENTS_PY.replace("clarification_requested", "clarification_asked")
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "EVENT_NAMES_WC_ADVISE != the IC-WC-ADVISE A6 vocabulary" in violations[0]
+
+
+def test_missing_wc_advise_tuple_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0014 — dropping the WC_ADVISE tuple (and its union leg) fails both checks."""
+    tampered = GOOD_EVENTS_PY.replace(
+        'EVENT_NAMES_WC_ADVISE: tuple[str, ...] = (\n'
+        '    "recommendation_generated",\n'
+        '    "clarification_requested",\n'
+        ')\n\n',
+        "",
+    ).replace(
+        "    + EVENT_NAMES_WC_ADVISE\n",
+        "",
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert any("EVENT_NAMES_WC_ADVISE not found" in v for v in violations)
+    assert any("union of the per-contract vocabularies" in v for v in violations)
+
+
+def test_renamed_wc_fix_event_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0015 — tampering the DL-047 SuggestedFix OBS vocabulary fails the gate."""
+    tampered = GOOD_EVENTS_PY.replace("suggested_fix_offered", "fix_applied")
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "EVENT_NAMES_WC_FIX != the DL-047 SuggestedFix vocabulary" in violations[0]
+
+
+def test_missing_wc_fix_tuple_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0015 — dropping the WC_FIX tuple (and its union leg) fails both checks."""
+    tampered = GOOD_EVENTS_PY.replace(
+        'EVENT_NAMES_WC_FIX: tuple[str, ...] = (\n'
+        '    "suggested_fix_offered",\n'
+        ')\n\n',
+        "",
+    ).replace(
+        "    + EVENT_NAMES_WC_FIX\n",
+        "",
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert any("EVENT_NAMES_WC_FIX not found" in v for v in violations)
+    assert any("union of the per-contract vocabularies" in v for v in violations)
+
+
 def test_missing_event_names_assignment_fails(tmp_path) -> None:
     root = _make_tree(tmp_path, events_src="OTHER = 1\n")
     violations = check_event_vocabulary(root)
-    # all seven contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/COST) AND the union.
-    assert len(violations) == 8
+    # all nine contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/WC_ADVISE/
+    # WC_FIX/COST) AND the union.
+    assert len(violations) == 10
     assert any("EVENT_NAMES_WA00R not found" in v for v in violations)
     assert any("EVENT_NAMES_WA001 not found" in v for v in violations)
     assert any("EVENT_NAMES_WA002 not found" in v for v in violations)
     assert any("EVENT_NAMES_WS not found" in v for v in violations)
     assert any("EVENT_NAMES_WB_INFER not found" in v for v in violations)
     assert any("EVENT_NAMES_WB_EVAL not found" in v for v in violations)
+    assert any("EVENT_NAMES_WC_ADVISE not found" in v for v in violations)
+    assert any("EVENT_NAMES_WC_FIX not found" in v for v in violations)
     assert any("EVENT_NAMES_COST not found" in v for v in violations)
     assert any("EVENT_NAMES not found" in v for v in violations)
 
@@ -391,7 +459,7 @@ def test_inconsistent_union_fails(tmp_path) -> None:
 
 
 def test_union_dropping_ws_and_cost_legs_fails(tmp_path) -> None:
-    """DTM-0011 — a union that omits the WS/WB_INFER/WB_EVAL/COST legs (an old form) fails."""
+    """DTM-0015 — a union that omits the WS/WB_INFER/WB_EVAL/WC_ADVISE/WC_FIX/COST legs (an old form) fails."""
     tampered = GOOD_EVENTS_PY.replace(
         "EVENT_NAMES: tuple[str, ...] = (\n"
         "    EVENT_NAMES_WA00R\n"
@@ -400,6 +468,8 @@ def test_union_dropping_ws_and_cost_legs_fails(tmp_path) -> None:
         "    + EVENT_NAMES_WS\n"
         "    + EVENT_NAMES_WB_INFER\n"
         "    + EVENT_NAMES_WB_EVAL\n"
+        "    + EVENT_NAMES_WC_ADVISE\n"
+        "    + EVENT_NAMES_WC_FIX\n"
         "    + EVENT_NAMES_COST\n"
         ")",
         "EVENT_NAMES: tuple[str, ...] = (\n"

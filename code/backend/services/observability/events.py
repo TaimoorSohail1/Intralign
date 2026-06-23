@@ -23,8 +23,17 @@ The vocabulary is pinned PER CONTRACT (deep-task decision #1, DTM-0007):
   decision #9), in contract order — the three OBS-WB-EVAL §2.3 events
   (Issue Generated / CAF Assessed / Outcome Confidence Computed) plus the two
   DL-047 trust signals (Understanding State Changed / false-confidence flag).
+- ``EVENT_NAMES_WC_ADVISE`` — EXACTLY the two IC/OBS-WC-ADVISE A6 names
+  (DTM-0014; decision #11), in contract order — "Recommendation Generated" /
+  "Clarification Requested". The per-emission ``cognition_history_record_appended``
+  is reused from the WA00R set (never duplicated).
+- ``EVENT_NAMES_WC_FIX`` — EXACTLY the one DL-047 SuggestedFix OBS name
+  (DTM-0015) — "Suggested Fix Offered". A SuggestedFix rides the existing
+  ``recommendation`` CHR output_kind; its CHR-append pairs with the reused
+  ``cognition_history_record_appended``. Application is observed as a USER edit +
+  recompute (commodity / Wave I) — NOT an Advise event.
 - ``EVENT_NAMES_COST`` — the single shared DL-048 spend event
-  (``ai_spend_recorded``), introduced in DTM-0009 and reused by Wave B.
+  (``ai_spend_recorded``), introduced in DTM-0009 and reused by Wave B/C.
 - ``EVENT_NAMES`` — the union (concatenation) the emitters accept; kept as the
   back-compat alias for existing consumers.
 
@@ -105,8 +114,26 @@ EVENT_NAMES_WB_EVAL: tuple[str, ...] = (
     "false_confidence_flagged",
 )
 
+# IC/OBS-WC-ADVISE A6 — the two Advise events, exactly (decision #11; DTM-0014).
+# Pinned verbatim against OBS-WC-ADVISE C3 / A6 ("Recommendation Generated";
+# "Clarification Requested"). The per-emission ``cognition_history_record_appended``
+# is reused from the WA00R set (never duplicated). Wave C / Advise.
+EVENT_NAMES_WC_ADVISE: tuple[str, ...] = (
+    "recommendation_generated",
+    "clarification_requested",
+)
+
+# DL-047 SuggestedFix OBS — the single "Suggested Fix Offered" event (DTM-0015).
+# A SuggestedFix is OFFERED, never applied by OSLO; application is observed as a
+# user edit + recompute (Wave I / commodity), not as an Advise event. The
+# per-emission ``cognition_history_record_appended`` is reused from the WA00R set
+# (a fix rides the existing ``recommendation`` output_kind).
+EVENT_NAMES_WC_FIX: tuple[str, ...] = (
+    "suggested_fix_offered",
+)
+
 # DL-048 cost-governance — the single shared spend event (decision #9),
-# introduced in DTM-0009 and reused by Wave B. "AI Spend Recorded" (OBS §3).
+# introduced in DTM-0009 and reused by Wave B/C. "AI Spend Recorded" (OBS §3).
 EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
 
 # Union vocabulary accepted by emitters (back-compat alias for consumers).
@@ -117,6 +144,8 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_WS
     + EVENT_NAMES_WB_INFER
     + EVENT_NAMES_WB_EVAL
+    + EVENT_NAMES_WC_ADVISE
+    + EVENT_NAMES_WC_FIX
     + EVENT_NAMES_COST
 )
 
@@ -150,7 +179,8 @@ class CollectingEventEmitter:
             raise UnknownEventError(
                 f"unknown contract event {event_name!r} — the vocabulary is "
                 "exactly IC-WA-00R A6 + IC-WA-001 A6 + IC-WA-002 A6 + "
-                "IC-WS-SYNTH A6 + IC-WB-INFER A6 + IC-WB-EVAL A6 + DL-048 cost: "
+                "IC-WS-SYNTH A6 + IC-WB-INFER A6 + IC-WB-EVAL A6 + "
+                "IC-WC-ADVISE A6 + DL-047 SuggestedFix + DL-048 cost: "
                 f"{', '.join(EVENT_NAMES)}"
             )
         self.events.append((event_name, dict(payload)))

@@ -1,0 +1,37 @@
+{
+  "name": "wc_advise_e2e_v0",
+  "model_version": "gemma4@wc-advise-v0",
+  "config": {
+    "tier": "free",
+    "stage": "advise",
+    "temperature": 0,
+    "routing": "advise->internal-gemma",
+    "note": "anchors are the deterministic Finding ids the FindingEngine derives from tests.positive.infer_finding.helpers.sample_drafts() (stable structural hashes)"
+  },
+  "responses": [
+    {
+      "key": "recommendation",
+      "tokens_in": 360,
+      "tokens_out": 140,
+      "text": "[{\"summary\": \"Attest the missing constraint evidence so the plan's clarity gap is closed.\", \"anchor\": \"gap-85a8634face3c609\", \"type\": \"suggested_action\"}, {\"summary\": \"Restate the declared outcome in measurable, time-bound (SMART) terms.\", \"anchor\": \"gap-994dee6e70b33464\", \"type\": \"candidate_improvement\"}, {\"summary\": \"Validate the payments-service stability before committing to the Q3 rollout.\", \"anchor\": \"risk-4bb8f802dd4dcbb6\", \"type\": \"suggested_action\"}]"
+    },
+    {
+      "key": "clarification",
+      "tokens_in": 300,
+      "tokens_out": 80,
+      "text": "[{\"question\": \"The attested assertions about the Q3 finish date contradict each other — which is authoritative?\", \"anchor\": \"conflict-5187581b388d7401\"}]"
+    },
+    {
+      "key": "validation",
+      "tokens_in": 320,
+      "tokens_out": 100,
+      "text": "[{\"summary\": \"Ask the project sponsor to confirm the missing constraint evidence is genuinely out of scope, not merely un-attested.\", \"anchor\": \"gap-85a8634face3c609\"}]"
+    },
+    {
+      "key": "suggested_fix",
+      "tokens_in": 340,
+      "tokens_out": 120,
+      "text": "[{\"candidate_edit\": \"Add a Constraints subsection to the Scope artifact recording the attested constraint evidence so the coverage gap is closed.\", \"target_artifact\": \"scope\", \"anchor\": \"gap-85a8634face3c609\"}, {\"candidate_edit\": \"Restate the declared outcome in the Intent artifact in measurable, time-bound (SMART) terms.\", \"target_artifact\": \"intent\", \"anchor\": \"gap-994dee6e70b33464\"}]"
+    }
+  ]
+}

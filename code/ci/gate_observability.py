@@ -23,11 +23,13 @@ b. **A6 vocabularies pinned per contract** (DTM-0007, decision #1; DTM-0008) —
    ``EVENT_NAMES_WA002`` as EXACTLY the five IC-WA-002 A6 names,
    ``EVENT_NAMES_WS`` as EXACTLY the four IC/OBS-WS-SYNTH A6 names,
    ``EVENT_NAMES_WB_INFER`` as EXACTLY the two IC/OBS-WB-INFER A6 names,
-   ``EVENT_NAMES_WB_EVAL`` as EXACTLY the five IC/OBS-WB-EVAL A6 names, and
+   ``EVENT_NAMES_WB_EVAL`` as EXACTLY the five IC/OBS-WB-EVAL A6 names,
+   ``EVENT_NAMES_WC_ADVISE`` as EXACTLY the two IC/OBS-WC-ADVISE A6 names,
+   ``EVENT_NAMES_WC_FIX`` as EXACTLY the one DL-047 SuggestedFix OBS name, and
    ``EVENT_NAMES_COST`` as EXACTLY the one DL-048 cost event, each a
    literal tuple in contract order, plus ``EVENT_NAMES`` as their consistent
    union (the literal concatenation, or the ``WA00R + WA001 + WA002 + WS +
-   WB_INFER + WB_EVAL + COST`` name concatenation). Any rename/addition/removal fails (events are
+   WB_INFER + WB_EVAL + WC_ADVISE + WC_FIX + COST`` name concatenation). Any rename/addition/removal fails (events are
    contract surface; OBS C2 lists == A6 lists; ``stale_detected`` lives in
    WA00R only).
 
@@ -100,6 +102,17 @@ EXPECTED_EVENT_NAMES_WB_EVAL: tuple[str, ...] = (
     "false_confidence_flagged",
 )
 
+# IC/OBS-WC-ADVISE A6 (DTM-0014 — the two Advise events, decision #11).
+EXPECTED_EVENT_NAMES_WC_ADVISE: tuple[str, ...] = (
+    "recommendation_generated",
+    "clarification_requested",
+)
+
+# DL-047 SuggestedFix OBS (DTM-0015 — the single "Suggested Fix Offered" event).
+EXPECTED_EVENT_NAMES_WC_FIX: tuple[str, ...] = (
+    "suggested_fix_offered",
+)
+
 # DL-048 cost-governance — the single shared spend event (DTM-0009; decision #9).
 EXPECTED_EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
 
@@ -111,6 +124,8 @@ EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     + EXPECTED_EVENT_NAMES_WS
     + EXPECTED_EVENT_NAMES_WB_INFER
     + EXPECTED_EVENT_NAMES_WB_EVAL
+    + EXPECTED_EVENT_NAMES_WC_ADVISE
+    + EXPECTED_EVENT_NAMES_WC_FIX
     + EXPECTED_EVENT_NAMES_COST
 )
 
@@ -122,6 +137,8 @@ _CONTRACT_VOCABULARIES: tuple[tuple[str, tuple[str, ...], str], ...] = (
     ("EVENT_NAMES_WS", EXPECTED_EVENT_NAMES_WS, "IC-WS-SYNTH A6"),
     ("EVENT_NAMES_WB_INFER", EXPECTED_EVENT_NAMES_WB_INFER, "IC-WB-INFER A6"),
     ("EVENT_NAMES_WB_EVAL", EXPECTED_EVENT_NAMES_WB_EVAL, "IC-WB-EVAL A6"),
+    ("EVENT_NAMES_WC_ADVISE", EXPECTED_EVENT_NAMES_WC_ADVISE, "IC-WC-ADVISE A6"),
+    ("EVENT_NAMES_WC_FIX", EXPECTED_EVENT_NAMES_WC_FIX, "DL-047 SuggestedFix"),
     ("EVENT_NAMES_COST", EXPECTED_EVENT_NAMES_COST, "DL-048 cost"),
 )
 
@@ -133,6 +150,8 @@ _UNION_NAME_ORDER: tuple[str, ...] = (
     "EVENT_NAMES_WS",
     "EVENT_NAMES_WB_INFER",
     "EVENT_NAMES_WB_EVAL",
+    "EVENT_NAMES_WC_ADVISE",
+    "EVENT_NAMES_WC_FIX",
     "EVENT_NAMES_COST",
 )
 
