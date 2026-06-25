@@ -54,8 +54,8 @@ These cannot both be the implementation target. They disagree on (a) **which arc
 
 ### Artifact Authority Hierarchy (highest → lowest)
 
-1. **Doctrine** (`01_governance/doctrine/`) — truth; wins all conflicts.
-2. **Constitution** (`01_governance/constitution/`) — operationalized doctrine.
+1. **Doctrine** (`00_owner/doctrine/`) — truth; wins all conflicts.
+2. **Constitution** (`00_owner/constitution/`) — operationalized doctrine.
 3. **Governance Specifications** (QA Governance, Observability Governance, this Control System, Classification Decisions) — govern *how* implementation proceeds.
 4. **Owner-ratified Architecture Spec** (the declared canonical architecture, once Deliverable 1 resolves).
 5. **Ownership Specification** → **Object Model** → **Behavior Model** (the ratified triad, in that order).
@@ -128,7 +128,7 @@ Per the verified `REPOSITORY_ARCHITECTURE.md` structure:
 - **Governance / canonical control:** `01_governance/` (doctrine, constitution, decisions, frameworks, QA/Observability/Control governance).
 - **Architecture (canonical, contracts):** `03_architecture/` (Cognitive Responsibility Spec, Ownership/Object/Behavior, Contract Packages, Generation Framework). **Contracts live here.**
 - **Product / UX specifications:** `02_product/`.
-- **Execution tracking / backlog:** `05_execution/` and `01_governance/backlog/`.
+- **Execution tracking / backlog:** `05_execution/` and `00_owner/backlog/`.
 - **Historical / Source (non-binding):** `04_research/**` and `raw/notion/**`.
 - **Generated code:** **no governed location is defined** — there is **no code-tree convention** in the repository (it is a knowledge base). *Finding:* a code-location convention does not yet exist and must be defined before code generation.
 

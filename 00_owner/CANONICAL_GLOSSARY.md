@@ -58,7 +58,7 @@
 | **Tier 5** | **Enterprise** | "Org", "Custom", "Corporate" |
 | **(non-consumer)** | **Internal** | "test tier", "admin tier", "god mode" — a **non-consumer** test-bypass entitlement, **not** part of the 1–5 ladder |
 
-Tiers are a **tier-keyed config dimension** (DL-048 §4c + CHG-056 envelope): each knob (project-size envelope, active projects, Deep/day, fix·chat caps, model routing, token budget) is set **per tier**, increasing up the ladder. Use `tier` as the config/telemetry key; values for **Tier 1 (Free)** and **Tier 2 (Basic)** are owner-confirmed (Calibration §4c), **Tiers 3–5 (Pro · Team · Enterprise) are TBD** (Open-TBD A1/E3; ladder draft in `01_governance/backlog/BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE.md`). **Do not hard-code tier behavior** — read it from config.
+Tiers are a **tier-keyed config dimension** (DL-048 §4c + CHG-056 envelope): each knob (project-size envelope, active projects, Deep/day, fix·chat caps, model routing, token budget) is set **per tier**, increasing up the ladder. Use `tier` as the config/telemetry key; values for **Tier 1 (Free)** and **Tier 2 (Basic)** are owner-confirmed (Calibration §4c), **Tiers 3–5 (Pro · Team · Enterprise) are TBD** (Open-TBD A1/E3; ladder draft in `00_owner/backlog/BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE.md`). **Do not hard-code tier behavior** — read it from config.
 
 ## Canon — outcome family (DL-050)
 
@@ -99,6 +99,8 @@ qualified canonical form below.** (This register *qualifies* — it does not red
 | **Acceptance** | user-attested → **UserAcceptanceRecord** · target met → **NFR Acceptance** | product / build |
 | **State** | product maturity → **Understanding State** · machine status → **run state** (`run_status`) | product / eng |
 | **Policy** | OSLO product policies → **Product Policy** · build constraints → **Build-Policy** | product / build |
+| **Founder Console** | the founder's command surface (GTM cockpit v2 + build / Dev-Readiness v3) → **Intralign Founder Console** *(this is the surface meant by unqualified prior uses; the Dev-Readiness panel renders here)* | company/build (`intralign-founder-console`) |
+| | the OSLO **product's** observability/economics surface → **OSLO Observability Console** *(reserved name; never "Founder Console")* | product (`30_engineering/telemetry/OSLO_RELEASE_1_OBSERVABILITY_AND_ECONOMICS_PLATFORM_SPECIFICATION_V1`) |
 
 **Semantic landmines** (same word, unrelated/opposite meaning):
 

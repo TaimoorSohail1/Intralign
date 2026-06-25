@@ -6,11 +6,11 @@
 
 The binding rules live in the **`oslo-knowledge-base`** repo, ratified under **DL-043** and **DL-044**:
 
-- `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md` — the engineering standard (applies to **any** autonomous coding agent, not just Claude Code).
-- `01_governance/AUTONOMOUS_IMPLEMENTATION_CONTROL_SYSTEM_V1.md` — precedence, MAY/MUST-NOT, escalation, readiness gate.
-- `01_governance/DEPLOYMENT_GOVERNANCE_SPECIFICATION_V1.md` — branch/promotion/CI gates/STOP conditions.
-- `03_architecture/contracts/` — the Wave A–E + U contract packages (Impl/QA/Obs triads).
-- `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md` + the DL-043/DL-044 decision entries.
+- `00_owner/build_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md` — the engineering standard (applies to **any** autonomous coding agent, not just Claude Code).
+- `00_owner/build_governance/AUTONOMOUS_IMPLEMENTATION_CONTROL_SYSTEM_V1.md` — precedence, MAY/MUST-NOT, escalation, readiness gate.
+- `00_owner/build_governance/DEPLOYMENT_GOVERNANCE_SPECIFICATION_V1.md` — branch/promotion/CI gates/STOP conditions.
+- `20_handoff/contracts/` — the Wave A–E + U contract packages (Impl/QA/Obs triads).
+- `30_engineering/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md` + the DL-043/DL-044 decision entries.
 
 **If this digest and an authoritative source ever differ, the source wins.**
 

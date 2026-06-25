@@ -5,7 +5,7 @@
 
 > **Read me first.** This package points to the canonical foundation, states what is **Ratified vs Ready-for-Review vs Historical**, gives the build order, the hard rules, the readiness score, and the residuals. If you read one more doc after this, read the **Cognitive Responsibility Architecture Specification** and **DL-043**.
 >
-> **To actually start building**, read the **[Engineering Onboarding Runbook](RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md)** (`03_architecture/`) — it sequences the who-does-what (Claude Code access, GitHub, environment bring-up, the per-wave loop). Tracker import and the env-bind starter kit (docker-compose, CI, `.env`) live in `03_architecture/engineering/`.
+> **To actually start building**, read the **[Engineering Onboarding Runbook](RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md)** (`03_architecture/`) — it sequences the who-does-what (Claude Code access, GitHub, environment bring-up, the per-wave loop). Tracker import and the env-bind starter kit (docker-compose, CI, `.env`) live in `30_engineering/delivery/`.
 
 ---
 
@@ -17,15 +17,15 @@ OSLO is a **Planning Intelligence / Understanding-Improvement System**: it inges
 
 | # | Document | Folder | Status |
 |---|---|---|---|
-| 1 | **Cognitive Responsibility Architecture Specification** | `03_architecture/specifications/` | **Canonical (DL-043 A)** |
-| 2 | **DL-043** decision + disposition | `01_governance/decisions/decision_log.md` + `…_DL043_DISPOSITION.md` | **Ratified w/ Conditions** |
-| 3 | **Epistemic State Model** · **Derived Cognition Lifecycle** · **User Acceptance / Plan-Fact** | `03_architecture/decisions/` | **Ratified (DL-043 D/E/G)** |
-| 4 | **Runtime Object Model** · **Behavior Model** · **Ownership Update** · **Logical Data Model** | `03_architecture/runtime_models/` | **Ratified/updated (DL-043)** |
-| 5 | **Contract Inventory** · **Contract Generation Plan** | `03_architecture/contracts/` | **Updated (DL-043)** |
+| 1 | **Cognitive Responsibility Architecture Specification** | `30_engineering/specifications/` | **Canonical (DL-043 A)** |
+| 2 | **DL-043** decision + disposition | `00_owner/decisions/decision_log.md` + `…_DL043_DISPOSITION.md` | **Ratified w/ Conditions** |
+| 3 | **Epistemic State Model** · **Derived Cognition Lifecycle** · **User Acceptance / Plan-Fact** | `00_owner/architecture_decisions/` | **Ratified (DL-043 D/E/G)** |
+| 4 | **Runtime Object Model** · **Behavior Model** · **Ownership Update** · **Logical Data Model** | `30_engineering/runtime_models/` | **Ratified/updated (DL-043)** |
+| 5 | **Contract Inventory** · **Contract Generation Plan** | `20_handoff/contracts/` | **Updated (DL-043)** |
 | 6 | **QA Governance** · **Observability Governance** | `01_governance/` | **Ratified (DL-043 H/I)** |
 | 7 | **Application/Platform Classification** | `01_governance/` | **Ratified (DL-043 J)** |
 | 8 | **Autonomous Implementation Control System** · **Claude Code Implementation Constraints** | `01_governance/` | **Ratified / Pending-ratify** |
-| 9 | **Runtime Environment Constraint Profile** + **DL-043 reconciliation** + **Calibration Defaults** | `03_architecture/environment/` | **Owner-provided / R1–R5 confirmed** |
+| 9 | **Runtime Environment Constraint Profile** + **DL-043 reconciliation** + **Calibration Defaults** | `30_engineering/environment/` | **Owner-provided / R1–R5 confirmed** |
 
 ## 2. The Architecture in Five Sentences
 
@@ -37,7 +37,7 @@ OSLO is a **Planning Intelligence / Understanding-Improvement System**: it inges
 
 ## 3. Contract Roadmap & Build Order
 
-All contract packages live in `03_architecture/contracts/`. Each is an **Impl + QA + Observability** triad.
+All contract packages live in `20_handoff/contracts/`. Each is an **Impl + QA + Observability** triad.
 
 | Wave | Package(s) | Owner | Status |
 |---|---|---|---|
@@ -100,7 +100,7 @@ All contract packages live in `03_architecture/contracts/`. Each is an **Impl + 
 ## 9. Where Things Live (reorganized tree)
 
 - `01_governance/` — doctrine, constitution, **decisions** (DL ledger), governance specs (QA/Obs/Control/Classification/Claude-Code), changelog.
-- `03_architecture/specifications/ · runtime_models/ · contracts/ · decisions/ · reviews/ · environment/ · legacy_layer_engineering/`.
+- `30_engineering/specifications/ · runtime_models/ · contracts/ · decisions/ · reviews/ · environment/ · legacy_layer_engineering/`.
 - `02_product/specs/ux · models · decisions · audits_reviews · data_api_nfr · testing_fixtures · planning` (+ `CURRENT_TRUTH.md` at root — *secondary representation under DL-043*).
 - `04_research/`, `raw/` — **Source Material, non-binding** (never an implementation source).
 

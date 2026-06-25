@@ -1,7 +1,7 @@
 # Phase V — Wave U: User Acceptance & Reconciliation (additive, non-governance)
 
 **Sequence:** After Phase IV. · **Status:** Not started · **Owner gate:** required before Phase VI.
-**Contracts:** `IC/QA/OBS-WU-ACCEPT` (`03_architecture/contracts/WAVE_C_AND_U_CONTRACT_PACKAGES_ADVISORY_AND_ACCEPTANCE.md`, Wave U section).
+**Contracts:** `IC/QA/OBS-WU-ACCEPT` (`20_handoff/contracts/WAVE_C_AND_U_CONTRACT_PACKAGES_ADVISORY_AND_ACCEPTANCE.md`, Wave U section).
 
 ## Goal
 Let the **user** accept a recommendation and record that acceptance as a **user-attested plan fact** — then track whether the understanding behind an accepted item later moves (Acceptance-Impact). This is the disposition seam, implemented as **attestation + Derived cognition**, **not** as an Authority/governance engine. OSLO never self-accepts.
@@ -14,20 +14,20 @@ Let the **user** accept a recommendation and record that acceptance as a **user-
 > Links only; nothing is copied here. The contract below is authoritative — if a plan and a contract differ, the **contract wins**.
 
 ### Phase-specific (Wave U — User Acceptance, additive/non-governance)
-- **Contract:** `03_architecture/contracts/WAVE_C_AND_U_CONTRACT_PACKAGES_ADVISORY_AND_ACCEPTANCE.md` (**Wave U section**)
-- **Conformance:** `03_architecture/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§3 WU-ACCEPT)
-- **Design basis:** `03_architecture/decisions/USER_ACCEPTANCE_EVENT_IMPACT_ANALYSIS_001.md` · DL-043 constituent G (`01_governance/decisions/decision_log.md`)
-- **Acceptance-impact config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§3 acceptance-impact drift)
+- **Contract:** `20_handoff/contracts/WAVE_C_AND_U_CONTRACT_PACKAGES_ADVISORY_AND_ACCEPTANCE.md` (**Wave U section**)
+- **Conformance:** `20_handoff/contracts/WAVE_CONTRACT_PACKAGES_CONFORMANCE_REVIEW_001.md` (§3 WU-ACCEPT)
+- **Design basis:** `00_owner/architecture_decisions/USER_ACCEPTANCE_EVENT_IMPACT_ANALYSIS_001.md` · DL-043 constituent G (`00_owner/decisions/decision_log.md`)
+- **Acceptance-impact config:** `30_engineering/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md` (§3 acceptance-impact drift)
 
 ### Always-required (every phase)
-- **Agent rules:** `03_architecture/engineering/starter_kit/AGENTS.md` · `01_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
-- **Canonical architecture:** `03_architecture/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
-- **Models:** `03_architecture/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
-- **Standards:** `01_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
-- **Numeric config:** `03_architecture/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
-- **Ratified scope:** `01_governance/decisions/decision_log.md` (DL-043, DL-044)
-- **Testing:** `02_product/specs/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
-- **Observability:** `01_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
+- **Agent rules:** `30_engineering/delivery/starter_kit/AGENTS.md` · `00_owner/build_governance/CLAUDE_CODE_IMPLEMENTATION_CONSTRAINTS_V1.md`
+- **Canonical architecture:** `30_engineering/specifications/OSLO_COGNITIVE_RESPONSIBILITY_ARCHITECTURE_SPECIFICATION_V1.md`
+- **Models:** `30_engineering/runtime_models/RELEASE_1_RUNTIME_OBJECT_MODEL_V1.md` · `…/RELEASE_1_RUNTIME_BEHAVIOR_MODEL_V1.md` · `…/RELEASE_1_LOGICAL_DATA_MODEL_V1.md`
+- **Standards:** `00_owner/build_governance/QA_GOVERNANCE_SPECIFICATION_V1.md` · `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md`
+- **Numeric config:** `30_engineering/environment/RELEASE_1_CALIBRATION_DEFAULTS_V1.md`
+- **Ratified scope:** `00_owner/decisions/decision_log.md` (DL-043, DL-044)
+- **Testing:** `30_engineering/testing_fixtures/RELEASE_1_TESTING_STRATEGY_V1.md` · `…/DETERMINISM_CALIBRATION_NOTE_001.md` (test authoring + determinism tiers; pair with each contract's QA section)
+- **Observability:** `00_owner/build_governance/OBSERVABILITY_GOVERNANCE_SPECIFICATION_V1.md` + this wave's **OBS contract** (inside the wave package above — events · audit · two-axis replay · drift/trust signals). Every governed output must emit and be replayable.
 
 ## Depends on
 Phase IV (recommendations to accept), Phase II (attested store + version-pinning to CHRs).

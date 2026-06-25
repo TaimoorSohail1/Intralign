@@ -34,7 +34,7 @@
 ## 2. Day-1 ordered steps
 1. **Read** (≈90 min): the README→Protocol→START_HERE 6 docs + the DL-046–050 note → Runbook Phase 1.
 2. **Clone** the knowledge base (reference) and **create/clone the app repo** (where code lands).
-3. **Seed the app repo** from `03_architecture/engineering/starter_kit/`: copy in `docker-compose.yml`, `ci-pipeline.yml` (→ `.github/workflows/ci.yml`), and **`CLAUDE.md` + `AGENTS.md`** at the app-repo root. Create `.env` from the values described in the starter-kit `README.md` (per-environment secrets; **never commit secrets**).
+3. **Seed the app repo** from `30_engineering/delivery/starter_kit/`: copy in `docker-compose.yml`, `ci-pipeline.yml` (→ `.github/workflows/ci.yml`), and **`CLAUDE.md` + `AGENTS.md`** at the app-repo root. Create `.env` from the values described in the starter-kit `README.md` (per-environment secrets; **never commit secrets**).
 4. **`docker compose up -d`** — confirm the five datastores are healthy: **Postgres · Neo4j · MongoDB · Qdrant · Redis**.
 5. **Scaffold the code-tree** per `starter_kit/CLAUDE.md` (and `AGENTS.md`): `/backend/responsibilities/{perceive,retain,infer,evaluate,advise,disclose}` + `/services`, `/shared`, `/frontend`, `/tests`. **No `/authority` module** (Authority is inactive in R1).
 6. **Wire the CI gates** (`ci.yml`, per Deployment Governance): build · **contract-traceability** · tests · **epistemic-invariant** · observability · security. **Prove each can FAIL the build** (force a failure in each, confirm red).

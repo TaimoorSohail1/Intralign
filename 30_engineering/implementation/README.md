@@ -2,7 +2,7 @@
 
 **Document Type:** Execution Planning — implementation roadmap (non-canonical tracking) · **Status:** Reference under DL-044 · **Date:** 2026-06-04
 
-> **Purpose:** a developer-facing, phase-by-phase home for execution. Each phase folder holds an `IMPLEMENTATION_PLAN.md` with its goal, the contracts in scope, dependencies, and the **expected outcomes / definition of done**. The phases mirror the **ratified build order** (Engineering Handoff Package §3, DL-044) — they don't invent scope; the contracts in `03_architecture/contracts/` remain authoritative.
+> **Purpose:** a developer-facing, phase-by-phase home for execution. Each phase folder holds an `IMPLEMENTATION_PLAN.md` with its goal, the contracts in scope, dependencies, and the **expected outcomes / definition of done**. The phases mirror the **ratified build order** (Engineering Handoff Package §3, DL-044) — they don't invent scope; the contracts in `20_handoff/contracts/` remain authoritative.
 
 ## Phase map (dependency spine — build in order)
 
@@ -24,7 +24,7 @@
 
 ## Related
 
-- Build order + readiness: `03_architecture/RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md`
-- Who-does-what + loop + testing: `03_architecture/RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md`
-- Tracker import (issues per contract): `03_architecture/engineering/LINEAR_IMPORT_README.md`
-- Contracts (authoritative): `03_architecture/contracts/`
+- Build order + readiness: `30_engineering/delivery/RELEASE_1_ENGINEERING_HANDOFF_PACKAGE_V1.md`
+- Who-does-what + loop + testing: `30_engineering/delivery/RELEASE_1_ENGINEERING_ONBOARDING_RUNBOOK_V1.md`
+- Tracker import (issues per contract): `30_engineering/delivery/LINEAR_IMPORT_README.md`
+- Contracts (authoritative): `20_handoff/contracts/`

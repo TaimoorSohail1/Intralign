@@ -838,5 +838,16 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-067 — Console-Driven DL Landing (automate the DL-065 flow server-side) → `00_owner/decisions/records/DL-067-console-driven-dl-landing.md`
 - DL-068 — Wave A sign-off + Wave B authorization → `00_owner/decisions/records/DL-068-wave-a-signoff-wave-b-authorization.md`
 - DL-069 — Internal Gemma (local Llama runtime) as the primary LLM (amends DL-054 §5) → `00_owner/decisions/records/DL-069-internal-gemma-primary-llm.md`
+- DL-070 — Ratify the Phase 1 "Prove Understanding" falsifiable exit gate (P-4 / DL-059 realization) → `00_owner/decisions/records/DL-070-phase1-prove-understanding-exit-gate.md`
+- DL-071 — DL-053 Disambiguation Register: 'Founder Console' (Intralign Founder Console vs OSLO Observability Console) → `00_owner/decisions/records/DL-071-founder-console-disambiguation.md`
+- DL-072 — Wave B exit-gate pass (with conditions) + Phase IV/Wave C authorization → `00_owner/decisions/records/DL-072-wave-b-exit-gate-wave-c-authorization.md`
+- DL-073 — Two-mode stage-conditioned onboarding (deferred-signup) + save-to-keep signup trigger → `00_owner/decisions/records/DL-073-two-mode-onboarding-deferred-signup.md`
+- DL-074 — Hybrid pricing — tier subscription + per-Deep-Pass overage (single-governor / multi-meter); extends DL-048 → `00_owner/decisions/records/DL-074-hybrid-pricing-multi-meter.md`
+- DL-075 — Ratify the Outcome-Lifecycle (Planning/Execution/Validation) orientation crosswalk → `00_owner/decisions/records/DL-075-outcome-lifecycle-orientation-crosswalk.md`
+- DL-076 — Ratify the OSLO release model & Alpha release ladder (R1-R5 reconciled with Alpha/Beta/§20) → `00_owner/decisions/records/DL-076-release-model-alpha-ladder.md`
+- DL-077 — Ratify the planning-artifact model architecture - Option C hybrid core (fixed understanding core + extensible execution-planning layer) → `00_owner/decisions/records/DL-077-planning-artifact-model-hybrid-core.md`
+- DL-078 — Ratify the artifact-profile mechanism & registry realization design (DL-077 Option C realization intent) → `00_owner/decisions/records/DL-078-artifact-profile-realization-design.md`
+- DL-079 — Ratify the third-party evaluation-lens cognition boundary (E4): governed input, never silent disposition → `00_owner/decisions/records/DL-079-e4-lens-cognition-boundary.md`
+- DL-080 — Ratify the GA deferred-signup realization (provisional identity · pre/post-signup gating · pre-signup retention & privacy) → `00_owner/decisions/records/DL-080-ga-deferred-signup-realization.md`
 
 <!-- RECORDS-INDEX:END -->
