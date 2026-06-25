@@ -1,8 +1,9 @@
 # DTM-0018 — REST exposure: api/v1 read routers + render DTOs (the layer the UI consumes)
 
-**Status:** Planned — BLOCKED on Wave E authorization (DL-044) + Wave U (#69) merge · **Module:**
-DTM-0018 · **Phase:** VI (Wave E) · **Contract:** **IC-WE-DISCLOSE** (presentation transport) +
-**ADR-0003** (REST `/v1`) · **Depends:** Waves A–U (the governed objects), Data Model v1.2.
+**Status:** Ready for review — owner authorized Wave E start 2026-06-25 · **Module:** DTM-0018 ·
+**Phase:** VI (Wave E) · **Contract:** **IC-WE-DISCLOSE** (presentation transport) + **ADR-0003**
+(REST `/v1`) · **Depends:** Waves A–U (present in this branch via the stack), Data Model v1.2. ·
+**Note:** Wave U (#69) not yet merged to `main`; its code is in this branch; owner directed start.
 
 ## Goal / observable behavior
 
@@ -95,7 +96,135 @@ existing capture/acceptance seams).
 
 ## Worker report
 
-_(worker fills)_
+**Status: Ready for review.** Cites IC-WE-DISCLOSE (E0/E1) + ADR-0003.
+
+### What was built (additive only — no migration, no new dependency)
+
+**DTOs — `shared/entities.py` (Data Model v1.2 verbatim; the response models, ADR-0003).**
+Filled the skeleton entities and added the full Disclose read-surface DTO set, fields
+bound to Data Model v1.2 (§7 Project, §10 AnalysisRun/CAFState/ConfidenceState, §11
+Finding, §12 Recommendation incl. RS-R3 `deferred` + RS-R7 card fields, §13
+Notification) and the Wave U receipts (UserAcceptanceRecord, PlanFact,
+AcceptanceImpactAssessment). Each **Derived** DTO carries a `DerivedEnvelope`
+(`label`) holding the epistemic-safety triple — `epistemic_label` (always `derived`)
++ `confidence_band` (LDM §3.1 / Calibration §2, the user-facing value) +
+`conflict_state` + `current_chr_ref` lineage — so the UI renders without re-deriving
+(decision #5). UAR/PlanFact carry `epistemic_label="attested-user"`. New enums
+(ProjectLifecycle, AnalysisRunType/Status, FindingType/Status, Severity, Dimension,
+RecommendationType/Status, EffortLevel, ConfidenceBand, ConflictState, Notification*)
+are transcribed verbatim from Data Model v1.2 §7/§10/§11/§12/§13.
+
+**Render layer — `backend/services/render/` (cognition → DTO mappers; replaces the stub).**
+- `read_seam.py` — the **SELECT-only** `ProjectionReader` Protocol + `SupabaseProjectionReader`.
+  Reads the **existing** persistence: the `derived.*_current` live-projection tables
+  (LDM §3.1; migration 20260612090100 — each row already carries `current_payload` +
+  the epistemic envelope) for derived cognition, and the append-only
+  `user_acceptance_record` / `attested_assertion` retention tables for the canonical
+  receipts. No insert/update/delete/upsert/append method exists on the reader (read-mostly
+  by construction; a negative test asserts this).
+- `mappers.py` — `finding_to_dto` / `recommendation_to_dto` / `confidence_to_dto` /
+  `caf_to_dto` / `acceptance_impact_to_dto` / `uar_to_dto` / `plan_fact_to_dto` /
+  `project_to_dto` / `analysis_run_to_dto` / `notification_to_dto`. Each reads the governed
+  **source row** and emits the external DTO with the epistemic label intact. **The internal
+  `shared.epistemic` types are never serialized verbatim** (decision #4; negative-proven).
+  Internal vocab is translated to the Data-Model enums (Advise `recommendation_type`
+  `candidate_improvement/suggested_action → improvement`; Infer `finding_type`
+  `gap+gap_kind/conflict/risk →` the §11 flat taxonomy).
+
+**Read routers — `backend/api/v1/routers/**` (GET only) + `v1/__init__.py` (includes them).**
+GET endpoints (the operations the screens in `UI_SCREEN_INVENTORY` actually consume):
+- `GET /v1/projects`, `GET /v1/projects/{project_id}` (Dashboard, Project Workspace)
+- `GET /v1/projects/{project_id}/analysis-runs`, `GET /v1/analysis-runs/{analysis_run_id}` (Analysis Progress poll §11, Deep Results)
+- `GET /v1/projects/{project_id}/findings`, `GET /v1/findings/{finding_id}` (Findings Workspace, Orientation)
+- `GET /v1/projects/{project_id}/recommendations`, `GET /v1/findings/{finding_id}/recommendations` (RP-C1 Finding-context list), `GET /v1/recommendations/{recommendation_id}`
+- `GET /v1/projects/{project_id}/confidence`, `GET /v1/projects/{project_id}/caf` (Dashboard, Confidence Experience, Orientation)
+- `GET /v1/projects/{project_id}/acceptance`, `…/plan-facts`, `…/acceptance-impact` (History/Timeline, Awareness)
+- `GET /v1/notifications` (Dashboard, Notification Center)
+
+Routers are thin: auth/scoping via `api/deps.py` (`require_principal` → bearer-required
+Principal; `get_projection_reader` → the SELECT-only seam), delegate to render mappers.
+`app.py` still serves `/openapi.json`. `api/deps.py` was upgraded from a `NotImplementedError`
+stub to a working contract surface (bearer → Principal, 401 on absent token; reader dependency
+overridable in tests) — additive, read-only.
+
+### Hard-constraint confirmation
+- **Read-mostly:** every DTM-0018 `/v1` route is GET (negative test enumerates the routes and
+  asserts no POST/PUT/PATCH/DELETE and no `:verb` path is reachable). No accept/capture/compute
+  path added; acceptance stays on the existing Wave U seam.
+- **No verbatim leak:** OpenAPI exposes only `shared.entities` DTOs; negatives assert the internal
+  cognition fields (`model_or_rule_version`/`understanding_state`/`confidence_stage`) never appear
+  and `shared.entities` never imports `shared.epistemic`.
+- **Every Derived object carries its epistemic label** (positive + negative tests).
+- **No migration, no new dependency** (`pyproject.toml` / `package.json` runtime unchanged; only
+  the approved test-tooling line stays). **No cognition/orchestration touched**; render appends no
+  CHR (gate-5 stays green — no CHR-append call-site added).
+
+### Tests (TDD — red first, then green)
+- `tests/positive/render/test_mappers.py` — mapper-per-object, labels intact.
+- `tests/negative/render/test_no_verbatim_leak.py` — DTO ≠ internal type; no internal fields;
+  Derived must carry a label; entities ≠ epistemic.
+- `tests/positive/api/` (conftest fake reader + dependency overrides) + `test_read_endpoints.py`
+  — GET list/detail per resource, labels in the JSON.
+- `tests/negative/api/test_read_surface_negatives.py` — 401 unauth; 404 out-of-workspace (§12);
+  **no mutating method / no :verb on the read surface (Critical)**; OpenAPI exposes no internal
+  cognition schema (Critical); reader has no write method.
+
+### Exact verification commands + results
+- `cd code && .venv/bin/python -m pytest tests/positive tests/negative -q` →
+  **574 passed, 65 skipped** (the 65 skips are pre-existing live/network-gated tests, unchanged;
+  my 40 new tests pass; no regression). The `StatusCode.UNAVAILABLE` lines are the offline
+  trace-export harness, not test failures.
+- `cd code && .venv/bin/ruff check .` → **All checks passed!**
+- `cd code && .venv/bin/python ci/gate_invariants.py` (gate-4) → **PASS**.
+- `cd code && .venv/bin/python ci/gate_observability.py` (gate-5) → **PASS**.
+- Backend up (`uvicorn backend.api.app:app --port 8000`), then
+  `cd code/frontend && npm run api:gen` → Orval generated hooks for projects, analysis-runs,
+  findings, recommendations, confidence, acceptance, notifications (+ schemas).
+  `bash scripts/check-openapi-drift.sh` → **"Frontend is in sync with the backend OpenAPI
+  contract."** (`npx tsc --noEmit` exit 0). `npm run build` (tsc -b + vite) → **built in 408ms**.
+- OpenAPI surface grew from `/health` to 16 paths (all GET); component schemas are the external
+  DTOs only.
+- `git status` — no change under `code/supabase/migrations/`; `git diff` empty for
+  `pyproject.toml` and `frontend/package.json` deps. Generated Orval client stays gitignored
+  (ADR-0003).
+
+### Spec gaps hit + how resolved/escalated (ANTI_ASSUMPTION)
+
+1. **Project / AnalysisRun / Notification have no built persistence/read seam (ESCALATE).**
+   `backend/platform/__init__.py` is a one-line stub and **no migration creates a `project`,
+   `analysis_run`, or `notification` table** in this branch (the built waves persist cognition
+   as CHRs + `derived.*_current`, and Wave U writes `user_acceptance_record`/`attested_assertion`).
+   `UI_SCREEN_INVENTORY` requires `GET /projects`, `GET /projects/{pid}`,
+   `GET /projects/{pid}/analysis-runs`, `GET /analysis-runs/{rid}`, `GET /notifications`.
+   **Resolution (no invention):** I exposed exactly those GET endpoints (so the OpenAPI/Orval
+   contract the UI binds to is complete) and defined the SELECT-only reads against the
+   Data-Model-named tables (`project`/`analysis_run`/`notification`, §7/§10/§13) on the reader.
+   I did **NOT** author any migration or invent table columns. The reads work the moment the
+   platform-persistence slice lands; tests exercise them via the in-memory fake. **This is a
+   genuine upstream gap: the Project/AnalysisRun/Notification persistence (platform module) is
+   unbuilt.** Flagging for the owner/EM — DTM-0018 cannot create canonical platform tables
+   (human approval required for schema/persistence; CLAUDE.md), and the screens need them. Likely
+   a platform-persistence task before/with DTM-0019+.
+
+2. **Derived-cognition LIST reads use `derived.*_current`, not the CHR repo.** The existing
+   `ChrRepository` read methods (`latest_for_output`/`get`/`lineage_chain`) return a single
+   stream's latest/detail/history, not "all findings/recs for a project" — and `repository.py` is
+   READ-ONLY in my boundary. The `derived.*_current` live-projection tables (LDM §3.1, already
+   migrated) ARE the designed presentation read model and carry the epistemic envelope, so render
+   reads them via a SELECT-only reader in `services/render` (which I own). **Caveat for the EM:**
+   no built wave currently *populates* `derived.*_current` (the stages emit CHRs; the
+   projection-write step isn't implemented yet), so these lists return rows only once that
+   projection-write exists. The READ contract + mappers are correct and tested against the real
+   row shape; the projection-WRITE is upstream (not DTM-0018's scope — read-only).
+
+3. **Confidence `?history=true` chain (spec §6) not built here.** The current-confidence GET is
+   provided; the supersession-chain variant depends on the CHR `lineage_chain` walk over a
+   populated projection — deferred to the surface slice that needs it (no screen in scope strictly
+   requires the chain for DTM-0018; added if DTM-0019+ binds it). Not invented.
+
+No OBS-WE event tuples were added to `events.py` (gate-5 pins the per-wave A6 vocabularies exactly;
+the `Disclosure Rendered`/`Notification Raised` OBS-WE events are surface-emitted in DTM-0019+, not
+by this read-transport slice — adding them now would fail gate-5 and isn't this contract's surface).
 
 ## Engineering-manager review notes
 
@@ -103,4 +232,34 @@ _(EM fills)_
 
 ## Approved by engineering manager
 
-_(added only after verification passes)_
+Status: Approved
+
+Executive summary:
+- REST read surface built additively: `services/render` (read_seam SELECT-only + cognition→DTO
+  mappers) + 7 GET routers (projects, analysis_runs, findings, recommendations, confidence,
+  acceptance, notifications) included in `v1/__init__.py`; `shared/entities.py` filled with the
+  Data Model v1.2 DTOs, every Derived DTO carrying a `DerivedEnvelope` (epistemic_label + band +
+  conflict + CHR lineage). OpenAPI grew `/health` → 16 GET paths. Satisfies IC-WE-DISCLOSE
+  (presents, never generates) + ADR-0003 (DTOs verbatim).
+
+Verification (EM re-ran, all green):
+- `.venv/bin/pytest tests/positive tests/negative -q` → **574 passed, 65 skipped** (40 new; no
+  regression).
+- `.venv/bin/ruff check .` → All checks passed. gate-4 → PASS. gate-5 → PASS.
+- Hard constraints test-enforced + spot-checked: `grep` confirms **GET-only** (no
+  post/put/patch/delete in routers); negatives bite — no-mutating-method, GET-only, no `:verb`
+  command path, 401 unauthenticated, 404 out-of-workspace, OpenAPI exposes no internal cognition
+  schema, `entities.py` has no `from shared.epistemic import`, `read_seam` SELECT-only.
+- No migration file added; no runtime dependency added (pyproject/package.json unchanged).
+
+Manual test plan:
+- Start backend on :8000 → `GET /v1/projects/{id}/findings` returns DTOs with labels; no endpoint
+  mutates a canonical row. `cd frontend && npm run api:gen` regenerates the client; drift gate green.
+
+Remaining risks / accepted follow-ups (both correctly escalated, NOT guessed):
+- **Platform persistence unbuilt** (projects/analysis_runs/notifications tables) — endpoints exist
+  but lists are empty until a platform-persistence task authors the schema (**owner approval
+  required** — CLAUDE.md migration rule). Tracked for a follow-up slice.
+- **No wave writes `derived.*_current` yet** — the read contract + mappers are correct/tested
+  against the real row shape; the projection-WRITE step is upstream (out of this read-only scope).
+- Neither blocks DTM-0019 (the shell consumes the generated client; empty lists render fine).
