@@ -20,6 +20,7 @@ import { AppShell } from "./AppShell";
 import { PlaceholderSurface } from "./PlaceholderSurface";
 import { MRIRoute } from "../surfaces/MRI/MRIRoute";
 import { FindingPanelRoute } from "../surfaces/Panels/FindingPanel/FindingPanelRoute";
+import { RecommendationPanelRoute } from "../surfaces/Panels/RecommendationPanel/RecommendationPanelRoute";
 
 const rootRoute = createRootRoute({
   component: AppShell,
@@ -114,16 +115,16 @@ const findingDetailRoute = createRoute({
   component: FindingPanelRoute,
 });
 
-// RP-C1 — Recommendation Panel ONLY within a Finding context.
+// DTM-0022 — the Recommendation Panel mounts at the nested recommendations route,
+// replacing the DTM-0019 placeholder. RP-C1: it renders ONLY within a Finding
+// context (this route lives only under a Finding). It presents the finding's
+// Recommendations as OSLO Recommended + Resolution Paths (presentation grouping,
+// no object) with the accept/reject/defer affordance that HANDS OFF to the Wave U
+// capture (the project Recommendation Workspace below) — Disclose never accepts.
 const findingRecommendationsRoute = createRoute({
   getParentRoute: () => findingRoute,
   path: "/recommendations",
-  component: () => (
-    <PlaceholderSurface
-      title="Recommendation Panel"
-      purpose="Recommendations for this finding (RP-C1 — only in a Finding context)."
-    />
-  ),
+  component: RecommendationPanelRoute,
 });
 
 const projectRecommendationsRoute = createRoute({
