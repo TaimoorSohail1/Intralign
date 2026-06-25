@@ -19,6 +19,7 @@ import {
 import { AppShell } from "./AppShell";
 import { PlaceholderSurface } from "./PlaceholderSurface";
 import { MRIRoute } from "../surfaces/MRI/MRIRoute";
+import { FindingPanelRoute } from "../surfaces/Panels/FindingPanel/FindingPanelRoute";
 
 const rootRoute = createRootRoute({
   component: AppShell,
@@ -103,15 +104,14 @@ const findingRoute = createRoute({
   component: () => <Outlet />,
 });
 
+// DTM-0021 — the Finding Panel mounts at the Finding-detail route, replacing the
+// DTM-0019 placeholder. It presents one finding + its Attested evidence lineage +
+// Derived confidence, and the RP-C1 affordance into the nested recommendations
+// route. Read-only.
 const findingDetailRoute = createRoute({
   getParentRoute: () => findingRoute,
   path: "/",
-  component: () => (
-    <PlaceholderSurface
-      title="Finding Panel"
-      purpose="A single finding, its evidence and explainability."
-    />
-  ),
+  component: FindingPanelRoute,
 });
 
 // RP-C1 — Recommendation Panel ONLY within a Finding context.
