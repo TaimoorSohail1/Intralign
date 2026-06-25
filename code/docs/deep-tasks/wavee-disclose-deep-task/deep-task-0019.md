@@ -1,8 +1,8 @@
 # DTM-0019 — App shell + design system: router, MUI/Intralign theme, epistemic-safety label
 
-**Status:** Planned — BLOCKED on DTM-0018 approval · **Module:** DTM-0019 · **Phase:** VI (Wave E)
-· **Contract:** **IC-WE-DISCLOSE** (E0 epistemic safety) + the UX master · **Depends:** DTM-0018
-(the generated client).
+**Status:** In progress — DTM-0018 approved (`36d3a2c`); owner authorized Wave E · **Module:**
+DTM-0019 · **Phase:** VI (Wave E) · **Contract:** **IC-WE-DISCLOSE** (E0 epistemic safety) + the
+UX master · **Depends:** DTM-0018 (the generated client — 16 GET paths now in OpenAPI).
 
 ## Goal / observable behavior
 
@@ -85,7 +85,96 @@ are set up. No surface content yet — this is the frame every DTM-0020+ surface
 
 ## Worker report
 
-_(worker fills)_
+**Status: Ready for review.** App shell (router + Intralign theme + providers) + the reusable
+epistemic-safety label are in place and tested; Vitest + Playwright are wired; build, drift gate,
+and prod audit are green. No surface content (DTM-0020+).
+
+### Files added / changed (all additive under `code/frontend/`)
+
+- **Theme (the clean seam):**
+  - `src/theme/tokens.ts` — Intralign palette (`charcoal #111315` / `warm-white #F5F4F0` /
+    `orange #D97A3A`), AA-checked surface tones + an epistemic-state tone set (attested / derived /
+    conflict / band tones). The only owner-ratified facts; no invented fonts/logo/redlines.
+  - `src/theme/index.ts` — `createTheme` MUI theme. `primary = orange` with **`contrastText =
+    charcoal`** (charcoal-on-orange ≈ 5.4:1 passes AA; white-on-orange does not). Default MUI type
+    scale + system font stack (OPEN_TBD E4 — designer refines this module only).
+- **Epistemic-safety label (centerpiece):**
+  - `src/components/confidenceBand.ts` — `resolveBand(value)` (the ±3 edge guard) + `BAND_LABEL`.
+  - `src/components/EpistemicLabel.tsx` — the reusable label; discriminated-union prop on
+    `standing` ("attested" | "derived") so Derived-as-settled is impossible by construction; plus
+    `fromDerivedEnvelope()` adapter that maps the generated `DerivedEnvelope` DTO `label` field.
+  - `src/components/confidenceBand.test.ts`, `src/components/EpistemicLabel.test.tsx` — Vitest.
+- **Router + shell:**
+  - `src/app/AppShell.tsx` — persistent AppBar (wordmark `OSLO`, text not logo) + permanent nav
+    rail (UI spec §2 IA) + `<Outlet/>` content region.
+  - `src/app/router.tsx` — code-based TanStack Router tree from `UI_SCREEN_INVENTORY.md` (13
+    screens). **RP-C1 encoded structurally:** the Recommendation Panel route lives only under a
+    Finding (`/projects/$projectId/findings/$findingId/recommendations`), never standalone.
+  - `src/app/PlaceholderSurface.tsx` — placeholder route element (renders no governed cognition).
+- **Providers:** `src/main.tsx` extended — `ThemeProvider` + `CssBaseline` → `QueryClientProvider`
+  (DTM-0018 client) → `RouterProvider`.
+- **Test setup / configs:** `vitest.config.ts`, `src/test/setup.ts`, `playwright.config.ts`,
+  `e2e/shell.spec.ts`; `package.json` scripts (`test`, `test:watch`, `test:e2e`);
+  `code/.gitignore` — ignore Playwright `test-results/` + `playwright-report/`.
+
+### Band / ±3 conservative edge-guard rule (implemented)
+
+Natural bands `0–49 low / 50–74 medium / 75–100 high`. The guard rounds **DOWN** (never up): a value
+strictly above a boundary (50 or 75) by **1 or 2** points drops to the lower band; the boundary value
+itself keeps the higher band; by **+3** the value has cleared the guard. So a low value can never
+display as high. Locked boundary cases (all asserted in `confidenceBand.test.ts`):
+
+| value | band | why |
+|---|---|---|
+| 48 | low | below 50; natural low |
+| 50 | medium | boundary value keeps the higher band |
+| 52 | low | 50+2, within the guard → drop |
+| 53 | medium | 50+3, cleared the guard |
+| 74 | medium | no boundary above it |
+| 75 | high | boundary value keeps the higher band |
+| 77 | medium | 75+2, within the guard → drop |
+| 78 | high | 75+3, cleared the guard |
+
+`50→medium` and `75→high` are the symmetric "boundary keeps the higher band" rule (the task names
+the `75→High` case explicitly; `50→medium` is its mirror). Confidence text is
+trust-in-understanding (`Low/Moderate/High understanding`) — never project-health/probability
+(negative-tested).
+
+### Negatives proven (Vitest — the point of E0)
+
+- A Derived item renders as **Derived**, never "settled"/"confirmed"/"attested" (the prop type has no
+  attested wording on the derived arm).
+- A value of 77 resolves to `medium` (`data-band="medium"`), never `high` — low-as-high is impossible.
+- Plan fact = `attested + source:user` → renders "You confirmed", not world-truth/Derived.
+
+### Exact commands + results
+
+- `npm install --save-dev vitest @testing-library/react @testing-library/jest-dom jsdom @playwright/test`
+  → `added 102 packages`. (`jest-dom` + `jsdom` are the approved supporting deps for the 3 named.)
+- `npm run build` (`tsc -b && vite build`) → **PASS**, `✓ 564 modules transformed`, `✓ built`.
+- `npx vitest run` → **PASS**, `Test Files 2 passed (2)`, `Tests 24 passed (24)`.
+- `bash scripts/check-openapi-drift.sh` (live) → started backend via
+  `.venv/bin/python -m uvicorn backend.api.app:app --port 8000` (16 GET paths confirmed), regenerated
+  the Orval client, `npx tsc --noEmit` → **"Frontend is in sync with the backend OpenAPI contract."**
+  The regen produced **no tracked change** (the generated client is gitignored) — not hand-edited.
+- `npx playwright install chromium` then `npx playwright test` → **PASS**, `2 passed` (shell renders +
+  nav; `/notifications` placeholder route resolves).
+- `npm audit --omit=dev --audit-level=high` (gate-6) → **`found 0 vulnerabilities`**. (Dev-tree
+  advisories exist in the vitest/playwright chains but are out of the prod-audit scope.)
+
+### Dependency confirmation
+
+- **No new runtime dependency.** The `dependencies` block is byte-identical in content (npm only
+  re-alphabetized it). New devDeps: `@playwright/test`, `vitest`, `@testing-library/react` (the 3
+  approved) + `@testing-library/jest-dom`, `jsdom` (the supporting deps the task lists as
+  already-present/approved). Used the code-based TanStack Router API (no new file-router plugin dep).
+
+### Notes / environment
+
+- Backend was startable from the repo `.venv` (uvicorn), so the **live** drift regen ran (not just
+  `tsc --noEmit`). The backend was stopped after the gate.
+- Working tree preserved: the only pre-existing change was the EM's status edit at the top of this
+  file. Nothing committed (staging/commit left to the EM).
 
 ## Engineering-manager review notes
 
@@ -93,4 +182,37 @@ _(EM fills)_
 
 ## Approved by engineering manager
 
-_(added only after verification passes)_
+Status: Approved
+
+Executive summary:
+- The bare scaffold is now a real Wave E app shell: MUI/Intralign theme (`theme/tokens.ts` +
+  `theme/index.ts`, charcoal-on-orange ≈5.4:1 AA), TanStack Router tree of the 13 inventory
+  screens + `AppShell`, providers wired in `main.tsx`, and the centerpiece reusable
+  **EpistemicLabel** (+ `confidenceBand` ±3 guard + `fromDerivedEnvelope` DTO adapter). No surface
+  content (correct — that's DTM-0020+).
+
+Verification (EM re-ran, all green):
+- `npm run build` → built (tsc -b + vite). `npx vitest run` → **24/24 passed**.
+- Worker reported `npx playwright test` 2/2 + `check-openapi-drift.sh` "in sync" + `npm audit
+  --omit=dev` 0 vulns; build+vitest reproduced here.
+- **Epistemic safety verified at the source:** `EpistemicLabel` prop is a **discriminated union on
+  `standing`** — the Derived arm carries no attested/"settled" wording (Derived always reads "a
+  recomputable projection — not settled"); the plan-fact (`user`) variant reads "You confirmed …
+  not asserted as world-truth." Derived-as-settled is impossible by construction (decision #5).
+- **Band authority correct:** `fromDerivedEnvelope` uses the DTO's authoritative `confidence_band`
+  (does NOT recompute) → the label can never disagree with the backend's governed band; the ±3
+  `resolveBand` guard is only the raw-value fallback.
+- **RP-C1 structural:** the Recommendation route exists only nested under a Finding
+  (`/projects/$projectId/findings/$findingId/recommendations`) — no standalone route.
+- No net-new runtime dependency (original 8 unchanged); only the 3 approved dev deps (+ jsdom,
+  jest-dom). No backend/migration change.
+
+Manual test plan:
+- `cd code/frontend && npm run dev` → shell loads with the Intralign theme; nav rail resolves
+  placeholder routes; the Recommendation route is unreachable except under a Finding.
+
+Remaining risks / accepted follow-ups:
+- Dev-tree `npm audit` (full) shows advisories in the vitest/playwright chains — OUT of gate-6's
+  `--omit=dev` scope (gate stays green); noted, not blocking. Bundle is ~390kB un-split — fine for
+  the shell; code-split per-surface as the surfaces land.
+- Placeholder routes render no governed cognition yet (by design — DTM-0020+).
