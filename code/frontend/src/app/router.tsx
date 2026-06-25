@@ -22,21 +22,24 @@ import { MRIRoute } from "../surfaces/MRI/MRIRoute";
 import { FindingPanelRoute } from "../surfaces/Panels/FindingPanel/FindingPanelRoute";
 import { RecommendationPanelRoute } from "../surfaces/Panels/RecommendationPanel/RecommendationPanelRoute";
 import { IssueCardsRoute } from "../surfaces/IssueCards/IssueCardsRoute";
+import { DashboardRoute } from "../surfaces/Overview/DashboardRoute";
+import { ProjectOverviewRoute } from "../surfaces/Overview/ProjectOverviewRoute";
 
 const rootRoute = createRootRoute({
   component: AppShell,
 });
 
 // ── Top-level screens ──────────────────────────────────────────────────────────
+// DTM-0024 — the Dashboard / Project List mounts at the top-level `/` route,
+// replacing the DTM-0019 placeholder. It lists the caller's workspace projects,
+// each with its current Outcome Confidence (Derived, banded) and a workspace link.
+// Read-only — no edit/score/accept/generate control (decision #3, Disclose presents,
+// never generates); the project understanding stays the center of gravity, never a
+// "project health"/score indicator.
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: () => (
-    <PlaceholderSurface
-      title="Projects"
-      purpose="Orient on landing: active projects, current confidence, attention items."
-    />
-  ),
+  component: DashboardRoute,
 });
 
 const projectsCreateRoute = createRoute({
@@ -66,15 +69,16 @@ const projectWorkspaceRoute = createRoute({
   component: MRIRoute,
 });
 
+// DTM-0024 — the Project Overview mounts at the Orientation route, replacing the
+// DTM-0019 placeholder. UI_SCREEN_INVENTORY maps the 60-Second Orientation to the
+// project-level understanding summary (confidence, CAF, counts) — exactly the
+// Project Overview. The Workspace root (`/`) is the MRI umbrella (DTM-0020), so the
+// Overview mounts here. Read-only — aggregate Outcome Confidence + CAF via
+// EpistemicLabel (Derived, banded), counts of governed objects; never project health.
 const orientationRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: "/orientation",
-  component: () => (
-    <PlaceholderSurface
-      title="60-Second Orientation"
-      purpose="First understanding: confidence, CAF, top findings/recs (not final)."
-    />
-  ),
+  component: ProjectOverviewRoute,
 });
 
 const analysisRunRoute = createRoute({
