@@ -18,6 +18,7 @@ import {
 } from "@tanstack/react-router";
 import { AppShell } from "./AppShell";
 import { PlaceholderSurface } from "./PlaceholderSurface";
+import { MRIRoute } from "../surfaces/MRI/MRIRoute";
 
 const rootRoute = createRootRoute({
   component: AppShell,
@@ -53,15 +54,13 @@ const projectRoute = createRoute({
   component: () => <Outlet />,
 });
 
+// DTM-0020 — the MRI umbrella surface mounts at the Project Workspace route,
+// replacing the DTM-0019 placeholder. It is the project's understanding view
+// (Findings/CAF/Confidence + the four DL-047 sub-components), read-only.
 const projectWorkspaceRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: "/",
-  component: () => (
-    <PlaceholderSurface
-      title="Project Workspace"
-      purpose="Hub for one project: artifacts, analysis, findings, recommendations, activity."
-    />
-  ),
+  component: MRIRoute,
 });
 
 const orientationRoute = createRoute({
