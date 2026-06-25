@@ -21,6 +21,7 @@ import { PlaceholderSurface } from "./PlaceholderSurface";
 import { MRIRoute } from "../surfaces/MRI/MRIRoute";
 import { FindingPanelRoute } from "../surfaces/Panels/FindingPanel/FindingPanelRoute";
 import { RecommendationPanelRoute } from "../surfaces/Panels/RecommendationPanel/RecommendationPanelRoute";
+import { IssueCardsRoute } from "../surfaces/IssueCards/IssueCardsRoute";
 
 const rootRoute = createRootRoute({
   component: AppShell,
@@ -87,15 +88,17 @@ const analysisRunRoute = createRoute({
   ),
 });
 
+// DTM-0023 — Issue Cards mount at the project findings route, replacing the
+// DTM-0019 placeholder. There is no dedicated "Issues" screen in the inventory;
+// issues (prioritized findings — Finding + assigned severity) are presented in
+// the project's findings context. The cards present severity + Derived confidence
+// and link each card back to its source Finding (the Finding Panel route).
+// Read-only — no triage/act control (decision #3, Disclose presents, never
+// generates; the inventory's "act" verbs are out of scope for the read surface).
 const projectFindingsRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: "/findings",
-  component: () => (
-    <PlaceholderSurface
-      title="Findings Workspace"
-      purpose="Triage and act on findings across their lifecycle."
-    />
-  ),
+  component: IssueCardsRoute,
 });
 
 // Finding detail (the Finding Panel context). RP-C1: recommendations nest here.
