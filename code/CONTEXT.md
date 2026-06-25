@@ -159,3 +159,43 @@ as "a decision you confirmed is affected". Recomputable, appends a CHR; never ca
 The **user is the acceptance authority**; OSLO records and reasons but never accepts on its own.
 Acceptance ≠ world-truth, ≠ OSLO-approval, ≠ governance; a UAR is **not** a Governance Decision;
 OSLO-level acceptance/approval/execution is Future (Outcome Governance, out of R1).
+
+## Wave E — Disclose Surfaces (presentation)
+
+**Disclose**:
+The responsibility that **presents** governed cognition to the user — a **consumer, never a
+producer**. It generates nothing, scores nothing, accepts nothing, and **changes no assessment**
+(only recompute does). _Avoid_: generate, decide, the UI (Disclose is the responsibility; the
+screens are its surfaces).
+
+**Render**:
+Disclose's **non-cognitive service** — turns governed objects into surface-ready views (the
+pixel/layout layer). Performs no cognition. _Avoid_: engine, generator.
+
+**Epistemic-safety labeling**:
+The core Disclose duty: every shown item carries its **epistemic standing** — **Attested vs
+Derived** + the **confidence band** (0–49/50–74/75–100, ±3 conservative edge guard) + any
+**conflict**. Derived is **never shown as settled**; low confidence is never shown as high; plan
+facts show as **user-attested** (not world-truth); confidence is **trust in understanding, never
+project health**.
+
+**MRI** (Master Review Interface):
+The umbrella surface visualising understanding state + diagnostics — with sub-components
+**Heatmap**, **CAF Triangle**, **Understanding Timeline**, **Understanding Dependencies**
+(MRI-04…07, DL-047). Shows current + history; never recomputes.
+
+**RP-C1** (Recommendation-Panel-only-in-Finding-context):
+The Recommendation Panel renders **only** within a Finding context — enforced in Disclose
+(presentation), not duplicated as a cognition rule. A standalone Recommendation Panel is a
+rejected negative. (Resolution Paths are presentation grouping of multiple Recommendations — never
+an object.)
+
+**OSLO Chat** (Disclose-class, DL-047):
+An interaction surface that **consumes** cognition (Explain/Clarify) and may **trigger** it
+(Improve → Advise + Deep Pass), but **writes no canonical, mutates no artifact, changes no
+assessment** (Critical negative). Emits non-canonical `ChatExchange` events.
+
+**Honest-limit disclosure** (DL-048 UP-4):
+When a Fast/Deep run is scope/budget-limited, Disclose presents a **truthful partial-analysis
+disclosure** (reduced coverage + the reason). An upgrade prompt may appear **alongside**, never
+**instead of**, the honest disclosure.
