@@ -211,27 +211,13 @@ const findingRecommendationsRoute = createRoute({
   component: RecommendationPanelRoute,
 });
 
-const projectRecommendationsRoute = createRoute({
-  getParentRoute: () => projectRoute,
-  path: "/recommendations",
-  component: () => (
-    <PlaceholderSurface
-      title="Recommendation Workspace"
-      purpose="Accept/reject/implement recommendations (routes to the Wave U capture)."
-    />
-  ),
-});
-
-const projectReportsRoute = createRoute({
-  getParentRoute: () => projectRoute,
-  path: "/reports",
-  component: () => (
-    <PlaceholderSurface
-      title="Report Viewer"
-      purpose="View, version, publish, archive, export reports."
-    />
-  ),
-});
+// DTM-0042 — the standalone project Recommendation Workspace and Report Viewer
+// placeholder routes were REMOVED here. Reasons:
+//   - Recommendation Workspace: RP-C1 keeps the Recommendation Panel reachable only
+//     from a Finding (`/findings/$findingId/recommendations`); a standalone project
+//     recommendations route is not a Wave E surface and had no inbound nav/affordance.
+//   - Report Viewer: Reports are a Category-E commodity screen with no R1 surface; a
+//     placeholder route is a silent dead-end. Omitted (honest) rather than shipped.
 
 // DTM-0029 — the Artifact Editor mounts the Assisted-Editing / Persistent-Intelligence
 // panel (AW-04/05), replacing the DTM-0019 placeholder. The panel is ALWAYS-VISIBLE,
@@ -257,58 +243,16 @@ const artifactRoute = createRoute({
   component: ArtifactEditorRoute,
 });
 
-// Cross-project top-level entries (resolve within the active project at build-out).
-const findingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/findings",
-  component: () => (
-    <PlaceholderSurface
-      title="Findings"
-      purpose="Findings across the active project context."
-    />
-  ),
-});
-
-const recommendationsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/recommendations",
-  component: () => (
-    <PlaceholderSurface
-      title="Recommendations"
-      purpose="Recommendations across the active project context."
-    />
-  ),
-});
-
-const reportsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/reports",
-  component: () => (
-    <PlaceholderSurface title="Reports" purpose="Reports across the workspace." />
-  ),
-});
-
-const sharedRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/shared",
-  component: () => (
-    <PlaceholderSurface
-      title="Shared Artifacts"
-      purpose="Scoped read (view/comment) of a shared object."
-    />
-  ),
-});
-
-const sharedDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/shared/$shareId",
-  component: () => (
-    <PlaceholderSurface
-      title="Shared Artifact Viewer"
-      purpose="Scoped read (view/comment) of a shared object."
-    />
-  ),
-});
+// DTM-0042 — the leftover top-level cross-project placeholder routes
+// (`/findings`, `/recommendations`, `/reports`, `/shared`, `/shared/$shareId`) were
+// REMOVED. The DTM-0019 nav linked the rail to these top-level routes, but the real
+// Wave E surfaces are project-SCOPED (`/projects/$projectId/findings`, the MRI at
+// `/projects/$projectId/`, …). The nav (see AppShell + navModel) now routes Findings
+// et al. into the ACTIVE project, so these flat routes were dead-ending at a
+// "Surface pending" placeholder for surfaces that already exist. Reports/Shared are
+// Category-E commodity screens with no R1 surface — omitted (honest), not stubbed.
+// RP-C1 is preserved: there is no standalone Recommendations route at all (the
+// Recommendation Panel lives only under a Finding).
 
 // DTM-0026 — the Notification / Awareness surface mounts at the top-level
 // `/notifications` route, replacing the DTM-0019 placeholder. It presents new
@@ -349,15 +293,8 @@ const routeTree = rootRoute.addChildren([
     analysisRunRoute,
     projectFindingsRoute,
     findingRoute.addChildren([findingDetailRoute, findingRecommendationsRoute]),
-    projectRecommendationsRoute,
-    projectReportsRoute,
   ]),
   artifactRoute,
-  findingsRoute,
-  recommendationsRoute,
-  reportsRoute,
-  sharedRoute,
-  sharedDetailRoute,
   notificationsRoute,
   settingsRoute,
 ]);

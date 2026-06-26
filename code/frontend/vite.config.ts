@@ -9,7 +9,15 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/v1": { target: "http://localhost:8000", changeOrigin: true },
+      // Dev-only: attach the dev JWT (OSLO_DEV_TOKEN) so the UI authenticates
+      // against the real authenticated backend. No login screen is wired in R1.
+      "/v1": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        headers: process.env.OSLO_DEV_TOKEN
+          ? { Authorization: `Bearer ${process.env.OSLO_DEV_TOKEN}` }
+          : undefined,
+      },
       "/health": { target: "http://localhost:8000", changeOrigin: true },
       "/openapi.json": { target: "http://localhost:8000", changeOrigin: true },
     },

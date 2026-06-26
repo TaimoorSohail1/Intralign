@@ -1,9 +1,17 @@
 /**
  * AppShell — the persistent frame every Wave E surface mounts into.
  *
- * IA from RELEASE_1_UI_SPECIFICATION_V1 §2: a persistent left rail (Projects,
- * Findings, Recommendations, Reports, Shared Artifacts, Notifications) + a content
- * outlet. No surface content lives here — surfaces render in the <Outlet/>.
+ * IA from RELEASE_1_UI_SPECIFICATION_V1 §2 (reconciled in DTM-0042). The §2 rail is
+ * a single flat list (Projects, Findings, Recommendations, Reports, Shared Artifacts,
+ * Notifications; Settings in the user menu), with the project-resource entries stated
+ * to "resolve within the active project". Wave E landed those as project-SCOPED
+ * surfaces (`/projects/$projectId/…`), so the rail is split into two groups (see
+ * `navModel.ts`):
+ *   - GLOBAL_NAV — always (Projects/Dashboard, Notifications, Settings).
+ *   - PROJECT_NAV — only when a project is active (route under `/projects/$projectId`),
+ *     each link targeting the ACTIVE project.
+ * RP-C1 is preserved (no standalone Recommendations entry) and the Category-E
+ * commodity screens (Reports, Shared) are omitted rather than left as dead-ends.
  *
  * Brand is designer-pending (OPEN_TBD E4): the wordmark is plain text, not a logo.
  */
@@ -16,22 +24,52 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
-import { Link, Outlet } from "@tanstack/react-router";
+import ListSubheader from "@mui/material/ListSubheader";
+import Divider from "@mui/material/Divider";
+import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import {
+  GLOBAL_NAV,
+  buildProjectNav,
+  activeProjectIdFromPath,
+  type NavEntry,
+} from "./navModel";
 
 const NAV_WIDTH = 240;
 
-/** Top-level nav entries — mirror the API resource scoping (UI spec §2). */
-const NAV: Array<{ to: string; label: string }> = [
-  { to: "/", label: "Projects" },
-  { to: "/findings", label: "Findings" },
-  { to: "/recommendations", label: "Recommendations" },
-  { to: "/reports", label: "Reports" },
-  { to: "/shared", label: "Shared Artifacts" },
-  { to: "/notifications", label: "Notifications" },
-  { to: "/settings", label: "Settings" },
-];
+/** One nav row. Deferred entries (no R1 surface) render disabled, never a link. */
+function NavRow({ item }: { item: NavEntry }) {
+  if (item.deferred) {
+    return (
+      <ListItem disablePadding>
+        <ListItemButton disabled data-testid="nav-deferred">
+          <ListItemText primary={item.label} secondary="Not in Release 1" />
+        </ListItemButton>
+      </ListItem>
+    );
+  }
+  return (
+    <ListItem disablePadding>
+      <ListItemButton
+        component={Link}
+        to={item.to}
+        activeProps={{ "aria-current": "page" }}
+        activeOptions={{ exact: !!item.exact }}
+        data-testid="nav-link"
+      >
+        <ListItemText primary={item.label} />
+      </ListItemButton>
+    </ListItem>
+  );
+}
 
 export function AppShell() {
+  // Derive the active project from the current route (DTM-0042 locked decision:
+  // project-context links target the ACTIVE project; never a project-scoped link
+  // with no id). useRouterState keeps this reactive to navigation.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const activeProjectId = activeProjectIdFromPath(pathname);
+  const projectNav = activeProjectId ? buildProjectNav(activeProjectId) : null;
+
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }} data-testid="app-shell">
       <AppBar
@@ -56,29 +94,57 @@ export function AppShell() {
       >
         <Toolbar />
         <Box component="nav" aria-label="Primary" sx={{ overflow: "auto" }}>
-          <List>
-            {NAV.map((item) => (
-              <ListItem key={item.to} disablePadding>
-                <ListItemButton
-                  component={Link}
-                  to={item.to}
-                  activeProps={{ "aria-current": "page" }}
-                  activeOptions={{ exact: item.to === "/" }}
-                >
-                  <ListItemText primary={item.label} />
-                </ListItemButton>
-              </ListItem>
+          <List
+            aria-label="Global"
+            data-testid="nav-global"
+            subheader={
+              <ListSubheader component="div" disableSticky>
+                Workspace
+              </ListSubheader>
+            }
+          >
+            {GLOBAL_NAV.map((item) => (
+              <NavRow key={item.to} item={item} />
             ))}
           </List>
+
+          {projectNav ? (
+            <>
+              <Divider />
+              <List
+                aria-label="Project"
+                data-testid="nav-project"
+                subheader={
+                  <ListSubheader component="div" disableSticky>
+                    Project
+                  </ListSubheader>
+                }
+              >
+                {projectNav.map((item) => (
+                  <NavRow key={item.to} item={item} />
+                ))}
+              </List>
+            </>
+          ) : (
+            <>
+              <Divider />
+              <List aria-label="Project" data-testid="nav-project-hint">
+                <ListItem>
+                  <ListItemText
+                    primary="Project"
+                    secondary="Open a project to see its surfaces."
+                    primaryTypographyProps={{ variant: "overline" }}
+                  />
+                </ListItem>
+              </List>
+            </>
+          )}
         </Box>
       </Drawer>
 
-      <Box
-        component="main"
-        sx={{ flexGrow: 1, p: 3 }}
-        data-testid="app-content"
-      >
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }} data-testid="app-content">
         <Toolbar />
+        {/* surfaces render here */}
         <Outlet />
       </Box>
     </Box>
