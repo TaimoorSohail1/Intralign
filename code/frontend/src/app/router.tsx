@@ -28,6 +28,8 @@ import { CompanionRoute } from "../surfaces/Companion/CompanionRoute";
 import { NotificationsRoute } from "../surfaces/Notifications/NotificationsRoute";
 import { TimelineRoute } from "../surfaces/Timeline/TimelineRoute";
 import { ExportRoute } from "../surfaces/Export/ExportRoute";
+import { ChatRoute } from "../surfaces/Chat/ChatRoute";
+import { ArtifactEditorRoute } from "../surfaces/AssistedEditing/ArtifactEditorRoute";
 
 const rootRoute = createRootRoute({
   component: AppShell,
@@ -130,18 +132,30 @@ const exportRoute = createRoute({
   component: ExportRoute,
 });
 
-// OSLO Chat — the Ask OSLO entry on the Companion launches Chat (a separate surface),
-// it never embeds it. Placeholder until the Chat surface ships; present so the
-// Companion's typed Ask-OSLO link resolves.
+// DTM-0029 — OSLO Chat mounts at the project Chat route, replacing the DTM-0025
+// placeholder. It is a Disclose-class conversation surface that CONSUMES cognition
+// (Explain/Clarify) and may TRIGGER it (Improve → Advise + Deep Pass) — but writes NO
+// canonical, mutates NO artifact, changes NO assessment (Critical, decision #10). It
+// inherits context when launched from an issue/recommendation/artifact/finding via the
+// search params (`context_kind`/`context_id`/`context_label`) — read-only, used only to
+// present and route relevantly. CHAT-COMMAND ENDPOINT (ANTI_ASSUMPTION, flagged): the
+// DTM-0018 client is GET-only, with no chat send/trigger endpoint — a send appends an
+// ephemeral, non-canonical pending exchange; "Improve" would route to the existing
+// Advise/Deep-Pass trigger when exposed. Nothing canonical is recorded.
 const projectChatRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: "/chat",
-  component: () => (
-    <PlaceholderSurface
-      title="Ask OSLO"
-      purpose="Converse with OSLO about this project's understanding."
-    />
-  ),
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { context_kind?: string; context_id?: string; context_label?: string } => ({
+    context_kind:
+      typeof search.context_kind === "string" ? search.context_kind : undefined,
+    context_id:
+      typeof search.context_id === "string" ? search.context_id : undefined,
+    context_label:
+      typeof search.context_label === "string" ? search.context_label : undefined,
+  }),
+  component: ChatRoute,
 });
 
 const analysisRunRoute = createRoute({
@@ -219,15 +233,28 @@ const projectReportsRoute = createRoute({
   ),
 });
 
+// DTM-0029 — the Artifact Editor mounts the Assisted-Editing / Persistent-Intelligence
+// panel (AW-04/05), replacing the DTM-0019 placeholder. The panel is ALWAYS-VISIBLE,
+// READ-ONLY presentation of the governed intelligence (Outcome Confidence + CAF +
+// Understanding-State via EpistemicLabel) and ROUTES assists to Chat (B1) / Suggested
+// Fix (B3) — performing none. It needs the project context: the editor reads it from the
+// `project_id` search param (the launching surface carries it); an optional `finding_id`
+// scopes the B3 Suggested-Fix assist via its Finding (RP-C1). Absent project context ⇒
+// the panel is held until it is provided (no fabricated project).
 const artifactRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/artifacts/$artifactId",
-  component: () => (
-    <PlaceholderSurface
-      title="Artifact Editor"
-      purpose="View/edit a planning artifact and its versions."
-    />
-  ),
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { project_id?: string; finding_id?: string; limited?: boolean } => ({
+    project_id: typeof search.project_id === "string" ? search.project_id : undefined,
+    finding_id: typeof search.finding_id === "string" ? search.finding_id : undefined,
+    // The DL-048 scope/budget-limit signal is NOT yet exposed over REST (flagged
+    // dependency). This param is the presentation seam: when the limit signal arrives,
+    // the honest-limit disclosure renders on this same (partial-orientation) surface.
+    limited: search.limited === true || search.limited === "true",
+  }),
+  component: ArtifactEditorRoute,
 });
 
 // Cross-project top-level entries (resolve within the active project at build-out).
