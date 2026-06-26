@@ -24,6 +24,7 @@ import { RecommendationPanelRoute } from "../surfaces/Panels/RecommendationPanel
 import { IssueCardsRoute } from "../surfaces/IssueCards/IssueCardsRoute";
 import { DashboardRoute } from "../surfaces/Overview/DashboardRoute";
 import { ProjectOverviewRoute } from "../surfaces/Overview/ProjectOverviewRoute";
+import { CompanionRoute } from "../surfaces/Companion/CompanionRoute";
 
 const rootRoute = createRootRoute({
   component: AppShell,
@@ -79,6 +80,32 @@ const orientationRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: "/orientation",
   component: ProjectOverviewRoute,
+});
+
+// DTM-0025 — the Understanding Companion mounts at the project Companion route,
+// replacing the DTM-0019 placeholder. It is the contextual understanding surface
+// (Outcome Confidence · CAF · Top Findings · Top Recommendations · stale-analysis
+// state · Ask OSLO), read-only. Option B (preserves RP-C1): a Top Recommendation's
+// affordance routes to the recommendation's ASSOCIATED FINDING (the Finding Panel),
+// NEVER directly to a standalone Recommendation Panel.
+const companionRoute = createRoute({
+  getParentRoute: () => projectRoute,
+  path: "/companion",
+  component: CompanionRoute,
+});
+
+// OSLO Chat — the Ask OSLO entry on the Companion launches Chat (a separate surface),
+// it never embeds it. Placeholder until the Chat surface ships; present so the
+// Companion's typed Ask-OSLO link resolves.
+const projectChatRoute = createRoute({
+  getParentRoute: () => projectRoute,
+  path: "/chat",
+  component: () => (
+    <PlaceholderSurface
+      title="Ask OSLO"
+      purpose="Converse with OSLO about this project's understanding."
+    />
+  ),
 });
 
 const analysisRunRoute = createRoute({
@@ -245,6 +272,8 @@ const routeTree = rootRoute.addChildren([
   projectRoute.addChildren([
     projectWorkspaceRoute,
     orientationRoute,
+    companionRoute,
+    projectChatRoute,
     analysisRunRoute,
     projectFindingsRoute,
     findingRoute.addChildren([findingDetailRoute, findingRecommendationsRoute]),
