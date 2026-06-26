@@ -26,6 +26,7 @@ import { DashboardRoute } from "../surfaces/Overview/DashboardRoute";
 import { ProjectOverviewRoute } from "../surfaces/Overview/ProjectOverviewRoute";
 import { CompanionRoute } from "../surfaces/Companion/CompanionRoute";
 import { NotificationsRoute } from "../surfaces/Notifications/NotificationsRoute";
+import { TimelineRoute } from "../surfaces/Timeline/TimelineRoute";
 
 const rootRoute = createRootRoute({
   component: AppShell,
@@ -93,6 +94,22 @@ const companionRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: "/companion",
   component: CompanionRoute,
+});
+
+// DTM-0027 — the History / Timeline surface mounts at the project History route,
+// replacing the DTM-0019 placeholder (none existed under the project; this is the
+// one route add). It is a SECONDARY project-context surface (Companion-Surface-class,
+// HISTORY_AND_TIMELINE_SURFACE_SPECIFICATION_V1 §D) — never a primary top-level
+// destination — that reconstructs the append-only TRAIL: the CHR history (the
+// analysis runs that appended Cognition History Records, each Derived/never settled)
+// + the UARs + the plan facts the user attested (user-attested, "You confirmed …",
+// NOT world-truth). Read-only — no edit/accept/generate/restore/rollback control
+// (decision #3, Disclose presents, never generates; spec §J append-only, no
+// deletion/mutation affordances). Superseded entries STAY visible (additive).
+const historyRoute = createRoute({
+  getParentRoute: () => projectRoute,
+  path: "/history",
+  component: TimelineRoute,
 });
 
 // OSLO Chat — the Ask OSLO entry on the Companion launches Chat (a separate surface),
@@ -281,6 +298,7 @@ const routeTree = rootRoute.addChildren([
     projectWorkspaceRoute,
     orientationRoute,
     companionRoute,
+    historyRoute,
     projectChatRoute,
     analysisRunRoute,
     projectFindingsRoute,
