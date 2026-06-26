@@ -183,6 +183,30 @@ EVENT_NAMES_RECOMMENDATION: tuple[str, ...] = (
     "recommendation_implemented",
 )
 
+# Event Model §5 "Project Events" — the three project-COMMAND events emitted by
+# the DTM-0034 REST command router (create / patch / archive), exactly, in §5
+# order. Pinned verbatim against EM §5.
+EVENT_NAMES_PROJECT: tuple[str, ...] = (
+    "project_created",
+    "project_updated",
+    "project_archived",
+)
+
+# Event Model §6 "Artifact Events" — the two artifact-intake-COMMAND events
+# emitted by the DTM-0034 router (create artifact / append version), exactly, in
+# §6 order. ``artifact_updated`` (§6) is a later state-command slice and is NOT
+# pinned here. Pinned verbatim against EM §6.
+EVENT_NAMES_ARTIFACT: tuple[str, ...] = (
+    "artifact_created",
+    "artifact_version_created",
+)
+
+# Event Model §7 "Context Events" — the single evidence-intake-COMMAND event
+# emitted by the DTM-0034 router (add evidence), exactly. The ``context_item_*``
+# events (§7) are extraction-engine emissions, not this command, and are NOT
+# pinned here. Pinned verbatim against EM §7.
+EVENT_NAMES_EVIDENCE: tuple[str, ...] = ("evidence_added",)
+
 # Union vocabulary accepted by emitters (back-compat alias for consumers).
 EVENT_NAMES: tuple[str, ...] = (
     EVENT_NAMES_WA00R
@@ -197,6 +221,9 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_COST
     + EVENT_NAMES_ANALYSIS
     + EVENT_NAMES_RECOMMENDATION
+    + EVENT_NAMES_PROJECT
+    + EVENT_NAMES_ARTIFACT
+    + EVENT_NAMES_EVIDENCE
 )
 
 _EVENT_NAME_SET: frozenset[str] = frozenset(EVENT_NAMES)

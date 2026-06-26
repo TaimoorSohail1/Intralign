@@ -20,6 +20,7 @@ from backend.api.v1.routers import (
     confidence,
     findings,
     notifications,
+    project_commands,
     projects,
     recommendations,
 )
@@ -45,3 +46,12 @@ router.include_router(analysis_commands.router)
 # recommendations read router; it wires the existing ``record_acceptance`` retain
 # seam (UAR always; plan fact on accept only) and never marks the rec world-true.
 router.include_router(acceptance_commands.router)
+
+# DTM-0034 — the project-command + evidence/artifact-intake router (POST /projects,
+# PATCH /projects/{pid}, POST /projects/{pid}:archive, POST .../evidence,
+# POST .../artifacts, POST /artifacts/{aid}/versions). Additive and separate from
+# the GET projects read router; project writes wire the DTM-0031 project_repo and
+# evidence/artifacts wire the existing ``submit_artifact`` intake seam — the
+# transport writes NO canonical store (admission appends the attested assertion
+# downstream). Archive is owner/admin only (§3).
+router.include_router(project_commands.router)

@@ -13,7 +13,10 @@ from pathlib import Path
 from ci.gate_observability import (
     EXPECTED_EVENT_NAMES,
     EXPECTED_EVENT_NAMES_ANALYSIS,
+    EXPECTED_EVENT_NAMES_ARTIFACT,
     EXPECTED_EVENT_NAMES_COST,
+    EXPECTED_EVENT_NAMES_EVIDENCE,
+    EXPECTED_EVENT_NAMES_PROJECT,
     EXPECTED_EVENT_NAMES_WA00R,
     EXPECTED_EVENT_NAMES_WA001,
     EXPECTED_EVENT_NAMES_WA002,
@@ -35,7 +38,10 @@ from ci.gate_observability import (
 from backend.services.observability.events import (
     EVENT_NAMES,
     EVENT_NAMES_ANALYSIS,
+    EVENT_NAMES_ARTIFACT,
     EVENT_NAMES_COST,
+    EVENT_NAMES_EVIDENCE,
+    EVENT_NAMES_PROJECT,
     EVENT_NAMES_WA00R,
     EVENT_NAMES_WA001,
     EVENT_NAMES_WA002,
@@ -77,9 +83,13 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
     assert EXPECTED_EVENT_NAMES_COST == EVENT_NAMES_COST
     assert EXPECTED_EVENT_NAMES_ANALYSIS == EVENT_NAMES_ANALYSIS
     assert EXPECTED_EVENT_NAMES_RECOMMENDATION == EVENT_NAMES_RECOMMENDATION
+    assert EXPECTED_EVENT_NAMES_PROJECT == EVENT_NAMES_PROJECT
+    assert EXPECTED_EVENT_NAMES_ARTIFACT == EVENT_NAMES_ARTIFACT
+    assert EXPECTED_EVENT_NAMES_EVIDENCE == EVENT_NAMES_EVIDENCE
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
-    # Union consistency: the alias is exactly the 12-way per-contract concatenation
-    # (DTM-0033 — RECOMMENDATION appended after ANALYSIS; the union grows, never reorders).
+    # Union consistency: the alias is exactly the 15-way per-contract concatenation
+    # (DTM-0034 — PROJECT/ARTIFACT/EVIDENCE appended after RECOMMENDATION; the union
+    # grows, never reorders).
     assert EVENT_NAMES == (
         EVENT_NAMES_WA00R
         + EVENT_NAMES_WA001
@@ -93,6 +103,9 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
         + EVENT_NAMES_COST
         + EVENT_NAMES_ANALYSIS
         + EVENT_NAMES_RECOMMENDATION
+        + EVENT_NAMES_PROJECT
+        + EVENT_NAMES_ARTIFACT
+        + EVENT_NAMES_EVIDENCE
     )
     # stale_detected lives in the WA00R set only — referenced, never duplicated.
     assert "stale_detected" in EVENT_NAMES_WA00R
@@ -252,6 +265,34 @@ def test_recommendation_vocabulary_is_the_four_em_8_11_names_verbatim() -> None:
     # ``recommendation_generated`` (the engine emission) lives in WC_ADVISE, not here.
     assert "recommendation_generated" in EVENT_NAMES_WC_ADVISE
     assert "recommendation_generated" not in EVENT_NAMES_RECOMMENDATION
+
+
+def test_project_artifact_evidence_command_vocabularies_are_verbatim() -> None:
+    """DTM-0034 — the EM §5/§6/§7 command vocabularies, exactly, in contract order."""
+    assert EVENT_NAMES_PROJECT == (
+        "project_created",
+        "project_updated",
+        "project_archived",
+    )
+    assert EVENT_NAMES_ARTIFACT == ("artifact_created", "artifact_version_created")
+    assert EVENT_NAMES_EVIDENCE == ("evidence_added",)
+    # The per-emission append event is REUSED from WA00R, never duplicated here.
+    for s in (EVENT_NAMES_PROJECT, EVENT_NAMES_ARTIFACT, EVENT_NAMES_EVIDENCE):
+        assert "cognition_history_record_appended" not in s
+    # These command events live in their own sets only — never leaking elsewhere.
+    for name in EVENT_NAMES_PROJECT + EVENT_NAMES_ARTIFACT + EVENT_NAMES_EVIDENCE:
+        assert name not in EVENT_NAMES_WS
+        assert name not in EVENT_NAMES_WB_INFER
+        assert name not in EVENT_NAMES_WB_EVAL
+        assert name not in EVENT_NAMES_WC_ADVISE
+        assert name not in EVENT_NAMES_WU_ACCEPT
+        assert name not in EVENT_NAMES_ANALYSIS
+        assert name not in EVENT_NAMES_RECOMMENDATION
+    # The engine-produced artifact_received/artifact_modified (WA001) and
+    # context_item_* (extraction) are NOT these command events.
+    assert "artifact_received" in EVENT_NAMES_WA001
+    assert "artifact_received" not in EVENT_NAMES_ARTIFACT
+    assert "artifact_updated" not in EVENT_NAMES  # a later state-command slice
 
 
 def test_wa002_vocabulary_is_the_five_ic_wa_002_a6_names_verbatim() -> None:

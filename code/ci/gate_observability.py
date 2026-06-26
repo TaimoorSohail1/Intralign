@@ -142,6 +142,24 @@ EXPECTED_EVENT_NAMES_RECOMMENDATION: tuple[str, ...] = (
     "recommendation_implemented",
 )
 
+# Event Model §5 project-command events (DTM-0034 — create / patch / archive).
+EXPECTED_EVENT_NAMES_PROJECT: tuple[str, ...] = (
+    "project_created",
+    "project_updated",
+    "project_archived",
+)
+
+# Event Model §6 artifact-intake-command events (DTM-0034 — create / version).
+# ``artifact_updated`` (a later state-command slice) is NOT in this vocabulary.
+EXPECTED_EVENT_NAMES_ARTIFACT: tuple[str, ...] = (
+    "artifact_created",
+    "artifact_version_created",
+)
+
+# Event Model §7 evidence-intake-command event (DTM-0034 — add evidence). The
+# ``context_item_*`` events are extraction-engine emissions, not this command.
+EXPECTED_EVENT_NAMES_EVIDENCE: tuple[str, ...] = ("evidence_added",)
+
 # The union the emitters must accept (back-compat alias in events.py).
 EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     EXPECTED_EVENT_NAMES_WA00R
@@ -156,6 +174,9 @@ EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     + EXPECTED_EVENT_NAMES_COST
     + EXPECTED_EVENT_NAMES_ANALYSIS
     + EXPECTED_EVENT_NAMES_RECOMMENDATION
+    + EXPECTED_EVENT_NAMES_PROJECT
+    + EXPECTED_EVENT_NAMES_ARTIFACT
+    + EXPECTED_EVENT_NAMES_EVIDENCE
 )
 
 # (contract-tuple variable name, expected value, contract label) for check (b).
@@ -176,6 +197,9 @@ _CONTRACT_VOCABULARIES: tuple[tuple[str, tuple[str, ...], str], ...] = (
         EXPECTED_EVENT_NAMES_RECOMMENDATION,
         "EM §8.11 recommendation",
     ),
+    ("EVENT_NAMES_PROJECT", EXPECTED_EVENT_NAMES_PROJECT, "EM §5 project"),
+    ("EVENT_NAMES_ARTIFACT", EXPECTED_EVENT_NAMES_ARTIFACT, "EM §6 artifact"),
+    ("EVENT_NAMES_EVIDENCE", EXPECTED_EVENT_NAMES_EVIDENCE, "EM §7 evidence"),
 )
 
 # The union must be the per-contract names concatenated in this exact order.
@@ -192,6 +216,9 @@ _UNION_NAME_ORDER: tuple[str, ...] = (
     "EVENT_NAMES_COST",
     "EVENT_NAMES_ANALYSIS",
     "EVENT_NAMES_RECOMMENDATION",
+    "EVENT_NAMES_PROJECT",
+    "EVENT_NAMES_ARTIFACT",
+    "EVENT_NAMES_EVIDENCE",
 )
 
 APPEND_EVENT = "cognition_history_record_appended"

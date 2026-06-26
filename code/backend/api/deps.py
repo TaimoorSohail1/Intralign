@@ -115,6 +115,38 @@ def get_event_emitter() -> Any:
     return ObservedEventEmitter.wrap(CollectingEventEmitter())
 
 
+# --- Project-CRUD + evidence/artifact-intake seams (DTM-0034) -----------------
+# The project-command + evidence/artifact-intake router consumes these providers.
+# The transport invents NO persistence: project writes go through the DTM-0031
+# ``project_repo`` (the platform ``project`` table); evidence/artifact go through
+# the EXISTING ``submit_artifact`` intake seam (the append-only ``artifact``
+# anchor + ``promotion_candidate`` via the intake store, body via Storage). Each
+# provider is overridable via ``app.dependency_overrides`` in tests and wired to
+# the real Supabase-backed seams in production.
+
+
+def get_project_repo() -> Any:
+    """Provide the platform ``project`` repo (DTM-0031; Supabase in prod)."""
+    from backend.platform.project_repo import SupabaseProjectRepository
+    from backend.services.persistence import get_supabase_client
+
+    return SupabaseProjectRepository(get_supabase_client())
+
+
+def get_intake_store() -> Any:
+    """Provide the intake ``artifact``/``promotion_candidate`` store (DTM-0007)."""
+    from backend.services.persistence import SupabaseIntakeStore, get_supabase_client
+
+    return SupabaseIntakeStore(get_supabase_client())
+
+
+def get_body_store() -> Any:
+    """Provide the artifact-body Storage seam (bucket ``artifacts``; DTM-0007)."""
+    from backend.services.persistence import ArtifactBodyStore, get_supabase_client
+
+    return ArtifactBodyStore(get_supabase_client())
+
+
 # --- Acceptance-command seams (DTM-0033) -------------------------------------
 # The acceptance command router (recommendations :accept/:reject/:defer/:implement)
 # consumes these providers. The transport invents NO acceptance logic: it resolves

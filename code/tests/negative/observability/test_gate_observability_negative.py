@@ -102,6 +102,19 @@ EVENT_NAMES_RECOMMENDATION: tuple[str, ...] = (
     "recommendation_implemented",
 )
 
+EVENT_NAMES_PROJECT: tuple[str, ...] = (
+    "project_created",
+    "project_updated",
+    "project_archived",
+)
+
+EVENT_NAMES_ARTIFACT: tuple[str, ...] = (
+    "artifact_created",
+    "artifact_version_created",
+)
+
+EVENT_NAMES_EVIDENCE: tuple[str, ...] = ("evidence_added",)
+
 EVENT_NAMES: tuple[str, ...] = (
     EVENT_NAMES_WA00R
     + EVENT_NAMES_WA001
@@ -115,6 +128,9 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_COST
     + EVENT_NAMES_ANALYSIS
     + EVENT_NAMES_RECOMMENDATION
+    + EVENT_NAMES_PROJECT
+    + EVENT_NAMES_ARTIFACT
+    + EVENT_NAMES_EVIDENCE
 )
 '''
 
@@ -465,9 +481,10 @@ def test_missing_wu_accept_tuple_fails_vocabulary_check(tmp_path) -> None:
 def test_missing_event_names_assignment_fails(tmp_path) -> None:
     root = _make_tree(tmp_path, events_src="OTHER = 1\n")
     violations = check_event_vocabulary(root)
-    # all twelve contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/WC_ADVISE/
-    # WC_FIX/WU_ACCEPT/COST/ANALYSIS/RECOMMENDATION) AND the union.
-    assert len(violations) == 13
+    # all fifteen contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/WC_ADVISE/
+    # WC_FIX/WU_ACCEPT/COST/ANALYSIS/RECOMMENDATION/PROJECT/ARTIFACT/EVIDENCE) AND
+    # the union (DTM-0034).
+    assert len(violations) == 16
     assert any("EVENT_NAMES_WA00R not found" in v for v in violations)
     assert any("EVENT_NAMES_WA001 not found" in v for v in violations)
     assert any("EVENT_NAMES_WA002 not found" in v for v in violations)
@@ -480,6 +497,9 @@ def test_missing_event_names_assignment_fails(tmp_path) -> None:
     assert any("EVENT_NAMES_COST not found" in v for v in violations)
     assert any("EVENT_NAMES_ANALYSIS not found" in v for v in violations)
     assert any("EVENT_NAMES_RECOMMENDATION not found" in v for v in violations)
+    assert any("EVENT_NAMES_PROJECT not found" in v for v in violations)
+    assert any("EVENT_NAMES_ARTIFACT not found" in v for v in violations)
+    assert any("EVENT_NAMES_EVIDENCE not found" in v for v in violations)
     assert any("EVENT_NAMES not found" in v for v in violations)
 
 
@@ -527,6 +547,9 @@ def test_union_dropping_ws_and_cost_legs_fails(tmp_path) -> None:
         "    + EVENT_NAMES_COST\n"
         "    + EVENT_NAMES_ANALYSIS\n"
         "    + EVENT_NAMES_RECOMMENDATION\n"
+        "    + EVENT_NAMES_PROJECT\n"
+        "    + EVENT_NAMES_ARTIFACT\n"
+        "    + EVENT_NAMES_EVIDENCE\n"
         ")",
         "EVENT_NAMES: tuple[str, ...] = (\n"
         "    EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002\n"
