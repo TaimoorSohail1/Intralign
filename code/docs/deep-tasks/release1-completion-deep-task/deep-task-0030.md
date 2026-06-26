@@ -1,8 +1,9 @@
 # DTM-0030 — Projection materializer (`derived.*_current` upsert; live read model)
 
-**Status:** Planned (ungated — can start on user authorization) · **Module:** DTM-0030 · **Phase:**
-Completion · **Contract:** LDM §3.1 (Live Cognition Projection) + Event Model §8 · **Depends:** the
-existing orchestration (`deep_pass.py`, `runner.py`) + CHR repo.
+**Status:** In progress — owner authorized full completion plan 2026-06-26 · **Module:** DTM-0030 ·
+**Phase:** Completion · **Contract:** LDM §3.1 (Live Cognition Projection) + Event Model §8 ·
+**Depends:** the existing orchestration (`deep_pass.py`, `runner.py`) + CHR repo. · **Branch:**
+`feat/release1-completion`.
 
 ## Goal / observable behavior
 
@@ -100,7 +101,104 @@ latest CHR** (LDM §3.1) — losing it loses nothing canonical.
 
 ## Worker report
 
-_(worker fills)_
+**Status: Ready for review.** Cites LDM §3.1 (Live Cognition Projection). No new
+migration, no new dependency (`pyproject.toml` unchanged), no canonical-store
+write in the materializer.
+
+### Files added
+
+- `backend/services/persistence/projection_store.py` — `SupabaseProjectionStore`:
+  the Derived-only write seam over the eight `derived.*_current` tables (the same
+  set the read seam SELECTs). Public surface = `supports` / `upsert_projection`
+  (PostgREST `upsert(..., on_conflict="projection_id")`) / `list_for_project`
+  (SELECT, used by rebuild). NO canonical-table surface by construction.
+- `backend/responsibilities/disclose/projection_writer.py` — the materializer:
+  `chr_to_projection_row` (pure CHR→row map), `ProjectionMaterializer`
+  (`materialize_chr_ids` + `rebuild_for_project`), and the keying helpers
+  `projection_subject` / `projection_id_for`.
+- `backend/responsibilities/disclose/__init__.py`,
+  `backend/services/persistence/__init__.py` — exports.
+- `tests/positive/disclose/test_projection_materializer.py` (8 tests),
+  `tests/negative/disclose/test_projection_materializer_negative.py` (7 tests).
+
+### Files modified (additive wiring only)
+
+- `backend/orchestration/graphs/deep_pass.py` — added an OPTIONAL `materializer`
+  param + a thin `materialize_projection` node on the SUCCESS path only:
+  `mark_current -> materialize_projection -> END`. When no materializer is
+  injected it is a pass-through, so the frozen backbone behavior (incl.
+  durable-resume / failure-edge tests) is unchanged. The cognition stages and the
+  chain order (`append_chrs -> stage_infer -> stage_evaluate -> stage_advise`) are
+  untouched.
+- `backend/orchestration/runner.py` — threaded the optional `materializer` through
+  `run` / `submit_trigger` to the graph factory (default `None`; every existing
+  caller/test is unaffected).
+
+### How upsert + supersession + rebuild work
+
+- **Upsert keyed.** Each row's `projection_id` is a deterministic
+  `uuid5(project_id, output_kind, subject)`. List-kinds key on the per-item
+  subject (`finding_id` / `issue_id` / `recommendation_id` / `clarification_id`);
+  singletons (`confidence` / `caf` / `outcome_confidence`) key on one row per
+  project; `acceptance_impact` keys per `uar_ref`. Same triple → same id → the
+  store `upsert` REPLACES the current row.
+- **Supersession.** A recompute appends a NEW CHR for the same subject (canonical,
+  via the frozen retain stage) and the materialize step upserts the matching live
+  row to the new `current_chr_ref`/payload. The CHR log grows append-only; the
+  projection is replaced in sync (proven: `test_rerun_supersedes_projection_same_row_new_chr`).
+- **Envelope.** `epistemic_label` is PINNED `'derived'`; `confidence_value`/`band`
+  come from the CHR payload (`index`/`band`, else the EVALUATE-owned `band_for`
+  — no invented band); `conflict_state` is `contested` iff the snapshot marks a
+  conflict, else `none`. Output matches the read-seam shape verbatim and is fed
+  through the DTM-0018 render mappers in the tests (`finding`/`confidence`/`caf`/
+  `recommendation`).
+- **Rebuild.** `rebuild_for_project(project_id)` reads the append-only CHR log
+  (via `chrs_for_project` when available, else `latest_for_output` per kind),
+  reduces to the latest CHR per (output_kind, subject), and upserts each — so a
+  lost/empty projection store is restored from CHRs alone (LDM §3.1 "rebuildable";
+  supports a backfill replacing the seeded dev harness). Proven:
+  `test_rebuild_for_project_repopulates_from_latest_chrs`.
+
+### Negatives proven (Critical, gate-4 aligned)
+
+- **No canonical write.** AST scan over both DTM-0030 modules: no `.table(...)`
+  names any canonical table; the store targets only `derived.*_current` tables;
+  `SupabaseProjectionStore` has no `insert_assertion`/`insert_acceptance`/
+  `insert_history`/`append` surface.
+- **No CHR mutation / append-only intact.** The materializer uses the CHR repo
+  READ-only (`get`/lister); an exploding-`append` fake proves `append` is never
+  invoked.
+- **No Derived→Attested.** Every materialized row carries `epistemic_label='derived'`
+  for all eight kinds, even when the CHR payload carries a stray
+  `epistemic_state="attested-oslo"` (it does not leak).
+- **Last-known-good on failure.** A store that raises mid-batch leaves the prior
+  good row byte-identical and the CHR log unmutated (no partial corruption).
+- Unmaterializable kinds (`reliability` etc.) are skipped — no row written.
+
+### Verify (exact commands + results)
+
+- `cd code && .venv/bin/pytest tests/positive/disclose tests/negative/disclose -q`
+  → **15 passed**.
+- `.venv/bin/pytest tests/positive tests/negative -q` → **589 passed, 65 skipped**
+  (the skips are the live-Supabase suites; no local stack), **0 failed** — no
+  regression.
+- `.venv/bin/ruff check .` → **All checks passed!**
+- `.venv/bin/python ci/gate_invariants.py` (gate-4) → **PASS**.
+- `.venv/bin/python ci/gate_observability.py` (gate-5) → **PASS** (the materializer
+  is correctly NOT seen as a CHR-append site — it only `get`s CHRs).
+- `git status` confirms: no new migration under `supabase/migrations/`,
+  `pyproject.toml` unchanged. Unrelated working-tree changes (`vite.config.ts`,
+  `scripts/`) preserved, untouched.
+
+### Flags
+
+- The live end-to-end leg (run → `derived.finding_current` populated → DTM-0018
+  `GET …/findings` returns it) is NOT exercised here because no local Supabase
+  stack is configured (the live deep_pass suite skips for the same reason). The
+  in-memory positive suite proves the CHR→row mapping and supersession against the
+  real render mappers; the wiring point (`materialize_projection` after
+  `mark_current`, with `materializer` threaded through the runner) is in place for
+  the live run once a stack + an injected `ProjectionMaterializer` are available.
 
 ## Engineering-manager review notes
 
@@ -109,3 +207,34 @@ _(EM fills)_
 ## Approved by engineering manager
 
 _(added only after verification passes)_
+
+## Approved by engineering manager
+
+Status: Approved
+
+Executive summary:
+- Projection materializer built: `SupabaseProjectionStore` (Derived-only upsert over the 8 existing
+  `derived.*_current` tables) + `ProjectionMaterializer` (`materialize_chr_ids` + `rebuild_for_project`)
+  wired as an OPTIONAL pass-through `materialize_projection` node after `mark_current` in deep_pass.
+  Read surfaces now show live materialized data from appended CHRs. LDM §3.1.
+
+Verification (EM re-ran):
+- `.venv/bin/pytest tests/positive tests/negative -q` → **589 passed, 65 skipped** (15 new; no
+  regression). ruff clean; gate-4 PASS; gate-5 PASS.
+- No new migration (8 derived tables already exist); `pyproject.toml` unchanged (no dep).
+- Derived-only confirmed: the store/materializer reference canonical tables only in docstrings (what
+  they must NOT touch); no canonical/CHR write surface. Negatives: AST scan (no canonical write),
+  exploding-append fake (no CHR mutation), all 8 kinds stay `derived` (no Derived→Attested),
+  last-known-good on mid-batch failure.
+- Additive topology: `materialize_projection` is pass-through when no materializer injected — frozen
+  backbone (durable-resume / failure-edge) unchanged.
+
+Manual test plan:
+- Inject a `ProjectionMaterializer` at a configured run → trigger → `derived.finding_current` holds
+  rows with the latest `current_chr_ref`; `GET …/findings` returns them; re-run supersedes the row,
+  CHR log grows.
+
+Remaining risks / flagged:
+- Live e2e (real Supabase run → query → GET) not exercised locally (no Supabase stack; same skip as
+  the existing live deep_pass suite). Wiring is in place + unit-proven; the runner now threads the
+  optional materializer. Will be exercised once DTM-0041 stands up the backing services.
