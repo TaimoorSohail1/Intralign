@@ -18,7 +18,9 @@ from backend.api.v1.routers import (
     analysis_commands,
     analysis_runs,
     confidence,
+    finding_commands,
     findings,
+    notification_commands,
     notifications,
     project_commands,
     projects,
@@ -55,3 +57,14 @@ router.include_router(acceptance_commands.router)
 # transport writes NO canonical store (admission appends the attested assertion
 # downstream). Archive is owner/admin only (§3).
 router.include_router(project_commands.router)
+
+# DTM-0035 — the finding-lifecycle command router (POST findings
+# :acknowledge/:address/:reopen) + the notification-state command router (POST
+# notifications :view/:dismiss). Additive and separate from the GET findings/
+# notifications read routers. Finding lifecycle updates the DERIVED projection
+# status (State Model §10 — a status attribute, NOT a UAR) via the projection
+# store; notification state transitions the PLATFORM (non-canonical) awareness
+# state via the DTM-0031 notification_repo. Neither writes a canonical store,
+# appends a CHR, or changes any assessment.
+router.include_router(finding_commands.router)
+router.include_router(notification_commands.router)

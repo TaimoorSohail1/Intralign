@@ -207,6 +207,32 @@ EVENT_NAMES_ARTIFACT: tuple[str, ...] = (
 # pinned here. Pinned verbatim against EM §7.
 EVENT_NAMES_EVIDENCE: tuple[str, ...] = ("evidence_added",)
 
+# Event Model §10 "Finding Events" — the two finding-LIFECYCLE-COMMAND events
+# emitted by the DTM-0035 REST command router (:acknowledge / :address / :reopen),
+# exactly, in EM §10 order. Per API Contract §5 + the endpoint catalog,
+# ``:acknowledge`` and ``:address`` both carry ``finding_updated`` (the resulting
+# status — acknowledged / addressed — rides the payload; the granular
+# ``finding_acknowledged``/``finding_addressed`` are documented status FACETS of
+# this canonical event, NOT new event types), and ``:reopen`` carries
+# ``finding_reopened``. ``finding_detected``/``finding_superseded`` (engine emissions)
+# live in the WB_INFER set; ``finding_created``/``finding_closed`` are engine/`:close`
+# emissions NOT in this command vocabulary. Pinned verbatim against EM §10.
+EVENT_NAMES_FINDING: tuple[str, ...] = (
+    "finding_updated",
+    "finding_reopened",
+)
+
+# Event Model §12 "Notification Events" — the two notification-STATE-COMMAND events
+# emitted by the DTM-0035 REST command router (:view / :dismiss), exactly, in EM §12
+# order. PLATFORM awareness state (non-canonical): a notification event has ZERO
+# recompute consumers and never alters a Finding or Recommendation (§12 clarification).
+# ``notification_created`` (source-object change) / ``notification_expired`` (scheduler)
+# are NOT client commands and are NOT pinned here. Pinned verbatim against EM §12.
+EVENT_NAMES_NOTIFICATION: tuple[str, ...] = (
+    "notification_viewed",
+    "notification_dismissed",
+)
+
 # Union vocabulary accepted by emitters (back-compat alias for consumers).
 EVENT_NAMES: tuple[str, ...] = (
     EVENT_NAMES_WA00R
@@ -224,6 +250,8 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_PROJECT
     + EVENT_NAMES_ARTIFACT
     + EVENT_NAMES_EVIDENCE
+    + EVENT_NAMES_FINDING
+    + EVENT_NAMES_NOTIFICATION
 )
 
 _EVENT_NAME_SET: frozenset[str] = frozenset(EVENT_NAMES)

@@ -115,6 +115,16 @@ EVENT_NAMES_ARTIFACT: tuple[str, ...] = (
 
 EVENT_NAMES_EVIDENCE: tuple[str, ...] = ("evidence_added",)
 
+EVENT_NAMES_FINDING: tuple[str, ...] = (
+    "finding_updated",
+    "finding_reopened",
+)
+
+EVENT_NAMES_NOTIFICATION: tuple[str, ...] = (
+    "notification_viewed",
+    "notification_dismissed",
+)
+
 EVENT_NAMES: tuple[str, ...] = (
     EVENT_NAMES_WA00R
     + EVENT_NAMES_WA001
@@ -131,6 +141,8 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_PROJECT
     + EVENT_NAMES_ARTIFACT
     + EVENT_NAMES_EVIDENCE
+    + EVENT_NAMES_FINDING
+    + EVENT_NAMES_NOTIFICATION
 )
 '''
 
@@ -478,13 +490,52 @@ def test_missing_wu_accept_tuple_fails_vocabulary_check(tmp_path) -> None:
     assert any("union of the per-contract vocabularies" in v for v in violations)
 
 
+def test_renamed_finding_command_event_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0035 — tampering the EM §10 finding-command vocabulary fails the gate."""
+    tampered = GOOD_EVENTS_PY.replace(
+        '    "finding_updated",\n    "finding_reopened",',
+        '    "finding_updated",\n    "finding_resurfaced",',
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "EVENT_NAMES_FINDING != the EM §10 finding vocabulary" in violations[0]
+
+
+def test_renamed_notification_command_event_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0035 — tampering the EM §12 notification-command vocabulary fails the gate."""
+    tampered = GOOD_EVENTS_PY.replace("notification_dismissed", "notification_cleared")
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "EVENT_NAMES_NOTIFICATION != the EM §12 notification vocabulary" in violations[0]
+
+
+def test_missing_finding_command_tuple_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0035 — dropping the FINDING tuple (and its union leg) fails both checks."""
+    tampered = GOOD_EVENTS_PY.replace(
+        'EVENT_NAMES_FINDING: tuple[str, ...] = (\n'
+        '    "finding_updated",\n'
+        '    "finding_reopened",\n'
+        ')\n\n',
+        "",
+    ).replace(
+        "    + EVENT_NAMES_FINDING\n",
+        "",
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert any("EVENT_NAMES_FINDING not found" in v for v in violations)
+    assert any("union of the per-contract vocabularies" in v for v in violations)
+
+
 def test_missing_event_names_assignment_fails(tmp_path) -> None:
     root = _make_tree(tmp_path, events_src="OTHER = 1\n")
     violations = check_event_vocabulary(root)
-    # all fifteen contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/WC_ADVISE/
-    # WC_FIX/WU_ACCEPT/COST/ANALYSIS/RECOMMENDATION/PROJECT/ARTIFACT/EVIDENCE) AND
-    # the union (DTM-0034).
-    assert len(violations) == 16
+    # all seventeen contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/WC_ADVISE/
+    # WC_FIX/WU_ACCEPT/COST/ANALYSIS/RECOMMENDATION/PROJECT/ARTIFACT/EVIDENCE/FINDING/
+    # NOTIFICATION) AND the union (DTM-0035).
+    assert len(violations) == 18
     assert any("EVENT_NAMES_WA00R not found" in v for v in violations)
     assert any("EVENT_NAMES_WA001 not found" in v for v in violations)
     assert any("EVENT_NAMES_WA002 not found" in v for v in violations)
@@ -550,6 +601,8 @@ def test_union_dropping_ws_and_cost_legs_fails(tmp_path) -> None:
         "    + EVENT_NAMES_PROJECT\n"
         "    + EVENT_NAMES_ARTIFACT\n"
         "    + EVENT_NAMES_EVIDENCE\n"
+        "    + EVENT_NAMES_FINDING\n"
+        "    + EVENT_NAMES_NOTIFICATION\n"
         ")",
         "EVENT_NAMES: tuple[str, ...] = (\n"
         "    EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002\n"

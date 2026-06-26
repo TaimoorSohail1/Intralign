@@ -16,6 +16,8 @@ from ci.gate_observability import (
     EXPECTED_EVENT_NAMES_ARTIFACT,
     EXPECTED_EVENT_NAMES_COST,
     EXPECTED_EVENT_NAMES_EVIDENCE,
+    EXPECTED_EVENT_NAMES_FINDING,
+    EXPECTED_EVENT_NAMES_NOTIFICATION,
     EXPECTED_EVENT_NAMES_PROJECT,
     EXPECTED_EVENT_NAMES_WA00R,
     EXPECTED_EVENT_NAMES_WA001,
@@ -41,6 +43,8 @@ from backend.services.observability.events import (
     EVENT_NAMES_ARTIFACT,
     EVENT_NAMES_COST,
     EVENT_NAMES_EVIDENCE,
+    EVENT_NAMES_FINDING,
+    EVENT_NAMES_NOTIFICATION,
     EVENT_NAMES_PROJECT,
     EVENT_NAMES_WA00R,
     EVENT_NAMES_WA001,
@@ -86,6 +90,8 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
     assert EXPECTED_EVENT_NAMES_PROJECT == EVENT_NAMES_PROJECT
     assert EXPECTED_EVENT_NAMES_ARTIFACT == EVENT_NAMES_ARTIFACT
     assert EXPECTED_EVENT_NAMES_EVIDENCE == EVENT_NAMES_EVIDENCE
+    assert EXPECTED_EVENT_NAMES_FINDING == EVENT_NAMES_FINDING
+    assert EXPECTED_EVENT_NAMES_NOTIFICATION == EVENT_NAMES_NOTIFICATION
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
     # Union consistency: the alias is exactly the 15-way per-contract concatenation
     # (DTM-0034 — PROJECT/ARTIFACT/EVIDENCE appended after RECOMMENDATION; the union
@@ -106,6 +112,8 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
         + EVENT_NAMES_PROJECT
         + EVENT_NAMES_ARTIFACT
         + EVENT_NAMES_EVIDENCE
+        + EVENT_NAMES_FINDING
+        + EVENT_NAMES_NOTIFICATION
     )
     # stale_detected lives in the WA00R set only — referenced, never duplicated.
     assert "stale_detected" in EVENT_NAMES_WA00R
@@ -293,6 +301,51 @@ def test_project_artifact_evidence_command_vocabularies_are_verbatim() -> None:
     assert "artifact_received" in EVENT_NAMES_WA001
     assert "artifact_received" not in EVENT_NAMES_ARTIFACT
     assert "artifact_updated" not in EVENT_NAMES  # a later state-command slice
+
+
+def test_finding_and_notification_command_vocabularies_are_verbatim() -> None:
+    """DTM-0035 — the EM §10 finding + §12 notification command vocabularies.
+
+    Per API Contract §5 + catalog: :acknowledge/:address carry ``finding_updated``
+    (the resulting status rides the payload — the granular acknowledged/addressed
+    names are FACETS, not new event types); :reopen carries ``finding_reopened``.
+    :view/:dismiss carry ``notification_viewed``/``notification_dismissed`` (platform
+    awareness state, non-canonical).
+    """
+    assert EVENT_NAMES_FINDING == ("finding_updated", "finding_reopened")
+    assert EVENT_NAMES_NOTIFICATION == (
+        "notification_viewed",
+        "notification_dismissed",
+    )
+    # The per-emission append event is REUSED from WA00R, never duplicated here.
+    assert "cognition_history_record_appended" not in EVENT_NAMES_FINDING
+    assert "cognition_history_record_appended" not in EVENT_NAMES_NOTIFICATION
+    # The engine finding emissions (WB_INFER) are NOT these command events — no new
+    # event types are introduced beyond the Event Model (API §5 facet note).
+    assert "finding_detected" in EVENT_NAMES_WB_INFER
+    assert "finding_detected" not in EVENT_NAMES_FINDING
+    assert "finding_superseded" not in EVENT_NAMES_FINDING
+    # ``finding_acknowledged``/``finding_addressed`` are status facets, NOT separate
+    # contract event names — they never enter the vocabulary.
+    assert "finding_acknowledged" not in EVENT_NAMES
+    assert "finding_addressed" not in EVENT_NAMES
+    # ``finding_created``/``finding_closed`` are engine/`:close` emissions — not this
+    # command slice — and are not pinned in this vocabulary.
+    assert "finding_created" not in EVENT_NAMES_FINDING
+    assert "finding_closed" not in EVENT_NAMES_FINDING
+    # ``notification_created``/``notification_expired`` are source-change/scheduler
+    # emissions, not these client commands.
+    assert "notification_created" not in EVENT_NAMES
+    assert "notification_expired" not in EVENT_NAMES
+    # These command events live in their own sets only — never leaking elsewhere.
+    for name in EVENT_NAMES_FINDING + EVENT_NAMES_NOTIFICATION:
+        assert name not in EVENT_NAMES_WS
+        assert name not in EVENT_NAMES_WB_EVAL
+        assert name not in EVENT_NAMES_WC_ADVISE
+        assert name not in EVENT_NAMES_WU_ACCEPT
+        assert name not in EVENT_NAMES_ANALYSIS
+        assert name not in EVENT_NAMES_RECOMMENDATION
+        assert name not in EVENT_NAMES_COST
 
 
 def test_wa002_vocabulary_is_the_five_ic_wa_002_a6_names_verbatim() -> None:

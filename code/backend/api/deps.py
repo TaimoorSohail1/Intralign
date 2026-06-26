@@ -177,6 +177,35 @@ def get_acceptance_chr_reader() -> Any:
     return ChrRepository(get_supabase_client())
 
 
+# --- Finding-lifecycle + notification-state command seams (DTM-0035) ----------
+# The finding-lifecycle command router (:acknowledge/:address/:reopen) updates the
+# DERIVED finding projection's workflow ``status`` (State Model §10 — a status
+# ATTRIBUTE on the Derived projection, NOT a user-attested record): it reads the
+# ``derived.finding_current`` row via the read seam, advances the payload status,
+# and UPSERTs it back through the projection store. It writes NO canonical row,
+# appends NO CHR, and is NOT an acceptance (no UAR). The notification-state command
+# router (:view/:dismiss) transitions the PLATFORM ``notification`` awareness state
+# via the DTM-0031 ``notification_repo`` (mark_viewed/mark_dismissed) — non-canonical,
+# it changes no assessment and drives no analysis. Each provider is overridable via
+# ``app.dependency_overrides`` in tests and wired to Supabase in production.
+
+
+def get_projection_store() -> Any:
+    """Provide the Derived ``derived.*_current`` projection store (DTM-0030; Supabase)."""
+    from backend.services.persistence import get_supabase_client
+    from backend.services.persistence.projection_store import SupabaseProjectionStore
+
+    return SupabaseProjectionStore(get_supabase_client())
+
+
+def get_notification_repo() -> Any:
+    """Provide the platform ``notification`` repo (DTM-0031; Supabase in prod)."""
+    from backend.platform.notification_repo import SupabaseNotificationRepository
+    from backend.services.persistence import get_supabase_client
+
+    return SupabaseNotificationRepository(get_supabase_client())
+
+
 class _IdempotencyStore:
     """In-process Idempotency-Key → response cache (API Contract §10).
 

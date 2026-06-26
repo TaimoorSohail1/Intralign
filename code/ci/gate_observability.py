@@ -160,6 +160,25 @@ EXPECTED_EVENT_NAMES_ARTIFACT: tuple[str, ...] = (
 # ``context_item_*`` events are extraction-engine emissions, not this command.
 EXPECTED_EVENT_NAMES_EVIDENCE: tuple[str, ...] = ("evidence_added",)
 
+# Event Model §10 finding-lifecycle-command events (DTM-0035 — :acknowledge /
+# :address / :reopen). Per API Contract §5 + catalog, :acknowledge and :address
+# carry ``finding_updated`` (resulting status in payload); :reopen carries
+# ``finding_reopened``. ``finding_detected``/``finding_superseded`` (engine) live
+# in WB_INFER; ``finding_created``/``finding_closed`` are not this command.
+EXPECTED_EVENT_NAMES_FINDING: tuple[str, ...] = (
+    "finding_updated",
+    "finding_reopened",
+)
+
+# Event Model §12 notification-state-command events (DTM-0035 — :view / :dismiss).
+# PLATFORM awareness state (non-canonical): zero recompute consumers; never alters
+# a Finding/Recommendation. ``notification_created``/``notification_expired`` are
+# not client commands and are not in this vocabulary.
+EXPECTED_EVENT_NAMES_NOTIFICATION: tuple[str, ...] = (
+    "notification_viewed",
+    "notification_dismissed",
+)
+
 # The union the emitters must accept (back-compat alias in events.py).
 EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     EXPECTED_EVENT_NAMES_WA00R
@@ -177,6 +196,8 @@ EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     + EXPECTED_EVENT_NAMES_PROJECT
     + EXPECTED_EVENT_NAMES_ARTIFACT
     + EXPECTED_EVENT_NAMES_EVIDENCE
+    + EXPECTED_EVENT_NAMES_FINDING
+    + EXPECTED_EVENT_NAMES_NOTIFICATION
 )
 
 # (contract-tuple variable name, expected value, contract label) for check (b).
@@ -200,6 +221,12 @@ _CONTRACT_VOCABULARIES: tuple[tuple[str, tuple[str, ...], str], ...] = (
     ("EVENT_NAMES_PROJECT", EXPECTED_EVENT_NAMES_PROJECT, "EM §5 project"),
     ("EVENT_NAMES_ARTIFACT", EXPECTED_EVENT_NAMES_ARTIFACT, "EM §6 artifact"),
     ("EVENT_NAMES_EVIDENCE", EXPECTED_EVENT_NAMES_EVIDENCE, "EM §7 evidence"),
+    ("EVENT_NAMES_FINDING", EXPECTED_EVENT_NAMES_FINDING, "EM §10 finding"),
+    (
+        "EVENT_NAMES_NOTIFICATION",
+        EXPECTED_EVENT_NAMES_NOTIFICATION,
+        "EM §12 notification",
+    ),
 )
 
 # The union must be the per-contract names concatenated in this exact order.
@@ -219,6 +246,8 @@ _UNION_NAME_ORDER: tuple[str, ...] = (
     "EVENT_NAMES_PROJECT",
     "EVENT_NAMES_ARTIFACT",
     "EVENT_NAMES_EVIDENCE",
+    "EVENT_NAMES_FINDING",
+    "EVENT_NAMES_NOTIFICATION",
 )
 
 APPEND_EVENT = "cognition_history_record_appended"
