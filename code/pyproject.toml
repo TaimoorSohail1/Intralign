@@ -19,6 +19,10 @@ dependencies = [
     "langgraph-checkpoint-postgres>=2",  # durable PostgresSaver — DTM-0005 approved (brings psycopg)
     "psycopg[binary]>=3.1",    # explicit: bundles libpq so the PostgresSaver boots on a clean machine/CI (reproducibility fix; IC-WA-00R)
     "supabase>=2.5",           # Supabase Postgres + Auth/GoTrue + Storage (DL-054)
+    "pyjwt[crypto]>=2.12",     # DTM-0036 auth seam — verify Supabase Auth (GoTrue) HS256 access
+                               # tokens offline. NOT a new transitive: `supabase`(>=2.5) already
+                               # pulls it via `supabase_auth` (Requires-Dist pyjwt[crypto]>=2.12);
+                               # declared explicitly because app code imports it directly.
     "neo4j>=5.20",             # knowledge graph
     "redis>=5.0",              # sessions / cache / event buffers
     "opentelemetry-sdk>=1.25", # observability (retained)

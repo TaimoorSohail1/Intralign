@@ -11,8 +11,9 @@
   ``app.dependency_overrides`` (the house pattern), wired to Supabase in prod.
 
 Read-mostly: these dependencies expose NO write/accept/compute path. JWT-claim
-verification (signature/exp) is the Supabase-Auth seam wired under deployment;
-this module establishes the contract surface the routers depend on.
+verification (signature/exp + claims → Principal) is performed by the
+Supabase-Auth seam in ``backend/platform/auth.py`` (DTM-0036), using the
+env-injected ``SUPABASE_JWT_SECRET`` (no secret in the repo).
 """
 
 from __future__ import annotations
@@ -38,21 +39,34 @@ class Principal:
 def current_principal(
     authorization: str | None = Header(default=None),
 ) -> Principal:
-    """Resolve the bearer token → Principal (401 when absent/blank).
+    """Resolve + verify the bearer token → Principal (401 on any failure).
 
-    R1 single-workspace: the verified token carries ``user_id`` + ``workspace_id``
-    + ``role``. The signature/exp verification is the Supabase-Auth seam wired at
-    deployment; here we require a bearer (the §3 contract) and reject its absence.
-    Tests override this dependency to inject a fixed Principal.
+    Verifies the Supabase Auth (GoTrue) HS256 access token offline — signature +
+    expiry — against the env-injected ``SUPABASE_JWT_SECRET`` (no secret in the
+    repo; Deployment Governance §7), then maps its claims to the R1 single-
+    workspace Principal: ``sub`` → ``user_id``; ``workspace_id`` + RBAC ``role``
+    (owner/admin/member) from ``app_metadata`` (API Contract Spec §3, 51–59;
+    Runtime Env §4). Missing/blank/tampered/expired/missing-claim ⇒ a single
+    ``401 unauthenticated`` (the verifier never leaks *why*).
+
+    Tests override this dependency (``app.dependency_overrides[current_principal]``)
+    to inject a fixed Principal — that path is untouched.
     """
-    if not authorization or not authorization.strip():
+    from backend.platform.auth import AuthError, extract_bearer, verify_token
+
+    try:
+        token = extract_bearer(authorization)
+        claims = verify_token(token)
+    except AuthError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"error": {"code": "unauthenticated", "message": "missing bearer token"}},
-        )
-    raise HTTPException(  # pragma: no cover - replaced by the Supabase-Auth seam / test override
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={"error": {"code": "unauthenticated", "message": "token verification not configured"}},
+            detail={"error": {"code": "unauthenticated", "message": str(exc)}},
+        ) from exc
+
+    return Principal(
+        user_id=claims.user_id,
+        workspace_id=claims.workspace_id,
+        role=claims.role,
     )
 
 
