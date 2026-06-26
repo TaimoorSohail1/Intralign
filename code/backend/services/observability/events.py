@@ -171,6 +171,18 @@ EVENT_NAMES_ANALYSIS: tuple[str, ...] = (
     "analysis_cancelled",
 )
 
+# Event Model §8.11 "Recommendations" — the four recommendation-COMMAND events
+# emitted by the DTM-0033 REST command router (:accept / :reject / :defer /
+# :implement), exactly, in §8.11 order. Each is a USER action recorded by Wave U
+# (DL-055 rec lifecycle); ``recommendation_generated`` (the engine emission) lives
+# in the WC_ADVISE set and is NOT repeated here. Pinned verbatim against EM §8.11.
+EVENT_NAMES_RECOMMENDATION: tuple[str, ...] = (
+    "recommendation_accepted",
+    "recommendation_rejected",
+    "recommendation_deferred",
+    "recommendation_implemented",
+)
+
 # Union vocabulary accepted by emitters (back-compat alias for consumers).
 EVENT_NAMES: tuple[str, ...] = (
     EVENT_NAMES_WA00R
@@ -184,6 +196,7 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_WU_ACCEPT
     + EVENT_NAMES_COST
     + EVENT_NAMES_ANALYSIS
+    + EVENT_NAMES_RECOMMENDATION
 )
 
 _EVENT_NAME_SET: frozenset[str] = frozenset(EVENT_NAMES)

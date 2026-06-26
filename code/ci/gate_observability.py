@@ -132,6 +132,16 @@ EXPECTED_EVENT_NAMES_ANALYSIS: tuple[str, ...] = (
     "analysis_cancelled",
 )
 
+# Event Model §8.11 recommendation-command events (DTM-0033 — :accept/:reject/
+# :defer/:implement). The USER actions recorded by Wave U (DL-055 rec lifecycle);
+# ``recommendation_generated`` (the engine emission) lives in WC_ADVISE, not here.
+EXPECTED_EVENT_NAMES_RECOMMENDATION: tuple[str, ...] = (
+    "recommendation_accepted",
+    "recommendation_rejected",
+    "recommendation_deferred",
+    "recommendation_implemented",
+)
+
 # The union the emitters must accept (back-compat alias in events.py).
 EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     EXPECTED_EVENT_NAMES_WA00R
@@ -145,6 +155,7 @@ EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     + EXPECTED_EVENT_NAMES_WU_ACCEPT
     + EXPECTED_EVENT_NAMES_COST
     + EXPECTED_EVENT_NAMES_ANALYSIS
+    + EXPECTED_EVENT_NAMES_RECOMMENDATION
 )
 
 # (contract-tuple variable name, expected value, contract label) for check (b).
@@ -160,6 +171,11 @@ _CONTRACT_VOCABULARIES: tuple[tuple[str, tuple[str, ...], str], ...] = (
     ("EVENT_NAMES_WU_ACCEPT", EXPECTED_EVENT_NAMES_WU_ACCEPT, "IC-WU-ACCEPT C3"),
     ("EVENT_NAMES_COST", EXPECTED_EVENT_NAMES_COST, "DL-048 cost"),
     ("EVENT_NAMES_ANALYSIS", EXPECTED_EVENT_NAMES_ANALYSIS, "EM §8.8 analysis"),
+    (
+        "EVENT_NAMES_RECOMMENDATION",
+        EXPECTED_EVENT_NAMES_RECOMMENDATION,
+        "EM §8.11 recommendation",
+    ),
 )
 
 # The union must be the per-contract names concatenated in this exact order.
@@ -175,6 +191,7 @@ _UNION_NAME_ORDER: tuple[str, ...] = (
     "EVENT_NAMES_WU_ACCEPT",
     "EVENT_NAMES_COST",
     "EVENT_NAMES_ANALYSIS",
+    "EVENT_NAMES_RECOMMENDATION",
 )
 
 APPEND_EVENT = "cognition_history_record_appended"

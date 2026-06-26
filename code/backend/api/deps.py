@@ -115,6 +115,36 @@ def get_event_emitter() -> Any:
     return ObservedEventEmitter.wrap(CollectingEventEmitter())
 
 
+# --- Acceptance-command seams (DTM-0033) -------------------------------------
+# The acceptance command router (recommendations :accept/:reject/:defer/:implement)
+# consumes these providers. The transport invents NO acceptance logic: it resolves
+# the recommendation's current CHR as the mandatory version_pin, builds the capture,
+# and calls the EXISTING ``record_acceptance`` retain seam (UAR always; plan fact on
+# accept only). Each provider is overridable via ``app.dependency_overrides`` in
+# tests and wired to the real Supabase-backed seams in production.
+
+
+def get_retention_store() -> Any:
+    """Provide the append-only retention store (UAR/plan-fact INSERT; Supabase)."""
+    from backend.services.persistence import get_supabase_client
+    from backend.services.persistence.retention_store import SupabaseRetentionStore
+
+    return SupabaseRetentionStore(get_supabase_client())
+
+
+def get_acceptance_chr_reader() -> Any:
+    """Provide the CHR reader ``record_acceptance`` uses to read the pinned CHR.
+
+    On ``accept`` the plan-fact content is a DATA read of the pinned CHR's
+    ``output_payload`` (no LLM) — the existing ``ChrRepository`` satisfies the
+    ``ChrReader`` protocol.
+    """
+    from backend.responsibilities.retain.repository import ChrRepository
+    from backend.services.persistence import get_supabase_client
+
+    return ChrRepository(get_supabase_client())
+
+
 class _IdempotencyStore:
     """In-process Idempotency-Key → response cache (API Contract §10).
 

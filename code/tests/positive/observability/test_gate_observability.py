@@ -19,6 +19,7 @@ from ci.gate_observability import (
     EXPECTED_EVENT_NAMES_WA002,
     EXPECTED_EVENT_NAMES_WB_EVAL,
     EXPECTED_EVENT_NAMES_WB_INFER,
+    EXPECTED_EVENT_NAMES_RECOMMENDATION,
     EXPECTED_EVENT_NAMES_WC_ADVISE,
     EXPECTED_EVENT_NAMES_WC_FIX,
     EXPECTED_EVENT_NAMES_WS,
@@ -40,6 +41,7 @@ from backend.services.observability.events import (
     EVENT_NAMES_WA002,
     EVENT_NAMES_WB_EVAL,
     EVENT_NAMES_WB_INFER,
+    EVENT_NAMES_RECOMMENDATION,
     EVENT_NAMES_WC_ADVISE,
     EVENT_NAMES_WC_FIX,
     EVENT_NAMES_WS,
@@ -74,9 +76,10 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
     assert EXPECTED_EVENT_NAMES_WU_ACCEPT == EVENT_NAMES_WU_ACCEPT
     assert EXPECTED_EVENT_NAMES_COST == EVENT_NAMES_COST
     assert EXPECTED_EVENT_NAMES_ANALYSIS == EVENT_NAMES_ANALYSIS
+    assert EXPECTED_EVENT_NAMES_RECOMMENDATION == EVENT_NAMES_RECOMMENDATION
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
-    # Union consistency: the alias is exactly the 11-way per-contract concatenation
-    # (DTM-0032 — ANALYSIS appended after COST; the union grows, never reorders).
+    # Union consistency: the alias is exactly the 12-way per-contract concatenation
+    # (DTM-0033 — RECOMMENDATION appended after ANALYSIS; the union grows, never reorders).
     assert EVENT_NAMES == (
         EVENT_NAMES_WA00R
         + EVENT_NAMES_WA001
@@ -89,6 +92,7 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
         + EVENT_NAMES_WU_ACCEPT
         + EVENT_NAMES_COST
         + EVENT_NAMES_ANALYSIS
+        + EVENT_NAMES_RECOMMENDATION
     )
     # stale_detected lives in the WA00R set only — referenced, never duplicated.
     assert "stale_detected" in EVENT_NAMES_WA00R
@@ -223,6 +227,31 @@ def test_analysis_vocabulary_is_the_three_em_8_8_names_verbatim() -> None:
     # not a command event — those names are NOT in this command vocabulary.
     assert "fast_analysis_started" not in EVENT_NAMES
     assert "deep_analysis_completed" not in EVENT_NAMES
+
+
+def test_recommendation_vocabulary_is_the_four_em_8_11_names_verbatim() -> None:
+    """DTM-0033 — the Event Model §8.11 recommendation-command list, exactly, in order."""
+    assert EVENT_NAMES_RECOMMENDATION == (
+        "recommendation_accepted",
+        "recommendation_rejected",
+        "recommendation_deferred",
+        "recommendation_implemented",
+    )
+    # The per-emission append event is REUSED from WA00R, never duplicated here.
+    assert "cognition_history_record_appended" not in EVENT_NAMES_RECOMMENDATION
+    # Recommendation-command events live in the RECOMMENDATION set only.
+    for name in EVENT_NAMES_RECOMMENDATION:
+        assert name not in EVENT_NAMES_WS
+        assert name not in EVENT_NAMES_WB_INFER
+        assert name not in EVENT_NAMES_WB_EVAL
+        assert name not in EVENT_NAMES_WC_ADVISE
+        assert name not in EVENT_NAMES_WC_FIX
+        assert name not in EVENT_NAMES_WU_ACCEPT
+        assert name not in EVENT_NAMES_COST
+        assert name not in EVENT_NAMES_ANALYSIS
+    # ``recommendation_generated`` (the engine emission) lives in WC_ADVISE, not here.
+    assert "recommendation_generated" in EVENT_NAMES_WC_ADVISE
+    assert "recommendation_generated" not in EVENT_NAMES_RECOMMENDATION
 
 
 def test_wa002_vocabulary_is_the_five_ic_wa_002_a6_names_verbatim() -> None:

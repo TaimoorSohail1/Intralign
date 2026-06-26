@@ -14,6 +14,7 @@ from fastapi import APIRouter
 
 from backend.api.v1.routers import (
     acceptance,
+    acceptance_commands,
     analysis_commands,
     analysis_runs,
     confidence,
@@ -38,3 +39,9 @@ router.include_router(notifications.router)
 # and separate from the GET read surface (decision #3/#4); it wires the existing
 # submit_trigger seam and never mutates a canonical store.
 router.include_router(analysis_commands.router)
+
+# DTM-0033 — the acceptance command router (POST recommendations
+# :accept/:reject/:defer/:implement). Additive and separate from the GET
+# recommendations read router; it wires the existing ``record_acceptance`` retain
+# seam (UAR always; plan fact on accept only) and never marks the rec world-true.
+router.include_router(acceptance_commands.router)
