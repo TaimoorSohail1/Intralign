@@ -27,6 +27,7 @@ import { ProjectOverviewRoute } from "../surfaces/Overview/ProjectOverviewRoute"
 import { CompanionRoute } from "../surfaces/Companion/CompanionRoute";
 import { NotificationsRoute } from "../surfaces/Notifications/NotificationsRoute";
 import { TimelineRoute } from "../surfaces/Timeline/TimelineRoute";
+import { ExportRoute } from "../surfaces/Export/ExportRoute";
 
 const rootRoute = createRootRoute({
   component: AppShell,
@@ -110,6 +111,23 @@ const historyRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: "/history",
   component: TimelineRoute,
+});
+
+// DTM-0028 — the Export / Share-out surface mounts at the project Export route
+// (`/projects/$projectId/export`; the one route add — no project-level export route
+// existed). It is a lightweight Companion-Surface-class ACTION (Export & Share-Out
+// spec §D) — a secondary project-context surface, never a primary top-level
+// destination and never a reporting workspace. It PACKAGES the existing governed
+// outputs (confidence/CAF/findings/recommendations/UARs/plan facts) into an
+// exportable artifact (browser Blob/anchor download + an in-app preview) that honors
+// the epistemic labels (Derived/Attested + band, plan-fact attribution) and preserves
+// provenance (the CHR version/source travels into the package) — and introduces NO new
+// claim (every line traces to a governed source field; decision #3, Disclose presents,
+// never generates). Read-only — no generate/score/accept/edit/govern/reanalyze control.
+const exportRoute = createRoute({
+  getParentRoute: () => projectRoute,
+  path: "/export",
+  component: ExportRoute,
 });
 
 // OSLO Chat — the Ask OSLO entry on the Companion launches Chat (a separate surface),
@@ -299,6 +317,7 @@ const routeTree = rootRoute.addChildren([
     orientationRoute,
     companionRoute,
     historyRoute,
+    exportRoute,
     projectChatRoute,
     analysisRunRoute,
     projectFindingsRoute,
