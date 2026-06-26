@@ -21,8 +21,11 @@ from backend.api.v1.routers import (
     confidence,
     finding_commands,
     findings,
+    history,
+    issues,
     notification_commands,
     notifications,
+    overview,
     project_commands,
     projects,
     recommendations,
@@ -38,6 +41,20 @@ router.include_router(recommendations.router)
 router.include_router(confidence.router)
 router.include_router(acceptance.router)
 router.include_router(notifications.router)
+
+# DTM-0038 — the read-shape additions that close the Wave E read-surface flags
+# with first-class reads (all GET-only, workspace-scoped, labels preserved):
+#  - issues: the first-class Issue (Derived ``issue_current``) + its source-Finding
+#    lineage (mirrors the findings reader);
+#  - overview: counts of the governed lists + the Derived Outcome-Confidence/CAF
+#    aggregates (a PRESENTATION of governed objects — NEVER a health/probability
+#    score; the Wave E not-project-health rule);
+#  - history: the append-only Cognition-History trail (the "what OSLO said when",
+#    CHR-only, Derived-labelled, append-order). The append-only write path stays
+#    the Retain-owned ChrRepository — these reads mutate nothing.
+router.include_router(issues.router)
+router.include_router(overview.router)
+router.include_router(history.router)
 
 # DTM-0032 — the analysis command router (POST :fast/:deep/:cancel). Additive
 # and separate from the GET read surface (decision #3/#4); it wires the existing

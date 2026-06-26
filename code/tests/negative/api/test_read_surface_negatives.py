@@ -58,6 +58,8 @@ def test_out_of_workspace_project_is_404() -> None:
 _READ_ROUTER_TAGS = frozenset({
     "projects", "analysis_runs", "findings", "recommendations",
     "confidence", "acceptance", "notifications",
+    # DTM-0038 — the read-shape additions are read-mostly too.
+    "issues", "overview", "history",
 })
 
 
@@ -143,4 +145,65 @@ def test_read_seam_has_no_write_method(path: str) -> None:
     assert not (methods & write_verbs), (
         f"the read seam exposes a write method {methods & write_verbs} — it must be "
         "SELECT-only (read-mostly)"
+    )
+
+
+# ---- DTM-0038: Issue / Overview / History negatives --------------------------
+
+def test_overview_is_not_a_project_health_metric() -> None:
+    """The Overview DTO/schema carries NO health/readiness/score/probability field.
+
+    Wave E not-project-health rule: the Overview is COUNTS + labelled aggregates —
+    never a single project-health number. Proven on both the DTO field set and the
+    serialized OpenAPI schema.
+    """
+    from shared.entities import Overview
+
+    banned = {"health", "readiness", "score", "probability", "project_health"}
+    assert not (set(Overview.model_fields) & banned)
+
+    schema = app.openapi()
+    props = set(
+        schema.get("components", {}).get("schemas", {}).get("Overview", {})
+        .get("properties", {})
+    )
+    assert "Overview" in schema.get("components", {}).get("schemas", {})
+    leaked = props & banned
+    assert not leaked, f"Overview schema reads as project health: {leaked}"
+
+
+def test_issue_and_history_schemas_carry_no_internal_cognition_fields() -> None:
+    """The Issue/HistoryEntry schemas leak no internal-cognition-only field (Critical)."""
+    schema = app.openapi()
+    components = schema.get("components", {}).get("schemas", {})
+    assert "Issue" in components
+    assert "HistoryEntry" in components
+    # Internal Issue payload + internal CHR fields that must NEVER cross the boundary.
+    internal_only = {
+        "mode", "confidence_stage", "understanding_state", "model_or_rule_version",
+        "output_payload", "upstream_lineage", "input_attestation_version",
+    }
+    for name in ("Issue", "HistoryEntry"):
+        props = set(components.get(name, {}).get("properties", {}))
+        leaked = props & internal_only
+        assert not leaked, f"{name} schema leaks internal cognition fields: {leaked}"
+
+
+def test_issue_dto_is_not_the_internal_cognition_type() -> None:
+    """The external Issue DTO is distinct from the internal Evaluate Issue type."""
+    import shared.entities as entities
+
+    assert entities.Issue.__module__ == "shared.entities"
+    assert entities.Issue is not getattr(epistemic, "Issue", object())
+
+
+def test_history_read_seam_has_no_write_method() -> None:
+    """The history reader exposes no append/insert/update — the write path stays Retain."""
+    from backend.services.render.read_seam import SupabaseHistoryReader
+
+    write_verbs = {"insert", "update", "delete", "upsert", "append"}
+    methods = {m for m in dir(SupabaseHistoryReader) if not m.startswith("_")}
+    assert not (methods & write_verbs), (
+        f"the history seam exposes a write method {methods & write_verbs} — it must "
+        "be SELECT-only (the append-only write path stays the Retain ChrRepository)"
     )

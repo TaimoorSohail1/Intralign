@@ -79,6 +79,78 @@ def test_get_recommendation_detail(client) -> None:
     assert resp.json()["recommendation_id"] == "r-1"
 
 
+def test_list_issues_carry_labels_and_lineage(client) -> None:
+    resp = client.get(f"/v1/projects/{PROJECT}/issues", headers=AUTH)
+    assert resp.status_code == 200
+    issue = resp.json()[0]
+    assert issue["issue_id"] == "i-1"
+    assert issue["finding_id"] == "f-1"  # source-Finding lineage
+    assert issue["finding_type"] == "conflict"
+    assert issue["severity"] == "critical"
+    assert issue["label"]["epistemic_label"] == "derived"
+    assert issue["label"]["conflict_state"] == "contested"
+    # No internal cognition field leaks onto the Issue DTO.
+    assert "mode" not in issue
+    assert "confidence_stage" not in issue
+    assert "understanding_state" not in issue
+
+
+def test_list_issues_filter_by_finding(client) -> None:
+    resp = client.get(
+        f"/v1/projects/{PROJECT}/issues", params={"finding_id": "f-1"}, headers=AUTH
+    )
+    assert resp.status_code == 200
+    assert all(i["finding_id"] == "f-1" for i in resp.json())
+    resp_none = client.get(
+        f"/v1/projects/{PROJECT}/issues", params={"finding_id": "nope"}, headers=AUTH
+    )
+    assert resp_none.json() == []
+
+
+def test_get_issue_detail(client) -> None:
+    resp = client.get("/v1/issues/i-1", headers=AUTH)
+    assert resp.status_code == 200
+    assert resp.json()["issue_id"] == "i-1"
+
+
+def test_get_issue_detail_missing_is_404(client) -> None:
+    resp = client.get("/v1/issues/does-not-exist", headers=AUTH)
+    assert resp.status_code == 404
+
+
+def test_overview_counts_and_aggregates_labelled(client) -> None:
+    resp = client.get(f"/v1/projects/{PROJECT}/overview", headers=AUTH)
+    assert resp.status_code == 200
+    body = resp.json()
+    counts = {c["kind"]: c["count"] for c in body["counts"]}
+    assert counts == {"finding": 1, "issue": 1, "recommendation": 1}
+    assert {c["label"] for c in body["counts"]} == {"findings", "issues", "recommendations"}
+    # The aggregates carry their Derived band (presentation, not a health number).
+    assert body["outcome_confidence"]["confidence_band"] == "medium"
+    assert body["outcome_confidence"]["label"]["epistemic_label"] == "derived"
+    assert body["caf"]["feasibility"]["band"] == "high"
+    # NOT a project-health metric — no health/score field on the payload.
+    assert "health" not in body
+    assert "score" not in body
+    assert "readiness" not in body
+    assert "probability" not in body
+
+
+def test_history_feed_append_order_derived_labelled(client) -> None:
+    resp = client.get(f"/v1/projects/{PROJECT}/history", headers=AUTH)
+    assert resp.status_code == 200
+    body = resp.json()
+    # Append order: oldest emitted first.
+    assert [e["chr_id"] for e in body] == ["chr-1", "chr-2"]
+    # Each entry is the OSLO-self-attested Derived trail receipt.
+    assert all(e["epistemic_label"] == "attested-oslo" for e in body)
+    # The supersession link is the drift backbone.
+    assert body[1]["supersedes_chr_id"] == "chr-1"
+    # No internal CHR field leaks onto the trail entry.
+    assert "output_payload" not in body[0]
+    assert "model_or_rule_version" not in body[0]
+
+
 def test_get_confidence(client) -> None:
     resp = client.get(f"/v1/projects/{PROJECT}/confidence", headers=AUTH)
     assert resp.status_code == 200

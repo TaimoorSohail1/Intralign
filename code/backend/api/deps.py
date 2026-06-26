@@ -24,7 +24,11 @@ from typing import Any
 
 from fastapi import Depends, Header, HTTPException, status
 
-from backend.services.render import ProjectionReader, SupabaseProjectionReader
+from backend.services.render import (
+    HistoryReader,
+    ProjectionReader,
+    SupabaseProjectionReader,
+)
 
 
 @dataclass(frozen=True)
@@ -75,6 +79,20 @@ def get_projection_reader() -> ProjectionReader:
     from backend.services.persistence import get_supabase_client
 
     return SupabaseProjectionReader(get_supabase_client())
+
+
+def get_history_reader() -> HistoryReader:
+    """Provide the SELECT-only Cognition-History trail reader (DTM-0038).
+
+    Reads the append-only ``cognition_history_record`` log for the history feed
+    (Supabase in prod; overridden in tests). It is read-only — the append-only
+    write path stays the Retain-owned ``ChrRepository`` (the read surface mutates
+    nothing).
+    """
+    from backend.services.persistence import get_supabase_client
+    from backend.services.render.read_seam import SupabaseHistoryReader
+
+    return SupabaseHistoryReader(get_supabase_client())
 
 
 def require_principal(principal: Principal = Depends(current_principal)) -> Principal:

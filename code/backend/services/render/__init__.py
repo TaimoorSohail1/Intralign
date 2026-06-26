@@ -14,18 +14,23 @@ from backend.services.render.mappers import (
     caf_to_dto,
     confidence_to_dto,
     finding_to_dto,
+    history_entry_to_dto,
+    issue_to_dto,
     notification_to_dto,
+    overview_to_dto,
     plan_fact_to_dto,
     project_to_dto,
     recommendation_to_dto,
     uar_to_dto,
 )
 from backend.services.render.read_seam import (
+    HistoryReader,
     ProjectionReader,
     SupabaseProjectionReader,
 )
 
 __all__ = [
+    "HistoryReader",
     "ProjectionReader",
     "SupabaseProjectionReader",
     "acceptance_impact_to_dto",
@@ -33,7 +38,10 @@ __all__ = [
     "caf_to_dto",
     "confidence_to_dto",
     "finding_to_dto",
+    "history_entry_to_dto",
+    "issue_to_dto",
     "notification_to_dto",
+    "overview_to_dto",
     "plan_fact_to_dto",
     "project_to_dto",
     "recommendation_to_dto",

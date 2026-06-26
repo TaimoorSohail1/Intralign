@@ -17,7 +17,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.api.app import app
-from backend.api.deps import Principal, current_principal, get_projection_reader
+from backend.api.deps import (
+    Principal,
+    current_principal,
+    get_history_reader,
+    get_projection_reader,
+)
 
 PROJECT = "11111111-1111-1111-1111-111111111111"
 WORKSPACE = "ws-1"
@@ -74,6 +79,21 @@ class FakeReader:
         return [r for r in self.notifications if str(r.get("workspace_id")) == workspace_id]
 
 
+class FakeHistoryReader:
+    """In-memory SELECT-only Cognition-History trail reader (no append/mutate).
+
+    Returns the CHR rows for a project in APPEND ORDER (oldest emitted first), the
+    way the real ``SupabaseHistoryReader`` orders by ``emitted_at`` ascending.
+    """
+
+    def __init__(self) -> None:
+        self.history: list[dict[str, Any]] = []
+
+    def list_history(self, project_id: str) -> list[dict[str, Any]]:
+        rows = [r for r in self.history if str(r.get("project_id")) == project_id]
+        return sorted(rows, key=lambda r: r.get("emitted_at") or "")
+
+
 def _projection_row(output_kind: str, payload: dict, project_id: str = PROJECT, **env) -> dict:
     return {
         "projection_id": env.get("projection_id", f"{output_kind}-proj-1"),
@@ -105,6 +125,14 @@ def reader() -> FakeReader:
         "finding", {"finding_id": "f-1", "finding_type": "conflict", "summary": "x",
                     "evidence_anchors": ["a-0"], "status": "detected"},
         conflict_state="contested", projection_id="f-1"))
+    r.projections.setdefault("issue", []).append(_projection_row(
+        "issue", {"issue_id": "i-1", "finding_id": "f-1", "finding_type": "conflict",
+                  "severity": "critical", "summary": "x", "evidence_anchors": ["a-0"],
+                  "status": "detected",
+                  # internal-only payload fields that must NOT leak onto the DTO:
+                  "mode": "fast", "confidence_stage": "orientation",
+                  "understanding_state": "initial", "epistemic_state": "derived"},
+        conflict_state="contested", projection_id="i-1"))
     r.projections.setdefault("recommendation", []).append(_projection_row(
         "recommendation", {"recommendation_id": "r-1", "anchor": "f-1",
                            "recommendation_type": "candidate_improvement",
@@ -138,14 +166,37 @@ def reader() -> FakeReader:
 
 
 @pytest.fixture
+def history_reader() -> FakeHistoryReader:
+    r = FakeHistoryReader()
+    # Two CHRs in append order; the second supersedes the first (drift backbone).
+    r.history.append({
+        "chr_id": "chr-1", "project_id": PROJECT, "output_kind": "outcome_confidence",
+        "recompute_trigger": "promotion", "supersedes_chr_id": None,
+        "emitted_at": "2026-06-25T00:00:00Z", "epistemic_state": "attested-oslo",
+        # internal-only CHR fields that must NOT leak onto the trail DTO:
+        "output_payload": {"index": 60.0}, "model_or_rule_version": {"model": "x"},
+    })
+    r.history.append({
+        "chr_id": "chr-2", "project_id": PROJECT, "output_kind": "outcome_confidence",
+        "recompute_trigger": "knowledge-change", "supersedes_chr_id": "chr-1",
+        "emitted_at": "2026-06-25T01:00:00Z", "epistemic_state": "attested-oslo",
+        "output_payload": {"index": 55.0}, "model_or_rule_version": {"model": "x"},
+    })
+    return r
+
+
+@pytest.fixture
 def principal() -> Principal:
     return Principal(user_id="u-1", workspace_id=WORKSPACE, role="member")
 
 
 @pytest.fixture
-def client(reader: FakeReader, principal: Principal) -> TestClient:
+def client(
+    reader: FakeReader, history_reader: FakeHistoryReader, principal: Principal
+) -> TestClient:
     app.dependency_overrides[current_principal] = lambda: principal
     app.dependency_overrides[get_projection_reader] = lambda: reader
+    app.dependency_overrides[get_history_reader] = lambda: history_reader
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

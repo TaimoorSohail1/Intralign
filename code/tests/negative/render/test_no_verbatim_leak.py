@@ -13,9 +13,10 @@ import shared.epistemic as epistemic
 from backend.services.render import (
     confidence_to_dto,
     finding_to_dto,
+    issue_to_dto,
     recommendation_to_dto,
 )
-from shared.entities import Finding, Recommendation
+from shared.entities import Finding, Issue, Recommendation
 
 PROJECT = "11111111-1111-1111-1111-111111111111"
 
@@ -60,6 +61,25 @@ def test_recommendation_dto_carries_no_internal_only_fields() -> None:
     assert "model_or_rule_version" not in field_names
     assert "understanding_state" not in field_names
     assert "confidence_stage" not in field_names
+
+
+def test_issue_dto_carries_no_internal_only_fields() -> None:
+    """The Issue DTO drops the internal cognition payload fields (no verbatim leak)."""
+    dto = issue_to_dto(_row("issue", {
+        "issue_id": "i-1", "finding_id": "f-1", "finding_type": "conflict",
+        "severity": "critical", "summary": "x", "evidence_anchors": ["a-0"],
+        # internal-only fields the Evaluate Issue carries — must NOT appear:
+        "mode": "fast", "confidence_stage": "orientation",
+        "understanding_state": "initial", "epistemic_state": "derived",
+    }))
+    assert isinstance(dto, Issue)
+    field_names = set(Issue.model_fields)
+    assert "mode" not in field_names
+    assert "confidence_stage" not in field_names
+    assert "understanding_state" not in field_names
+    # The label still travels (a Derived object always carries its label).
+    assert dto.label.epistemic_label == "derived"
+    assert dto.finding_id == "f-1"  # source-Finding lineage preserved
 
 
 def test_every_derived_dto_carries_an_epistemic_label() -> None:

@@ -46,6 +46,7 @@ _DERIVED_TABLE = {
 
 ASSERTION_TABLE = "attested_assertion"
 ACCEPTANCE_TABLE = "user_acceptance_record"
+CHR_TABLE = "cognition_history_record"
 
 # Platform tables (Data Model §7/§10/§13). NOTE: these are NOT yet created by a
 # migration in this branch (the ``platform`` module is a stub — see the DTM-0018
@@ -91,6 +92,21 @@ class ProjectionReader(Protocol):
         ...  # pragma: no cover - protocol
 
     def list_notifications(self, workspace_id: str) -> list[dict[str, Any]]:
+        ...  # pragma: no cover - protocol
+
+
+@runtime_checkable
+class HistoryReader(Protocol):
+    """SELECT-only read of the Cognition-History trail (the "what OSLO said when").
+
+    The history feed reads the append-only ``cognition_history_record`` log (LDM
+    §2.2) in append order (``emitted_at`` ascending). This is a SELECT surface —
+    there is no append/update method on it (the append-only write path stays the
+    Retain-owned ``ChrRepository``; the read surface mutates nothing). Satisfied by
+    :class:`SupabaseHistoryReader` in production and an in-memory fake in tests.
+    """
+
+    def list_history(self, project_id: str) -> list[dict[str, Any]]:
         ...  # pragma: no cover - protocol
 
 
@@ -209,6 +225,31 @@ class SupabaseProjectionReader:
             .select("*")
             .eq("workspace_id", workspace_id)
             .order("created_at", desc=True)
+            .execute()
+        )
+        return list(resp.data)
+
+
+class SupabaseHistoryReader:
+    """Concrete SELECT-only read of the Cognition-History trail (LDM §2.2).
+
+    Reads the append-only ``cognition_history_record`` log in APPEND ORDER
+    (``emitted_at`` ascending — oldest first; the "what OSLO said when" trail). It
+    is a ``select(...)`` ONLY — no insert/update/delete; the append-only write
+    path stays the Retain-owned ``ChrRepository`` (one-producer / CHR discipline
+    preserved). Uses the single Supabase transport (never an ad-hoc client).
+    """
+
+    def __init__(self, client: Client) -> None:
+        self._client = client
+
+    def list_history(self, project_id: str) -> list[dict[str, Any]]:
+        """The project's Cognition-History trail, oldest-emitted first (SELECT only)."""
+        resp = (
+            self._client.table(CHR_TABLE)
+            .select("*")
+            .eq("project_id", project_id)
+            .order("emitted_at", desc=False)
             .execute()
         )
         return list(resp.data)

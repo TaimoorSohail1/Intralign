@@ -234,6 +234,39 @@ class Finding(BaseModel):
     label: DerivedEnvelope = Field(default_factory=DerivedEnvelope)
 
 
+class Issue(BaseModel):
+    """Issue DTO — the Derived, first-class prioritized Finding (LDM §2.2/§3.1).
+
+    Object Model §8: an Issue is a Core Derived Runtime Object formed *from* a
+    Finding (``Issue ──from──> Finding``) with ``severity`` as an attribute — it
+    is NOT a separate canonical row. The persistence representation is the
+    ``derived.issue_current`` live projection (the DTM-0030 materializer populates
+    it from the ``issue`` CHRs). It carries the Finding's Data-Model field set
+    (``finding_type`` / ``severity`` / ``summary`` / ``evidence_links``) PLUS its
+    own first-class identity (``issue_id``) and the source-Finding lineage
+    (``finding_id``). The epistemic ``label`` travels (always Derived + band +
+    conflict, decision #5). No field is invented beyond the Finding field set +
+    the Issue's identity/lineage (Data Model v1.2 introduces no new entity; Issue
+    is the Object-Model Derived projection of a prioritized Finding).
+    """
+
+    issue_id: str
+    project_id: str
+    finding_id: str
+    first_seen_run_id: str | None = None
+    last_updated_run_id: str | None = None
+    finding_type: FindingType
+    affected_dimensions: list[Dimension] = Field(default_factory=list)
+    severity: Severity | None = None
+    status: FindingStatus = FindingStatus.DETECTED
+    summary: str | None = None
+    evidence_links: list[str] = Field(default_factory=list)
+    created_at: str | None = None
+    updated_at: str | None = None
+    closed_at: str | None = None
+    label: DerivedEnvelope = Field(default_factory=DerivedEnvelope)
+
+
 class CAFDimensionView(BaseModel):
     """One CAF dimension snapshot — Data Model v1.2 §10 CAFState per-dimension fields."""
 
@@ -300,6 +333,83 @@ class Recommendation(BaseModel):
     created_at: str | None = None
     updated_at: str | None = None
     label: DerivedEnvelope = Field(default_factory=DerivedEnvelope)
+
+
+# --- Overview / counts DTO (DTM-0038 — presentation of governed objects) -------
+# CRITICAL (Wave E not-project-health rule): the Overview is a PRESENTATION of the
+# governed objects — counts of Findings/Issues/Recommendations + the aggregate
+# Outcome-Confidence band + CAF, each EPISTEMICALLY LABELLED. It is NEVER a
+# health/readiness/probability score and computes nothing new: every number is a
+# count of, or a pass-through band from, an already-governed object. There is no
+# ``health`` / ``readiness`` / ``score`` / ``probability`` field on this DTO by
+# construction (negative-proven).
+
+
+class GovernedCount(BaseModel):
+    """A labelled count of one governed-object kind (presentation, not a metric).
+
+    ``label`` is the human-facing kind name (e.g. ``"findings"``); ``count`` is the
+    number of governed objects of that kind currently presented. It is a COUNT of
+    governed objects — never a health figure, never a percentage.
+    """
+
+    label: str = Field(description="The governed-object kind this counts (e.g. 'findings').")
+    kind: str = Field(description="The governed-object kind key (finding|issue|recommendation).")
+    count: int = Field(ge=0, description="How many governed objects of this kind are present.")
+
+
+class Overview(BaseModel):
+    """Overview DTO — counts of governed objects + labelled aggregates (DTM-0038).
+
+    Presents, for one project: the counts of the governed lists (Findings,
+    Issues, Recommendations) AND the aggregate epistemic signals OSLO already
+    governs — the Outcome-Confidence band + the CAF snapshot — each carrying its
+    Derived epistemic label so the UI renders without re-deriving (decision #5).
+
+    NOT a health metric (Wave E): the counts are presentation of governed objects
+    and the confidence/CAF are pass-throughs of their own governed bands. The DTO
+    deliberately carries NO ``health`` / ``readiness`` / ``score`` / ``probability``
+    field — Overview never reads as a single project-health number.
+    """
+
+    project_id: str
+    counts: list[GovernedCount] = Field(default_factory=list)
+    outcome_confidence: ConfidenceState | None = Field(
+        default=None,
+        description="The aggregate Outcome Confidence (Derived; band is user-facing).",
+    )
+    caf: CAFState | None = Field(
+        default=None, description="The CAF snapshot (three co-equal Derived dimensions)."
+    )
+
+
+# --- History feed DTO (DTM-0038 — the Cognition-History trail, append-order) ----
+# The "what OSLO said when" trail: each entry is read EXACT from a Cognition
+# History Record (LDM §2.2; the append-only emission receipt) — Derived-labelled
+# (a CHR is OSLO-self-attested, ``attested-oslo``). The feed is CHR-only (the
+# existing UAR/plan-fact reads cover user-attested receipts; see the worker
+# report). Append-order is preserved by ``emitted_at``. Read-exact: the entry
+# surfaces the receipt's identity + lineage, never re-derives.
+
+
+class HistoryEntry(BaseModel):
+    """One Cognition-History trail entry — read exact from a CHR (LDM §2.2).
+
+    Surfaces the emission receipt's identity (``chr_id``), the governed-output
+    kind it emitted (``output_kind``), when it was emitted (``emitted_at``), what
+    drove the (re)compute (``recompute_trigger``), and the supersession link
+    (``supersedes_chr_id``) that makes the trail a drift backbone. ``epistemic_label``
+    is ``attested-oslo`` — a CHR is OSLO-self-attested by definition; the entry is
+    a Derived-trail receipt, never a canonical fact about the world.
+    """
+
+    chr_id: str
+    project_id: str
+    output_kind: str
+    recompute_trigger: str | None = None
+    supersedes_chr_id: str | None = None
+    emitted_at: str | None = None
+    epistemic_label: str = "attested-oslo"
 
 
 # --- Notification DTO (Data Model v1.2 §13 — awareness only, never canonical) ---

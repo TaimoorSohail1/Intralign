@@ -13,7 +13,10 @@ from backend.services.render import (
     caf_to_dto,
     confidence_to_dto,
     finding_to_dto,
+    history_entry_to_dto,
+    issue_to_dto,
     notification_to_dto,
+    overview_to_dto,
     plan_fact_to_dto,
     project_to_dto,
     recommendation_to_dto,
@@ -24,7 +27,10 @@ from shared.entities import (
     CAFState,
     ConfidenceState,
     Finding,
+    HistoryEntry,
+    Issue,
     Notification,
+    Overview,
     PlanFact,
     Project,
     Recommendation,
@@ -82,6 +88,102 @@ def test_finding_gap_maps_to_datamodel_taxonomy() -> None:
     )
     dto = finding_to_dto(row)
     assert dto.finding_type.value == "coverage_gap"
+
+
+def test_issue_mapper_carries_label_and_lineage() -> None:
+    """An Issue is the Derived prioritized Finding: label travels + source lineage."""
+    row = _projection_row(
+        "issue",
+        {
+            "issue_id": "i-1",
+            "finding_id": "f-1",
+            "finding_type": "conflict",
+            "severity": "critical",
+            "summary": "Two assertions contradict.",
+            "evidence_anchors": ["a-0", "a-1"],
+            "status": "detected",
+        },
+        conflict_state="contested",
+    )
+    dto = issue_to_dto(row)
+    assert isinstance(dto, Issue)
+    assert dto.issue_id == "i-1"
+    assert dto.finding_id == "f-1"  # source-Finding lineage
+    assert dto.finding_type.value == "conflict"
+    assert dto.severity.value == "critical"
+    assert dto.evidence_links == ["a-0", "a-1"]
+    # The epistemic label travels: Derived + band + conflict (decision #5).
+    assert dto.label.epistemic_label == "derived"
+    assert dto.label.confidence_band.value == "medium"
+    assert dto.label.conflict_state.value == "contested"
+    assert dto.label.current_chr_ref == "chr-1"
+
+
+def test_issue_mapper_maps_gap_taxonomy() -> None:
+    row = _projection_row(
+        "issue",
+        {"issue_id": "i-2", "finding_id": "f-2", "finding_type": "gap",
+         "gap_kind": "coverage", "severity": "moderate", "summary": "x",
+         "evidence_anchors": ["a-0"]},
+    )
+    dto = issue_to_dto(row)
+    assert dto.finding_type.value == "coverage_gap"
+
+
+def test_overview_mapper_counts_and_labelled_aggregates() -> None:
+    """Overview is counts of governed lists + labelled aggregates (never health)."""
+    findings = [_projection_row("finding", {"finding_id": f"f-{i}"}) for i in range(3)]
+    issues = [_projection_row("issue", {"issue_id": f"i-{i}", "finding_id": f"f-{i}"})
+              for i in range(2)]
+    recs = [_projection_row("recommendation", {"recommendation_id": "r-1", "anchor": "f-1"})]
+    oc = [_projection_row("outcome_confidence",
+                          {"index": 62.0, "band": "medium", "basis": ["clarity"]})]
+    caf = [_projection_row("caf", {"dimensions": {
+        "clarity": {"index": 70.0, "band": "medium", "reliability": "moderate"},
+        "alignment": {"index": 55.0, "band": "medium", "reliability": "low"},
+        "feasibility": {"index": 80.0, "band": "high", "reliability": "high"}}})]
+    dto = overview_to_dto(
+        PROJECT, finding_rows=findings, issue_rows=issues, recommendation_rows=recs,
+        outcome_confidence_rows=oc, caf_rows=caf,
+    )
+    assert isinstance(dto, Overview)
+    counts = {c.kind: c.count for c in dto.counts}
+    assert counts == {"finding": 3, "issue": 2, "recommendation": 1}
+    # Each count is labelled (presentation of governed objects).
+    assert {c.label for c in dto.counts} == {"findings", "issues", "recommendations"}
+    # The aggregates carry their Derived band (pass-through, not a computed health).
+    assert dto.outcome_confidence is not None
+    assert dto.outcome_confidence.confidence_band.value == "medium"
+    assert dto.outcome_confidence.label.epistemic_label == "derived"
+    assert dto.caf is not None
+    assert dto.caf.feasibility.band.value == "high"
+
+
+def test_overview_dto_has_no_health_field() -> None:
+    """The Overview DTO carries NO health/readiness/score/probability field (Wave E)."""
+    fields = set(Overview.model_fields)
+    banned = {"health", "readiness", "score", "probability", "project_health", "status"}
+    assert not (fields & banned), f"Overview leaks a health-shaped field: {fields & banned}"
+
+
+def test_history_entry_mapper_is_derived_trail_read_exact() -> None:
+    """A history entry reads the CHR exact + carries the OSLO-self-attested label."""
+    row = {
+        "chr_id": "chr-2", "project_id": PROJECT, "output_kind": "outcome_confidence",
+        "recompute_trigger": "knowledge-change", "supersedes_chr_id": "chr-1",
+        "emitted_at": "2026-06-25T01:00:00Z", "epistemic_state": "attested-oslo",
+        "output_payload": {"index": 55.0}, "model_or_rule_version": {"model": "x"},
+    }
+    dto = history_entry_to_dto(row)
+    assert isinstance(dto, HistoryEntry)
+    assert dto.chr_id == "chr-2"
+    assert dto.output_kind == "outcome_confidence"
+    assert dto.recompute_trigger == "knowledge-change"
+    assert dto.supersedes_chr_id == "chr-1"  # the supersession link (drift backbone)
+    assert dto.epistemic_label == "attested-oslo"
+    # No internal CHR field leaks onto the trail DTO.
+    assert "output_payload" not in HistoryEntry.model_fields
+    assert "model_or_rule_version" not in HistoryEntry.model_fields
 
 
 def test_recommendation_mapper_maps_type_and_status() -> None:

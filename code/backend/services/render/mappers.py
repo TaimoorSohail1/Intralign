@@ -26,7 +26,11 @@ from shared.entities import (
     ConfidenceState,
     DerivedEnvelope,
     Finding,
+    GovernedCount,
+    HistoryEntry,
+    Issue,
     Notification,
+    Overview,
     PlanFact,
     Project,
     Recommendation,
@@ -115,6 +119,38 @@ def _finding_type(finding_type: Any, gap_kind: Any) -> str:
     if ft == "risk":
         return "inference"
     return "ambiguity"
+
+
+def issue_to_dto(row: dict[str, Any]) -> Issue:
+    """Map a ``derived.issue_current`` row → the Issue DTO (Object Model §8).
+
+    An Issue is the Derived, first-class prioritized Finding (``Issue ──from──>
+    Finding``, severity an attribute). It carries the Finding's Data-Model field
+    set PLUS its own identity (``issue_id``) and the source-Finding lineage
+    (``finding_id``). The epistemic label travels (Derived + band + conflict). The
+    internal-only payload fields (``mode`` / ``confidence_stage`` /
+    ``understanding_state`` / ``epistemic_state``) are NOT carried onto the DTO —
+    no internal cognition leaks verbatim (decision #4; negative-proven). Mirrors
+    ``finding_to_dto`` for the shared Finding field set.
+    """
+    p = _payload(row)
+    return Issue(
+        issue_id=str(p.get("issue_id") or row.get("projection_id")),
+        project_id=str(row["project_id"]),
+        finding_id=str(p.get("finding_id") or ""),
+        first_seen_run_id=p.get("first_seen_run_id"),
+        last_updated_run_id=p.get("last_updated_run_id"),
+        finding_type=_finding_type(p.get("finding_type"), p.get("gap_kind")),
+        affected_dimensions=list(p.get("affected_dimensions") or []),
+        severity=p.get("severity"),
+        status=p.get("status") or "detected",
+        summary=p.get("summary"),
+        evidence_links=list(p.get("evidence_anchors") or p.get("evidence_links") or []),
+        created_at=p.get("created_at"),
+        updated_at=p.get("updated_at"),
+        closed_at=p.get("closed_at"),
+        label=_envelope(row),
+    )
 
 
 def recommendation_to_dto(row: dict[str, Any]) -> Recommendation:
@@ -220,6 +256,64 @@ def acceptance_impact_to_dto(row: dict[str, Any]) -> AcceptanceImpactAssessment:
         pinned_band=p.get("pinned_band"),
         latest_band=p.get("latest_band"),
         label=_envelope(row),
+    )
+
+
+# --- Overview / counts (DTM-0038 — presentation of governed objects) ----------
+
+def overview_to_dto(
+    project_id: str,
+    *,
+    finding_rows: list[dict[str, Any]],
+    issue_rows: list[dict[str, Any]],
+    recommendation_rows: list[dict[str, Any]],
+    outcome_confidence_rows: list[dict[str, Any]],
+    caf_rows: list[dict[str, Any]],
+) -> Overview:
+    """Aggregate the governed lists → the Overview DTO (counts + labelled aggregates).
+
+    CRITICAL (Wave E not-project-health rule): every field is a COUNT of, or a
+    labelled pass-through of, an already-governed object. The counts are sizes of
+    the governed lists; the Outcome-Confidence + CAF are mapped through their
+    existing Derived mappers (the band travels). NOTHING here computes a health /
+    readiness / probability score — there is no such field on the DTO.
+    """
+    return Overview(
+        project_id=str(project_id),
+        counts=[
+            GovernedCount(label="findings", kind="finding", count=len(finding_rows)),
+            GovernedCount(label="issues", kind="issue", count=len(issue_rows)),
+            GovernedCount(
+                label="recommendations", kind="recommendation",
+                count=len(recommendation_rows),
+            ),
+        ],
+        outcome_confidence=(
+            confidence_to_dto(outcome_confidence_rows[0]) if outcome_confidence_rows else None
+        ),
+        caf=caf_to_dto(caf_rows[0]) if caf_rows else None,
+    )
+
+
+# --- History feed (DTM-0038 — the Cognition-History trail, read exact) ---------
+
+def history_entry_to_dto(row: dict[str, Any]) -> HistoryEntry:
+    """Map a ``cognition_history_record`` row → the HistoryEntry DTO (read exact).
+
+    The entry surfaces the CHR's identity + lineage exactly as the append-only
+    receipt holds them (LDM §2.2) — it re-derives nothing. ``epistemic_label`` is
+    ``attested-oslo`` (a CHR is OSLO-self-attested by definition).
+    """
+    chr_id = row.get("chr_id")
+    supersedes = row.get("supersedes_chr_id")
+    return HistoryEntry(
+        chr_id=str(chr_id),
+        project_id=str(row.get("project_id")),
+        output_kind=str(row.get("output_kind")),
+        recompute_trigger=row.get("recompute_trigger"),
+        supersedes_chr_id=str(supersedes) if supersedes is not None else None,
+        emitted_at=str(row["emitted_at"]) if row.get("emitted_at") is not None else None,
+        epistemic_label=str(row.get("epistemic_state") or "attested-oslo"),
     )
 
 
