@@ -14,6 +14,7 @@ from ci.gate_observability import (
     EXPECTED_EVENT_NAMES,
     EXPECTED_EVENT_NAMES_ANALYSIS,
     EXPECTED_EVENT_NAMES_ARTIFACT,
+    EXPECTED_EVENT_NAMES_CHAT,
     EXPECTED_EVENT_NAMES_COST,
     EXPECTED_EVENT_NAMES_EVIDENCE,
     EXPECTED_EVENT_NAMES_FINDING,
@@ -41,6 +42,7 @@ from backend.services.observability.events import (
     EVENT_NAMES,
     EVENT_NAMES_ANALYSIS,
     EVENT_NAMES_ARTIFACT,
+    EVENT_NAMES_CHAT,
     EVENT_NAMES_COST,
     EVENT_NAMES_EVIDENCE,
     EVENT_NAMES_FINDING,
@@ -92,6 +94,7 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
     assert EXPECTED_EVENT_NAMES_EVIDENCE == EVENT_NAMES_EVIDENCE
     assert EXPECTED_EVENT_NAMES_FINDING == EVENT_NAMES_FINDING
     assert EXPECTED_EVENT_NAMES_NOTIFICATION == EVENT_NAMES_NOTIFICATION
+    assert EXPECTED_EVENT_NAMES_CHAT == EVENT_NAMES_CHAT
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
     # Union consistency: the alias is exactly the 15-way per-contract concatenation
     # (DTM-0034 — PROJECT/ARTIFACT/EVIDENCE appended after RECOMMENDATION; the union
@@ -114,6 +117,7 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
         + EVENT_NAMES_EVIDENCE
         + EVENT_NAMES_FINDING
         + EVENT_NAMES_NOTIFICATION
+        + EVENT_NAMES_CHAT
     )
     # stale_detected lives in the WA00R set only — referenced, never duplicated.
     assert "stale_detected" in EVENT_NAMES_WA00R
@@ -346,6 +350,26 @@ def test_finding_and_notification_command_vocabularies_are_verbatim() -> None:
         assert name not in EVENT_NAMES_ANALYSIS
         assert name not in EVENT_NAMES_RECOMMENDATION
         assert name not in EVENT_NAMES_COST
+
+
+def test_chat_vocabulary_is_the_one_obs_wi_interact_name_verbatim() -> None:
+    """DTM-0037 — the OBS-WI-INTERACT chat list, exactly: 'chat_exchange'."""
+    assert EVENT_NAMES_CHAT == ("chat_exchange",)
+    # NON-CANONICAL: the chat event never pairs with a CHR append (chat writes no
+    # canonical; an Improve's recompute owns ``cognition_history_record_appended``).
+    assert "cognition_history_record_appended" not in EVENT_NAMES_CHAT
+    # The chat event lives in the CHAT set only — never leaking into other sets.
+    for other in (
+        EVENT_NAMES_WS, EVENT_NAMES_WB_INFER, EVENT_NAMES_WB_EVAL,
+        EVENT_NAMES_WC_ADVISE, EVENT_NAMES_WC_FIX, EVENT_NAMES_WU_ACCEPT,
+        EVENT_NAMES_ANALYSIS, EVENT_NAMES_RECOMMENDATION, EVENT_NAMES_NOTIFICATION,
+        EVENT_NAMES_COST,
+    ):
+        assert "chat_exchange" not in other
+    # The chat-triggered Deep Pass lifecycle rides the recompute backbone (WA00R),
+    # not a chat event — those names are NOT in the chat vocabulary.
+    assert "deep_analysis_requested" in EVENT_NAMES_ANALYSIS
+    assert "deep_analysis_requested" not in EVENT_NAMES_CHAT
 
 
 def test_wa002_vocabulary_is_the_five_ic_wa_002_a6_names_verbatim() -> None:

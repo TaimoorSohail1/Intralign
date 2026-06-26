@@ -17,6 +17,7 @@ from backend.api.v1.routers import (
     acceptance_commands,
     analysis_commands,
     analysis_runs,
+    chat,
     confidence,
     finding_commands,
     findings,
@@ -68,3 +69,13 @@ router.include_router(project_commands.router)
 # appends a CHR, or changes any assessment.
 router.include_router(finding_commands.router)
 router.include_router(notification_commands.router)
+
+# DTM-0037 — the OSLO Chat router (POST /projects/{pid}/chat). Additive and
+# separate from the read surface. A Disclose-class interaction surface (DL-047
+# CHAT-01…04): Explain/Clarify/Resolve CONSUME existing cognition (read + an
+# LLM-phrased response via the fixture-backed seam); Improve TRIGGERS cognition
+# (the existing submit_trigger seam, materializer injected). It returns a
+# NON-CANONICAL ChatExchange and emits the non-canonical ``chat_exchange`` event.
+# CRITICAL: the chat writes NO canonical (no AttestedAssertion/CHR/UAR), mutates
+# NO artifact, and changes NO assessment — it only consumes + triggers.
+router.include_router(chat.router)

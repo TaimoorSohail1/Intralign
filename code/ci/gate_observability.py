@@ -179,6 +179,11 @@ EXPECTED_EVENT_NAMES_NOTIFICATION: tuple[str, ...] = (
     "notification_dismissed",
 )
 
+# OBS-WI-INTERACT chat event (DTM-0037 — POST /projects/{pid}/chat). The single
+# NON-CANONICAL "Chat Exchange" event; the chat consumes/triggers cognition but
+# emits no canonical event (the triggered Deep Pass owns its WA00R emissions).
+EXPECTED_EVENT_NAMES_CHAT: tuple[str, ...] = ("chat_exchange",)
+
 # The union the emitters must accept (back-compat alias in events.py).
 EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     EXPECTED_EVENT_NAMES_WA00R
@@ -198,6 +203,7 @@ EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     + EXPECTED_EVENT_NAMES_EVIDENCE
     + EXPECTED_EVENT_NAMES_FINDING
     + EXPECTED_EVENT_NAMES_NOTIFICATION
+    + EXPECTED_EVENT_NAMES_CHAT
 )
 
 # (contract-tuple variable name, expected value, contract label) for check (b).
@@ -227,6 +233,7 @@ _CONTRACT_VOCABULARIES: tuple[tuple[str, tuple[str, ...], str], ...] = (
         EXPECTED_EVENT_NAMES_NOTIFICATION,
         "EM §12 notification",
     ),
+    ("EVENT_NAMES_CHAT", EXPECTED_EVENT_NAMES_CHAT, "OBS-WI-INTERACT chat"),
 )
 
 # The union must be the per-contract names concatenated in this exact order.
@@ -248,6 +255,7 @@ _UNION_NAME_ORDER: tuple[str, ...] = (
     "EVENT_NAMES_EVIDENCE",
     "EVENT_NAMES_FINDING",
     "EVENT_NAMES_NOTIFICATION",
+    "EVENT_NAMES_CHAT",
 )
 
 APPEND_EVENT = "cognition_history_record_appended"

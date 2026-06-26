@@ -220,6 +220,37 @@ def get_notification_repo() -> Any:
     return SupabaseNotificationRepository(get_supabase_client())
 
 
+# --- OSLO Chat seam (DTM-0037) -----------------------------------------------
+# The chat router (POST /projects/{pid}/chat) consumes this responder. The
+# responder CONSUMES cognition (Explain/Clarify/Resolve = read + phrase via the
+# fixture-backed LLM seam) and may TRIGGER it (Improve → the EXISTING
+# ``submit_trigger`` seam, materializer injected — the frozen recompute owns its
+# CHR append). It is constructed with NO canonical-write collaborator: it holds
+# ONLY the LLM provider, the ``submit_trigger`` seam, and the DTM-0030
+# materializer. Overridable via ``app.dependency_overrides`` in tests (a recorded
+# fixture drives the LLM offline, ADR-0004); wired to the real seams in prod.
+
+
+def get_chat_responder() -> Any:
+    """Provide the OSLO Chat responder (DTM-0037; consume + trigger, non-canonical).
+
+    Live: the LLM provider routes to the internal gemma model (the ``advise``
+    stage, DL-069 — no new model/routing); Improve wires the existing
+    ``submit_trigger`` seam with the DTM-0030 materializer injected. In CI the
+    responder is overridden with a recorded-fixture-backed provider (zero network,
+    ADR-0004). It holds NO retention/CHR/intake/projection-store handle — the chat
+    writes no canonical and mutates no artifact (DL-047 Critical).
+    """
+    from backend.responsibilities.disclose.chat import ChatResponder
+    from backend.services.llm_provider import LLMProvider
+
+    return ChatResponder(
+        provider=LLMProvider(),
+        submit_trigger=get_trigger_submitter(),
+        materializer=get_materializer(),
+    )
+
+
 class _IdempotencyStore:
     """In-process Idempotency-Key → response cache (API Contract §10).
 

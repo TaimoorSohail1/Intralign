@@ -125,6 +125,8 @@ EVENT_NAMES_NOTIFICATION: tuple[str, ...] = (
     "notification_dismissed",
 )
 
+EVENT_NAMES_CHAT: tuple[str, ...] = ("chat_exchange",)
+
 EVENT_NAMES: tuple[str, ...] = (
     EVENT_NAMES_WA00R
     + EVENT_NAMES_WA001
@@ -143,6 +145,7 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_EVIDENCE
     + EVENT_NAMES_FINDING
     + EVENT_NAMES_NOTIFICATION
+    + EVENT_NAMES_CHAT
 )
 '''
 
@@ -532,10 +535,10 @@ def test_missing_finding_command_tuple_fails_vocabulary_check(tmp_path) -> None:
 def test_missing_event_names_assignment_fails(tmp_path) -> None:
     root = _make_tree(tmp_path, events_src="OTHER = 1\n")
     violations = check_event_vocabulary(root)
-    # all seventeen contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/WC_ADVISE/
+    # all eighteen contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/WC_ADVISE/
     # WC_FIX/WU_ACCEPT/COST/ANALYSIS/RECOMMENDATION/PROJECT/ARTIFACT/EVIDENCE/FINDING/
-    # NOTIFICATION) AND the union (DTM-0035).
-    assert len(violations) == 18
+    # NOTIFICATION/CHAT) AND the union (DTM-0037).
+    assert len(violations) == 19
     assert any("EVENT_NAMES_WA00R not found" in v for v in violations)
     assert any("EVENT_NAMES_WA001 not found" in v for v in violations)
     assert any("EVENT_NAMES_WA002 not found" in v for v in violations)
@@ -551,6 +554,7 @@ def test_missing_event_names_assignment_fails(tmp_path) -> None:
     assert any("EVENT_NAMES_PROJECT not found" in v for v in violations)
     assert any("EVENT_NAMES_ARTIFACT not found" in v for v in violations)
     assert any("EVENT_NAMES_EVIDENCE not found" in v for v in violations)
+    assert any("EVENT_NAMES_CHAT not found" in v for v in violations)
     assert any("EVENT_NAMES not found" in v for v in violations)
 
 
@@ -603,6 +607,7 @@ def test_union_dropping_ws_and_cost_legs_fails(tmp_path) -> None:
         "    + EVENT_NAMES_EVIDENCE\n"
         "    + EVENT_NAMES_FINDING\n"
         "    + EVENT_NAMES_NOTIFICATION\n"
+        "    + EVENT_NAMES_CHAT\n"
         ")",
         "EVENT_NAMES: tuple[str, ...] = (\n"
         "    EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002\n"

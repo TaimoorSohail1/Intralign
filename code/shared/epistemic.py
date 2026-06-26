@@ -23,6 +23,12 @@ class EpistemicState(str, Enum):
     ATTESTED_OSLO = "attested-oslo"              # OSLO-self-attested (CognitionHistoryRecord)
     ATTESTED_USER = "attested-user"              # user-attested (UserAcceptanceRecord / Plan Fact)
     DERIVED = "derived"                          # recomputable cognition (Finding/Issue/Recommendation)
+    # DL-047 — interaction records (ChatSession/ChatExchange) are NEITHER attested
+    # nor derived cognition: they are non-canonical platform interaction state
+    # (like a notification). This marker keeps them OFF the cognition layers — an
+    # interaction record can never be mistaken for a governed receipt or a
+    # recomputable projection. NOT used by any cognition DB CHECK constraint.
+    NON_CANONICAL = "non-canonical"              # interaction record (ChatExchange/ChatSession)
 
 
 class CognitionEntity(BaseModel):
@@ -34,7 +40,11 @@ class CognitionEntity(BaseModel):
 
     @property
     def is_canonical(self) -> bool:
-        return self.epistemic_state != EpistemicState.DERIVED
+        return self.epistemic_state in (
+            EpistemicState.ATTESTED_EVIDENCE,
+            EpistemicState.ATTESTED_OSLO,
+            EpistemicState.ATTESTED_USER,
+        )
 
 
 # Canonical vocabulary. Forbidden in new code: GovernanceDecision, Authority*,
@@ -900,4 +910,113 @@ class SuggestedFix(CognitionEntity):
     epistemic_state: Literal[EpistemicState.DERIVED] = Field(
         default=EpistemicState.DERIVED,
         description="Pinned derived — a SuggestedFix is never Attested-as-truth.",
+    )
+
+
+# =============================================================================
+# OSLO Chat (DTM-0037, DL-047 CHAT-01…04; Wave I IC/OBS-WI-INTERACT) — the
+# NON-CANONICAL interaction records.
+#
+# A ``ChatSession`` / ``ChatExchange`` is NOT governed cognition. It is NEITHER
+# Attested (a canonical receipt) NOR Derived (a recomputable projection) — it is
+# a non-canonical INTERACTION record, like a notification: platform state that
+# captures the user's message + OSLO's phrased response. Its ``epistemic_state``
+# is PINNED to ``non-canonical`` so it can never sit on a cognition layer.
+#
+# THE HEADLINE CRITICAL INVARIANT (DL-047): OSLO Chat CONSUMES cognition
+# (Explain/Clarify/Resolve = read + phrase) and may TRIGGER it (Improve →
+# submit_trigger → the FROZEN Deep-Pass recompute owns its CHR append). The chat
+# itself writes NO canonical (no AttestedAssertion / CHR / UAR), mutates NO
+# artifact, and changes NO assessment. These shapes carry NO assessment /
+# confidence / accepted / attested field (``extra='forbid'``) — a chat exchange
+# CANNOT represent a governed change. They are EPHEMERAL in this slice (returned
+# to the frontend, not persisted): NO migration. A durable
+# ``chat_session``/``chat_exchange`` platform table is a flagged follow-up.
+# =============================================================================
+
+# DL-047 — the four OSLO Chat functions (CHAT-01: Explain · Clarify · Resolve ·
+# Improve). Explain/Clarify/Resolve CONSUME existing cognition; Improve TRIGGERS
+# a Deep Pass (via 00R). A literal — a chat intent is never a free-form string.
+ChatIntent = Literal["explain", "clarify", "resolve", "improve"]
+
+
+class ChatContext(BaseModel):
+    """The launching object a chat exchange inherits context from (CHAT-01).
+
+    When chat is launched from an issue / recommendation / artifact / finding /
+    CRR, the exchange inherits that object's identity so OSLO answers in its
+    context. A REFERENCE only — it never carries or mutates the object's content.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    object_type: str = Field(
+        ..., description="The launching object kind (issue/recommendation/artifact/finding/crr)."
+    )
+    object_id: str = Field(..., description="The launching object id (a reference, not content).")
+
+
+class ChatExchange(CognitionEntity):
+    """A NON-CANONICAL interaction record: the user message + OSLO's response.
+
+    DL-047 CHAT-01…04. NOT governed cognition — neither Attested nor Derived; an
+    interaction record (like a notification). It captures one turn: the user's
+    ``user_message``, the LLM-phrased ``response`` (semantic; never a canonical
+    output), the ``intent``, the inherited ``context`` (optional), and — for an
+    Improve — the ``triggered_run`` id of the Deep Pass the chat triggered
+    (bookkeeping only; the recompute, not the chat, owns its CHR append).
+
+    Forbidden surface (``extra='forbid'``): a ChatExchange carries NO assessment /
+    confidence / finding / accepted / attested field — it CANNOT represent a
+    governed change. ``epistemic_state`` is PINNED to ``non-canonical``: a chat
+    exchange is never Attested-as-truth and never a Derived projection.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    exchange_id: str = Field(..., description="Stable identity for this interaction turn.")
+    session_id: str | None = Field(
+        default=None, description="The ChatSession this turn belongs to (optional in R1)."
+    )
+    intent: ChatIntent = Field(..., description="Explain/Clarify/Resolve (consume) | Improve (trigger).")
+    user_message: str = Field(..., description="The user's message (verbatim).")
+    response: str = Field(..., description="OSLO's phrased response (AI-text; semantic, never canonical).")
+    context: ChatContext | None = Field(
+        default=None, description="The launching object's context, inherited (CHAT-01)."
+    )
+    # For an Improve: the id of the Deep Pass run the chat TRIGGERED (the frozen
+    # recompute owns its CHR append — this is non-canonical bookkeeping, not a
+    # canonical write). None for the consume intents (they trigger nothing).
+    triggered_run: str | None = Field(
+        default=None, description="Improve-only: the triggered Deep-Pass run id (bookkeeping)."
+    )
+    model_or_rule_version: str = Field(
+        ..., description="model/prompt/rule version stamp for the phrasing (audit)."
+    )
+    # Pinned: a ChatExchange is a NON-CANONICAL interaction record — never a
+    # canonical receipt and never a Derived projection.
+    epistemic_state: Literal[EpistemicState.NON_CANONICAL] = Field(
+        default=EpistemicState.NON_CANONICAL,
+        description="Pinned non-canonical — an interaction record, not governed cognition.",
+    )
+
+
+class ChatSession(CognitionEntity):
+    """A NON-CANONICAL chat session — the interaction container for exchanges.
+
+    DL-047. NOT governed cognition (neither Attested nor Derived) — a
+    non-canonical interaction record scoped to a project. Carries no cognition
+    and no assessment; it only groups a sequence of ``ChatExchange`` turns. In
+    this R1 slice sessions are EPHEMERAL (no migration); a durable platform table
+    is a flagged follow-up.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    session_id: str = Field(..., description="Stable identity for the interaction session.")
+    epistemic_state: Literal[EpistemicState.NON_CANONICAL] = Field(
+        default=EpistemicState.NON_CANONICAL,
+        description="Pinned non-canonical — an interaction container, not governed cognition.",
     )

@@ -233,6 +233,16 @@ EVENT_NAMES_NOTIFICATION: tuple[str, ...] = (
     "notification_dismissed",
 )
 
+# OBS-WI-INTERACT — the single OSLO Chat event emitted by the DTM-0037 chat
+# router (POST /projects/{pid}/chat), exactly. NON-CANONICAL: a ``chat_exchange``
+# is an interaction record (like a notification) — zero recompute consumers, it
+# alters no Finding/Recommendation/assessment. Chat's Improve TRIGGERS a Deep
+# Pass whose run lifecycle (``*_analysis_*``) rides the recompute backbone
+# (WA00R) and its CHR append rides ``cognition_history_record_appended`` (WA00R)
+# — those are NOT this event. Pinned verbatim against OBS-WI-INTERACT §3
+# ("Chat Exchange", non-canonical).
+EVENT_NAMES_CHAT: tuple[str, ...] = ("chat_exchange",)
+
 # Union vocabulary accepted by emitters (back-compat alias for consumers).
 EVENT_NAMES: tuple[str, ...] = (
     EVENT_NAMES_WA00R
@@ -252,6 +262,7 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_EVIDENCE
     + EVENT_NAMES_FINDING
     + EVENT_NAMES_NOTIFICATION
+    + EVENT_NAMES_CHAT
 )
 
 _EVENT_NAME_SET: frozenset[str] = frozenset(EVENT_NAMES)
