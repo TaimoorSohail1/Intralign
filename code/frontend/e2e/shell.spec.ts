@@ -12,6 +12,9 @@ test("app shell renders with the primary nav", async ({ page }) => {
 });
 
 test("a placeholder route resolves on navigation", async ({ page }) => {
-  await page.goto("/notifications");
-  await expect(page.getByTestId("surface-title")).toHaveText("Notification Center");
+  // `/notifications` is now the real Notification / Awareness surface (DTM-0026);
+  // `/settings` remains a DTM-0019 placeholder, so it is the probe for "a
+  // placeholder route resolves on navigation".
+  await page.goto("/settings");
+  await expect(page.getByTestId("surface-title")).toHaveText("User Settings");
 });

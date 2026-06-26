@@ -25,6 +25,7 @@ import { IssueCardsRoute } from "../surfaces/IssueCards/IssueCardsRoute";
 import { DashboardRoute } from "../surfaces/Overview/DashboardRoute";
 import { ProjectOverviewRoute } from "../surfaces/Overview/ProjectOverviewRoute";
 import { CompanionRoute } from "../surfaces/Companion/CompanionRoute";
+import { NotificationsRoute } from "../surfaces/Notifications/NotificationsRoute";
 
 const rootRoute = createRootRoute({
   component: AppShell,
@@ -247,15 +248,22 @@ const sharedDetailRoute = createRoute({
   ),
 });
 
+// DTM-0026 — the Notification / Awareness surface mounts at the top-level
+// `/notifications` route, replacing the DTM-0019 placeholder. It presents new
+// emissions (the workspace-level notifications read) + Acceptance-Impact alerts
+// ("a decision you confirmed is affected" — a Derived drift, project-scoped via
+// the optional `project_id` search param) as awareness, and routes each to its
+// source context. Read-only over governed objects; read/unread/dismiss is platform
+// state (Category E) — NON-canonical (decision #9): it writes no canonical, changes
+// no assessment, and resolves no drift.
 const notificationsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/notifications",
-  component: () => (
-    <PlaceholderSurface
-      title="Notification Center"
-      purpose="In-product awareness feed."
-    />
-  ),
+  validateSearch: (search: Record<string, unknown>): { project_id?: string } => ({
+    project_id:
+      typeof search.project_id === "string" ? search.project_id : undefined,
+  }),
+  component: NotificationsRoute,
 });
 
 const settingsRoute = createRoute({
