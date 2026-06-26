@@ -24,6 +24,7 @@ import type {
   CAFState,
   Finding,
   Recommendation,
+  Overview,
 } from "../../api/generated/oSLORelease1API.schemas";
 
 export const PROJECT_ID = "proj-001";
@@ -184,6 +185,23 @@ export const overviewFindingsFixture: Finding[] = [
     },
   },
 ];
+
+/**
+ * The first-class `/overview` DTO (DTM-0038): the aggregate understanding summary in
+ * ONE read — outcome confidence + CAF + the governed-object counts
+ * (finding=3, issue=2, recommendation=2). This is the mocked shape of the
+ * `useGetOverview…` hook the Project Overview now consumes.
+ */
+export const overviewFixture: Overview = {
+  project_id: PROJECT_ID,
+  outcome_confidence: overviewConfidenceFixture,
+  caf: overviewCafFixture,
+  counts: [
+    { kind: "finding", label: "Findings", count: 3 },
+    { kind: "issue", label: "Issues", count: 2 },
+    { kind: "recommendation", label: "Recommendations", count: 2 },
+  ],
+};
 
 /** Recommendations for the project (Derived advisory candidates). Count = 2. */
 export const overviewRecommendationsFixture: Recommendation[] = [

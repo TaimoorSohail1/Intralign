@@ -8,13 +8,13 @@
  * affordances, and inherits context when launched from an issue/recommendation/artifact/
  * finding.
  *
- * CHAT-COMMAND ENDPOINT (ANTI_ASSUMPTION — FLAGGED): there is no chat send/trigger
- * endpoint, and no mutation endpoint of any kind, in the DTM-0018 generated client (GET
- * reads only). Per the protocol we do NOT invent a canonical write: a send appends an
- * EPHEMERAL, NON-CANONICAL exchange marked "pending" — "Improve" would route to the
- * existing Advise/Deep-Pass trigger when that seam is exposed. Nothing canonical is
- * recorded; no governed object is mutated; no assessment changes. Only ephemeral
- * conversation display state changes.
+ * CHAT ENDPOINT (DTM-0039 — replaces the flagged ephemeral stub): a send / Explain /
+ * Clarify / Improve now calls `POST /projects/{id}/chat` (the generated
+ * `useChat…` mutation). That endpoint is the NON-CANONICAL chat path: it appends a
+ * `ChatExchange` and — for Improve — TRIGGERS the frozen Deep Pass. It writes NO
+ * canonical, mutates NO artifact, changes NO assessment (the backend enforces this; the
+ * surface performs no local canonical write either). The user turn renders immediately;
+ * OSLO's phrased `response` is appended from the endpoint result.
  *
  * Honest behavior (spec §G/§O): clarification is information-capture that feeds the NEXT
  * reanalysis — Chat never implies an instant assessment change, never fabricates an
@@ -30,6 +30,12 @@ import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Alert from "@mui/material/Alert";
 import { Link } from "@tanstack/react-router";
+
+import { useChatV1ProjectsProjectIdChatPost } from "../../api/generated/chat/chat";
+import type {
+  ChatRequestIntent,
+  ChatExchange as ChatExchangeDTO,
+} from "../../api/generated/oSLORelease1API.schemas";
 
 /** Who authored a turn in the transcript. */
 export type ChatRole = "user" | "oslo";
@@ -109,11 +115,17 @@ function ExchangeRow({ exchange }: { exchange: ChatExchange }) {
   );
 }
 
+/** Map the surface's inherited context to the endpoint's optional `context` ref. */
+function toRequestContext(ctx: ChatContext) {
+  if (ctx.kind === "project" || !ctx.id) return undefined;
+  return { object_type: ctx.kind, object_id: ctx.id };
+}
+
 export function Chat({ projectId, context, initialExchanges = [] }: ChatProps) {
   const ctx: ChatContext = context ?? { kind: "project" };
   const [exchanges, setExchanges] = useState<ChatExchange[]>(initialExchanges);
   const [draft, setDraft] = useState("");
-  // The most recent reason a turn is pending / a trigger is flagged (honest disclosure).
+  // The most recent honest disclosure (e.g. Improve triggered a Deep Pass).
   const [pendingNotice, setPendingNotice] = useState<string | null>(null);
 
   const nextId = useMemo(() => {
@@ -121,55 +133,82 @@ export function Chat({ projectId, context, initialExchanges = [] }: ChatProps) {
     return () => `ex-local-${++n}-${Date.now()}`;
   }, [exchanges.length]);
 
+  // The chat ENDPOINT (DTM-0037): the non-canonical chat path. On success it returns a
+  // `ChatExchange` whose `response` is OSLO's phrased reply — appended to the transcript.
+  // It writes no canonical and changes no assessment (backend-enforced); the surface
+  // performs no local canonical write either.
+  const chatM = useChatV1ProjectsProjectIdChatPost();
+
   /**
-   * Append an EPHEMERAL, NON-CANONICAL user turn marked pending. This writes nothing
-   * canonical and mutates no governed object — the chat-command seam is not exposed, so
-   * the turn is held pending (never fabricates an OSLO answer).
+   * Send a turn THROUGH the chat endpoint. The user turn renders immediately (marked
+   * pending until the endpoint responds), then OSLO's phrased `response` is appended
+   * from the result. Improve triggers a Deep Pass server-side (disclosed honestly).
    */
-  function appendPending(text: string, notice: string) {
-    const trimmed = text.trim();
+  function sendViaEndpoint(message: string, intent: ChatRequestIntent) {
+    const trimmed = message.trim();
     if (!trimmed) return;
+    const userTurnId = nextId();
     setExchanges((prev) => [
       ...prev,
-      { exchange_id: nextId(), role: "user", text: trimmed, status: "pending" },
+      { exchange_id: userTurnId, role: "user", text: trimmed, status: "pending" },
     ]);
-    setPendingNotice(notice);
+    setPendingNotice(null);
+    chatM.mutate(
+      {
+        projectId,
+        data: { message: trimmed, intent, context: toRequestContext(ctx) },
+      },
+      {
+        onSuccess: (res) => {
+          const exchange = res.data as ChatExchangeDTO;
+          setExchanges((prev) => [
+            // mark the user turn delivered…
+            ...prev.map((e) =>
+              e.exchange_id === userTurnId ? { ...e, status: "delivered" as const } : e,
+            ),
+            // …and append OSLO's phrased response (semantic; never a canonical output).
+            {
+              exchange_id: exchange.exchange_id,
+              role: "oslo" as const,
+              text: exchange.response,
+              status: "delivered" as const,
+            },
+          ]);
+          if (intent === "improve" && exchange.triggered_run) {
+            setPendingNotice(
+              "Improve triggered a Deep Pass reanalysis — Chat itself recorded nothing and " +
+                "changed no assessment; the reanalysis will update OSLO's understanding when it " +
+                "completes.",
+            );
+          }
+        },
+        onError: () => {
+          setPendingNotice(
+            "That message couldn't be delivered just now. Nothing was recorded and no " +
+              "assessment changed — please try again.",
+          );
+        },
+      },
+    );
   }
 
   function handleSend() {
     if (!draft.trim()) return;
-    appendPending(
-      draft,
-      "Sent — OSLO Chat's conversation seam is not yet wired, so this is held pending. " +
-        "Nothing was recorded and no assessment changed.",
-    );
+    // Default intent `explain` — the read-only intent (it triggers nothing).
+    sendViaEndpoint(draft, "explain");
     setDraft("");
   }
 
   function handleExplain() {
-    appendPending(
-      `Explain ${CONTEXT_NOUN[ctx.kind]}`,
-      "Explain reads from OSLO's existing understanding — it computes nothing and changes " +
-        "no assessment. The conversation seam is not yet wired, so this is held pending.",
-    );
+    sendViaEndpoint(`Explain ${CONTEXT_NOUN[ctx.kind]}`, "explain");
   }
 
   function handleClarify() {
-    appendPending(
-      `Clarify ${CONTEXT_NOUN[ctx.kind]}`,
-      "Clarifications capture information that feeds the NEXT reanalysis — answering one " +
-        "changes no confidence/CAF and resolves no finding by itself. Held pending until " +
-        "the conversation seam is available.",
-    );
+    sendViaEndpoint(`Clarify ${CONTEXT_NOUN[ctx.kind]}`, "clarify");
   }
 
   function handleImprove() {
-    appendPending(
-      `Improve ${CONTEXT_NOUN[ctx.kind]}`,
-      "Improve would route to the existing Advise + Deep Pass trigger — Chat itself records " +
-        "nothing and mutates nothing. The trigger seam is not yet exposed, so this is held " +
-        "pending.",
-    );
+    sendViaEndpoint(`Improve ${CONTEXT_NOUN[ctx.kind]}`, "improve");
   }
 
   const isEmpty = exchanges.length === 0;

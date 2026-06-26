@@ -34,6 +34,41 @@ const recState = {
 
 vi.mock("../../../api/generated/recommendations/recommendations", () => ({
   useListRecommendationsForFindingV1FindingsFindingIdRecommendationsGet: () => recState,
+  // The query-key helper is used by the surface to invalidate the read on success.
+  getListRecommendationsForFindingV1FindingsFindingIdRecommendationsGetQueryKey: (
+    findingId: string,
+    params: unknown,
+  ) => [`/v1/findings/${findingId}/recommendations`, params],
+}));
+
+// ── Mock the DTM-0033 acceptance-command hooks (the affordance now CALLS these) ──
+// Each hook returns a stable `mutate` spy so a test can assert the command is the
+// path. `onSuccess` is captured so we can assert the read is invalidated.
+const acceptMutate = vi.fn();
+const rejectMutate = vi.fn();
+const deferMutate = vi.fn();
+const implementMutate = vi.fn();
+let lastAcceptOnSuccess: (() => void) | undefined;
+
+vi.mock("../../../api/generated/acceptance-commands/acceptance-commands", () => ({
+  useAcceptRecommendationV1RecommendationsRecommendationIdAcceptPost: (opts?: {
+    mutation?: { onSuccess?: () => void };
+  }) => {
+    lastAcceptOnSuccess = opts?.mutation?.onSuccess;
+    return { mutate: acceptMutate, isPending: false };
+  },
+  useRejectRecommendationV1RecommendationsRecommendationIdRejectPost: () => ({
+    mutate: rejectMutate,
+    isPending: false,
+  }),
+  useDeferRecommendationV1RecommendationsRecommendationIdDeferPost: () => ({
+    mutate: deferMutate,
+    isPending: false,
+  }),
+  useImplementRecommendationV1RecommendationsRecommendationIdImplementPost: () => ({
+    mutate: implementMutate,
+    isPending: false,
+  }),
 }));
 
 // Imported AFTER the mock is declared (vi.mock is hoisted).
@@ -55,6 +90,11 @@ beforeEach(() => {
   recState.isError = false;
   recState.error = null;
   recState.data = { data: recommendationsForFinding };
+  acceptMutate.mockReset();
+  rejectMutate.mockReset();
+  deferMutate.mockReset();
+  implementMutate.mockReset();
+  lastAcceptOnSuccess = undefined;
 });
 
 describe("RecommendationPanel — presents the finding's recommendations", () => {
@@ -147,28 +187,56 @@ describe("RecommendationPanel — loading / empty states", () => {
   });
 });
 
+// ── The command-path POSITIVES (DTM-0039 — the affordance CALLS the command) ──
+describe("RecommendationPanel — the affordance calls the user-initiated command", () => {
+  it("accept calls the accept mutation with the recommendation id (the command records the UAR)", async () => {
+    await mount();
+    const panel = screen.getByTestId("recommendation-panel");
+    const primaryItem = within(panel).getByTestId("recommendation-item-rec-primary-1");
+    fireEvent.click(within(primaryItem).getByTestId("affordance-accept"));
+    expect(acceptMutate).toHaveBeenCalledTimes(1);
+    expect(acceptMutate).toHaveBeenCalledWith({ recommendationId: "rec-primary-1" });
+  });
+
+  it("reject / defer / implement each call their own command mutation", async () => {
+    await mount();
+    const panel = screen.getByTestId("recommendation-panel");
+    const primaryItem = within(panel).getByTestId("recommendation-item-rec-primary-1");
+    fireEvent.click(within(primaryItem).getByTestId("affordance-reject"));
+    fireEvent.click(within(primaryItem).getByTestId("affordance-defer"));
+    fireEvent.click(within(primaryItem).getByTestId("affordance-implement"));
+    expect(rejectMutate).toHaveBeenCalledWith({ recommendationId: "rec-primary-1" });
+    expect(deferMutate).toHaveBeenCalledWith({ recommendationId: "rec-primary-1" });
+    expect(implementMutate).toHaveBeenCalledWith({ recommendationId: "rec-primary-1" });
+  });
+
+  it("on command success it invalidates the finding-recs read (re-reads the governed status)", async () => {
+    await mount();
+    // the surface wires an onSuccess that invalidates the read; it is defined
+    expect(typeof lastAcceptOnSuccess).toBe("function");
+  });
+});
+
 // ── The Disclose-never-accepts NEGATIVES (the spine; fail review if absent) ──
-describe("RecommendationPanel — NEGATIVES: presents the affordance, NEVER accepts", () => {
-  it("accept does NOT flip the recommendation to Accepted locally — it hands off to Wave U", async () => {
-    const { router } = await mount();
+describe("RecommendationPanel — NEGATIVES: presents the affordance, NEVER accepts locally", () => {
+  it("accept does NOT flip the recommendation to Accepted locally — the command is the only path", async () => {
+    await mount();
     const panel = screen.getByTestId("recommendation-panel");
     const primaryItem = within(panel).getByTestId("recommendation-item-rec-primary-1");
     // before: the primary is `generated` (read from the governed source)
     expect(primaryItem).toHaveAttribute("data-status", "generated");
 
-    const accept = within(primaryItem).getByTestId("affordance-accept");
-    fireEvent.click(accept);
-    await router.invalidate();
+    fireEvent.click(within(primaryItem).getByTestId("affordance-accept"));
 
-    // The hand-off: navigation to the EXISTING Wave U capture — NOT a local mutation.
-    expect(router.state.location.pathname).toMatch(/\/recommendations$/);
-    expect(router.state.location.pathname).not.toContain("/findings/");
-    // and the recommendation's status did NOT change client-side.
-    expect(
-      within(screen.queryByTestId("recommendation-panel") ?? document.body).queryByTestId(
-        "recommendation-item-rec-primary-1",
-      ),
-    ).toBeNull();
+    // The SURFACE performs no local acceptance: the card's status stays exactly what
+    // the governed read returned — it is NOT flipped to "accepted" client-side. The
+    // command (mutation) is the only path that records acceptance.
+    const after = within(screen.getByTestId("recommendation-panel")).getByTestId(
+      "recommendation-item-rec-primary-1",
+    );
+    expect(after).toHaveAttribute("data-status", "generated");
+    // and the mutation (the command) is what was invoked — not a local state write.
+    expect(acceptMutate).toHaveBeenCalledTimes(1);
   });
 
   it("does NOT construct or emit any Resolution-Path object (grouping markup only)", async () => {

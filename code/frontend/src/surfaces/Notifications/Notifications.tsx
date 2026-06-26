@@ -16,20 +16,18 @@
  *     never shown settled and NEVER auto-resolved.
  *
  * ── THE CRITICAL BOUNDARY (the spine of this slice) ──────────────────────────────
- * Read/unread/dismiss is **platform state (Category E), NON-canonical** (spec §J;
- * CONTEXT.md). Marking a notification read or dismissing it:
+ * View/dismiss is **platform state (Category E), NON-canonical** (spec §J;
+ * CONTEXT.md). Marking a notification viewed or dismissing it:
  *   - writes NO canonical, changes NO assessment, promotes nothing;
  *   - does NOT resolve the underlying drift / Acceptance-Impact;
- *   - does NOT mutate the underlying governed `Notification` object.
+ *   - does NOT mutate any governed COGNITION object.
  *
- * THE DISMISS-STATE FINDING (binding to this slice — see the worker report): the
- * DTM-0018 REST surface exposes only a notifications READ
- * (`GET /v1/notifications`). There is **no platform read/dismiss WRITE endpoint**
- * in the generated client (no PATCH/POST mutation for notification state). Per the
- * task contract we therefore model read/dismiss as **LOCAL platform state**
- * (component state) — a presentation convenience — and we do NOT invent a
- * canonical write. The governed object is never mutated; the local state is layered
- * over it for display only.
+ * VIEW/DISMISS WIRING (DTM-0039 — replaces the flagged local-only state): view/dismiss
+ * now call the platform-state COMMANDS (`POST /notifications/{id}:view|:dismiss`,
+ * DTM-0035). These are PLATFORM awareness-state writes (created→viewed / →dismissed) —
+ * NOT canonical cognition, NOT an assessment change. On success the notifications read
+ * is invalidated so the feed re-reads the platform state from the source. A local
+ * optimistic cue/removal is layered for immediate feedback; the command is the path.
  *
  * Read-only over governed objects: no generate / score / accept / resolve /
  * approve / govern / recompute / reanalyze control anywhere (decision #3 — Disclose
@@ -46,8 +44,16 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { useListNotificationsV1NotificationsGet } from "../../api/generated/notifications/notifications";
+import {
+  useListNotificationsV1NotificationsGet,
+  getListNotificationsV1NotificationsGetQueryKey,
+} from "../../api/generated/notifications/notifications";
+import {
+  useViewNotificationV1NotificationsNotificationIdViewPost,
+  useDismissNotificationV1NotificationsNotificationIdDismissPost,
+} from "../../api/generated/notification-commands/notification-commands";
 import { useListAcceptanceImpactV1ProjectsProjectIdAcceptanceImpactGet } from "../../api/generated/acceptance/acceptance";
 import { EpistemicLabel, fromDerivedEnvelope } from "../../components/EpistemicLabel";
 import { epistemicTones } from "../../theme/tokens";
@@ -310,20 +316,44 @@ export function Notifications({ projectId }: NotificationsProps) {
     ? asArray<AcceptanceImpactAssessment>(impactQ.data?.data)
     : [];
 
-  // ── LOCAL platform state (non-canonical): which notifications the user has
-  //    locally read / dismissed. Layered over the governed feed for display only;
-  //    it mutates NO governed object and writes NO canonical (no write endpoint
-  //    exists — see the module docstring + the worker report).
+  // ── LOCAL optimistic platform cue (non-canonical) — layered for immediate feedback
+  //    while the platform-state COMMAND is in flight. The command (below) is the path;
+  //    on success the read is invalidated and the feed re-reads the platform state.
   const [locallyRead, setLocallyRead] = useState<Record<string, true>>({});
   const [locallyDismissed, setLocallyDismissed] = useState<Record<string, true>>({});
+
+  const queryClient = useQueryClient();
+  const invalidate = () =>
+    queryClient.invalidateQueries({
+      queryKey: getListNotificationsV1NotificationsGetQueryKey(
+        projectId ? { project_id: projectId } : undefined,
+      ),
+    });
+
+  // The platform-state COMMANDS (DTM-0035): created→viewed / →dismissed. These write
+  // PLATFORM awareness state — NOT canonical cognition, NOT an assessment change.
+  const viewM = useViewNotificationV1NotificationsNotificationIdViewPost({
+    mutation: { onSuccess: invalidate },
+  });
+  const dismissM = useDismissNotificationV1NotificationsNotificationIdDismissPost({
+    mutation: { onSuccess: invalidate },
+  });
 
   const visible = useMemo(
     () => notifications.filter((n) => !locallyDismissed[n.notification_id]),
     [notifications, locallyDismissed],
   );
 
-  const markRead = (id: string) => setLocallyRead((m) => ({ ...m, [id]: true }));
-  const dismiss = (id: string) => setLocallyDismissed((m) => ({ ...m, [id]: true }));
+  // View → optimistic cue + the platform-state command (created→viewed).
+  const markRead = (id: string) => {
+    setLocallyRead((m) => ({ ...m, [id]: true }));
+    viewM.mutate({ notificationId: id });
+  };
+  // Dismiss → optimistic removal + the platform-state command (→dismissed).
+  const dismiss = (id: string) => {
+    setLocallyDismissed((m) => ({ ...m, [id]: true }));
+    dismissM.mutate({ notificationId: id });
+  };
 
   const loading = notificationsQ.isLoading || (Boolean(projectId) && impactQ.isLoading);
   const isEmpty = !loading && visible.length === 0 && impacts.length === 0;

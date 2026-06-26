@@ -8,10 +8,10 @@
  * control, the card never reads as settled/attested, and confidence never reads
  * as project health/readiness/probability.
  *
- * THE ISSUES-DATA FINDING: there is no dedicated Issue endpoint/DTO (see
- * fixtures.ts). The cards render from the DTM-0018 Finding read (the governed
- * carrier of severity + the Derived confidence label + source-finding lineage).
- * The DTM-0018 generated `useListFindings…` hook is mocked with fixture DTOs.
+ * DTM-0039: the cards render from the FIRST-CLASS `/issues` read (DTM-0038) — the
+ * dedicated `Issue` DTO (Evaluate's prioritized Finding), carrying severity + the
+ * Derived confidence label + the source-finding lineage. The generated
+ * `useListIssues…` hook is mocked with fixture DTOs.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, within, fireEvent } from "@testing-library/react";
@@ -25,7 +25,7 @@ import {
   PROJECT_ID,
 } from "./fixtures";
 
-// ── Mock the DTM-0018 findings list hook (the surface consumes, never re-implements) ──
+// ── Mock the first-class /issues read (the surface consumes, never re-implements) ──
 const issuesState = {
   data: { data: issuesFixture },
   isLoading: false,
@@ -33,8 +33,8 @@ const issuesState = {
   error: null as unknown,
 };
 
-vi.mock("../../api/generated/findings/findings", () => ({
-  useListFindingsV1ProjectsProjectIdFindingsGet: () => issuesState,
+vi.mock("../../api/generated/issues/issues", () => ({
+  useListIssuesV1ProjectsProjectIdIssuesGet: () => issuesState,
 }));
 
 // Imported AFTER the mock is declared (vi.mock is hoisted).

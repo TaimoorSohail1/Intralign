@@ -31,10 +31,11 @@ test("Chat inherits a Finding context from the URL and offers the Finding Panel 
   );
 });
 
-// CRITICAL NEGATIVE — sending writes NO canonical and changes NO assessment. A send
-// appends an ephemeral pending exchange + an honest pending notice; no network mutation
-// is issued, and the surface never claims an applied/accepted/resolved/saved change.
-test("Chat send is non-canonical: a pending exchange, no write, no assessment change", async ({
+// HAPPY-PATH + CRITICAL NEGATIVE (DTM-0039) — sending goes THROUGH the chat ENDPOINT
+// (the non-canonical chat path). The ONLY write is `POST …/chat`; no canonical-write or
+// governed-object mutation endpoint is hit, and the surface never claims an
+// applied/accepted/resolved/saved change. The endpoint is stubbed so the flow completes.
+test("Chat send goes through the chat endpoint (non-canonical) — no canonical write", async ({
   page,
 }) => {
   const mutating: string[] = [];
@@ -45,18 +46,39 @@ test("Chat send is non-canonical: a pending exchange, no write, no assessment ch
     }
   });
 
+  // Stub the chat endpoint: it returns a NON-CANONICAL ChatExchange (OSLO's phrasing).
+  await page.route(/\/v1\/projects\/[^/]+\/chat$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        exchange_id: "ex-srv-1",
+        project_id: "demo-project",
+        user_message: "Accept this recommendation",
+        response: "OSLO explains from existing understanding; nothing changed.",
+        intent: "explain",
+        epistemic_state: "non-canonical",
+        model_or_rule_version: "e2e",
+        triggered_run: null,
+      }),
+    });
+  });
+
   await page.goto("/projects/demo-project/chat");
   await expect(page.getByTestId("chat")).toBeVisible();
 
   await page.getByTestId("chat-input").getByRole("textbox").fill("Accept this recommendation");
   await page.getByTestId("chat-send").click();
 
-  // The message appears as an ephemeral exchange + an honest pending notice.
+  // The user message + OSLO's phrased response render in the transcript.
   await expect(page.getByTestId("chat-transcript")).toContainText(/accept this recommendation/i);
-  await expect(page.getByTestId("chat-pending-notice")).toBeVisible();
+  await expect(page.getByTestId("chat-transcript")).toContainText(/oslo explains from existing/i);
 
-  // No mutating network request was issued by the surface.
-  expect(mutating, `unexpected mutating requests: ${mutating.join(", ")}`).toHaveLength(0);
+  // The ONLY mutating request is the chat endpoint — no canonical-write / governed
+  // mutation (accept / finding / notification / analysis) endpoint was hit.
+  const nonChat = mutating.filter((m) => !/\/v1\/projects\/[^/]+\/chat$/.test(m));
+  expect(nonChat, `unexpected non-chat mutating requests: ${nonChat.join(", ")}`).toHaveLength(0);
+  expect(mutating.some((m) => /\/chat$/.test(m))).toBe(true);
 
   // The surface never claims an applied/accepted/resolved/saved change.
   const text = (await page.getByTestId("chat").textContent()) ?? "";

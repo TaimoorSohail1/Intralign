@@ -1,33 +1,24 @@
 /**
- * Issue Cards fixtures (DTM-0023, IC-WE-DISCLOSE E1).
+ * Issue Cards fixtures (DTM-0023 → DTM-0039 read-swap).
  *
- * THE ISSUES-DATA FINDING (binding to this slice — see the worker report):
- * There is **no dedicated Issue endpoint or Issue DTO** in the DTM-0018 REST
- * surface. The internal cognition `Issue` (`shared/epistemic.py`) — Evaluate's
- * *prioritized Finding* (a Finding + an assigned `severity`, carrying the source
- * Finding lineage) — is NOT exposed verbatim over REST (no `Issue` class in
- * `shared/entities.py`; nothing named "issue" in the generated client). The
- * governed carrier of exactly the data an Issue Card needs is therefore the
- * **Finding DTO**: it already carries `severity` (the very attribute Evaluate
- * assigns to FORM an Issue), the Derived confidence `label` (DerivedEnvelope +
- * band), and the source-finding identity (`finding_id` / `finding_type` /
- * `evidence_links`). So the cards render from the `listFindings` read and link
- * each card back to its source Finding (the Finding Panel route). We do NOT
- * invent an Issue endpoint — the gap is flagged, not filled.
- *
- * These fixtures mirror the generated `Finding` type VERBATIM (no invented
- * fields). They are the mocked shape of the DTM-0018 `useListFindings…` hook.
+ * DTM-0039: the cards now render from the FIRST-CLASS `/issues` read (DTM-0038) — the
+ * dedicated `Issue` DTO (Evaluate's *prioritized Finding*). Each Issue carries its
+ * `issue_id`, the source `finding_id` lineage, the governed `severity`, the Derived
+ * confidence `label` (DerivedEnvelope + band), and the workflow `status`. These
+ * fixtures mirror the generated `Issue` type VERBATIM (no invented fields). They are
+ * the mocked shape of the `useListIssues…` hook.
  */
-import type { Finding } from "../../api/generated/oSLORelease1API.schemas";
+import type { Issue } from "../../api/generated/oSLORelease1API.schemas";
 
 export const PROJECT_ID = "proj-001";
 
 /**
- * A critical, contested issue (its source Finding's Derived label is
- * `contested`) — the card surfaces a conflict marker (presented, never
- * resolved). Anchored to its source Finding `f-conflict-1`.
+ * A critical, contested issue (its Derived label is `contested`) — the card surfaces a
+ * conflict marker (presented, never resolved). Anchored to its source Finding
+ * `f-conflict-1`.
  */
-export const criticalIssueFixture: Finding = {
+export const criticalIssueFixture: Issue = {
+  issue_id: "iss-conflict-1",
   finding_id: "f-conflict-1",
   project_id: PROJECT_ID,
   finding_type: "conflict",
@@ -51,7 +42,8 @@ export const criticalIssueFixture: Finding = {
  * A moderate issue, not contested — used to assert the conflict marker is ABSENT
  * and that a distinct severity renders as a governed qualifier.
  */
-export const moderateIssueFixture: Finding = {
+export const moderateIssueFixture: Issue = {
+  issue_id: "iss-ambiguity-1",
   finding_id: "f-ambiguity-1",
   project_id: PROJECT_ID,
   finding_type: "ambiguity",
@@ -75,7 +67,8 @@ export const moderateIssueFixture: Finding = {
  * A warning-severity issue with high-confidence understanding — exercises the
  * full severity range + a high band.
  */
-export const warningIssueFixture: Finding = {
+export const warningIssueFixture: Issue = {
+  issue_id: "iss-missing-1",
   finding_id: "f-missing-1",
   project_id: PROJECT_ID,
   finding_type: "missing_information",
@@ -96,7 +89,7 @@ export const warningIssueFixture: Finding = {
 };
 
 /** The ordered set of issues the surface presents (most severe first is the UI's job). */
-export const issuesFixture: Finding[] = [
+export const issuesFixture: Issue[] = [
   criticalIssueFixture,
   moderateIssueFixture,
   warningIssueFixture,

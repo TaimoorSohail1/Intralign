@@ -47,9 +47,30 @@ const impactState = {
 
 vi.mock("../../api/generated/notifications/notifications", () => ({
   useListNotificationsV1NotificationsGet: () => notificationsState,
+  getListNotificationsV1NotificationsGetQueryKey: (params: unknown) => [
+    "/v1/notifications",
+    params,
+  ],
 }));
 vi.mock("../../api/generated/acceptance/acceptance", () => ({
   useListAcceptanceImpactV1ProjectsProjectIdAcceptanceImpactGet: () => impactState,
+}));
+
+// ── Mock the platform-state COMMANDS (DTM-0035). view/dismiss now CALL these. ────────
+const viewMutate = vi.fn();
+const dismissMutate = vi.fn();
+let lastDismissOnSuccess: (() => void) | undefined;
+vi.mock("../../api/generated/notification-commands/notification-commands", () => ({
+  useViewNotificationV1NotificationsNotificationIdViewPost: () => ({
+    mutate: viewMutate,
+    isPending: false,
+  }),
+  useDismissNotificationV1NotificationsNotificationIdDismissPost: (opts?: {
+    mutation?: { onSuccess?: () => void };
+  }) => {
+    lastDismissOnSuccess = opts?.mutation?.onSuccess;
+    return { mutate: dismissMutate, isPending: false };
+  },
 }));
 
 // Imported AFTER the mocks are declared (vi.mock is hoisted).
@@ -68,6 +89,9 @@ beforeEach(() => {
   impactState.isError = false;
   impactState.error = null;
   impactState.data = { data: acceptanceImpactFixture };
+  viewMutate.mockReset();
+  dismissMutate.mockReset();
+  lastDismissOnSuccess = undefined;
 });
 
 // ── POSITIVE: presents drift + Acceptance-Impact + new emissions as awareness ────
@@ -139,7 +163,37 @@ describe("Notifications — presents awareness (drift + Acceptance-Impact + emis
   });
 });
 
-// ── Read/dismiss = PLATFORM state (non-canonical) ────────────────────────────────
+// ── View/dismiss = PLATFORM-STATE COMMAND (non-canonical) ────────────────────────
+describe("Notifications — view/dismiss calls the platform-state command (DTM-0035)", () => {
+  it("dismiss calls the dismiss command with the notification id", async () => {
+    await mount();
+    const item = screen
+      .getAllByTestId("notification-item")
+      .find((n) => n.getAttribute("data-notification-id") === unreadFindingNotification.notification_id)!;
+    fireEvent.click(within(item).getByTestId("dismiss-notification"));
+    expect(dismissMutate).toHaveBeenCalledWith({
+      notificationId: unreadFindingNotification.notification_id,
+    });
+  });
+
+  it("mark-read calls the view command with the notification id", async () => {
+    await mount();
+    const unread = screen
+      .getAllByTestId("notification-item")
+      .find((n) => n.getAttribute("data-notification-id") === unreadCommentNotification.notification_id)!;
+    fireEvent.click(within(unread).getByTestId("mark-read"));
+    expect(viewMutate).toHaveBeenCalledWith({
+      notificationId: unreadCommentNotification.notification_id,
+    });
+  });
+
+  it("on command success it invalidates the notifications read (re-reads platform state)", async () => {
+    await mount();
+    expect(typeof lastDismissOnSuccess).toBe("function");
+  });
+});
+
+// ── Read/dismiss optimistic cue (presentation convenience over the command) ──────
 describe("Notifications — read/dismiss is platform state (a Category-E affordance)", () => {
   it("exposes a dismiss affordance as a platform action", async () => {
     await mount();
@@ -247,7 +301,7 @@ describe("Notifications — NEGATIVES: presents, never generates; state is non-c
     }
   });
 
-  it("CRITICAL: dismiss is LOCAL platform state — it does NOT mutate the governed notification object", async () => {
+  it("CRITICAL: dismiss is a PLATFORM-STATE command — the surface mutates NO governed object locally", async () => {
     // Snapshot the governed object identity + fields BEFORE the platform action.
     const before = JSON.parse(JSON.stringify(unreadFindingNotification));
     await mount();
@@ -255,14 +309,15 @@ describe("Notifications — NEGATIVES: presents, never generates; state is non-c
       .getAllByTestId("notification-item")
       .find((n) => n.getAttribute("data-notification-id") === unreadFindingNotification.notification_id)!;
     fireEvent.click(within(item).getByTestId("dismiss-notification"));
-    // The governed DTO object the surface was handed is byte-for-byte unchanged:
-    // dismiss wrote no canonical, mutated no governed field (state stays `created`).
+    // The DTO object the surface was handed is byte-for-byte unchanged: the platform
+    // state is written by the COMMAND (backend), not flipped locally. The surface
+    // mutated no governed field; the re-read comes from the source via invalidate.
     expect(unreadFindingNotification).toEqual(before);
     expect(unreadFindingNotification.state).toBe("created");
     expect(unreadFindingNotification.dismissed_at).toBeNull();
   });
 
-  it("CRITICAL: mark-read is LOCAL platform state — it does NOT mutate the governed notification object", async () => {
+  it("CRITICAL: mark-read is a PLATFORM-STATE command — the surface mutates NO governed object locally", async () => {
     const before = JSON.parse(JSON.stringify(unreadCommentNotification));
     await mount();
     const item = screen

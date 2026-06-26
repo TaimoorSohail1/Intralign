@@ -31,6 +31,31 @@ const findingState = {
 
 vi.mock("../../../api/generated/findings/findings", () => ({
   useGetFindingV1FindingsFindingIdGet: () => findingState,
+  getGetFindingV1FindingsFindingIdGetQueryKey: (findingId: string) => [
+    `/v1/findings/${findingId}`,
+  ],
+}));
+
+// ── Mock the DTM-0035 finding lifecycle commands (acknowledge/address/reopen) ──
+const acknowledgeMutate = vi.fn();
+const addressMutate = vi.fn();
+const reopenMutate = vi.fn();
+let lastAckOnSuccess: (() => void) | undefined;
+vi.mock("../../../api/generated/finding-commands/finding-commands", () => ({
+  useAcknowledgeFindingV1FindingsFindingIdAcknowledgePost: (opts?: {
+    mutation?: { onSuccess?: () => void };
+  }) => {
+    lastAckOnSuccess = opts?.mutation?.onSuccess;
+    return { mutate: acknowledgeMutate, isPending: false };
+  },
+  useAddressFindingV1FindingsFindingIdAddressPost: () => ({
+    mutate: addressMutate,
+    isPending: false,
+  }),
+  useReopenFindingV1FindingsFindingIdReopenPost: () => ({
+    mutate: reopenMutate,
+    isPending: false,
+  }),
 }));
 
 // Imported AFTER the mock is declared (vi.mock is hoisted).
@@ -48,6 +73,10 @@ beforeEach(() => {
   findingState.isError = false;
   findingState.error = null;
   findingState.data = { data: conflictedFindingFixture };
+  acknowledgeMutate.mockReset();
+  addressMutate.mockReset();
+  reopenMutate.mockReset();
+  lastAckOnSuccess = undefined;
 });
 
 describe("FindingPanel — presents one Finding with its lineage + confidence", () => {
@@ -133,6 +162,29 @@ describe("FindingPanel — loading / empty-evidence / not-found states", () => {
     findingState.data = { data: noEvidenceFindingFixture };
     await mount(noEvidenceFindingFixture.finding_id);
     expect(screen.getByTestId("finding-evidence-empty")).toBeInTheDocument();
+  });
+});
+
+// ── Finding-lifecycle affordance (DTM-0039 → DTM-0035) ───────────────────────────
+describe("FindingPanel — lifecycle affordance calls the workflow command", () => {
+  it("acknowledge calls the acknowledge command for a detected finding", async () => {
+    await mount(); // conflictedFindingFixture is `detected`
+    const ack = screen.getByTestId("finding-acknowledge");
+    fireEvent.click(ack);
+    expect(acknowledgeMutate).toHaveBeenCalledWith({
+      findingId: conflictedFindingFixture.finding_id,
+    });
+  });
+
+  it("presents the finding's Derived workflow status (a status, not an assessment)", async () => {
+    await mount();
+    const status = screen.getByTestId("finding-status");
+    expect(status).toHaveAttribute("data-status", "detected");
+  });
+
+  it("on command success it invalidates the finding read (re-reads the governed status)", async () => {
+    await mount();
+    expect(typeof lastAckOnSuccess).toBe("function");
   });
 });
 

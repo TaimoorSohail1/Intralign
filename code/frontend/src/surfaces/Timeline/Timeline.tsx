@@ -9,16 +9,14 @@
  * reanalysis is not a Disclose affordance). It hosts NO structured actions
  * (no restore/rollback/approve/edit/delete — §D, §J, HT-6).
  *
- * It reconstructs the trail from THREE already-retained, append-only DTM-0018 reads
- * (there is NO dedicated CHR/history endpoint — see the worker report; the CHR
- * trail is reconstructed from the analysis runs that appended the Cognition History
- * Records, exactly as the MRI Understanding Timeline does — the visual idiom is
- * reused, the component is NOT forked):
+ * It reconstructs the trail from THREE already-retained, append-only reads:
  *
- *   1. `useListAnalysisRuns…` — the CHR trail (runs that appended CHRs). Each entry
- *      is **Derived** (a recomputable projection of OSLO's understanding, never
- *      "settled"). `run_status: 'superseded'` / `'failed'` carry the append-only
- *      lifecycle; the superseded/failed entry STAYS visible (supersession additive).
+ *   1. `useListHistory…` — the first-class CHR trail (DTM-0038): the Cognition History
+ *      Records appended over the project's life. Each entry is **Derived** (a
+ *      recomputable projection of OSLO's understanding, never "settled"); the
+ *      append-only `supersedes_chr_id` chain carries supersession — the superseded
+ *      entry STAYS visible (supersession is additive, never erased). Replaces the
+ *      DTM-0027 placeholder that reconstructed the trail from the analysis runs.
  *   2. `useListAcceptances…` — UARs (what the user confirmed). **user-attested**,
  *      version-pinned — a human decision receipt, NOT world-truth/approval.
  *   3. `useListPlanFacts…` — plan facts. **user-attested** ("You confirmed …") —
@@ -37,7 +35,7 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Link } from "@tanstack/react-router";
 
-import { useListAnalysisRunsV1ProjectsProjectIdAnalysisRunsGet } from "../../api/generated/analysis-runs/analysis-runs";
+import { useListHistoryV1ProjectsProjectIdHistoryGet } from "../../api/generated/history/history";
 import {
   useListAcceptancesV1ProjectsProjectIdAcceptanceGet,
   useListPlanFactsV1ProjectsProjectIdPlanFactsGet,
@@ -45,7 +43,7 @@ import {
 import { EpistemicLabel } from "../../components/EpistemicLabel";
 import { epistemicTones, surfaces } from "../../theme/tokens";
 import type {
-  AnalysisRun,
+  HistoryEntry,
   UserAcceptanceRecord,
   PlanFact,
 } from "../../api/generated/oSLORelease1API.schemas";
@@ -54,20 +52,15 @@ export interface TimelineProps {
   projectId: string;
 }
 
-const RUN_TYPE_LABEL: Record<string, string> = {
+/** Presentation label for a CHR's emitted output kind — upstream-owned; History
+ *  computes/changes none of it. */
+const OUTPUT_KIND_LABEL: Record<string, string> = {
   fast_analysis_pass: "Fast pass",
   deep_analysis_pass: "Deep pass",
-};
-
-/** Presentation label for a run's lifecycle state — a presentation of the
- *  upstream-owned status (HT-7); History computes/changes none of it. */
-const RUN_STATUS_LABEL: Record<string, string> = {
-  queued: "Queued",
-  running: "Running",
-  completed: "Completed",
-  failed: "Failed",
-  cancelled: "Cancelled",
-  superseded: "Superseded",
+  finding: "Finding",
+  confidence: "Confidence",
+  caf: "CAF",
+  recommendation: "Recommendation",
 };
 
 const UAR_ACTION_LABEL: Record<string, string> = {
@@ -92,33 +85,34 @@ function whenLabel(ts?: string | null): string {
 }
 
 /**
- * One CHR trail entry — a run that appended a Cognition History Record. ALWAYS
- * Derived (a recomputable projection, never settled). The current understanding is
- * marked distinctly; a superseded/failed run is shown honestly and STAYS visible
- * (append-only — supersession is additive, the prior is never erased).
+ * One CHR trail entry — a Cognition History Record from the first-class /history read.
+ * ALWAYS Derived (a recomputable projection, never settled). The current understanding
+ * (the newest, un-superseded CHR) is marked distinctly; a superseded CHR is shown
+ * honestly and STAYS visible (append-only — supersession is additive, never erased).
  */
 function ChrEntry({
-  run,
+  entry,
   isCurrent,
+  isSuperseded,
   projectId,
 }: {
-  run: AnalysisRun;
+  entry: HistoryEntry;
   isCurrent: boolean;
+  isSuperseded: boolean;
   projectId: string;
 }) {
-  const isSuperseded = run.run_status === "superseded";
   return (
     <Paper
       variant="outlined"
       sx={{ p: 2 }}
       data-testid="chr-entry"
-      data-run-id={run.analysis_run_id}
+      data-chr-id={entry.chr_id}
       data-current={isCurrent ? "true" : undefined}
       data-superseded={isSuperseded ? "true" : undefined}
     >
       <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap", mb: 0.5 }}>
         <Typography variant="subtitle2">
-          {RUN_TYPE_LABEL[run.run_type] ?? run.run_type}
+          {OUTPUT_KIND_LABEL[entry.output_kind] ?? entry.output_kind}
         </Typography>
         {/* CHR entries are Derived — never settled (rendered via the single label). */}
         <EpistemicLabel epistemic={{ standing: "derived" }} />
@@ -140,12 +134,12 @@ function ChrEntry({
         )}
       </Box>
       <Typography variant="caption" color="text.secondary" display="block">
-        {whenLabel(run.completed_at ?? run.started_at)} ·{" "}
-        {RUN_STATUS_LABEL[run.run_status] ?? run.run_status}
+        {whenLabel(entry.emitted_at)}
+        {entry.recompute_trigger ? ` · ${entry.recompute_trigger}` : ""}
       </Typography>
       <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-        {run.analysis_run_id}
-        {run.previous_run_id ? ` · follows ${run.previous_run_id}` : ""}
+        {entry.chr_id}
+        {entry.supersedes_chr_id ? ` · supersedes ${entry.supersedes_chr_id}` : ""}
       </Typography>
       {/* Route to retained context (the project's understanding) — never an action. */}
       <Link
@@ -224,29 +218,32 @@ function PlanFactEntry({ fact }: { fact: PlanFact }) {
 }
 
 export function Timeline({ projectId }: TimelineProps) {
-  const runsQ = useListAnalysisRunsV1ProjectsProjectIdAnalysisRunsGet(projectId);
+  const historyQ = useListHistoryV1ProjectsProjectIdHistoryGet(projectId);
   const acceptancesQ = useListAcceptancesV1ProjectsProjectIdAcceptanceGet(projectId);
   const planFactsQ = useListPlanFactsV1ProjectsProjectIdPlanFactsGet(projectId);
 
   // APPEND-EXACT: present each source's records in the order the read returned them.
-  // No re-sort, no reverse — the trail is record-exact. We derive "current" WITHOUT
-  // mutating order: the current understanding is the LAST completed run.
-  const runs = asArray<AnalysisRun>(runsQ.data?.data);
+  // No re-sort, no reverse — the trail is record-exact.
+  const history = asArray<HistoryEntry>(historyQ.data?.data);
   const acceptances = asArray<UserAcceptanceRecord>(acceptancesQ.data?.data);
   const planFacts = asArray<PlanFact>(planFactsQ.data?.data);
 
-  // Identify the current understanding (latest completed run) for distinct marking —
-  // a read-only lookup, it does NOT reorder the append-exact trail.
-  let currentRunId: string | undefined;
-  for (const r of runs) {
-    if (r.run_status === "completed") currentRunId = r.analysis_run_id;
+  // Supersession (append-only, additive): a CHR is SUPERSEDED if a later CHR carries
+  // its id in `supersedes_chr_id`. The CURRENT understanding is the newest CHR that
+  // nothing supersedes. Both are read-only lookups — they do NOT reorder the trail.
+  const supersededIds = new Set(
+    history.map((h) => h.supersedes_chr_id).filter((id): id is string => Boolean(id)),
+  );
+  let currentChrId: string | undefined;
+  for (const h of history) {
+    if (!supersededIds.has(h.chr_id)) currentChrId = h.chr_id;
   }
 
   const loading =
-    runsQ.isLoading || acceptancesQ.isLoading || planFactsQ.isLoading;
+    historyQ.isLoading || acceptancesQ.isLoading || planFactsQ.isLoading;
   const isEmpty =
     !loading &&
-    runs.length === 0 &&
+    history.length === 0 &&
     acceptances.length === 0 &&
     planFacts.length === 0;
 
@@ -286,13 +283,14 @@ export function Timeline({ projectId }: TimelineProps) {
             <Typography variant="subtitle2" sx={{ mb: 1 }} data-testid="chr-section-title">
               How OSLO&apos;s understanding evolved
             </Typography>
-            {runs.length > 0 ? (
-              <TrailRail count={runs.length} currentIndex={runs.findIndex((r) => r.analysis_run_id === currentRunId)}>
-                {runs.map((run) => (
+            {history.length > 0 ? (
+              <TrailRail count={history.length} currentIndex={history.findIndex((h) => h.chr_id === currentChrId)}>
+                {history.map((entry) => (
                   <ChrEntry
-                    key={run.analysis_run_id}
-                    run={run}
-                    isCurrent={run.analysis_run_id === currentRunId}
+                    key={entry.chr_id}
+                    entry={entry}
+                    isCurrent={entry.chr_id === currentChrId}
+                    isSuperseded={supersededIds.has(entry.chr_id)}
                     projectId={projectId}
                   />
                 ))}

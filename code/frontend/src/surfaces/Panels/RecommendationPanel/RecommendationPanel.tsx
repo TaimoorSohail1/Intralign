@@ -35,13 +35,14 @@
  * (Recommendation Panel Spec §K prohibitions; RP-7/RP-8/RP-10/RP-11). Only
  * reanalysis changes assessment, and reanalysis is not a Disclose affordance.
  *
- * Acceptance-write dependency (ANTI_ASSUMPTION — flagged in the Worker report):
- * the DTM-0018 REST surface is read-only; there is NO acceptance COMMAND (POST)
- * endpoint in the generated client (the `acceptance` client exposes only GET
- * reads). So the affordance HANDS OFF to the existing Wave U capture surface (the
- * project Recommendation Workspace route) rather than calling a command. When a
- * Wave U acceptance-command endpoint lands, the affordance wires to it there; the
- * panel adds no backend write path and performs no acceptance locally.
+ * Acceptance-write wiring (DTM-0039 — replaces the DTM-0022 hand-off): the affordance
+ * now calls the user-initiated acceptance COMMAND (the generated
+ * `acceptance-commands` hooks — `:accept`/`:reject`/`:defer`/`:implement`). The
+ * BACKEND records the UAR (+ version-pin) and writes the plan fact on accept; the
+ * SURFACE performs NO local acceptance — it does NOT flip the recommendation to
+ * "Accepted" client-side and writes no canonical. On success it invalidates the
+ * finding-recs read so the governed status is re-read from the source. Disclose still
+ * presents the affordance; it never accepts itself.
  */
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -51,9 +52,18 @@ import Chip from "@mui/material/Chip";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
-import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { useListRecommendationsForFindingV1FindingsFindingIdRecommendationsGet } from "../../../api/generated/recommendations/recommendations";
+import {
+  useListRecommendationsForFindingV1FindingsFindingIdRecommendationsGet,
+  getListRecommendationsForFindingV1FindingsFindingIdRecommendationsGetQueryKey,
+} from "../../../api/generated/recommendations/recommendations";
+import {
+  useAcceptRecommendationV1RecommendationsRecommendationIdAcceptPost,
+  useRejectRecommendationV1RecommendationsRecommendationIdRejectPost,
+  useDeferRecommendationV1RecommendationsRecommendationIdDeferPost,
+  useImplementRecommendationV1RecommendationsRecommendationIdImplementPost,
+} from "../../../api/generated/acceptance-commands/acceptance-commands";
 import { EpistemicLabel, fromDerivedEnvelope } from "../../../components/EpistemicLabel";
 import { epistemicTones } from "../../../theme/tokens";
 import type {
@@ -137,31 +147,52 @@ function Section({
 }
 
 /**
- * The accept / reject / defer AFFORDANCE for a recommendation (§K). It hands off to
- * the EXISTING Wave U capture surface — it performs NO acceptance, mutates no
- * state, and writes nothing (decision #3, Critical). Rendered as navigation `<Link>`s
- * so a click is a hand-off, never a local state change.
+ * The accept / reject / defer / implement AFFORDANCE for a recommendation (§K).
  *
- * ANTI_ASSUMPTION: there is no acceptance COMMAND endpoint in the generated client,
- * so the affordance routes to the Wave U capture route (project Recommendation
- * Workspace) carrying the recommendation + the user's intended action. When the
- * Wave U acceptance command lands, it wires there. version-pin is Wave U's.
+ * DTM-0039: each button calls the user-initiated acceptance COMMAND (the generated
+ * `acceptance-commands` mutation hooks). The BACKEND records the UAR (+ the mandatory
+ * version-pin) and writes the plan fact on accept — the SURFACE performs NO local
+ * acceptance: it never flips the recommendation to "Accepted" client-side and writes
+ * no canonical. On success it invalidates the finding-recs read so the governed
+ * status is re-read from the source (the only place the status changes). Disclose
+ * still presents the affordance; it never accepts itself.
  */
 function AcceptanceAffordance({
+  findingId,
   projectId,
   recommendationId,
 }: {
+  findingId: string;
   projectId: string;
   recommendationId: string;
 }) {
-  // The hand-off destination: the existing Wave U capture surface. We carry the
-  // recommendation id + intended action as search params; Disclose writes nothing.
-  const handoff = (intent: "accept" | "reject" | "defer") =>
-    ({
-      to: "/projects/$projectId/recommendations",
-      params: { projectId },
-      search: { recommendation: recommendationId, action: intent },
-    }) as const;
+  const queryClient = useQueryClient();
+
+  // On any acceptance command succeeding, re-read the governed recommendation list for
+  // this finding — the surface never mutates the status locally, it re-reads it.
+  const invalidate = () =>
+    queryClient.invalidateQueries({
+      queryKey: getListRecommendationsForFindingV1FindingsFindingIdRecommendationsGetQueryKey(
+        findingId,
+        { project_id: projectId },
+      ),
+    });
+
+  const acceptM = useAcceptRecommendationV1RecommendationsRecommendationIdAcceptPost({
+    mutation: { onSuccess: invalidate },
+  });
+  const rejectM = useRejectRecommendationV1RecommendationsRecommendationIdRejectPost({
+    mutation: { onSuccess: invalidate },
+  });
+  const deferM = useDeferRecommendationV1RecommendationsRecommendationIdDeferPost({
+    mutation: { onSuccess: invalidate },
+  });
+  const implementM = useImplementRecommendationV1RecommendationsRecommendationIdImplementPost({
+    mutation: { onSuccess: invalidate },
+  });
+
+  const pending =
+    acceptM.isPending || rejectM.isPending || deferM.isPending || implementM.isPending;
 
   return (
     <Box
@@ -169,34 +200,53 @@ function AcceptanceAffordance({
       sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}
     >
       <Typography variant="body2" color="text.secondary" sx={{ width: "100%", mb: 0.5 }}>
-        Your decision is recorded by OSLO's acceptance capture — this panel presents the
+        Your decision is recorded by OSLO&apos;s acceptance capture — this panel presents the
         options; it does not accept on your behalf, and accepting changes no assessment.
       </Typography>
-      <Link {...handoff("accept")} style={{ textDecoration: "none" }} data-testid="affordance-accept">
-        <Button variant="contained" component="span">
-          Accept this recommendation
-        </Button>
-      </Link>
-      <Link {...handoff("reject")} style={{ textDecoration: "none" }} data-testid="affordance-reject">
-        <Button variant="outlined" component="span">
-          Reject this recommendation
-        </Button>
-      </Link>
-      <Link {...handoff("defer")} style={{ textDecoration: "none" }} data-testid="affordance-defer">
-        <Button variant="outlined" component="span">
-          Defer this recommendation
-        </Button>
-      </Link>
+      <Button
+        variant="contained"
+        disabled={pending}
+        data-testid="affordance-accept"
+        onClick={() => acceptM.mutate({ recommendationId })}
+      >
+        Accept this recommendation
+      </Button>
+      <Button
+        variant="outlined"
+        disabled={pending}
+        data-testid="affordance-reject"
+        onClick={() => rejectM.mutate({ recommendationId })}
+      >
+        Reject this recommendation
+      </Button>
+      <Button
+        variant="outlined"
+        disabled={pending}
+        data-testid="affordance-defer"
+        onClick={() => deferM.mutate({ recommendationId })}
+      >
+        Defer this recommendation
+      </Button>
+      <Button
+        variant="outlined"
+        disabled={pending}
+        data-testid="affordance-implement"
+        onClick={() => implementM.mutate({ recommendationId })}
+      >
+        Mark as acted on
+      </Button>
     </Box>
   );
 }
 
 /** One recommendation card — its header, label, status, rationale, affordance. */
 function RecommendationCard({
+  findingId,
   projectId,
   rec,
   primary,
 }: {
+  findingId: string;
   projectId: string;
   rec: Recommendation;
   primary: boolean;
@@ -274,8 +324,13 @@ function RecommendationCard({
           <EpistemicLabel epistemic={fromDerivedEnvelope(rec.label)} />
         </Box>
 
-        {/* The accept/reject/defer affordance — hands off to Wave U, never accepts */}
-        <AcceptanceAffordance projectId={projectId} recommendationId={rec.recommendation_id} />
+        {/* The accept/reject/defer/implement affordance — calls the command; the
+            backend records the UAR. The surface performs no local acceptance. */}
+        <AcceptanceAffordance
+          findingId={findingId}
+          projectId={projectId}
+          recommendationId={rec.recommendation_id}
+        />
       </Box>
     </Paper>
   );
@@ -363,7 +418,7 @@ function RecommendationPanelInner({
             testId="oslo-recommended-section"
             subtitle="What OSLO currently suggests as the primary way to address this finding — advisory, no score."
           >
-            <RecommendationCard projectId={projectId} rec={primary} primary />
+            <RecommendationCard findingId={findingId} projectId={projectId} rec={primary} primary />
           </Section>
 
           {/* ── Resolution Paths — the OTHER recommendations, grouped (§J / RP-6) ──
@@ -382,7 +437,7 @@ function RecommendationPanelInner({
                     data-testid="resolution-path"
                     data-recommendation-id={rec.recommendation_id}
                   >
-                    <RecommendationCard projectId={projectId} rec={rec} primary={false} />
+                    <RecommendationCard findingId={findingId} projectId={projectId} rec={rec} primary={false} />
                   </Box>
                 ))}
               </Stack>

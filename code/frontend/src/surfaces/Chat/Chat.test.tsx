@@ -24,9 +24,9 @@ import {
   findingContextFixture,
 } from "./fixtures";
 
-// Import EVERY generated API module so a test can assert — structurally — that the whole
-// generated client is read-only: there is NO mutation/write/trigger hook for Chat to
-// even reach. The CHAT-command endpoint does not exist (flagged dependency).
+// Import the READ API modules so a test can assert — structurally — that they remain
+// read-only: Chat reaches NO canonical-write hook (accept/finding-mutation/etc.). The
+// ONLY write Chat performs is the chat ENDPOINT (the non-canonical chat path).
 import * as findingsApi from "../../api/generated/findings/findings";
 import * as recommendationsApi from "../../api/generated/recommendations/recommendations";
 import * as acceptanceApi from "../../api/generated/acceptance/acceptance";
@@ -34,6 +34,37 @@ import * as confidenceApi from "../../api/generated/confidence/confidence";
 import * as analysisRunsApi from "../../api/generated/analysis-runs/analysis-runs";
 import * as projectsApi from "../../api/generated/projects/projects";
 import * as notificationsApi from "../../api/generated/notifications/notifications";
+
+// ── Mock the chat ENDPOINT (DTM-0037). Chat now sends THROUGH this — the non-canonical
+//    chat path. The mock captures the variables and lets a test drive onSuccess. ──────
+const chatMutate = vi.fn();
+vi.mock("../../api/generated/chat/chat", () => ({
+  useChatV1ProjectsProjectIdChatPost: () => ({
+    mutate: (
+      vars: { projectId: string; data: { message: string; intent?: string } },
+      opts?: {
+        onSuccess?: (res: { data: unknown }) => void;
+        onError?: (e: unknown) => void;
+      },
+    ) => {
+      chatMutate(vars);
+      // Simulate the endpoint's NON-CANONICAL ChatExchange response (OSLO's phrasing).
+      opts?.onSuccess?.({
+        data: {
+          exchange_id: `srv-${chatMutate.mock.calls.length}`,
+          project_id: vars.projectId,
+          user_message: vars.data.message,
+          response: "OSLO explains from existing understanding; nothing changed.",
+          intent: vars.data.intent ?? "explain",
+          epistemic_state: "non-canonical",
+          model_or_rule_version: "test",
+          triggered_run: vars.data.intent === "improve" ? "run-deep-1" : null,
+        },
+      });
+    },
+    isPending: false,
+  }),
+}));
 
 import { Chat } from "./Chat";
 import { ChatRoute } from "./ChatRoute";
@@ -54,7 +85,7 @@ function mountRoute(search: string) {
 }
 
 beforeEach(() => {
-  vi.restoreAllMocks();
+  chatMutate.mockReset();
 });
 
 describe("Chat — renders the conversation + input + affordances", () => {
@@ -113,35 +144,61 @@ describe("Chat — empty state", () => {
   });
 });
 
-describe("Chat — sending (CHAT-command endpoint flagged, ephemeral only)", () => {
-  it("appends the user message as a non-canonical exchange on send", async () => {
+describe("Chat — sending (via the chat ENDPOINT, DTM-0037)", () => {
+  it("sends the message THROUGH the chat endpoint (the non-canonical chat path)", async () => {
     await mount();
     const input = within(screen.getByTestId("chat-input")).getByRole("textbox");
     fireEvent.change(input, { target: { value: "What drives feasibility here?" } });
     fireEvent.click(screen.getByTestId("chat-send"));
+    // the endpoint mutation is the path — called with the project + message + intent
+    expect(chatMutate).toHaveBeenCalledTimes(1);
+    expect(chatMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: PROJECT_ID,
+        data: expect.objectContaining({
+          message: "What drives feasibility here?",
+          intent: "explain",
+        }),
+      }),
+    );
+    // the user message appears in the transcript
     const transcript = screen.getByTestId("chat-transcript");
     expect(within(transcript).getByText(/what drives feasibility here\?/i)).toBeInTheDocument();
   });
 
-  it("marks a sent exchange as PENDING (chat-command endpoint not yet exposed)", async () => {
+  it("appends OSLO's phrased response from the endpoint result (never fabricated locally)", async () => {
     await mount();
     const input = within(screen.getByTestId("chat-input")).getByRole("textbox");
-    fireEvent.change(input, { target: { value: "Improve the scope statement" } });
+    fireEvent.change(input, { target: { value: "Explain alignment" } });
     fireEvent.click(screen.getByTestId("chat-send"));
-    // The latest exchange is flagged pending — it does NOT fabricate an answer.
-    const pending = screen.getByTestId("chat-pending-notice");
-    expect(pending.textContent ?? "").toMatch(/pending|not yet|when available/i);
+    const transcript = screen.getByTestId("chat-transcript");
+    // OSLO's response (from the mocked endpoint) is rendered
+    expect(
+      within(transcript).getByText(/oslo explains from existing understanding/i),
+    ).toBeInTheDocument();
+  });
+
+  it("Improve sends with intent=improve and discloses the triggered Deep Pass honestly", async () => {
+    await mount();
+    fireEvent.click(screen.getByTestId("chat-affordance-improve"));
+    expect(chatMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ intent: "improve" }) }),
+    );
+    const notice = screen.getByTestId("chat-pending-notice");
+    expect(notice.textContent ?? "").toMatch(/deep pass|reanalysis/i);
   });
 });
 
 // ── THE CRITICAL NEGATIVES — Chat writes no canonical / mutates nothing / changes no
 //    assessment. These are the spine of the slice. ────────────────────────────────────
 describe("Chat — CRITICAL negatives: no canonical write / no mutation / no assessment change", () => {
-  it("the generated client exposes NO write/mutation hook for Chat to reach (endpoint flagged)", () => {
-    // The whole DTM-0018 client is read-only: every exported hook is a GET ("…Get").
-    // There is no useMutation / POST / create / send / trigger / accept hook anywhere —
-    // so Chat structurally CANNOT write canonical or mutate a governed object.
-    const allExports = [
+  it("the READ modules stay read-only — Chat reaches NO canonical-write hook", () => {
+    // The findings/recommendations/acceptance/confidence/analysis-runs/projects/
+    // notifications READ modules are GET-only (Orval names a GET op "…Get"). Chat
+    // imports NONE of the command modules (accept/finding-mutation/etc.); the ONLY
+    // write it performs is the chat ENDPOINT — the non-canonical chat path. So Chat
+    // structurally CANNOT write canonical or mutate a governed object.
+    const readModuleExports = [
       ...Object.keys(findingsApi),
       ...Object.keys(recommendationsApi),
       ...Object.keys(acceptanceApi),
@@ -150,12 +207,11 @@ describe("Chat — CRITICAL negatives: no canonical write / no mutation / no ass
       ...Object.keys(projectsApi),
       ...Object.keys(notificationsApi),
     ];
-    const hookExports = allExports.filter((name) => name.startsWith("use"));
+    const hookExports = readModuleExports.filter((name) => name.startsWith("use"));
     expect(hookExports.length).toBeGreaterThan(0);
     for (const name of hookExports) {
-      // Every generated hook is a GET read (Orval names a GET op "…Get"). That is the
-      // structural guarantee: the client is read-only, so there is NO send/trigger/write
-      // hook for Chat to reach — the chat-command endpoint is flagged, not invented.
+      // Every hook in these READ modules is a GET read — none is a canonical-write
+      // hook Chat could reach.
       expect(name).toMatch(/Get$/);
     }
   });

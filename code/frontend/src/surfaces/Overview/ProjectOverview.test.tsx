@@ -14,32 +14,54 @@
  * generated hooks are mocked with fixture DTOs.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, within } from "@testing-library/react";
+import { screen, within, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { renderOverview } from "./testHarness";
 import {
   PROJECT_ID,
   overviewConfidenceFixture,
-  overviewCafFixture,
-  overviewFindingsFixture,
-  overviewRecommendationsFixture,
+  overviewFixture,
 } from "./fixtures";
 
-// ── Mock the DTM-0018 reads (the surface consumes, never re-implements) ──────────
-const confidenceState = { data: { data: overviewConfidenceFixture }, isLoading: false };
-const cafState = { data: { data: overviewCafFixture }, isLoading: false };
-const findingsState = { data: { data: overviewFindingsFixture }, isLoading: false };
-const recsState = { data: { data: overviewRecommendationsFixture }, isLoading: false };
+// ── Mock the first-class /overview read (the surface consumes, never re-implements) ──
+const overviewState = {
+  data: { data: overviewFixture } as { data: typeof overviewFixture | undefined },
+  isLoading: false,
+};
 
-vi.mock("../../api/generated/confidence/confidence", () => ({
-  useGetConfidenceV1ProjectsProjectIdConfidenceGet: () => confidenceState,
-  useGetCafV1ProjectsProjectIdCafGet: () => cafState,
+vi.mock("../../api/generated/overview/overview", () => ({
+  useGetOverviewV1ProjectsProjectIdOverviewGet: () => overviewState,
 }));
-vi.mock("../../api/generated/findings/findings", () => ({
-  useListFindingsV1ProjectsProjectIdFindingsGet: () => findingsState,
+
+// ── Mock the analysis-runs read (for the invalidate query-key helper) ──────────────
+vi.mock("../../api/generated/analysis-runs/analysis-runs", () => ({
+  getListAnalysisRunsV1ProjectsProjectIdAnalysisRunsGetQueryKey: (projectId: string) => [
+    `/v1/projects/${projectId}/analysis-runs`,
+  ],
 }));
-vi.mock("../../api/generated/recommendations/recommendations", () => ({
-  useListRecommendationsV1ProjectsProjectIdRecommendationsGet: () => recsState,
+
+// ── Mock the analysis + evidence COMMANDS (DTM-0032/0034). The actions CALL these. ──
+const fastMutate = vi.fn();
+const deepMutate = vi.fn();
+const evidenceMutate = vi.fn();
+vi.mock("../../api/generated/analysis-commands/analysis-commands", () => ({
+  useStartFastAnalysisV1ProjectsProjectIdAnalysisRunsFastPost: () => ({
+    mutate: fastMutate,
+    isPending: false,
+    isSuccess: false,
+  }),
+  useStartDeepAnalysisV1ProjectsProjectIdAnalysisRunsDeepPost: () => ({
+    mutate: deepMutate,
+    isPending: false,
+    isSuccess: false,
+  }),
+}));
+vi.mock("../../api/generated/project-commands/project-commands", () => ({
+  useAddEvidenceV1ProjectsProjectIdEvidencePost: () => ({
+    mutate: evidenceMutate,
+    isPending: false,
+    isSuccess: false,
+  }),
 }));
 
 // Imported AFTER the mocks (vi.mock is hoisted).
@@ -52,14 +74,11 @@ function mount(projectId = PROJECT_ID) {
 }
 
 beforeEach(() => {
-  confidenceState.data = { data: overviewConfidenceFixture };
-  confidenceState.isLoading = false;
-  cafState.data = { data: overviewCafFixture };
-  cafState.isLoading = false;
-  findingsState.data = { data: overviewFindingsFixture };
-  findingsState.isLoading = false;
-  recsState.data = { data: overviewRecommendationsFixture };
-  recsState.isLoading = false;
+  overviewState.data = { data: overviewFixture };
+  overviewState.isLoading = false;
+  fastMutate.mockReset();
+  deepMutate.mockReset();
+  evidenceMutate.mockReset();
 });
 
 describe("ProjectOverview — aggregate Outcome Confidence + CAF + counts", () => {
@@ -103,26 +122,64 @@ describe("ProjectOverview — aggregate Outcome Confidence + CAF + counts", () =
   });
 });
 
+// ── Project actions: trigger analysis + add evidence (DTM-0032/0034) ─────────────
+describe("ProjectOverview — actions call the user-initiated commands", () => {
+  it("Start Fast Pass triggers the fast-analysis command", async () => {
+    await mount();
+    fireEvent.click(screen.getByTestId("trigger-fast"));
+    expect(fastMutate).toHaveBeenCalledWith({ projectId: PROJECT_ID });
+  });
+
+  it("Start Deep Pass triggers the deep-analysis command", async () => {
+    await mount();
+    fireEvent.click(screen.getByTestId("trigger-deep"));
+    expect(deepMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ projectId: PROJECT_ID }),
+    );
+  });
+
+  it("Add evidence submits the evidence command with source + content", async () => {
+    await mount();
+    fireEvent.change(screen.getByTestId("evidence-source-type"), {
+      target: { value: "interview" },
+    });
+    fireEvent.change(screen.getByTestId("evidence-content-ref"), {
+      target: { value: "Go-live is end of Q3 per the sponsor" },
+    });
+    fireEvent.click(screen.getByTestId("add-evidence-submit"));
+    expect(evidenceMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: PROJECT_ID,
+        data: {
+          source_type: "interview",
+          content_ref: "Go-live is end of Q3 per the sponsor",
+        },
+      }),
+      expect.anything(),
+    );
+  });
+});
+
 describe("ProjectOverview — loading / empty states", () => {
   it("renders a clean loading state without crashing", async () => {
-    confidenceState.isLoading = true;
-    confidenceState.data = undefined as never;
+    overviewState.isLoading = true;
+    overviewState.data = { data: undefined };
     await mount();
     expect(screen.getByTestId("project-overview")).toBeInTheDocument();
     expect(screen.getByTestId("overview-loading")).toBeInTheDocument();
   });
 
   it("renders cleanly when confidence/CAF are not yet available", async () => {
-    confidenceState.data = undefined as never;
-    cafState.data = undefined as never;
+    overviewState.data = { data: { project_id: PROJECT_ID } as typeof overviewFixture };
     await mount();
     expect(screen.getByTestId("overview-confidence-empty")).toBeInTheDocument();
     expect(screen.getByTestId("overview-caf-empty")).toBeInTheDocument();
   });
 
-  it("counts read zero (not an error) when the lists are empty", async () => {
-    findingsState.data = { data: [] };
-    recsState.data = { data: [] };
+  it("counts read zero (not an error) when the overview has no counts", async () => {
+    overviewState.data = {
+      data: { project_id: PROJECT_ID, counts: [] } as typeof overviewFixture,
+    };
     await mount();
     const counts = screen.getByTestId("overview-counts");
     expect(within(counts).getByTestId("count-findings")).toHaveTextContent("0");

@@ -27,6 +27,16 @@ const projectsState = {
 
 vi.mock("../../api/generated/projects/projects", () => ({
   useListProjectsV1ProjectsGet: () => projectsState,
+  getListProjectsV1ProjectsGetQueryKey: () => ["/v1/projects"],
+}));
+
+// ── Mock the create-project COMMAND (§5 POST /projects). Create CALLS this. ──────
+const createProjectMutate = vi.fn();
+vi.mock("../../api/generated/project-commands/project-commands", () => ({
+  useCreateProjectV1ProjectsPost: () => ({
+    mutate: createProjectMutate,
+    isPending: false,
+  }),
 }));
 
 // Per-row confidence: keyed by the project id the hook is called with.
@@ -53,6 +63,7 @@ beforeEach(() => {
   projectsState.isError = false;
   projectsState.error = null;
   projectsState.data = { data: projectsFixture };
+  createProjectMutate.mockReset();
 });
 
 describe("Dashboard — lists each project with current confidence + a workspace link", () => {
@@ -102,6 +113,20 @@ describe("Dashboard — lists each project with current confidence + a workspace
     fireEvent.click(link);
     await router.invalidate();
     expect(router.state.location.pathname).toBe("/projects/proj-002");
+  });
+});
+
+describe("Dashboard — create project (§5 POST /projects)", () => {
+  it("Create project calls the create-project command with the title", async () => {
+    await mount();
+    fireEvent.change(screen.getByTestId("create-project-title"), {
+      target: { value: "Atlas v2 migration" },
+    });
+    fireEvent.click(screen.getByTestId("create-project-submit"));
+    expect(createProjectMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { title: "Atlas v2 migration" } }),
+      expect.anything(),
+    );
   });
 });
 

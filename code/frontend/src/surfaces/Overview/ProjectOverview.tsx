@@ -14,10 +14,10 @@
  *     prioritized with a `severity`), recommendations — each a count OF governed
  *     objects, NEVER a computed score or a project-health metric.
  *
- * THE COUNTS-DATA FINDING (see fixtures.ts + the worker report): there is **no
- * aggregate "overview"/counts DTO** in the DTM-0018 REST surface — no field carries
- * the totals. So the counts are simply the LENGTHS of the already-governed list
- * reads. We do NOT invent a counts endpoint — the gap is flagged, not filled.
+ * FIRST-CLASS OVERVIEW READ (DTM-0039 → DTM-0038): the aggregate confidence + CAF +
+ * governed-object counts now come from the dedicated `/overview` read
+ * (`useGetOverview…`) in ONE call — replacing the DTM-0024 placeholder that composed
+ * four list/scalar reads and computed the counts client-side.
  *
  * Read-only: there is no edit / score / accept / generate / recompute control
  * anywhere (decision #3 — Disclose presents, never generates; only reanalysis
@@ -28,31 +28,150 @@
  *
  * It consumes the DTM-0018 Orval hooks read-only.
  */
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useQueryClient } from "@tanstack/react-query";
 
+import { useGetOverviewV1ProjectsProjectIdOverviewGet } from "../../api/generated/overview/overview";
 import {
-  useGetConfidenceV1ProjectsProjectIdConfidenceGet,
-  useGetCafV1ProjectsProjectIdCafGet,
-} from "../../api/generated/confidence/confidence";
-import { useListFindingsV1ProjectsProjectIdFindingsGet } from "../../api/generated/findings/findings";
-import { useListRecommendationsV1ProjectsProjectIdRecommendationsGet } from "../../api/generated/recommendations/recommendations";
+  useStartFastAnalysisV1ProjectsProjectIdAnalysisRunsFastPost,
+  useStartDeepAnalysisV1ProjectsProjectIdAnalysisRunsDeepPost,
+} from "../../api/generated/analysis-commands/analysis-commands";
+import { useAddEvidenceV1ProjectsProjectIdEvidencePost } from "../../api/generated/project-commands/project-commands";
+import { getListAnalysisRunsV1ProjectsProjectIdAnalysisRunsGetQueryKey } from "../../api/generated/analysis-runs/analysis-runs";
 
 import { EpistemicLabel, fromDerivedEnvelope } from "../../components/EpistemicLabel";
 import type {
+  Overview,
   ConfidenceState,
   CAFState,
   CAFDimensionView,
-  Finding,
-  Recommendation,
+  GovernedCount,
   Dimension,
 } from "../../api/generated/oSLORelease1API.schemas";
 
 export interface ProjectOverviewProps {
   projectId: string;
+}
+
+/**
+ * The project-action affordances (DTM-0039 → DTM-0032/0034). These are user-initiated
+ * COMMANDS:
+ *   - **Start Fast Pass / Deep Pass** trigger an analysis run (the user, not Disclose,
+ *     asks OSLO to (re)analyze) — the recompute, not the surface, appends the CHR.
+ *   - **Add evidence** submits new Attested intake → feeds Perceive → recompute.
+ * The surface performs no cognition; on success the analysis-runs read is invalidated.
+ */
+function ProjectActions({ projectId }: { projectId: string }) {
+  const queryClient = useQueryClient();
+  const invalidateRuns = () =>
+    queryClient.invalidateQueries({
+      queryKey: getListAnalysisRunsV1ProjectsProjectIdAnalysisRunsGetQueryKey(projectId),
+    });
+
+  const fastM = useStartFastAnalysisV1ProjectsProjectIdAnalysisRunsFastPost({
+    mutation: { onSuccess: invalidateRuns },
+  });
+  const deepM = useStartDeepAnalysisV1ProjectsProjectIdAnalysisRunsDeepPost({
+    mutation: { onSuccess: invalidateRuns },
+  });
+  const evidenceM = useAddEvidenceV1ProjectsProjectIdEvidencePost({
+    mutation: { onSuccess: invalidateRuns },
+  });
+
+  const [sourceType, setSourceType] = useState("");
+  const [contentRef, setContentRef] = useState("");
+
+  const submitEvidence = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sourceType.trim() || !contentRef.trim()) return;
+    evidenceM.mutate(
+      {
+        projectId,
+        data: { source_type: sourceType.trim(), content_ref: contentRef.trim() },
+      },
+      {
+        onSuccess: () => {
+          setSourceType("");
+          setContentRef("");
+          invalidateRuns();
+        },
+      },
+    );
+  };
+
+  const triggering = fastM.isPending || deepM.isPending;
+
+  return (
+    <Section
+      title="Move this project forward"
+      testId="overview-actions"
+      subtitle="Ask OSLO to (re)analyze, or add new evidence. These are your actions — OSLO presents understanding; it analyzes only when you ask, and adding evidence feeds the next analysis."
+    >
+      <Stack spacing={2}>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <Button
+            variant="contained"
+            disabled={triggering}
+            data-testid="trigger-fast"
+            onClick={() => fastM.mutate({ projectId })}
+          >
+            Start Fast Pass
+          </Button>
+          <Button
+            variant="outlined"
+            disabled={triggering}
+            data-testid="trigger-deep"
+            onClick={() => deepM.mutate({ projectId, data: { trigger_source: "overview" } })}
+          >
+            Start Deep Pass
+          </Button>
+        </Box>
+
+        <Box component="form" onSubmit={submitEvidence} data-testid="add-evidence-form">
+          <Stack spacing={1} direction={{ xs: "column", sm: "row" }}>
+            <TextField
+              size="small"
+              label="Evidence source"
+              value={sourceType}
+              onChange={(e) => setSourceType(e.target.value)}
+              inputProps={{ "data-testid": "evidence-source-type" }}
+            />
+            <TextField
+              size="small"
+              fullWidth
+              label="Evidence content / reference"
+              value={contentRef}
+              onChange={(e) => setContentRef(e.target.value)}
+              inputProps={{ "data-testid": "evidence-content-ref" }}
+            />
+            <Button type="submit" variant="outlined" data-testid="add-evidence-submit">
+              Add evidence
+            </Button>
+          </Stack>
+        </Box>
+
+        {fastM.isSuccess || deepM.isSuccess ? (
+          <Alert severity="info" icon={false} data-testid="analysis-triggered-notice">
+            Analysis requested. OSLO is (re)analyzing — its understanding updates when the
+            run completes; this view will reflect it then.
+          </Alert>
+        ) : null}
+        {evidenceM.isSuccess ? (
+          <Alert severity="info" icon={false} data-testid="evidence-added-notice">
+            Evidence added. It feeds the next analysis — it changes no assessment on its own.
+          </Alert>
+        ) : null}
+      </Stack>
+    </Section>
+  );
 }
 
 /** True for a plain object DTO (not an array, string, or null). */
@@ -149,27 +268,33 @@ function CountItem({
   );
 }
 
+/** Pull a governed count by kind from the first-class overview (0 when absent). */
+function countOf(counts: GovernedCount[], kind: string): number {
+  return counts.find((c) => c.kind === kind)?.count ?? 0;
+}
+
 export function ProjectOverview({ projectId }: ProjectOverviewProps) {
-  const confidenceQ = useGetConfidenceV1ProjectsProjectIdConfidenceGet(projectId);
-  const cafQ = useGetCafV1ProjectsProjectIdCafGet(projectId);
-  const findingsQ = useListFindingsV1ProjectsProjectIdFindingsGet(projectId);
-  const recsQ = useListRecommendationsV1ProjectsProjectIdRecommendationsGet(projectId);
+  // The first-class /overview read (DTM-0038): the aggregate understanding summary in
+  // ONE read — outcome confidence + CAF + the governed-object counts. Replaces the
+  // DTM-0024 placeholder that composed four list/scalar reads + a client-side count.
+  const overviewQ = useGetOverviewV1ProjectsProjectIdOverviewGet(projectId);
 
-  const confidence = isRecord(confidenceQ.data?.data)
-    ? (confidenceQ.data?.data as ConfidenceState)
+  const overview = isRecord(overviewQ.data?.data)
+    ? (overviewQ.data?.data as Overview)
     : undefined;
-  const caf = isRecord(cafQ.data?.data) ? (cafQ.data?.data as CAFState) : undefined;
-  const findings = asArray<Finding>(findingsQ.data?.data);
-  const recommendations = asArray<Recommendation>(recsQ.data?.data);
 
-  // Counts are presentation of governed objects — the lengths of the list reads.
-  // An Issue IS a Finding Evaluate prioritized by assigning a severity.
-  const findingsCount = findings.length;
-  const issuesCount = findings.filter((f) => Boolean(f.severity)).length;
-  const recommendationsCount = recommendations.length;
+  const confidence = isRecord(overview?.outcome_confidence)
+    ? (overview?.outcome_confidence as ConfidenceState)
+    : undefined;
+  const caf = isRecord(overview?.caf) ? (overview?.caf as CAFState) : undefined;
+  const counts = asArray<GovernedCount>(overview?.counts);
 
-  const anyLoading =
-    confidenceQ.isLoading || cafQ.isLoading || findingsQ.isLoading || recsQ.isLoading;
+  // Counts come from the governed overview (kind = finding|issue|recommendation).
+  const findingsCount = countOf(counts, "finding");
+  const issuesCount = countOf(counts, "issue");
+  const recommendationsCount = countOf(counts, "recommendation");
+
+  const anyLoading = overviewQ.isLoading;
 
   const cafDimensions: CAFDimensionView[] | undefined = caf
     ? [caf.clarity, caf.alignment, caf.feasibility].filter(Boolean)
@@ -199,6 +324,9 @@ export function ProjectOverview({ projectId }: ProjectOverviewProps) {
       ) : null}
 
       <Stack spacing={2}>
+        {/* Project actions — trigger analysis / add evidence (user-initiated commands). */}
+        <ProjectActions projectId={projectId} />
+
         {/* Aggregate Outcome Confidence — the headline trust signal. */}
         <Section title="Outcome Confidence" testId="overview-confidence">
           {confidence ? (

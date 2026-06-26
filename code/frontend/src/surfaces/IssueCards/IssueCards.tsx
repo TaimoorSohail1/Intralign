@@ -15,19 +15,18 @@
  *     `/projects/$projectId/findings/$findingId`) — the audit answer to "which
  *     Finding became this Issue".
  *
- * THE ISSUES-DATA FINDING (see fixtures.ts + the worker report): there is **no
- * dedicated Issue endpoint or Issue DTO** in the DTM-0018 REST surface. The
- * governed carrier of an Issue's data is the **Finding DTO** (it carries the
- * `severity`, the Derived `label`, and the source-finding lineage), so the cards
- * render from the `useListFindings…` read. We do NOT invent an Issue endpoint —
- * a card with no `severity` is simply not an Issue yet and is skipped.
+ * FIRST-CLASS ISSUES READ (DTM-0039 → DTM-0038): the cards now render from the dedicated
+ * `/issues` read (`useListIssues…`) — the first-class `Issue` DTO (Evaluate's prioritized
+ * Finding). Each Issue carries its `issue_id`, the source `finding_id` lineage, the
+ * governed `severity`, and the Derived confidence `label`. This replaces the DTM-0023
+ * placeholder that filtered the findings list by severity.
  *
  * Read-only: there is no edit / score / accept / defer / prioritise / generate /
  * recompute control anywhere on the surface (decision #3 — Disclose presents,
  * never generates; only reanalysis changes an assessment, and reanalysis is not
  * a Disclose affordance). Loading / empty states render cleanly and positively.
  *
- * It consumes the DTM-0018 `useListFindings…` hook read-only.
+ * It consumes the `useListIssues…` hook read-only.
  */
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -38,11 +37,11 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Link } from "@tanstack/react-router";
 
-import { useListFindingsV1ProjectsProjectIdFindingsGet } from "../../api/generated/findings/findings";
+import { useListIssuesV1ProjectsProjectIdIssuesGet } from "../../api/generated/issues/issues";
 import { EpistemicLabel, fromDerivedEnvelope } from "../../components/EpistemicLabel";
 import { epistemicTones } from "../../theme/tokens";
 import type {
-  Finding,
+  Issue,
   FindingType,
   Severity,
 } from "../../api/generated/oSLORelease1API.schemas";
@@ -76,15 +75,15 @@ const FINDING_TYPE_LABEL: Record<FindingType, string> = {
 };
 
 /** True for a plain array of objects (defensive against partial responses). */
-function asFindingArray(v: unknown): Finding[] {
-  return Array.isArray(v) ? (v.filter((x) => x && typeof x === "object") as Finding[]) : [];
+function asIssueArray(v: unknown): Issue[] {
+  return Array.isArray(v) ? (v.filter((x) => x && typeof x === "object") as Issue[]) : [];
 }
 
 /**
  * One Issue card — a prioritized Finding. Renders its severity + Derived
  * confidence label + a link to its source Finding. Pure presentation; no control.
  */
-function IssueCard({ issue, projectId }: { issue: Finding; projectId: string }) {
+function IssueCard({ issue, projectId }: { issue: Issue; projectId: string }) {
   const severity = issue.severity as Severity;
   return (
     <Paper
@@ -135,14 +134,13 @@ function IssueCard({ issue, projectId }: { issue: Finding; projectId: string }) 
 }
 
 export function IssueCards({ projectId }: IssueCardsProps) {
-  const findingsQ = useListFindingsV1ProjectsProjectIdFindingsGet(projectId);
+  const issuesQ = useListIssuesV1ProjectsProjectIdIssuesGet(projectId);
 
-  const findings = asFindingArray(findingsQ.data?.data);
-  // An Issue IS a Finding that Evaluate prioritized by assigning a severity.
-  // A Finding with no severity is not yet an Issue — it is not shown here.
-  const issues = findings.filter((f) => Boolean(f.severity));
+  // The first-class /issues read returns the governed Issues directly (Evaluate's
+  // prioritized Findings) — no client-side severity filter needed.
+  const issues = asIssueArray(issuesQ.data?.data);
 
-  const loading = findingsQ.isLoading;
+  const loading = issuesQ.isLoading;
 
   return (
     <Box data-testid="issue-cards" sx={{ py: 1 }}>
@@ -175,7 +173,7 @@ export function IssueCards({ projectId }: IssueCardsProps) {
       ) : (
         <Stack spacing={2}>
           {issues.map((issue) => (
-            <IssueCard key={issue.finding_id} issue={issue} projectId={projectId} />
+            <IssueCard key={issue.issue_id} issue={issue} projectId={projectId} />
           ))}
         </Stack>
       )}

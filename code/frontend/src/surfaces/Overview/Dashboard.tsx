@@ -29,16 +29,23 @@
  * It consumes the DTM-0018 Orval hooks read-only; the project list may be empty until
  * platform persistence lands → loading + empty states render cleanly and positively.
  */
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Chip from "@mui/material/Chip";
 import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { useListProjectsV1ProjectsGet } from "../../api/generated/projects/projects";
+import {
+  useListProjectsV1ProjectsGet,
+  getListProjectsV1ProjectsGetQueryKey,
+} from "../../api/generated/projects/projects";
+import { useCreateProjectV1ProjectsPost } from "../../api/generated/project-commands/project-commands";
 import { useGetConfidenceV1ProjectsProjectIdConfidenceGet } from "../../api/generated/confidence/confidence";
 import { EpistemicLabel, fromDerivedEnvelope } from "../../components/EpistemicLabel";
 import type {
@@ -155,6 +162,59 @@ function ProjectRow({ project }: { project: Project }) {
   );
 }
 
+/**
+ * The create-project AFFORDANCE (DTM-0039 → §5 `POST /projects`). A user-initiated
+ * command that creates a new project (lifecycle `created`) — it computes no cognition;
+ * the new project starts un-analyzed. On success the project-list read is invalidated.
+ */
+function CreateProject() {
+  const queryClient = useQueryClient();
+  const createM = useCreateProjectV1ProjectsPost({
+    mutation: {
+      onSuccess: () =>
+        queryClient.invalidateQueries({
+          queryKey: getListProjectsV1ProjectsGetQueryKey(),
+        }),
+    },
+  });
+  const [title, setTitle] = useState("");
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+    createM.mutate(
+      { data: { title: title.trim() } },
+      { onSuccess: () => setTitle("") },
+    );
+  };
+
+  return (
+    <Paper variant="outlined" sx={{ p: 2, mb: 2 }} data-testid="create-project">
+      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
+        New project
+      </Typography>
+      <Box component="form" onSubmit={submit} sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+        <TextField
+          size="small"
+          label="Project name"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          inputProps={{ "data-testid": "create-project-title" }}
+          sx={{ flexGrow: 1 }}
+        />
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={createM.isPending}
+          data-testid="create-project-submit"
+        >
+          Create project
+        </Button>
+      </Box>
+    </Paper>
+  );
+}
+
 export function Dashboard() {
   const projectsQ = useListProjectsV1ProjectsGet();
   const projects = asProjectArray(projectsQ.data?.data);
@@ -170,6 +230,8 @@ export function Dashboard() {
         Open a project to go deeper. OSLO presents this; it computes nothing here —
         only reanalysis changes a project&apos;s understanding.
       </Typography>
+
+      <CreateProject />
 
       {loading ? (
         <Box

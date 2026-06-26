@@ -17,13 +17,18 @@
  *     (`…/findings/$findingId/recommendations`). Recommendations are NOT rendered
  *     inline here (that's DTM-0022) — only the affordance to open them.
  *
- * Read-only: there is no edit / accept / reject / defer / resolve / generate /
- * recompute control anywhere on the panel (Finding Panel Spec §K prohibitions;
- * decision #3 — only reanalysis changes assessment, and reanalysis is not a
- * Disclose affordance). Loading / not-found / empty-evidence states render
- * cleanly because projections may be absent until upstream populates them.
+ * Workflow affordance (DTM-0039 → DTM-0035): acknowledge / address / reopen transition
+ * the finding's **Derived workflow status** via the user-initiated command. These are
+ * NOT assessment changes (no resolve / accept / generate / recompute / reanalyze): the
+ * confidence / canonical truth is untouched — only reanalysis changes the assessment.
+ * The surface performs no local cognition; the command is the path and on success the
+ * finding read is re-read.
  *
- * It consumes the DTM-0018 `useGetFinding…` hook read-only.
+ * Loading / not-found / empty-evidence states render cleanly because projections may be
+ * absent until upstream populates them.
+ *
+ * It consumes the DTM-0018 `useGetFinding…` hook read-only and the DTM-0035 finding
+ * lifecycle commands.
  */
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -34,16 +39,124 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { useGetFindingV1FindingsFindingIdGet } from "../../../api/generated/findings/findings";
+import {
+  useGetFindingV1FindingsFindingIdGet,
+  getGetFindingV1FindingsFindingIdGetQueryKey,
+} from "../../../api/generated/findings/findings";
+import {
+  useAcknowledgeFindingV1FindingsFindingIdAcknowledgePost,
+  useAddressFindingV1FindingsFindingIdAddressPost,
+  useReopenFindingV1FindingsFindingIdReopenPost,
+} from "../../../api/generated/finding-commands/finding-commands";
 import { EpistemicLabel, fromDerivedEnvelope } from "../../../components/EpistemicLabel";
 import { epistemicTones } from "../../../theme/tokens";
 import type {
   Finding,
   FindingType,
+  FindingStatus,
   Severity,
   Dimension,
 } from "../../../api/generated/oSLORelease1API.schemas";
+
+/** User-facing label for the Derived finding workflow status (presentation). */
+const FINDING_STATUS_LABEL: Record<FindingStatus, string> = {
+  detected: "Detected",
+  acknowledged: "Acknowledged",
+  addressed: "Addressed",
+  closed: "Closed",
+  reopened: "Reopened",
+  superseded: "Superseded",
+};
+
+/**
+ * The finding-lifecycle AFFORDANCE (DTM-0039 → DTM-0035). Acknowledge / Address /
+ * Reopen transition the finding's **Derived workflow status** (detected→acknowledged→
+ * addressed; closed→reopened) via the user-initiated command. These are workflow
+ * status transitions — they change NO assessment / confidence / canonical truth (only
+ * reanalysis changes the assessment). The surface performs no local cognition: the
+ * command is the path, and on success the finding read is invalidated to re-read the
+ * governed status from the source.
+ */
+function FindingLifecycle({
+  findingId,
+  status,
+}: {
+  findingId: string;
+  status?: FindingStatus;
+}) {
+  const queryClient = useQueryClient();
+  const invalidate = () =>
+    queryClient.invalidateQueries({
+      queryKey: getGetFindingV1FindingsFindingIdGetQueryKey(findingId),
+    });
+
+  const acknowledgeM = useAcknowledgeFindingV1FindingsFindingIdAcknowledgePost({
+    mutation: { onSuccess: invalidate },
+  });
+  const addressM = useAddressFindingV1FindingsFindingIdAddressPost({
+    mutation: { onSuccess: invalidate },
+  });
+  const reopenM = useReopenFindingV1FindingsFindingIdReopenPost({
+    mutation: { onSuccess: invalidate },
+  });
+
+  const pending = acknowledgeM.isPending || addressM.isPending || reopenM.isPending;
+
+  // Contextual transitions: only the moves valid from the current status are offered.
+  const canAcknowledge = status === "detected" || status === "reopened" || !status;
+  const canAddress = status === "acknowledged";
+  const canReopen = status === "closed" || status === "addressed";
+
+  return (
+    <Box data-testid="finding-lifecycle" sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+      {status ? (
+        <Chip
+          size="small"
+          variant="outlined"
+          label={`Status: ${FINDING_STATUS_LABEL[status] ?? status}`}
+          data-testid="finding-status"
+          data-status={status}
+          sx={{ mr: 1 }}
+        />
+      ) : null}
+      {canAcknowledge ? (
+        <Button
+          size="small"
+          variant="outlined"
+          disabled={pending}
+          data-testid="finding-acknowledge"
+          onClick={() => acknowledgeM.mutate({ findingId })}
+        >
+          Acknowledge
+        </Button>
+      ) : null}
+      {canAddress ? (
+        <Button
+          size="small"
+          variant="outlined"
+          disabled={pending}
+          data-testid="finding-address"
+          onClick={() => addressM.mutate({ findingId })}
+        >
+          Mark addressed
+        </Button>
+      ) : null}
+      {canReopen ? (
+        <Button
+          size="small"
+          variant="outlined"
+          disabled={pending}
+          data-testid="finding-reopen"
+          onClick={() => reopenM.mutate({ findingId })}
+        >
+          Reopen
+        </Button>
+      ) : null}
+    </Box>
+  );
+}
 
 export interface FindingPanelProps {
   projectId: string;
@@ -209,9 +322,12 @@ export function FindingPanel({ projectId, findingId }: FindingPanelProps) {
                 />
               ))}
             </Box>
-            <Typography variant="body1">
+            <Typography variant="body1" sx={{ mb: 1 }}>
               {finding.summary ?? finding.finding_id}
             </Typography>
+            {/* Finding-lifecycle affordance — acknowledge/address/reopen transition the
+                Derived workflow status via the command; they change no assessment. */}
+            <FindingLifecycle findingId={findingId} status={finding.status as FindingStatus} />
           </Section>
 
           {/* ── Confidence — the finding's Derived label (banded, conflict-aware) ── */}

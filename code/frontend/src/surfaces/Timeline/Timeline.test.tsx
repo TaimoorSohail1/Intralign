@@ -16,8 +16,8 @@
  *     evidence-attested, not OSLO-attested).
  *   - CHR Derived: every CHR/run entry reads as Derived, NEVER settled.
  *
- * The three DTM-0018 reads are mocked with fixture DTOs:
- *   - `useListAnalysisRuns…`  (the runs that appended CHRs → the CHR trail, Derived)
+ * The three reads are mocked with fixture DTOs:
+ *   - `useListHistory…`       (the first-class CHR trail, DTM-0038 — Derived)
  *   - `useListAcceptances…`   (UARs — user-attested, version-pinned)
  *   - `useListPlanFacts…`     (plan facts — user-attested, NOT world-truth)
  */
@@ -57,8 +57,8 @@ const planFactsState = {
   error: null as unknown,
 };
 
-vi.mock("../../api/generated/analysis-runs/analysis-runs", () => ({
-  useListAnalysisRunsV1ProjectsProjectIdAnalysisRunsGet: () => runsState,
+vi.mock("../../api/generated/history/history", () => ({
+  useListHistoryV1ProjectsProjectIdHistoryGet: () => runsState,
 }));
 vi.mock("../../api/generated/acceptance/acceptance", () => ({
   useListAcceptancesV1ProjectsProjectIdAcceptanceGet: () => acceptancesState,
@@ -96,10 +96,10 @@ describe("Timeline — reconstructs the trail (CHR + UAR + plan facts)", () => {
     expect(chr.length).toBe(analysisRunsFixture.length);
     // current + past are BOTH present
     expect(
-      chr.some((e) => e.getAttribute("data-run-id") === currentRun.analysis_run_id),
+      chr.some((e) => e.getAttribute("data-chr-id") === currentRun.chr_id),
     ).toBe(true);
     expect(
-      chr.some((e) => e.getAttribute("data-run-id") === supersededRun.analysis_run_id),
+      chr.some((e) => e.getAttribute("data-chr-id") === supersededRun.chr_id),
     ).toBe(true);
   });
 
@@ -115,7 +115,7 @@ describe("Timeline — reconstructs the trail (CHR + UAR + plan facts)", () => {
     await mount();
     const current = screen
       .getAllByTestId("chr-entry")
-      .find((e) => e.getAttribute("data-run-id") === currentRun.analysis_run_id)!;
+      .find((e) => e.getAttribute("data-chr-id") === currentRun.chr_id)!;
     expect(current).toHaveAttribute("data-current", "true");
   });
 
@@ -160,20 +160,21 @@ describe("Timeline — supersession is visible, not erased (append-only)", () =>
     await mount();
     const superseded = screen
       .getAllByTestId("chr-entry")
-      .find((e) => e.getAttribute("data-run-id") === supersededRun.analysis_run_id)!;
+      .find((e) => e.getAttribute("data-chr-id") === supersededRun.chr_id)!;
     expect(superseded).toBeInTheDocument();
     expect(superseded).toHaveAttribute("data-superseded", "true");
     // and it is NOT shown as the current understanding
     expect(superseded).not.toHaveAttribute("data-current", "true");
   });
 
-  it("shows a failed reanalysis honestly as failed (last-known-good retained)", async () => {
+  it("retains a prior (un-superseded) CHR in the trail, not marked current (append-only)", async () => {
     await mount();
-    const failed = screen
+    const prior = screen
       .getAllByTestId("chr-entry")
-      .find((e) => e.getAttribute("data-run-id") === failedRun.analysis_run_id)!;
-    expect(failed).toBeInTheDocument();
-    expect(within(failed).getByText(/failed/i)).toBeInTheDocument();
+      .find((e) => e.getAttribute("data-chr-id") === failedRun.chr_id)!;
+    expect(prior).toBeInTheDocument();
+    // it is a prior CHR — not the current understanding
+    expect(prior).not.toHaveAttribute("data-current", "true");
   });
 });
 
@@ -264,8 +265,8 @@ describe("Timeline — NEGATIVES: presents, never generates; append-only; record
     // them (the fixture's append order) — not re-sorted, not reversed.
     const renderedRunIds = screen
       .getAllByTestId("chr-entry")
-      .map((e) => e.getAttribute("data-run-id"));
-    const sourceRunIds = analysisRunsFixture.map((r) => r.analysis_run_id);
+      .map((e) => e.getAttribute("data-chr-id"));
+    const sourceRunIds = analysisRunsFixture.map((r) => r.chr_id);
     expect(renderedRunIds).toEqual(sourceRunIds);
 
     // Same for UARs and plan facts — record order preserved per source.
