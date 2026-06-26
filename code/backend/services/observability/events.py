@@ -41,6 +41,10 @@ The vocabulary is pinned PER CONTRACT (deep-task decision #1, DTM-0007):
   CHR output_kind).
 - ``EVENT_NAMES_COST`` — the single shared DL-048 spend event
   (``ai_spend_recorded``), introduced in DTM-0009 and reused by Wave B/C.
+- ``EVENT_NAMES_ANALYSIS`` — EXACTLY the three Event Model §8.8 analysis-COMMAND
+  events (DTM-0032), in §8.8 order — "Fast/Deep Analysis Requested" /
+  "Analysis Cancelled". The run lifecycle (``*_analysis_started/completed``) is
+  engine-produced through the recompute backbone (WA00R), never a command event.
 - ``EVENT_NAMES`` — the union (concatenation) the emitters accept; kept as the
   back-compat alias for existing consumers.
 
@@ -156,6 +160,17 @@ EVENT_NAMES_WU_ACCEPT: tuple[str, ...] = (
 # introduced in DTM-0009 and reused by Wave B/C. "AI Spend Recorded" (OBS §3).
 EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
 
+# Event Model §8.8 "Analysis" — the three analysis-COMMAND events emitted by the
+# DTM-0032 REST command router (:fast / :deep / :cancel), exactly, in §8.8 order.
+# The run lifecycle (``*_analysis_started`` / ``*_analysis_completed``) is
+# engine-produced through the existing recompute backbone (WA00R), not a command
+# event — those names are NOT pinned here. Pinned verbatim against EM §8.8.
+EVENT_NAMES_ANALYSIS: tuple[str, ...] = (
+    "fast_analysis_requested",
+    "deep_analysis_requested",
+    "analysis_cancelled",
+)
+
 # Union vocabulary accepted by emitters (back-compat alias for consumers).
 EVENT_NAMES: tuple[str, ...] = (
     EVENT_NAMES_WA00R
@@ -168,6 +183,7 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_WC_FIX
     + EVENT_NAMES_WU_ACCEPT
     + EVENT_NAMES_COST
+    + EVENT_NAMES_ANALYSIS
 )
 
 _EVENT_NAME_SET: frozenset[str] = frozenset(EVENT_NAMES)

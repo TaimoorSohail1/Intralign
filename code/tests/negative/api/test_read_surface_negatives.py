@@ -51,9 +51,23 @@ def test_out_of_workspace_project_is_404() -> None:
 
 # ---- read-mostly: NO mutation reachable from the read surface (Critical) -----
 
+# The DTM-0018 Disclose read routers, identified by tag. Command routers
+# (DTM-0032+ — analysis :fast/:deep/:cancel, etc.) live under the SAME /v1
+# prefix but are a separate concern (decision #3/#4); the read-surface guard
+# proves the READ routers stay GET-only, not that /v1 carries no command at all.
+_READ_ROUTER_TAGS = frozenset({
+    "projects", "analysis_runs", "findings", "recommendations",
+    "confidence", "acceptance", "notifications",
+})
+
+
 def _dtm0018_routes():
-    """The routes the DTM-0018 read surface adds (everything under /v1 here)."""
-    return [r for r in v1_router.routes if getattr(r, "path", "").startswith("/v1")]
+    """The DTM-0018 read-surface routes (the read routers, by tag)."""
+    return [
+        r for r in v1_router.routes
+        if getattr(r, "path", "").startswith("/v1")
+        and set(getattr(r, "tags", []) or []) & _READ_ROUTER_TAGS
+    ]
 
 
 def test_no_mutating_method_on_the_read_surface() -> None:

@@ -125,6 +125,13 @@ EXPECTED_EVENT_NAMES_WU_ACCEPT: tuple[str, ...] = (
 # DL-048 cost-governance — the single shared spend event (DTM-0009; decision #9).
 EXPECTED_EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
 
+# Event Model §8.8 analysis-command events (DTM-0032 — :fast/:deep/:cancel).
+EXPECTED_EVENT_NAMES_ANALYSIS: tuple[str, ...] = (
+    "fast_analysis_requested",
+    "deep_analysis_requested",
+    "analysis_cancelled",
+)
+
 # The union the emitters must accept (back-compat alias in events.py).
 EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     EXPECTED_EVENT_NAMES_WA00R
@@ -137,6 +144,7 @@ EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     + EXPECTED_EVENT_NAMES_WC_FIX
     + EXPECTED_EVENT_NAMES_WU_ACCEPT
     + EXPECTED_EVENT_NAMES_COST
+    + EXPECTED_EVENT_NAMES_ANALYSIS
 )
 
 # (contract-tuple variable name, expected value, contract label) for check (b).
@@ -151,6 +159,7 @@ _CONTRACT_VOCABULARIES: tuple[tuple[str, tuple[str, ...], str], ...] = (
     ("EVENT_NAMES_WC_FIX", EXPECTED_EVENT_NAMES_WC_FIX, "DL-047 SuggestedFix"),
     ("EVENT_NAMES_WU_ACCEPT", EXPECTED_EVENT_NAMES_WU_ACCEPT, "IC-WU-ACCEPT C3"),
     ("EVENT_NAMES_COST", EXPECTED_EVENT_NAMES_COST, "DL-048 cost"),
+    ("EVENT_NAMES_ANALYSIS", EXPECTED_EVENT_NAMES_ANALYSIS, "EM §8.8 analysis"),
 )
 
 # The union must be the per-contract names concatenated in this exact order.
@@ -165,6 +174,7 @@ _UNION_NAME_ORDER: tuple[str, ...] = (
     "EVENT_NAMES_WC_FIX",
     "EVENT_NAMES_WU_ACCEPT",
     "EVENT_NAMES_COST",
+    "EVENT_NAMES_ANALYSIS",
 )
 
 APPEND_EVENT = "cognition_history_record_appended"
@@ -319,7 +329,7 @@ def _flatten_name_concatenation(value: ast.expr) -> tuple[str, ...] | None:
 
 
 def _union_is_consistent(value: ast.expr) -> bool:
-    """EVENT_NAMES is the WA00R+WA001+WA002 concatenation (by name) or the literal union."""
+    """EVENT_NAMES is the per-contract concatenation (by name) or the literal union."""
     if _flatten_name_concatenation(value) == _UNION_NAME_ORDER:
         return True
     try:

@@ -14,6 +14,7 @@ from fastapi import APIRouter
 
 from backend.api.v1.routers import (
     acceptance,
+    analysis_commands,
     analysis_runs,
     confidence,
     findings,
@@ -32,3 +33,8 @@ router.include_router(recommendations.router)
 router.include_router(confidence.router)
 router.include_router(acceptance.router)
 router.include_router(notifications.router)
+
+# DTM-0032 — the analysis command router (POST :fast/:deep/:cancel). Additive
+# and separate from the GET read surface (decision #3/#4); it wires the existing
+# submit_trigger seam and never mutates a canonical store.
+router.include_router(analysis_commands.router)

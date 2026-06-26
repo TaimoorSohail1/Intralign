@@ -17,7 +17,9 @@ this module establishes the contract surface the routers depend on.
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
+from typing import Any
 
 from fastapi import Depends, Header, HTTPException, status
 
@@ -64,3 +66,93 @@ def get_projection_reader() -> ProjectionReader:
 def require_principal(principal: Principal = Depends(current_principal)) -> Principal:
     """Router-facing auth dependency (a single import point for the routers)."""
     return principal
+
+
+# --- Command-surface seams (DTM-0032) ----------------------------------------
+# The command routers (analysis :fast/:deep/:cancel, …) consume these provider
+# dependencies. Each is overridable via ``app.dependency_overrides`` in tests so
+# the transport can be exercised over HTTP without a backing store, and wired to
+# the real Supabase-backed seams in production. The command transport invents NO
+# orchestration: it calls the existing ``submit_trigger`` seam (materializer
+# injected, DTM-0030) and persists the platform ``analysis_run`` via the repo.
+
+
+def get_analysis_run_repo() -> Any:
+    """Provide the platform ``analysis_run`` repo (DTM-0031; Supabase in prod)."""
+    from backend.platform.analysis_run_repo import SupabaseAnalysisRunRepository
+    from backend.services.persistence import get_supabase_client
+
+    return SupabaseAnalysisRunRepository(get_supabase_client())
+
+
+def get_trigger_submitter() -> Any:
+    """Provide the orchestration ``submit_trigger`` seam (runner; DTM-0030)."""
+    from backend.orchestration.runner import submit_trigger
+
+    return submit_trigger
+
+
+def get_materializer() -> Any:
+    """Provide the DTM-0030 ``ProjectionMaterializer`` (so derived.*_current fills).
+
+    Injected into ``submit_trigger`` so a successful deep pass upserts the
+    ``derived.*_current`` projection rows the read surfaces read (LDM §3.1).
+    """
+    from backend.responsibilities.disclose.projection_writer import ProjectionMaterializer
+    from backend.responsibilities.retain.repository import ChrRepository
+    from backend.services.persistence import get_supabase_client
+    from backend.services.persistence.projection_store import SupabaseProjectionStore
+
+    client = get_supabase_client()
+    return ProjectionMaterializer(SupabaseProjectionStore(client), ChrRepository(client))
+
+
+def get_event_emitter() -> Any:
+    """Provide the observed event emitter (the A6 seam; collecting by default)."""
+    from backend.services.observability.emitters import ObservedEventEmitter
+    from backend.services.observability.events import CollectingEventEmitter
+
+    return ObservedEventEmitter.wrap(CollectingEventEmitter())
+
+
+class _IdempotencyStore:
+    """In-process Idempotency-Key → response cache (API Contract §10).
+
+    A repeated command with the same key returns the first run unchanged — no
+    second persist, no second trigger. R1 single-dyno scope; the durable
+    cross-dyno store (Redis) is the flagged follow-up. Keyed by (key, route) so
+    the same key on different commands does not collide.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._records: dict[tuple[str, str], dict[str, Any]] = {}
+
+    def get(self, key: str, route: str) -> dict[str, Any] | None:
+        with self._lock:
+            return self._records.get((key, route))
+
+    def put(self, key: str, route: str, value: dict[str, Any]) -> None:
+        with self._lock:
+            self._records[(key, route)] = value
+
+
+_IDEMPOTENCY_STORE = _IdempotencyStore()
+
+
+def reset_idempotency_store() -> None:
+    """Replace the process-wide idempotency store (test isolation seam)."""
+    global _IDEMPOTENCY_STORE
+    _IDEMPOTENCY_STORE = _IdempotencyStore()
+
+
+def get_idempotency_store() -> _IdempotencyStore:
+    """Provide the Idempotency-Key cache (overridable in tests)."""
+    return _IDEMPOTENCY_STORE
+
+
+def idempotency_key(
+    idempotency_key: str | None = Header(default=None),
+) -> str | None:
+    """Read the optional ``Idempotency-Key`` header (API Contract §10)."""
+    return idempotency_key

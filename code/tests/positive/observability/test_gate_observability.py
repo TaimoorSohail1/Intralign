@@ -12,6 +12,7 @@ from pathlib import Path
 
 from ci.gate_observability import (
     EXPECTED_EVENT_NAMES,
+    EXPECTED_EVENT_NAMES_ANALYSIS,
     EXPECTED_EVENT_NAMES_COST,
     EXPECTED_EVENT_NAMES_WA00R,
     EXPECTED_EVENT_NAMES_WA001,
@@ -32,6 +33,7 @@ from ci.gate_observability import (
 )
 from backend.services.observability.events import (
     EVENT_NAMES,
+    EVENT_NAMES_ANALYSIS,
     EVENT_NAMES_COST,
     EVENT_NAMES_WA00R,
     EVENT_NAMES_WA001,
@@ -71,9 +73,10 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
     assert EXPECTED_EVENT_NAMES_WC_FIX == EVENT_NAMES_WC_FIX
     assert EXPECTED_EVENT_NAMES_WU_ACCEPT == EVENT_NAMES_WU_ACCEPT
     assert EXPECTED_EVENT_NAMES_COST == EVENT_NAMES_COST
+    assert EXPECTED_EVENT_NAMES_ANALYSIS == EVENT_NAMES_ANALYSIS
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
-    # Union consistency: the alias is exactly the 10-way per-contract concatenation
-    # (DTM-0016 — WU_ACCEPT added between WC_FIX and COST; the union grows, never reorders).
+    # Union consistency: the alias is exactly the 11-way per-contract concatenation
+    # (DTM-0032 — ANALYSIS appended after COST; the union grows, never reorders).
     assert EVENT_NAMES == (
         EVENT_NAMES_WA00R
         + EVENT_NAMES_WA001
@@ -85,6 +88,7 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
         + EVENT_NAMES_WC_FIX
         + EVENT_NAMES_WU_ACCEPT
         + EVENT_NAMES_COST
+        + EVENT_NAMES_ANALYSIS
     )
     # stale_detected lives in the WA00R set only — referenced, never duplicated.
     assert "stale_detected" in EVENT_NAMES_WA00R
@@ -195,6 +199,30 @@ def test_wu_accept_vocabulary_is_the_three_ic_wu_accept_c3_names_verbatim() -> N
         assert name not in EVENT_NAMES_COST
     # The single ai_spend_recorded is the COST event, reused — not a WU_ACCEPT event.
     assert "ai_spend_recorded" not in EVENT_NAMES_WU_ACCEPT
+
+
+def test_analysis_vocabulary_is_the_three_em_8_8_names_verbatim() -> None:
+    """DTM-0032 — the Event Model §8.8 analysis-command list, exactly, in order."""
+    assert EVENT_NAMES_ANALYSIS == (
+        "fast_analysis_requested",
+        "deep_analysis_requested",
+        "analysis_cancelled",
+    )
+    # The per-emission append event is REUSED from WA00R, never duplicated here.
+    assert "cognition_history_record_appended" not in EVENT_NAMES_ANALYSIS
+    # Analysis-command events live in the ANALYSIS set only — never leaking elsewhere.
+    for name in EVENT_NAMES_ANALYSIS:
+        assert name not in EVENT_NAMES_WS
+        assert name not in EVENT_NAMES_WB_INFER
+        assert name not in EVENT_NAMES_WB_EVAL
+        assert name not in EVENT_NAMES_WC_ADVISE
+        assert name not in EVENT_NAMES_WC_FIX
+        assert name not in EVENT_NAMES_WU_ACCEPT
+        assert name not in EVENT_NAMES_COST
+    # The run lifecycle (started/completed) rides the recompute backbone (WA00R),
+    # not a command event — those names are NOT in this command vocabulary.
+    assert "fast_analysis_started" not in EVENT_NAMES
+    assert "deep_analysis_completed" not in EVENT_NAMES
 
 
 def test_wa002_vocabulary_is_the_five_ic_wa_002_a6_names_verbatim() -> None:
