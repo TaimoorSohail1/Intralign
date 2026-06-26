@@ -60,6 +60,17 @@ stack HEAD — created at execution start; keeps the Wave E branch PR-able).
    Production is owner-only.
 8. **DL-048 token-budget enforcement** — the spend-gate mechanism (verify present/complete).
 
+## ✅ Owner authorization (recorded 2026-06-26)
+
+The repository owner (acting via the session owner-proxy) **explicitly authorized the full 12-slice
+plan, INCLUDING the three owner-gated slices**: DTM-0031 (platform-table migration), DTM-0036 (auth
+seam + its verify dependency), DTM-0041 (env binding / staging deploy prep). This satisfies the
+`code/CLAUDE.md` "Human approval REQUIRED" gate for the migration, the auth/security seam, and the
+staging deploy. **Production promotion remains owner-only** (a tagged release is a separate owner
+action — Deployment Governance §1; not covered by this build authorization). If DTM-0036 needs a
+NEW dependency, the worker flags the exact lib and the EM confirms it before adding (STOP rule #4
+narrowed, not waived).
+
 ## Governance gates (per `code/CLAUDE.md` + Deployment Governance §9 — FLAG, do not bypass)
 
 - **OWNER-APPROVAL REQUIRED (STOP before coding the migration/seam):**
