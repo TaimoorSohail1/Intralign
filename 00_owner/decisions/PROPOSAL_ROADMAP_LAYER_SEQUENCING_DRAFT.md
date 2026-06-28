@@ -1,6 +1,6 @@
 # Proposal — Layer-Before-Depth Roadmap Sequencing (cross-platform planning-governance breadth before execution-governance depth)
 
-**Document Type:** Governance Proposal (Framework 001 / 001A) — **plan only; nothing ratified** · **Status:** **DRAFT · Pending Owner Ratification** · **Date:** 2026-06-28
+**Document Type:** Governance Proposal (Framework 001 / 001A) — **plan only; nothing ratified** · **Status:** **Adopted (DL-081)** · **Date:** 2026-06-28
 **Origin:** Owner direction (working session, 2026-06-28) — capture the roadmap-sequencing principle developed in analysis and route it through Framework 001 to bind as product-roadmap canon.
 **Backlog:** RB-027. **Draft decision record:** `records/DL-081-roadmap-layer-sequencing.md`.
 **Layer:** Product scope / roadmap orientation (`10_product`). **Non-doctrinal** sequencing of existing ladder levels (DL-076 / DL-075 pattern). Introduces no new doctrine, structure, or responsibility.
@@ -52,7 +52,7 @@ Realization order:
 
 ## Status
 
-**DRAFT — pending owner ratification.** Nothing ratified; no canon superseded. On owner approval: land the decision via the Founder Console "Approve & Land" / `dl-land` workflow (stamps the DL number, regenerates the index, appends the changelog, opens the PR for owner merge).
+**Adopted (DL-081).** Nothing ratified; no canon superseded. On owner approval: land the decision via the Founder Console "Approve & Land" / `dl-land` workflow (stamps the DL number, regenerates the index, appends the changelog, opens the PR for owner merge).
 
 ---
 *Owner decision options: **(A)** adopt as product-roadmap canon (recommended; this proposal is written for A); **(B)** elevate the sequencing to doctrine (Execution Depth) — heavier, requires a doctrine change; **(C)** defer. AI drafted and recommends; only the owner ratifies (Framework 001A).*

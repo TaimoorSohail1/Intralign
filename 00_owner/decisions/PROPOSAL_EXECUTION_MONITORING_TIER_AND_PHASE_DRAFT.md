@@ -1,6 +1,6 @@
 # Proposal — Execution-monitoring tier placement & phase + capability tier split (amends DL-082, extends DL-074)
 
-**Document Type:** Governance Proposal (Framework 001 / 001A) — **plan only; nothing ratified** · **Status:** **DRAFT · Pending Owner Ratification** · **Date:** 2026-06-28
+**Document Type:** Governance Proposal (Framework 001 / 001A) — **plan only; nothing ratified** · **Status:** **Adopted (DL-083)** · **Date:** 2026-06-28
 **Origin:** Owner direction (working session, 2026-06-28) — confirm the three-way capability tier split and move execution monitoring from Alpha exit to Beta.
 **Backlog:** RB-029. **Draft record:** `records/DL-083-execution-monitoring-tier-and-phase.md`. **Artifact amended:** `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` §3a.
 **Layer:** Product scope / roadmap + monetization orientation (`10_product`). **Non-doctrinal**; amends DL-082, extends DL-074.
@@ -47,7 +47,7 @@ Separately, the Tier-3 execution-monitoring build lands in the **Beta** phase, s
 
 ## Status
 
-**DRAFT — pending owner ratification.** On approval: land via the Founder Console "Approve & Land" / `dl-land` workflow (stamps the DL number, regenerates the index, appends the changelog, opens the PR), committing the §3a amendment + RB-029 + this proposal alongside.
+**Adopted (DL-083).** On approval: land via the Founder Console "Approve & Land" / `dl-land` workflow (stamps the DL number, regenerates the index, appends the changelog, opens the PR), committing the §3a amendment + RB-029 + this proposal alongside.
 
 ---
 *Owner decision options: **(A)** adopt as proposed (recommended; written for A); **(B)** adjust a tier placement or keep a light read-only visibility proxy in Alpha; **(C)** defer. AI drafted and recommends; only the owner ratifies (Framework 001A).*
