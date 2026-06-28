@@ -332,6 +332,16 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 - **Proposal Scope:** Amend DL-076 by ratifying Alpha exit criteria: (1) build/prove gates pass [unchanged]; (2) value validated by behavioral retention/repeat use; (3) ≥ 2 governed planning/execution platforms with real per-platform depth; (4) execution visibility operational = read-only outcome ingest (≥ 1 platform) + closed feedback loop, drift-surfacing deferred to Beta+; (5) 50+ users + engagement (§20) [unchanged]. Owner-set thresholds.
 - **Dependencies:** Amends DL-076; constrained by DL-047, §20, CHG-064; consistent with RB-027 / `DL-081-roadmap-layer-sequencing` (≥ 2 threshold; depth deferral). Lands after DL-080 per DL-065 R3; recommend after RB-027.
 - **Proposal:** `00_owner/decisions/PROPOSAL_ALPHA_EXIT_CRITERIA_DRAFT.md`. **Draft record:** `records/DL-082-alpha-exit-criteria.md`. **Artifact:** `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` §3a.
+- **Status:** Adopted — DL-082.
+
+### RB-029 — Execution-monitoring tier placement & phase (amends DL-082, extends DL-074)
+
+- **Source Finding:** Owner direction 2026-06-28 — aligning tiering with the DL-082 Alpha exit criteria surfaced that "planning-vendor support" and "execution visibility" conflated three distinct capabilities (Export-Share-Out; outbound plan export to execution tool; inbound execution monitoring). The Tier-3 monitoring build lands in Beta, so it cannot gate Alpha graduation.
+- **Affected Layer(s):** Product scope / roadmap + monetization orientation (`10_product`). Non-doctrinal.
+- **Affected Concepts:** Alpha exit criteria (DL-082); tier ladder / capability placement (DL-074); execution monitoring / visibility; plan export; Export-Share-Out (G4); Layer-Before-Depth (DL-081).
+- **Proposal Scope:** (1) Three-way tier split — Export-Share-Out = Free/no-account; plan export → execution tool = Tier 2/Basic (distinct, separately-scoped); execution monitoring = Tier 3/Pro+. (2) Move execution monitoring from Alpha exit to Beta (built at T3 in Beta); amend Alpha exit to build/prove + value-by-retention + ≥2 planning sources + 50+ users. (3) Alpha validates engagement; Beta validates outcome impact. (4) Plan export-out is not-yet-scoped — placement only, not authorization.
+- **Dependencies:** Amends DL-082; extends DL-074; constrained by DL-047, DL-081, CHG-064, §20. Routes plan-export and monitoring realization to separate scoping.
+- **Proposal:** `00_owner/decisions/PROPOSAL_EXECUTION_MONITORING_TIER_AND_PHASE_DRAFT.md`. **Draft record:** `records/DL-083-execution-monitoring-tier-and-phase.md`. **Artifact:** `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` §3a.
 - **Status:** Proposed.
 
 ---
