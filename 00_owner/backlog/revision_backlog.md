@@ -310,6 +310,32 @@ _Added 2026-06-17 by explicit owner direction. These three items were surfaced b
 
 ---
 
+## P5 — Roadmap Sequencing (owner-directed)
+
+_Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing principle from the cognitive-layer defensibility analysis and routes it through Framework 001 to bind as product-roadmap canon._
+
+### RB-027 — Layer-Before-Depth roadmap sequencing
+
+- **Source Finding:** Cognitive-layer defensibility analysis (2026-06-28) concluded OSLO's durable moat is altitude + cross-system neutrality + accumulated outcome corpus — not the cognitive behaviors (which frontier models increasingly absorb). The entry wedge ("60-second planning intelligence", Positioning §4) is capability-shaped and at risk of collapsing into a feature of an incumbent execution tool unless OSLO reaches the layer position first. No canonical sequencing rule governs the order in which the §7 ladder is realized after R1.
+- **Affected Layer(s):** Product scope / roadmap orientation (`10_product`). Non-doctrinal.
+- **Affected Concepts:** Strategic Objective Ladder (Positioning §7); Execution Depth axis (Doctrine 10 / DL-034); advisory-only invariant (DL-047); cross-platform neutrality / "layer" altitude.
+- **Proposal Scope:** Ratify the **Layer-Before-Depth** principle — establish cross-platform planning-governance breadth (≥2 governed platforms, real per-platform depth) at the understanding/governance altitude before descending into execution-phase governance; execution-phase read-only visibility permitted earlier as a feedback input; advisory-only invariant (DL-047) preserved throughout; R1 scope unchanged (applies R2+). Sequences existing ladder levels; introduces no new doctrine, capability, or responsibility.
+- **Dependencies:** Traces up to Positioning §7; constrained by DL-047 and Doctrine 10 / DL-034; consistent with DL-076, CHG-064. Lands after the in-flight canon PR (DL-080) per DL-065 R3.
+- **Proposal:** `00_owner/decisions/PROPOSAL_ROADMAP_LAYER_SEQUENCING_DRAFT.md`. **Draft record:** `records/DL-081-roadmap-layer-sequencing.md`.
+- **Status:** Proposed.
+
+### RB-028 — Alpha exit criteria (specify "proven"; amends DL-076)
+
+- **Source Finding:** Owner direction 2026-06-28 — the Alpha phase's three pillars (project-intelligence value validation, planning-vendor breadth, execution visibility) are **exit criteria**, not just activities. DL-076 defined the Alpha→Beta two-gate model (build/prove vs §20 graduation) but did not specify what "proven" requires.
+- **Affected Layer(s):** Product scope / roadmap orientation (`10_product`). Non-doctrinal.
+- **Affected Concepts:** Alpha→Beta graduation; "proven" gate (DL-076 §3); §20 engagement gate; planning-vendor breadth / neutrality; execution visibility (read-only, DL-047); value validation.
+- **Proposal Scope:** Amend DL-076 by ratifying Alpha exit criteria: (1) build/prove gates pass [unchanged]; (2) value validated by behavioral retention/repeat use; (3) ≥ 2 governed planning/execution platforms with real per-platform depth; (4) execution visibility operational = read-only outcome ingest (≥ 1 platform) + closed feedback loop, drift-surfacing deferred to Beta+; (5) 50+ users + engagement (§20) [unchanged]. Owner-set thresholds.
+- **Dependencies:** Amends DL-076; constrained by DL-047, §20, CHG-064; consistent with RB-027 / `DL-081-roadmap-layer-sequencing` (≥ 2 threshold; depth deferral). Lands after DL-080 per DL-065 R3; recommend after RB-027.
+- **Proposal:** `00_owner/decisions/PROPOSAL_ALPHA_EXIT_CRITERIA_DRAFT.md`. **Draft record:** `records/DL-082-alpha-exit-criteria.md`. **Artifact:** `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` §3a.
+- **Status:** Proposed.
+
+---
+
 ## Governance Notes
 
 1. This backlog is a draft. Entries reflect findings from initial repository review, not ratified governance positions.

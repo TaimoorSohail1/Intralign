@@ -35,6 +35,20 @@ R1/R2 are *early Alpha releases* **below** the gate; the **50+ metric is reached
 
 **To advance Alpha → Beta, both must hold:** the product **proven** (build gates) **and** the audience/engagement **reached** (§20).
 
+## 3a. Alpha exit criteria (owner-set)
+
+> **Authorized by `DL-082-alpha-exit-criteria` (amends DL-076).** Specifies what "**proven**" means at Alpha exit, alongside the unchanged §20 graduation gate.
+
+Advancing Alpha → Beta requires **all** of the following — the three owner-set "proven" gates plus the existing engagement gate:
+
+1. **Build / prove gates pass** (unchanged, §3) — the engine works (Phase 1 "Prove Understanding" / Phase 2 "Prove Improvement").
+2. **Value validated** — the project-intelligence value proposition is validated by **behavioral retention / repeat use**: users return and re-run OSLO on real projects **unprompted** (the hardest-to-fake usage signal). Sentiment alone does not pass.
+3. **Planning-vendor breadth** — **≥ 2** planning/execution platforms are governed sources, each with **real per-platform depth** (governed-source depth, **not** shallow connectors / a "row of logos"). This establishes the cross-platform **neutrality/altitude** that constitutes the layer; the ≥ 2 threshold is consistent with the Layer-Before-Depth sequencing principle (`DL-081-roadmap-layer-sequencing`).
+4. **Execution visibility operational** — **read-only outcome ingest** from **≥ 1** execution platform **plus a closed feedback loop** (governed understanding compared against observed outcomes). Strictly observational — advisory-only preserved (DL-047). **Drift-surfacing from execution data is deferred to Beta+** (an execution-intelligence behavior, Positioning §7 levels 4–5; out of Alpha scope per Layer-Before-Depth).
+5. **Audience / engagement reached** — **50+ users + engagement (§20)** — **unchanged** (DL-076). The market/outcome graduation gate.
+
+**Relationship to the two-gate model (§3):** criterion 1 is the build/prove gate; criterion 5 is the graduation/outcome gate; criteria 2–4 **enrich the "proven" side** — Alpha proves not just that the engine works, but that it delivers recognized value, travels across planning sources, and closes the outcome loop. Criteria 2–4 are **owner-set Alpha exit gates**; they do not alter R1 scope (CHG-064) and apply across the R1–R5 ladder.
+
 ## 4. Access model across the ladder (DL-073)
 
 - **Alpha (R1–R5) + Beta — controlled access:** invite/allowlist, **auth-gated**, ingestion-first landing.
