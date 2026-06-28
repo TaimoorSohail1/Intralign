@@ -362,6 +362,16 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 - **Dependencies:** Placed by DL-083 (Tier 3, Beta). Constrained by DL-047 (read-only / advisory-only), DL-048 (cost), Doctrine 04 (Outcome Integrity). Relates to DL-081 (Layer-Before-Depth — execution depth after breadth) and the Internal/Alpha entitlement backlog. Distinct from RB-030 (outbound export). DL-042 moratorium history.
 - **Status:** Proposed.
 
+### RB-032 — R2 candidate-epic phase/tier placement + Foundational-Architecture-in-Alpha principle
+
+- **Source Finding:** Owner direction 2026-06-28 — the R2 candidate index gathered deferred epics without binding *when* each begins. Owner set the gates: Execution Intelligence (R2-C) → Beta; Team Collaboration depth (R2-D) → Team tier; Governance & Authority (R2-E) → Beta; plus a build-sequencing exception allowing foundational architecture to be laid early in Alpha where it reduces later effort/complexity.
+- **Affected Layer(s):** Product scope / roadmap + build-sequencing orientation (`10_product`). Non-doctrinal.
+- **Affected Concepts:** R2 candidate epics (R2-C/D/E); Alpha/Beta phases (DL-076); tier ladder (DL-074); execution monitoring (DL-083); Layer-Before-Depth (DL-081); advisory-only (DL-047); foundational-architecture build sequencing.
+- **Proposal Scope:** Bind the three phase/tier placements and ratify the **Foundational-Architecture-in-Alpha** principle (early foundation permitted in Alpha when it measurably reduces later effort/complexity; advisory-only, non-activating, specified-but-inactive; routes through scoping + DL where architectural). Additive; no capability/doctrine introduced.
+- **Dependencies:** Builds on DL-076, DL-074, DL-083, DL-081, DL-047, CHG-064. Reflected in `RELEASE_2_BACKLOG_CANDIDATES.md` (Phase & tier placement note).
+- **Proposal:** `00_owner/decisions/PROPOSAL_R2_PHASE_TIER_PLACEMENT_DRAFT.md`. **Draft record:** `records/DL-084-r2-phase-tier-placement.md`.
+- **Status:** Proposed.
+
 ---
 
 ## Governance Notes
