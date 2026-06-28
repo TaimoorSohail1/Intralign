@@ -1,6 +1,6 @@
 # Proposal — Alpha Exit Criteria (specify "proven" for Alpha→Beta; amends DL-076)
 
-**Document Type:** Governance Proposal (Framework 001 / 001A) — **plan only; nothing ratified** · **Status:** **DRAFT · Pending Owner Ratification** · **Date:** 2026-06-28
+**Document Type:** Governance Proposal (Framework 001 / 001A) — **plan only; nothing ratified** · **Status:** **Adopted (DL-082)** · **Date:** 2026-06-28
 **Origin:** Owner direction (working session, 2026-06-28) — the Alpha phase's three pillars are exit criteria; capture and bind them by amending DL-076's release-ladder artifact.
 **Backlog:** RB-028. **Draft decision record:** `records/DL-082-alpha-exit-criteria.md`. **Artifact amended:** `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` (new §3a).
 **Layer:** Product scope / roadmap orientation (`10_product`). **Non-doctrinal**; amends DL-076.
@@ -48,7 +48,7 @@ Advancing Alpha → Beta requires **all** of:
 
 ## Status
 
-**DRAFT — pending owner ratification.** Nothing ratified. On approval: land via the Founder Console "Approve & Land" / `dl-land` workflow (stamps the DL number, regenerates the index, appends the changelog, opens the PR), committing the §3a amendment + RB-028 + this proposal alongside.
+**Adopted (DL-082).** Nothing ratified. On approval: land via the Founder Console "Approve & Land" / `dl-land` workflow (stamps the DL number, regenerates the index, appends the changelog, opens the PR), committing the §3a amendment + RB-028 + this proposal alongside.
 
 ---
 *Owner decision options: **(A)** adopt as DL-076 amendment with the owner-set thresholds (recommended; this proposal is written for A); **(B)** adjust thresholds; **(C)** defer. AI drafted and recommends; only the owner ratifies (Framework 001A).*
