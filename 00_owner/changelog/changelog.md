@@ -915,6 +915,13 @@ Each changelog entry contains:
 - **Change Summary:** Amend DL-082 and extend DL-074. **Three-way capability tier split:** Export-Share-Out = Free/no-account; plan export → execution tool = Tier 2/Basic (distinct, separately scoped); execution monitoring (inbound outcome ingest + closed loop) = Tier 3/Pro+, built in Beta. **Phase move:** execution monitoring relocated from the Alpha exit criteria to **Beta** (a Beta-built capability cannot gate Alpha graduation). Amended Alpha exit = build/prove + value-by-retention + ≥ 2 governed planning sources + 50+ users (§20). Alpha validates **engagement**; Beta validates **outcome impact**. Advisory-only (DL-047) preserved; non-doctrinal.
 - **Supersession Reference:** Amends DL-082 (removes the execution-visibility Alpha exit criterion; relocates to Beta); extends DL-074 (capability tier placement). No epistemic invariant, doctrine, or constitution touched.
 
+### CHG-119 — DL-084: R2 candidate-epic phase/tier placement + Foundational-Architecture-in-Alpha principle
+
+- **Date:** 2026-06-28 · **Authorizing Decision:** DL-084.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-084-r2-phase-tier-placement.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated); `00_owner/backlog/revision_backlog.md` (RB-032 added); `00_owner/decisions/PROPOSAL_R2_PHASE_TIER_PLACEMENT_DRAFT.md` (new). Reflects the placements already annotated in `00_owner/backlog/RELEASE_2_BACKLOG_CANDIDATES.md` (CHG-118-era PR #78).
+- **Change Summary:** Bind the R2 candidate-epic phase/tier placement — **Execution Intelligence (R2-C) → Beta**, **Team Collaboration depth (R2-D) → Team tier (Tier 4)**, **Governance & Authority (R2-E) → Beta** — and ratify the **Foundational-Architecture-in-Alpha** build-sequencing principle: architectural foundation for a gated capability may be laid early in Alpha (R2) where it measurably reduces later effort/complexity, kept advisory-only / non-activating / specified-but-inactive and routed through scoping (+ DL where architectural). Sibling to DL-081 (Layer-Before-Depth). Non-doctrinal; no capability or epistemic invariant introduced.
+- **Supersession Reference:** None. Additive; consistent with DL-074, DL-076, DL-081, DL-083, DL-047.
+
 ---
 
 ## Governance Notes
