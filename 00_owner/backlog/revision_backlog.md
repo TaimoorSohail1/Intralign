@@ -322,7 +322,7 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 - **Proposal Scope:** Ratify the **Layer-Before-Depth** principle — establish cross-platform planning-governance breadth (≥2 governed platforms, real per-platform depth) at the understanding/governance altitude before descending into execution-phase governance; execution-phase read-only visibility permitted earlier as a feedback input; advisory-only invariant (DL-047) preserved throughout; R1 scope unchanged (applies R2+). Sequences existing ladder levels; introduces no new doctrine, capability, or responsibility.
 - **Dependencies:** Traces up to Positioning §7; constrained by DL-047 and Doctrine 10 / DL-034; consistent with DL-076, CHG-064. Lands after the in-flight canon PR (DL-080) per DL-065 R3.
 - **Proposal:** `00_owner/decisions/PROPOSAL_ROADMAP_LAYER_SEQUENCING_DRAFT.md`. **Draft record:** `records/DL-081-roadmap-layer-sequencing.md`.
-- **Status:** Proposed.
+- **Status:** Adopted — DL-081.
 
 ### RB-028 — Alpha exit criteria (specify "proven"; amends DL-076)
 
@@ -342,6 +342,24 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 - **Proposal Scope:** (1) Three-way tier split — Export-Share-Out = Free/no-account; plan export → execution tool = Tier 2/Basic (distinct, separately-scoped); execution monitoring = Tier 3/Pro+. (2) Move execution monitoring from Alpha exit to Beta (built at T3 in Beta); amend Alpha exit to build/prove + value-by-retention + ≥2 planning sources + 50+ users. (3) Alpha validates engagement; Beta validates outcome impact. (4) Plan export-out is not-yet-scoped — placement only, not authorization.
 - **Dependencies:** Amends DL-082; extends DL-074; constrained by DL-047, DL-081, CHG-064, §20. Routes plan-export and monitoring realization to separate scoping.
 - **Proposal:** `00_owner/decisions/PROPOSAL_EXECUTION_MONITORING_TIER_AND_PHASE_DRAFT.md`. **Draft record:** `records/DL-083-execution-monitoring-tier-and-phase.md`. **Artifact:** `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` §3a.
+- **Status:** Adopted — DL-083.
+
+### RB-030 — Scope the plan-export-to-execution-tool capability (outbound)
+
+- **Source Finding:** DL-083 placed **plan export → execution tool** at **Tier 2 / Basic** but flagged it as a **distinct, not-yet-scoped** capability — the G4 Export-Share-Out contract is a *read-only orientation share*, not a *push-to-execution-tool*. The capability is undefined in canon; tier placement is **not** build authorization (Anti-Assumption).
+- **Affected Layer(s):** Product scope (`10_product`) → `20_handoff` / `30_engineering` for realization. Non-doctrinal (capability scoping).
+- **Affected Concepts:** Plan export (outbound); Export-Share-Out / G4 (Wave E); planning artifact model (DL-077); execution-tool connectors; tier placement (DL-074 / DL-083); advisory-only (DL-047).
+- **Proposal Scope:** Scope the outbound plan-export capability — **which** execution/planning platforms (Jira · Asana · MS Project · …); **one-way push vs round-trip**; **plan → work-item mapping** semantics (how the OSLO planning artifact maps to platform tasks); update/idempotency behavior; the **connector/auth surface** (commodity, Category-E) vs any contracted seam; **Tier-2 gating** (per DL-083) and cost profile (one-shot, low). Explicitly distinguish from **G4 share-out** and from **inbound execution monitoring (RB-031)**. Produce a Capability-Matrix entry + target Release. Carries integration-governance history (**DL-042** Integration Moratorium Closure) — scope deliberately, not by inference.
+- **Dependencies:** Placed by DL-083 (Tier 2). Distinct from RB-031 (inbound) and G4 (share-out). Relates to DL-077 (planning artifact). Connector work under DL-042 history. Advisory-only (DL-047) preserved — an outbound artifact push, not OSLO acting on the execution system.
+- **Status:** Proposed.
+
+### RB-031 — Scope the execution-monitoring realization (inbound; Tier 3 / Pro+, Beta)
+
+- **Source Finding:** DL-083 placed **execution monitoring** at **Tier 3 / Pro+**, built in **Beta**, and moved it out of the Alpha exit criteria — but the realization (which platforms, the intake seam, build, config) is unscoped. The 2026-06-05 tier-progression note flagged it as "not R1 unless scoped," with governance flags.
+- **Affected Layer(s):** Product scope (`10_product`) → `20_handoff` / `30_engineering`; monetization (Calibration §4c). Non-doctrinal (capability scoping).
+- **Affected Concepts:** Execution monitoring / visibility (inbound outcome ingest + closed loop); Outcome Integrity / Current Reality (Doctrine 04); Perceive intake / Attested provenance; Derived cognition (recompute / CHR); tier placement (DL-074 / DL-083); cost governance (DL-048); integration moratorium (DL-042); Internal/Alpha entitlement.
+- **Proposal Scope:** Scope the inbound monitoring capability — **which** execution platforms; the **evidence-intake seam** (external outcome data → Perceive → **Attested** with provenance = external system → **Derived** "on-track / drifting" read, recomputable, CHR-appended) [**contracted**] vs the **connector/sync/field-mapping** layer [**commodity**, Category-E]; the **closed feedback loop** (governed understanding vs observed outcomes); **polling/coalescing** + the recurring-cost + rate-limit surface folded under DL-048 per-tier budgets; **Tier-3/Pro+ gating** + Calibration §4c rows; **Beta** build placement; **Alpha validation via the Internal/Alpha entitlement** (test-bypass backlog). Drift-surfacing remains a later execution-intelligence behavior (out of scope here). Maps to the **Current-Reality** side of Outcome Integrity — feeds the signal, no parallel truth path. Produce a Capability-Matrix entry + Release placement; **DL-042** integration history applies.
+- **Dependencies:** Placed by DL-083 (Tier 3, Beta). Constrained by DL-047 (read-only / advisory-only), DL-048 (cost), Doctrine 04 (Outcome Integrity). Relates to DL-081 (Layer-Before-Depth — execution depth after breadth) and the Internal/Alpha entitlement backlog. Distinct from RB-030 (outbound export). DL-042 moratorium history.
 - **Status:** Proposed.
 
 ---
