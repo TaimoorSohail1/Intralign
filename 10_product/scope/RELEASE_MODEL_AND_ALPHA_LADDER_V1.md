@@ -35,6 +35,23 @@ R1/R2 are *early Alpha releases* **below** the gate; the **50+ metric is reached
 
 **To advance Alpha → Beta, both must hold:** the product **proven** (build gates) **and** the audience/engagement **reached** (§20).
 
+## 3a. Alpha exit criteria (owner-set)
+
+> **Authorized by `DL-082-alpha-exit-criteria` (amends DL-076); amended by `DL-083-execution-monitoring-tier-and-phase` (execution monitoring → Beta; tier placement).** Specifies what "**proven**" means at Alpha exit, alongside the unchanged §20 graduation gate.
+
+Advancing Alpha → Beta requires **all** of the following — the two owner-set "proven" gates plus the existing engagement gate:
+
+1. **Build / prove gates pass** (unchanged, §3) — the engine works (Phase 1 "Prove Understanding" / Phase 2 "Prove Improvement").
+2. **Value validated** — the project-intelligence value proposition is validated by **behavioral retention / repeat use**: users return and re-run OSLO on real projects **unprompted** (the hardest-to-fake usage signal). Sentiment alone does not pass. *In Alpha this validates **engagement**; **outcome-impact** validation (did governed understanding improve delivery?) moves to Beta with execution monitoring (DL-083).*
+3. **Planning-vendor breadth** — **≥ 2** planning platforms are governed **planning sources** (inbound plan ingestion), each with **real per-platform depth** (governed-source depth, **not** shallow connectors / a "row of logos"). This establishes the cross-platform **neutrality/altitude** that constitutes the layer; the ≥ 2 threshold is consistent with the Layer-Before-Depth sequencing principle (`DL-081-roadmap-layer-sequencing`).
+4. **Audience / engagement reached** — **50+ users + engagement (§20)** — **unchanged** (DL-076). The market/outcome graduation gate.
+
+**Execution monitoring — deferred to Beta (DL-083).** Read-only execution-outcome ingest **plus a closed feedback loop** (governed understanding compared against observed outcomes) is a **Beta capability**, built at **Tier 3 / Pro+** in the Beta phase — **not** an Alpha exit gate (it cannot gate Alpha graduation when its build lands in Beta). It remains strictly observational — advisory-only preserved (DL-047); drift-surfacing is a later execution-intelligence behavior (Positioning §7 levels 4–5). Consistent with Layer-Before-Depth (DL-081): read-only visibility is **permitted but not required** in Alpha. *Outcome-impact validation becomes a **Beta** gate once monitoring exists.*
+
+**Capability tier placement (DL-083, extends DL-074):** **Export-Share-Out** (read-only orientation share) = Free / no-account (acquisition loop, DL-073); **plan export → execution tool** (outbound push of the plan) = **Tier 2 / Basic** (a distinct, separately-scoped capability — not the G4 share-out); **execution monitoring** (inbound outcome ingest + closed loop) = **Tier 3 / Pro+**, inherited by Team/Enterprise, built in Beta.
+
+**Relationship to the two-gate model (§3):** criterion 1 is the build/prove gate; criterion 4 is the graduation/outcome gate; criteria 2–3 **enrich the "proven" side** — Alpha proves the engine works, delivers recognized value (engagement), and travels across planning sources. Outcome-loop validation moves to **Beta** with execution monitoring. Criteria 2–3 are **owner-set Alpha exit gates**; they do not alter R1 scope (CHG-064) and apply across the R1–R5 ladder.
+
 ## 4. Access model across the ladder (DL-073)
 
 - **Alpha (R1–R5) + Beta — controlled access:** invite/allowlist, **auth-gated**, ingestion-first landing.

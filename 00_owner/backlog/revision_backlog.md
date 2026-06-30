@@ -310,6 +310,70 @@ _Added 2026-06-17 by explicit owner direction. These three items were surfaced b
 
 ---
 
+## P5 — Roadmap Sequencing (owner-directed)
+
+_Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing principle from the cognitive-layer defensibility analysis and routes it through Framework 001 to bind as product-roadmap canon._
+
+### RB-027 — Layer-Before-Depth roadmap sequencing
+
+- **Source Finding:** Cognitive-layer defensibility analysis (2026-06-28) concluded OSLO's durable moat is altitude + cross-system neutrality + accumulated outcome corpus — not the cognitive behaviors (which frontier models increasingly absorb). The entry wedge ("60-second planning intelligence", Positioning §4) is capability-shaped and at risk of collapsing into a feature of an incumbent execution tool unless OSLO reaches the layer position first. No canonical sequencing rule governs the order in which the §7 ladder is realized after R1.
+- **Affected Layer(s):** Product scope / roadmap orientation (`10_product`). Non-doctrinal.
+- **Affected Concepts:** Strategic Objective Ladder (Positioning §7); Execution Depth axis (Doctrine 10 / DL-034); advisory-only invariant (DL-047); cross-platform neutrality / "layer" altitude.
+- **Proposal Scope:** Ratify the **Layer-Before-Depth** principle — establish cross-platform planning-governance breadth (≥2 governed platforms, real per-platform depth) at the understanding/governance altitude before descending into execution-phase governance; execution-phase read-only visibility permitted earlier as a feedback input; advisory-only invariant (DL-047) preserved throughout; R1 scope unchanged (applies R2+). Sequences existing ladder levels; introduces no new doctrine, capability, or responsibility.
+- **Dependencies:** Traces up to Positioning §7; constrained by DL-047 and Doctrine 10 / DL-034; consistent with DL-076, CHG-064. Lands after the in-flight canon PR (DL-080) per DL-065 R3.
+- **Proposal:** `00_owner/decisions/PROPOSAL_ROADMAP_LAYER_SEQUENCING_DRAFT.md`. **Draft record:** `records/DL-081-roadmap-layer-sequencing.md`.
+- **Status:** Adopted — DL-081.
+
+### RB-028 — Alpha exit criteria (specify "proven"; amends DL-076)
+
+- **Source Finding:** Owner direction 2026-06-28 — the Alpha phase's three pillars (project-intelligence value validation, planning-vendor breadth, execution visibility) are **exit criteria**, not just activities. DL-076 defined the Alpha→Beta two-gate model (build/prove vs §20 graduation) but did not specify what "proven" requires.
+- **Affected Layer(s):** Product scope / roadmap orientation (`10_product`). Non-doctrinal.
+- **Affected Concepts:** Alpha→Beta graduation; "proven" gate (DL-076 §3); §20 engagement gate; planning-vendor breadth / neutrality; execution visibility (read-only, DL-047); value validation.
+- **Proposal Scope:** Amend DL-076 by ratifying Alpha exit criteria: (1) build/prove gates pass [unchanged]; (2) value validated by behavioral retention/repeat use; (3) ≥ 2 governed planning/execution platforms with real per-platform depth; (4) execution visibility operational = read-only outcome ingest (≥ 1 platform) + closed feedback loop, drift-surfacing deferred to Beta+; (5) 50+ users + engagement (§20) [unchanged]. Owner-set thresholds.
+- **Dependencies:** Amends DL-076; constrained by DL-047, §20, CHG-064; consistent with RB-027 / `DL-081-roadmap-layer-sequencing` (≥ 2 threshold; depth deferral). Lands after DL-080 per DL-065 R3; recommend after RB-027.
+- **Proposal:** `00_owner/decisions/PROPOSAL_ALPHA_EXIT_CRITERIA_DRAFT.md`. **Draft record:** `records/DL-082-alpha-exit-criteria.md`. **Artifact:** `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` §3a.
+- **Status:** Adopted — DL-082.
+
+### RB-029 — Execution-monitoring tier placement & phase (amends DL-082, extends DL-074)
+
+- **Source Finding:** Owner direction 2026-06-28 — aligning tiering with the DL-082 Alpha exit criteria surfaced that "planning-vendor support" and "execution visibility" conflated three distinct capabilities (Export-Share-Out; outbound plan export to execution tool; inbound execution monitoring). The Tier-3 monitoring build lands in Beta, so it cannot gate Alpha graduation.
+- **Affected Layer(s):** Product scope / roadmap + monetization orientation (`10_product`). Non-doctrinal.
+- **Affected Concepts:** Alpha exit criteria (DL-082); tier ladder / capability placement (DL-074); execution monitoring / visibility; plan export; Export-Share-Out (G4); Layer-Before-Depth (DL-081).
+- **Proposal Scope:** (1) Three-way tier split — Export-Share-Out = Free/no-account; plan export → execution tool = Tier 2/Basic (distinct, separately-scoped); execution monitoring = Tier 3/Pro+. (2) Move execution monitoring from Alpha exit to Beta (built at T3 in Beta); amend Alpha exit to build/prove + value-by-retention + ≥2 planning sources + 50+ users. (3) Alpha validates engagement; Beta validates outcome impact. (4) Plan export-out is not-yet-scoped — placement only, not authorization.
+- **Dependencies:** Amends DL-082; extends DL-074; constrained by DL-047, DL-081, CHG-064, §20. Routes plan-export and monitoring realization to separate scoping.
+- **Proposal:** `00_owner/decisions/PROPOSAL_EXECUTION_MONITORING_TIER_AND_PHASE_DRAFT.md`. **Draft record:** `records/DL-083-execution-monitoring-tier-and-phase.md`. **Artifact:** `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` §3a.
+- **Status:** Adopted — DL-083.
+
+### RB-030 — Scope the plan-export-to-execution-tool capability (outbound)
+
+- **Source Finding:** DL-083 placed **plan export → execution tool** at **Tier 2 / Basic** but flagged it as a **distinct, not-yet-scoped** capability — the G4 Export-Share-Out contract is a *read-only orientation share*, not a *push-to-execution-tool*. The capability is undefined in canon; tier placement is **not** build authorization (Anti-Assumption).
+- **Affected Layer(s):** Product scope (`10_product`) → `20_handoff` / `30_engineering` for realization. Non-doctrinal (capability scoping).
+- **Affected Concepts:** Plan export (outbound); Export-Share-Out / G4 (Wave E); planning artifact model (DL-077); execution-tool connectors; tier placement (DL-074 / DL-083); advisory-only (DL-047).
+- **Proposal Scope:** Scope the outbound plan-export capability — **which** execution/planning platforms (Jira · Asana · MS Project · …); **one-way push vs round-trip**; **plan → work-item mapping** semantics (how the OSLO planning artifact maps to platform tasks); update/idempotency behavior; the **connector/auth surface** (commodity, Category-E) vs any contracted seam; **Tier-2 gating** (per DL-083) and cost profile (one-shot, low). Explicitly distinguish from **G4 share-out** and from **inbound execution monitoring (RB-031)**. Produce a Capability-Matrix entry + target Release. Carries integration-governance history (**DL-042** Integration Moratorium Closure) — scope deliberately, not by inference.
+- **Dependencies:** Placed by DL-083 (Tier 2). Distinct from RB-031 (inbound) and G4 (share-out). Relates to DL-077 (planning artifact). Connector work under DL-042 history. Advisory-only (DL-047) preserved — an outbound artifact push, not OSLO acting on the execution system.
+- **Status:** Proposed.
+
+### RB-031 — Scope the execution-monitoring realization (inbound; Tier 3 / Pro+, Beta)
+
+- **Source Finding:** DL-083 placed **execution monitoring** at **Tier 3 / Pro+**, built in **Beta**, and moved it out of the Alpha exit criteria — but the realization (which platforms, the intake seam, build, config) is unscoped. The 2026-06-05 tier-progression note flagged it as "not R1 unless scoped," with governance flags.
+- **Affected Layer(s):** Product scope (`10_product`) → `20_handoff` / `30_engineering`; monetization (Calibration §4c). Non-doctrinal (capability scoping).
+- **Affected Concepts:** Execution monitoring / visibility (inbound outcome ingest + closed loop); Outcome Integrity / Current Reality (Doctrine 04); Perceive intake / Attested provenance; Derived cognition (recompute / CHR); tier placement (DL-074 / DL-083); cost governance (DL-048); integration moratorium (DL-042); Internal/Alpha entitlement.
+- **Proposal Scope:** Scope the inbound monitoring capability — **which** execution platforms; the **evidence-intake seam** (external outcome data → Perceive → **Attested** with provenance = external system → **Derived** "on-track / drifting" read, recomputable, CHR-appended) [**contracted**] vs the **connector/sync/field-mapping** layer [**commodity**, Category-E]; the **closed feedback loop** (governed understanding vs observed outcomes); **polling/coalescing** + the recurring-cost + rate-limit surface folded under DL-048 per-tier budgets; **Tier-3/Pro+ gating** + Calibration §4c rows; **Beta** build placement; **Alpha validation via the Internal/Alpha entitlement** (test-bypass backlog). Drift-surfacing remains a later execution-intelligence behavior (out of scope here). Maps to the **Current-Reality** side of Outcome Integrity — feeds the signal, no parallel truth path. Produce a Capability-Matrix entry + Release placement; **DL-042** integration history applies.
+- **Dependencies:** Placed by DL-083 (Tier 3, Beta). Constrained by DL-047 (read-only / advisory-only), DL-048 (cost), Doctrine 04 (Outcome Integrity). Relates to DL-081 (Layer-Before-Depth — execution depth after breadth) and the Internal/Alpha entitlement backlog. Distinct from RB-030 (outbound export). DL-042 moratorium history.
+- **Status:** Proposed.
+
+### RB-032 — R2 candidate-epic phase/tier placement + Foundational-Architecture-in-Alpha principle
+
+- **Source Finding:** Owner direction 2026-06-28 — the R2 candidate index gathered deferred epics without binding *when* each begins. Owner set the gates: Execution Intelligence (R2-C) → Beta; Team Collaboration depth (R2-D) → Team tier; Governance & Authority (R2-E) → Beta; plus a build-sequencing exception allowing foundational architecture to be laid early in Alpha where it reduces later effort/complexity.
+- **Affected Layer(s):** Product scope / roadmap + build-sequencing orientation (`10_product`). Non-doctrinal.
+- **Affected Concepts:** R2 candidate epics (R2-C/D/E); Alpha/Beta phases (DL-076); tier ladder (DL-074); execution monitoring (DL-083); Layer-Before-Depth (DL-081); advisory-only (DL-047); foundational-architecture build sequencing.
+- **Proposal Scope:** Bind the three phase/tier placements and ratify the **Foundational-Architecture-in-Alpha** principle (early foundation permitted in Alpha when it measurably reduces later effort/complexity; advisory-only, non-activating, specified-but-inactive; routes through scoping + DL where architectural). Additive; no capability/doctrine introduced.
+- **Dependencies:** Builds on DL-076, DL-074, DL-083, DL-081, DL-047, CHG-064. Reflected in `RELEASE_2_BACKLOG_CANDIDATES.md` (Phase & tier placement note).
+- **Proposal:** `00_owner/decisions/PROPOSAL_R2_PHASE_TIER_PLACEMENT_DRAFT.md`. **Draft record:** `records/DL-084-r2-phase-tier-placement.md`.
+- **Status:** Proposed.
+
+---
+
 ## Governance Notes
 
 1. This backlog is a draft. Entries reflect findings from initial repository review, not ratified governance positions.

@@ -18,12 +18,13 @@
 | PS-02 | Planning Artifact Generation | **WAVE_S · IC-WS-SYNTH** (Infer) | artifacts **Derived**; CHR per gen; **neg: Attested-as-truth / autonomous write** | Planning Artifact Generated/Regenerated | III |
 | PS-03 | Understanding Evaluation (seed) | WAVE_S → WAVE_B · IC-WB-EVAL | Evaluate seeds CAF/Confidence from model | Issue/CAF/OutcomeConfidence events | III |
 | PS-04 | Artifact Lifecycle (versioning) | WAVE_A_002 · IC-WA-002 (store) | append-only versions; supersession traceable | Version Recorded | II |
+| PS-05 | Artifact Lifecycle (archival + unarchival reversal) | WAVE_A_002 · IC/OBS-WA-002 (store) | archive **and unarchive** append-only & non-destructive; latest-wins status; **neg: spurious/destructive unarchival** (DL-058 / RB-025) | Knowledge Archived / Knowledge Unarchived | II |
 | AE-01 | Fast Pass | WAVE_B · IC/QA-WB (DL-046) | **Time-to-First-MRI < 60s** (perf gate); orientation outputs | events carry `mode=fast` | III |
 | AE-02 | Deep Pass | WAVE_B · IC/QA-WB (DL-046) | async expansion; **neg: Deep blocks user** | `mode=deep` + completion-time | III |
 | AE-03 | Event-Driven Recompute | WAVE_A_00R · IC-WA-00R | only info-change recomputes; coalesced; last-known-good | Recompute Triggered | II |
 | AE-04 | Understanding State Model | WAVE_B (DL-047) | Initial→…→Mature attribute; change only via recompute | Understanding State Changed | III |
 | AE-05 | Progressive Disclosure | WAVE_E (DL-047) | progressive present; never Unknown→Final-Truth (neg) | (presentation) | VI |
-| CAF-01…05 | CAF Engine / Clarity / Alignment / Feasibility / taxonomy | WAVE_B · IC-WB-EVAL | CAF assessed; Derived; recompute-appends | CAF Assessed | III |
+| CAF-01…05 | CAF Engine / Clarity / Alignment / Feasibility / taxonomy | WAVE_B · IC-WB-EVAL | CAF assessed; Derived; recompute-appends; **drivers individually inspectable — neg: opaque rollup** (DL-062 / RB-026) | CAF Assessed | III |
 | CONF-01…04 | Outcome Confidence / score+states / explainability / history | WAVE_B · IC-WB-EVAL | confidence=understanding (neg: as health); band-edge guard | Outcome Confidence Computed | III |
 | CONF-05 | Progressive Confidence Stages | WAVE_B (DL-046) | Orientation→Expanded→Validated | confidence_stage on emission | III |
 | CONF-06 | False-Confidence Detection | WAVE_B (DL-047) | **neg: high confidence on weak understanding unflagged** | False-Confidence Flagged | III |
