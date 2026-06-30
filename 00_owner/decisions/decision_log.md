@@ -849,5 +849,9 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-078 — Ratify the artifact-profile mechanism & registry realization design (DL-077 Option C realization intent) → `00_owner/decisions/records/DL-078-artifact-profile-realization-design.md`
 - DL-079 — Ratify the third-party evaluation-lens cognition boundary (E4): governed input, never silent disposition → `00_owner/decisions/records/DL-079-e4-lens-cognition-boundary.md`
 - DL-080 — Ratify the GA deferred-signup realization (provisional identity · pre/post-signup gating · pre-signup retention & privacy) → `00_owner/decisions/records/DL-080-ga-deferred-signup-realization.md`
+- DL-081 — Layer-Before-Depth roadmap sequencing (cross-platform planning-governance breadth before execution-governance depth) → `00_owner/decisions/records/DL-081-roadmap-layer-sequencing.md`
+- DL-082 — Alpha exit criteria (specify "proven" for Alpha→Beta; amends DL-076) → `00_owner/decisions/records/DL-082-alpha-exit-criteria.md`
+- DL-083 — Execution-monitoring tier placement & phase (T3/Pro+, Beta-built; out of Alpha exit) + capability tier split → `00_owner/decisions/records/DL-083-execution-monitoring-tier-and-phase.md`
+- DL-084 — R2 candidate-epic phase/tier placement + Foundational-Architecture-in-Alpha principle → `00_owner/decisions/records/DL-084-r2-phase-tier-placement.md`
 
 <!-- RECORDS-INDEX:END -->

@@ -894,6 +894,34 @@ Each changelog entry contains:
 - **Change Summary:** Ratify the GA deferred-signup realization (DL-073 §Phasing a/b/c) as one decision — provisional `Principal` with claim-as-promotion and full identity/record continuity (OB-5); anonymous gating = one project / Fast Pass only / Free per-run envelope / rate-capped, Deep+persistence behind signup, with pre-signup consumption resetting to the Free governor at claim; pre-signup data Operational-class with a 30-day unclaimed TTL, canonical retention attaching at claim, never-claimed purgeable/non-linkable. Settles the two open owner values (reset-at-claim; 30-day TTL). Realization intent only (engineering authors data model, §4c anonymous row, §4 provisional retention class, purge); GA-gated; no doctrine; epistemic invariants preserved.
 - **Supersession Reference:** None. Realizes DL-073 §Phasing; discharges the two-mode proposal §6.3 authorization.
 
+### CHG-116 — DL-081: Ratify Layer-Before-Depth roadmap sequencing
+
+- **Date:** 2026-06-28 · **Authorizing Decision:** DL-081.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-081-roadmap-layer-sequencing.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated); `00_owner/backlog/revision_backlog.md` (RB-027 added); `00_owner/decisions/PROPOSAL_ROADMAP_LAYER_SEQUENCING_DRAFT.md` (status → adopted).
+- **Change Summary:** Ratify the **Layer-Before-Depth** roadmap sequencing principle — OSLO establishes cross-platform planning-governance breadth (**≥ 2** governed platforms, real per-platform depth) at the understanding/governance altitude before descending into execution-phase governance; advisory-only (DL-047) preserved throughout; sequences existing Positioning §7 ladder levels and the DL-034 Execution Depth axis; R1 scope unchanged (CHG-064). Non-doctrinal product-roadmap orientation.
+- **Supersession Reference:** None. Additive; traces up to Positioning §7; consistent with DL-076, DL-047, DL-034.
+
+### CHG-117 — DL-082: Ratify Alpha exit criteria (amends DL-076)
+
+- **Date:** 2026-06-28 · **Authorizing Decision:** DL-082.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-082-alpha-exit-criteria.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated); `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` (new §3a Alpha exit criteria); `00_owner/backlog/revision_backlog.md` (RB-028 added); `00_owner/decisions/PROPOSAL_ALPHA_EXIT_CRITERIA_DRAFT.md` (status → adopted).
+- **Change Summary:** Amend DL-076 by ratifying the **Alpha → Beta exit criteria** — (1) build/prove gates pass; (2) value validated by behavioral retention / repeat use; (3) **≥ 2** governed planning platforms with real per-platform depth; (4) execution visibility operational = read-only outcome ingest (≥ 1 platform) + closed feedback loop, drift-surfacing deferred to Beta+; (5) 50+ users + engagement (§20) unchanged. Strictly observational — advisory-only (DL-047) preserved. Non-doctrinal.
+- **Supersession Reference:** Amends DL-076 (adds §3a to `RELEASE_MODEL_AND_ALPHA_LADDER_V1.md`). No prior change superseded.
+
+### CHG-118 — DL-083: Execution-monitoring tier placement & phase (T3/Pro+, Beta; out of Alpha exit) + capability tier split
+
+- **Date:** 2026-06-28 · **Authorizing Decision:** DL-083.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-083-execution-monitoring-tier-and-phase.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated); `10_product/scope/RELEASE_MODEL_AND_ALPHA_LADDER_V1.md` (§3a amended — execution monitoring → Beta; three-way capability tier split); `00_owner/backlog/revision_backlog.md` (RB-029 added; RB-028 status → adopted); `00_owner/decisions/PROPOSAL_EXECUTION_MONITORING_TIER_AND_PHASE_DRAFT.md` (new).
+- **Change Summary:** Amend DL-082 and extend DL-074. **Three-way capability tier split:** Export-Share-Out = Free/no-account; plan export → execution tool = Tier 2/Basic (distinct, separately scoped); execution monitoring (inbound outcome ingest + closed loop) = Tier 3/Pro+, built in Beta. **Phase move:** execution monitoring relocated from the Alpha exit criteria to **Beta** (a Beta-built capability cannot gate Alpha graduation). Amended Alpha exit = build/prove + value-by-retention + ≥ 2 governed planning sources + 50+ users (§20). Alpha validates **engagement**; Beta validates **outcome impact**. Advisory-only (DL-047) preserved; non-doctrinal.
+- **Supersession Reference:** Amends DL-082 (removes the execution-visibility Alpha exit criterion; relocates to Beta); extends DL-074 (capability tier placement). No epistemic invariant, doctrine, or constitution touched.
+
+### CHG-119 — DL-084: R2 candidate-epic phase/tier placement + Foundational-Architecture-in-Alpha principle
+
+- **Date:** 2026-06-28 · **Authorizing Decision:** DL-084.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-084-r2-phase-tier-placement.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated); `00_owner/backlog/revision_backlog.md` (RB-032 added); `00_owner/decisions/PROPOSAL_R2_PHASE_TIER_PLACEMENT_DRAFT.md` (new). Reflects the placements already annotated in `00_owner/backlog/RELEASE_2_BACKLOG_CANDIDATES.md` (CHG-118-era PR #78).
+- **Change Summary:** Bind the R2 candidate-epic phase/tier placement — **Execution Intelligence (R2-C) → Beta**, **Team Collaboration depth (R2-D) → Team tier (Tier 4)**, **Governance & Authority (R2-E) → Beta** — and ratify the **Foundational-Architecture-in-Alpha** build-sequencing principle: architectural foundation for a gated capability may be laid early in Alpha (R2) where it measurably reduces later effort/complexity, kept advisory-only / non-activating / specified-but-inactive and routed through scoping (+ DL where architectural). Sibling to DL-081 (Layer-Before-Depth). Non-doctrinal; no capability or epistemic invariant introduced.
+- **Supersession Reference:** None. Additive; consistent with DL-074, DL-076, DL-081, DL-083, DL-047.
+
 ---
 
 ## Governance Notes
