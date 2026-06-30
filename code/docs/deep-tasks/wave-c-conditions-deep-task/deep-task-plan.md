@@ -1,7 +1,7 @@
 # Deep-task plan — Wave C exit-gate conditions (DL-072 carry-overs)
 
 **Status:** DRAFT (planning only) · **Gated on:** owner ratification of the Wave C exit-gate review
-(`00_owner/decisions/WAVE_C_EXIT_GATE_REVIEW_DRAFT.md`, recommended *Accepted with Conditions*) +
+(the Wave C exit-gate review — a separate governance draft, recommended *Accepted with Conditions*) +
 DL-044 cadence. **Coding does not begin until the owner ratifies.**
 
 Discharges the three binding conditions carried from **DL-072** so Phase V / Wave U can be

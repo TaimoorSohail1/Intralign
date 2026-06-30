@@ -2,11 +2,13 @@
 
 **Branch:** `feat/wave-c-conditions` · **Discharges:** DL-072 carried conditions (RB-025, RB-026, DL-046/DL-070 latency) · **Layer:** engineering realization (`code/`, non-canonical) + one LDM §2.5 vocabulary edit
 
+**Contracts:** `IC-WA-002` (Retain — unarchive / RB-025), `IC-WB-EVAL` (Evaluate — CAF decomposability / RB-026). Observability: `OBS-WA-002` (retention events — see escalation).
+
 ## Why
 
 DL-072 passed the Wave B exit gate with three binding conditions to land in/by Wave C. This PR
 clears the two buildable ones and ships a runnable harness for the third, so the Wave C exit gate
-(`00_owner/decisions/WAVE_C_EXIT_GATE_REVIEW_DRAFT.md`) can be ratified and Phase V / Wave U
+(the Wave C exit-gate review — a separate governance draft) can be ratified and Phase V / Wave U
 authorized. No canonical content is ratified here — owner ratifies the gate separately.
 
 ## What changed
