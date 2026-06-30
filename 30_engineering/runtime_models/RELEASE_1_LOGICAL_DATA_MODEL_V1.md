@@ -35,7 +35,7 @@
 - **Plan Fact:** an **Attested Assertion** with `attesting_source = user` — the **confirmed content** as a Canonical Fact attributed to the user. Created on `accept`/`direct_edit`. **Factual in the plan, not world-truth.** Decoupled from OSLO's (still-Derived) recommendation.
 
 ### 2.5 History Record *(generic append-only audit entry)*
-- `history_id` · `event_type` (integrity-clearance | knowledge-versioned | superseded | archived | emission-appended | acceptance-recorded | recompute) · `subject_ref` · `at` · `actor`. The integrity/audit trail (R3/R5 event mapping).
+- `history_id` · `event_type` (integrity-clearance | knowledge-versioned | superseded | archived | unarchived | emission-appended | acceptance-recorded | recompute) · `subject_ref` · `at` · `actor`. The integrity/audit trail (R3/R5 event mapping). *(`unarchived` = the append-only reversal of `archived`; archive is reversible in R1 per DL-058/RB-025. Active/archived status is the latest of `archived`/`unarchived`.)*
 
 ## 3. Derived Representation (recomputable current-view — NOT system of record)
 

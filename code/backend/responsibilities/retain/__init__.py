@@ -20,8 +20,11 @@ from backend.responsibilities.retain.admission import (
 from backend.responsibilities.retain.archival import (
     ArchivalResult,
     AssertionNotFoundError,
+    NotArchivedError,
+    UnarchivalResult,
     archive_assertion,
     is_archived,
+    unarchive_assertion,
 )
 from backend.responsibilities.retain.models import CognitionHistoryRecord
 from backend.responsibilities.retain.repository import ChrRepository
@@ -41,13 +44,16 @@ __all__ = [
     "AssertionNotFoundError",
     "ChrRepository",
     "CognitionHistoryRecord",
+    "NotArchivedError",
     "PriorAssertionNotFoundError",
     "RetentionStore",
+    "UnarchivalResult",
     "VersioningResult",
     "admit_candidate",
     "archive_assertion",
     "is_archived",
     "record_acceptance",
+    "unarchive_assertion",
     "version_assertion",
     "version_chain",
 ]
