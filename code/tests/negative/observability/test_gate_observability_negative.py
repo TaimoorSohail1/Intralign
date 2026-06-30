@@ -235,6 +235,7 @@ def test_missing_wa002_tuple_fails_vocabulary_check(tmp_path) -> None:
         '    "knowledge_versioned",\n'
         '    "knowledge_superseded",\n'
         '    "knowledge_archived",\n'
+        '    "knowledge_unarchived",\n'
         '    "knowledge_mutation_recorded",\n'
         ')\n\n',
         "",

@@ -191,7 +191,7 @@ def is_archived(assertion_id: str, *, store: RetentionStore) -> bool:
     No status column exists (decision #6); the answer is read from the
     append-only history alone. History is returned oldest-first (the real store
     orders by ``at`` then ``created_at``; the in-memory store preserves insert
-    order), so the LAST ``archived``/``unarchived`` transition is authoritative:
+    order), so the LAST ``archived``/``unarchived`` transition wins:
     archive → archived; a later unarchive → active; a later re-archive → archived.
     """
     archived = False
