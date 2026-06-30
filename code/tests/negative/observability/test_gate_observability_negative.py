@@ -49,6 +49,7 @@ EVENT_NAMES_WA002: tuple[str, ...] = (
     "knowledge_versioned",
     "knowledge_superseded",
     "knowledge_archived",
+    "knowledge_unarchived",
     "knowledge_mutation_recorded",
 )
 
