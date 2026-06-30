@@ -2,7 +2,19 @@
 
 **Status:** **Candidate list — owner-directed (2026-06-05). NOT ratified R2 scope; NOT prioritized.** A gathering point for everything deferred past Release 1, so R2 starts from one picture instead of scattered notes. Each candidate gets its **own scoping item** (and DL where it touches architecture) **when promoted**. Per `CLAUDE.md`: this introduces no doctrine and resolves no ontology — it **indexes**, it does not decide.
 
-> **R1 context:** Release 1 is the owner's **own test/validation vehicle** — bottleneck is *proving the product*, not acquiring users or monetizing. R2 is the first **enhancement** release; it builds on R1's real usage/funnel data. Sources below are cited so each candidate traces to where it was deferred.
+> **R1 context:** Release 1 is the owner's **own test/validation vehicle** — a tight **owner + 2–3** cohort (DL-076: owner + <5) whose purpose is to surface **issues, refinements, and enhancements** before authorizing the 10–20-user R2. R1 therefore yields **qualitative product-correctness signal — not statistically meaningful usage / funnel / cost data.** R2 starts from R1's **fix / refine / enhance findings**; the **quantitative calibrations** (cost medians, conversion / k-factor, upgrade-prompt timing) **accrue from R2+ (10–20) and mature across the Alpha ladder**, not from R1. *(Owner clarification 2026-06-28.)* Sources below are cited so each candidate traces to where it was deferred.
+
+---
+
+## Phase & tier placement (owner direction, 2026-06-28)
+
+These candidate epics are **gated by phase/tier**, independent of the "R2-" index labels (this file is a deferral-candidate index, not a ship-release plan):
+
+- **R2-C — Execution Intelligence → Beta.** Does **not** begin until the Beta phase (consistent with **DL-083**, which placed execution monitoring at Tier 3 / Pro+, Beta-built). C1 → C2 → C3 are Beta capabilities.
+- **R2-D — Team Collaboration depth → Team tier (Tier 4).** Does **not** begin until the Team tier.
+- **R2-E — Governance & Authority → Beta.** Does **not** begin until the Beta phase (the largest, most architectural epic; likely multi-release).
+
+**Foundational-architecture exception (applies to all three):** *architectural foundation* work for a phase-/tier-gated capability **may be done earlier, in Alpha (R2), when laying it early reduces later effort or complexity** — build the seams/abstractions now, ship the user-facing capability at its gated phase/tier. This is **build-sequencing, not capability activation**: any such early foundation stays **advisory-only / non-activating** (DL-047), specified-but-inactive, and routes through normal scoping (and a DL where it touches architecture). Mirrors **Layer-Before-Depth (DL-081)** — altitude/foundation first, depth at its proper phase.
 
 ---
 
@@ -14,16 +26,16 @@
 | A2 | **Referral reward** — bounded, conversion-credited capacity bump | CHG-064; `BACKLOG_REFERRAL_REWARD` | Credits on *join* → **depends on A1**. Cost-bounded (DL-048) + abuse guards; values owner-set. |
 | A3 | **Pre-account interaction (PF-05)** — begin using before signup (Lovable/Bolt/v0-style) | Matrix PF-05 (Future) | Complements A1's low-friction entry; an acquisition/onboarding lever. |
 
-*All three tuned against R1's TEL-06 / k-factor (P6) data; bound by the value-alignment guardrails (no autonomous sends, no dark patterns).*
+*All three tuned against **R2+** TEL-06 / k-factor data (R1's cohort is too small for meaningful funnel signal — see R1 context); bound by the value-alignment guardrails (no autonomous sends, no dark patterns).*
 
 ## Epic R2-B — Paid Tiers & Monetization
 
 | # | Candidate | Source | Notes |
 |---|---|---|---|
-| B1 | **Define paid tiers 3–5 (Pro · Team · Enterprise)** — envelope, caps, routing, token budget, price per tier | Open-TBD E3; `BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE` (costed ladder) | Tier-keyed config rows, **not code** (enforcement already tier-parameterized). Set values from R1 cost telemetry. |
+| B1 | **Define paid tiers 3–5 (Pro · Team · Enterprise)** — envelope, caps, routing, token budget, price per tier | Open-TBD E3; `BACKLOG_TIER_PROGRESSION_MONETIZATION_EXPERIENCE` (costed ladder) | Tier-keyed config rows, **not code** (enforcement already tier-parameterized). Set values from **R2+ real-usage cost telemetry** (not R1 — cohort too small; see R1 context). |
 | B2 | **Paid-tier upgrade experience at scale** — extend the upgrade-prompt taxonomy + tier-progression to the paid ladder | `12_freemium_tier_behavior_logic.md` (Free/Basic applied) | Reuses the ratified pattern; new prompts/targets per tier. |
 
-## Epic R2-C — Execution Intelligence *(clusters; ties to the Outcome-Integrity doctrine's "Current Reality")*
+## Epic R2-C — Execution Intelligence *(clusters; ties to the Outcome-Integrity doctrine's "Current Reality")* — **Beta phase** (owner 2026-06-28; see Phase & tier placement)
 
 | # | Candidate | Source | Notes |
 |---|---|---|---|
@@ -33,13 +45,13 @@
 
 *Doctrinal note: C1→C2 feed the **Current-Reality** side of Outcome Integrity (coherence between Intended and Current Reality) — they extend the model, not bypass it.*
 
-## Epic R2-D — Team Collaboration *(depth beyond R1's seed)*
+## Epic R2-D — Team Collaboration *(depth beyond R1's seed)* — **Team tier (Tier 4)** (owner 2026-06-28)
 
 | # | Candidate | Source | Notes |
 |---|---|---|---|
 | D1 | **Team collaboration depth** — shared spaces, approvals, advanced shared views | Team tier unlock; freemium constraints ("collaboration depth" gated) | R1 ships seed primitives (comments, CRR, MRI share); R2 adds depth. Multi-user concurrency/edit-conflict model (Matrix gap #340) lands here. |
 
-## Epic R2-E — Governance & Authority *(largest, most architectural — likely multi-release)*
+## Epic R2-E — Governance & Authority *(largest, most architectural — likely multi-release)* — **Beta phase** (owner 2026-06-28)
 
 | # | Candidate | Source | Notes |
 |---|---|---|---|

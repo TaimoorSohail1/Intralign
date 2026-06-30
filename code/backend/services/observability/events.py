@@ -81,12 +81,17 @@ EVENT_NAMES_WA001: tuple[str, ...] = (
     "artifact_modified",
 )
 
-# IC-WA-002 A6 — the five retention events, exactly (OBS-WA-002 C2).
+# IC-WA-002 A6 — the retention events (OBS-WA-002 C2).
+# NOTE (RB-025 / DL-058): ``knowledge_unarchived`` is the append-only archive-reversal
+# event added with unarchive-in-R1; this expands the contract's original "five retention
+# events, exactly" to six. The OBS-WA-002 contract (20_handoff) + the traceability matrix
+# must be updated to match — co-governed change, owner/EM review (see escalation).
 EVENT_NAMES_WA002: tuple[str, ...] = (
     "knowledge_promoted",
     "knowledge_versioned",
     "knowledge_superseded",
     "knowledge_archived",
+    "knowledge_unarchived",
     "knowledge_mutation_recorded",
 )
 

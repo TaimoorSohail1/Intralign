@@ -72,12 +72,15 @@ EXPECTED_EVENT_NAMES_WA001: tuple[str, ...] = (
     "artifact_modified",
 )
 
-# IC-WA-002 A6 (DTM-0008 — the five retention events, contract order).
+# IC-WA-002 A6 (DTM-0008 — retention events, contract order).
+# RB-025 / DL-058: ``knowledge_unarchived`` added (archive reversal); expands the original
+# five to six. OBS-WA-002 contract + traceability matrix to be updated to match (escalation).
 EXPECTED_EVENT_NAMES_WA002: tuple[str, ...] = (
     "knowledge_promoted",
     "knowledge_versioned",
     "knowledge_superseded",
     "knowledge_archived",
+    "knowledge_unarchived",
     "knowledge_mutation_recorded",
 )
 

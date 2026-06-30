@@ -62,7 +62,7 @@ Retain **must**:
 5. **Support supersession.** A newer version may supersede a prior version explicitly; the superseded version is **retained, marked, and traceable** — never deleted.
 6. **Maintain append-only history** via History Records: every promotion, version, supersession, mutation, and archival is recorded as an immutable historical entry.
 7. **Preserve historical knowledge.** Prior states remain auditable and reconstructable from the version chain and History Records.
-8. **Support archival** of knowledge that is no longer active **without destruction** — archived knowledge remains preserved, auditable, and historically intact.
+8. **Support archival** of knowledge that is no longer active **without destruction** — archived knowledge remains preserved, auditable, and historically intact — **and support unarchival (reversal of archival)**, also without destruction, as an append-only event. Archive is **reversible in R1** (DL-058 / UP-3 affirmed; RB-025); active/archived status is the latest of the archived/unarchived transitions.
 9. **Emit version/mutation events** (A6) so downstream responsibilities can react.
 10. **Participate in recompute as a trigger, not an evaluator.** A knowledge mutation **triggers** the `Retain → Infer → Evaluate → Advise` cascade; Retain emits the trigger and does not itself reassess.
 
@@ -91,14 +91,15 @@ Retain **must not**:
 - **Knowledge Versioned** — a new version of existing knowledge is created.
 - **Knowledge Superseded** — a version is explicitly superseded by a newer version (prior retained).
 - **Knowledge Archived** — knowledge is moved to archived state (preserved, not destroyed).
+- **Knowledge Unarchived** — an archived object is returned to active state via an append-only reversal entry (archive is reversible in R1 — DL-058 / RB-025; preserved, not destroyed).
 - **Knowledge Mutation Recorded** — an append-only History Record entry capturing the mutation, its provenance, and its authorization reference; serves as the recompute trigger signal.
 
-*(Behavior Model terminology used where applicable; no new event types introduced beyond those required by this package's scope.)*
+*(Behavior Model terminology used where applicable. The **Knowledge Unarchived** event was added per DL-058 / RB-025 — this expands the original five retention events to six; no other new event types introduced beyond this package's scope.)*
 
 ### A7. States
 Canonical knowledge object lifecycle (append-only / version-preserving):
 
-`Authorized (candidate admitted)` → `Active (v1)` → `Active (vN)` *(on mutation: new version, prior preserved)* → `Superseded (by vN+1)` *(prior retained)* → `Archived` *(preserved, auditable)*.
+`Authorized (candidate admitted)` → `Active (v1)` → `Active (vN)` *(on mutation: new version, prior preserved)* → `Superseded (by vN+1)` *(prior retained)* → `Archived` *(preserved, auditable)* → `Active` *(on unarchival: append-only reversal, latest-wins — DL-058 / RB-025)*.
 
 - All transitions are **additive**: no state transition overwrites or destroys prior state.
 - **Archived** is terminal-for-activity but **not** deletion; archived objects remain in the version chain and History.
@@ -144,6 +145,7 @@ Validate that Retain **does** the following:
 5. **Supersession behavior** — an explicit supersession marks the prior version superseded (retained, traceable) and emits `Knowledge Superseded`.
 6. **Recompute triggering** — a knowledge mutation emits the trigger that initiates `Retain → Infer → Evaluate → Advise`.
 7. **Archival without destruction** — archived knowledge remains present, versioned, and auditable; emits `Knowledge Archived`.
+8. **Unarchival without destruction** — an archived object is returned to active by an append-only reversal; the row is intact, history preserved; emits `Knowledge Unarchived`; status reflects the latest archived/unarchived transition (DL-058 / RB-025).
 
 ### B3. Negative Validation
 Validate the **absence** of the following (each must be demonstrably impossible / rejected):
@@ -157,6 +159,7 @@ Validate the **absence** of the following (each must be demonstrably impossible 
 7. **Silent supersession** — no supersession without a recorded supersession event.
 8. **Provenance / attribution loss** — no admission or version drops provenance or source attribution.
 9. **Cross-ownership leakage** — Authority does not become owner of knowledge; Retain does not govern admission.
+10. **Spurious or destructive unarchival** — unarchive of a non-archived object is rejected (no spurious reversal event); unarchival mutates or deletes no row (append-only reversal — DL-058 / RB-025).
 
 ### B4. Failure Classification (QA Governance severity model)
 - **Critical** (invariant / ownership / authority violation): unauthorized promotion; silent overwrite; knowledge/history destruction; assessment mutated without recompute; Retain generating Findings/Recommendations/Confidence; provenance/attribution loss; Authority owning knowledge.
@@ -175,7 +178,7 @@ Preserve across changes: admission-requires-authorization; append-only history; 
 - **Replay tier (per DL-043):** Retain requires **provenance replay, version-chain replay, and integrity-clearance verification** — this is **audit/provenance replay, NOT cognitive replay.** Retention is preservation, not cognitive generation; cognitive (semantic/band/set) replay applies to Findings/Confidence/Recommendations downstream. *(No Authority authorization decision exists in R1; the prior "authorization-chain" reference is superseded by the integrity-clearance check.)* For **Cognition History Records** and **User Acceptance Records**, replay is **record-exact** (they are Attested, stored facts).
 
 ### C2. Observable Events
-Observe: **promotion** (Knowledge Promoted), **versioning** (Knowledge Versioned), **mutation** (Knowledge Mutation Recorded), **supersession** (Knowledge Superseded), **archival** (Knowledge Archived). Observation may be finer-grained than emission (additive-consistent with IC-WA-002 §A6).
+Observe: **promotion** (Knowledge Promoted), **versioning** (Knowledge Versioned), **mutation** (Knowledge Mutation Recorded), **supersession** (Knowledge Superseded), **archival** (Knowledge Archived), **unarchival** (Knowledge Unarchived — archive reversal, DL-058 / RB-025). Observation may be finer-grained than emission (additive-consistent with IC-WA-002 §A6).
 
 ### C3. Audit
 Capture for every event: **source** (origin artifact / Promotion Candidate; or emitting cognition / accepting user), **provenance** (lineage), **version chain** (predecessor/successor links), and **integrity-clearance reference** (the promotion-readiness/integrity check admitting/affecting the knowledge). Audit must show, for any canonical object, *which attesting source produced it, when, from what origin, and through which versions.*

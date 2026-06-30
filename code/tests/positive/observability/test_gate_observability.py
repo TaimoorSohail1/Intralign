@@ -372,13 +372,18 @@ def test_chat_vocabulary_is_the_one_obs_wi_interact_name_verbatim() -> None:
     assert "deep_analysis_requested" not in EVENT_NAMES_CHAT
 
 
-def test_wa002_vocabulary_is_the_five_ic_wa_002_a6_names_verbatim() -> None:
-    """DTM-0008 — the IC-WA-002 A6 list, exactly, in contract order."""
+def test_wa002_vocabulary_is_the_ic_wa_002_a6_names_verbatim() -> None:
+    """DTM-0008 — the IC-WA-002 A6 list, exactly, in contract order.
+
+    RB-025 / DL-058: ``knowledge_unarchived`` (archive reversal) is included — the
+    original five become six (OBS-WA-002 contract to be updated to match; escalation).
+    """
     assert EVENT_NAMES_WA002 == (
         "knowledge_promoted",
         "knowledge_versioned",
         "knowledge_superseded",
         "knowledge_archived",
+        "knowledge_unarchived",
         "knowledge_mutation_recorded",
     )
 
