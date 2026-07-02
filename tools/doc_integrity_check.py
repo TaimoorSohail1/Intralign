@@ -49,7 +49,7 @@ def is_active(p):
     s = rel(p)
     return not any(x in s for x in ("90_research/", "legacy_layer_engineering/",
                    "historical_artifacts/", "00_owner/audits/", "00_raw",
-                   "raw/"))  # 90_research/ + raw/ = raw Notion/source export, not part of the active knowledge tree
+                   "raw/", "node_modules/"))  # 90_research/ + raw/ = raw source export; node_modules/ = vendored deps (e.g. the visual_regression harness) — never canon
 
 # high-signal RETIRED terms only (unambiguous; common words like "Governance Layer"
 # are excluded — they appear legitimately in governance/constitution prose).

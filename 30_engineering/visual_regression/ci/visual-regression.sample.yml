@@ -1,0 +1,31 @@
+# Sample GitHub Actions job — copy into the APP repo at .github/workflows/visual-regression.yml
+# (kept here as a .sample so it does not activate in the canon repo). Part of the app-ci six-gate.
+name: Visual Regression
+on: [pull_request]
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      # Vendor this harness dir into the app repo (or add the canon repo as a submodule/copy).
+      - name: Install harness
+        working-directory: visual_regression
+        run: |
+          npm ci || npm install
+          npx playwright install --with-deps chromium
+      - name: Start app
+        run: |
+          npm ci
+          npm run build
+          (npm run start &) && npx wait-on http://localhost:3000
+      - name: Visual regression (capture + compare)
+        working-directory: visual_regression
+        env:
+          APP_BASE_URL: http://localhost:3000
+        run: npm test
+      - name: Upload diffs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: visual-diffs, path: visual_regression/diffs/ }

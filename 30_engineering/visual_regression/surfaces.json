@@ -1,0 +1,14 @@
+{
+  "_note": "Surface manifest for R1 visual-regression. Baselines are captured from the reference-of-record prototype (product-design/oslo_r1_experience_mockup_v2.html). The built app is compared against these baselines. 'proto.prep' drives the prototype; 'app.path'/'app.prep' are how the dev reaches the equivalent surface in the built app (fill these in for your app's routes).",
+  "viewport": { "width": 1440, "height": 960 },
+  "diffThreshold": 0.02,
+  "prototype": "../../product-design/oslo_r1_experience_mockup_v2.html",
+  "surfaces": [
+    { "name": "01-onboarding",   "proto": { "prep": "" },                                            "app": { "path": "/" } },
+    { "name": "02-overview",     "proto": { "prep": "jumpToWorkspace()" },                            "app": { "path": "/projects/{sampleId}/overview" } },
+    { "name": "03-findings",     "proto": { "prep": "jumpToWorkspace();openAllFindings()" },          "app": { "path": "/projects/{sampleId}/findings" } },
+    { "name": "04-finding-panel","proto": { "prep": "jumpToWorkspace();openFindingPanel('FND-2041')" },"app": { "path": "/projects/{sampleId}/findings/{criticalId}" } },
+    { "name": "05-artifact",     "proto": { "prep": "jumpToWorkspace();openArtifact('Resources')" },  "app": { "path": "/projects/{sampleId}/sections/resources" } },
+    { "name": "06-history",      "proto": { "prep": "jumpToWorkspace();openHistory()" },              "app": { "path": "/projects/{sampleId}/history" } }
+  ]
+}
