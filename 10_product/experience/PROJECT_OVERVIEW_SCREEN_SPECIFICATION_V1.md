@@ -174,4 +174,13 @@ Ratified by **DL-085** (Accepted with Conditions). This block updates the Confid
 
 Ratified by **DL-088** (presentation-only; complements DL-085 §P). To reduce cognitive load the Overview is sequenced **Confidence → a single "Start here" next-action (the top severity-ordered open finding) → a compact Progress readout → Explore details (CAF · Reliability · Attention)**. The at-a-glance CAF triad is **demoted into Explore details** (it duplicated the CAF card). The §D canonical order and all integrity rules otherwise stand; findings/recommendations remain descriptive/advisory; only reanalysis changes assessment. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html`.
 
+## R. Ratified update — Overview cognitive-load trim (DL-090, 2026-07-02)
+
+Ratified by **DL-090** (presentation-only; **amends §Q**). The Overview is trimmed to: **Confidence → a compact "What's driving it" CAF driver-glance → confidence trend → Start here → Progress → (quiet) project summary.** Removed from the Overview:
+- **Reliability component breakdown** — headline stays on the confidence line; Coverage/Evidence/Assessability fold into the "how this is calculated" explainer.
+- **Recommendations summary** — Panel Model; recommendations live only inside a Finding ("Start here" carries the next action).
+- **Attention heatmap** — relocated to its own **"Attention map" (MRI) left-rail surface** (see Global-Nav / MRI specs), not embedded here.
+
+CAF driver chips are **qualitative** (level only; per-dimension 0–100 numbers move to drill-in). Confidence doctrine, Panel Model, and advisory-only unchanged. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html` (baseline `02-overview`).
+
 **Project Overview Screen Specification v1 complete.**

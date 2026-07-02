@@ -858,5 +858,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-087 — Strategic chain & onboarding positioning (+ plain-language labels) → `00_owner/decisions/records/DL-087-strategic-chain-positioning.md`
 - DL-088 — R1 UX-surface reconciliation (prototype-as-baseline) → `00_owner/decisions/records/DL-088-ux-surface-reconciliation.md`
 - DL-089 — Clarification flow contract (object-free; in-panel + chat — Option B) → `00_owner/decisions/records/DL-089-clarification-flow.md`
+- DL-090 — Overview cognitive-load trim + Attention-map as its own surface (amends DL-088) → `00_owner/decisions/records/DL-090-overview-trim.md`
 
 <!-- RECORDS-INDEX:END -->

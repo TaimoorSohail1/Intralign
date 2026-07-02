@@ -232,4 +232,8 @@ Explicitly **deferred / out of scope:** mobile-specific navigation; future multi
 
 Ratified by **DL-088** (presentation-only). The top bar is decluttered: **Findings and History move to the left rail** as project views; the **feature tour moves to Settings → Help**; the **OSLO-panel toggle moves to the panel edge**. **Findings-list-as-destination** is reconciled with the contextual-Panel model — the *list* is a destination (Findings Workspace), the *detail* stays a contextual Panel (no orphan recommendation surface). **Command palette (⌘K) is DEFERRED to R2** (logged to the R2 backlog; not built in R1). Context-preservation and all other integrity rules stand. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html`.
 
+## V. Ratified update — Attention map (MRI) as its own surface (DL-090, 2026-07-02)
+
+Ratified by **DL-090** (presentation-only). The **Attention map (MRI Workspace)** is a **left-rail center-pane surface** (consistent with the canonical MRI Workspace primary nav), reachable alongside Overview / Findings / History — **not embedded in the Overview**. Correspondingly the Overview no longer hosts the heatmap, the reliability component breakdown, or a recommendations list (see `PROJECT_OVERVIEW_SCREEN_SPEC` §R). Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html` (baseline `07-attention-map`).
+
 **Global Navigation & Application Shell Specification v1 complete.**

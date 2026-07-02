@@ -165,4 +165,8 @@ Ratified by **DL-085**. Where the MRI understanding-overview surfaces the **Outc
 
 *This specification defines the canonical Release 1 MRI Experience — a component of the MRI umbrella (per Reconciliation Decision 001) alongside the MRI Visualization Model, MRI Snapshot, and MRI Navigation. The MRI Experience (Missing · Risky · Incomplete) is a diagnostic understanding and navigation surface — a lens over existing Findings grouped into Missing/Risky/Incomplete, severity-ordered, that answers "what needs attention?" and routes to the Finding Panel (why), Artifact Workspace (where), and Recommendation Panel (what to consider). It uses the MRI Visualization Model and MRI Snapshot rather than competing with them. It introduces no new object, model, ontology, finding, recommendation behavior, governance, execution, automation, scoring, API, event, or styling; preserves Findings as descriptive, Recommendations as advisory, Artifacts as planning context, and that only reanalysis changes assessment.*
 
+## S. Ratified update — reached via its own surface (DL-090, 2026-07-02)
+
+Ratified by **DL-090** (presentation-only). The MRI Experience (weakness map / heatmap) is reached via its own **"Attention map" left-rail surface**, **not** embedded in the Project Overview (which previously hosted the heatmap). All MRI integrity rules stand (qualitative; no scores/ranks; only reanalysis changes assessment). Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html` (baseline `07-attention-map`).
+
 **MRI Experience Specification v1 complete.**

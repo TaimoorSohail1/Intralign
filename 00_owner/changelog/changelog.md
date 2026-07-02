@@ -957,6 +957,13 @@ Each changelog entry contains:
 - **Change Summary:** Clarification flow contract (object-free; in-panel + chat — Option B). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-125 — DL-090: Overview cognitive-load trim + Attention-map as its own surface (amends DL-088)
+
+- **Date:** 2026-07-02 · **Authorizing Decision:** DL-090.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-090-overview-trim.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Overview cognitive-load trim + Attention-map as its own surface (amends DL-088). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
