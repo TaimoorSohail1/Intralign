@@ -964,6 +964,13 @@ Each changelog entry contains:
 - **Change Summary:** Overview cognitive-load trim + Attention-map as its own surface (amends DL-088). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-126 — DL-091: Wave C (Advise) exit-gate pass + Phase V / Wave U authorization
+
+- **Date:** 2026-07-02 · **Authorizing Decision:** DL-091.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-091-wave-c-exit-gate-phase-v-authorization.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Wave C (Advise) exit-gate pass + Phase V / Wave U authorization. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
