@@ -157,6 +157,10 @@ Conformance is **all-or-nothing**; any new object/finding, duplicated finding, d
 
 Explicitly **deferred / out of scope:** the **Artifact Workspace** full spec; governance/accepted-understanding/disposition; automation/agents/execution; future orchestration; APIs/events; computation/scoring/calculations; styling; numeric tier boundaries; calibration values; exact edge-case category mapping (presentation calibration).
 
+## R. Ratified update — Outcome Confidence presentation (DL-085, 2026-07-02)
+
+Ratified by **DL-085**. Where the MRI understanding-overview surfaces the **Outcome Confidence** signal, it follows DL-085: the sanctioned **numeric index (0–100) is focal, with band + reliability as qualifiers, never bare** (Master Spec §20). This applies **only** to the Outcome Confidence signal. **MRIE-9 / MRIE-C4 are unchanged and binding:** finding **prioritization** and **weakness-map (heatmap) intensity** remain **qualitative** (severity) with **no scores, percentages, or ranking numbers** — the Outcome Confidence index is not a finding/heatmap score. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html`.
+
 ---
 
 *This specification defines the canonical Release 1 MRI Experience — a component of the MRI umbrella (per Reconciliation Decision 001) alongside the MRI Visualization Model, MRI Snapshot, and MRI Navigation. The MRI Experience (Missing · Risky · Incomplete) is a diagnostic understanding and navigation surface — a lens over existing Findings grouped into Missing/Risky/Incomplete, severity-ordered, that answers "what needs attention?" and routes to the Finding Panel (why), Artifact Workspace (where), and Recommendation Panel (what to consider). It uses the MRI Visualization Model and MRI Snapshot rather than competing with them. It introduces no new object, model, ontology, finding, recommendation behavior, governance, execution, automation, scoring, API, event, or styling; preserves Findings as descriptive, Recommendations as advisory, Artifacts as planning context, and that only reanalysis changes assessment.*

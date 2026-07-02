@@ -156,6 +156,16 @@ Conformance is **all-or-nothing**; any bare/health-framed confidence, any displa
 
 Explicitly **deferred** (out of scope): visual styling; colors; typography; component implementation; responsive breakpoints; animations; design-system details; API/events; computation/generation; calibration values; numeric tier boundaries.
 
+## P. Ratified update — Confidence presentation (DL-085, 2026-07-02)
+
+Ratified by **DL-085** (Accepted with Conditions). This block updates the Confidence *presentation* in §E/§F/§M/§N; all other integrity rules are unchanged, and meaning (Interpretation Doctrine) is unchanged. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html`. *(Overview hierarchy / "Start here" / Explore-details changes are governed separately by the UX-Surface Reconciliation decision, not here.)*
+
+- **Confidence Card (supersedes the §F "Confidence Card → Visible" line):** the **numeric Outcome Confidence index (0–100) is the focal element**, with its **band** (Very Low…Very High) and **reliability qualifier** shown directly alongside as qualifiers. Confidence is **still never shown bare** (band + reliability always present) and **never** framed as health/probability. Numeric 0–100 is sanctioned by Master Spec §20; the **band remains the authoritative unit of magnitude**.
+- **Cause-bound movement:** when analysis changes the index the card states the **cause** (e.g., a resolved finding), and the index may move **up or down** (a fall after Extended/Deep Analysis reflects improved understanding, not a worse project). Surfaced via a "how this is calculated" affordance; **no "illustrative" caveat** in production.
+- **Work-ledger:** a compact readout of **countable governed objects** (findings resolved/open by severity) accompanies the card; it counts only attested/governed objects and **never** restates the signal as a second number.
+- **No gamification:** no points, streaks, or score-to-beat; the confidence ramp stays **neutral** (non health-color).
+- **Retained verbatim:** the "never bare / never health-probability" requirement (POS-1, POS-C2). §E/§M/§N band-first framing is **superseded** to "number-focal, reliability-qualified."
+
 ---
 
 *This specification defines the single canonical Release 1 Project Overview screen architecture: a confidence-first understanding console — Project Header → Outcome Confidence → CAF → Reliability → Findings → Recommendations → Summary — with a desktop understanding-spine + context-rail, a confidence-first mobile column, state-aware provisional/current presentation, hub-and-spoke navigation to the Findings and Recommendations experiences, and append-only history. It defines presentation architecture only — no models, scoring, computation, generation, governance, execution, automation, APIs, events, or styling — and preserves that confidence is reliability-qualified trust in understanding and only reanalysis changes assessment.*

@@ -922,6 +922,13 @@ Each changelog entry contains:
 - **Change Summary:** Bind the R2 candidate-epic phase/tier placement — **Execution Intelligence (R2-C) → Beta**, **Team Collaboration depth (R2-D) → Team tier (Tier 4)**, **Governance & Authority (R2-E) → Beta** — and ratify the **Foundational-Architecture-in-Alpha** build-sequencing principle: architectural foundation for a gated capability may be laid early in Alpha (R2) where it measurably reduces later effort/complexity, kept advisory-only / non-activating / specified-but-inactive and routed through scoping (+ DL where architectural). Sibling to DL-081 (Layer-Before-Depth). Non-doctrinal; no capability or epistemic invariant introduced.
 - **Supersession Reference:** None. Additive; consistent with DL-074, DL-076, DL-081, DL-083, DL-047.
 
+### CHG-120 — DL-085: User-facing Confidence movement & quantified progress presentation
+
+- **Date:** 2026-07-02 · **Authorizing Decision:** DL-085.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-085-confidence-presentation.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** User-facing Confidence movement & quantified progress presentation. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
