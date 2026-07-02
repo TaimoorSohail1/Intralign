@@ -173,26 +173,36 @@ class SupabaseProjectionReader:
 
     def list_acceptances(self, project_id: str) -> list[dict[str, Any]]:
         """All user_acceptance_record rows for a project, newest first (SELECT only)."""
-        resp = (
-            self._client.table(ACCEPTANCE_TABLE)
-            .select("*")
-            .eq("project_id", project_id)
-            .order("created_at", desc=True)
-            .execute()
-        )
-        return list(resp.data)
+        try:
+            resp = (
+                self._client.table(ACCEPTANCE_TABLE)
+                .select("*")
+                .eq("project_id", project_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
+            return list(resp.data)
+        except Exception as exc:
+            if _is_unavailable_read_model(exc, f"public.{ACCEPTANCE_TABLE}"):
+                return []
+            raise
 
     def list_plan_facts(self, project_id: str) -> list[dict[str, Any]]:
         """User-attested plan facts (attested_assertion, attested-user) for a project."""
-        resp = (
-            self._client.table(ASSERTION_TABLE)
-            .select("*")
-            .eq("project_id", project_id)
-            .eq("epistemic_state", "attested-user")
-            .order("created_at", desc=True)
-            .execute()
-        )
-        return list(resp.data)
+        try:
+            resp = (
+                self._client.table(ASSERTION_TABLE)
+                .select("*")
+                .eq("project_id", project_id)
+                .eq("epistemic_state", "attested-user")
+                .order("created_at", desc=True)
+                .execute()
+            )
+            return list(resp.data)
+        except Exception as exc:
+            if _is_unavailable_read_model(exc, f"public.{ASSERTION_TABLE}"):
+                return []
+            raise
 
     # -- platform reads (project / analysis_run / notification; SELECT only) --
     # See the module note: the platform tables are not yet migrated in this
@@ -290,11 +300,16 @@ class SupabaseHistoryReader:
 
     def list_history(self, project_id: str) -> list[dict[str, Any]]:
         """The project's Cognition-History trail, oldest-emitted first (SELECT only)."""
-        resp = (
-            self._client.table(CHR_TABLE)
-            .select("*")
-            .eq("project_id", project_id)
-            .order("emitted_at", desc=False)
-            .execute()
-        )
-        return list(resp.data)
+        try:
+            resp = (
+                self._client.table(CHR_TABLE)
+                .select("*")
+                .eq("project_id", project_id)
+                .order("emitted_at", desc=False)
+                .execute()
+            )
+            return list(resp.data)
+        except Exception as exc:
+            if _is_unavailable_read_model(exc, f"public.{CHR_TABLE}"):
+                return []
+            raise

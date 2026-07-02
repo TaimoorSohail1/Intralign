@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from backend.services.render.read_seam import SupabaseProjectionReader
+from backend.services.render.read_seam import SupabaseHistoryReader, SupabaseProjectionReader
 
 
 class _FailingQuery:
@@ -72,3 +72,43 @@ def test_read_seam_returns_empty_when_platform_read_tables_are_missing() -> None
 
     assert reader.list_analysis_runs("project-1") == []
     assert reader.get_analysis_run("run-1") is None
+
+
+def test_read_seam_returns_empty_when_canonical_receipt_tables_are_missing() -> None:
+    reader = SupabaseProjectionReader(
+        _FailingClient(
+            derived_exc=Exception("unused"),
+            public_exc=Exception(
+                "{'message': \"Could not find the table 'public.attested_assertion'\", "
+                "'code': 'PGRST205'}"
+            ),
+        )
+    )
+
+    assert reader.list_plan_facts("project-1") == []
+
+    reader = SupabaseProjectionReader(
+        _FailingClient(
+            derived_exc=Exception("unused"),
+            public_exc=Exception(
+                "{'message': \"Could not find the table 'public.user_acceptance_record'\", "
+                "'code': 'PGRST205'}"
+            ),
+        )
+    )
+
+    assert reader.list_acceptances("project-1") == []
+
+
+def test_history_reader_returns_empty_when_chr_table_is_missing() -> None:
+    reader = SupabaseHistoryReader(
+        _FailingClient(
+            derived_exc=Exception("unused"),
+            public_exc=Exception(
+                "{'message': \"Could not find the table 'public.cognition_history_record'\", "
+                "'code': 'PGRST205'}"
+            ),
+        )
+    )
+
+    assert reader.list_history("project-1") == []
