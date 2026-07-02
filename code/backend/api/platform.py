@@ -63,7 +63,7 @@ def _service(name: str, ok: bool, started_at: float, detail: str = "") -> dict[s
 def _check_supabase_auth() -> dict[str, Any]:
     started = time.perf_counter()
     url = os.environ.get(_SUPABASE_URL, "").rstrip("/")
-    anon_key = os.environ.get(_SUPABASE_ANON_KEY, "")
+    anon_key = os.environ.get(_SUPABASE_ANON_KEY, "") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
     if not url or not anon_key:
         return _service("Supabase Auth", False, started, "missing configuration")
 
@@ -82,15 +82,33 @@ def _check_supabase_auth() -> dict[str, Any]:
 def _check_supabase_postgres() -> dict[str, Any]:
     started = time.perf_counter()
     db_url = os.environ.get(_SUPABASE_DB_URL, "")
-    if not db_url:
+    api_url = os.environ.get(_SUPABASE_URL, "").rstrip("/")
+    api_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "") or os.environ.get(_SUPABASE_ANON_KEY, "")
+
+    if db_url:
+        try:
+            with psycopg.connect(db_url, connect_timeout=5) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("select 1")
+                    cur.fetchone()
+            return _service("Supabase Postgres", True, started)
+        except Exception:
+            # Hosted demos often have the Supabase API key before the raw DB
+            # password. Fall through to PostgREST: it still verifies that the
+            # Supabase project database API is reachable.
+            pass
+
+    if not api_url or not api_key:
         return _service("Supabase Postgres", False, started, "missing configuration")
 
     try:
-        with psycopg.connect(db_url, connect_timeout=5) as conn:
-            with conn.cursor() as cur:
-                cur.execute("select 1")
-                cur.fetchone()
-        return _service("Supabase Postgres", True, started)
+        rest_request = request.Request(
+            f"{api_url}/rest/v1/",
+            headers={"apikey": api_key, "authorization": f"Bearer {api_key}"},
+            method="GET",
+        )
+        with request.urlopen(rest_request, timeout=5) as response:
+            return _service("Supabase Postgres", 200 <= response.status < 500, started, "postgrest")
     except Exception as exc:
         return _service("Supabase Postgres", False, started, exc.__class__.__name__)
 
