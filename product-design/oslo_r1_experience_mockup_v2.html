@@ -15,7 +15,7 @@
   --bg:#111315; --bg-2:#15181C; --surface:#1B1F24; --surface-2:#242A31; --surface-3:#2C333B;
   --text:#F5F4F0; --muted:#B8BDC5; --subtle:#8C939D; --border:#343B44; --border-2:#3E4650;
   --primary:#D97A3A; --primary-hover:#C86A2B; --primary-light:#E59A63; --primary-fg:#111315;
-  --success:#4D8B6B; --warning:#D9A441; --danger:#C75B5B;
+  --success:#4D8B6B; --warning:#D9A441; --danger:#C75B5B; --cool:#7FA0C9;
   --on-accent:#FFFFFF; --amber-fg:#3A2A08;
   /* neutral maturity ramp — NEVER health colors */
   --conf-low:#8C939D; --conf-medium:#B8BDC5; --conf-high:#F5F4F0;
@@ -28,7 +28,7 @@
   --bg:#FBFAF7; --bg-2:#F2F1EC; --surface:#FFFFFF; --surface-2:#F5F4F0; --surface-3:#E9E7E1;
   --text:#1B1F24; --muted:#4A515A; --subtle:#79818B; --border:#DEDBD3; --border-2:#CAC7BF;
   --primary:#D97A3A; --primary-hover:#C86A2B; --primary-light:#B45309; --primary-fg:#1B1F24;
-  --success:#3E7357; --warning:#A8791F; --danger:#B24A4A;
+  --success:#3E7357; --warning:#A8791F; --danger:#B24A4A; --cool:#3F6193;
   --on-accent:#FFFFFF; --amber-fg:#3A2A08;
   /* single-hue intensity ramp: low (pale) → high (dark). Neutral, not health. */
   --conf-low:#C7CCD3; --conf-medium:#8C939D; --conf-high:#2C333B;
@@ -649,8 +649,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .fcard .fm{font-size:11.5px;color:var(--subtle);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .fcard .ftype{font-size:9.5px;font-weight:600;color:var(--muted);border:1px solid var(--border-2);border-radius:5px;padding:1px 6px;background:var(--surface-2);white-space:nowrap}
 .fcard .fbasis{font-size:9.5px;font-weight:600;border-radius:5px;padding:1px 6px;white-space:nowrap}
-.fcard .fbasis.inferred{color:var(--primary-light);border:1px solid rgba(217,122,58,.4);background:rgba(217,122,58,.06)}
-.fcard .fbasis.stated{color:var(--muted);border:1px solid var(--border-2);background:var(--surface-2)}
+.fcard .fbasis.inferred{color:var(--cool);border:1px solid rgba(127,160,201,.42);background:rgba(127,160,201,.10)}
+.fcard .fbasis.stated{color:var(--success);border:1px solid rgba(77,139,107,.40);background:rgba(77,139,107,.09)}
 .fa-hidden{font-size:12px;color:var(--subtle);text-align:center;padding:12px}
 /* history rows */
 .hrow{display:flex;gap:13px;padding:12px 2px;border-bottom:1px solid var(--border)}
