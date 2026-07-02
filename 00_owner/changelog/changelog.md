@@ -973,10 +973,10 @@ Each changelog entry contains:
 
 ### CHG-127 — DL-092: Wave C (Advise) exit-gate pass + Phase V / Wave U authorization
 
-- **Date:** 2026-07-02 · **Authorizing Decision:** DL-092.
-- **Affected Artifacts:** `00_owner/decisions/records/DL-092-wave-c-exit-gate-phase-v-authorization.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
-- **Change Summary:** Wave C (Advise) exit-gate pass + Phase V / Wave U authorization. Landed via the dl-land workflow (DL-067).
-- **Supersession Reference:** None.
+- **Date:** 2026-07-02 · **Authorizing Decision:** DL-092. **VOID — accidental duplicate of CHG-126 / DL-091 (double-land); no independent effect.**
+- **Affected Artifacts:** `00_owner/decisions/records/DL-092-wave-c-exit-gate-phase-v-authorization.md` (voided in place — duplicate of DL-091).
+- **Change Summary:** Duplicate land of the Wave C exit-gate + Phase V authorization already recorded by DL-091 (CHG-126). DL-092 marked Void; number retained for monotonicity (DL-065).
+- **Supersession Reference:** Voided as a duplicate of DL-091.
 
 ---
 

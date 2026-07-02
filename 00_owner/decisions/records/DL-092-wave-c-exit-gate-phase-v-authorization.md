@@ -1,6 +1,8 @@
 # DL-092 — Wave C (Advise) exit-gate pass + Phase V / Wave U authorization
 
-- **Date:** 2026-07-02 · **Status:** Ratified · **Decided by:** Idris (Founder Console)
+> **VOID — accidental duplicate (double-land).** This record is a byte-for-byte duplicate of **DL-091** (same decision, date, and body; only the number differs). The Wave C exit-gate pass + Phase V / Wave U authorization is recorded canonically by **DL-091**. DL-092 has **no independent effect** — do not cite it. The number is retained (not reused) to keep DL numbering monotonic per DL-065. Cause: the `dl_records.py land` + `ship_canon.sh` sequence was run twice (CHG-126 → DL-091, CHG-127 → DL-092).
+
+- **Date:** 2026-07-02 · **Status:** Void (duplicate of DL-091) · **Decided by:** Idris (Founder Console)
 - **Class:** A
 
 - **Source:** DL-044 (per-wave exit-gate / authorization cadence); DL-072 (Wave B exit-gate pass + Phase IV/Wave C authorization, with three binding conditions RB-025 / RB-026 / DL-046-latency); PR #46 (Phase IV / Wave C — Advise, merged to `main`); PR #80 (Wave C exit-gate conditions — commit `2512fe4`, merged `88e0690`); the AI-drafted Wave C exit-gate review (`00_owner/decisions/WAVE_C_EXIT_GATE_REVIEW_DRAFT.md`, 2026-06-29); 2026-07-02 code survey of `code/`. Owner ratification via the Founder Console.
