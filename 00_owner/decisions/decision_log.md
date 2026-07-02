@@ -854,5 +854,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-083 — Execution-monitoring tier placement & phase (T3/Pro+, Beta-built; out of Alpha exit) + capability tier split → `00_owner/decisions/records/DL-083-execution-monitoring-tier-and-phase.md`
 - DL-084 — R2 candidate-epic phase/tier placement + Foundational-Architecture-in-Alpha principle → `00_owner/decisions/records/DL-084-r2-phase-tier-placement.md`
 - DL-085 — User-facing Confidence movement & quantified progress presentation → `00_owner/decisions/records/DL-085-confidence-presentation.md`
+- DL-086 — Outcome Confidence index calibration (measurement) — 5-band scheme + v0 defaults → `00_owner/decisions/records/DL-086-confidence-index-calibration.md`
 
 <!-- RECORDS-INDEX:END -->

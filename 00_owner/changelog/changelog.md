@@ -929,6 +929,13 @@ Each changelog entry contains:
 - **Change Summary:** User-facing Confidence movement & quantified progress presentation. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-121 — DL-086: Outcome Confidence index calibration (measurement) — 5-band scheme + v0 defaults
+
+- **Date:** 2026-07-02 · **Authorizing Decision:** DL-086.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-086-confidence-index-calibration.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Outcome Confidence index calibration (measurement) — 5-band scheme + v0 defaults. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
