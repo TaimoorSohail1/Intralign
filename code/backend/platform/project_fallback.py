@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import ssl
 from datetime import UTC, datetime
 from typing import Any, Mapping
 
@@ -34,9 +35,24 @@ def _redis_client() -> Any | None:
     try:
         from redis import Redis
 
-        return Redis.from_url(redis_url, decode_responses=True)
+        kwargs: dict[str, Any] = {"decode_responses": True}
+        if redis_url.startswith("rediss://"):
+            # Heroku Redis commonly presents a self-signed certificate chain.
+            kwargs["ssl_cert_reqs"] = ssl.CERT_NONE
+        return Redis.from_url(redis_url, **kwargs)
     except Exception:
         return None
+
+
+def _redis_or_none() -> Any | None:
+    client = _redis_client()
+    if client is None:
+        return None
+    try:
+        client.ping()
+    except Exception:
+        return None
+    return client
 
 
 def _project_key(project_id: str) -> str:
@@ -55,7 +71,7 @@ def create_project(row: Mapping[str, Any]) -> dict[str, Any]:
     project_id = str(project["project_id"])
     workspace_id = str(project["workspace_id"])
 
-    client = _redis_client()
+    client = _redis_or_none()
     if client is not None:
         client.set(_project_key(project_id), json.dumps(project))
         client.lrem(_workspace_key(workspace_id), 0, project_id)
@@ -71,7 +87,7 @@ def create_project(row: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def get_project(project_id: str) -> dict[str, Any] | None:
-    client = _redis_client()
+    client = _redis_or_none()
     if client is not None:
         raw = client.get(_project_key(project_id))
         return json.loads(raw) if raw else None
@@ -80,7 +96,7 @@ def get_project(project_id: str) -> dict[str, Any] | None:
 
 
 def list_projects(workspace_id: str) -> list[dict[str, Any]]:
-    client = _redis_client()
+    client = _redis_or_none()
     if client is not None:
         ids = client.lrange(_workspace_key(workspace_id), 0, -1)
         projects = []
@@ -104,7 +120,7 @@ def update_project(project_id: str, patch: Mapping[str, Any]) -> dict[str, Any]:
     project.update(dict(patch))
     project["updated_at"] = _now()
 
-    client = _redis_client()
+    client = _redis_or_none()
     if client is not None:
         client.set(_project_key(project_id), json.dumps(project))
     else:
