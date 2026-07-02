@@ -277,6 +277,17 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 /* hero: CAF at-a-glance + focus guide */
 .card.hero .conf-head{gap:28px}
 .caf-glance{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.drivers{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+.drv-lab{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--subtle);font-weight:600;margin-right:2px}
+.drv{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);border:1px solid var(--border-2);border-radius:99px;padding:5px 12px;cursor:pointer;background:var(--surface-2)}
+.drv:hover{border-color:var(--primary);color:var(--text)}
+.drv i{width:8px;height:8px;border-radius:99px;display:inline-block;flex-shrink:0}
+.drv b{color:var(--text);font-weight:600}
+.card.hero .conftrend{border-top:none;margin-top:10px;padding-top:0}
+.mri-pane{padding:22px 26px 40px;max-width:900px;margin:0 auto}
+.mri-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.mri-head h1{font-size:20px;font-weight:600}
+.mri-sub{font-size:12.5px;color:var(--subtle)}
 .cg{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:99px;padding:4px 11px}
 .cg i{width:8px;height:8px;border-radius:50%}.cg b{color:var(--text);font-weight:600}
 .focus{margin-top:16px;border-top:1px solid var(--border);padding-top:14px}
@@ -877,6 +888,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
       <div class="ex-item active" id="exHome" onclick="openTab('understanding')"><span class="ic">◎</span> Overview</div>
       <div class="ex-item" id="exFindings" onclick="openAllFindings()"><span class="ic">⚑</span> Findings <span class="fb tot" id="exFindCount">6</span></div>
       <div class="ex-item" id="exHistory" onclick="openHistory()"><span class="ic">◴</span> History</div>
+      <div class="ex-item" id="exMRI" onclick="openMRI()"><span class="ic">▦</span> Attention map</div>
       <div class="ex-sec">Plan sections</div>
       <div class="ex-subsec">Understanding</div>
       <div class="ex-item" data-art="Intent" onclick="openArtifact('Intent')"><span class="ic">▤</span> Intent</div>
@@ -940,7 +952,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
           <div class="art" id="artview"></div>
         </section>
 
-        <!-- MRI CANVAS -->
+        <!-- OVERVIEW -->
         <section class="pane active" id="pane-understanding">
           <div class="uc">
             <div class="errbar" id="errbar" style="display:none"><span class="ar-i" style="color:var(--danger)">⚠</span><span style="flex:1">Reanalysis couldn't complete — showing your <b style="color:var(--text)">last-good understanding</b>, unchanged. <a onclick="retryAnalysis()">Retry</a></span><span class="coach-x" onclick="document.getElementById('errbar').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
@@ -959,29 +971,25 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
                   <div class="nh" id="conf-change" style="display:none;margin-top:7px"></div>
                 </div>
               </div>
+              <div class="drivers"><span class="drv-lab">What's driving it</span><button class="drv" onclick="openFindingsDim('Clarity')"><i style="background:var(--conf-medium)"></i>Clarity <b>Forming</b></button><button class="drv" onclick="openFindingsDim('Alignment')"><i style="background:var(--conf-low)"></i>Alignment <b>Limited</b></button><button class="drv" id="cg-feas" onclick="openFindingsDim('Feasibility')"><i id="cg-feas-dot" style="background:var(--conf-low)"></i>Feasibility <b id="cg-feas-lvl">Limited</b></button></div>
+              <div class="conftrend" id="conftrend"></div>
               <div class="focus" id="focus"></div>
               <div id="ledger"></div>
             </div>
             <div class="explore">
-            <div class="explore-h">Explore details <span>optional — the summary above is the read</span></div>
-            <div class="osec" id="osec-caf"><button class="osec-h" onclick="toggleSec('caf')" aria-expanded="false"><span class="osec-t" title="Internally: CAF — Clarity, Alignment, Feasibility">Clarity · Alignment · Feasibility</span><span class="osec-sum">Where the plan reads clearly, and where it's still forming</span><span class="osec-chev">›</span></button><div class="osec-b">
-              <div class="conftrend" id="conftrend"></div>
-              <div class="caf-row">
-                <div class="caf"><div class="dn">Clarity</div><div style="display:flex;align-items:baseline;margin-bottom:8px"><div class="lvl" style="margin:0">Forming</div><div class="cnum" style="margin-left:auto">64<span>/100</span></div></div><div class="cbar"><i style="width:64%;background:var(--conf-medium)"></i></div><div class="rl">Reliability: Moderate</div></div>
-                <div class="caf"><div class="dn">Alignment <span class="elabel prelim">Prelim</span></div><div style="display:flex;align-items:baseline;margin-bottom:8px"><div class="lvl" style="margin:0">Limited</div><div class="cnum" style="margin-left:auto">38<span>/100</span></div></div><div class="cbar"><i style="width:38%;background:var(--conf-low)"></i></div><div class="rl">Reliability: Limited</div></div>
-                <div class="caf"><div class="dn">Feasibility <span class="elabel prelim">Prelim</span></div><div style="display:flex;align-items:baseline;margin-bottom:8px"><div class="lvl" id="feas-lvl" style="margin:0">Limited</div><div class="cnum" style="margin-left:auto"><span id="feas-num">34</span><span>/100</span></div></div><div class="cbar"><i id="feas-bar" style="width:34%;background:var(--conf-low);transition:width 1s ease,background .6s ease"></i></div><div class="rl">Reliability: Limited</div></div>
-              </div>
+            <div class="explore-h">More <span>optional — the read above is the summary</span></div>
+            <div class="osec" id="osec-sum"><button class="osec-h" onclick="toggleSec('sum')" aria-expanded="false"><span class="osec-t">Project summary</span><span class="osec-sum">One-day dev conference · understanding Moderate, forming</span><span class="osec-chev">›</span></button><div class="osec-b">
+              <div style="font-size:13.5px;color:var(--muted);line-height:1.75;margin-top:6px">DevNorth 2026 is a one-day, in-person developer conference (Sep 18, ~450 attendees, sponsor-funded). OSLO's understanding is <b style="color:var(--text)">Moderate</b> and forming: intent, context and scope read clearly; feasibility and alignment are still preliminary, held back mainly by an unconfirmed venue Wi-Fi dependency. Reliability is Moderate — the read rests on the documents provided. This reflects OSLO's understanding of the plan — <b style="color:var(--text)">not</b> project health, readiness, or a probability of success.</div>
             </div></div>
-            <div class="osec" id="osec-rel"><button class="osec-h" onclick="toggleSec('rel')" aria-expanded="false"><span class="osec-t">Reliability</span><span class="osec-sum">Moderate — the read rests on your documents</span><span class="osec-chev">›</span></button><div class="osec-b">
-              <div style="font-size:13.5px;color:var(--muted);margin:6px 0 14px">Determined independently of the Clarity/Alignment/Feasibility read — it reflects the evidence behind the read, not the plan's integrity, and can rise as evidence improves. <span class="info" data-tip="Qualifies Confidence; not findings-driven.">i</span></div>
-              <div class="caf-row">
-                <div class="caf"><div class="dn">Coverage</div><div class="lvl" style="margin-bottom:7px">Moderate</div><div class="rl">How much of the project reality was observable in your inputs.</div></div>
-                <div class="caf"><div class="dn">Evidence availability</div><div class="lvl" style="margin-bottom:7px">Moderate</div><div class="rl">Presence and accessibility of evidence supporting the read.</div></div>
-                <div class="caf"><div class="dn">How assessable</div><div class="lvl" style="margin-bottom:7px;color:var(--warning)">Limited</div><div class="rl">Feasibility is hard to assess while key dependencies are unconfirmed.</div></div>
-              </div>
-            </div></div>
-            <div class="osec" id="osec-attn"><button class="osec-h" onclick="toggleSec('attn')" aria-expanded="false"><span class="osec-t">Attention</span><span class="osec-sum">6 findings · <b style="color:var(--danger)">1 critical</b> in Resources — where the plan needs work</span><span class="osec-chev">›</span></button><div class="osec-b">
-              <div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px"><div style="flex:1;font-size:12.5px;color:var(--subtle)">Brighter = more attention. Click a cell to investigate.</div><div class="mfilter"><button class="mf on" onclick="mview(this,'heat')">▦ Heatmap</button><button class="mf" onclick="mview(this,'field')">⌖ Dimensions</button><button class="mf" onclick="openAllFindings()">⚑ All findings</button></div></div>
+            </div><!-- /explore -->
+          </div><!-- /uc -->
+        </section>
+
+        <!-- ATTENTION MAP (MRI) -->
+        <section class="pane" id="pane-mri">
+          <div class="mri-pane">
+            <div class="mri-head"><h1>Attention map</h1><span class="mri-sub">Where the plan needs work · rows = plan sections · columns = Clarity · Alignment · Feasibility</span></div>
+            <div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px"><div style="flex:1;font-size:12.5px;color:var(--subtle)">Brighter = more attention. Click a cell to investigate.</div><div class="mfilter"><button class="mf on" onclick="mview(this,'heat')">▦ Heatmap</button><button class="mf" onclick="mview(this,'field')">⌖ Dimensions</button><button class="mf" onclick="openAllFindings()">⚑ All findings</button></div></div>
               <div class="attn-canvas"><div class="mcanvas" id="mcanvas">
               <div class="gridbg"></div>
 
@@ -1048,16 +1056,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
               </div><!-- /mview-field -->
               </div><!-- /mcanvas -->
               </div><!-- /attn-canvas -->
-            </div></div><!-- /attn osec -->
-            <div class="osec" id="osec-rec"><button class="osec-h" onclick="toggleSec('rec')" aria-expanded="false"><span class="osec-t">Recommendations</span><span class="osec-sum">3 open · confirm venue Wi-Fi first · advisory</span><span class="osec-chev">›</span></button><div class="osec-b">
-              <div style="font-size:13.5px;color:var(--muted);line-height:1.7;margin-top:6px">The most consequential next step is confirming <b style="color:var(--text)">venue Wi-Fi capacity</b> (Critical · Resources). Two Clarity gaps in Requirements and an unassigned run-of-show owner in WBS also have suggested paths. <span class="info" data-tip="Advisory only — OSLO suggests, you decide. Selecting a path records your decision (confirmed by you); it changes no assessment until you act and reanalyze.">i</span></div>
-              <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="openAllFindings()">Review in findings →</button>
-            </div></div>
-            <div class="osec" id="osec-sum"><button class="osec-h" onclick="toggleSec('sum')" aria-expanded="false"><span class="osec-t">Project summary</span><span class="osec-sum">One-day dev conference · understanding Moderate, forming</span><span class="osec-chev">›</span></button><div class="osec-b">
-              <div style="font-size:13.5px;color:var(--muted);line-height:1.75;margin-top:6px">DevNorth 2026 is a one-day, in-person developer conference (Sep 18, ~450 attendees, sponsor-funded). OSLO's understanding is <b style="color:var(--text)">Moderate</b> and forming: intent, context and scope read clearly; feasibility and alignment are still preliminary, held back mainly by an unconfirmed venue Wi-Fi dependency. Reliability is Moderate — the read rests on the documents provided. This reflects OSLO's understanding of the plan — <b style="color:var(--text)">not</b> project health, readiness, or a probability of success.</div>
-            </div></div>
-            </div><!-- /explore -->
-          </div><!-- /uc -->
+          </div>
         </section>
 
         <!-- RECOMMENDATIONS -->
@@ -1588,6 +1587,9 @@ const _histicon={analysis_run:'✦',reanalysis_run:'↻',artifact_version_saved:
 /* History is a center pane (not a full overlay) — it leaves the OSLO panel visible, like Overview and the plan sections. */
 function openHistory(){renderHistory();document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));const pane=document.getElementById('pane-history');if(pane)pane.classList.add('active');document.querySelectorAll('.ex-item').forEach(e=>e.classList.remove('active'));const hx=document.getElementById('exHistory');if(hx)hx.classList.add('active');document.getElementById('crumb').textContent='History';document.getElementById('cscroll').scrollTop=0;}
 function closeHistory(){openTab('understanding');}
+function openMRI(){document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));const pane=document.getElementById('pane-mri');if(pane)pane.classList.add('active');document.querySelectorAll('.ex-item').forEach(e=>e.classList.remove('active'));const mx=document.getElementById('exMRI');if(mx)mx.classList.add('active');document.getElementById('crumb').textContent='Attention map';document.getElementById('cscroll').scrollTop=0;if(typeof layoutMRI==='function')setTimeout(layoutMRI,40);}
+/* CAF driver-glance chip → that dimension's findings */
+function openFindingsDim(d){openAllFindings();_filt.dim=d;_syncFiltBtns();renderFinds();}
 function renderHistory(){document.getElementById('hist-list').innerHTML=HISTORY.map(h=>`<div class="hrow"><div class="hicon">${_histicon[h.type]||'•'}</div><div class="hbody"><div class="hlab">${h.lab} ${h.cur?'<span class="hstate cur">current</span>':'<span class="hstate">prior</span>'}</div>${h.d?`<div class="hd">${h.d}</div>`:''}<div class="ht">${h.t} · <span class="mono" style="font-size:10px">${h.type}</span></div></div></div>`).join('');}
 function askOSLO(id){const f=FINDINGS[id];document.getElementById('bodyGrid').classList.remove('chat-collapsed');
   const s=document.getElementById('chatscroll');
