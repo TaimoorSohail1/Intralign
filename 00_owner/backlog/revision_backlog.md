@@ -382,6 +382,16 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 - **Proposal:** `00_owner/decisions/PROPOSAL_EPISTEMIC_BASIS_ON_FINDINGS_DRAFT.md`.
 - **Status:** R1 presentation **Adopted — DL-093** (amends `FINDING_PRESENTATION_SPECIFICATION_V1` §C/§O→§P + `FINDING_PANEL_SPECIFICATION_V1` §E/§F + glossary label-map). R2 sub-typing + basis-assignment contract remains **Proposed** (deferred phase).
 
+### RB-034 — Onboarding finding-coverage via grounded gap-detection (density without inference)
+
+- **Source Finding:** Owner concern 2026-07-02 — onboarding must show a **material** number of findings even when inputs are sparse, but the orientation currently surfaces few (~6–8) and leans on **inferred** findings. With the DL-093 basis tags visible, an inference-heavy set reads as "OSLO is guessing," undercutting trust. The honest density lever is **grounded gap-detection** (coverage-gap set-difference vs the 8 artifact types × completeness criteria), which scales *up* with sparseness; inference should stay a bounded minority. Demonstrated in the reference prototype (`03-findings`: the DevNorth sample expanded 6→15 findings — 10 grounded / 5 inferred — for the same sparse brief).
+- **Affected Layer(s):** Synthesis / understanding contracts (`20_handoff/contracts` — Wave S / Wave B) + Fast-Pass stage spec (`30_engineering/analysis_engine`). Non-doctrinal; **no new epistemic invariant**.
+- **Affected Concepts:** Coverage-gap detection; finding grounding (Wave B "anchor each Finding to Attested evidence"); no-silent-gap-filling (Wave S); Fast/Deep (DL-046); cost governance (DL-048); epistemic basis (DL-093); finding-type taxonomy (RB-033); Reliability (Coverage / Evidence availability / Assessability).
+- **Proposal Scope:** Ratify an **orientation-coverage rule** — the Fast Pass / Infer runs a **grounded completeness-criteria matrix** (8 artifact types × CAF dimensions × an owner-ratified completeness-criteria set); each unmet criterion is a **grounded** finding (`coverage_gap` / `missing_information` / `ambiguity`), anchored to the expected-artifact framework. Density is an **outcome** of the matrix, never a quota met by fabrication; inference remains explicitly flagged (`basis = inferred`) and a **bounded minority**. All numeric thresholds (criteria set, density floor, grounded:inferred target) **owner-set**; must stay within the DL-048 per-tier budget (graceful degradation → partial coverage deferred to Deep).
+- **Dependencies:** `WAVE_S_CONTRACT_PACKAGE_SYNTHESIS_ENGINE` (DL-047); `WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING`; `FAST_PASS_STAGE_IO_SPEC`; `RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`; DL-093; DL-046; DL-048; RB-033.
+- **Proposal:** `00_owner/decisions/PROPOSAL_ONBOARDING_FINDING_COVERAGE_DRAFT.md`.
+- **Status:** Proposed — owner to ratify the rule and set thresholds (or defer to Alpha telemetry tuning).
+
 ---
 
 ## Governance Notes
