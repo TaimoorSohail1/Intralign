@@ -177,7 +177,7 @@ Ratified by **DL-088** (presentation-only; complements DL-085 §P). To reduce co
 ## R. Ratified update — Overview cognitive-load trim (DL-090, 2026-07-02)
 
 Ratified by **DL-090** (presentation-only; **amends §Q**). The Overview is trimmed to: **Confidence → a compact "What's driving it" CAF driver-glance → confidence trend → Start here → Progress → (quiet) project summary.** Removed from the Overview:
-- **Reliability component breakdown** — headline stays on the confidence line; Coverage/Evidence/Assessability fold into the "how this is calculated" explainer.
+- **Reliability component breakdown** — headline stays on the confidence line; Coverage/Evidence availability/Assessability fold into the "how this is calculated" explainer. **Realization (DL-090):** that explainer is the **top-bar Confidence pill popover**, which shows the CAF dimension breakdown **and** the three reliability components; the confidence-line reliability qualifier links to it. Reliability remains a **qualifier** of Confidence, determined independently of CAF — not a fourth dimension, never findings-driven (POS-6). Verified by baseline `08-confidence-explainer`.
 - **Recommendations summary** — Panel Model; recommendations live only inside a Finding ("Start here" carries the next action).
 - **Attention heatmap** — relocated to its own **"Attention map" (MRI) left-rail surface** (see Global-Nav / MRI specs), not embedded here.
 

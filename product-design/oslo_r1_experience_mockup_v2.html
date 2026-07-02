@@ -872,7 +872,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
     <span class="crumb-sep">›</span>
     <div class="tb-crumb" id="crumb">Overview</div>
     <div class="tb-sp"></div>
-    <button class="conf-pill" id="confpill" onclick="toggleConfPop(event)" title="Outcome Confidence — click for the dimensions"><span class="conf-dot"></span><span class="t1">Confidence</span><span class="t2 mono" id="cp-idx">58</span><span class="t2b" id="cp-band">Moderate</span><span class="q" id="cp-rel">Moderate reliability</span><span style="color:var(--subtle);font-size:9px;margin-left:2px">▾</span></button>
+    <button class="conf-pill" id="confpill" onclick="toggleConfPop(event)" title="Outcome Confidence — click for the dimensions and reliability basis"><span class="conf-dot"></span><span class="t1">Confidence</span><span class="t2 mono" id="cp-idx">58</span><span class="t2b" id="cp-band">Moderate</span><span class="q" id="cp-rel">Moderate reliability</span><span style="color:var(--subtle);font-size:9px;margin-left:2px">▾</span></button>
     <button class="icbtn" onclick="openCmd()" title="Search & commands (⌘K)" aria-label="Search and commands" style="width:30px;height:30px">⌕</button>
     <button class="btn btn-ghost btn-sm" onclick="openShare()" title="Share this project">⤳ Share</button>
     <button class="btn btn-ghost btn-sm" onclick="openExport()" title="Export / share-out a snapshot">⇩ Export</button>
@@ -967,7 +967,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
                 </svg><div class="ctr"><span class="idx-wrap"><span class="idx mono" id="ring-idx">58</span><span class="idx-max">/100</span></span><span class="band" id="ring-band">Moderate</span></div></div>
                 <div class="conf-meta">
                   <div class="big">Understanding is forming. <span class="info" data-tip="How this is calculated: OSLO derives Confidence from the CAF dimensions (Clarity · Alignment · Feasibility), qualified by reliability. It changes only when something changes the read — a finding resolved, evidence added — and can rise or fall. The named band is the meaningful unit; small shifts within a band aren't material.">i</span></div>
-                  <div class="nh">Qualified by <b style="color:var(--muted)">Moderate reliability</b> — held back by a Feasibility weakness. <span class="info" data-tip="The signal sits here because of a Feasibility weakness (one of the three dimensions), not a reliability shortfall. When the three dimensions look strong but the read is weakly supported (low reliability), Confidence is held back and flagged — never shown bare.">i</span></div>
+                  <div class="nh">Qualified by <b style="color:var(--muted)">Moderate reliability</b> — held back by a Feasibility weakness. <span class="info" data-tip="The signal sits here because of a Feasibility weakness (one of the three dimensions), not a reliability shortfall. When the three dimensions look strong but the read is weakly supported (low reliability), Confidence is held back and flagged — never shown bare. Reliability basis (Coverage · Evidence availability · Assessability) lives in the Confidence pill explainer — click the Confidence chip.">i</span></div>
                   <div class="nh" id="conf-change" style="display:none;margin-top:7px"></div>
                 </div>
               </div>
@@ -1111,7 +1111,14 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
     <div class="cpp-d"><span>Alignment</span><span class="cpp-bar"><i style="width:38%;background:var(--conf-low)"></i></span><b>Limited</b></div>
     <div class="cpp-d"><span>Feasibility</span><span class="cpp-bar"><i style="width:34%;background:var(--conf-low)"></i></span><b>Limited</b></div>
   </div>
-  <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:11px" onclick="closeConfPop();openTab('understanding')">Open full breakdown →</button>
+  <div class="cpp-h" style="margin-top:14px">Reliability basis <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--subtle)">· qualifies confidence</span></div>
+  <div class="cpp-dims">
+    <div class="cpp-d" title="How much of the project reality was observable in your inputs."><span>Coverage</span><span class="cpp-bar"><i style="width:60%;background:var(--conf-medium)"></i></span><b>Moderate</b></div>
+    <div class="cpp-d" title="Presence and accessibility of evidence supporting the read."><span>Evidence</span><span class="cpp-bar"><i style="width:60%;background:var(--conf-medium)"></i></span><b>Moderate</b></div>
+    <div class="cpp-d" title="Feasibility is hard to assess while key dependencies are unconfirmed."><span>Assessable</span><span class="cpp-bar"><i style="width:35%;background:var(--conf-low)"></i></span><b style="color:var(--warning)">Limited</b></div>
+  </div>
+  <div class="cpp-sub" style="margin-top:9px;margin-bottom:0">Determined independently of Clarity/Alignment/Feasibility — it reflects the evidence behind the read, not the plan's integrity, and can rise as evidence improves.</div>
+  <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:12px" onclick="closeConfPop();openTab('understanding')">Open Overview →</button>
 </div>
 
 <!-- Findings moved to a center pane (#pane-findings) -->
@@ -1722,7 +1729,7 @@ const TOUR=[
  {sel:'#osec-attn',t:'The attention map',x:'Open it for weaknesses across your plan sections × dimensions. Click a cell to investigate a finding (why); click an artifact row to open it (where).'},
  {sel:'.explorer',t:'Your plan sections',x:'OSLO drafted these from your input. Edit any one and OSLO reanalyzes automatically — only reanalysis changes the assessment.'},
  {sel:'.chatp',t:'Ask OSLO anything',x:'A persistent advisor — ask about a finding, an artifact, or what to do next. It reads and explains; you stay in control — nothing changes without you.'},
- {sel:'#confpill',t:'Your read, always visible',x:'Confidence + reliability stay in the top bar. Click it for the Clarity · Alignment · Feasibility breakdown.'}
+ {sel:'#confpill',t:'Your read, always visible',x:'Confidence + reliability stay in the top bar. Click it for the Clarity · Alignment · Feasibility breakdown and the reliability basis.'}
 ];
 let _tourI=-1;
 function startTour(){closeSettings();closeOrientation();document.getElementById('bodyGrid').classList.remove('chat-collapsed');openTab('understanding');tourGo(0);}

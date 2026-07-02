@@ -10,6 +10,7 @@
     { "name": "04-finding-panel","proto": { "prep": "jumpToWorkspace();openFindingPanel('FND-2041')" },"app": { "path": "/projects/{sampleId}/findings/{criticalId}" } },
     { "name": "05-artifact",     "proto": { "prep": "jumpToWorkspace();openArtifact('Resources')" },  "app": { "path": "/projects/{sampleId}/sections/resources" } },
     { "name": "06-history",      "proto": { "prep": "jumpToWorkspace();openHistory()" },              "app": { "path": "/projects/{sampleId}/history" } },
-    { "name": "07-attention-map","proto": { "prep": "jumpToWorkspace();openMRI()" },                "app": { "path": "/projects/{sampleId}/attention" } }
+    { "name": "07-attention-map","proto": { "prep": "jumpToWorkspace();openMRI()" },                "app": { "path": "/projects/{sampleId}/attention" } },
+    { "name": "08-confidence-explainer","proto": { "prep": "jumpToWorkspace();toggleConfPop({stopPropagation:function(){}})" }, "app": { "path": "/projects/{sampleId}/overview", "prep": "openConfidenceExplainer" } }
   ]
 }

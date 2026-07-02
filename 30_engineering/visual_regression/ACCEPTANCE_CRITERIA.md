@@ -41,6 +41,15 @@
 - **Center pane**, secondary, **append-only, read-only** — no restore/rollback/actions (DL-088; HISTORY_SURFACE).
 - Prior/current/superseded labels correct; viewing changes nothing.
 
+## 07 — Attention map (its own surface)
+- Reached from the **left rail** ("Attention map"), not embedded in the Overview (DL-090; GLOBAL_NAV §V, MRI §S).
+- Heatmap cell with 2+ findings opens the **filtered Findings list** (not a single finding); single-finding cell opens that finding's panel.
+
+## 08 — Confidence explainer (the "how this is calculated" popover)
+- Opened from the top-bar **Confidence pill**; shows the CAF dimension breakdown **and** the **Reliability basis** — Coverage, Evidence availability, Assessability (DL-085; DL-090 relocation target).
+- Reliability is presented as a **qualifier** of Confidence, **determined independently** of Clarity/Alignment/Feasibility — not a fourth dimension and not findings-derived (Interpretation Doctrine; DL-085).
+- The reliability components are **not** rendered on the Overview (DL-090 trim) — they live only here and are bound to the reliability read on `GET /projects/{pid}/confidence`.
+
 ## Notes for the implementer
 - Run visual gate in a **fixed container** (viewport 1440×960, reduced-motion, srgb) so diffs are deterministic; mask genuinely dynamic regions (timestamps) via Playwright `mask` if needed.
 - The numeric Confidence value is produced by the **v0 formula** (`30_engineering/scoring/CAF_CONFIDENCE_V0_SCORING_FORMULA_V1.md`); thresholds are the ratified 5-band map (DL-086). Sub-±7 jitter must not render as a change.
