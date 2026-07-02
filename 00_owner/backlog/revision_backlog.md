@@ -372,6 +372,16 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 - **Proposal:** `00_owner/decisions/PROPOSAL_R2_PHASE_TIER_PLACEMENT_DRAFT.md`. **Draft record:** `records/DL-084-r2-phase-tier-placement.md`.
 - **Status:** Proposed.
 
+### RB-033 — Epistemic basis on Findings (two-axis type + basis; R1 presentation, R2 sub-typing)
+
+- **Source Finding:** Owner observation 2026-07-02 — Findings do not surface the epistemic language PMs use ("inferred," "assumed/assumption," "stated"), although canon already ratifies the vocabulary (Attested/Derived; assumption/constraint/dependency content types) and a **Disclose obligation** (`RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`). A consistency check found the Finding card non-conformant to `FINDING_PRESENTATION_SPECIFICATION_V1` §C (required "Finding type" not rendered), and that "inference" was conflated with a finding **type** rather than the Derived **basis** — conflicting with the ratified **Gap / Conflict / Risk** finding types (Architecture Foundation M-3; `WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING`).
+- **Affected Layer(s):** Product experience (`10_product/experience`) for R1 presentation; Finding object model + Wave B Infer/Evaluate contracts (`20_handoff`) for R2. Non-doctrinal.
+- **Affected Concepts:** Finding type (Gap/Conflict/Risk); epistemic state (Attested/Derived); content types (assumption/ambiguity); Disclose obligation; finding-type-as-label-not-coefficient (Outcome-Confidence Calibration); DL-087 plain-language labels.
+- **Proposal Scope:** A **two-axis** model — **type** (what the observation is: Gap/Conflict/Risk + finer kinds) separate from **basis** (how grounded: stated=Attested vs inferred=Derived). **Phase R1 (presentation — ready to ratify):** amend `FINDING_PRESENTATION_SPECIFICATION_V1` §C/§F + `FINDING_PANEL_SPECIFICATION_V1` so the card carries type + a stated/inferred basis tag and the panel names the basis in plain language (discharging the Disclose obligation at the finding level); drop "Inference" as a type. Realized in the reference prototype (baseline `03-findings`); presentation-only, no object/doctrine change. **Phase R2 (ontology — deferred):** formalize the finer kinds (Assumption/Ambiguity/Coverage-gap/Missing-info) as **sub-types of Gap/Conflict/Risk** in the Finding object model, and specify the **basis-assignment contract** (which of Infer/Evaluate sets a finding's Attested/Derived basis).
+- **Dependencies:** `RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`; Architecture Foundation M-3 + `WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING` (Gap/Conflict/Risk); `CANONICAL_GLOSSARY` (Attested/Derived, DL-087); `FINDING_PRESENTATION_SPECIFICATION_V1` §C/§F; `FINDING_PANEL_SPECIFICATION_V1`; `OUTCOME_CONFIDENCE_CALIBRATION_DECISION_001` (type is a label, not a coefficient). R2 additionally: Finding object model + Wave B Infer/Evaluate contracts.
+- **Proposal:** `00_owner/decisions/PROPOSAL_EPISTEMIC_BASIS_ON_FINDINGS_DRAFT.md`.
+- **Status:** Proposed — R1 presentation ready for owner ratification; R2 sub-typing + basis-assignment contract tracked as the deferred phase.
+
 ---
 
 ## Governance Notes
