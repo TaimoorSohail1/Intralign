@@ -38,6 +38,7 @@ import Chip from "@mui/material/Chip";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import CircularProgress from "@mui/material/CircularProgress";
+import Alert from "@mui/material/Alert";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -243,6 +244,10 @@ export function Dashboard() {
             Loading your projects…
           </Typography>
         </Box>
+      ) : projectsQ.isError ? (
+        <Alert severity="error" data-testid="dashboard-error">
+          Projects could not be loaded. Refresh the page and try again.
+        </Alert>
       ) : projects.length === 0 ? (
         <Paper variant="outlined" sx={{ p: 2 }}>
           <Typography
