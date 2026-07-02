@@ -189,4 +189,8 @@ Conformance is **all-or-nothing on these rules**; any prescriptive/opaque/unanch
 
 *This specification defines the canonical Release 1 presentation of Findings: descriptive, evidence-based, explainable, CAF-dimension-organized, finding-anchored surfaces with Recommendations beneath, and correct (non-causal) depiction of the Finding → CAF → Confidence relationship. It modifies no model, lifecycle, object, event, or assessment behavior, reintroduces no Resolution Path object, and introduces no governance, execution, automation, scoring, or ranking.*
 
+## O. Ratified update — Findings workspace & filters (DL-088, 2026-07-02)
+
+Ratified by **DL-088** (presentation-only). The **Findings list is a center-pane workspace** (the canonical "Findings Workspace") reachable from the left rail — consistent with Overview/History; the **finding detail remains a contextual Panel** (Panel Model preserved). Adds **Dimension / Severity / Section filters** and a **Group-by (Dimension | Section)** control; default grouping is **Dimension** (findings map to the CAF dimensions that drive Confidence). Finding cards stay scannable (title · severity · location · status); type, evidence count, and resolution paths live in the finding detail. No new object, scoring, or ranking. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html`.
+
 **Finding Presentation Specification v1 complete.**

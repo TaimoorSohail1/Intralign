@@ -170,4 +170,8 @@ Ratified by **DL-085** (Accepted with Conditions). This block updates the Confid
 
 *This specification defines the single canonical Release 1 Project Overview screen architecture: a confidence-first understanding console — Project Header → Outcome Confidence → CAF → Reliability → Findings → Recommendations → Summary — with a desktop understanding-spine + context-rail, a confidence-first mobile column, state-aware provisional/current presentation, hub-and-spoke navigation to the Findings and Recommendations experiences, and append-only history. It defines presentation architecture only — no models, scoring, computation, generation, governance, execution, automation, APIs, events, or styling — and preserves that confidence is reliability-qualified trust in understanding and only reanalysis changes assessment.*
 
+## Q. Ratified update — Overview hierarchy (DL-088, 2026-07-02)
+
+Ratified by **DL-088** (presentation-only; complements DL-085 §P). To reduce cognitive load the Overview is sequenced **Confidence → a single "Start here" next-action (the top severity-ordered open finding) → a compact Progress readout → Explore details (CAF · Reliability · Attention)**. The at-a-glance CAF triad is **demoted into Explore details** (it duplicated the CAF card). The §D canonical order and all integrity rules otherwise stand; findings/recommendations remain descriptive/advisory; only reanalysis changes assessment. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html`.
+
 **Project Overview Screen Specification v1 complete.**

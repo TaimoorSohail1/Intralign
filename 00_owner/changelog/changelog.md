@@ -943,6 +943,13 @@ Each changelog entry contains:
 - **Change Summary:** Strategic chain & onboarding positioning (+ plain-language labels). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-123 — DL-088: R1 UX-surface reconciliation (prototype-as-baseline)
+
+- **Date:** 2026-07-02 · **Authorizing Decision:** DL-088.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-088-ux-surface-reconciliation.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** R1 UX-surface reconciliation (prototype-as-baseline). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
