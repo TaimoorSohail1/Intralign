@@ -85,6 +85,7 @@ const LIFECYCLE_LABEL: Record<ProjectLifecycle, string> = {
 function ProjectRow({ project }: { project: Project }) {
   const confidenceQ = useGetConfidenceV1ProjectsProjectIdConfidenceGet(
     project.project_id,
+    { query: { enabled: Boolean(project.current_confidence_state_id) } },
   );
   const confidence = isRecord(confidenceQ.data?.data)
     ? (confidenceQ.data?.data as ConfidenceState)

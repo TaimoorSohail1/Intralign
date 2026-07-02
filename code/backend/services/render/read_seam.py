@@ -60,6 +60,14 @@ ANALYSIS_RUN_TABLE = "analysis_run"
 NOTIFICATION_TABLE = "notification"
 
 
+def _is_unavailable_read_model(exc: Exception, schema_or_table: str) -> bool:
+    """Hosted-demo compatibility for schemas/tables whose migrations are not applied."""
+    text = str(exc)
+    if "PGRST106" in text and f"Invalid schema: {schema_or_table}" in text:
+        return True
+    return "PGRST205" in text and schema_or_table in text
+
+
 @runtime_checkable
 class ProjectionReader(Protocol):
     """The SELECT-only read seam the render mappers + routers depend on.
@@ -128,28 +136,38 @@ class SupabaseProjectionReader:
     def list_projection(self, project_id: str, output_kind: str) -> list[dict[str, Any]]:
         """All current derived projections of a kind for a project (SELECT only)."""
         table = _DERIVED_TABLE[output_kind]
-        resp = (
-            self._client.schema("derived")
-            .table(table)
-            .select("*")
-            .eq("project_id", project_id)
-            .order("recomputed_at", desc=True)
-            .execute()
-        )
-        return list(resp.data)
+        try:
+            resp = (
+                self._client.schema("derived")
+                .table(table)
+                .select("*")
+                .eq("project_id", project_id)
+                .order("recomputed_at", desc=True)
+                .execute()
+            )
+            return list(resp.data)
+        except Exception as exc:
+            if _is_unavailable_read_model(exc, "derived"):
+                return []
+            raise
 
     def get_projection(self, output_kind: str, projection_id: str) -> dict[str, Any] | None:
         """One derived projection by id, or None (SELECT only)."""
         table = _DERIVED_TABLE[output_kind]
-        resp = (
-            self._client.schema("derived")
-            .table(table)
-            .select("*")
-            .eq("projection_id", projection_id)
-            .limit(1)
-            .execute()
-        )
-        return resp.data[0] if resp.data else None
+        try:
+            resp = (
+                self._client.schema("derived")
+                .table(table)
+                .select("*")
+                .eq("projection_id", projection_id)
+                .limit(1)
+                .execute()
+            )
+            return resp.data[0] if resp.data else None
+        except Exception as exc:
+            if _is_unavailable_read_model(exc, "derived"):
+                return None
+            raise
 
     # -- canonical receipts (append-only retention; SELECT only) -------------
 
@@ -212,34 +230,49 @@ class SupabaseProjectionReader:
             raise
 
     def list_analysis_runs(self, project_id: str) -> list[dict[str, Any]]:
-        resp = (
-            self._client.table(ANALYSIS_RUN_TABLE)
-            .select("*")
-            .eq("project_id", project_id)
-            .order("started_at", desc=True)
-            .execute()
-        )
-        return list(resp.data)
+        try:
+            resp = (
+                self._client.table(ANALYSIS_RUN_TABLE)
+                .select("*")
+                .eq("project_id", project_id)
+                .order("started_at", desc=True)
+                .execute()
+            )
+            return list(resp.data)
+        except Exception as exc:
+            if _is_unavailable_read_model(exc, f"public.{ANALYSIS_RUN_TABLE}"):
+                return []
+            raise
 
     def get_analysis_run(self, analysis_run_id: str) -> dict[str, Any] | None:
-        resp = (
-            self._client.table(ANALYSIS_RUN_TABLE)
-            .select("*")
-            .eq("analysis_run_id", analysis_run_id)
-            .limit(1)
-            .execute()
-        )
-        return resp.data[0] if resp.data else None
+        try:
+            resp = (
+                self._client.table(ANALYSIS_RUN_TABLE)
+                .select("*")
+                .eq("analysis_run_id", analysis_run_id)
+                .limit(1)
+                .execute()
+            )
+            return resp.data[0] if resp.data else None
+        except Exception as exc:
+            if _is_unavailable_read_model(exc, f"public.{ANALYSIS_RUN_TABLE}"):
+                return None
+            raise
 
     def list_notifications(self, workspace_id: str) -> list[dict[str, Any]]:
-        resp = (
-            self._client.table(NOTIFICATION_TABLE)
-            .select("*")
-            .eq("workspace_id", workspace_id)
-            .order("created_at", desc=True)
-            .execute()
-        )
-        return list(resp.data)
+        try:
+            resp = (
+                self._client.table(NOTIFICATION_TABLE)
+                .select("*")
+                .eq("workspace_id", workspace_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
+            return list(resp.data)
+        except Exception as exc:
+            if _is_unavailable_read_model(exc, f"public.{NOTIFICATION_TABLE}"):
+                return []
+            raise
 
 
 class SupabaseHistoryReader:
