@@ -24,6 +24,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
+from backend.platform import project_fallback
+
 if TYPE_CHECKING:  # import-time dependency only for type checkers
     from supabase import Client
 
@@ -40,48 +42,75 @@ class SupabaseProjectRepository:
 
     def create(self, row: Mapping[str, Any]) -> dict[str, Any]:
         """Insert one project row (workspace-scoped by ``workspace_id`` in ``row``)."""
-        resp = self._client.table(PROJECT_TABLE).insert(dict(row)).execute()
-        return resp.data[0]
+        try:
+            resp = self._client.table(PROJECT_TABLE).insert(dict(row)).execute()
+            return resp.data[0]
+        except Exception as exc:
+            if project_fallback.is_missing_project_table(exc):
+                return project_fallback.create_project(row)
+            raise
 
     def update_lifecycle(self, project_id: str, lifecycle_state: str) -> dict[str, Any]:
         """Transition the mutable ``lifecycle_state`` (platform table — not append-only)."""
-        resp = (
-            self._client.table(PROJECT_TABLE)
-            .update({"lifecycle_state": lifecycle_state})
-            .eq("project_id", project_id)
-            .execute()
-        )
-        return resp.data[0] if resp.data else {}
+        try:
+            resp = (
+                self._client.table(PROJECT_TABLE)
+                .update({"lifecycle_state": lifecycle_state})
+                .eq("project_id", project_id)
+                .execute()
+            )
+            return resp.data[0] if resp.data else {}
+        except Exception as exc:
+            if project_fallback.is_missing_project_table(exc):
+                return project_fallback.update_project(
+                    project_id, {"lifecycle_state": lifecycle_state}
+                )
+            raise
 
     def update(self, project_id: str, patch: Mapping[str, Any]) -> dict[str, Any]:
         """Patch arbitrary mutable project fields (title/description/etc.)."""
-        resp = (
-            self._client.table(PROJECT_TABLE)
-            .update(dict(patch))
-            .eq("project_id", project_id)
-            .execute()
-        )
-        return resp.data[0] if resp.data else {}
+        try:
+            resp = (
+                self._client.table(PROJECT_TABLE)
+                .update(dict(patch))
+                .eq("project_id", project_id)
+                .execute()
+            )
+            return resp.data[0] if resp.data else {}
+        except Exception as exc:
+            if project_fallback.is_missing_project_table(exc):
+                return project_fallback.update_project(project_id, patch)
+            raise
 
     # -- read ----------------------------------------------------------------
 
     def get(self, project_id: str) -> dict[str, Any] | None:
-        resp = (
-            self._client.table(PROJECT_TABLE)
-            .select("*")
-            .eq("project_id", project_id)
-            .limit(1)
-            .execute()
-        )
-        return resp.data[0] if resp.data else None
+        try:
+            resp = (
+                self._client.table(PROJECT_TABLE)
+                .select("*")
+                .eq("project_id", project_id)
+                .limit(1)
+                .execute()
+            )
+            return resp.data[0] if resp.data else None
+        except Exception as exc:
+            if project_fallback.is_missing_project_table(exc):
+                return project_fallback.get_project(project_id)
+            raise
 
     def list_for_workspace(self, workspace_id: str) -> list[dict[str, Any]]:
         """All projects in a workspace, newest first (workspace-scoped read)."""
-        resp = (
-            self._client.table(PROJECT_TABLE)
-            .select("*")
-            .eq("workspace_id", workspace_id)
-            .order("created_at", desc=True)
-            .execute()
-        )
-        return list(resp.data)
+        try:
+            resp = (
+                self._client.table(PROJECT_TABLE)
+                .select("*")
+                .eq("workspace_id", workspace_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
+            return list(resp.data)
+        except Exception as exc:
+            if project_fallback.is_missing_project_table(exc):
+                return project_fallback.list_projects(workspace_id)
+            raise

@@ -29,6 +29,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
+from backend.platform import project_fallback
+
 if TYPE_CHECKING:  # import-time dependency only for type checkers
     from supabase import Client
 
@@ -180,24 +182,34 @@ class SupabaseProjectionReader:
     # tests, ready for the platform tables (DTM-0018 worker-report escalation).
 
     def list_projects(self, workspace_id: str) -> list[dict[str, Any]]:
-        resp = (
-            self._client.table(PROJECT_TABLE)
-            .select("*")
-            .eq("workspace_id", workspace_id)
-            .order("created_at", desc=True)
-            .execute()
-        )
-        return list(resp.data)
+        try:
+            resp = (
+                self._client.table(PROJECT_TABLE)
+                .select("*")
+                .eq("workspace_id", workspace_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
+            return list(resp.data)
+        except Exception as exc:
+            if project_fallback.is_missing_project_table(exc):
+                return project_fallback.list_projects(workspace_id)
+            raise
 
     def get_project(self, project_id: str) -> dict[str, Any] | None:
-        resp = (
-            self._client.table(PROJECT_TABLE)
-            .select("*")
-            .eq("project_id", project_id)
-            .limit(1)
-            .execute()
-        )
-        return resp.data[0] if resp.data else None
+        try:
+            resp = (
+                self._client.table(PROJECT_TABLE)
+                .select("*")
+                .eq("project_id", project_id)
+                .limit(1)
+                .execute()
+            )
+            return resp.data[0] if resp.data else None
+        except Exception as exc:
+            if project_fallback.is_missing_project_table(exc):
+                return project_fallback.get_project(project_id)
+            raise
 
     def list_analysis_runs(self, project_id: str) -> list[dict[str, Any]]:
         resp = (
