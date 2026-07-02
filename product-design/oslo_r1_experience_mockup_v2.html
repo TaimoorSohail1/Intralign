@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en" style="background:#0E1013;color-scheme:dark">
+<head>
+<meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>html,body{background:#0E1013!important}</style>
+<title>OSLO · R1 Experience Prototype v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E1013; --bg-2:#121519; --surface:#181C21; --surface-2:#1F242B; --surface-3:#262C34;
+  --text:#F5F4F0; --muted:#B8BDC5; --subtle:#8C939D; --border:#2C333B; --border-2:#39414B;
+  --primary:#D97A3A; --primary-hover:#C86A2B; --primary-light:#E59A63; --primary-fg:#0E1013;
+  --success:#4D8B6B; --warning:#D9A441; --danger:#C75B5B;
+  --conf-low:#8C939D; --conf-medium:#B8BDC5; --conf-high:#F5F4F0;
+  --sans:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13.5px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.mono{font-family:var(--mono)}
+.btn{border-radius:7px;padding:8px 15px;font-weight:600;font-size:13px;transition:all .18s}
+.btn-primary{background:var(--primary);color:var(--primary-fg)} .btn-primary:hover{background:var(--primary-hover)}
+.btn-ghost{border:1px solid var(--border-2);color:var(--muted)} .btn-ghost:hover{border-color:var(--subtle);color:var(--text)}
+.btn-sm{padding:5px 11px;font-size:12px}
+.elabel{font-size:9.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid}
+.elabel.derived{color:var(--subtle);border-color:var(--border-2);background:var(--surface-2)}
+.elabel.attested{color:var(--primary-light);border-color:rgba(217,122,58,.4);background:rgba(217,122,58,.10)}
+.elabel.prelim{color:var(--warning);border-color:rgba(217,164,65,.35);background:rgba(217,164,65,.10)}
+.chip{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:99px;border:1px solid var(--border-2);color:var(--muted)}
+
+/* ============ ONBOARDING (vibe-coding intake) ============ */
+#onboarding{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(900px 500px at 50% 8%,rgba(217,122,58,.10),transparent 60%),var(--bg);padding:24px}
+.ob-brand{display:flex;align-items:center;gap:11px;margin-bottom:34px}
+.ob-brand .logo{width:34px;height:34px;border-radius:9px;background:var(--primary);display:grid;place-items:center;color:var(--primary-fg);font-weight:700;font-size:19px}
+.ob-brand .nm{font-size:17px;font-weight:600}.ob-brand .sb{font-size:12px;color:var(--subtle)}
+.ob-h{font-size:34px;font-weight:600;letter-spacing:-.5px;text-align:center;margin-bottom:10px}
+.ob-sub{color:var(--muted);font-size:15px;text-align:center;max-width:560px;margin-bottom:30px;line-height:1.6}
+.composer{width:100%;max-width:680px;background:var(--surface);border:1px solid var(--border-2);border-radius:16px;padding:18px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
+.composer textarea{width:100%;background:none;border:none;color:var(--text);font-family:inherit;font-size:15px;line-height:1.6;resize:none;outline:none;min-height:96px}
+.composer textarea::placeholder{color:var(--subtle)}
+.composer .crow{display:flex;align-items:center;gap:9px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.attach{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);border:1px solid var(--border-2);border-radius:8px;padding:6px 11px}
+.attach:hover{color:var(--text);border-color:var(--subtle)}
+.filechip{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 10px}
+.filechip .x{color:var(--subtle);cursor:pointer}
+.ob-samples{margin-top:26px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.ob-samples .lab{font-size:12px;color:var(--subtle)}
+.sample{font-size:12.5px;color:var(--muted);border:1px solid var(--border-2);border-radius:99px;padding:6px 14px;transition:all .18s}
+.sample:hover{color:var(--text);border-color:var(--primary);background:rgba(217,122,58,.07)}
+.ob-foot{position:absolute;bottom:22px;font-size:11.5px;color:var(--subtle);display:flex;align-items:center;gap:7px}
+/* analyzing overlay */
+#analyzing{position:fixed;inset:0;z-index:110;display:none;flex-direction:column;align-items:center;justify-content:center;background:var(--bg)}
+#analyzing.show{display:flex}
+.scanner{width:130px;height:130px;border-radius:50%;border:2px solid var(--border);position:relative;display:grid;place-items:center;margin-bottom:26px;
+  box-shadow:0 0 60px rgba(217,122,58,.18)}
+.scanner::before{content:"";position:absolute;inset:-2px;border-radius:50%;border-top:2px solid var(--primary);animation:spin 1s linear infinite}
+.scanner .core{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(217,122,58,.35),transparent 70%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.an-steps{font-size:13.5px;color:var(--muted);text-align:center;line-height:2}
+.an-steps .done{color:var(--primary-light)}
+
+/* ============ APP SHELL (Cursor-style IDE) ============ */
+#app{display:none;height:100vh;grid-template-rows:48px 1fr;grid-template-columns:1fr}
+#app.show{display:grid}
+.topbar{grid-row:1;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--border);background:var(--bg-2)}
+.tb-brand{display:flex;align-items:center;gap:9px;font-weight:600}
+.tb-brand .logo{width:22px;height:22px;border-radius:6px;background:var(--primary);display:grid;place-items:center;color:var(--primary-fg);font-weight:700;font-size:13px}
+.tb-crumb{font-size:12.5px;color:var(--subtle)} .tb-crumb b{color:var(--text);font-weight:500}
+.tb-sp{flex:1}
+.conf-pill{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:99px;padding:5px 12px 5px 10px}
+.conf-dot{width:8px;height:8px;border-radius:50%;background:var(--conf-medium)}
+.conf-pill .t1{font-size:10px;color:var(--subtle)} .conf-pill .t2{font-size:12px;font-weight:600}
+.conf-pill .q{font-size:10.5px;color:var(--muted);padding-left:7px;border-left:1px solid var(--border-2)}
+
+.body{grid-row:2;display:grid;grid-template-columns:236px 1fr 360px;overflow:hidden;transition:grid-template-columns .2s}
+.body.chat-collapsed{grid-template-columns:236px 1fr 0}
+
+/* explorer */
+.explorer{border-right:1px solid var(--border);background:var(--bg-2);overflow-y:auto;padding:12px 10px}
+.ex-sec{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--subtle);font-weight:600;padding:12px 8px 6px;display:flex;align-items:center;gap:6px}
+.ex-sec .cnt{margin-left:auto;font-weight:500}
+.ex-item{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;color:var(--muted);font-size:13px;cursor:pointer;transition:all .15s}
+.ex-item:hover{background:var(--surface-2);color:var(--text)}
+.ex-item.active{background:rgba(217,122,58,.12);color:var(--primary-light)}
+.ex-item .ic{width:15px;text-align:center;opacity:.8;font-size:12px}
+.ex-item .fb{margin-left:auto;font-size:10px;font-weight:600;padding:0 6px;border-radius:99px;line-height:16px}
+.fb.crit{background:rgba(199,91,91,.18);color:var(--danger)} .fb.mod{background:rgba(217,164,65,.16);color:var(--warning)}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;color:var(--muted);font-size:13px;cursor:pointer;font-weight:500;transition:all .15s}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:rgba(217,122,58,.12);color:var(--primary-light)}
+.nav-item .ic{width:15px;text-align:center;font-size:13px}
+.nav-item .badge{margin-left:auto;background:var(--danger);color:#fff;font-size:9.5px;font-weight:600;padding:0 6px;border-radius:99px;line-height:16px}
+
+/* center */
+.center{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.tabs{display:flex;align-items:center;gap:1px;border-bottom:1px solid var(--border);background:var(--bg-2);padding:0 6px;height:38px;flex-shrink:0;overflow-x:auto}
+.tab{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:12.5px;color:var(--subtle);border-top:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--muted)}
+.tab.active{color:var(--text);background:var(--bg);border-top-color:var(--primary)}
+.tab .ic{font-size:11px;opacity:.8}
+.tab .x{opacity:.4;font-size:13px} .tab:hover .x{opacity:.8}
+.cscroll{flex:1;overflow-y:auto}
+.pane{display:none;animation:fade .2s} .pane.active{display:block}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* artifact editor */
+.art{max-width:820px;margin:0 auto;padding:26px 34px 80px}
+.art-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.art-head h1{font-size:23px;font-weight:600}
+.art-bar{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--subtle);margin-bottom:6px}
+.vers{display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:6px;padding:3px 9px;cursor:pointer;color:var(--muted)}
+.art-diagbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 14px;margin:14px 0 20px;font-size:12.5px}
+.art-diagbar b{color:var(--text)}
+.art-body p{color:var(--muted);font-size:14.5px;line-height:1.85;margin-bottom:15px}
+.art-body h3{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--subtle);margin:22px 0 10px;font-weight:600}
+.dx{position:relative;cursor:pointer;border-bottom:2px dotted;padding-bottom:1px}
+.dx.crit{border-color:var(--danger)} .dx.mod{border-color:var(--warning)} .dx.warn{border-color:var(--subtle)}
+.dx:hover{background:rgba(217,122,58,.08)}
+.dx .gut{position:absolute;left:-26px;top:2px;font-size:11px}
+.dx.crit .gut{color:var(--danger)} .dx.mod .gut{color:var(--warning)}
+/* inline finding tooltip */
+.dxpop{position:fixed;z-index:60;display:none;width:300px;background:var(--surface-3);border:1px solid var(--border-2);border-radius:10px;padding:13px 15px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.dxpop.show{display:block}
+.dxpop .dt{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.dxpop .dn{font-weight:600;font-size:13px} .dxpop .dd{font-size:12.5px;color:var(--muted);line-height:1.5}
+.dxpop .da{display:flex;gap:8px;margin-top:11px}
+
+/* understanding console */
+.uc{max-width:880px;margin:0 auto;padding:26px 30px 70px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px}
+.card .ch{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.card .ch h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--subtle);font-weight:600}
+.conf-head{display:flex;gap:24px;align-items:center}
+.ring{position:relative;width:96px;height:96px;flex-shrink:0}.ring svg{transform:rotate(-90deg)}
+.ring .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .band{font-size:14px;font-weight:600}.ring .idx{font-size:10.5px;color:var(--subtle)}
+.conf-meta .big{font-size:17px;font-weight:600;margin-bottom:3px}.conf-meta .ql{color:var(--muted);font-size:13px;max-width:430px}
+.nh{margin-top:11px;font-size:11px;color:var(--subtle)}
+.caf-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.caf{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:13px}
+.caf .dn{font-size:11px;color:var(--subtle);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.caf .lvl{font-size:16px;font-weight:600;margin-bottom:7px}
+.cbar{height:5px;border-radius:3px;background:var(--border-2);overflow:hidden;margin-bottom:8px}.cbar i{display:block;height:100%}
+.caf .rl{font-size:11px;color:var(--subtle)}
+
+/* ============ MRI CANVAS (futuristic) ============ */
+.mri{position:relative;height:100%;display:flex;flex-direction:column}
+.mri-top{display:flex;align-items:center;gap:12px;padding:16px 22px;border-bottom:1px solid var(--border)}
+.mri-top h1{font-size:19px;font-weight:600}
+.mri-top .sub{font-size:12.5px;color:var(--subtle)}
+.mfilter{display:flex;gap:7px;margin-left:auto}
+.mf{font-size:11.5px;font-weight:600;border:1px solid var(--border-2);border-radius:99px;padding:5px 13px;color:var(--muted);transition:all .15s}
+.mf:hover{color:var(--text)} .mf.on{color:var(--text);border-color:var(--primary);background:rgba(217,122,58,.10)}
+.mf .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.mcanvas{flex:1;position:relative;overflow:hidden;
+  background:radial-gradient(700px 480px at 50% 42%,rgba(217,122,58,.06),transparent 65%),
+  linear-gradient(var(--bg-2),var(--bg));}
+.gridbg{position:absolute;inset:0;opacity:.35;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:46px 46px;-webkit-mask-image:radial-gradient(620px 440px at 50% 44%,#000,transparent 72%);
+  mask-image:radial-gradient(620px 440px at 50% 44%,#000,transparent 72%)}
+.scanline{position:absolute;left:0;right:0;height:160px;top:-160px;
+  background:linear-gradient(180deg,transparent,rgba(217,122,58,.10),transparent);animation:scan 5.5s ease-in-out infinite}
+@keyframes scan{0%{top:-160px}50%{top:100%}100%{top:-160px}}
+.mlegend{position:absolute;left:20px;bottom:18px;font-size:11px;color:var(--subtle);display:flex;flex-direction:column;gap:6px}
+.mlegend .row{display:flex;align-items:center;gap:7px}.mlegend i{width:9px;height:9px;border-radius:50%}
+.mcore{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.mcore .b{font-size:21px;font-weight:600}.mcore .l{font-size:10.5px;color:var(--subtle);text-transform:uppercase;letter-spacing:.7px;margin-top:2px}
+.node{position:absolute;transform:translate(-50%,-50%);cursor:pointer;transition:transform .15s}
+.node .d{width:14px;height:14px;border-radius:50%;border:2px solid var(--bg)}
+.node:hover{transform:translate(-50%,-50%) scale(1.35);z-index:5}
+.node.crit .d{background:var(--danger);box-shadow:0 0 16px rgba(199,91,91,.7)}
+.node.mod .d{background:var(--warning);box-shadow:0 0 14px rgba(217,164,65,.6)}
+.node.warn .d{background:var(--subtle);box-shadow:0 0 10px rgba(140,147,157,.5)}
+.node .lbl{position:absolute;left:18px;top:-4px;white-space:nowrap;font-size:11px;color:var(--muted);background:rgba(14,16,19,.85);padding:2px 7px;border-radius:5px;border:1px solid var(--border);opacity:0;transition:opacity .15s;pointer-events:none}
+.node:hover .lbl{opacity:1}
+.node.pulse .d{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+.axis-lbl{position:absolute;font-size:11px;font-weight:600;letter-spacing:.6px;color:var(--subtle);text-transform:uppercase}
+
+/* heatmap (primary MRI visual) */
+.heatwrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px}
+.heat{display:grid;grid-template-columns:150px repeat(3,118px);grid-auto-rows:60px;gap:8px}
+.heat-corner{font-size:10.5px;color:var(--subtle);text-transform:uppercase;letter-spacing:.6px;align-self:center}
+.heat-colh{font-size:12.5px;font-weight:600;color:var(--muted);text-align:center;align-self:center}
+.heat-rowh{font-size:13px;color:var(--muted);align-self:center}
+.heat-cell{border-radius:11px;display:grid;place-items:center;cursor:pointer;border:1px solid var(--border);transition:transform .15s,box-shadow .15s;font-weight:600;font-size:16px;position:relative}
+.heat-cell:hover{transform:scale(1.06);z-index:3;border-color:var(--border-2)}
+.heat-cell.l0{background:var(--surface-2);color:var(--subtle);cursor:default}
+.heat-cell.l1{background:rgba(217,164,65,.16);color:var(--warning);border-color:rgba(217,164,65,.28)}
+.heat-cell.l2{background:rgba(217,164,65,.44);color:#3a2a08;border-color:rgba(217,164,65,.55)}
+.heat-cell.l3{background:var(--danger);color:#fff;border-color:var(--danger);box-shadow:0 0 24px rgba(199,91,91,.55)}
+.heat-cell .mini{position:absolute;bottom:6px;font-size:9px;font-weight:500;opacity:.85;letter-spacing:.3px}
+.heat-legend{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--subtle)}
+.heat-legend i{width:22px;height:12px;border-radius:3px;display:inline-block}
+.heat-legend .g0{background:var(--surface-2)}.heat-legend .g1{background:rgba(217,164,65,.16)}.heat-legend .g2{background:rgba(217,164,65,.44)}.heat-legend .g3{background:var(--danger)}
+.heat-legend .note{margin-left:16px}
+.fieldwrap{position:absolute;inset:0}
+.dp-dot{width:8px;height:8px;border-radius:50%;background:var(--warning);animation:pulse 1.2s ease-in-out infinite;flex-shrink:0}
+.dpbanner{display:flex;align-items:center;gap:10px;padding:9px 22px;border-bottom:1px solid var(--border);background:rgba(217,164,65,.07);font-size:12.5px;color:var(--muted)}
+.dpbanner.done{background:rgba(77,139,107,.10)}.dpbanner.done .dp-dot{background:var(--success);animation:none}
+/* ============ GLOBAL CHAT PANEL (persistent, Cursor-style) ============ */
+.chatp{border-left:1px solid var(--border);background:var(--bg-2);display:flex;flex-direction:column;overflow:hidden}
+.body.chat-collapsed .chatp{display:none}
+.chat-h{display:flex;align-items:center;gap:9px;padding:12px 15px;border-bottom:1px solid var(--border)}
+.chat-h .o{width:22px;height:22px;border-radius:6px;background:var(--primary);display:grid;place-items:center;color:var(--primary-fg);font-weight:700;font-size:12px}
+.chat-h .nm{font-weight:600;font-size:13px}
+.chat-h .mode{margin-left:auto;font-size:11px;color:var(--subtle);border:1px solid var(--border-2);border-radius:6px;padding:3px 9px}
+.chat-ctx{padding:8px 15px;border-bottom:1px solid var(--border);font-size:11px;color:var(--subtle);display:flex;align-items:center;gap:7px}
+.chat-ctx .pill{background:var(--surface-2);border:1px solid var(--border-2);border-radius:6px;padding:2px 8px;color:var(--muted);font-family:var(--mono);font-size:10.5px}
+.chat-scroll{flex:1;overflow-y:auto;padding:15px}
+.cmsg{margin-bottom:15px}
+.cmsg .who{font-size:10.5px;color:var(--subtle);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.cmsg .bub{font-size:13px;line-height:1.6;color:var(--muted)}
+.cmsg.user .bub{background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text)}
+.cmsg .bub a{color:var(--primary-light);cursor:pointer}
+.chat-foot{padding:12px;border-top:1px solid var(--border)}
+.chat-input{background:var(--surface);border:1px solid var(--border-2);border-radius:10px;padding:10px 12px}
+.chat-input textarea{width:100%;background:none;border:none;color:var(--text);font-family:inherit;font-size:13px;resize:none;outline:none;min-height:38px}
+.chat-input .cr{display:flex;align-items:center;gap:8px;margin-top:7px}
+.chat-input .cr .sp{flex:1;font-size:11px;color:var(--subtle)}
+.chat-toggle{position:absolute;top:54px;right:12px;z-index:20;border:1px solid var(--border-2);background:var(--surface);border-radius:7px;padding:5px 10px;font-size:12px;color:var(--muted);display:none}
+.body.chat-collapsed ~ .chat-toggle,.show .chat-toggle{display:block}
+
+/* artifact = predefined elements w/ epistemic notation */
+.artlegend{font-size:11.5px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:9px 13px;margin:6px 0 16px;line-height:1.6}
+.el{border:1px solid var(--border);border-radius:12px;padding:13px 16px;margin-bottom:12px;background:var(--surface)}
+.el[data-epi="attested"]{border-color:rgba(217,122,58,.32)}
+.el-h{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.el-n{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--subtle);font-weight:600}
+.epi{font-size:9.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid;white-space:nowrap}
+.epi.derived{color:var(--subtle);border-color:var(--border-2);background:var(--surface-2)}
+.epi.attested{color:var(--primary-light);border-color:rgba(217,122,58,.4);background:rgba(217,122,58,.10)}
+.el-act{margin-left:auto;display:flex;gap:6px;opacity:0;transition:opacity .15s}
+.el:hover .el-act{opacity:1}
+.btn-mini{font-size:11px;color:var(--muted);border:1px solid var(--border-2);border-radius:6px;padding:3px 9px}
+.btn-mini:hover{color:var(--text);border-color:var(--subtle)}
+.el-b{color:var(--muted);font-size:14px;line-height:1.7}
+/* Notion-style block editor */
+.doc{max-width:780px;margin:6px auto 0}
+.blk{position:relative;display:flex;gap:6px;padding:2px 0;border-radius:6px}
+.blk:hover{background:rgba(255,255,255,.02)}
+.blk-gutter{width:16px;flex-shrink:0;color:var(--subtle);opacity:0;cursor:grab;font-size:12px;text-align:center;padding-top:5px;user-select:none;letter-spacing:-2px}
+.blk:hover .blk-gutter{opacity:.45}
+.blk-c{flex:1;min-width:0}
+.blk-c p{color:var(--text);font-size:14.5px;line-height:1.75;margin:3px 0}
+.blk-c h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--subtle);font-weight:600;margin:14px 0 3px}
+.blk-c ul{margin:3px 0;list-style:none;padding:0}
+.blk-c li{position:relative;padding-left:17px;color:var(--text);font-size:14px;line-height:1.7;margin:3px 0}
+.blk-c li:before{content:'•';position:absolute;left:4px;color:var(--subtle)}
+.blk-c table{width:100%;border-collapse:collapse;font-size:13px;margin:5px 0}
+.blk-c th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--subtle);font-weight:600;padding:7px 10px;border-bottom:1px solid var(--border-2)}
+.blk-c td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--muted)}
+.blk-c tr:hover td{background:rgba(255,255,255,.02)}
+.blk-anno{width:116px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px;padding-top:5px}
+.blk-epi{font-size:9px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;padding:1px 6px;border-radius:99px;border:1px solid;opacity:.5;transition:opacity .15s}
+.blk:hover .blk-epi{opacity:1}
+.blk-epi.derived{color:var(--subtle);border-color:var(--border-2)}
+.blk-epi.attested{color:var(--primary-light);border-color:rgba(217,122,58,.4);background:rgba(217,122,58,.10);opacity:1}
+.blk-confirm{font-size:9.5px;color:var(--muted);border:1px solid var(--border-2);border-radius:5px;padding:1px 6px;opacity:0;transition:opacity .15s}
+.blk:hover .blk-confirm{opacity:1}.blk-confirm:hover{color:var(--text);border-color:var(--subtle)}
+.blk.hasfind{border-left:2px solid;border-radius:0 6px 6px 0;padding-left:8px;margin-left:-10px}
+.blk.hasfind.crit{border-color:var(--danger)}.blk.hasfind.mod{border-color:var(--warning)}.blk.hasfind.warn{border-color:var(--subtle)}
+.find-marker{font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;cursor:pointer;border:1px solid;white-space:nowrap}
+.find-marker.crit{color:var(--danger);border-color:rgba(199,91,91,.4);background:rgba(199,91,91,.09)}
+.find-marker.mod{color:var(--warning);border-color:rgba(217,164,65,.4);background:rgba(217,164,65,.09)}
+.find-marker.warn{color:var(--subtle);border-color:var(--border-2)}
+/* flowing-prose editor + inline color annotations + live autosave */
+.doc{outline:none}
+.doc p{color:var(--text);font-size:15px;line-height:1.8;margin:11px 0}
+.doc h3{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--subtle);font-weight:600;margin:20px 0 6px}
+.doc ul{margin:8px 0;padding-left:20px}.doc li{color:var(--text);font-size:14.5px;line-height:1.75;margin:5px 0}
+.doc table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0}
+.doc th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--subtle);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border-2)}
+.doc td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+.doc *:focus{outline:none}
+.anno{cursor:pointer;border-radius:3px;padding:0 1px;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;font-weight:500}
+.anno.crit{color:var(--danger);text-decoration-color:var(--danger)}
+.anno.mod{color:var(--warning);text-decoration-color:var(--warning)}
+.anno.warn{color:var(--text);text-decoration-color:var(--subtle)}
+.anno:hover{background:rgba(217,122,58,.12)}
+.doc p.attested,.doc li.attested,.doc h3.attested{box-shadow:inset 3px 0 var(--primary);padding-left:11px;margin-left:-14px}
+.doc td.attested{box-shadow:inset 3px 0 var(--primary)}
+.savestate{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--subtle)}
+.savestate .ss-dot{width:7px;height:7px;border-radius:50%;background:var(--success)}
+.savestate.saving .ss-dot{background:var(--subtle)}
+.savestate.stale{color:var(--warning)}.savestate.stale .ss-dot{background:var(--warning)}
+.savestate.reana .ss-dot{background:var(--warning);animation:pulse 1s ease-in-out infinite}
+.savestate.ok .ss-dot{background:var(--success)}
+.editbar,.stalebar{display:none;align-items:center;gap:10px;border-radius:9px;padding:9px 13px;margin:6px 0 14px;font-size:12.5px;color:var(--muted)}
+.editbar{background:rgba(217,122,58,.08);border:1px solid rgba(217,122,58,.3)}
+.stalebar{background:rgba(217,164,65,.09);border:1px solid rgba(217,164,65,.3)}
+.editing .editbar{display:flex}.editing .artlegend{display:none}
+.stale .stalebar{display:flex}.stale .artlegend{display:none}
+.editing .blk-anno{opacity:.38;pointer-events:none}
+.editing .blk-c[contenteditable]{outline:none}
+.editing .blk-c[contenteditable]:hover{background:rgba(255,255,255,.03);border-radius:4px}
+.editing .blk-c[contenteditable]:focus{box-shadow:inset 0 0 0 1px var(--border-2);border-radius:4px}
+.stale .blk-anno{opacity:.55}
+/* finding / issue contextual panel */
+.findscrim{position:fixed;top:48px;left:236px;right:0;bottom:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.findscrim.open{opacity:1;pointer-events:auto}
+.findpanel{position:fixed;top:48px;right:0;bottom:0;width:480px;max-width:92vw;background:var(--bg-2);border-left:1px solid var(--border-2);box-shadow:-14px 0 44px rgba(0,0,0,.55);transform:translateX(106%);transition:transform .25s var(--ease);z-index:41;display:flex;flex-direction:column}
+.findpanel.open{transform:none}
+.fp-h{padding:15px 18px;border-bottom:1px solid var(--border)}
+.fp-h .fp-top{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.fp-h h2{font-size:16.5px;font-weight:600;line-height:1.3}
+.fp-close{margin-left:auto;font-size:18px;color:var(--subtle);cursor:pointer}
+.fp-scroll{flex:1;overflow-y:auto;padding:16px 18px 24px}
+.fp-sec{margin-bottom:17px}
+.fp-sec .t{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--subtle);font-weight:600;margin-bottom:7px}
+.fp-sec p{font-size:13px;color:var(--muted);line-height:1.6}
+.fp-ev{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:11px 13px;margin-bottom:7px;font-size:12.5px;color:var(--muted)}
+.fp-ev .src{font-size:10.5px;color:var(--primary-light);font-family:var(--mono);margin-bottom:3px}
+.fp-rec{border:1px solid rgba(217,122,58,.4);background:rgba(217,122,58,.06);border-radius:10px;padding:13px 15px}
+.fp-rec .tag{color:var(--primary-light);font-weight:600;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px}
+.fp-path{border:1px solid var(--border);border-radius:8px;padding:10px 13px;margin-top:8px;font-size:12.5px;color:var(--muted)}
+.fp-foot{border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--bg-2)}
+.fp-note{font-size:10.5px;color:var(--subtle);width:100%;margin-top:2px}
+.fp-path{cursor:pointer}.fp-path.sel{border-color:var(--primary);background:rgba(217,122,58,.08)}
+.fp-path .selmark{float:right;color:var(--primary-light);font-size:11px;font-weight:600}
+/* all-findings overlay with filters */
+.findsall{position:fixed;top:48px;left:236px;right:0;bottom:0;background:var(--bg);z-index:38;display:none;flex-direction:column}
+.findsall.open{display:flex}
+.fa-h{padding:15px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.fa-h h1{font-size:19px;font-weight:600}
+.fa-filters{display:flex;align-items:center;gap:7px;padding:11px 22px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.fa-lab{font-size:10px;color:var(--subtle);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.ff{font-size:12px;border:1px solid var(--border-2);border-radius:99px;padding:4px 12px;color:var(--muted)}
+.ff.on{color:var(--text);border-color:var(--primary);background:rgba(217,122,58,.10)}
+.fa-list{flex:1;overflow-y:auto;padding:18px 22px}
+.fa-group{margin-bottom:20px}
+.fa-gh{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.fcard{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin-bottom:9px;cursor:pointer;display:flex;gap:12px;align-items:stretch;transition:border-color .15s}
+.fcard:hover{border-color:var(--border-2)}
+.fcard .sevbar{width:4px;border-radius:3px;flex-shrink:0}
+.fcard .ft{font-weight:600;font-size:13.5px;margin-bottom:5px}
+.fcard .fm{font-size:11.5px;color:var(--subtle);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.fa-hidden{font-size:12px;color:var(--subtle);text-align:center;padding:12px}
+/* persistent understanding metrics on global panel */
+.upanel{border-bottom:1px solid var(--border);padding:11px 13px;background:var(--bg-2)}
+.up-h{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--subtle);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.metric{display:flex;align-items:center;gap:11px;padding:8px;border-radius:9px;cursor:pointer;transition:background .15s}
+.metric:hover{background:var(--surface-2)}
+.m-ring{position:relative;width:38px;height:38px;flex-shrink:0}.m-ring svg{transform:rotate(-90deg)}
+.m-main{flex:1}.m-band{font-size:15px;font-weight:600;line-height:1.2}.m-sub{font-size:11px;color:var(--subtle)}
+.m-chev{color:var(--subtle);font-size:12px;transition:transform .2s}
+.metric.open .m-chev,.cm.open .m-chev{transform:rotate(90deg)}
+.m-detail{display:none;font-size:12px;color:var(--muted);line-height:1.55;padding:4px 10px 9px;border-left:2px solid var(--border-2);margin:2px 0 6px 14px}
+.m-detail.show{display:block}
+.m-detail .row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid var(--border)}
+.m-detail .row:last-of-type{border:none}
+.caf-mini{margin-top:4px}
+.cm{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:8px;cursor:pointer;transition:background .15s}
+.cm:hover{background:var(--surface-2)}
+.cm-n{font-size:12px;color:var(--muted);width:70px;flex-shrink:0}
+.cm-l{font-size:12px;font-weight:600;width:54px;flex-shrink:0}
+.cm-bar{flex:1;height:4px;border-radius:2px;background:var(--border-2);overflow:hidden}.cm-bar i{display:block;height:100%}
+.cm-idx{font-size:12px;color:var(--muted);font-weight:600;width:24px;text-align:right;font-family:var(--mono)}
+.cnum{font-family:var(--mono);font-size:20px;font-weight:600;line-height:1}.cnum span{font-size:11px;color:var(--subtle)}
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;place-items:center;z-index:120}
+.scrim.open{display:grid}
+.modal{background:var(--surface);border:1px solid var(--border-2);border-radius:14px;padding:24px;max-width:430px}
+.modal h2{font-size:17px;margin-bottom:8px}.modal p{color:var(--muted);font-size:13px;margin-bottom:16px}
+.modal .opt{border:1px solid var(--border-2);border-radius:9px;padding:12px 14px;cursor:pointer;margin-bottom:9px}
+.modal .opt:hover{border-color:var(--primary)} .modal .opt b{display:block;margin-bottom:2px}.modal .opt span{font-size:12px;color:var(--subtle)}
+.callout{font-size:11.5px;color:var(--subtle);background:var(--surface-2);border-left:2px solid var(--primary);padding:8px 12px;border-radius:0 6px 6px 0;margin-top:12px}
+</style>
+</head>
+<body style="background:#0E1013">
+
+<!-- ============ ONBOARDING ============ -->
+<div id="onboarding">
+  <div class="ob-brand"><div class="logo">O</div><div><div class="nm">OSLO</div><div class="sb">by Intralign · Planning Intelligence</div></div></div>
+  <div class="ob-h">What are you planning?</div>
+  <div class="ob-sub">Paste your thinking or drop in <b style="color:var(--muted)">any readable document with context</b> — a brief, notes, a deck, a plan. OSLO maps it into your planning artifacts (intent, context, scope, requirements, WBS, schedule, resources) and shows what needs attention. Templates below are optional quick-starts.</div>
+  <div class="composer">
+    <textarea id="obtext" placeholder="e.g. We're running DevNorth 2026, a one-day developer conference on Sep 18 for ~450 attendees. Sponsors fund it. Venue, speakers, registration and on-site logistics are the big unknowns…"></textarea>
+    <div class="crow">
+      <button class="attach" onclick="addFile()"><span>⊕</span> Attach documents</button>
+      <div id="filechips" style="display:flex;gap:7px"></div>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary" onclick="ingest()">Map my understanding →</button>
+    </div>
+  </div>
+  <div class="ob-samples">
+    <span class="lab">or start from a template:</span>
+    <button class="sample" onclick="sample('Generic Project Plan')">Generic Project Plan</button>
+    <button class="sample" onclick="sample('Product / Software Launch')">Product / Software Launch</button>
+    <button class="sample" onclick="sample('Marketing Campaign')">Marketing Campaign</button>
+    <button class="sample" onclick="sample('Event')">Event</button>
+    <button class="sample" onclick="sample('Strategic Initiative')">Strategic Initiative</button>
+  </div>
+  <div class="ob-foot">ⓘ OSLO advises; you decide. It maps understanding — it never executes your plan.</div>
+</div>
+
+<!-- ============ ANALYZING ============ -->
+<div id="analyzing">
+  <div class="scanner"><div class="core"></div></div>
+  <div class="an-steps" id="ansteps">
+    <div data-s>Reading your inputs…</div>
+    <div data-s>Extracting plan facts &amp; assumptions…</div>
+    <div data-s>Mapping Clarity · Alignment · Feasibility…</div>
+    <div data-s>Surfacing what needs attention…</div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <header class="topbar">
+    <div class="tb-brand"><div class="logo">O</div> OSLO</div>
+    <div class="tb-crumb" id="crumb"><b>DevNorth 2026</b> · MRI</div>
+    <div class="tb-sp"></div>
+    <div class="conf-pill" title="Confidence is understanding maturity — never project health">
+      <span class="conf-dot"></span><div><div class="t1">Confidence</div><div class="t2">Moderate</div></div>
+      <span class="q">Reliability: Moderate</span>
+    </div>
+    <div class="conf-pill" id="dpstatus" style="display:none;border-color:rgba(217,164,65,.4)"><span class="dp-dot"></span><div><div class="t1">Deep Analysis</div><div class="t2" id="dptxt">running…</div></div></div>
+    <button class="btn btn-ghost btn-sm" onclick="rerun(event)" title="Reanalysis is event-driven — trigger it when an edit makes the analysis stale">↻ Reanalyze</button>
+    <button class="btn btn-ghost btn-sm" onclick="toggleChat()" title="Toggle OSLO panel">✦</button>
+  </header>
+
+  <div class="body" id="bodyGrid">
+    <!-- EXPLORER -->
+    <aside class="explorer">
+      <div class="ex-sec">Project</div>
+      <div class="ex-item" onclick="openTab('understanding')"><span class="ic">◎</span> DevNorth 2026 <span class="chip" style="margin-left:auto;font-size:9px;padding:1px 6px">sample</span></div>
+      <div class="ex-sec">Understanding core <span class="cnt">DL-077</span></div>
+      <div class="ex-item" onclick="openArtifact('Intent')"><span class="ic">▤</span> Intent</div>
+      <div class="ex-item" onclick="openArtifact('Context')"><span class="ic">▤</span> Context</div>
+      <div class="ex-item" onclick="openArtifact('Scope')"><span class="ic">▤</span> Scope</div>
+      <div class="ex-item" onclick="openArtifact('Requirements')"><span class="ic">▤</span> Requirements <span class="fb mod">2</span></div>
+      <div class="ex-sec">Execution plan · classical-PM</div>
+      <div class="ex-item" onclick="openArtifact('WBS')"><span class="ic">▤</span> WBS <span class="fb mod">1</span></div>
+      <div class="ex-item" onclick="openArtifact('Schedule')"><span class="ic">▤</span> Schedule <span class="fb mod">1</span></div>
+      <div class="ex-item active" onclick="openArtifact('Resources')"><span class="ic">▤</span> Resources <span class="fb crit">2</span></div>
+      <div class="ex-sec">Understand</div>
+      <div class="nav-item" onclick="openTab('understanding')"><span class="ic">◎</span> Understanding</div>
+      <div class="nav-item" onclick="openTab('mri')"><span class="ic">⌖</span> MRI · Attention <span class="badge">6</span></div>
+      <div class="ex-sec">Investigate</div>
+      <div class="nav-item" onclick="openAllFindings()"><span class="ic">⚑</span> Findings <span class="badge">6</span></div>
+      <div class="nav-item" onclick="openTab('rec')"><span class="ic">◆</span> Recommendations</div>
+      <div class="nav-item" onclick="alert('History of understanding — every recompute appended, never overwritten (CHR).')"><span class="ic">◴</span> History</div>
+      <div style="font-size:10px;color:var(--subtle);padding:14px 8px;line-height:1.5">R1 ships the classical-PM profile only (DL-077). Profile is non-gating; extensibility is post-R1.</div>
+    </aside>
+
+    <!-- CENTER -->
+    <div class="center">
+      <div class="tabs" id="tabs">
+        <div class="tab active" data-tab="artifact" onclick="openArtifact()"><span class="ic">▤</span> <span id="artTabName">Resources</span> <span class="x">×</span></div>
+        <div class="tab" data-tab="mri" onclick="openTab('mri')"><span class="ic">⌖</span> MRI <span class="x">×</span></div>
+        <div class="tab" data-tab="understanding" onclick="openTab('understanding')"><span class="ic">◎</span> Understanding <span class="x">×</span></div>
+      </div>
+      <div class="cscroll" id="cscroll">
+
+        <!-- ARTIFACT EDITOR -->
+        <section class="pane active" id="pane-artifact">
+          <div class="art" id="artview"></div>
+        </section>
+
+        <!-- MRI CANVAS -->
+        <section class="pane" id="pane-mri" style="height:calc(100vh - 86px)">
+          <div class="mri">
+            <div class="mri-top">
+              <div><h1>MRI · Your 60-second orientation <span class="chip" style="vertical-align:3px;color:var(--primary-light);border-color:rgba(217,122,58,.4)">Time-to-first-MRI 41s</span></h1><div class="sub">Where understanding needs attention across your project. Brighter = more attention. Click a cell to investigate.</div></div>
+              <div class="mfilter">
+                <button class="mf on" onclick="mview(this,'heat')">▦ Heatmap</button>
+                <button class="mf" onclick="mview(this,'field')">⌖ CAF Field</button>
+                <button class="mf" onclick="openAllFindings()">⚑ All findings</button>
+              </div>
+            </div>
+            <div class="dpbanner" id="dpbanner"><span class="dp-dot"></span><span id="dpnotetxt">60-second orientation is provisional — <b>Deep Analysis is running automatically in the background</b>. Keep working; nothing blocks, and you never wait for it.</span><div style="flex:1"></div><span style="font-size:11px;color:var(--subtle)">Deep Pass is automatic (DL-046)</span></div>
+            <div class="mcanvas" id="mcanvas">
+              <div class="gridbg"></div>
+
+              <!-- HEATMAP (primary 60-second visual) -->
+              <div class="heatwrap" id="mview-heat">
+                <div class="heat">
+                  <div class="heat-corner">Planning artifact ↓ / CAF →</div>
+                  <div class="heat-colh">Clarity</div>
+                  <div class="heat-colh">Alignment</div>
+                  <div class="heat-colh">Feasibility</div>
+
+                  <div class="heat-rowh">Intent</div>
+                  <div class="heat-cell l0">·</div><div class="heat-cell l0">·</div><div class="heat-cell l0">·</div>
+
+                  <div class="heat-rowh">Context</div>
+                  <div class="heat-cell l0">·</div><div class="heat-cell l0">·</div><div class="heat-cell l0">·</div>
+
+                  <div class="heat-rowh">Scope</div>
+                  <div class="heat-cell l0">·</div><div class="heat-cell l0">·</div><div class="heat-cell l0">·</div>
+
+                  <div class="heat-rowh">Requirements</div>
+                  <div class="heat-cell l2" onclick="openFindingPanel('FND-2051')">2<div class="mini">moderate</div></div>
+                  <div class="heat-cell l0">·</div><div class="heat-cell l0">·</div>
+
+                  <div class="heat-rowh" style="color:var(--subtle);font-size:11px;border-top:1px solid var(--border);padding-top:8px">— execution plan —</div>
+                  <div></div><div></div><div></div>
+
+                  <div class="heat-rowh">WBS</div>
+                  <div class="heat-cell l0">·</div><div class="heat-cell l0">·</div>
+                  <div class="heat-cell l1" onclick="openFindingPanel('FND-2061')">1<div class="mini">warning</div></div>
+
+                  <div class="heat-rowh">Schedule</div>
+                  <div class="heat-cell l0">·</div><div class="heat-cell l0">·</div>
+                  <div class="heat-cell l2" onclick="openFindingPanel('FND-2071')">1<div class="mini">moderate</div></div>
+
+                  <div class="heat-rowh">Resources</div>
+                  <div class="heat-cell l0">·</div><div class="heat-cell l0">·</div>
+                  <div class="heat-cell l3" onclick="openFindingPanel('FND-2041')">2<div class="mini">critical</div></div>
+                </div>
+                <div class="heat-legend">
+                  <span>Calm</span><i class="g0"></i><i class="g1"></i><i class="g2"></i><i class="g3"></i><span>Needs attention</span>
+                  <span class="note">Rows = DL-077 planning artifacts · columns = CAF. Severity of attention, not a health score.</span>
+                </div>
+              </div>
+
+              <!-- CAF FIELD (secondary toggle) -->
+              <div class="fieldwrap" id="mview-field" style="display:none">
+              <svg id="tri" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+                <defs><filter id="glow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+                <polygon id="tri-outer" fill="none" stroke="var(--border-2)" stroke-width="1.5" stroke-dasharray="4 5"/>
+                <polygon id="tri-fill" fill="rgba(184,189,197,.07)" stroke="var(--conf-medium)" stroke-width="2" filter="url(#glow)"/>
+              </svg>
+              <div class="axis-lbl" id="ax-c">Clarity</div>
+              <div class="axis-lbl" id="ax-a">Alignment</div>
+              <div class="axis-lbl" id="ax-f">Feasibility</div>
+              <div class="mcore"><div class="b">Moderate</div><div class="l">Understanding</div></div>
+              <div class="mlegend">
+                <div class="row"><i style="background:var(--danger)"></i> Critical</div>
+                <div class="row"><i style="background:var(--warning)"></i> Moderate</div>
+                <div class="row"><i style="background:var(--subtle)"></i> Warning</div>
+                <div class="row" style="margin-top:4px;color:var(--subtle)">Position = which dimension · glow = severity</div>
+              </div>
+              <!-- nodes injected by JS -->
+              </div><!-- /mview-field -->
+            </div>
+          </div>
+        </section>
+
+        <!-- UNDERSTANDING CONSOLE -->
+        <section class="pane" id="pane-understanding">
+          <div class="uc">
+            <div class="card">
+              <div class="ch"><h3>Outcome Confidence</h3><span class="elabel derived" style="margin-left:auto">Derived</span></div>
+              <div class="conf-head">
+                <div class="ring"><svg width="96" height="96" viewBox="0 0 96 96">
+                  <circle cx="48" cy="48" r="40" fill="none" stroke="var(--border-2)" stroke-width="7"/>
+                  <circle cx="48" cy="48" r="40" fill="none" stroke="var(--conf-medium)" stroke-width="7" stroke-dasharray="251" stroke-dashoffset="105" stroke-linecap="round"/>
+                </svg><div class="ctr"><span class="band">Moderate</span><span class="idx mono">58/100</span></div></div>
+                <div class="conf-meta">
+                  <div class="big">Understanding is forming.</div>
+                  <div class="ql">Clear read on what the project is, but alignment and feasibility are still preliminary from the Fast Pass. A Deep Pass will expand them.</div>
+                  <div class="nh">ⓘ Confidence is understanding maturity — not a health score, probability, or grade. Qualified by <b style="color:var(--muted)">Moderate reliability</b>.</div>
+                </div>
+              </div>
+              <div class="caf-row">
+                <div class="caf"><div class="dn">Clarity</div><div style="display:flex;align-items:baseline;margin-bottom:8px"><div class="lvl" style="margin:0">Forming</div><div class="cnum" style="margin-left:auto">64<span>/100</span></div></div><div class="cbar"><i style="width:64%;background:var(--conf-medium)"></i></div><div class="rl">Reliability: Moderate</div></div>
+                <div class="caf"><div class="dn">Alignment <span class="elabel prelim">Prelim</span></div><div style="display:flex;align-items:baseline;margin-bottom:8px"><div class="lvl" style="margin:0">Limited</div><div class="cnum" style="margin-left:auto">38<span>/100</span></div></div><div class="cbar"><i style="width:38%;background:var(--conf-low)"></i></div><div class="rl">Reliability: Limited</div></div>
+                <div class="caf"><div class="dn">Feasibility <span class="elabel prelim">Prelim</span></div><div style="display:flex;align-items:baseline;margin-bottom:8px"><div class="lvl" style="margin:0">Limited</div><div class="cnum" style="margin-left:auto">34<span>/100</span></div></div><div class="cbar"><i style="width:34%;background:var(--conf-low)"></i></div><div class="rl">Reliability: Limited</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RECOMMENDATIONS -->
+        <section class="pane" id="pane-rec">
+          <div class="uc">
+            <div class="art-head" style="margin-bottom:14px"><h1 style="font-size:20px">Recommendations</h1><span class="callout" style="margin:0">OSLO advises; you decide.</span></div>
+            <div style="font-size:12px;color:var(--subtle);margin-bottom:12px">for FND-2041 · Resources · venue Wi-Fi capacity gap</div>
+            <div class="card" style="border-color:rgba(217,122,58,.4);background:rgba(217,122,58,.06);margin-bottom:14px">
+              <div style="color:var(--primary-light);font-weight:600;font-size:11px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:9px">◆ OSLO Recommended <span class="elabel derived">Derived</span></div>
+              <div style="font-size:15px;font-weight:500;line-height:1.45;margin-bottom:10px">Confirm the venue's 500-person Wi-Fi capacity before locking the in-person-only format.</div>
+              <div style="font-size:12.5px;color:var(--muted)">Resolves the Critical feasibility gap in Resources; the plan depends on 450+ connected attendees with no recovery path noted.</div>
+              <div style="display:flex;gap:9px;margin-top:14px"><button class="btn btn-primary btn-sm" onclick="this.textContent='✓ Selected Path';this.style.background='var(--success)';this.style.color='#fff'">Accept as Selected Path</button><button class="btn btn-ghost btn-sm">Defer</button><button class="btn btn-ghost btn-sm">Dismiss</button></div>
+            </div>
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--subtle);font-weight:600;margin:14px 0 9px">Possible resolution paths</div>
+            <div class="card" style="margin-bottom:9px"><b>Run a venue Wi-Fi load test in August</b> <span class="chip">lower risk</span><div style="font-size:12.5px;color:var(--muted);margin-top:4px">Validates real capacity ahead of Sep 18; the mitigation the plan already hints at.</div></div>
+            <div class="card"><b>Contract a managed event-Wi-Fi vendor as backup</b> <span class="chip">more certain</span><div style="font-size:12.5px;color:var(--muted);margin-top:4px">Removes the dependency on house Wi-Fi; adds cost.</div></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- GLOBAL CHAT -->
+    <aside class="chatp">
+      <!-- PERSISTENT UNDERSTANDING METRICS (always visible) -->
+      <div class="upanel">
+        <div class="up-h">Understanding <span class="elabel derived" style="font-size:9px">Derived</span><span style="margin-left:auto;font-size:9.5px;color:var(--subtle);text-transform:none;letter-spacing:0">click for detail</span></div>
+        <div class="metric" onclick="toggleM(this,'conf')">
+          <div class="m-ring"><svg width="38" height="38" viewBox="0 0 38 38"><circle cx="19" cy="19" r="15" fill="none" stroke="var(--border-2)" stroke-width="4"/><circle cx="19" cy="19" r="15" fill="none" stroke="var(--conf-medium)" stroke-width="4" stroke-dasharray="94.2" stroke-dashoffset="39.6" stroke-linecap="round"/></svg></div>
+          <div class="m-main"><div class="m-band">Moderate <span style="font-size:13px;color:var(--muted);font-weight:600;font-family:var(--mono)">58</span></div><div class="m-sub">Confidence index 0–100 · Reliability: Moderate</div></div>
+          <span class="m-chev">›</span>
+        </div>
+        <div class="m-detail" id="d-conf">
+          <div style="margin-bottom:7px">Understanding maturity — <b style="color:var(--muted)">not</b> health or probability. <span class="mono">58/100</span>, qualified by Moderate reliability.</div>
+          <div class="row"><span>Driven by</span><span style="color:var(--text)">Clarity · Forming</span></div>
+          <div class="row"><span>Held back by</span><span style="color:var(--text)">Feasibility (Resources)</span></div>
+          <div class="row"><span>Last changed</span><span style="color:var(--text)">↓ Wi-Fi capacity gap</span></div>
+          <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="event.stopPropagation();openTab('understanding')">Open full breakdown →</button>
+        </div>
+        <div class="caf-mini">
+          <div class="cm" onclick="toggleM(this,'clarity')"><span class="cm-n">Clarity</span><span class="cm-l">Forming</span><span class="cm-bar"><i style="width:64%;background:var(--conf-medium)"></i></span><span class="cm-idx">64</span><span class="m-chev">›</span></div>
+          <div class="m-detail" id="d-clarity">Maturity index 64/100. 12 of 18 key elements clearly defined. Reliability: Moderate. 2 findings.</div>
+          <div class="cm" onclick="toggleM(this,'alignment')"><span class="cm-n">Alignment</span><span class="cm-l" style="color:var(--warning)">Limited</span><span class="cm-bar"><i style="width:38%;background:var(--conf-low)"></i></span><span class="cm-idx">38</span><span class="m-chev">›</span></div>
+          <div class="m-detail" id="d-alignment">Maturity index 38/100. Goals partially mapped. <span class="elabel prelim">Preliminary</span> (Fast Pass).</div>
+          <div class="cm" onclick="toggleM(this,'feasibility')"><span class="cm-n">Feasibility</span><span class="cm-l" style="color:var(--warning)">Limited</span><span class="cm-bar"><i style="width:34%;background:var(--conf-low)"></i></span><span class="cm-idx">34</span><span class="m-chev">›</span></div>
+          <div class="m-detail" id="d-feasibility">Maturity index 34/100. 2 critical feasibility gaps (Wi-Fi capacity, keynote backup). <span class="elabel prelim">Preliminary</span>.</div>
+        </div>
+      </div>
+      <div class="chat-h"><div class="o">O</div><div class="nm">OSLO</div><div class="mode">Ask</div></div>
+      <div class="chat-ctx">Context <span class="pill" id="chatctx">Resources · v2</span></div>
+      <div class="chat-scroll" id="chatscroll">
+        <div class="cmsg"><div class="who">OSLO</div><div class="bub">I've mapped DevNorth 2026 into your planning artifacts. Understanding is at <b style="color:var(--text)">Moderate</b> maturity — the main thing holding it back is a Critical feasibility gap in <a onclick="openArtifact('Resources')">Resources</a> (venue Wi-Fi capacity). Ask me anything, or open the MRI to see all six findings.</div></div>
+        <div class="cmsg user"><div class="who">You</div><div class="bub">Why isn't confidence higher?</div></div>
+        <div class="cmsg"><div class="who">OSLO</div><div class="bub">Intent, Context and Scope read clearly, but Feasibility is held back by an unconfirmed dependency — the plan needs 450+ attendees yet the venue's 500-person Wi-Fi capacity isn't confirmed. Requirements also has two Clarity gaps (lead-tracking method, the "sold-out" definition). Want the <a onclick="openTab('rec')">resolution paths</a>?</div></div>
+      </div>
+      <div class="chat-foot">
+        <div class="chat-input">
+          <textarea placeholder="Ask OSLO about this artifact, a finding, or what to do next…"></textarea>
+          <div class="cr"><span class="sp">↳ reads &amp; explains · writes nothing to your plan</span><button class="btn btn-primary btn-sm">Send</button></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <button class="chat-toggle" onclick="toggleChat()">✦ OSLO</button>
+</div>
+
+<div class="dxpop" id="dxpop"></div>
+
+<!-- all-findings overlay (filterable list) -->
+<div class="findsall" id="findsall">
+  <div class="fa-h"><h1>Findings</h1><span id="fa-count" style="color:var(--subtle);font-size:13px"></span><div style="flex:1"></div><button class="btn btn-ghost btn-sm" onclick="closeAllFindings()">Close</button></div>
+  <div class="fa-filters">
+    <span class="fa-lab">Dimension</span>
+    <button class="ff on" data-f="dim" data-v="all" onclick="setFilt('dim','all',this)">All</button>
+    <button class="ff" data-f="dim" data-v="Clarity" onclick="setFilt('dim','Clarity',this)">Clarity</button>
+    <button class="ff" data-f="dim" data-v="Alignment" onclick="setFilt('dim','Alignment',this)">Alignment</button>
+    <button class="ff" data-f="dim" data-v="Feasibility" onclick="setFilt('dim','Feasibility',this)">Feasibility</button>
+    <span class="fa-lab" style="margin-left:14px">Severity</span>
+    <button class="ff on" data-f="sev" data-v="all" onclick="setFilt('sev','all',this)">All</button>
+    <button class="ff" data-f="sev" data-v="critical" onclick="setFilt('sev','critical',this)">Critical</button>
+    <button class="ff" data-f="sev" data-v="moderate" onclick="setFilt('sev','moderate',this)">Moderate</button>
+    <button class="ff" data-f="sev" data-v="warning" onclick="setFilt('sev','warning',this)">Warning</button>
+    <span style="flex:1"></span><span class="fa-lab">Grouped by CAF dimension · severity-ordered</span>
+  </div>
+  <div class="fa-list" id="fa-list"></div>
+</div>
+
+<!-- finding / issue contextual panel -->
+<div class="findscrim" id="findscrim" onclick="closeFindingPanel()"></div>
+<div class="findpanel" id="findpanel"><div id="findbody"></div></div>
+
+<!-- limit modal -->
+<div class="scrim" id="limitModal"><div class="modal">
+  <h2>You're on the Free plan</h2><p>Free includes <b style="color:var(--text)">1 active project</b>. To start another, pick a path — both are fine.</p>
+  <div class="opt" onclick="closeLimit()"><b>Upgrade to Basic</b><span>3 active projects + Deep Pass on demand</span></div>
+  <div class="opt" onclick="closeLimit()"><b>Archive “DevNorth 2026”</b><span>Non-destructive — restore anytime, history intact</span></div>
+  <div style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="closeLimit()">Maybe later</button></div>
+</div></div>
+
+<script>
+/* ---- onboarding ---- */
+let files=0;
+function addFile(){const c=document.getElementById('filechips');files++;const el=document.createElement('div');el.className='filechip';el.innerHTML='▤ document_'+files+'.pdf <span class="x" onclick="this.parentNode.remove()">×</span>';c.appendChild(el);}
+function sample(t){document.getElementById('obtext').value='['+t+'] '+document.getElementById('obtext').placeholder;}
+function ingest(){
+  document.getElementById('onboarding').style.display='none';
+  const a=document.getElementById('analyzing');a.classList.add('show');
+  const steps=document.querySelectorAll('#ansteps [data-s]');steps.forEach(s=>s.style.opacity=.3);
+  let i=0;const t=setInterval(()=>{if(i<steps.length){steps[i].style.opacity=1;steps[i].classList.add('done');i++;}
+    else{clearInterval(t);a.classList.remove('show');document.getElementById('app').classList.add('show');openTab('mri');startDeepPass();}},620);
+}
+/* ---- tabs / nav ---- */
+const titles={artifact:'Artifact',mri:'MRI · Attention',understanding:'Understanding',rec:'Recommendations'};
+function openTab(t){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  const pane=document.getElementById('pane-'+t);if(pane)pane.classList.add('active');
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('crumb').innerHTML='<b>DevNorth 2026</b> · '+(titles[t]||'');
+  document.getElementById('cscroll').scrollTop=0;
+  if(t==='mri')setTimeout(layoutMRI,30);
+}
+const _epi=(e)=>`<span class="epi ${e}">${e==='attested'?'Attested · you':'Derived · OSLO'}</span>`;
+const _el=(n,e,body)=>`<div class="el" data-epi="${e}"><div class="el-h"><span class="el-n">${n}</span>${_epi(e)}<div class="el-act">${e==='derived'?'<button class="btn-mini" onclick="confirmEl(this)">✓ Confirm</button>':''}<button class="btn-mini" onclick="editEl()">✎ Edit</button></div></div><div class="el-b">${body}</div></div>`;
+const _mk=(id,sev,txt)=>`<span class="dx ${sev}" onclick="openFindingPanel('${id}')" title="Open finding ${id}"><span class="gut">▲</span>${txt}</span>`;
+const _ahead=(n,layer)=>`<div class="art-head"><h1>${n}</h1></div>
+  <div class="art-bar"><div class="vers" id="artver" onclick="alert('Versions are append-only — never overwritten.')">v2 ▾</div><span>${layer}</span><div style="flex:1"></div><span class="savestate ok" id="savestate"><span class="ss-dot"></span> Up to date</span></div>
+  <div class="artlegend">⌕ OSLO drafted this artifact from your ingested documents as normal prose. <b>Just type to edit</b> — changes save automatically, any sentence you revise becomes your <span class="epi attested" style="vertical-align:1px">Attested</span> plan fact, and OSLO <b>reanalyzes on its own</b> after you pause. CAF weaknesses are <b>colored inline</b> — hover for a summary, click to investigate. Editing changes content only; only reanalysis changes the assessment.</div>`;
+/* Flowing-prose model — content per artifact TYPE; CAF weaknesses are inline colored spans */
+const _layer=(n)=>['Intent','Context','Scope','Requirements'].includes(n)?'Understanding core · DL-077':'Execution plan · classical-PM';
+const _a=(fid,sev,dim,txt)=>`<span class="anno ${sev}" contenteditable="false" data-fid="${fid}" onclick="openFindingPanel('${fid}')" title="${dim} weakness · ${sev==='crit'?'Critical':sev==='mod'?'Moderate':'Warning'} — click to investigate">${txt}</span>`;
+const ARTPROSE={
+ Intent:`<p>Run <b>DevNorth 2026</b>, a one-day in-person developer conference on <b>September 18</b>, to strengthen the regional developer community and generate qualified pipeline for the sponsor.</p>
+  <h3>Success</h3><ul><li>A well-attended, well-rated event.</li><li>Produces qualified sponsor leads.</li></ul>`,
+ Context:`<p>The audience is regional software engineers, tech leads, and engineering managers, plus eight to ten sponsors seeking developer mindshare.</p>
+  <p>This is the first run under the current sponsor — a sponsor-funded community event.</p>`,
+ Scope:`<h3>In scope</h3><p>Program — two keynotes, twelve breakouts across two tracks, one workshop block, and an evening reception. Logistics — venue, AV, catering, registration, badging, and recording.</p>
+  <h3>Out of scope</h3><p>A virtual or hybrid stream — the event is in-person only this year.</p>`,
+ Requirements:`<h3>Success metrics</h3><p>The event targets 450 registrations at an 85% show-rate and a CSAT of at least 4.3 / 5. It also aims for `+_a('FND-2051','mod','Clarity','at least 120 sponsor-qualified leads, though no tracking method or definition of “qualified” is given')+`.</p>
+  <h3>Acceptance criteria</h3><p>The intent frames success as a `+_a('FND-2052','warn','Clarity','“sold-out” event, which isn’t reconciled with the 450-registration target')+`.</p>`,
+ WBS:`<p>The work breaks down into five streams; each needs an accountable owner before the September 1 run-of-show deadline.</p>
+  <table><thead><tr><th>Workstream</th><th>Key deliverable</th><th>Owner</th></tr></thead><tbody>
+  <tr><td>Venue &amp; logistics</td><td>Venue contract, floor plan</td><td>Ops lead</td></tr>
+  <tr><td>CFP &amp; program</td><td>Final program, run-of-show</td><td>`+_a('FND-2061','warn','Feasibility','— unassigned')+`</td></tr>
+  <tr><td>Sponsorship</td><td>Sponsor kit, booths</td><td>Sales</td></tr>
+  <tr><td>Marketing &amp; registration</td><td>Registration site, campaign</td><td>Marketing</td></tr>
+  <tr><td>On-site ops</td><td>Badging, check-in</td><td>Ops lead</td></tr></tbody></table>`,
+ Schedule:`<p>The plan runs from May through the September event.</p>
+  <table><thead><tr><th>Milestone</th><th>Date</th><th>Status</th></tr></thead><tbody>
+  <tr><td>Venue + CFP open</td><td>May 1</td><td>Done</td></tr>
+  <tr><td>CFP closes</td><td>Jun 30</td><td>Done</td></tr>
+  <tr><td>Registration opens</td><td>Jul 1</td><td>`+_a('FND-2071','mod','Feasibility','At risk — pace vs the 450 target')+`</td></tr>
+  <tr><td>Speakers confirmed</td><td>Jul 15</td><td>Pending</td></tr>
+  <tr><td>Sponsor sales close</td><td>Aug 15</td><td>Pending</td></tr>
+  <tr><td>Run-of-show final</td><td>Sep 1</td><td>Pending</td></tr>
+  <tr><td>Event</td><td>Sep 18</td><td>—</td></tr></tbody></table>`,
+ Resources:`<h3>Vendors &amp; dependencies</h3>
+  <table><thead><tr><th>Resource</th><th>Role</th><th>Status</th></tr></thead><tbody>
+  <tr><td>Venue</td><td>Rooms, power, Wi-Fi (500-person)</td><td>`+_a('FND-2041','crit','Feasibility','Wi-Fi capacity unconfirmed')+`</td></tr>
+  <tr><td>AV vendor</td><td>Staging, mics, recording</td><td>Confirmed</td></tr>
+  <tr><td>Caterer</td><td>Breakfast, lunch, reception</td><td>Confirmed</td></tr></tbody></table>
+  <h3>People &amp; speakers</h3>
+  <table><thead><tr><th>People</th><th>Count</th><th>Status</th></tr></thead><tbody>
+  <tr><td>Keynotes</td><td>2</td><td>`+_a('FND-2042','mod','Feasibility','Backups unconfirmed')+`</td></tr>
+  <tr><td>Breakout speakers</td><td>12</td><td>In selection</td></tr>
+  <tr><td>Volunteer crew</td><td>~10</td><td>Recruiting</td></tr></tbody></table>`
+};
+function artHTML(name){return _ahead(name,_layer(name))+`<div class="doc" id="artdoc" contenteditable="true" spellcheck="false" oninput="onArtInput()">`+(ARTPROSE[name]||ARTPROSE['Resources'])+`</div>`;}
+let _saveT,_reanT;
+function onArtInput(){
+  const sel=document.getSelection();let node=sel&&sel.anchorNode;
+  if(node){const el=node.nodeType===3?node.parentElement:node;const b=el&&el.closest('p,li,td,h3');if(b)b.classList.add('attested');}
+  const ss=document.getElementById('savestate');if(ss){ss.className='savestate saving';ss.innerHTML='<span class="ss-dot"></span> Saving…';}
+  clearTimeout(_saveT);clearTimeout(_reanT);
+  _saveT=setTimeout(()=>{const ver=document.getElementById('artver');if(ver)ver.textContent='v3 ▾';
+    if(ss){ss.className='savestate stale';ss.innerHTML='<span class="ss-dot"></span> Saved · analysis stale';}
+    _reanT=setTimeout(()=>{if(ss){ss.className='savestate reana';ss.innerHTML='<span class="ss-dot"></span> Reanalyzing…';}
+      setTimeout(()=>{if(ss){ss.className='savestate ok';ss.innerHTML='<span class="ss-dot"></span> Up to date';}},1500);},1300);},700);
+}
+const FINDINGS={
+ 'FND-2041':{title:'Venue Wi-Fi capacity is unconfirmed',type:'Coverage gap',sev:'critical',dim:'Feasibility',art:'Resources',
+   summary:'The plan requires 450+ on-site attendees, but the venue’s 500-person Wi-Fi capacity is not confirmed. A conference network failure is a common, high-impact failure and no recovery path is noted.',
+   ev:[['Resources · Vendors','“Venue — rooms, power, Wi-Fi (must confirm 500-person Wi-Fi capacity)”'],['Intent','Target 450 attendees · in-person only']],
+   caf:'Weakens <b>Feasibility</b>: a core dependency for the in-person format is unverified, so OSLO can’t confirm the plan is executable as written. (Finding → CAF → Confidence.)',
+   rec:'Confirm the venue’s 500-person Wi-Fi capacity before locking the in-person-only format.',
+   paths:['Run a venue Wi-Fi load test in August','Contract a managed event-Wi-Fi vendor as backup']},
+ 'FND-2042':{title:'Keynote backups are unconfirmed',type:'Assumption',sev:'moderate',dim:'Feasibility',art:'Resources',
+   summary:'A single backup per keynote is mentioned but not confirmed. A keynote drop-out is a single point of failure for a one-day event.',
+   ev:[['Resources · Speakers','“2 keynotes — line up one backup per keynote”']],
+   caf:'Weakens <b>Feasibility</b>: a known risk is acknowledged but not yet mitigated in the plan.',
+   rec:'Confirm a named, briefed backup for each keynote by speaker-confirmation (Jul 15).',
+   paths:['Pre-record a fallback keynote','Designate an internal speaker as emergency backup']},
+ 'FND-2051':{title:'Sponsor-lead metric has no tracking method',type:'Missing information',sev:'moderate',dim:'Clarity',art:'Requirements',
+   summary:'“≥120 sponsor-qualified leads” is a target, but neither the definition of “qualified” nor the tracking method is specified — so success can’t be measured.',
+   ev:[['Requirements · Success metrics','“≥120 sponsor-qualified leads”']],
+   caf:'Weakens <b>Clarity</b>: a success criterion is stated without the means to evaluate it.',
+   rec:'Define “qualified lead” and the capture mechanism (badge scan / form) before registration opens.',
+   paths:['Adopt the sponsor CRM’s lead definition','Use badge-scan + a 1-question qualifier']},
+ 'FND-2052':{title:'“Sold-out” success is unreconciled with the 450 target',type:'Ambiguity',sev:'warning',dim:'Clarity',art:'Requirements',
+   summary:'The intent uses “sold-out” as a success signal, but attendance is targeted at 450 with a waitlist — the cap that defines “sold out” is not stated.',
+   ev:[['Intent','“a sold-out, well-rated event”'],['Requirements','“450 registrations / ≥85% show-rate”']],
+   caf:'Weakens <b>Clarity</b>: two success framings coexist without a single, testable definition.',
+   rec:'State the registration cap that defines “sold out” and align it with the 450 target.',
+   paths:['Set the cap at 450','Set the cap at venue maximum and treat 450 as a floor']},
+ 'FND-2061':{title:'Run-of-show has no assigned owner',type:'Coverage gap',sev:'warning',dim:'Feasibility',art:'WBS',
+   summary:'Run-of-show finalization gates Sep 18 but is not assigned an owner in the work breakdown.',
+   ev:[['WBS · Key deliverables','“…run-of-show…”'],['Schedule','“Sep 1 — run-of-show final”']],
+   caf:'Weakens <b>Feasibility</b>: a gating deliverable lacks accountable ownership.',
+   rec:'Assign an owner for run-of-show with a Sep 1 due date.',
+   paths:['Assign the event lead','Assign the AV vendor’s show-caller']},
+ 'FND-2071':{title:'Registration pace is unevidenced against the 450 target',type:'Inference',sev:'moderate',dim:'Feasibility',art:'Schedule',
+   summary:'Hitting 450 registrations requires a registration pace from Jul 1 that the current promotion plan does not yet evidence.',
+   ev:[['Schedule','“Jul 1 — registration opens”'],['Requirements','“450 registrations / ≥85% show-rate”']],
+   caf:'Weakens <b>Feasibility</b>: a target depends on a ramp that isn’t backed by a plan.',
+   rec:'Add an early-bird + speaker-promotion plan with weekly pace checkpoints against 450.',
+   paths:['Early-bird pricing through July','Speaker-driven promotion quotas']}
+};
+let _curArt='Resources';
+function openArtifact(name){name=name||_curArt;_curArt=name;
+  const v=document.getElementById('artview');if(v)v.innerHTML=artHTML(name);
+  const t=document.getElementById('artTabName');if(t)t.textContent=name;
+  document.querySelectorAll('.ex-item').forEach(e=>e.classList.toggle('active',e.textContent.trim().startsWith(name)));
+  openTab('artifact');document.getElementById('crumb').innerHTML='<b>DevNorth 2026</b> · '+name;}
+function confirmEl(b){const el=b.closest('.el');el.dataset.epi='attested';el.querySelector('.epi').outerHTML=_epi('attested');b.remove();}
+function editEl(){alert('Edit field — content only. Your edit is recorded as your Attested plan fact (AttestedAssertion, attested-user). Saving changes no assessment; only reanalysis does.');}
+const _sevword={critical:'Critical',moderate:'Moderate',warning:'Warning'};
+function openFindingPanel(id){const f=FINDINGS[id];if(!f)return;
+  document.getElementById('findbody').innerHTML=
+    `<div class="fp-h"><div class="fp-top"><span class="chip sev${f.sev[0]==='c'?'c':f.sev[0]==='m'?'m':'w'}">${_sevword[f.sev]}</span><span class="chip">${f.type}</span><span class="elabel derived">Derived</span><span class="fp-close" onclick="closeFindingPanel()">×</span></div><h2>${f.title}</h2><div style="font-size:11.5px;color:var(--subtle);margin-top:6px">${id} · affects ${f.dim} · in ${f.art} · status: Open (detected)</div></div>
+     <div class="fp-scroll">
+       <div class="fp-sec"><div class="t">Why this exists</div><p>${f.summary}</p></div>
+       <div class="fp-sec"><div class="t">Evidence — traceable to your inputs</div>${f.ev.map(e=>`<div class="fp-ev"><div class="src">${e[0]}</div>${e[1]}</div>`).join('')}</div>
+       <div class="fp-sec"><div class="t">CAF impact</div><p>${f.caf}</p></div>
+       <div class="fp-sec"><div class="t">Recommendations — select a path</div><div class="fp-rec"><div class="tag">◆ OSLO Recommended <span class="elabel derived">Derived</span></div><p style="color:var(--text)">${f.rec}</p><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="selectPath(this,'rec')">Accept as Selected Path</button></div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--subtle);margin:11px 0 6px">Other possible resolution paths</div>${f.paths.map(p=>`<div class="fp-path" onclick="selectPath(this,'path')">○ ${p}<span class="selmark">Select</span></div>`).join('')}<div style="font-size:11px;color:var(--subtle);margin-top:8px">A grouping of recommendations — selecting one records your <b>Selected Path</b> (an Attested decision), distinct from OSLO’s Derived advice.</div></div>
+       <div class="fp-sec"><div class="t">History</div><p>Detected in the last Fast Pass · append-only (CHR). Prior states retained.</p></div>
+       <div class="fp-sec"><div class="t">Reanalysis</div><p>This finding weakens or closes <b>only</b> through reanalysis after you change information — never resolved by hand.</p></div>
+     </div>
+     <div class="fp-foot"><button class="btn btn-primary btn-sm" onclick="askOSLO('${id}')">✦ Ask OSLO in context</button><button class="btn btn-ghost btn-sm" onclick="openArtifact(FINDINGS['${id}'].art);closeFindingPanel()">Update information</button><button class="btn btn-ghost btn-sm" onclick="rerun(event)">↻ Reanalyze</button><div class="fp-note">OSLO advises; you decide. You can’t resolve a finding by hand — change the plan and reanalyze.</div></div>`;
+  document.getElementById('findpanel').classList.add('open');
+  document.getElementById('findscrim').classList.add('open');}
+function closeFindingPanel(){document.getElementById('findpanel').classList.remove('open');document.getElementById('findscrim').classList.remove('open');}
+function acceptRec(b){b.textContent='✓ Selected Path';b.style.background='var(--success)';b.style.color='#fff';}
+function openFinding(){openFindingPanel('FND-2041');}
+const _filt={dim:'all',sev:'all'};const DIMORDER=['Feasibility','Clarity','Alignment'];const _sevrank={critical:0,moderate:1,warning:2};
+function openAllFindings(){renderFinds();document.getElementById('findsall').classList.add('open');}
+function closeAllFindings(){document.getElementById('findsall').classList.remove('open');}
+function setFilt(f,v,btn){_filt[f]=v;document.querySelectorAll('[data-f="'+f+'"]').forEach(b=>b.classList.toggle('on',b===btn));renderFinds();}
+function clearFilt(){_filt.dim='all';_filt.sev='all';document.querySelectorAll('.ff').forEach(b=>b.classList.toggle('on',b.dataset.v==='all'));renderFinds();}
+function renderFinds(){const all=Object.entries(FINDINGS);const total=all.length;let shown=0,html='';
+  DIMORDER.forEach(dim=>{if(_filt.dim!=='all'&&_filt.dim!==dim)return;
+    let items=all.filter(([id,f])=>f.dim===dim&&(_filt.sev==='all'||f.sev===_filt.sev));
+    items.sort((a,b)=>_sevrank[a[1].sev]-_sevrank[b[1].sev]);
+    if(items.length===0){if(_filt.dim==='all'&&_filt.sev==='all'&&dim==='Alignment')html+='<div class="fa-group"><div class="fa-gh">Alignment · 0</div><div style="font-size:12px;color:var(--subtle)">Nothing is weakening Alignment.</div></div>';return;}
+    shown+=items.length;
+    html+=`<div class="fa-group"><div class="fa-gh">${dim} · ${items.length}</div>`+items.map(([id,f])=>{const c=f.sev==='critical'?'danger':f.sev==='moderate'?'warning':'subtle';return `<div class="fcard" onclick="openFindingPanel('${id}')"><div class="sevbar" style="background:var(--${c})"></div><div style="flex:1"><div class="ft">${f.title}</div><div class="fm"><span class="chip sev${f.sev[0]==='c'?'c':f.sev[0]==='m'?'m':'w'}">${_sevword[f.sev]}</span><span>${f.type}</span><span>· in ${f.art}</span><span>· ${f.ev.length} evidence</span><span>· ${f.paths.length+1} resolution paths</span><span>· detected</span></div></div><span style="color:var(--subtle);align-self:center">›</span></div>`}).join('')+'</div>';});
+  const hidden=total-shown,filtered=(_filt.dim!=='all'||_filt.sev!=='all');
+  document.getElementById('fa-list').innerHTML=html+(filtered&&hidden>0?`<div class="fa-hidden">${hidden} finding${hidden>1?'s':''} hidden by filters · <a style="color:var(--primary-light);cursor:pointer" onclick="clearFilt()">clear filters</a></div>`:'');
+  document.getElementById('fa-count').textContent=shown+' active'+(filtered?' (filtered)':'');}
+function selectPath(el,kind){const sec=el.closest('.fp-scroll');if(!sec)return;
+  sec.querySelectorAll('.fp-path').forEach(p=>{p.classList.remove('sel');const m=p.querySelector('.selmark');if(m)m.textContent='Select';});
+  const rb=sec.querySelector('.fp-rec .btn-primary');if(rb){rb.textContent='Accept as Selected Path';rb.style.background='';rb.style.color='';}
+  if(kind==='path'){el.classList.add('sel');const m=el.querySelector('.selmark');if(m)m.textContent='✓ Selected Path';}
+  else{el.textContent='✓ Selected Path';el.style.background='var(--success)';el.style.color='#fff';}}
+function askOSLO(id){const f=FINDINGS[id];document.getElementById('bodyGrid').classList.remove('chat-collapsed');
+  document.getElementById('chatctx').textContent=id+' · '+f.art;
+  const s=document.getElementById('chatscroll');
+  s.insertAdjacentHTML('beforeend',`<div class="cmsg user"><div class="who">You</div><div class="bub">About ${id} — ${f.title.toLowerCase()}. What should I do?</div></div><div class="cmsg"><div class="who">OSLO</div><div class="bub">${f.rec} I can walk through the ${f.paths.length} alternative paths, or you can update the <a onclick="openArtifact('${f.art}')">${f.art}</a> artifact and reanalyze. I advise; you decide.</div></div>`);
+  s.scrollTop=s.scrollHeight;closeFindingPanel();}
+/* ---- chat ---- */
+function toggleChat(){document.getElementById('bodyGrid').classList.toggle('chat-collapsed');}
+function toggleM(el,id){const d=document.getElementById('d-'+id);const open=d.classList.toggle('show');el.classList.toggle('open',open);}
+/* ---- inline diagnostics ---- */
+function dxpop(el,sev,title,desc,id){
+  const p=document.getElementById('dxpop');const r=el.getBoundingClientRect();
+  p.innerHTML='<div class="dt"><span class="chip" style="color:var(--'+(sev==='crit'?'danger':'warning')+')">'+(sev==='crit'?'Critical':'Moderate')+'</span><span class="elabel derived">Derived</span><span class="mono" style="margin-left:auto;font-size:10px;color:var(--subtle)">'+id+'</span></div><div class="dn">'+title+'</div><div class="dd">'+desc+'</div><div class="da"><button class="btn btn-primary btn-sm" onclick="openFinding()">Investigate</button><button class="btn btn-ghost btn-sm" onclick="openTab(\'rec\')">Recommendations</button></div>';
+  p.style.left=Math.min(r.left,window.innerWidth-320)+'px';p.style.top=(r.bottom+8)+'px';p.classList.add('show');
+}
+function dxhide(){setTimeout(()=>{if(!document.getElementById('dxpop').matches(':hover'))document.getElementById('dxpop').classList.remove('show')},250);}
+/* ---- MRI layout ---- */
+const NODES=[
+  {x:.5,y:.30,sev:'crit',cat:'risky',lbl:'Launch ↔ dependency conflict'},
+  {x:.30,y:.62,sev:'crit',cat:'missing',lbl:'No rollback plan'},
+  {x:.40,y:.50,sev:'mod',cat:'risky',lbl:'Vendor API limits assumed'},
+  {x:.60,y:.40,sev:'mod',cat:'missing',lbl:'Phase 2 metrics undefined'},
+  {x:.66,y:.58,sev:'warn',cat:'risky',lbl:'Team capacity inferred'},
+  {x:.52,y:.52,sev:'warn',cat:'incomplete',lbl:'"Q3" scope ambiguous'}
+];
+function layoutMRI(){
+  const c=document.getElementById('mcanvas');if(!c)return;const w=c.clientWidth,h=c.clientHeight;if(!w)return;
+  const f=document.getElementById('mview-field');f.querySelectorAll('.node').forEach(n=>n.remove());
+  // triangle points
+  const cx=w*.5, top={x:w*.5,y:h*.16}, bl={x:w*.26,y:h*.72}, br={x:w*.74,y:h*.72};
+  const outer=document.getElementById('tri-outer');outer.setAttribute('points',`${top.x},${top.y} ${bl.x},${bl.y} ${br.x},${br.y}`);
+  // current CAF fill (clarity high, alignment/feasibility limited) -> pull toward centroid
+  const ce={x:(top.x+bl.x+br.x)/3,y:(top.y+bl.y+br.y)/3};
+  const mix=(p,f)=>`${ce.x+(p.x-ce.x)*f},${ce.y+(p.y-ce.y)*f}`;
+  document.getElementById('tri-fill').setAttribute('points',`${mix(top,.66)} ${mix(bl,.40)} ${mix(br,.36)}`);
+  pos('ax-c',top.x-22,top.y-26);pos('ax-a',bl.x-58,bl.y+8);pos('ax-f',br.x+10,br.y+8);
+  NODES.forEach((n,i)=>{
+    const el=document.createElement('div');el.className='node '+n.sev+(n.sev==='crit'?' pulse':'');el.dataset.cat=n.cat;
+    el.style.left=(n.x*w)+'px';el.style.top=(n.y*h)+'px';
+    el.innerHTML='<div class="d"></div><div class="lbl">'+n.lbl+'</div>';
+    el.onclick=openFinding;f.appendChild(el);
+  });
+}
+function pos(id,x,y){const e=document.getElementById(id);e.style.left=x+'px';e.style.top=y+'px';}
+function filt(btn,cat){document.querySelectorAll('.mf').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  document.querySelectorAll('.node').forEach(n=>n.style.display=(cat==='all'||n.dataset.cat===cat)?'block':'none');}
+function mview(b,w){document.querySelectorAll('.mri-top .mf').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  document.getElementById('mview-heat').style.display=w==='heat'?'flex':'none';
+  document.getElementById('mview-field').style.display=w==='field'?'block':'none';
+  if(w==='field')setTimeout(layoutMRI,20);}
+window.addEventListener('resize',()=>{if(document.getElementById('pane-mri').classList.contains('active'))layoutMRI();});
+/* ---- misc ---- */
+function rerun(e){const b=e.target,t=b.textContent;b.textContent='Analyzing…';b.disabled=true;setTimeout(()=>{b.textContent=t;b.disabled=false;alert('Fast Pass complete in 41s — Time-to-First-MRI under the 60s target.')},1300);}
+function closeLimit(){document.getElementById('limitModal').classList.remove('open');}
+function startDeepPass(){
+  const pill=document.getElementById('dpstatus');if(pill)pill.style.display='flex';
+  setTimeout(()=>{
+    const b=document.getElementById('dpbanner');if(b){b.classList.add('done');
+      document.getElementById('dpnotetxt').innerHTML='<b>Deep Analysis complete</b> — understanding expanded; it superseded the provisional orientation. Confidence refined within Moderate (index 58 → 62).';}
+    const t=document.getElementById('dptxt');if(t)t.textContent='complete';
+  },6500);
+}
+document.getElementById('artview').innerHTML=artHTML('Resources');
+</script>
+</body>
+</html>
