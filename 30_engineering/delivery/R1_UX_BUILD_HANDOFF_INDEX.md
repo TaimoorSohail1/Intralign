@@ -46,5 +46,18 @@
 - `OPEN_TBD` **A2** (latency p50/p95) and **E3** (paid-tier limits).
 - Command palette (⌘K) is **R2**, not R1.
 
+## R1 completion dependencies — what blocks R1 vs what doesn't
+**Nothing here blocks *starting* R1.** Categorized so no TBD is mistaken for a blocker:
+
+- **Ratified for R1 — build to these now:** confidence formula v0 + **5-band** + **±7** (DL-086); Fast-Pass **Free envelope** ~20 artifacts / ~50k words / 1 active (A1); the **`<60s` Time-to-First-MRI ceiling** (ratified, Master Spec §20/M1); browsers **evergreen** (E1); **WCAG 2.1 AA** (E2); Intralign **palette** core (E4).
+- **Not R1 — do not wait on these:** paid-tier values Pro/Team/Enterprise (**E3 → R2**; tiers are Calibration config rows, not code); latency **p50/p95 distribution targets** (A2 — only the *targets* are open; the `<60s` ceiling is ratified; refine from telemetry); **command palette ⌘K** (R2); designer assets — type scale / logo / microcopy (E4 → designer; token contract holds).
+- **Resolve *during* build (feature-completeness, not pre-start blockers):**
+  - **G5** — `confidence_recalculated` payload carries the driving finding/CAF ref (backs the cause-bound Confidence banner, DL-085).
+  - **G6** — `GET /projects/{pid}/confidence?history=true` returns the numeric value per run (backs the trend chart, DL-085).
+  - **G3** — history-surface read (existing per-object reads likely suffice; confirm).
+  - **G4 / G7 / G8** — soft: derive-or-drop the two derived ledger counts; auto-reanalysis debounce tuning; optional recommendation-`deferred` affordance.
+
+**Rule:** treat any open TBD as *"build to the ratified default / scaffold the metric, refine from telemetry"* — never as a blocker, and never guess an owner value (escalate per the Anti-Assumption Build Protocol).
+
 ## Definition of done (per surface)
 Visual baseline match (≤2%) **and** all `ACCEPTANCE_CRITERIA.md` checks pass **and** every dynamic element bound per the integration map **and** governance invariants hold. Any capability missing from the traceability matrix is a coverage defect to **escalate**, not fill by assumption.
