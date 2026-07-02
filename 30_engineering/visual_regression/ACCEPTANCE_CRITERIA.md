@@ -50,6 +50,14 @@
 - Reliability is presented as a **qualifier** of Confidence, **determined independently** of Clarity/Alignment/Feasibility — not a fourth dimension and not findings-derived (Interpretation Doctrine; DL-085).
 - The reliability components are **not** rendered on the Overview (DL-090 trim) — they live only here and are bound to the reliability read on `GET /projects/{pid}/confidence`.
 
+## Automated behavioral gate (`behavioral.mjs`)
+Some invariants the pixel diff **can't** see are enforced by `node behavioral.mjs` (script `npm run behavioral`; `behavioral:proto` needs no running app and runs against the reference prototype). Current checks, each traced to a decision:
+- **tour-integrity** — every quick-tour step selector resolves to an element (DL-088/DL-090). This catches a step left pointing at a removed surface — the pixel gate cannot, because the tour isn't in any baseline shot.
+- **confidence-not-bare** — the top-bar Confidence pill always carries its reliability qualifier (DL-085).
+- **reliability-basis-in-explainer** — the Confidence explainer exposes Coverage / Evidence availability / Assessability (DL-090).
+
+A failed behavioral check fails the build alongside the visual gate. Add app-mode bindings (`--mode app --base <url>`) as the built app gains the equivalent affordances.
+
 ## Notes for the implementer
 - Run visual gate in a **fixed container** (viewport 1440×960, reduced-motion, srgb) so diffs are deterministic; mask genuinely dynamic regions (timestamps) via Playwright `mask` if needed.
 - The numeric Confidence value is produced by the **v0 formula** (`30_engineering/scoring/CAF_CONFIDENCE_V0_SCORING_FORMULA_V1.md`); thresholds are the ratified 5-band map (DL-086). Sub-±7 jitter must not render as a change.

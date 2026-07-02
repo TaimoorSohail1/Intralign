@@ -7,7 +7,8 @@ Enforces that the **built app matches the ratified prototype** (`product-design/
 - `baselines/` — golden PNGs captured from the prototype (committed; the source of truth for diffs).
 - `capture.mjs` — renders surfaces from the prototype (`--mode proto`) or the built app (`--mode app`).
 - `compare.mjs` — pixel-diffs `candidate/` vs `baselines/`, writes `diffs/`, fails over `diffThreshold`.
-- `ACCEPTANCE_CRITERIA.md` — per-surface structural/behavioral checks (traceable to DL-085…089).
+- `behavioral.mjs` — invariants the pixel diff can't see (quick-tour steps resolve, Confidence never bare, reliability basis in the explainer). Run with `npm run behavioral`; `npm run behavioral:proto` needs no running app.
+- `ACCEPTANCE_CRITERIA.md` — per-surface structural/behavioral checks (traceable to DL-085…090).
 - `ci/visual-regression.sample.yml` — drop-in GitHub Actions job for the **app** repo.
 
 ## Install

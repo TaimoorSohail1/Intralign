@@ -7,7 +7,9 @@
     "baseline": "node capture.mjs --mode proto --out baselines",
     "capture": "node capture.mjs --mode app --out candidate",
     "compare": "node compare.mjs",
-    "test": "npm run capture && npm run compare"
+    "behavioral": "node behavioral.mjs",
+    "behavioral:proto": "node behavioral.mjs --mode proto",
+    "test": "npm run capture && npm run compare && npm run behavioral"
   },
   "dependencies": {
     "playwright-core": "^1.44.0",

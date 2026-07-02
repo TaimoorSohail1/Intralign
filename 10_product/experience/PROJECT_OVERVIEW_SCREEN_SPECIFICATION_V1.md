@@ -183,4 +183,6 @@ Ratified by **DL-090** (presentation-only; **amends §Q**). The Overview is trim
 
 CAF driver chips are **qualitative** (level only; per-dimension 0–100 numbers move to drill-in). Confidence doctrine, Panel Model, and advisory-only unchanged. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html` (baseline `02-overview`).
 
+**Readability presentation (realization, presentation-only).** The §Q/§R hierarchy renders as **three whitespace-separated cards** — (1) *the read* (Confidence ring + number, reliability qualifier, "What's driving it" CAF chips, trend), (2) *Start here* (the single next action), (3) *Progress* (a 4-cell stat row: findings resolved · critical open · dependencies confirmed · plan sections read). Segmentation is by whitespace/cards, not hairline dividers. Type roles are limited to: hero number · section headline (~21px) · body/qualifier (~13px `muted`) · caption (~11px `subtle`); the reliability qualifier is never the smallest text. The first-run coaching banner does not persist on the steady-state Overview. This changes presentation hierarchy only — order, content set (DL-090), Confidence doctrine, and Panel Model are unchanged. Verified by baselines `02-overview`, `04-finding-panel`, `08-confidence-explainer`.
+
 **Project Overview Screen Specification v1 complete.**

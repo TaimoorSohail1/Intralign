@@ -174,6 +174,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 #ledger .lg-i{font-weight:700;color:var(--subtle);text-transform:uppercase;letter-spacing:.07em;font-size:10px}
 #ledger .lg b{color:var(--text)}
 #ledger .lg{white-space:nowrap}
+.ledger-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.lg-cell{display:flex;flex-direction:column;gap:4px}
+.lg-n{font-size:23px;font-weight:600;color:var(--text);font-family:var(--mono);line-height:1}
+.lg-n.danger{color:var(--danger)}.lg-n.success{color:var(--success)}
+.lg-l{font-size:11.5px;color:var(--subtle);line-height:1.35}
+@media(max-width:640px){.ledger-grid{grid-template-columns:repeat(2,1fr);gap:14px}}
 @keyframes cflash{0%{box-shadow:0 0 0 3px rgba(77,139,107,.4)}100%{box-shadow:0 0 0 0 rgba(77,139,107,0)}}
 .cmsg.win .bub{border-left:3px solid var(--success);background:rgba(77,139,107,.08);border-radius:0 9px 9px 0;padding:10px 12px}
 .conf-pill .q{font-size:10.5px;color:var(--muted);padding-left:7px;border-left:1px solid var(--border-2)}
@@ -266,6 +272,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 /* understanding console */
 .uc{max-width:880px;margin:0 auto;padding:26px 30px 70px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px}
+.card.hero,.focuscard,.ledgercard{padding:22px}
+.focuscard{margin-top:16px}.ledgercard{margin-top:14px}
+.focuscard .focus{margin-top:0;border-top:none;padding-top:0}
+.ledgercard #ledger{margin:0;display:block}
 .card .ch{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .card .ch h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--subtle);font-weight:600}
 .conf-head{display:flex;gap:24px;align-items:center}
@@ -311,12 +321,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .fl-cta{flex-shrink:0;font-size:12px;font-weight:600;color:var(--on-accent);background:var(--primary);padding:5px 12px;border-radius:7px}
 .focus-then{font-size:12px;color:var(--subtle);margin-top:9px}
 .focus-then a{color:var(--muted);cursor:pointer}.focus-then a:hover{color:var(--primary-light)}
-.conf-meta .big{font-size:17px;font-weight:600;margin-bottom:3px}.conf-meta .ql{color:var(--muted);font-size:13px;max-width:430px}
-.nh{margin-top:11px;font-size:11px;color:var(--subtle)}
+.conf-meta .big{font-size:21px;font-weight:600;margin-bottom:5px;line-height:1.25}.conf-meta .ql{color:var(--muted);font-size:13px;max-width:430px}
+.nh{margin-top:11px;font-size:13px;color:var(--muted);line-height:1.5;max-width:56ch}
 .stagepips{margin-left:14px;font-size:10.5px;color:var(--subtle);display:inline-flex;align-items:center;gap:5px;cursor:help}
 .stagepips b{color:var(--primary-light)}.stagepips .sp-arrow{opacity:.5;font-size:9px}
 .conftrend{margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
-.ct-h{display:flex;align-items:center;gap:6px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--subtle);font-weight:600;margin-bottom:4px}
+.ct-h{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--subtle);font-weight:500;margin-bottom:5px}
 .ct-x{display:flex;justify-content:space-between;font-size:10.5px;color:var(--subtle);margin-top:2px}
 /* empty states */
 .empty{text-align:center;padding:26px 18px;color:var(--subtle);font-size:13px}
@@ -957,7 +967,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
           <div class="uc">
             <div class="errbar" id="errbar" style="display:none"><span class="ar-i" style="color:var(--danger)">⚠</span><span style="flex:1">Reanalysis couldn't complete — showing your <b style="color:var(--text)">last-good understanding</b>, unchanged. <a onclick="retryAnalysis()">Retry</a></span><span class="coach-x" onclick="document.getElementById('errbar').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
             <div class="arrival" id="arrival" style="display:none"><span class="ar-i">✦</span><span class="ar-t"><b>Initial analysis complete in <span id="arrival-t">41</span>s.</b> OSLO read your brief, drafted <a onclick="openArtifact('Intent')">7 plan sections</a>, assessed Clarity · Alignment · Feasibility, and surfaced <a onclick="openAllFindings()">6 findings</a>.</span><a onclick="startTour()" style="color:var(--primary-light);cursor:pointer;white-space:nowrap;font-weight:600;align-self:center" title="A 60-second tour of how to use OSLO">Take a quick tour →</a><span class="coach-x" onclick="document.getElementById('arrival').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
-            <div class="coach" id="coach-ov"><span>This is your <b>strategic read</b>. Confidence is how well OSLO understands the plan — not a grade. Start with what's weakening understanding, then decide what to act on.</span><span class="coach-x" onclick="document.getElementById('coach-ov').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
+            <div class="coach" id="coach-ov" style="display:none"><span>This is your <b>strategic read</b>. Confidence is how well OSLO understands the plan — not a grade. Start with what's weakening understanding, then decide what to act on.</span><span class="coach-x" onclick="document.getElementById('coach-ov').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
             <div class="card hero">
               <div class="ch"><h3>Confidence</h3><span class="info" data-tip="Confidence is understanding maturity — not a health score, probability, or grade. It is always qualified by reliability. Understanding matures in stages: Orientation → Expanded → Validated.">i</span><span class="ustate cur" id="ustate" style="margin-left:auto" title="Analysis state — still updating while analysis runs, current when complete. Only reanalysis changes the assessment.">Current</span><span class="elabel derived" style="margin-left:8px">From OSLO</span></div>
               <div class="conf-head">
@@ -973,9 +983,9 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
               </div>
               <div class="drivers"><span class="drv-lab">What's driving it</span><button class="drv" onclick="openFindingsDim('Clarity')"><i style="background:var(--conf-medium)"></i>Clarity <b>Forming</b></button><button class="drv" onclick="openFindingsDim('Alignment')"><i style="background:var(--conf-low)"></i>Alignment <b>Limited</b></button><button class="drv" id="cg-feas" onclick="openFindingsDim('Feasibility')"><i id="cg-feas-dot" style="background:var(--conf-low)"></i>Feasibility <b id="cg-feas-lvl">Limited</b></button></div>
               <div class="conftrend" id="conftrend"></div>
-              <div class="focus" id="focus"></div>
-              <div id="ledger"></div>
             </div>
+            <div class="card focuscard"><div class="focus" id="focus"></div></div>
+            <div class="card ledgercard"><div class="ch"><h3>Progress</h3><span class="info" data-tip="Concrete, countable progress — the auditable objects behind the read. Findings and evidence are measurable; the confidence index above is not, below band granularity.">i</span></div><div id="ledger"></div></div>
             <div class="explore">
             <div class="explore-h">More <span>optional — the read above is the summary</span></div>
             <div class="osec" id="osec-sum"><button class="osec-h" onclick="toggleSec('sum')" aria-expanded="false"><span class="osec-t">Project summary</span><span class="osec-sum">One-day dev conference · understanding Moderate, forming</span><span class="osec-chev">›</span></button><div class="osec-b">
@@ -1870,11 +1880,12 @@ function renderTrend(){const el=document.getElementById('conftrend');if(!el)retu
     <div class="ct-x">${TREND.map((t,i)=>{const d=i>0?t.n-TREND[i-1].n:0;const arr=d>0?` <span style="color:var(--success)">▲${d}</span>`:d<0?` <span style="color:var(--warning)">▼${Math.abs(d)}</span>`:'';return `<span>${t.run} <b style="color:var(--text)">${t.n}</b>${arr}</span>`;}).join('')}</div>`;}
 function renderLedger(){const el=document.getElementById('ledger');if(!el)return;
   const crit=Math.max(0,1-RESOLVED_COUNT), dep=Math.min(3,2+RESOLVED_COUNT);
-  el.innerHTML=`<span class="lg-i" title="Concrete, countable progress — the auditable objects behind the read. Findings and evidence are measurable; the confidence index above is not, below band granularity.">Progress</span>`+
-    `<span class="lg"><b>${RESOLVED_COUNT}</b> of 6 findings resolved</span>`+
-    `<span class="lg">${crit?`<b style="color:var(--danger)">${crit}</b> critical open`:`<b style="color:var(--success)">0</b> critical open`}</span>`+
-    `<span class="lg"><b>${dep}</b> of 3 dependencies confirmed</span>`+
-    `<span class="lg"><b>7</b> of 7 plan sections read</span>`;}
+  el.innerHTML=`<div class="ledger-grid">`+
+    `<div class="lg-cell"><span class="lg-n">${RESOLVED_COUNT}</span><span class="lg-l">of 6 findings resolved</span></div>`+
+    `<div class="lg-cell"><span class="lg-n ${crit?'danger':'success'}">${crit}</span><span class="lg-l">critical open</span></div>`+
+    `<div class="lg-cell"><span class="lg-n">${dep}</span><span class="lg-l">of 3 dependencies confirmed</span></div>`+
+    `<div class="lg-cell"><span class="lg-n">7</span><span class="lg-l">of 7 plan sections read</span></div>`+
+  `</div>`;}
 document.getElementById('artview').innerHTML=artHTML('Resources');updateWnav();renderNotif();renderTrend();renderLedger();renderFocus();updateFindCount();enhanceA11y();initTheme();
 /* Testing fast-entry: open the file with #overview (or #workspace / #test) to jump straight to the project Overview, skipping onboarding — handy for exercising the resolve flow. Normal open still shows the full first-run experience. */
 function jumpToWorkspace(){

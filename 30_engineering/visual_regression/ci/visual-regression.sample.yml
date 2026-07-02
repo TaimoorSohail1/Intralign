@@ -20,7 +20,10 @@ jobs:
           npm ci
           npm run build
           (npm run start &) && npx wait-on http://localhost:3000
-      - name: Visual regression (capture + compare)
+      - name: Behavioral gate — reference invariants (no running app needed)
+        working-directory: visual_regression
+        run: npm run behavioral:proto   # tour steps resolve · Confidence never bare · reliability basis in explainer
+      - name: Visual regression (capture + compare + behavioral)
         working-directory: visual_regression
         env:
           APP_BASE_URL: http://localhost:3000
