@@ -1724,11 +1724,11 @@ function openSettings(){document.getElementById('settings').classList.add('show'
 function closeSettings(){document.getElementById('settings').classList.remove('show');}
 /* optional feature tour — spotlight coachmarks over the real UI (opt-in, never gates) */
 const TOUR=[
- {sel:'.card.hero',t:'Your strategic read',x:'Confidence is how well OSLO understands the plan — maturity, not a grade — always shown with its reliability qualifier.'},
- {sel:'#focus',t:'Where to focus',x:'The findings weakening understanding, most severe first. Click any to investigate. OSLO suggests where to start; you decide.'},
- {sel:'#osec-attn',t:'The attention map',x:'Open it for weaknesses across your plan sections × dimensions. Click a cell to investigate a finding (why); click an artifact row to open it (where).'},
- {sel:'.explorer',t:'Your plan sections',x:'OSLO drafted these from your input. Edit any one and OSLO reanalyzes automatically — only reanalysis changes the assessment.'},
- {sel:'.chatp',t:'Ask OSLO anything',x:'A persistent advisor — ask about a finding, an artifact, or what to do next. It reads and explains; you stay in control — nothing changes without you.'},
+ {sel:'.card.hero',t:'Your strategic read',x:'Confidence is how well OSLO understands your plan — maturity, not a grade. The 0–100 read is the focal point, always shown with its reliability qualifier.'},
+ {sel:'.drivers',t:"What's driving it",x:'Clarity, Alignment and Feasibility at a glance — the dimensions behind the read. Click a driver to see the findings moving it.'},
+ {sel:'#focus',t:'Where to start',x:'The open finding most worth your attention, most severe first. OSLO suggests where to start; you decide.'},
+ {sel:'.explorer',t:'Your project rail',x:'Findings, History and the Attention map open here as focused views — in the Attention map, click a cell to jump to the findings there. Your plan sections sit below; edit any one and OSLO reanalyzes automatically — only reanalysis changes the assessment.'},
+ {sel:'.chatp',t:'Ask OSLO anything',x:'A persistent advisor — ask about a finding, a section, or what to do next. It reads and explains; you stay in control — nothing changes without you.'},
  {sel:'#confpill',t:'Your read, always visible',x:'Confidence + reliability stay in the top bar. Click it for the Clarity · Alignment · Feasibility breakdown and the reliability basis.'}
 ];
 let _tourI=-1;
