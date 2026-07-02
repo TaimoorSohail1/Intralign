@@ -970,7 +970,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
         <section class="pane active" id="pane-understanding">
           <div class="uc">
             <div class="errbar" id="errbar" style="display:none"><span class="ar-i" style="color:var(--danger)">⚠</span><span style="flex:1">Reanalysis couldn't complete — showing your <b style="color:var(--text)">last-good understanding</b>, unchanged. <a onclick="retryAnalysis()">Retry</a></span><span class="coach-x" onclick="document.getElementById('errbar').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
-            <div class="arrival" id="arrival" style="display:none"><span class="ar-i">✦</span><span class="ar-t"><b>Initial analysis complete in <span id="arrival-t">41</span>s.</b> OSLO read your brief, drafted <a onclick="openArtifact('Intent')">7 plan sections</a>, assessed Clarity · Alignment · Feasibility, and surfaced <a onclick="openAllFindings()">6 findings</a>.</span><a onclick="startTour()" style="color:var(--primary-light);cursor:pointer;white-space:nowrap;font-weight:600;align-self:center" title="A 60-second tour of how to use OSLO">Take a quick tour →</a><span class="coach-x" onclick="document.getElementById('arrival').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
+            <div class="arrival" id="arrival" style="display:none"><span class="ar-i">✦</span><span class="ar-t"><b>Initial analysis complete in <span id="arrival-t">41</span>s.</b> OSLO read your brief, drafted <a onclick="openArtifact('Intent')">7 plan sections</a>, assessed Clarity · Alignment · Feasibility, and surfaced <a onclick="openAllFindings()">15 findings</a>.</span><a onclick="startTour()" style="color:var(--primary-light);cursor:pointer;white-space:nowrap;font-weight:600;align-self:center" title="A 60-second tour of how to use OSLO">Take a quick tour →</a><span class="coach-x" onclick="document.getElementById('arrival').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
             <div class="coach" id="coach-ov" style="display:none"><span>This is your <b>strategic read</b>. Confidence is how well OSLO understands the plan — not a grade. Start with what's weakening understanding, then decide what to act on.</span><span class="coach-x" onclick="document.getElementById('coach-ov').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
             <div class="card hero">
               <div class="ch"><h3>Confidence</h3><span class="info" data-tip="Confidence is understanding maturity — not a health score, probability, or grade. It is always qualified by reliability. Understanding matures in stages: Orientation → Expanded → Validated.">i</span><span class="ustate cur" id="ustate" style="margin-left:auto" title="Analysis state — still updating while analysis runs, current when complete. Only reanalysis changes the assessment.">Current</span><span class="elabel derived" style="margin-left:8px">From OSLO</span></div>
@@ -1081,7 +1081,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
     <aside class="chatp">
       <div class="chat-h"><div class="o">O</div><div class="nm">OSLO</div><button class="chat-min" onclick="toggleChat()" title="Hide the OSLO panel" aria-label="Hide the OSLO panel">›</button></div>
       <div class="chat-scroll" id="chatscroll">
-        <div class="cmsg"><div class="who">OSLO</div><div class="bub">I've mapped DevNorth 2026 into your plan sections. Understanding is at <b style="color:var(--text)">Moderate</b> maturity — the main thing holding it back is a Critical feasibility gap in <a onclick="openArtifact('Resources')">Resources</a> (venue Wi-Fi capacity). Ask me anything, or open <a onclick="openAllFindings()">all findings</a> to see all six.</div></div>
+        <div class="cmsg"><div class="who">OSLO</div><div class="bub">I've mapped DevNorth 2026 into your plan sections. Understanding is at <b style="color:var(--text)">Moderate</b> maturity — the main thing holding it back is a Critical feasibility gap in <a onclick="openArtifact('Resources')">Resources</a> (venue Wi-Fi capacity). Ask me anything, or open <a onclick="openAllFindings()">all findings</a> to see all 15.</div></div>
       </div>
       <div class="chat-foot">
         <div class="chat-input">
@@ -1383,7 +1383,61 @@ const FINDINGS={
    ev:[['Schedule','“Jul 1 — registration opens”'],['Requirements','“450 registrations / ≥85% show-rate”']],
    caf:'Weakens <b>Feasibility</b>: a target depends on a ramp that isn’t backed by a plan.',
    rec:'Add an early-bird + speaker-promotion plan with weekly pace checkpoints against 450.',
-   paths:['Early-bird pricing through July','Speaker-driven promotion quotas']}
+   paths:['Early-bird pricing through July','Speaker-driven promotion quotas']},
+ 'FND-2053':{title:'“Well-rated” success has no rating threshold or method',type:'Missing information',basis:'stated',sev:'warning',dim:'Clarity',art:'Requirements',
+   summary:'Intent names a “well-rated” event as a success signal, but no rating scale, threshold, or survey method is stated — so success can’t be evaluated.',
+   ev:[['Intent','“a sold-out, well-rated event”']],
+   caf:'Weakens <b>Clarity</b>: a success criterion is asserted with no way to measure it.',
+   rec:'Define the rating instrument (e.g., post-event survey) and the passing threshold.',
+   paths:['Post-event NPS ≥ 40','Session-level ≥ 4/5 average']},
+ 'FND-2054':{title:'Target attendee profile is unspecified',type:'Coverage gap',basis:'stated',sev:'warning',dim:'Clarity',art:'Context',
+   summary:'The brief targets 450 attendees but does not describe who they are (role, seniority, sector) — the audience definition Context needs.',
+   ev:[['Context','“~450 attendees, in-person”']],
+   caf:'Weakens <b>Clarity</b>: without an audience definition, scope and messaging can’t be judged.',
+   rec:'State the primary attendee persona(s) the event is designed for.',
+   paths:['Working developers (mid-level)','Eng leaders + practitioners mix']},
+ 'FND-2081':{title:'No decision owner or approver is named',type:'Coverage gap',basis:'stated',sev:'moderate',dim:'Alignment',art:'Work breakdown',
+   summary:'Key choices (budget, speakers, venue) have no named owner/approver in the work breakdown, so decisions can’t be traced to accountability.',
+   ev:[['Work breakdown','no owner / approver assigned']],
+   caf:'Weakens <b>Alignment</b>: without owners, choices can drift from intent unchecked.',
+   rec:'Assign an owner and an approver for each key decision area.',
+   paths:['Single event lead owns all','Split: program vs operations owners']},
+ 'FND-2082':{title:'Speaker themes are not tied to the audience goals',type:'Ambiguity',basis:'inferred',sev:'warning',dim:'Alignment',art:'Scope',
+   summary:'The talk themes and the stated attendee goals are not connected in the brief; OSLO cannot confirm the program serves the intended audience.',
+   ev:[['Scope','“2 keynotes + breakout tracks”'],['Intent','“a sold-out, well-rated event”']],
+   caf:'Weakens <b>Alignment</b>: program content may not match why attendees come.',
+   rec:'Map each track to an audience goal it serves.',
+   paths:['Theme-to-goal matrix','Pre-event survey selects tracks']},
+ 'FND-2083':{title:'Budget is unreconciled with the sponsor-funded model',type:'Missing information',basis:'stated',sev:'moderate',dim:'Alignment',art:'Resources',
+   summary:'The event is described as sponsor-funded, but no budget or sponsor-revenue figure is present to reconcile cost against funding.',
+   ev:[['Context','“sponsor-funded”'],['Resources','no budget line present']],
+   caf:'Weakens <b>Alignment</b>: spend and funding can’t be shown to match.',
+   rec:'Add a budget with sponsor-revenue and cost lines.',
+   paths:['Bottom-up cost model','Sponsor-tier revenue target']},
+ 'FND-2062':{title:'Resources has no budget or cost breakdown',type:'Missing information',basis:'stated',sev:'moderate',dim:'Feasibility',art:'Resources',
+   summary:'The Resources section lists vendors and venue but no cost estimates — the plan’s executability can’t be assessed against a budget.',
+   ev:[['Resources','“Venue · Speakers · AV” (no costs)']],
+   caf:'Weakens <b>Feasibility</b>: without costs, affordability and trade-offs are unknown.',
+   rec:'Add per-line cost estimates for venue, AV, catering, and speakers.',
+   paths:['Collect vendor quotes','Use prior-event actuals as baseline']},
+ 'FND-2063':{title:'Schedule has no milestones or critical path',type:'Coverage gap',basis:'stated',sev:'moderate',dim:'Feasibility',art:'Schedule',
+   summary:'The Schedule names the event date and registration open, but no interim milestones or dependencies — so slippage risk can’t be seen.',
+   ev:[['Schedule','“Jul 1 — registration opens · Sep 18 — event”']],
+   caf:'Weakens <b>Feasibility</b>: no milestones means no early warning on delays.',
+   rec:'Add milestones (venue lock, speaker confirm, run-of-show) with dependencies.',
+   paths:['Backward-plan from Sep 18','Weekly milestone checkpoints']},
+ 'FND-2064':{title:'No risk or contingency plan is present',type:'Coverage gap',basis:'stated',sev:'warning',dim:'Feasibility',art:'Work breakdown',
+   summary:'The plan has no risks or contingencies — for a single-day, in-person event, common failure modes (speaker drop-out, weather, AV) are unaddressed.',
+   ev:[['Work breakdown','no risk register present']],
+   caf:'Weakens <b>Feasibility</b>: known failure modes have no mitigation.',
+   rec:'Add a short risk register with an owner and mitigation per top risk.',
+   paths:['Top-5 risk register','Add a contingency budget line']},
+ 'FND-2065':{title:'Catering and on-site logistics are unspecified',type:'Coverage gap',basis:'stated',sev:'warning',dim:'Feasibility',art:'Resources',
+   summary:'For ~450 on-site attendees, catering, registration desk, and signage are not covered in Resources.',
+   ev:[['Resources','venue listed; catering/logistics absent'],['Context','“~450 attendees, in-person”']],
+   caf:'Weakens <b>Feasibility</b>: day-of operations are unplanned for the stated headcount.',
+   rec:'Add catering, registration, and signage to the resource plan.',
+   paths:['Venue-provided catering','External caterer + volunteers']}
 };
 /* ---- finding lifecycle (FINDING_SYSTEM §C): detected→acknowledged→addressed→closed (+reopened/superseded). Never resolved by hand — only reanalysis closes. ---- */
 const _fstatus={};Object.keys(FINDINGS).forEach(id=>_fstatus[id]='detected');
@@ -1887,7 +1941,7 @@ function renderTrend(){const el=document.getElementById('conftrend');if(!el)retu
 function renderLedger(){const el=document.getElementById('ledger');if(!el)return;
   const crit=Math.max(0,1-RESOLVED_COUNT), dep=Math.min(3,2+RESOLVED_COUNT);
   el.innerHTML=`<div class="ledger-grid">`+
-    `<div class="lg-cell"><span class="lg-n">${RESOLVED_COUNT}</span><span class="lg-l">of 6 findings resolved</span></div>`+
+    `<div class="lg-cell"><span class="lg-n">${RESOLVED_COUNT}</span><span class="lg-l">of ${Object.keys(FINDINGS).length} findings resolved</span></div>`+
     `<div class="lg-cell"><span class="lg-n ${crit?'danger':'success'}">${crit}</span><span class="lg-l">critical open</span></div>`+
     `<div class="lg-cell"><span class="lg-n">${dep}</span><span class="lg-l">of 3 dependencies confirmed</span></div>`+
     `<div class="lg-cell"><span class="lg-n">7</span><span class="lg-l">of 7 plan sections read</span></div>`+
