@@ -159,11 +159,25 @@ def test_get_confidence(client) -> None:
     assert body["label"]["epistemic_label"] == "derived"
 
 
+def test_get_confidence_empty_is_null(client, reader) -> None:
+    reader.projections["outcome_confidence"] = []
+    resp = client.get(f"/v1/projects/{PROJECT}/confidence", headers=AUTH)
+    assert resp.status_code == 200
+    assert resp.json() is None
+
+
 def test_get_caf(client) -> None:
     resp = client.get(f"/v1/projects/{PROJECT}/caf", headers=AUTH)
     assert resp.status_code == 200
     body = resp.json()
     assert body["feasibility"]["band"] == "high"
+
+
+def test_get_caf_empty_is_null(client, reader) -> None:
+    reader.projections["caf"] = []
+    resp = client.get(f"/v1/projects/{PROJECT}/caf", headers=AUTH)
+    assert resp.status_code == 200
+    assert resp.json() is None
 
 
 def test_list_acceptances_attested_user(client) -> None:
