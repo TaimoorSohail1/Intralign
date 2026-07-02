@@ -936,6 +936,13 @@ Each changelog entry contains:
 - **Change Summary:** Outcome Confidence index calibration (measurement) — 5-band scheme + v0 defaults. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-122 — DL-087: Strategic chain & onboarding positioning (+ plain-language labels)
+
+- **Date:** 2026-07-02 · **Authorizing Decision:** DL-087.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-087-strategic-chain-positioning.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Strategic chain & onboarding positioning (+ plain-language labels). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
