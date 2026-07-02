@@ -648,7 +648,9 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .fcard .ft{font-weight:600;font-size:13.5px;margin-bottom:5px}
 .fcard .fm{font-size:11.5px;color:var(--subtle);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .fcard .ftype{font-size:9.5px;font-weight:600;color:var(--muted);border:1px solid var(--border-2);border-radius:5px;padding:1px 6px;background:var(--surface-2);white-space:nowrap}
-.fcard .ftype.epi{color:var(--primary-light);border-color:rgba(217,122,58,.4);background:rgba(217,122,58,.06)}
+.fcard .fbasis{font-size:9.5px;font-weight:600;border-radius:5px;padding:1px 6px;white-space:nowrap}
+.fcard .fbasis.inferred{color:var(--primary-light);border:1px solid rgba(217,122,58,.4);background:rgba(217,122,58,.06)}
+.fcard .fbasis.stated{color:var(--muted);border:1px solid var(--border-2);background:var(--surface-2)}
 .fa-hidden{font-size:12px;color:var(--subtle);text-align:center;padding:12px}
 /* history rows */
 .hrow{display:flex;gap:13px;padding:12px 2px;border-bottom:1px solid var(--border)}
@@ -1344,39 +1346,39 @@ function onArtInput(){
       setTimeout(()=>{if(ss){ss.className='savestate ok';ss.innerHTML='<span class="ss-dot"></span> Up to date';}},1500);},1300);},700);
 }
 const FINDINGS={
- 'FND-2041':{title:'Venue Wi-Fi capacity is unconfirmed',type:'Coverage gap',sev:'critical',dim:'Feasibility',art:'Resources',
+ 'FND-2041':{title:'Venue Wi-Fi capacity is unconfirmed',type:'Coverage gap',basis:'inferred',sev:'critical',dim:'Feasibility',art:'Resources',
    summary:'The plan requires 450+ on-site attendees, but the venue’s 500-person Wi-Fi capacity is not confirmed. A conference network failure is a common, high-impact failure and no recovery path is noted.',
    ev:[['Resources · Vendors','“Venue — rooms, power, Wi-Fi (must confirm 500-person Wi-Fi capacity)”'],['Intent','Target 450 attendees · in-person only']],
    caf:'Weakens <b>Feasibility</b>: a core dependency for the in-person format is unverified, so OSLO can’t confirm the plan is executable as written. (Finding → dimension → Confidence.)',
    rec:'Confirm the venue’s 500-person Wi-Fi capacity before locking the in-person-only format.',
    paths:['Run a venue Wi-Fi load test in August','Contract a managed event-Wi-Fi vendor as backup']},
- 'FND-2042':{title:'Keynote backups are unconfirmed',type:'Assumption',sev:'moderate',dim:'Feasibility',art:'Resources',
+ 'FND-2042':{title:'Keynote backups are unconfirmed',type:'Assumption',basis:'stated',sev:'moderate',dim:'Feasibility',art:'Resources',
    summary:'A single backup per keynote is mentioned but not confirmed. A keynote drop-out is a single point of failure for a one-day event.',
    ev:[['Resources · Speakers','“2 keynotes — line up one backup per keynote”']],
    caf:'Weakens <b>Feasibility</b>: a known risk is acknowledged but not yet mitigated in the plan.',
    rec:'Confirm a named, briefed backup for each keynote by speaker-confirmation (Jul 15).',
    paths:['Pre-record a fallback keynote','Designate an internal speaker as emergency backup']},
- 'FND-2051':{title:'Sponsor-lead metric has no tracking method',type:'Missing information',sev:'moderate',dim:'Clarity',art:'Requirements',
+ 'FND-2051':{title:'Sponsor-lead metric has no tracking method',type:'Missing information',basis:'inferred',sev:'moderate',dim:'Clarity',art:'Requirements',
    summary:'“≥120 sponsor-qualified leads” is a target, but neither the definition of “qualified” nor the tracking method is specified — so success can’t be measured.',
    ev:[['Requirements · Success metrics','“≥120 sponsor-qualified leads”']],
    caf:'Weakens <b>Clarity</b>: a success criterion is stated without the means to evaluate it.',
    rec:'Define “qualified lead” and the capture mechanism (badge scan / form) before registration opens.',
    paths:['Adopt the sponsor CRM’s lead definition','Use badge-scan + a 1-question qualifier'],
    draft:'Success metrics — sponsor leads: a “qualified lead” = a booth-scanned attendee who opts in to sponsor follow-up, captured via badge scan plus a one-question qualifier at each sponsor booth. Target: ≥120 qualified leads by event end.'},
- 'FND-2052':{title:'“Sold-out” success is unreconciled with the 450 target',type:'Ambiguity',sev:'warning',dim:'Clarity',art:'Requirements',
+ 'FND-2052':{title:'“Sold-out” success is unreconciled with the 450 target',type:'Ambiguity',basis:'stated',sev:'warning',dim:'Clarity',art:'Requirements',
    summary:'The intent uses “sold-out” as a success signal, but attendance is targeted at 450 with a waitlist — the cap that defines “sold out” is not stated.',
    ev:[['Intent','“a sold-out, well-rated event”'],['Requirements','“450 registrations / ≥85% show-rate”']],
    caf:'Weakens <b>Clarity</b>: two success framings coexist without a single, testable definition.',
    rec:'State the registration cap that defines “sold out” and align it with the 450 target.',
    clar:'Which defines success here — hitting the 450-registration target, or selling out a fixed cap? Tell OSLO and it will reconcile the two.',
    paths:['Set the cap at 450','Set the cap at venue maximum and treat 450 as a floor']},
- 'FND-2061':{title:'Run-of-show has no assigned owner',type:'Coverage gap',sev:'warning',dim:'Feasibility',art:'WBS',
+ 'FND-2061':{title:'Run-of-show has no assigned owner',type:'Coverage gap',basis:'inferred',sev:'warning',dim:'Feasibility',art:'WBS',
    summary:'Run-of-show finalization gates Sep 18 but is not assigned an owner in the work breakdown.',
    ev:[['WBS · Key deliverables','“…run-of-show…”'],['Schedule','“Sep 1 — run-of-show final”']],
    caf:'Weakens <b>Feasibility</b>: a gating deliverable lacks accountable ownership.',
    rec:'Assign an owner for run-of-show with a Sep 1 due date.',
    paths:['Assign the event lead','Assign the AV vendor’s show-caller']},
- 'FND-2071':{title:'Registration pace is unevidenced against the 450 target',type:'Inference',sev:'moderate',dim:'Feasibility',art:'Schedule',
+ 'FND-2071':{title:'Registration pace is unevidenced against the 450 target',type:'Coverage gap',basis:'inferred',sev:'moderate',dim:'Feasibility',art:'Schedule',
    summary:'Hitting 450 registrations requires a registration pace from Jul 1 that the current promotion plan does not yet evidence.',
    ev:[['Schedule','“Jul 1 — registration opens”'],['Requirements','“450 registrations / ≥85% show-rate”']],
    caf:'Weakens <b>Feasibility</b>: a target depends on a ramp that isn’t backed by a plan.',
@@ -1561,9 +1563,9 @@ function _empty(kind){const M={
   'unavail':['!','err','Temporarily unavailable','Findings couldn’t load. This is a technical issue, not an all-clear.']};
   const m=M[kind]||M['none'];return `<div class="empty ${m[1]}"><div class="ei">${m[0]}</div><div style="color:var(--text);font-weight:500">${m[2]}</div><div style="margin-top:4px">${m[3]}</div></div>`;}
 /* Card kept scannable (title + severity + location + status); type, evidence count and resolution paths live in the finding detail. */
-const _ftypeLabel={'Inference':'Inferred','Missing information':'Missing info'};
-const _epiTypes=new Set(['Assumption','Inference','Ambiguity']);
-const _fcard=([id,f])=>{const c=f.sev==='critical'?'danger':f.sev==='moderate'?'warning':'subtle';const isEpi=_epiTypes.has(f.type);return `<div class="fcard" onclick="openFindingPanel('${id}')"><div class="sevbar" style="background:var(--${c})"></div><div style="flex:1"><div class="ft">${f.title}</div><div class="fm"><span class="chip sev${f.sev[0]==='c'?'c':f.sev[0]==='m'?'m':'w'}">${_sevword[f.sev]}</span><span class="ftype${isEpi?' epi':''}" title="Finding type — the epistemic nature of this observation. ${isEpi?'Assumption / Inferred / Ambiguity describe OSLO&#39;s read of a not-yet-stated basis (Derived unless stated in evidence).':'A gap in what the plan states or covers.'}">${_ftypeLabel[f.type]||f.type}</span><span>· ${_group==='art'?f.dim:'in '+dispName(f.art)}</span><span>· <span class="fstatus ${_fstatus[id]}" style="font-size:9px">${_statusword[_fstatus[id]]}</span></span>${f.clar&&!['closed','superseded'].includes(_fstatus[id])?'<span>· <span class="fstatus" style="font-size:9px;color:var(--primary-light);border-color:rgba(217,122,58,.4)">❓ clarification</span></span>':''}</div></div><span style="color:var(--subtle);align-self:center">›</span></div>`;};
+const _ftypeLabel={'Missing information':'Missing info'};
+const _basisTip={inferred:'Epistemic basis — OSLO inferred this; it is not stated in your inputs (Derived).',stated:'Epistemic basis — grounded in something stated in your inputs (Attested).'};
+const _fcard=([id,f])=>{const c=f.sev==='critical'?'danger':f.sev==='moderate'?'warning':'subtle';return `<div class="fcard" onclick="openFindingPanel('${id}')"><div class="sevbar" style="background:var(--${c})"></div><div style="flex:1"><div class="ft">${f.title}</div><div class="fm"><span class="chip sev${f.sev[0]==='c'?'c':f.sev[0]==='m'?'m':'w'}">${_sevword[f.sev]}</span><span class="ftype" title="Finding type — what the observation is (Gap / Conflict / Risk family).">${_ftypeLabel[f.type]||f.type}</span>${f.basis?`<span class="fbasis ${f.basis}" title="${_basisTip[f.basis]||''}">${f.basis}</span>`:''}<span>· ${_group==='art'?f.dim:'in '+dispName(f.art)}</span><span>· <span class="fstatus ${_fstatus[id]}" style="font-size:9px">${_statusword[_fstatus[id]]}</span></span>${f.clar&&!['closed','superseded'].includes(_fstatus[id])?'<span>· <span class="fstatus" style="font-size:9px;color:var(--primary-light);border-color:rgba(217,122,58,.4)">❓ clarification</span></span>':''}</div></div><span style="color:var(--subtle);align-self:center">›</span></div>`;};
 function renderFinds(){renderArtFilters();syncGroupBtns();const all=Object.entries(FINDINGS).filter(([id])=>!['closed','superseded'].includes(_fstatus[id]));const total=all.length;let shown=0,html='';
   if(total===0){document.getElementById('fa-list').innerHTML=_empty('none');document.getElementById('fa-count').textContent='0 active';return;}
   const match=([id,f])=>(_filt.dim==='all'||f.dim===_filt.dim)&&(_filt.sev==='all'||f.sev===_filt.sev)&&(_filt.art==='all'||f.art===_filt.art);
