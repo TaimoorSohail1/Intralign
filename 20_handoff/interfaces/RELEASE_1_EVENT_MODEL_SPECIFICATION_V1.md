@@ -206,6 +206,18 @@ Release 1 only (private/public-link + workspace visibility; view/comment permiss
 
 ---
 
+## 14a. Clarification Event (information-capture — DL-089)
+
+Clarification is **conversational information-capture**, not a modeled object (per `OSLO_CHAT_AND_CLARIFICATION_EXPERIENCE_SPECIFICATION_V1` §122). A user's answer to an OSLO clarification is captured as a **project-information change** (like an artifact edit / evidence add) and feeds the next reanalysis; it changes no assessment by itself.
+
+| Event | Producer | Resulting transition |
+|---|---|---|
+| `clarification_answer_captured` | User | Project-information change recorded (Attested authorship) → marks analysis stale and **feeds the next Deep Analysis**. Payload `{answer_text, prompt_ref?, context_ref?}`. **No** Clarification object/lifecycle/disposition is created. |
+
+*(Optional presentation-only `clarification_prompt_shown` — awareness that OSLO raised a prompt; **zero** recompute consumers — may be added if the surface needs it; otherwise the stale/pending analysis state suffices.)*
+
+---
+
 ## 15. Recompute Rules  *(critical)*
 
 Deterministic event→recompute mapping. **No-change → no-recompute:** an event that does not change evidence, artifacts, or context produces no run.
@@ -215,7 +227,7 @@ Triggered by `project_created` **followed by** the first analyzable `artifact_cr
 **Rule:** emit `fast_analysis_requested` **iff** the project has **no completed fast run** AND ≥1 analyzable input. Exactly once per project.
 
 ### Deep Analysis
-Triggered by: `fast_analysis_completed` (auto first deep pass); substantive `artifact_updated` / `artifact_version_created`; `context_item_added/updated`; `recommendation_implemented` (fix produced new evidence); collaboration-derived Context Events; `manual` request.
+Triggered by: `fast_analysis_completed` (auto first deep pass); substantive `artifact_updated` / `artifact_version_created`; `context_item_added/updated`; `recommendation_implemented` (fix produced new evidence); `clarification_answer_captured` (DL-089); collaboration-derived Context Events; `manual` request.
 **Rule:** on a qualifying event, **if no deep run is Running** for the project → emit `deep_analysis_requested`; **if one is Running** → set "deep pending" and **coalesce** subsequent qualifying events into a single next request (debounce window = calibration, §19). Trivial edits do not qualify.
 
 ### Confidence Recalculation

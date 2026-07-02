@@ -950,6 +950,13 @@ Each changelog entry contains:
 - **Change Summary:** R1 UX-surface reconciliation (prototype-as-baseline). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-124 — DL-089: Clarification flow contract (object-free; in-panel + chat — Option B)
+
+- **Date:** 2026-07-02 · **Authorizing Decision:** DL-089.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-089-clarification-flow.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Clarification flow contract (object-free; in-panel + chat — Option B). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
