@@ -1,22 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "//": [
-    "OSLO Release 1 — Vercel binding for the frontend (DL-054: frontend runs",
-    "native on Vercel; backend runs native on Heroku). The Orval-generated axios",
-    "client calls RELATIVE URLs (/v1, /health, /openapi.json) — see",
-    "frontend/orval.config.ts + vite.config.ts. In dev, vite's proxy forwards",
-    "them to http://localhost:8000. In Staging/Production, these rewrites forward",
-    "them to the Heroku backend instead, so the browser stays same-origin (no CORS).",
-    "",
-    "ENVIRONMENT BINDING (owner action, per Deployment Governance §3/§7): the",
-    "BACKEND_ORIGIN below is a PLACEHOLDER, not a live URL. Vercel does NOT",
-    "interpolate env vars inside rewrite destinations, so the per-environment",
-    "backend origin must be set one of two ways before a Staging deploy:",
-    "  (a) replace the placeholder host in THIS file on the deploy branch, or",
-    "  (b) define the rewrites at the Vercel project level (Dashboard > Settings).",
-    "No secret lives here — only a public backend hostname. See",
-    "code/docs/DEPLOYMENT_RUNBOOK.md."
-  ],
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
@@ -24,18 +7,26 @@
   "rewrites": [
     {
       "source": "/v1/:path*",
-      "destination": "https://OSLO-BACKEND-PLACEHOLDER.example.com/v1/:path*"
+      "destination": "https://oslo-2-0-f0f243e60348.herokuapp.com/v1/:path*"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://oslo-2-0-f0f243e60348.herokuapp.com/auth/:path*"
+    },
+    {
+      "source": "/health/:path*",
+      "destination": "https://oslo-2-0-f0f243e60348.herokuapp.com/health/:path*"
     },
     {
       "source": "/health",
-      "destination": "https://OSLO-BACKEND-PLACEHOLDER.example.com/health"
+      "destination": "https://oslo-2-0-f0f243e60348.herokuapp.com/health"
     },
     {
       "source": "/openapi.json",
-      "destination": "https://OSLO-BACKEND-PLACEHOLDER.example.com/openapi.json"
+      "destination": "https://oslo-2-0-f0f243e60348.herokuapp.com/openapi.json"
     },
     {
-      "source": "/((?!v1|health|openapi.json|assets|.*\\..*).*)",
+      "source": "/((?!v1|auth|health|openapi.json|assets|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]
