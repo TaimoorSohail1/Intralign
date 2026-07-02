@@ -57,8 +57,9 @@ The Finding Panel is the contextual surface a user opens after selecting a Findi
 
 ## E. Finding Header
 
-- **Visible:** title · finding type (user-friendly) · severity (qualitative: critical/moderate/warning) · affected CAF dimension(s) · lifecycle status (§N).
+- **Visible:** title · finding type (user-friendly) · **epistemic basis** (`stated` / `inferred`) · severity (qualitative: critical/moderate/warning) · affected CAF dimension(s) · lifecycle status (§N).
 - **Descriptive only** — the header states the observed condition. **No recommendations or actions here** beyond panel controls (e.g., open Recommendation Panel, close).
+- **Basis (DL-093, presentation-only):** the header carries the finding's **basis** as a calm/neutral tag — **stated (Attested)** vs **inferred (Derived)** — and §F names it in plain language ("OSLO inferred this — not stated in your inputs" / "Grounded in a stated item in your plan"), discharging the Disclose obligation (`RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`). **"Inferred" is a basis, never a type.** Basis colour never uses the action/attention accent. Sub-typing + basis-assignment contract deferred to R2 (RB-033).
 
 ## F. Finding Summary Section
 

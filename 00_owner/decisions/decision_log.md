@@ -861,5 +861,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-090 — Overview cognitive-load trim + Attention-map as its own surface (amends DL-088) → `00_owner/decisions/records/DL-090-overview-trim.md`
 - DL-091 — Wave C (Advise) exit-gate pass + Phase V / Wave U authorization → `00_owner/decisions/records/DL-091-wave-c-exit-gate-phase-v-authorization.md`
 - DL-092 — Wave C (Advise) exit-gate pass + Phase V / Wave U authorization → `00_owner/decisions/records/DL-092-wave-c-exit-gate-phase-v-authorization.md`
+- DL-093 — Finding type + epistemic basis presentation (two-axis; RB-033 Phase R1) → `00_owner/decisions/records/DL-093-finding-type-and-epistemic-basis-r1.md`
 
 <!-- RECORDS-INDEX:END -->

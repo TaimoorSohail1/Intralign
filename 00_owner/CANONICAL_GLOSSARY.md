@@ -127,6 +127,8 @@ qualified canonical form below.** (This register *qualifies* — it does not red
 | **Extended Analysis** | **Deep Pass** / Deep Analysis Pass (DL-046) | UI label |
 | **Plan sections** | **Planning Artifacts** / plan artifacts (DL-077) | UI label (non-PM-legible) |
 | **Work breakdown** | **WBS** (Work Breakdown Structure) | UI label |
+| **Stated** (finding basis — grounded in your inputs) | **Attested** (source-attributed assertion; `RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`) | finding basis, presentation only (DL-093) |
+| **Inferred** (finding basis — OSLO's read, not yet stated) | **Derived** (Infer/Evaluate understanding; Epistemic State Model) | finding basis, presentation only (DL-093); **not** a finding *type* |
 | **Clarity · Alignment · Feasibility** | **CAF** (the acronym) | spell out in UI; CAF stays internal |
 | **Strategic Judgement** (the human act of weighing OSLO's understanding) | **not** the retired **Judgment Layer** (banned as a primary identifier; use **Evaluate**) | positioning uses "Judgement" only in the human-act sense |
 

@@ -978,6 +978,13 @@ Each changelog entry contains:
 - **Change Summary:** Duplicate land of the Wave C exit-gate + Phase V authorization already recorded by DL-091 (CHG-126). DL-092 marked Void; number retained for monotonicity (DL-065).
 - **Supersession Reference:** Voided as a duplicate of DL-091.
 
+### CHG-128 — DL-093: Finding type + epistemic basis presentation (two-axis; RB-033 Phase R1)
+
+- **Date:** 2026-07-02 · **Authorizing Decision:** DL-093.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-093-finding-type-and-epistemic-basis-r1.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Finding type + epistemic basis presentation (two-axis; RB-033 Phase R1). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
