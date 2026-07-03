@@ -206,7 +206,22 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .body.chat-collapsed{grid-template-columns:236px 1fr 0}
 
 /* explorer */
-.explorer{border-right:1px solid var(--border);background:var(--bg-2);overflow-y:auto;padding:12px 10px}
+.explorer{border-right:1px solid var(--border);background:var(--bg-2);overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column}
+.ex-footer{margin-top:auto;flex-shrink:0;display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--border)}
+.ex-tour{flex-shrink:0;display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted);border:1px solid var(--border-2);border-radius:8px;padding:9px 11px;cursor:pointer;background:var(--surface)}
+.ex-tour:hover{border-color:var(--primary);color:var(--text)}
+.ex-tour .tic{color:var(--primary-light);font-size:13px}
+.ex-util{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;cursor:pointer}
+.ex-util:hover{background:var(--hover-tint)}
+.ex-util .ul{display:flex;flex-direction:column;line-height:1.2;flex:1;min-width:0}
+.ex-util .ul b{color:var(--text);font-weight:600;font-size:12px}
+.ex-util .ul span{font-size:10px;color:var(--subtle)}
+.ex-util .uic{color:var(--primary-light);font-size:12px}
+.ex-util .up{font-size:10.5px;color:var(--primary-light);font-weight:600;border:1px solid rgba(217,122,58,.4);border-radius:6px;padding:2px 8px}
+.ex-util .uav{width:26px;height:26px;flex-shrink:0;border-radius:7px;background:var(--surface-3);display:grid;place-items:center;font-size:10px;font-weight:700;color:var(--muted)}
+.freechip{font-size:10.5px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-2);border-radius:99px;padding:3px 10px;cursor:pointer}
+.freechip:hover{color:var(--text);border-color:var(--subtle)}
+.fb.warn{background:var(--surface-2);color:var(--subtle)}
 .ex-sec{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--subtle);font-weight:600;padding:12px 8px 6px;display:flex;align-items:center;gap:6px}
 .ex-sec .cnt{margin-left:auto;font-weight:500}
 .ex-subsec{font-size:10px;color:var(--subtle);font-weight:500;padding:8px 8px 3px;opacity:.7}
@@ -892,8 +907,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
     <button class="btn btn-ghost btn-sm" onclick="openShare()" title="Share this project">⤳ Share</button>
     <button class="btn btn-ghost btn-sm" onclick="openExport()" title="Export / share-out a snapshot">⇩ Export</button>
     <button class="icbtn" onclick="openNotif()" title="Notifications" aria-label="Notifications" style="width:30px;height:30px">◔<span class="nbadge" id="nbadge">3</span></button>
-    <button class="planchip" onclick="openLimit()" title="You're on the Free plan — see options">Free · <b>Upgrade</b></button>
-    <button class="acct" onclick="openSettings()" title="Account &amp; settings">ID</button>
+    <span class="freechip" onclick="openLimit()" title="Free plan — account &amp; upgrade in the bottom-left">Free</span>
   </header>
 
   <div class="body" id="bodyGrid">
@@ -914,6 +928,11 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
       <div class="ex-item" data-art="WBS" onclick="openArtifact('WBS')"><span class="ic">▤</span> Work breakdown <span class="fb mod">1</span></div>
       <div class="ex-item" data-art="Schedule" onclick="openArtifact('Schedule')"><span class="ic">▤</span> Schedule <span class="fb mod">1</span></div>
       <div class="ex-item" data-art="Resources" onclick="openArtifact('Resources')"><span class="ic">▤</span> Resources <span class="fb crit">2</span></div>
+      <div class="ex-footer">
+        <div class="ex-tour" id="railTour" onclick="startTour()" role="button" tabindex="0" title="A 60-second tour of how to use OSLO"><span class="tic">✦</span> Take a quick tour</div>
+        <div class="ex-util" onclick="openLimit()" title="You're on the Free plan — see options"><span class="uic">◆</span><span class="ul"><b>Free plan</b><span>1 active project</span></span><span class="up">Upgrade</span></div>
+        <div class="ex-util" onclick="openSettings()" title="Account &amp; settings"><span class="uav">ID</span><span class="ul"><b>Your account</b><span>Settings</span></span></div>
+      </div>
     </aside>
 
     <!-- CENTER -->
@@ -1412,7 +1431,9 @@ const _fstatus={};Object.keys(FINDINGS).forEach(id=>_fstatus[id]='detected');
 const LIFE=['detected','acknowledged','addressed','closed'];
 const _statusword={detected:'Open · detected',acknowledged:'Acknowledged',addressed:'Addressed · awaiting reanalysis',closed:'Closed',reopened:'Reopened',superseded:'Superseded'};
 function setStatus(id,s){_fstatus[id]=s;pushHistory('finding_lifecycle_changed',FINDINGS[id].title+' → '+_statusword[s]);renderFocus();updateFindCount();}
-function updateFindCount(){const n=Object.keys(FINDINGS).filter(id=>!['closed','superseded'].includes(_fstatus[id])).length;const e=document.getElementById('exFindCount');if(e){e.textContent=n;e.style.display=n?'':'none';}}
+function updateFindCount(){const n=Object.keys(FINDINGS).filter(id=>!['closed','superseded'].includes(_fstatus[id])).length;const e=document.getElementById('exFindCount');if(e){e.textContent=n;e.style.display=n?'':'none';}updateSectionBadges();}
+/* live per-section rail badges from FINDINGS (count + max-severity colour) */
+function updateSectionBadges(){document.querySelectorAll('.ex-item[data-art]').forEach(el=>{const art=el.dataset.art;const m=Object.entries(FINDINGS).filter(([id,f])=>f.art===art&&!['closed','superseded'].includes(_fstatus[id]));let fb=el.querySelector('.fb');if(!m.length){if(fb)fb.remove();return;}const sev=m.map(e=>e[1].sev).sort((a,b)=>_sevrank[a]-_sevrank[b])[0];const cls=sev==='critical'?'crit':sev==='moderate'?'mod':'warn';if(!fb){fb=document.createElement('span');el.appendChild(fb);}fb.className='fb '+cls;fb.textContent=m.length;});}
 /* 60-second orientation: 'what's weakening understanding' — top findings, severity-ordered, advisory (SIXTY_SECOND_ORIENTATION §3–4). No scores/impact numbers (Finding Presentation FPRS-8). */
 const _sevrankF={critical:0,moderate:1,warning:2};
 function renderFocus(){const el=document.getElementById('focus');if(!el)return;
@@ -1784,7 +1805,10 @@ const TOUR=[
 ];
 let _tourI=-1;
 function startTour(){closeSettings();closeOrientation();document.getElementById('bodyGrid').classList.remove('chat-collapsed');openTab('understanding');tourGo(0);}
-function tourNext(){if(_tourI>=TOUR.length-1)tourEnd();else tourGo(_tourI+1);}
+let _tourDone=false;
+function tourNext(){if(_tourI>=TOUR.length-1)tourComplete();else tourGo(_tourI+1);}
+/* Completing the tour retires the rail nudge (it stays available in Settings). Skip keeps it. */
+function tourComplete(){_tourDone=true;const t=document.getElementById('railTour');if(t)t.style.display='none';tourEnd();}
 function tourGo(i){if(i<0)i=0;_tourI=i;const step=TOUR[i];const el=document.querySelector(step.sel);
   const mask=document.getElementById('tourmask'),tip=document.getElementById('tourtip');if(!el){tourEnd();return;}
   el.scrollIntoView({behavior:'smooth',block:'center'});
@@ -1822,7 +1846,8 @@ function analyzeSampleNow(){clearInterval(_sampleT);ingest();}
 /* first-run choreography: hold the Overview (center) while the Fast Pass runs; focus the rails + trace, then reveal populated Overview */
 function showBuilding(){document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));const b=document.getElementById('pane-building');if(b)b.classList.add('active');document.querySelectorAll('.ex-item').forEach(e=>e.classList.remove('active'));const c=document.getElementById('crumb');if(c)c.textContent='Analyzing…';}
 function setPillPending(p){const i=document.getElementById('cp-idx'),b=document.getElementById('cp-band'),r=document.getElementById('cp-rel');if(i){i.style.display=p?'none':'';i.textContent=(typeof CONF_IDX!=='undefined'?CONF_IDX:58);}if(b)b.textContent=p?'Analyzing…':'Moderate';if(r)r.style.display=p?'none':'';}
-function showArrival(){const a=document.getElementById('arrival');if(a)a.style.display='flex';}
+function showArrival(){if(_tourDone)return;const s=document.getElementById('arrivalSpot');if(s)s.style.display='block';}
+function closeArrivalSpot(){const s=document.getElementById('arrivalSpot');if(s)s.style.display='none';}
 function showSaveBar(){const b=document.getElementById('savebar');if(b)b.classList.add('show');}
 function dismissSaveBar(){const b=document.getElementById('savebar');if(b)b.classList.remove('show');}
 function saveToKeep(){alert('Save-to-keep (DL-073): sign-up fires here — after you\'ve seen the value, not before. Your anonymous work is claimed and carried through unchanged (a claim, not a reanalysis). Account creation happens on your side.');dismissSaveBar();}
@@ -1938,5 +1963,24 @@ function jumpToWorkspace(){
 }
 if(/^#(overview|workspace|test|demo)/i.test(location.hash||'')){try{jumpToWorkspace();}catch(e){}}
 </script>
+<style>
+.arr-scrim{position:fixed;inset:0;background:rgba(8,10,12,.66);z-index:900}
+.arr-card{position:fixed;top:90px;left:50%;transform:translateX(-50%);width:min(720px,72vw);z-index:901;background:var(--surface-2);border:1px solid rgba(217,122,58,.5);border-radius:14px;padding:20px 22px;box-shadow:0 0 0 3px rgba(217,122,58,.28),0 26px 70px rgba(0,0,0,.6)}
+.arr-card .arr-h{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
+.arr-card .arr-h .i{color:var(--primary-light);font-size:18px}
+.arr-card .arr-t{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.arr-card .arr-t b{color:var(--text)}
+.arr-card .arr-row{display:flex;align-items:center;gap:14px}
+.arr-card .arr-btn{background:var(--primary);color:var(--primary-fg);border-radius:9px;padding:10px 18px;font-weight:600;font-size:13.5px}
+.arr-card .arr-skip{color:var(--subtle);font-size:12.5px;cursor:pointer}
+</style>
+<div id="arrivalSpot" style="display:none">
+  <div class="arr-scrim" onclick="closeArrivalSpot()"></div>
+  <div class="arr-card" role="dialog" aria-label="Initial analysis complete">
+    <div class="arr-h"><span class="i">✦</span> Initial analysis complete in 41s</div>
+    <div class="arr-t">OSLO read your brief, drafted <b>7 plan sections</b>, assessed Clarity · Alignment · Feasibility, and surfaced <b style="color:var(--primary-light)">15 findings</b> — 1 critical. Here's where to start.</div>
+    <div class="arr-row"><button class="arr-btn" onclick="startTour();closeArrivalSpot()">Take a quick tour →</button><span class="arr-skip" onclick="closeArrivalSpot()" role="button" tabindex="0">Skip — explore on my own</span></div>
+  </div>
+</div>
 </body>
 </html>
