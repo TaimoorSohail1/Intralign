@@ -1,0 +1,27 @@
+name: Doc Integrity (KIA2-1)
+
+# Read-only knowledge-integrity GATE. Runs autonomously on every push/PR; it
+# DETECTS drift and reports pass/fail. It never edits content, auto-fixes,
+# merges, or deploys — a human/agent fixes flagged issues under the normal rules.
+# ERRORs (broken internal links in the active tree) fail the build.
+# WARNs (active→superseded refs, banned terms, stale DL range) are reported.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  doc-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: OSLO doc-integrity check
+        run: python3 tools/doc_integrity_check.py
+        # To also fail on warnings once the warning backlog is cleared (KIA2-2),
+        # change to:  python3 tools/doc_integrity_check.py --strict

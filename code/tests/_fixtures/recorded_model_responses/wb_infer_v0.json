@@ -1,0 +1,36 @@
+{
+  "name": "wb_infer_v0",
+  "model_version": "gpt-4.1-mini@wb-infer-finding-v0",
+  "config": {
+    "tier": "free",
+    "stage": "finding-derivation",
+    "temperature": 0,
+    "routing": "synthesis/eval->mini"
+  },
+  "responses": [
+    {
+      "key": "alignment",
+      "tokens_in": 320,
+      "tokens_out": 90,
+      "text": "[{\"summary\": \"The synthesized scope omits the payments-service integration the declared outcome implies.\", \"anchors\": [\"assertion-2\", \"outcome-ref\"]}]"
+    },
+    {
+      "key": "risk",
+      "tokens_in": 300,
+      "tokens_out": 110,
+      "text": "[{\"summary\": \"Feasibility risk: the Q3 rollout depends on a payments service whose stability is only an assumption.\", \"anchors\": [\"assertion-2\", \"assertion-3\"]}, {\"summary\": \"Feasibility risk: flat headcount may be insufficient for the rollout.\", \"anchors\": [\"assertion-3\"]}]"
+    },
+    {
+      "key": "alignment_unanchored",
+      "tokens_in": 120,
+      "tokens_out": 40,
+      "text": "[{\"summary\": \"A gap with no resolvable anchor.\", \"anchors\": [\"nonexistent-id\"]}]"
+    },
+    {
+      "key": "risk_empty",
+      "tokens_in": 80,
+      "tokens_out": 10,
+      "text": "[]"
+    }
+  ]
+}

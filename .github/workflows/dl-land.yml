@@ -1,0 +1,109 @@
+name: DL Land (DL-067)
+
+# Server-side landing of a governance decision under the DL-065 discipline.
+# Dispatched manually (Actions → Run workflow) or by the Founder Console
+# "Approve & Land" button. It authors a numbered record + regenerates the
+# index + appends a changelog entry, runs the doc-integrity gate (FAIL-CLOSED),
+# pushes a branch, and OPENS a PR. It NEVER merges — the owner merges
+# (canon is human-gated). Numbering happens here, off current `main`, so a
+# stale local clone can never mis-number (the failure this workflow prevents).
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: "Decision title (one line, no leading 'DL-NNN —')"
+        required: true
+      body:
+        description: "Decision body (markdown; include a '## Decision' section)"
+        required: true
+      slug:
+        description: "Optional kebab-case slug (derived from title if blank)"
+        required: false
+        default: ""
+      class:
+        description: "Class A/B/C/D/E (per DL-063)"
+        required: false
+        default: "A"
+      decided_by:
+        description: "Decided by"
+        required: false
+        default: "Idris (Founder Console)"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: dl-land
+  cancel-in-progress: false
+
+jobs:
+  land:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Guard — one canon PR in flight (R3)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          OPEN=$(gh pr list --state open --base main --json headRefName \
+            --jq '[.[] | select(.headRefName | startswith("decision/"))] | length')
+          if [ "${OPEN:-0}" -gt 0 ]; then
+            echo "::error::A decision/* PR is already open (R3: one canon PR in flight). Merge or close it first."
+            exit 1
+          fi
+
+      - name: Write decision body
+        env:
+          BODY: ${{ inputs.body }}
+        run: printf '%s\n' "$BODY" > /tmp/dl_body.md
+
+      - name: Land record (number-at-merge + index + changelog)
+        id: land
+        env:
+          TITLE: ${{ inputs.title }}
+          SLUG: ${{ inputs.slug }}
+          DECIDED_BY: ${{ inputs.decided_by }}
+          KLASS: ${{ inputs.class }}
+        run: |
+          [ -z "$SLUG" ] && SLUG="$TITLE"
+          python3 tools/dl_records.py land \
+            --title "$TITLE" \
+            --body-file /tmp/dl_body.md \
+            --decided-by "$DECIDED_BY" \
+            --class "$KLASS" \
+            --slug "$SLUG"
+
+      - name: Doc-integrity gate (FAIL-CLOSED — no PR if red)
+        run: python3 tools/doc_integrity_check.py
+
+      - name: Commit & push branch
+        run: |
+          git config user.name "oslo-dl-land[bot]"
+          git config user.email "oslo-dl-land@users.noreply.github.com"
+          BR="${{ steps.land.outputs.branch }}"
+          git checkout -b "$BR"
+          git add 00_owner/decisions/records 00_owner/decisions/decision_log.md 00_owner/changelog/changelog.md
+          git commit -m "DL-${{ steps.land.outputs.dl }}: ${{ inputs.title }} (CHG-${{ steps.land.outputs.chg }})"
+          git push -u origin "$BR"
+
+      - name: Open PR (never merges — owner merges)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: ${{ inputs.title }}
+        run: |
+          gh pr create --base main --head "${{ steps.land.outputs.branch }}" \
+            --title "DL-${{ steps.land.outputs.dl }}: $TITLE" \
+            --body "Landed by the **dl-land** workflow (DL-067) under the DL-065 discipline — numbered off current \`main\`, gate green. **Owner merges** (canon is never auto-merged).
+
+          - DL-${{ steps.land.outputs.dl }} · CHG-${{ steps.land.outputs.chg }}
+          - Record: \`00_owner/decisions/records/DL-${{ steps.land.outputs.dl }}-${{ steps.land.outputs.slug }}.md\`"

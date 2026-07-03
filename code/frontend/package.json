@@ -1,0 +1,34 @@
+{
+  "name": "oslo-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "OSLO Release 1 frontend — React + Vite + MUI + TanStack, Vercel. Orval-generated API client.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "api:gen": "orval --config ./orval.config.ts"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@mui/material": "^5.16.0",
+    "@emotion/react": "^11.13.0",
+    "@emotion/styled": "^11.13.0",
+    "@tanstack/react-query": "^5.51.0",
+    "@tanstack/react-router": "^1.45.0",
+    "axios": "^1.7.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.0",
+    "vite": "^5.3.0",
+    "orval": "^6.31.0"
+  },
+  "overrides": {
+    "form-data": "^4.0.6"
+  }
+}

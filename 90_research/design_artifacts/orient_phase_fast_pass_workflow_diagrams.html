@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>OSLO Orient Phase (Fast Pass) — Workflow Diagrams</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color:#111827; background:#ffffff; line-height:1.45; margin:0; padding:28px 32px; }
+  @media (prefers-color-scheme: dark){ body{ background:#0b0f17; color:#e5e7eb; } .diagram{ background:rgba(255,255,255,0.04); border-color:#334155; } h1,h3{color:#f1f5f9} .sub,.note{color:#94a3b8} }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .meta { font-size:12px; opacity:.7; margin:0 0 14px; }
+  .note { font-size:12.5px; background:rgba(127,127,127,0.08); border:1px solid rgba(127,127,127,0.25); border-radius:8px; padding:10px 12px; margin:0 0 18px; }
+  h3 { margin:24px 0 2px; font-size:15.5px; }
+  .sub { font-size:12px; opacity:.65; margin:0 0 8px; }
+  .legend { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 16px; font-size:11.5px; }
+  .legend span { padding:2px 8px; border-radius:6px; border:1px solid; }
+  .lg-rule{background:#e0e7ff;border-color:#4338ca;color:#1e1b4b}
+  .lg-llm{background:#f5e8fd;border-color:#7b1fa2;color:#4a148c}
+  .lg-hyb{background:#ffedd5;border-color:#c2410c;color:#7c2d12}
+  .lg-store{background:#dcfce7;border-color:#15803d;color:#14532d}
+  .lg-ckpt{background:#fef9c3;border-color:#ca8a04;color:#713f12}
+  .lg-bad{background:#fee2e2;border-color:#b91c1c;color:#7f1d1d}
+  .diagram { overflow-x:auto; border:1px solid #e5e7eb; border-radius:10px; padding:14px; background:rgba(127,127,127,0.04); margin-bottom:6px; }
+  .diagram svg { max-width:none; height:auto; }
+  .err { color:#b91c1c; font-size:12px; white-space:pre-wrap; font-family:ui-monospace,monospace; }
+</style>
+</head>
+<body>
+<h1>OSLO Orient Phase (Fast Pass) — Workflow &amp; Architecture Diagrams</h1>
+<p class="meta">Non-canonical design artifact · Framework 001A · 2026-06-10 · AI-generated synthesis</p>
+<div class="note"><b>Non-canonical.</b> Synthesized representation of the Orient phase (= Fast Pass) for orientation only; <b>informs but does not bind</b> (DL-033). On any conflict the Analysis Engine Spec, Fast/Deep Stage I/O Specs, Rule/LLM Guidelines, Scope Guardrails, Runtime Models, scoring models, and Wave contracts (<code>20_handoff/</code>) prevail. Storage bindings follow the logical-data-model bindings — confirm against the final infra spec.</div>
+
+<div class="legend">
+  <span class="lg-rule">Rule (deterministic)</span>
+  <span class="lg-llm">LLM (semantic)</span>
+  <span class="lg-hyb">Hybrid</span>
+  <span class="lg-store">Store / success</span>
+  <span class="lg-ckpt">Durable checkpoint</span>
+  <span class="lg-bad">Fallback / failure</span>
+</div>
+
+<h3>A · Master durable workflow — success path + inline fallbacks</h3>
+<p class="sub">Fast Pass S0–S8 as one durable AnalysisRun job · target &lt;60s</p>
+<div class="diagram" id="dA"></div>
+
+<h3>B · Durable orchestration sequence — side-effects + crash/resume</h3>
+<p class="sub">Orchestrator ↔ rule/LLM workers ↔ stores ↔ event bus</p>
+<div class="diagram" id="dB"></div>
+
+<h3>C · Durable job (AnalysisRun) state machine</h3>
+<p class="sub">queued → running → completed/failed/cancelled, with resume</p>
+<div class="diagram" id="dC"></div>
+
+<h3>D · Fallback sub-flows</h3>
+<p class="sub">oversize · skeleton fail · LLM invalid · publish fail · crash</p>
+<div class="diagram" id="dD"></div>
+
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',flowchart:{htmlLabels:true,curve:'basis'},themeVariables:{background:'transparent',primaryColor:'#f3f4f6',primaryTextColor:'#111827',primaryBorderColor:'#9ca3af',lineColor:'#6b7280',secondaryColor:'#eef2ff',tertiaryColor:'#f9fafb',fontSize:'13px',actorBkg:'#eef2ff',actorBorder:'#6366f1',actorTextColor:'#111827',noteBkgColor:'#fff7ed',noteBorderColor:'#fdba74',noteTextColor:'#7c2d12'}});
+
+const dA = `flowchart TD
+classDef rule fill:#e0e7ff,stroke:#4338ca,color:#1e1b4b;
+classDef llm fill:#f5e8fd,stroke:#7b1fa2,color:#4a148c;
+classDef hybrid fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
+classDef store fill:#dcfce7,stroke:#15803d,color:#14532d;
+classDef ckpt fill:#fef9c3,stroke:#ca8a04,color:#713f12;
+classDef bad fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
+TRIG(["Trigger: first analyzable input<br/>(no completed fast run yet)"])
+J0["⛓ Durable job created — AnalysisRun queued→running<br/>emit fast_analysis_requested / _started"]:::ckpt
+S0["S0 · INTAKE & ACQUISITION — RULE<br/>in: project, evidence, intent<br/>do: validate envelope ~20k/33k, provenance, enqueue<br/>out: Evidence rows, AnalysisRun<br/>store: PG · Supabase Storage raw · Redis queue"]:::rule
+OVR{"envelope oversize?"}
+OVRF["FALLBACK · accept but route DEEP-only<br/>(skip Fast, queue for Deep)"]:::bad
+S1["S1 · NORMALIZATION — RULE<br/>in: raw content_ref<br/>do: parse, de-boilerplate, segment, span-tag<br/>out: span-tagged units<br/>store: Supabase Storage units · Redis working set"]:::rule
+CK1["⛓ checkpoint"]:::ckpt
+S2["S2 · GLOBAL SKELETON — HYBRID<br/>RULE: NER entity index, cross-ref link<br/>LLM: intent restatement, relationship skeleton<br/>out: global map (fast-horizon ContextItems)<br/>store: PG ctx · Neo4j rel · Redis shared ctx"]:::hybrid
+SKOK{"skeleton built?"}
+SKF["FALLBACK · isolation-only mode<br/>Coverage↓ → reliability↓<br/>run CONTINUES (not failed)"]:::bad
+S3["S3 · CLAIM EXTRACTION — HYBRID<br/>RULE: assertion pre-filter, dedup_key/hash<br/>LLM: identify claims (paraphrased/implicit)<br/>out: ~50–100 claims<br/>store: PG claims · pgvector embeddings"]:::hybrid
+S4["S4 · CAF EVALUATION — HYBRID<br/>RULE: Clarity detectors, constraint NER, coverage set-diff<br/>LLM: Alignment/Feasibility (preliminary)<br/>out: CAFState (3 dims + reliability)<br/>store: PG CAFState"]:::hybrid
+S5["S5 · FINDING GENERATION — HYBRID<br/>detect (rule/LLM) → emit (RULE) Findings<br/>out: Findings detected (7 types, ≥1 evidence link)<br/>store: PG index · PG jsonb CHR snapshot"]:::hybrid
+S6["S6 · RECOMMENDATION GEN — HYBRID<br/>RULE: finding-type→rec-type map<br/>LLM: rationale phrasing<br/>out: Recommendations generated (3 types)<br/>store: PG index · PG jsonb CHR snapshot"]:::hybrid
+S7["S7 · CONFIDENCE & STATE — RULE<br/>do: consolidate power-mean p=-0.5 ε=5, qualify<br/>out: ConfidenceState (band + reliability + basis)<br/>store: PG ConfidenceState · Redis projection"]:::rule
+CK2["⛓ checkpoint (pre-publish)"]:::ckpt
+S8["S8 · MRI & PUBLICATION — RULE<br/>do: build MRI, ATOMIC commit all-or-none<br/>store: PG commit+ledger · PG jsonb MRI · Redis cache"]:::rule
+PUBOK{"atomic commit ok?"}
+PUBF["FALLBACK · rollback (nothing persisted)<br/>run=failed → Project reverts to created<br/>emit analysis_failed → retry/resume"]:::bad
+DONE["✅ SUCCESS — Project orienting→ORIENTED<br/>ordered fan-out (one correlation_id):<br/>fast_analysis_completed → confidence_created →<br/>finding_created×N → recommendation_created×M → notification_created<br/>banner: not final — Deep to follow"]:::store
+TRIG --> J0
+J0 --> S0
+S0 --> OVR
+OVR -->|yes| OVRF
+OVR -->|no| S1
+S1 --> CK1
+CK1 --> S2
+S2 --> SKOK
+SKOK -->|"fail / timeout"| SKF
+SKF --> S3
+SKOK -->|yes| S3
+S3 --> S4
+S4 --> S5
+S5 --> S6
+S6 --> S7
+S7 --> CK2
+CK2 --> S8
+S8 --> PUBOK
+PUBOK -->|no| PUBF
+PUBOK -->|yes| DONE`;
+
+const dB = `sequenceDiagram
+autonumber
+actor U as Trigger
+participant O as Durable Orchestrator
+participant RW as Rule Worker
+participant LW as LLM Worker
+participant DB as Datastores
+participant EB as Event Bus
+U->>O: start Fast Pass (project, evidence)
+O->>DB: create AnalysisRun (queued→running)
+O->>EB: fast_analysis_requested / _started
+Note over O: each stage checkpointed; LLM calls,<br/>writes, events recorded for replay
+O->>RW: S0 intake/validate, S1 normalize
+RW->>DB: persist Evidence + span-tagged units
+RW-->>O: stage output (checkpoint ok)
+O->>RW: S2 NER index + cross-ref
+O->>LW: S2 intent + relationship skeleton
+alt skeleton OK
+  LW-->>O: global map (recorded)
+  O->>DB: persist ContextItems + Neo4j skeleton
+else fails or times out
+  LW-->>O: error
+  Note over O: FALLBACK isolation-only<br/>(coverage↓, reliability↓); run continues
+end
+O-->>O: checkpoint ok
+rect rgb(254,226,226)
+  Note over O,LW: 💥 crash mid-run
+  O-->>O: RESUME from last checkpoint;<br/>replay recorded side effects<br/>(no double LLM call, events deduped)
+end
+O->>LW: S3 claims, S4 Alignment/Feasibility
+O->>RW: S4 Clarity/coverage, S5 findings, S6 rec-map, S7 confidence
+RW->>DB: persist claims, CAFState, Findings, Recs, ConfidenceState + CHR
+O-->>O: checkpoint ok (pre-publish)
+O->>RW: S8 build MRI + ATOMIC commit
+alt commit OK
+  RW->>DB: commit MRISnapshot + run=completed
+  O->>EB: ordered fan-out (confidence→findings→recs→notification)
+  O->>U: Project ORIENTED — 60-second orientation ready
+else commit fails
+  RW->>DB: rollback (nothing persisted)
+  O->>EB: analysis_failed
+  O->>U: revert to created; retry/resume
+end`;
+
+const dC = `stateDiagram-v2
+[*] --> queued: job created
+queued --> running: orchestrator picks up
+running --> running: stage checkpoint S0..S8
+running --> completed: atomic publish ok → ORIENTED
+running --> failed: validation / publish error
+running --> cancelled: user or timeout cancel
+failed --> queued: retry / resume from last checkpoint
+completed --> superseded: later Deep / recompute supersedes
+cancelled --> [*]
+completed --> [*]
+superseded --> [*]`;
+
+const dD = `flowchart TD
+classDef bad fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
+classDef ok fill:#dcfce7,stroke:#15803d,color:#14532d;
+subgraph FB1["Fallback 1 · Oversize input (S0)"]
+  A1{"tokens > envelope?"}
+  A2["accept, skip Fast,<br/>route to Deep-only queue"]:::bad
+  A3["proceed Fast"]:::ok
+  A1 -->|yes| A2
+  A1 -->|no| A3
+end
+subgraph FB2["Fallback 2 · Skeleton failure (S2)"]
+  B1{"global map built?"}
+  B2["isolation-only: per-unit eval,<br/>coverage↓ → reliability↓"]:::bad
+  B3["full global context"]:::ok
+  B4["run CONTINUES — not failed"]:::ok
+  B1 -->|"no / timeout"| B2
+  B1 -->|yes| B3
+  B2 --> B4
+end
+subgraph FB3["Fallback 3 · LLM invalid or timeout (S2–S6)"]
+  C1{"LLM output valid vs schema?"}
+  C6["use result (record side effect)"]:::ok
+  C2["retry — bounded, TBD"]:::bad
+  C3{"still failing?"}
+  C4["degrade: skip semantic enrichment,<br/>mark reliability↓"]:::bad
+  C5["fail stage → job failed"]:::bad
+  C1 -->|yes| C6
+  C1 -->|no| C2
+  C2 --> C3
+  C3 -->|"non-critical"| C4
+  C3 -->|"critical"| C5
+end
+subgraph FB4["Fallback 4 · Atomic publish failure (S8)"]
+  D1{"commit all-or-none ok?"}
+  D5["ORIENTED + ordered events"]:::ok
+  D2["rollback — nothing persisted"]:::bad
+  D3["run=failed, Project→created,<br/>emit analysis_failed"]:::bad
+  D4["retry / resume from pre-publish checkpoint"]:::ok
+  D1 -->|yes| D5
+  D1 -->|no| D2
+  D2 --> D3
+  D3 --> D4
+end
+subgraph FB5["Fallback 5 · Process crash (any stage)"]
+  E1["💥 worker / orchestrator dies"]
+  E2["durable engine detects timeout"]
+  E3["RESUME from last checkpoint;<br/>replay recorded side effects<br/>(no duplicate LLM calls; events deduped)"]:::ok
+  E4["continue to completion"]:::ok
+  E1 --> E2
+  E2 --> E3
+  E3 --> E4
+end`;
+
+const defs = {dA, dB, dC, dD};
+for (const [id, def] of Object.entries(defs)) {
+  try {
+    const {svg} = await mermaid.render(id + '_svg', def.trim());
+    document.getElementById(id).innerHTML = svg;
+  } catch (e) {
+    document.getElementById(id).innerHTML = '<div class="err">Render error in ' + id + ': ' + (e && e.message ? e.message : e) + '</div>';
+  }
+}
+</script>
+</body>
+</html>

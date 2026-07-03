@@ -1,0 +1,29 @@
+# Gate-4 forbidden-token allowlist (ci/gate_invariants.py check a).
+#
+# ONLY prose mentions of the forbidden vocabulary (e.g. comments restating the
+# "No Authority engine" rule) may be listed here — NEVER identifiers. Every
+# addition is reviewed under gate 7 (human review).
+#
+# Format, one entry per line:
+#   <path relative to code/, posix> :: <substring that must appear in the line>
+# A flagged line is exempt iff its file path equals the entry path AND the
+# substring occurs in the line. Blank lines and '#' comments are ignored.
+#
+# Two distinct uses share this file:
+#   (a) forbidden-token prose mentions (.py lines) — gate_invariants.py check (a);
+#   (c) reviewed canonical-table ALTER exemptions — gate_invariants.py check (c).
+# For (c) the substring matches the whitespace-collapsed SQL statement and ONLY
+# ever exempts an ALTER (UPDATE/DELETE/DROP TABLE are never allowlistable).
+
+# --- (a) forbidden-token prose mentions ---
+shared/epistemic.py :: Forbidden in new code: GovernanceDecision, Authority*
+
+# --- (c) reviewed canonical-table ALTER exemptions (gate-7 human review) ---
+# DTM-0009 — OWNER-APPROVED 2026-06-17. Append-only-preserving widening of the
+# cognition_history_record output_kind CHECK by EXACTLY two Wave-S values
+# (synthesized_planning_model, planning_artifact). Drop+recreate of the named
+# output_kind CHECK constraint only; no row mutated, no column altered, the
+# BEFORE UPDATE/DELETE trigger + REVOKE grants untouched. The two substrings name
+# the specific constraint so they match ONLY this migration's CHECK statements.
+supabase/migrations/20260617120000_chr_output_kind_wave_s.sql :: drop constraint if exists cognition_history_record_output_kind_check
+supabase/migrations/20260617120000_chr_output_kind_wave_s.sql :: add constraint cognition_history_record_output_kind_check check (output_kind in

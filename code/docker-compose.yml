@@ -1,0 +1,58 @@
+# OSLO Release 1 — Local Backing Services (DL-054 binding)
+# App code runs NATIVELY (uvicorn / vite). Only backing services are Dockerized.
+# Supabase (Postgres + Auth/GoTrue + pgvector + Storage) runs via the Supabase CLI
+# (`supabase start`), NOT this file. This file brings up the two non-Supabase stores.
+# Synthetic/seed data only — never raw production canonical data.
+# Values come from .env (see .env.example). Do not commit .env.
+
+services:
+  # --- Neo4j: knowledge-graph relationships among governed objects ---
+  neo4j:
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-oslo_dev_pw}
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"
+      - "${NEO4J_BOLT_PORT:-7687}:7687"
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # --- Redis: runtime sessions / cache / event buffers (Streams + Pub/Sub) ---
+  redis:
+    image: redis:7
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- otel-lgtm: dev-only observability stack (DTM-0003) — OTLP collector + Grafana/Tempo ---
+  # Opt-in profile:  docker compose --profile observability up -d
+  # Staging swaps in owner-provisioned Grafana via the same OTEL_EXPORTER_OTLP_ENDPOINT.
+  otel-lgtm:
+    image: grafana/otel-lgtm
+    profiles: ["observability"]
+    ports:
+      - "4317:4317"   # OTLP gRPC (OTEL_EXPORTER_OTLP_ENDPOINT)
+      - "4318:4318"   # OTLP HTTP
+      - "3000:3000"   # Grafana UI
+    volumes:
+      - otel_lgtm_data:/data
+
+volumes:
+  neo4j_data:
+  redis_data:
+  otel_lgtm_data:
+
+# NOTE (DL-054): MongoDB and Qdrant are REMOVED. Artifact bodies → Supabase Storage,
+# embeddings → Supabase pgvector, relational + auth → Supabase Postgres + GoTrue/RLS.
+# Bring Supabase up separately:  supabase start   (see README).
