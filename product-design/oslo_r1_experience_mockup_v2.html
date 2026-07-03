@@ -179,6 +179,16 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .lg-n{font-size:23px;font-weight:600;color:var(--text);font-family:var(--mono);line-height:1}
 .lg-n.danger{color:var(--danger)}.lg-n.success{color:var(--success)}
 .lg-l{font-size:11.5px;color:var(--subtle);line-height:1.35}
+.lg-meters{display:flex;flex-direction:column;gap:14px}
+.lg-meter{display:grid;grid-template-columns:1fr auto;gap:5px 12px;align-items:baseline}
+.lg-meter .lm-lab{font-size:12.5px;color:var(--muted)}
+.lg-meter .lm-val{font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono);text-align:right;white-space:nowrap}
+.lg-meter .lm-d{color:var(--subtle);font-weight:400}
+.lg-meter .lm-bar{grid-column:1/-1;height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden}
+.lg-meter .lm-bar>i{display:block;height:100%;border-radius:99px;background:var(--conf-medium);transition:width .5s var(--ease)}
+.lg-meter.status{align-items:center}
+.lg-meter .lm-val.danger{color:var(--danger)}
+.lg-meter .lm-val.clear{color:var(--subtle);font-weight:500}
 @media(max-width:640px){.ledger-grid{grid-template-columns:repeat(2,1fr);gap:14px}}
 @keyframes cflash{0%{box-shadow:0 0 0 3px rgba(77,139,107,.4)}100%{box-shadow:0 0 0 0 rgba(77,139,107,0)}}
 .cmsg.win .bub{border-left:3px solid var(--success);background:rgba(77,139,107,.08);border-radius:0 9px 9px 0;padding:10px 12px}
@@ -1945,12 +1955,14 @@ function renderTrend(){const el=document.getElementById('conftrend');if(!el)retu
     <svg viewBox="0 0 ${W} 40" preserveAspectRatio="none" style="width:100%;height:40px"><polyline points="${pts}" fill="none" stroke="var(--conf-medium)" stroke-width="2" stroke-linecap="round"/>${TREND.map((t,i)=>`<circle cx="${X(i)}" cy="${yFor(t.n)}" r="3.5" fill="var(--conf-medium)"/>`).join('')}</svg>
     <div class="ct-x">${TREND.map((t,i)=>{const d=i>0?t.n-TREND[i-1].n:0;const arr=d>0?` <span style="color:var(--success)">▲${d}</span>`:d<0?` <span style="color:var(--warning)">▼${Math.abs(d)}</span>`:'';return `<span>${t.run} <b style="color:var(--text)">${t.n}</b>${arr}</span>`;}).join('')}</div>`;}
 function renderLedger(){const el=document.getElementById('ledger');if(!el)return;
-  const crit=Math.max(0,1-RESOLVED_COUNT), dep=Math.min(3,2+RESOLVED_COUNT);
-  el.innerHTML=`<div class="ledger-grid">`+
-    `<div class="lg-cell"><span class="lg-n">${RESOLVED_COUNT}</span><span class="lg-l">of ${Object.keys(FINDINGS).length} findings resolved</span></div>`+
-    `<div class="lg-cell"><span class="lg-n ${crit?'danger':'success'}">${crit}</span><span class="lg-l">critical open</span></div>`+
-    `<div class="lg-cell"><span class="lg-n">${dep}</span><span class="lg-l">of 3 dependencies confirmed</span></div>`+
-    `<div class="lg-cell"><span class="lg-n">7</span><span class="lg-l">of 7 plan sections read</span></div>`+
+  const total=Object.keys(FINDINGS).length, res=RESOLVED_COUNT, open=total-res, crit=Math.max(0,1-RESOLVED_COUNT), dep=Math.min(3,2+RESOLVED_COUNT);
+  const bar=(lab,n,d)=>`<div class="lg-meter"><span class="lm-lab">${lab}</span><span class="lm-val">${n} <span class="lm-d">/ ${d}</span></span><span class="lm-bar"><i style="width:${d?Math.round(n/d*100):0}%"></i></span></div>`;
+  const stat=(lab,val,cls)=>`<div class="lg-meter status"><span class="lm-lab">${lab}</span><span class="lm-val ${cls||''}">${val}</span></div>`;
+  el.innerHTML=`<div class="lg-meters">`+
+    stat('Findings resolved',`${res} <span class="lm-d">resolved · ${open} open</span>`)+
+    stat('Critical findings open',crit?crit:'0 <span class="lm-d">· all clear</span>',crit?'danger':'clear')+
+    bar('Dependencies confirmed',dep,3)+
+    bar('Plan sections read',7,7)+
   `</div>`;}
 document.getElementById('artview').innerHTML=artHTML('Resources');updateWnav();renderNotif();renderTrend();renderLedger();renderFocus();updateFindCount();renderHeat();enhanceA11y();initTheme();
 /* Testing fast-entry: open the file with #overview (or #workspace / #test) to jump straight to the project Overview, skipping onboarding — handy for exercising the resolve flow. Normal open still shows the full first-run experience. */
