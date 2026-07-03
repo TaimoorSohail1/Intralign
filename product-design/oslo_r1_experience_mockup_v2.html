@@ -998,8 +998,8 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
                 <button class="ff" data-f="sev" data-v="moderate" onclick="setFilt('sev','moderate',this)">Moderate</button>
                 <button class="ff" data-f="sev" data-v="warning" onclick="setFilt('sev','warning',this)">Warning</button>
               </div></div>
-              <div class="ff-row"><span class="fa-lab">Section</span><div class="ff-chips" id="fa-artf"></div></div>
-              <div class="ff-note" id="ff-grouprow">Group by <button class="gb on" data-g="dim" onclick="setGroup('dim',this)">Dimension</button><button class="gb" data-g="art" onclick="setGroup('art',this)">Section</button> <span style="opacity:.8">· severity-ordered</span></div>
+              <div class="ff-row"><span class="fa-lab">Artifact</span><div class="ff-chips" id="fa-artf"></div></div>
+              <div class="ff-note" id="ff-grouprow">Group by <button class="gb on" data-g="dim" onclick="setGroup('dim',this)">Dimension</button><button class="gb" data-g="art" onclick="setGroup('art',this)">Artifact</button> <span style="opacity:.8">· severity-ordered</span></div>
             </div>
             <div class="fa-list" id="fa-list"></div>
           </div>
@@ -1426,7 +1426,7 @@ const FINDINGS={
    rec:'Add a budget with sponsor-revenue and cost lines.',
    paths:['Bottom-up cost model','Sponsor-tier revenue target']},
  'FND-2062':{title:'Resources has no budget or cost breakdown',type:'Missing information',basis:'stated',sev:'moderate',dim:'Feasibility',art:'Resources',
-   summary:'The Resources section lists vendors and venue but no cost estimates — the plan’s executability can’t be assessed against a budget.',
+   summary:'The Resources artifact lists vendors and venue but no cost estimates — the plan’s executability can’t be assessed against a budget.',
    ev:[['Resources','“Venue · Speakers · AV” (no costs)']],
    caf:'Weakens <b>Feasibility</b>: without costs, affordability and trade-offs are unknown.',
    rec:'Add per-line cost estimates for venue, AV, catering, and speakers.',
@@ -1509,7 +1509,7 @@ function openFindingPanel(id){const f=FINDINGS[id];if(!f)return;const st=_fstatu
     ? `<button class="btn btn-ghost btn-sm" onclick="askOSLO('${id}')">✦ Ask OSLO</button><span style="font-size:12px;color:var(--success)">✓ Closed by reanalysis after you updated the plan.</span>`
     : `<button class="btn btn-primary btn-sm" onclick="applyFix('${id}')">Update the plan</button><button class="btn btn-ghost btn-sm" onclick="askOSLO('${id}')">✦ Ask OSLO</button>`;
   document.getElementById('findbody').innerHTML=
-    `<div class="fp-h"><div class="fp-top"><span class="chip sev${f.sev[0]==='c'?'c':f.sev[0]==='m'?'m':'w'}">${_sevword[f.sev]}</span><span class="chip">${f.type}</span><span class="fstatus ${st}">${_statusword[st]}</span><span class="elabel derived">From OSLO</span><span class="fp-close" onclick="closeFindingPanel()">×</span></div><h2>${f.title}</h2><div style="font-size:11.5px;color:var(--subtle);margin-top:6px">${id} · affects ${f.dim} · in <a style="color:var(--primary-light);cursor:pointer" onclick="openArtifact('${f.art}');closeFindingPanel()" title="Open the ${dispName(f.art)} section — where this weakness lives">${dispName(f.art)}</a></div><div class="fp-life">${track}</div></div>
+    `<div class="fp-h"><div class="fp-top"><span class="chip sev${f.sev[0]==='c'?'c':f.sev[0]==='m'?'m':'w'}">${_sevword[f.sev]}</span><span class="chip">${f.type}</span><span class="fstatus ${st}">${_statusword[st]}</span><span class="elabel derived">From OSLO</span><span class="fp-close" onclick="closeFindingPanel()">×</span></div><h2>${f.title}</h2><div style="font-size:11.5px;color:var(--subtle);margin-top:6px">${id} · affects ${f.dim} · in <a style="color:var(--primary-light);cursor:pointer" onclick="openArtifact('${f.art}');closeFindingPanel()" title="Open the ${dispName(f.art)} artifact — where this weakness lives">${dispName(f.art)}</a></div><div class="fp-life">${track}</div></div>
      <div class="fp-scroll">
        ${(g=>g?`<div class="fp-guide">${g}</div>`:'')(findingGuide(st, !!f.draft))}
        <div class="fp-sec"><div class="t">Why this exists</div><p>${f.summary}</p></div>
@@ -1623,9 +1623,9 @@ function openFindingsFor(art,dim){
 const _HEATGROUPS=[['Understanding',['Intent','Context','Scope','Requirements']],['Execution',['WBS','Schedule','Resources']]];
 const _HEATDIMS=['Clarity','Alignment','Feasibility'];
 function renderHeat(){const el=document.getElementById('heatGrid');if(!el)return;
-  let h='<div class="heat-corner">Section ↓ / dimension →</div>'+_HEATDIMS.map(d=>`<div class="heat-colh">${d}</div>`).join('');
+  let h='<div class="heat-corner">Artifact ↓ / dimension →</div>'+_HEATDIMS.map(d=>`<div class="heat-colh">${d}</div>`).join('');
   _HEATGROUPS.forEach(([g,secs])=>{h+=`<div class="heat-group">${g}</div>`;
-    secs.forEach(s=>{h+=`<div class="heat-rowh art" onclick="openArtifact('${s}')" role="button" tabindex="0" title="Open the ${dispName(s)} section">${dispName(s)}</div>`;
+    secs.forEach(s=>{h+=`<div class="heat-rowh art" onclick="openArtifact('${s}')" role="button" tabindex="0" title="Open the ${dispName(s)} artifact">${dispName(s)}</div>`;
       _HEATDIMS.forEach(d=>{const m=Object.entries(FINDINGS).filter(([id,f])=>f.art===s&&f.dim===d&&!['closed','superseded'].includes(_fstatus[id]));
         if(!m.length){h+='<div class="heat-cell l0">·</div>';return;}
         const sev=m.map(e=>e[1].sev).sort((a,b)=>_sevrank[a]-_sevrank[b])[0];const lv=sev==='critical'?'l3':sev==='moderate'?'l2':'l1';
@@ -1831,7 +1831,7 @@ const TOUR=[
  {sel:'.drivers',t:"What's driving it",x:'Clarity, Alignment and Feasibility at a glance — the dimensions behind the read. Click a driver to see the findings moving it.'},
  {sel:'#focus',t:'Where to start',x:'The open finding most worth your attention, most severe first. OSLO suggests where to start; you decide.'},
  {sel:'.explorer',t:'Your project rail',x:'Findings, History and the Attention map open here as focused views — in the Attention map, click a cell to jump to the findings there. Your plan artifacts sit below; edit any one and OSLO reanalyzes automatically — only reanalysis changes the assessment.'},
- {sel:'.chatp',t:'Ask OSLO anything',x:'A persistent advisor — ask about a finding, a section, or what to do next. It reads and explains; you stay in control — nothing changes without you.'},
+ {sel:'.chatp',t:'Ask OSLO anything',x:'A persistent advisor — ask about a finding, an artifact, or what to do next. It reads and explains; you stay in control — nothing changes without you.'},
  {sel:'#confpill',t:'Your read, always visible',x:'Confidence + reliability stay in the top bar. Click it for the Clarity · Alignment · Feasibility breakdown and the reliability basis.'}
 ];
 let _tourI=-1;
@@ -1934,7 +1934,7 @@ function cmdRegistry(){const it=[];
   it.push({g:'Go to',ic:'◎',label:'Overview',run:()=>openTab('understanding'),kw:'home confidence'});
   it.push({g:'Go to',ic:'⚑',label:'Findings',run:()=>openAllFindings(),kw:'issues weaknesses'});
   it.push({g:'Go to',ic:'◴',label:'History',run:()=>openHistory(),kw:'timeline audit'});
-  _ARTORDER.forEach(s=>it.push({g:'Plan artifacts',ic:'▤',label:dispName(s),run:()=>openArtifact(s),kw:'section '+dispName(s)}));
+  _ARTORDER.forEach(s=>it.push({g:'Plan artifacts',ic:'▤',label:dispName(s),run:()=>openArtifact(s),kw:'artifact '+dispName(s)}));
   Object.entries(FINDINGS).filter(([id])=>!['closed','superseded'].includes(_fstatus[id])).forEach(([id,f])=>it.push({g:'Open a finding',ic:'•',label:f.title,sub:_sevword[f.sev]+' · '+dispName(f.art),run:()=>openFindingPanel(id),kw:'finding '+f.dim+' '+dispName(f.art)}));
   it.push({g:'Actions',ic:'⤳',label:'Share project',run:()=>openShare(),kw:'invite'});
   it.push({g:'Actions',ic:'⇩',label:'Export snapshot',run:()=>openExport(),kw:'download'});
