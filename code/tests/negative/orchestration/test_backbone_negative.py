@@ -112,7 +112,15 @@ def test_b3_2_chr_overwrite_surface_absent_at_backbone_level() -> None:
         for n in vars(ChrRepository)
         if not n.startswith("_") and callable(getattr(ChrRepository, n))
     }
-    assert public == {"append", "get", "latest_for_output", "lineage_chain"}
+    # DTM-0017 adds ``latest_acceptance_impact_for_uar`` — a SELECT-only READ for
+    # the Acceptance-Impact supersede lookup (no mutation path is introduced).
+    assert public == {
+        "append",
+        "get",
+        "latest_for_output",
+        "lineage_chain",
+        "latest_acceptance_impact_for_uar",
+    }
 
 
 def test_b3_3_intake_alone_trigger_rejected_before_any_run() -> None:

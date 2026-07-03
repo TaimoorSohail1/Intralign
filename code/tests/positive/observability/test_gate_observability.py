@@ -21,6 +21,7 @@ from ci.gate_observability import (
     EXPECTED_EVENT_NAMES_WC_ADVISE,
     EXPECTED_EVENT_NAMES_WC_FIX,
     EXPECTED_EVENT_NAMES_WS,
+    EXPECTED_EVENT_NAMES_WU_ACCEPT,
     check_append_event_pairing,
     check_event_vocabulary,
     check_replay_harness,
@@ -40,6 +41,7 @@ from backend.services.observability.events import (
     EVENT_NAMES_WC_ADVISE,
     EVENT_NAMES_WC_FIX,
     EVENT_NAMES_WS,
+    EVENT_NAMES_WU_ACCEPT,
 )
 
 CODE_ROOT = Path(__file__).resolve().parents[3]
@@ -67,10 +69,11 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
     assert EXPECTED_EVENT_NAMES_WB_EVAL == EVENT_NAMES_WB_EVAL
     assert EXPECTED_EVENT_NAMES_WC_ADVISE == EVENT_NAMES_WC_ADVISE
     assert EXPECTED_EVENT_NAMES_WC_FIX == EVENT_NAMES_WC_FIX
+    assert EXPECTED_EVENT_NAMES_WU_ACCEPT == EVENT_NAMES_WU_ACCEPT
     assert EXPECTED_EVENT_NAMES_COST == EVENT_NAMES_COST
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
-    # Union consistency: the alias is exactly the 9-way per-contract concatenation
-    # (DTM-0015 — WC_FIX added between WC_ADVISE and COST; the union grows, never reorders).
+    # Union consistency: the alias is exactly the 10-way per-contract concatenation
+    # (DTM-0016 — WU_ACCEPT added between WC_FIX and COST; the union grows, never reorders).
     assert EVENT_NAMES == (
         EVENT_NAMES_WA00R
         + EVENT_NAMES_WA001
@@ -80,6 +83,7 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
         + EVENT_NAMES_WB_EVAL
         + EVENT_NAMES_WC_ADVISE
         + EVENT_NAMES_WC_FIX
+        + EVENT_NAMES_WU_ACCEPT
         + EVENT_NAMES_COST
     )
     # stale_detected lives in the WA00R set only — referenced, never duplicated.
@@ -167,6 +171,30 @@ def test_wc_fix_vocabulary_is_the_one_dl047_suggested_fix_name_verbatim() -> Non
         assert "suggested_fix_offered" not in other
     # The single ai_spend_recorded is the COST event, reused — not a WC_FIX event.
     assert "ai_spend_recorded" not in EVENT_NAMES_WC_FIX
+
+
+def test_wu_accept_vocabulary_is_the_three_ic_wu_accept_c3_names_verbatim() -> None:
+    """DTM-0016 + DTM-0017 — the IC-WU-ACCEPT C3 list, exactly, in contract order."""
+    assert EVENT_NAMES_WU_ACCEPT == (
+        "user_acceptance_record_appended",
+        "plan_fact_recorded",
+        "acceptance_impact_assessed",
+    )
+    # The per-emission append event is REUSED from WA00R, never duplicated here.
+    assert "cognition_history_record_appended" not in EVENT_NAMES_WU_ACCEPT
+    # The capture event lives in WA001 (Perceive's), reused — not a WU_ACCEPT event.
+    assert "user_acceptance_captured" in EVENT_NAMES_WA001
+    assert "user_acceptance_captured" not in EVENT_NAMES_WU_ACCEPT
+    # The acceptance-recording events live in WU_ACCEPT only — never leaking elsewhere.
+    for name in EVENT_NAMES_WU_ACCEPT:
+        assert name not in EVENT_NAMES_WS
+        assert name not in EVENT_NAMES_WB_INFER
+        assert name not in EVENT_NAMES_WB_EVAL
+        assert name not in EVENT_NAMES_WC_ADVISE
+        assert name not in EVENT_NAMES_WC_FIX
+        assert name not in EVENT_NAMES_COST
+    # The single ai_spend_recorded is the COST event, reused — not a WU_ACCEPT event.
+    assert "ai_spend_recorded" not in EVENT_NAMES_WU_ACCEPT
 
 
 def test_wa002_vocabulary_is_the_ic_wa_002_a6_names_verbatim() -> None:

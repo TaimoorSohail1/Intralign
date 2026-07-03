@@ -203,6 +203,191 @@ class PlanningArtifact(CognitionEntity):
 
 
 # =============================================================================
+# Wave U (DTM-0016, IC-WU-ACCEPT — U1.2) — the PlanFact cognition type. A plan
+# fact is the SECOND canonical item Retain records when a user CONFIRMS a
+# planning item (accept / direct-edit; NOT reject/defer): the confirmed content
+# recorded as a USER-ATTESTED ``AttestedAssertion`` (``attesting_source=user``,
+# ``epistemic_state=attested-user``) — "factual in the plan, attributed to the
+# user", per the Plan-Fact Clarification (§0.1; DL-043 constituent G).
+#
+# THE CRITICAL INVARIANTS (the seven (G) forbidden, hard rule #5), made
+# STRUCTURALLY IMPOSSIBLE on the shape (``extra='forbid'``):
+# - A plan fact is NOT world-truth and NOT OSLO-approved: it carries NO
+#   ``true`` / ``approved`` / ``world_truth`` / ``certified`` / ``valid`` field —
+#   OSLO certifies neither (§0.1). The epistemic_state is PINNED to
+#   ``attested-user``: a plan fact can never be ``attested-oslo`` (OSLO can never
+#   author it) nor ``derived`` (it is canonical, not a recomputable projection).
+# - It is NOT a Governance Decision / approval / sign-off: NO ``governance`` /
+#   ``decision`` / ``authority`` / ``sign_off`` / ``applied`` / ``executed`` field.
+# - The USER authors it: ``attested_by_user`` is mandatory and is the attribution
+#   (OSLO never self-accepts — hard rule #5). ``version_pin`` is mandatory: a plan
+#   fact pins the exact emission/version confirmed (no plan fact without it).
+#
+# A plan fact persists as a row in the EXISTING ``attested_assertion`` table
+# (the CHECK already admits ``attested-user`` — no migration). This class is the
+# typed shape of that confirmed-content payload; ``content_type`` is from the LDM
+# §2.1 set (default ``fact``).
+# =============================================================================
+
+# IC-WU-ACCEPT — a plan fact's content_type is the LDM §2.1 attested_assertion
+# set (the table CHECK: fact/assumption/constraint/dependency/goal). Default
+# ``fact`` (decision: an accepted recommendation's confirmed content is a plan
+# fact). A LABEL describing the KIND of confirmed content — never a truth claim.
+PlanFactContentType = Literal["fact", "assumption", "constraint", "dependency", "goal"]
+
+
+class PlanFact(CognitionEntity):
+    """A user-attested confirmed planning item (IC-WU-ACCEPT U1.2) — canonical, not truth.
+
+    Written by Retain on ``accept`` / ``direct_edit`` (NOT reject/defer) as the
+    SECOND canonical item beside the ``UserAcceptanceRecord``: the confirmed
+    content recorded as "factual in the plan, attributed to the user" (Plan-Fact
+    Clarification §0.1). The USER authors it — OSLO never auto-promotes its own
+    Derived recommendation and never self-accepts (hard rule #5); the content is
+    the confirmed item, the attribution is the user.
+
+    A plan fact marks NOTHING world-true, approved, governed, applied, or
+    executed. The forbidden surface (``extra='forbid'``) carries NO
+    ``true`` / ``approved`` / ``world_truth`` / ``certified`` / ``valid`` /
+    ``governance`` / ``decision`` / ``authority`` / ``sign_off`` / ``applied`` /
+    ``executed`` field — every (G) forbidden invariant is made structurally
+    unrepresentable. ``epistemic_state`` is PINNED to ``attested-user``: it can
+    never be authored by OSLO (``attested-oslo``) or be a recomputable derivation
+    (``derived``). ``version_pin`` is mandatory (pins the exact emission/version
+    confirmed); ``attested_by_user`` is mandatory (the user attribution).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    # The confirmed content recorded as factual-in-the-plan. For an accepted
+    # Recommendation this is derived from the pinned CHR's output_payload (a data
+    # read, no LLM); for a direct edit it is the user's edit content.
+    proposition: str = Field(
+        ..., min_length=1,
+        description="The confirmed content, recorded as factual-in-the-plan (not world-truth).",
+    )
+    content_type: PlanFactContentType = Field(
+        default="fact",
+        description="LDM §2.1 kind label (fact/assumption/constraint/dependency/goal).",
+    )
+    # MANDATORY: the user who authored the confirmation. OSLO never self-accepts
+    # (hard rule #5) — a plan fact ALWAYS carries a user attribution.
+    attested_by_user: str = Field(
+        ..., min_length=1,
+        description="The user who confirmed this — the plan fact's author (never OSLO).",
+    )
+    # MANDATORY: the exact emission/version confirmed (the accepted CHR id, the
+    # attestation id, or the capture ref for a direct edit). No plan fact without it.
+    version_pin: str = Field(
+        ..., min_length=1,
+        description="The exact emission/version confirmed (CHR/assertion/capture ref).",
+    )
+    provenance_ref: dict = Field(
+        ...,
+        description="Lineage: version-pin + user attribution + the capture that confirmed it.",
+    )
+    # Pinned: a plan fact is USER-ATTESTED canonical — never OSLO-authored
+    # (attested-oslo) and never a recomputable derivation (derived). OSLO can
+    # never self-accept (hard rule #5) and never promote a Derived rec to truth.
+    epistemic_state: Literal[EpistemicState.ATTESTED_USER] = Field(
+        default=EpistemicState.ATTESTED_USER,
+        description="Pinned attested-user — the user authors it; OSLO never self-accepts.",
+    )
+
+
+# =============================================================================
+# Wave U (DTM-0017, IC-WU-ACCEPT — U1.3) — the AcceptanceImpactAssessment
+# cognition type. After a recompute produces new values, Evaluate scans the
+# project's ACTIVE version-pinned UARs; for each, it compares the LATEST value
+# for the accepted item against the value at the VERSION-PINNED Cognition History
+# Record. If the drift is ≥10 pts OR a band change (Calibration §3) it emits ONE
+# AcceptanceImpactAssessment — "a decision you confirmed is affected". It rides
+# the EXISTING CHR ``acceptance_impact`` output_kind (no migration), superseding a
+# prior assessment for the SAME UAR (append-only history).
+#
+# THE HEADLINE CRITICAL INVARIANT (the seven (G) forbidden; hard rule #2): the
+# impact comparison is DERIVED Cognition, NEVER canonical / world-truth. Made
+# STRUCTURALLY IMPOSSIBLE on the shape (``extra='forbid'``):
+# - ``epistemic_state`` is PINNED to ``derived``: an Acceptance-Impact Assessment
+#   can never be ``attested-*`` (it is a recomputable comparison, not a receipt or
+#   a user attestation). It carries NO ``true`` / ``approved`` / ``world_truth`` /
+#   ``certified`` / ``canonical`` / ``governance`` / ``decision`` / ``authority``
+#   field — it certifies nothing and governs nothing.
+# - It is READ-ONLY over the UAR and the plan fact: it carries REFERENCES
+#   (``uar_ref`` + ``pinned_chr`` + ``latest_chr``), never the UAR/plan-fact rows
+#   themselves, and writing one mutates NEITHER (the reconcile only reads them).
+# - The comparison is RULE-DERIVED (exact): ``delta`` is the signed value move
+#   (latest − pinned) and ``band_changed`` records the band transition; together
+#   they are the drift the ≥10/band rule fired on (Calibration §3).
+# =============================================================================
+
+
+class AcceptanceImpactAssessment(CognitionEntity):
+    """A Derived drift assessment over a user-accepted item (IC-WU-ACCEPT U1.3).
+
+    Emitted by Evaluate in the recompute, AFTER the new values are computed, when
+    the value behind a user-accepted item has moved ≥10 pts OR changed band vs the
+    version-pinned acceptance (Calibration §3). It surfaces "a decision you
+    confirmed is affected" — Derived, recomputable, riding the existing
+    ``acceptance_impact`` CHR output_kind (no migration), superseding a prior
+    assessment for the SAME UAR.
+
+    Critical (the seven (G) forbidden; hard rule #2): the impact comparison is
+    DERIVED, NEVER canonical / world-truth. The forbidden surface
+    (``extra='forbid'``) carries NO ``true`` / ``approved`` / ``world_truth`` /
+    ``certified`` / ``canonical`` / ``governance`` / ``decision`` / ``authority``
+    field — it certifies nothing, governs nothing, and mutates neither the UAR nor
+    the plan fact (it holds only REFERENCES to them). ``epistemic_state`` is
+    PINNED to ``derived``: an Acceptance-Impact Assessment can never be Attested.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    project_id: str
+    # The UAR whose accepted item this assessment is about (read-only reference —
+    # the UAR row is never mutated; this is the supersession key per UAR).
+    uar_ref: str = Field(
+        ..., min_length=1,
+        description="Lineage: the UserAcceptanceRecord id this assessment is about.",
+    )
+    # The value at the version-pinned acceptance (the CHR the UAR pinned) and the
+    # latest value for the same accepted item — references, never the rows.
+    pinned_chr: str = Field(
+        ..., min_length=1,
+        description="The version-pinned CHR id the acceptance pinned (the baseline value).",
+    )
+    latest_chr: str = Field(
+        ..., min_length=1,
+        description="The latest CHR id for the same accepted item (the moved value).",
+    )
+    # The drift the ≥10/band rule fired on (rule-derived; exact). ``delta`` is the
+    # signed value move (latest − pinned); ``band_changed`` records a band shift.
+    delta: float = Field(
+        ..., description="Signed value move (latest − pinned) on the 0–100 scale.",
+    )
+    band_changed: bool = Field(
+        ..., description="Whether the value's band changed vs the version-pinned value.",
+    )
+    pinned_band: ConfidenceBand | None = Field(
+        default=None, description="The band at the version-pinned acceptance (audit)."
+    )
+    latest_band: ConfidenceBand | None = Field(
+        default=None, description="The latest band for the accepted item (audit)."
+    )
+    model_or_rule_version: str = Field(..., description="rule version stamp (exact replay).")
+    mode: Mode
+    confidence_stage: ConfidenceStage = "orientation"
+    understanding_state: UnderstandingState = "initial"
+    # Pinned: an Acceptance-Impact Assessment is DERIVED cognition — never
+    # canonical / Attested / world-truth (hard rule #2; the seven (G) forbidden).
+    epistemic_state: Literal[EpistemicState.DERIVED] = Field(
+        default=EpistemicState.DERIVED,
+        description="Pinned derived — the impact comparison is never canonical.",
+    )
+
+
+# =============================================================================
 # Wave B (DTM-0010, IC-WB-INFER) — the Finding cognition type. Infer is the
 # SINGLE producer of Findings (one-producer rule #1). A Finding is DERIVED
 # Cognition (recomputable; never written to the canonical store as Attested,

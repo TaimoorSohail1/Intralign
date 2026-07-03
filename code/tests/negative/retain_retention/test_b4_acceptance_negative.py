@@ -8,23 +8,29 @@ capture event already fired in Perceive).
 
 from __future__ import annotations
 
-import ast
 import inspect
 import uuid
-from pathlib import Path
 
 import pytest
 
-import backend.responsibilities.retain.acceptance as acceptance_module
 from backend.responsibilities.retain.acceptance import (
     AcceptanceRecordingError,
     record_acceptance,
 )
-from tests.positive.retain_retention.fakes import InMemoryRetentionStore
+from tests.positive.retain_retention.fakes import (
+    InMemoryChrReader,
+    InMemoryRetentionStore,
+)
 
 USER = str(uuid.uuid4())
 PIN = str(uuid.uuid4())
 PROJECT = str(uuid.uuid4())
+
+
+def _reader() -> InMemoryChrReader:
+    reader = InMemoryChrReader()
+    reader.seed(PIN, {"summary": "Confirmed planning content."})
+    return reader
 
 # Every field a persisted UAR row may carry — attribution + universals ONLY.
 _ALLOWED_UAR_FIELDS = {
@@ -85,7 +91,7 @@ def test_b_plus_3_acceptance_recording_is_never_truth_assertion() -> None:
     marker exists anywhere in it (Critical: acceptance-as-truth, C6)."""
     store = InMemoryRetentionStore()
     result = record_acceptance(
-        _capture_fields(), project_id=PROJECT, store=store
+        _capture_fields(), project_id=PROJECT, store=store, chr_reader=_reader()
     )
     row = store.get_acceptance(result.uar_id)
     assert set(row) <= _ALLOWED_UAR_FIELDS
@@ -103,26 +109,20 @@ def test_b_plus_3_acceptance_recording_is_never_truth_assertion() -> None:
 
 
 def test_b_plus_3_accepted_item_is_never_mutated() -> None:
-    """§B+ negative 3 — recording touches its two tables only; the accepted
-    item (assertion/CHR) is decoupled and untouched."""
+    """§B+ negative 3 — the accepted item (assertion/CHR) is decoupled and
+    untouched. A reject records the UAR only (DTM-0016: no plan fact), so the
+    write footprint is exactly the two UAR tables — the accepted item is never
+    mutated by acceptance recording."""
     store = InMemoryRetentionStore()
-    record_acceptance(_capture_fields(), project_id=PROJECT, store=store)
+    record_acceptance(_capture_fields(action="reject"), project_id=PROJECT, store=store)
     assert store.tables_written == ["user_acceptance_record", "history_record"]
     assert store.assertions == []
 
 
-def test_acceptance_module_emits_nothing_and_has_no_emitter_seam() -> None:
-    """No event belongs to the UAR write (the capture event fired in
-    Perceive): the function takes no emitter and the module makes no emit call."""
-    assert "emitter" not in inspect.signature(record_acceptance).parameters
-    tree = ast.parse(
-        Path(inspect.getfile(acceptance_module)).read_text(encoding="utf-8")
-    )
-    emit_calls = [
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and node.func.attr == "emit"
-    ]
-    assert emit_calls == []
+def test_acceptance_path_takes_an_optional_emitter() -> None:
+    """DTM-0016 — the acceptance path now emits its own OBS-WU-ACCEPT events, so
+    it takes an OPTIONAL emitter (additive; existing callers keep working)."""
+    sig = inspect.signature(record_acceptance)
+    assert "emitter" in sig.parameters
+    # Optional: default None so Wave-A callers that pass no emitter still work.
+    assert sig.parameters["emitter"].default is None

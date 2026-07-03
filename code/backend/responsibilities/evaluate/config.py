@@ -46,6 +46,14 @@ MEDIUM_BAND_FLOOR: float = 50.0
 HIGH_BAND_FLOOR: float = 75.0
 BAND_EDGE_GUARD: float = 3.0
 
+# Calibration §3 — the Acceptance-Impact drift trigger: a value behind a
+# user-accepted item must move ≥10 points OR change band (vs the version-pinned
+# acceptance) before OSLO surfaces an Acceptance-Impact alert ("a decision you
+# confirmed is affected"). Owner-tunable dial (conservative; surface over
+# suppress) — transcribed VERBATIM from RELEASE_1_CALIBRATION_DEFAULTS_V1.md §3.
+# Below this, the reconcile raises NOTHING.
+ACCEPTANCE_IMPACT_DRIFT_POINTS: float = 10.0
+
 # A conservative default impact for a Finding whose Impact Assessment has not
 # sized a magnitude yet (v0: treat an un-sized Finding as MODERATE so it is felt
 # but does not dominate — the magnitude is refined by Deep Pass / calibration).

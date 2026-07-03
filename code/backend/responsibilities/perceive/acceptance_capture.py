@@ -46,6 +46,16 @@ class AcceptanceCapture(BaseModel):
     action: AcceptanceActionName
     project_id: str | None = None
     captured_at: datetime
+    # Wave U (DTM-0016): for a ``direct_edit`` the user authors content directly —
+    # this carries that confirmed edit content so Retain can record the plan fact
+    # from it (no recommendation to derive from). For accept/reject/defer it is
+    # ``None`` (an accept's plan-fact content comes from the pinned CHR, a data
+    # read; reject/defer write no plan fact). It is the user's words, NEVER a
+    # truth/approval marker.
+    edit_content: str | None = Field(
+        default=None,
+        description="direct_edit only: the user-authored confirmed content (plan fact source).",
+    )
 
 
 def capture_acceptance(
