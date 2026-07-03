@@ -125,7 +125,7 @@ qualified canonical form below.** (This register *qualifies* — it does not red
 | **AI-first PM** (a PM augmented by OSLO's understanding) | **AI-First delivery** — build/delivery governance (`00_owner/build_governance`); unrelated scope | augmentation claim; never automation/replacement |
 | **Initial Analysis** | **Fast Pass** / Fast Analysis Pass (DL-046) | UI label |
 | **Extended Analysis** | **Deep Pass** / Deep Analysis Pass (DL-046) | UI label |
-| **Plan sections** | **Planning Artifacts** / plan artifacts (DL-077) | UI label (non-PM-legible) |
+| **Plan artifacts** | **Planning Artifacts** / plan artifacts (DL-077) | UI label; supersedes prior "Plan sections" (DL-087 amendment, 2026-07-03) — presentation now tracks the canonical term |
 | **Work breakdown** | **WBS** (Work Breakdown Structure) | UI label |
 | **Stated** (finding basis — grounded in your inputs) | **Attested** (source-attributed assertion; `RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`) | finding basis, presentation only (DL-093) |
 | **Inferred** (finding basis — OSLO's read, not yet stated) | **Derived** (Infer/Evaluate understanding; Epistemic State Model) | finding basis, presentation only (DL-093); **not** a finding *type* |

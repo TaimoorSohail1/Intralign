@@ -659,6 +659,17 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .ff-note{font-size:11px;color:var(--subtle);align-self:flex-end;display:flex;align-items:center;gap:6px;margin-top:2px}
 .gb{font-size:11px;border:1px solid var(--border-2);border-radius:99px;padding:2px 10px;color:var(--muted);cursor:pointer}
 .gb.on{border-color:var(--primary);background:rgba(217,122,58,.10);color:var(--text)}
+.lens-tabs{display:inline-flex;gap:2px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:9px;padding:2px}
+.lens{font-size:16px;font-weight:600;color:var(--muted);padding:4px 15px;border-radius:7px;cursor:pointer}
+.lens.on{background:var(--surface);color:var(--text)}
+.fa-lenssub{font-size:12.5px;color:var(--subtle);margin:0 0 8px}
+.triage{display:flex;gap:22px;align-items:center;padding:0 0 14px;margin-bottom:6px;border-bottom:1px solid var(--border)}
+.triage .tg{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
+.triage .tg b{font-family:var(--mono);font-size:16px}
+.triage .tg .dot{width:8px;height:8px;border-radius:99px;display:inline-block}
+.triage .tg.crit b{color:var(--danger)}.triage .tg.crit .dot{background:var(--danger)}
+.triage .tg.mod b{color:var(--warning)}.triage .tg.mod .dot{background:var(--warning)}
+.triage .tg.warn b{color:var(--subtle)}.triage .tg.warn .dot{background:var(--subtle)}
 .ff .ffn{font-size:9px;font-weight:700;color:var(--subtle);margin-left:3px}
 .ff.on .ffn{color:var(--primary-light)}
 .ff.ff-empty{opacity:.5}
@@ -930,7 +941,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
       <div class="ex-item" id="exFindings" onclick="openAllFindings()"><span class="ic">⚑</span> Findings <span class="fb tot" id="exFindCount">6</span></div>
       <div class="ex-item" id="exHistory" onclick="openHistory()"><span class="ic">◴</span> History</div>
       <div class="ex-item" id="exMRI" onclick="openMRI()"><span class="ic">▦</span> Attention map</div>
-      <div class="ex-sec">Plan sections</div>
+      <div class="ex-sec">Plan artifacts</div>
       <div class="ex-subsec">Understanding</div>
       <div class="ex-item" data-art="Intent" onclick="openArtifact('Intent')"><span class="ic">▤</span> Intent</div>
       <div class="ex-item" data-art="Context" onclick="openArtifact('Context')"><span class="ic">▤</span> Context</div>
@@ -956,8 +967,8 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
           <div style="max-width:520px;margin:11vh auto 0;text-align:center;padding:0 24px">
             <div class="buildspin">✦</div>
             <h1 style="font-size:22px;font-weight:600;margin:18px 0 8px">Building your understanding…</h1>
-            <p style="color:var(--muted);font-size:14px;line-height:1.65">OSLO is reading your inputs, drafting your plan sections, and assessing where the plan stands.</p>
-            <p style="color:var(--subtle);font-size:12.5px;margin-top:14px">Follow the steps in the <b style="color:var(--muted)">panel on the right →</b>; your plan sections appear in the <b style="color:var(--muted)">left rail</b>.</p>
+            <p style="color:var(--muted);font-size:14px;line-height:1.65">OSLO is reading your inputs, drafting your plan artifacts, and assessing where the plan stands.</p>
+            <p style="color:var(--subtle);font-size:12.5px;margin-top:14px">Follow the steps in the <b style="color:var(--muted)">panel on the right →</b>; your plan artifacts appear in the <b style="color:var(--muted)">left rail</b>.</p>
           </div>
         </section>
 
@@ -972,7 +983,8 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
         <!-- FINDINGS (center pane — filterable index; leaves the OSLO panel visible) -->
         <section class="pane" id="pane-findings">
           <div class="finds-pane">
-            <div class="finds-head"><h1>Findings</h1><span id="fa-count" style="color:var(--subtle);font-size:13px"></span></div>
+            <div class="finds-head"><div class="lens-tabs"><button class="lens on" data-lens="find" onclick="setLens('find',this)">Findings</button><button class="lens" data-lens="issue" onclick="setLens('issue',this)">Issues</button></div><span id="fa-count" style="color:var(--subtle);font-size:13px"></span></div>
+            <div class="fa-lenssub" id="fa-lenssub">What's weakening your understanding — grouped by dimension.</div>
             <div class="fa-filters">
               <div class="ff-row"><span class="fa-lab">Dimension</span><div class="ff-chips">
                 <button class="ff on" data-f="dim" data-v="all" onclick="setFilt('dim','all',this)">All</button>
@@ -987,7 +999,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
                 <button class="ff" data-f="sev" data-v="warning" onclick="setFilt('sev','warning',this)">Warning</button>
               </div></div>
               <div class="ff-row"><span class="fa-lab">Section</span><div class="ff-chips" id="fa-artf"></div></div>
-              <div class="ff-note">Group by <button class="gb on" data-g="dim" onclick="setGroup('dim',this)">Dimension</button><button class="gb" data-g="art" onclick="setGroup('art',this)">Section</button> <span style="opacity:.8">· severity-ordered</span></div>
+              <div class="ff-note" id="ff-grouprow">Group by <button class="gb on" data-g="dim" onclick="setGroup('dim',this)">Dimension</button><button class="gb" data-g="art" onclick="setGroup('art',this)">Section</button> <span style="opacity:.8">· severity-ordered</span></div>
             </div>
             <div class="fa-list" id="fa-list"></div>
           </div>
@@ -1002,7 +1014,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
         <section class="pane active" id="pane-understanding">
           <div class="uc">
             <div class="errbar" id="errbar" style="display:none"><span class="ar-i" style="color:var(--danger)">⚠</span><span style="flex:1">Reanalysis couldn't complete — showing your <b style="color:var(--text)">last-good understanding</b>, unchanged. <a onclick="retryAnalysis()">Retry</a></span><span class="coach-x" onclick="document.getElementById('errbar').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
-            <div class="arrival" id="arrival" style="display:none"><span class="ar-i">✦</span><span class="ar-t"><b>Initial analysis complete in <span id="arrival-t">41</span>s.</b> OSLO read your brief, drafted <a onclick="openArtifact('Intent')">7 plan sections</a>, assessed Clarity · Alignment · Feasibility, and surfaced <a onclick="openAllFindings()">15 findings</a>.</span><a onclick="startTour()" style="color:var(--primary-light);cursor:pointer;white-space:nowrap;font-weight:600;align-self:center" title="A 60-second tour of how to use OSLO">Take a quick tour →</a><span class="coach-x" onclick="document.getElementById('arrival').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
+            <div class="arrival" id="arrival" style="display:none"><span class="ar-i">✦</span><span class="ar-t"><b>Initial analysis complete in <span id="arrival-t">41</span>s.</b> OSLO read your brief, drafted <a onclick="openArtifact('Intent')">7 plan artifacts</a>, assessed Clarity · Alignment · Feasibility, and surfaced <a onclick="openAllFindings()">15 findings</a>.</span><a onclick="startTour()" style="color:var(--primary-light);cursor:pointer;white-space:nowrap;font-weight:600;align-self:center" title="A 60-second tour of how to use OSLO">Take a quick tour →</a><span class="coach-x" onclick="document.getElementById('arrival').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
             <div class="coach" id="coach-ov" style="display:none"><span>This is your <b>strategic read</b>. Confidence is how well OSLO understands the plan — not a grade. Start with what's weakening understanding, then decide what to act on.</span><span class="coach-x" onclick="document.getElementById('coach-ov').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
             <div class="card hero">
               <div class="ch"><h3>Confidence</h3><span class="info" data-tip="Confidence is understanding maturity — not a health score, probability, or grade. It is always qualified by reliability. Understanding matures in stages: Orientation → Expanded → Validated.">i</span><span class="ustate cur" id="ustate" style="margin-left:auto" title="Analysis state — still updating while analysis runs, current when complete. Only reanalysis changes the assessment.">Current</span><span class="elabel derived" style="margin-left:8px">From OSLO</span></div>
@@ -1034,7 +1046,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
         <!-- ATTENTION MAP (MRI) -->
         <section class="pane" id="pane-mri">
           <div class="mri-pane">
-            <div class="mri-head"><h1>Attention map</h1><span class="mri-sub">Where the plan needs work · rows = plan sections · columns = Clarity · Alignment · Feasibility</span></div>
+            <div class="mri-head"><h1>Attention map</h1><span class="mri-sub">Where the plan needs work · rows = plan artifacts · columns = Clarity · Alignment · Feasibility</span></div>
             <div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px"><div style="flex:1;font-size:12.5px;color:var(--subtle)">Brighter = more attention. Click a cell to investigate.</div><div class="mfilter"><button class="mf on" onclick="mview(this,'heat')">▦ Heatmap</button><button class="mf" onclick="mview(this,'field')">⌖ Dimensions</button><button class="mf" onclick="openAllFindings()">⚑ All findings</button></div></div>
               <div class="attn-canvas"><div class="mcanvas" id="mcanvas">
               <div class="gridbg"></div>
@@ -1044,7 +1056,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
                 <div class="heat" id="heatGrid"><!-- generated by renderHeat() from FINDINGS --></div>
                 <div class="heat-legend">
                   <span>Calm</span><i class="g0"></i><i class="g1"></i><i class="g2"></i><i class="g3"></i><span>Needs attention</span>
-                  <span class="note">Rows = plan sections · columns = Clarity · Alignment · Feasibility. <span class="info" data-tip="Brightness shows severity of attention — not a health score.">i</span></span>
+                  <span class="note">Rows = plan artifacts · columns = Clarity · Alignment · Feasibility. <span class="info" data-tip="Brightness shows severity of attention — not a health score.">i</span></span>
                 </div>
               </div>
 
@@ -1080,7 +1092,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
     <aside class="chatp">
       <div class="chat-h"><div class="o">O</div><div class="nm">OSLO</div><button class="chat-min" onclick="toggleChat()" title="Hide the OSLO panel" aria-label="Hide the OSLO panel">›</button></div>
       <div class="chat-scroll" id="chatscroll">
-        <div class="cmsg"><div class="who">OSLO</div><div class="bub">I've mapped DevNorth 2026 into your plan sections. Understanding is at <b style="color:var(--text)">Moderate</b> maturity — the main thing holding it back is a Critical feasibility gap in <a onclick="openArtifact('Resources')">Resources</a> (venue Wi-Fi capacity). Ask me anything, or open <a onclick="openAllFindings()">all findings</a> to see all 15.</div></div>
+        <div class="cmsg"><div class="who">OSLO</div><div class="bub">I've mapped DevNorth 2026 into your plan artifacts. Understanding is at <b style="color:var(--text)">Moderate</b> maturity — the main thing holding it back is a Critical feasibility gap in <a onclick="openArtifact('Resources')">Resources</a> (venue Wi-Fi capacity). Ask me anything, or open <a onclick="openAllFindings()">all findings</a> to see all 15.</div></div>
       </div>
       <div class="chat-foot">
         <div class="chat-input">
@@ -1258,7 +1270,7 @@ function ingest(){
   const a=document.getElementById('analyzing');a.classList.add('show');
   const seq=[
     {s:'Analyzing your plan',t:'Reading your plan the way a strategic leader would…',d:'OSLO takes in your documents and builds an understanding of the plan.'},
-    {s:'Analyzing your plan',t:'Mapping where it’s clear — and where it’s weak…',d:'Clarity, alignment, and feasibility across your plan sections.'},
+    {s:'Analyzing your plan',t:'Mapping where it’s clear — and where it’s weak…',d:'Clarity, alignment, and feasibility across your plan artifacts.'},
     {s:'Analyzing your plan',t:'Surfacing what could keep you from the outcome…',d:'The findings you’ll want to weigh — advisory, never automatic.'},
     {s:'Analyzing your plan',t:'Your strategic read is ready.',d:'Here’s where your plan stands.'}
   ];
@@ -1274,7 +1286,7 @@ function ingest(){
       setTimeout(showSaveBar,11500);}},1750);
 }
 /* ---- tabs / nav ---- */
-const titles={artifact:'Plan section',understanding:'Overview'};
+const titles={artifact:'Plan artifact',understanding:'Overview'};
 function openTab(t){
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
   const pane=document.getElementById('pane-'+t);if(pane)pane.classList.add('active');
@@ -1588,7 +1600,9 @@ function bumpConfidence(){
 function closeFindingPanel(){document.getElementById('findpanel').classList.remove('open');document.getElementById('findscrim').classList.remove('open');}
 function acceptRec(b){b.textContent='✓ Chosen';b.style.background='var(--success)';b.style.color='var(--on-accent)';}
 function openFinding(){openFindingPanel('FND-2041');}
-const _filt={dim:'all',sev:'all',art:'all'};let _group='dim';const DIMORDER=['Feasibility','Clarity','Alignment'];const _sevrank={critical:0,moderate:1,warning:2};
+const _filt={dim:'all',sev:'all',art:'all'};let _group='dim';let _lens='find';const DIMORDER=['Feasibility','Clarity','Alignment'];const SEVORDER=['critical','moderate','warning'];const _sevrank={critical:0,moderate:1,warning:2};
+/* Two lenses on the same evaluated findings (canon Finding→Issue): 'find' = by understanding/dimension (descriptive); 'issue' = by severity (action, urgency-forward). Not a rename, not a second destination. */
+function setLens(l,btn){_lens=l;document.querySelectorAll('.lens').forEach(b=>b.classList.toggle('on',b.dataset.lens===l));_group=l==='issue'?'sev':'dim';const sub=document.getElementById('fa-lenssub');if(sub)sub.textContent=l==='issue'?'What needs your attention — most urgent first. Severity is qualitative; only reanalysis resolves.':"What's weakening your understanding — grouped by dimension.";const gr=document.getElementById('ff-grouprow');if(gr)gr.style.display=l==='issue'?'none':'';renderFinds();}
 const _ARTORDER=['Intent','Context','Scope','Requirements','WBS','Schedule','Resources'];
 /* Section filter row — built from the sections that actually have active findings, so it stays in sync as findings close (mirrors the heatmap's section×dimension scoping). */
 function renderArtFilters(){const el=document.getElementById('fa-artf');if(!el)return;
@@ -1637,19 +1651,24 @@ const _fcard=([id,f])=>{const c=f.sev==='critical'?'danger':f.sev==='moderate'?'
 function renderFinds(){renderArtFilters();syncGroupBtns();const all=Object.entries(FINDINGS).filter(([id])=>!['closed','superseded'].includes(_fstatus[id]));const total=all.length;let shown=0,html='';
   if(total===0){document.getElementById('fa-list').innerHTML=_empty('none');document.getElementById('fa-count').textContent='0 active';return;}
   const match=([id,f])=>(_filt.dim==='all'||f.dim===_filt.dim)&&(_filt.sev==='all'||f.sev===_filt.sev)&&(_filt.art==='all'||f.art===_filt.art);
-  const byArt=_group==='art', keys=byArt?_ARTORDER:DIMORDER, kf=byArt?'art':'dim';
+  const bySev=_group==='sev', byArt=_group==='art';
+  const keys=bySev?SEVORDER:(byArt?_ARTORDER:DIMORDER), kf=bySev?'sev':(byArt?'art':'dim');
+  let triage='';
+  if(bySev){const c=k=>all.filter(e=>e[1].sev===k).length;triage=`<div class="triage"><div class="tg crit"><span class="dot"></span><b>${c('critical')}</b> Critical</div><div class="tg mod"><span class="dot"></span><b>${c('moderate')}</b> Moderate</div><div class="tg warn"><span class="dot"></span><b>${c('warning')}</b> Warning</div></div>`;}
   keys.forEach(k=>{
     if(byArt&&_filt.art!=='all'&&_filt.art!==k)return;
-    if(!byArt&&_filt.dim!=='all'&&_filt.dim!==k)return;
+    if(_group==='dim'&&_filt.dim!=='all'&&_filt.dim!==k)return;
+    if(bySev&&_filt.sev!=='all'&&_filt.sev!==k)return;
     let items=all.filter(e=>e[1][kf]===k&&match(e));
     items.sort((a,b)=>_sevrank[a[1].sev]-_sevrank[b[1].sev]);
-    if(items.length===0){if(!byArt&&_filt.dim==='all'&&_filt.sev==='all'&&_filt.art==='all'&&k==='Alignment')html+='<div class="fa-group"><div class="fa-gh">Alignment · 0</div><div style="font-size:12px;color:var(--subtle)">Nothing is weakening Alignment.</div></div>';return;}
+    if(items.length===0){if(_group==='dim'&&_filt.dim==='all'&&_filt.sev==='all'&&_filt.art==='all'&&k==='Alignment')html+='<div class="fa-group"><div class="fa-gh">Alignment · 0</div><div style="font-size:12px;color:var(--subtle)">Nothing is weakening Alignment.</div></div>';return;}
     shown+=items.length;
-    html+=`<div class="fa-group"><div class="fa-gh">${byArt?dispName(k):k} · ${items.length}</div>`+items.map(_fcard).join('')+'</div>';
+    const label=bySev?_sevword[k]:(byArt?dispName(k):k);
+    html+=`<div class="fa-group"><div class="fa-gh">${label} · ${items.length}</div>`+items.map(_fcard).join('')+'</div>';
   });
   const hidden=total-shown,filtered=(_filt.dim!=='all'||_filt.sev!=='all'||_filt.art!=='all');
   if(shown===0)html=_empty('none-lens');
-  document.getElementById('fa-list').innerHTML=html+(filtered&&hidden>0&&shown>0?`<div class="fa-hidden">${hidden} finding${hidden>1?'s':''} hidden by filters · <a style="color:var(--primary-light);cursor:pointer" onclick="clearFilt()">clear filters</a></div>`:'');
+  document.getElementById('fa-list').innerHTML=triage+html+(filtered&&hidden>0&&shown>0?`<div class="fa-hidden">${hidden} finding${hidden>1?'s':''} hidden by filters · <a style="color:var(--primary-light);cursor:pointer" onclick="clearFilt()">clear filters</a></div>`:'');
   document.getElementById('fa-count').textContent=shown+' active'+(filtered?' (filtered)':'');}
 function selectPath(el,kind,id){const sec=el.closest('.fp-scroll');if(!sec)return;
   sec.querySelectorAll('.fp-path').forEach(p=>{p.classList.remove('sel');const m=p.querySelector('.selmark');if(m)m.textContent='Select';});
@@ -1675,7 +1694,7 @@ const HISTORY=[
 ];
 function pushHistory(type,text){HISTORY.unshift({t:'just now',type:type,lab:text,d:'',cur:true});const ph=document.getElementById('pane-history');if(ph&&ph.classList.contains('active'))renderHistory();}
 const _histicon={analysis_run:'✦',reanalysis_run:'↻',artifact_version_saved:'▤',finding_detected:'⚑',finding_lifecycle_changed:'◆',selected_recommendation:'✓',reanalysis_failed:'!',analysis_stale:'…'};
-/* History is a center pane (not a full overlay) — it leaves the OSLO panel visible, like Overview and the plan sections. */
+/* History is a center pane (not a full overlay) — it leaves the OSLO panel visible, like Overview and the plan artifacts. */
 function openHistory(){renderHistory();document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));const pane=document.getElementById('pane-history');if(pane)pane.classList.add('active');document.querySelectorAll('.ex-item').forEach(e=>e.classList.remove('active'));const hx=document.getElementById('exHistory');if(hx)hx.classList.add('active');document.getElementById('crumb').textContent='History';document.getElementById('cscroll').scrollTop=0;}
 function closeHistory(){openTab('understanding');}
 function openMRI(){document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));const pane=document.getElementById('pane-mri');if(pane)pane.classList.add('active');document.querySelectorAll('.ex-item').forEach(e=>e.classList.remove('active'));const mx=document.getElementById('exMRI');if(mx)mx.classList.add('active');document.getElementById('crumb').textContent='Attention map';document.getElementById('cscroll').scrollTop=0;renderHeat();if(typeof layoutMRI==='function')setTimeout(layoutMRI,40);}
@@ -1811,7 +1830,7 @@ const TOUR=[
  {sel:'.card.hero',t:'Your strategic read',x:'Confidence is how well OSLO understands your plan — maturity, not a grade. The 0–100 read is the focal point, always shown with its reliability qualifier.'},
  {sel:'.drivers',t:"What's driving it",x:'Clarity, Alignment and Feasibility at a glance — the dimensions behind the read. Click a driver to see the findings moving it.'},
  {sel:'#focus',t:'Where to start',x:'The open finding most worth your attention, most severe first. OSLO suggests where to start; you decide.'},
- {sel:'.explorer',t:'Your project rail',x:'Findings, History and the Attention map open here as focused views — in the Attention map, click a cell to jump to the findings there. Your plan sections sit below; edit any one and OSLO reanalyzes automatically — only reanalysis changes the assessment.'},
+ {sel:'.explorer',t:'Your project rail',x:'Findings, History and the Attention map open here as focused views — in the Attention map, click a cell to jump to the findings there. Your plan artifacts sit below; edit any one and OSLO reanalyzes automatically — only reanalysis changes the assessment.'},
  {sel:'.chatp',t:'Ask OSLO anything',x:'A persistent advisor — ask about a finding, a section, or what to do next. It reads and explains; you stay in control — nothing changes without you.'},
  {sel:'#confpill',t:'Your read, always visible',x:'Confidence + reliability stay in the top bar. Click it for the Clarity · Alignment · Feasibility breakdown and the reliability basis.'}
 ];
@@ -1879,7 +1898,7 @@ function seedFastTrace(){
   s.insertAdjacentHTML('afterbegin',`<div class="cmsg"><div class="who">OSLO</div><div class="trace" id="fptrace"><div class="trace-h" onclick="this.parentNode.classList.toggle('collapsed')"><span class="tchev">▸</span>Initial Analysis <span class="tcount">7 steps</span><span class="trace-time" id="fptracetime">running…</span></div><div class="trace-body" id="fptracebody"></div></div></div>`);
   const box=document.getElementById('fptracebody');
   const arts=`<div class="trace-arts"><a onclick="openArtifact('Intent')">Intent</a> · <a onclick="openArtifact('Context')">Context</a> · <a onclick="openArtifact('Scope')">Scope</a> · <a onclick="openArtifact('Requirements')">Requirements</a> · <a onclick="openArtifact('WBS')">Work breakdown</a> · <a onclick="openArtifact('Schedule')">Schedule</a> · <a onclick="openArtifact('Resources')">Resources</a></div>`;
-  const rows=['Read 3 documents','Extracted 34 source-attributed claims <span class="tlab">From OSLO</span>','Drafted 7 plan sections <span class="tlab">From OSLO</span>','__ARTS__','Assessed Clarity/Alignment/Feasibility · Confidence Moderate (58) <span class="tlab">reliability-qualified</span>','Surfaced 6 findings across the artifacts'];
+  const rows=['Read 3 documents','Extracted 34 source-attributed claims <span class="tlab">From OSLO</span>','Drafted 7 plan artifacts <span class="tlab">From OSLO</span>','__ARTS__','Assessed Clarity/Alignment/Feasibility · Confidence Moderate (58) <span class="tlab">reliability-qualified</span>','Surfaced 6 findings across the artifacts'];
   let i=0;
   (function step(){
     const prev=box.querySelector('.trace-row.running');if(prev)prev.classList.remove('running');
@@ -1915,7 +1934,7 @@ function cmdRegistry(){const it=[];
   it.push({g:'Go to',ic:'◎',label:'Overview',run:()=>openTab('understanding'),kw:'home confidence'});
   it.push({g:'Go to',ic:'⚑',label:'Findings',run:()=>openAllFindings(),kw:'issues weaknesses'});
   it.push({g:'Go to',ic:'◴',label:'History',run:()=>openHistory(),kw:'timeline audit'});
-  _ARTORDER.forEach(s=>it.push({g:'Plan sections',ic:'▤',label:dispName(s),run:()=>openArtifact(s),kw:'section '+dispName(s)}));
+  _ARTORDER.forEach(s=>it.push({g:'Plan artifacts',ic:'▤',label:dispName(s),run:()=>openArtifact(s),kw:'section '+dispName(s)}));
   Object.entries(FINDINGS).filter(([id])=>!['closed','superseded'].includes(_fstatus[id])).forEach(([id,f])=>it.push({g:'Open a finding',ic:'•',label:f.title,sub:_sevword[f.sev]+' · '+dispName(f.art),run:()=>openFindingPanel(id),kw:'finding '+f.dim+' '+dispName(f.art)}));
   it.push({g:'Actions',ic:'⤳',label:'Share project',run:()=>openShare(),kw:'invite'});
   it.push({g:'Actions',ic:'⇩',label:'Export snapshot',run:()=>openExport(),kw:'download'});
@@ -1966,7 +1985,7 @@ function renderLedger(){const el=document.getElementById('ledger');if(!el)return
     `</div>`+
     `<div class="pv-col">`+
       meter('Dependencies confirmed',dep,3)+
-      meter('Plan sections read',7,7)+
+      meter('Plan artifacts read',7,7)+
     `</div>`+
   `</div>`;}
 document.getElementById('artview').innerHTML=artHTML('Resources');updateWnav();renderNotif();renderTrend();renderLedger();renderFocus();updateFindCount();renderHeat();enhanceA11y();initTheme();
@@ -1995,7 +2014,7 @@ if(/^#(overview|workspace|test|demo)/i.test(location.hash||'')){try{jumpToWorksp
   <div class="arr-scrim" onclick="closeArrivalSpot()"></div>
   <div class="arr-card" role="dialog" aria-label="Initial analysis complete">
     <div class="arr-h"><span class="i">✦</span> Initial analysis complete in 41s</div>
-    <div class="arr-t">OSLO read your brief, drafted <b>7 plan sections</b>, assessed Clarity · Alignment · Feasibility, and surfaced <b style="color:var(--primary-light)">15 findings</b> — 1 critical. Here's where to start.</div>
+    <div class="arr-t">OSLO read your brief, drafted <b>7 plan artifacts</b>, assessed Clarity · Alignment · Feasibility, and surfaced <b style="color:var(--primary-light)">15 findings</b> — 1 critical. Here's where to start.</div>
     <div class="arr-row"><button class="arr-btn" onclick="startTour();closeArrivalSpot()">Take a quick tour →</button><span class="arr-skip" onclick="closeArrivalSpot()" role="button" tabindex="0">Skip — explore on my own</span></div>
   </div>
 </div>
