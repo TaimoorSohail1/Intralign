@@ -1,6 +1,12 @@
 # R1 UX Build — Developer Handoff Index
 
-> **Single entry point** for building the Release-1 experience exactly as designed and correctly wired to the backend. Read this first, then work top-down. Everything referenced here is ratified and on `main`. Date: 2026-07-02.
+> **Single entry point** for building the Release-1 experience exactly as designed and correctly wired to the backend. Read this first, then work top-down. Date: 2026-07-02 (updated 2026-07-03).
+
+> **Before you build — read `20_handoff/R1_BUILD_SEQUENCE_AND_GATES.md`.** It defines the build **order** and the gates that enforce it. Two hard prerequisites and one guardrail apply to everything below:
+>
+> 1. **BLOCKER — the R1 app is not on `main` yet.** The Disclose application lives on `feat/phase6-wavee-disclose`; `main` holds only a skeleton (`code/frontend/src/` is just `main.tsx`, `api/v1/routers/` just `__init__.py`). **Integrate it first** (Issue #113) — do **not** start wiring the UI until it lands. Only the specs, prototype, and baselines referenced here are on `main`.
+> 2. **The prototype + all 9 visual baselines were updated (PR #116).** Pull latest `main` and build to the **current** `product-design/oslo_r1_experience_mockup_v2.html` — not any earlier read.
+> 3. **GUARDRAIL — RB-035 (PR #117) is UNRATIFIED; do not build it.** It proposes dropping the `acknowledged` finding state and single-action resolution. Build the **ratified** `FINDING_SYSTEM_SPECIFICATION_V1 §C` (`detected → acknowledged → addressed → closed`, multi-step resolution) until the owner ratifies the DL.
 
 ## The build contract (read first)
 1. **The prototype is the spec.** `product-design/oslo_r1_experience_mockup_v2.html` is the **reference of record** — build the UX to match it exactly (layout, states, interactions, copy). The experience specs describe intent; where a detail is only visible in the prototype, the prototype wins.
@@ -47,7 +53,7 @@
 - Command palette (⌘K) is **R2**, not R1.
 
 ## R1 completion dependencies — what blocks R1 vs what doesn't
-**Nothing here blocks *starting* R1.** Categorized so no TBD is mistaken for a blocker:
+**No *TBD* in this list blocks starting R1** — but the app-integration prerequisite in the banner at the top **does** (Issue #113; integrate the app before wiring the UI). Categorized so no TBD is mistaken for a blocker:
 
 - **Ratified for R1 — build to these now:** confidence formula v0 + **5-band** + **±7** (DL-086); Fast-Pass **Free envelope** ~20 artifacts / ~50k words / 1 active (A1); the **`<60s` Time-to-First-MRI ceiling** (ratified, Master Spec §20/M1); browsers **evergreen** (E1); **WCAG 2.1 AA** (E2); Intralign **palette** core (E4).
 - **Not R1 — do not wait on these:** paid-tier values Pro/Team/Enterprise (**E3 → R2**; tiers are Calibration config rows, not code); latency **p50/p95 distribution targets** (A2 — only the *targets* are open; the `<60s` ceiling is ratified; refine from telemetry); **command palette ⌘K** (R2); designer assets — type scale / logo / microcopy (E4 → designer; token contract holds).

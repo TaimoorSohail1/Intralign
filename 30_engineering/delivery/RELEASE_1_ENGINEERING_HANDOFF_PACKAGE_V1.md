@@ -1,5 +1,7 @@
 # Release 1 Engineering Handoff Package v1
 
+> **⚠ Current build order + status: `20_handoff/R1_BUILD_SEQUENCE_AND_GATES.md` (2026-07-03).** This package (2026-06-04) predates the app-integration status (Issue #113 — the R1 app is **not yet on `main`**), the prototype/baseline refresh (PR #116), and the RB-035 guardrail (PR #117, unratified — **do not build**). Read the sequence note and the `R1_UX_BUILD_HANDOFF_INDEX.md` banner first; where they differ from this package on order or status, **they win.**
+
 **Document Type:** Engineering Handoff — the first document engineering (and Claude Code) reads · **Status:** **Handoff-Ready (2026-06-04)** · **Date:** 2026-06-04
 **Reflects:** DL-043 (ratified) · the reorganized tree (commit `734e18a`) · the pre-handoff audit (`RELEASE_1_PRE_HANDOFF_AUDIT_001`).
 
