@@ -394,6 +394,18 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 
 ---
 
+### RB-035 — Finding flow simplification (no-Acknowledge lifecycle + single-action resolution)
+
+- **Source Finding:** Owner-directed exploration during the R1 UX refinement pass (PR #116). The `acknowledged` lifecycle state records user sentiment with no effect on the assessment (contrary to "only reanalysis changes the assessment"), and resolution is a multi-step ceremony where OSLO can draft the fix.
+- **Affected Layer(s):** `10_product/domain` (`FINDING_SYSTEM_SPECIFICATION_V1 §C` + finding-status enum / State Model §10 / Data Model v1.1) with `10_product/experience` (Finding Panel / Presentation specs) realization.
+- **Affected Concepts:** Finding lifecycle states + transitions; acceptance-vs-reanalysis (only reanalysis changes the assessment); resolution flow (select → addressed → update → reanalysis → closed); recommendation/finding coupling.
+- **Proposal Scope:** Two separable decisions — **D1:** drop `acknowledged` (lifecycle `open → addressed → closed`); **D2:** single-action "Apply this fix" resolution where OSLO can draft. Both preserve the epistemic invariants (addressed-before-closed; reanalysis-only closure). Confirmed decoupled from the Wave U acceptance model and the Wave C/U contracts.
+- **Dependencies:** `FINDING_SYSTEM_SPECIFICATION_V1 §C` (HARD); State/Data Model finding-status enum (HARD); `FINDING_PANEL_SPECIFICATION_V1` / `FINDING_PRESENTATION_SPECIFICATION_V1` (MED); `RECOMMENDATION_FINDING_COUPLING_SPECIFICATION_V1 §3` (CHECK — keys on closed/superseded, not acknowledged); Wave B Infer/Evaluate contract (CHECK). No change to Wave C/U contracts or acceptance code.
+- **Proposal:** `00_owner/decisions/PROPOSAL_FINDING_FLOW_SIMPLIFICATION_DRAFT.md`. Exploration artifact: `90_research/design_artifacts/oslo_r1_proposed_findings_lifecycle.html`.
+- **Status:** Proposed — owner to ratify D1 and/or D2 (Framework 001A review complete; Decision pending). Realization recommended as Release 2.
+
+---
+
 ## Governance Notes
 
 1. This backlog is a draft. Entries reflect findings from initial repository review, not ratified governance positions.
