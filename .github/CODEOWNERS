@@ -1,22 +1,29 @@
 # CODEOWNERS — ownership-zone review routing (active under DL-051 zone structure)
-# Listed owners are REQUIRED reviewers for changes under each path (enforced by the
-# `protect-main` ruleset: PR + 1 approval + "require review from Code Owners").
+# Listed owners are REQUIRED reviewers for changes under each path.
 #
-# Semantics (DL-051): 00_owner = owner-only; 10_product = product-authoritative (owner
-# acts as PM today); 20_handoff = CO-GOVERNED SEAM (both sides); 30_engineering =
-# engineering-authoritative (owner still ratifies canon); 90_research = non-canonical.
-# CODEOWNERS enforces REVIEW, not ratification — canonical changes route through
-# Framework 001; only the owner ratifies/supersedes/adopts canon (ratify ≠ author).
-
-# --- Default: owner reviews everything not otherwise matched ---
-*                       @idris-manley
+# ZONE SPLIT (velocity + control): engineering self-merges pure app code; the owner gates canon.
+#  - `code/**` is INTENTIONALLY UNLISTED — it has no required code-owner, so a PR touching only
+#    code/** merges on green CI alone (six-gate + visual-regression). This is "engineering authors
+#    realization" (DL-051); the gates are the automated review.
+#  - Everything canon/governance/design below requires the owner (@idris-manley). The 20_handoff
+#    seam and CI/infra require both. A PR that touches ANY listed path needs that path's reviewer,
+#    so cross-zone merges (e.g. the #113 integration, which conflicts against canon) stay owner-gated.
+#
+# RULESET REQUIREMENT for self-merge to work: `protect-main` must require "status checks to pass"
+# + "review from Code Owners", with **required approvals = 0** (approvals are branch-wide and would
+# otherwise re-gate code/**). Code-owner review still forces owner sign-off on the listed paths.
+#
+# Semantics (DL-051): 00_owner = owner-only; 10_product = product-authoritative; 20_handoff =
+# CO-GOVERNED SEAM (both sides); 30_engineering = engineering-authoritative (owner still ratifies
+# canon); 90_research = non-canonical. CODEOWNERS enforces REVIEW, not ratification — canonical
+# changes route through Framework 001; only the owner ratifies/supersedes/adopts canon.
 
 # --- 00_owner — owner only (doctrine, constitution, frameworks, decisions, glossary, TBD) ---
 /00_owner/              @idris-manley
 # Build-governance is owner-ratified policy that binds engineering; eng may PROPOSE, owner RATIFIES:
 /00_owner/build_governance/   @idris-manley @mkashifse
 
-# --- 10_product — product-authoritative (owner is PM today; engineering reads) ---
+# --- 10_product — product-authoritative (ratified specs; owner ratifies changes) ---
 /10_product/            @idris-manley
 
 # --- 20_handoff — THE SEAM — both signatures required ---
@@ -24,6 +31,9 @@
 
 # --- 30_engineering — engineering-authoritative (owner ratifies canon; product reads) ---
 /30_engineering/        @idris-manley @mkashifse
+
+# --- product-design — the reference-of-record prototype (the build's source of truth) — owner-gated ---
+/product-design/        @idris-manley
 
 # --- 90_research — non-canonical ---
 /90_research/           @idris-manley @mkashifse
@@ -40,3 +50,6 @@
 # --- CI / infra — owner-controlled, eng lead co-reviews ---
 /tools/                 @idris-manley @mkashifse
 /.github/               @idris-manley @mkashifse
+
+# --- code/** — NOT LISTED on purpose: engineering self-merges on green CI (no owner review). ---
+#     (Do not add a catch-all `* @idris-manley` above — it would re-gate code/**.)
