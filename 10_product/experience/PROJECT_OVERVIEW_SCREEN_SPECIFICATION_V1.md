@@ -156,8 +156,33 @@ Conformance is **all-or-nothing**; any bare/health-framed confidence, any displa
 
 Explicitly **deferred** (out of scope): visual styling; colors; typography; component implementation; responsive breakpoints; animations; design-system details; API/events; computation/generation; calibration values; numeric tier boundaries.
 
+## P. Ratified update — Confidence presentation (DL-085, 2026-07-02)
+
+Ratified by **DL-085** (Accepted with Conditions). This block updates the Confidence *presentation* in §E/§F/§M/§N; all other integrity rules are unchanged, and meaning (Interpretation Doctrine) is unchanged. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html`. *(Overview hierarchy / "Start here" / Explore-details changes are governed separately by the UX-Surface Reconciliation decision, not here.)*
+
+- **Confidence Card (supersedes the §F "Confidence Card → Visible" line):** the **numeric Outcome Confidence index (0–100) is the focal element**, with its **band** (Very Low…Very High) and **reliability qualifier** shown directly alongside as qualifiers. Confidence is **still never shown bare** (band + reliability always present) and **never** framed as health/probability. Numeric 0–100 is sanctioned by Master Spec §20; the **band remains the authoritative unit of magnitude**.
+- **Cause-bound movement:** when analysis changes the index the card states the **cause** (e.g., a resolved finding), and the index may move **up or down** (a fall after Extended/Deep Analysis reflects improved understanding, not a worse project). Surfaced via a "how this is calculated" affordance; **no "illustrative" caveat** in production.
+- **Work-ledger:** a compact readout of **countable governed objects** (findings resolved/open by severity) accompanies the card; it counts only attested/governed objects and **never** restates the signal as a second number.
+- **No gamification:** no points, streaks, or score-to-beat; the confidence ramp stays **neutral** (non health-color).
+- **Retained verbatim:** the "never bare / never health-probability" requirement (POS-1, POS-C2). §E/§M/§N band-first framing is **superseded** to "number-focal, reliability-qualified."
+
 ---
 
 *This specification defines the single canonical Release 1 Project Overview screen architecture: a confidence-first understanding console — Project Header → Outcome Confidence → CAF → Reliability → Findings → Recommendations → Summary — with a desktop understanding-spine + context-rail, a confidence-first mobile column, state-aware provisional/current presentation, hub-and-spoke navigation to the Findings and Recommendations experiences, and append-only history. It defines presentation architecture only — no models, scoring, computation, generation, governance, execution, automation, APIs, events, or styling — and preserves that confidence is reliability-qualified trust in understanding and only reanalysis changes assessment.*
+
+## Q. Ratified update — Overview hierarchy (DL-088, 2026-07-02)
+
+Ratified by **DL-088** (presentation-only; complements DL-085 §P). To reduce cognitive load the Overview is sequenced **Confidence → a single "Start here" next-action (the top severity-ordered open finding) → a compact Progress readout → Explore details (CAF · Reliability · Attention)**. The at-a-glance CAF triad is **demoted into Explore details** (it duplicated the CAF card). The §D canonical order and all integrity rules otherwise stand; findings/recommendations remain descriptive/advisory; only reanalysis changes assessment. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html`.
+
+## R. Ratified update — Overview cognitive-load trim (DL-090, 2026-07-02)
+
+Ratified by **DL-090** (presentation-only; **amends §Q**). The Overview is trimmed to: **Confidence → a compact "What's driving it" CAF driver-glance → confidence trend → Start here → Progress → (quiet) project summary.** Removed from the Overview:
+- **Reliability component breakdown** — headline stays on the confidence line; Coverage/Evidence availability/Assessability fold into the "how this is calculated" explainer. **Realization (DL-090):** that explainer is the **top-bar Confidence pill popover**, which shows the CAF dimension breakdown **and** the three reliability components; the confidence-line reliability qualifier links to it. Reliability remains a **qualifier** of Confidence, determined independently of CAF — not a fourth dimension, never findings-driven (POS-6). Verified by baseline `08-confidence-explainer`.
+- **Recommendations summary** — Panel Model; recommendations live only inside a Finding ("Start here" carries the next action).
+- **Attention heatmap** — relocated to its own **"Attention map" (MRI) left-rail surface** (see Global-Nav / MRI specs), not embedded here.
+
+CAF driver chips are **qualitative** (level only; per-dimension 0–100 numbers move to drill-in). Confidence doctrine, Panel Model, and advisory-only unchanged. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html` (baseline `02-overview`).
+
+**Readability presentation (realization, presentation-only).** The §Q/§R hierarchy renders as **three whitespace-separated cards** — (1) *the read* (Confidence ring + number, reliability qualifier, "What's driving it" CAF chips, trend), (2) *Start here* (the single next action), (3) *Progress* (a 4-cell stat row: findings resolved · critical open · dependencies confirmed · plan sections read). Segmentation is by whitespace/cards, not hairline dividers. Type roles are limited to: hero number · section headline (~21px) · body/qualifier (~13px `muted`) · caption (~11px `subtle`); the reliability qualifier is never the smallest text. The first-run coaching banner does not persist on the steady-state Overview. This changes presentation hierarchy only — order, content set (DL-090), Confidence doctrine, and Panel Model are unchanged. Verified by baselines `02-overview`, `04-finding-panel`, `08-confidence-explainer`.
 
 **Project Overview Screen Specification v1 complete.**

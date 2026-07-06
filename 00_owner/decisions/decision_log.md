@@ -853,5 +853,14 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-082 — Alpha exit criteria (specify "proven" for Alpha→Beta; amends DL-076) → `00_owner/decisions/records/DL-082-alpha-exit-criteria.md`
 - DL-083 — Execution-monitoring tier placement & phase (T3/Pro+, Beta-built; out of Alpha exit) + capability tier split → `00_owner/decisions/records/DL-083-execution-monitoring-tier-and-phase.md`
 - DL-084 — R2 candidate-epic phase/tier placement + Foundational-Architecture-in-Alpha principle → `00_owner/decisions/records/DL-084-r2-phase-tier-placement.md`
+- DL-085 — User-facing Confidence movement & quantified progress presentation → `00_owner/decisions/records/DL-085-confidence-presentation.md`
+- DL-086 — Outcome Confidence index calibration (measurement) — 5-band scheme + v0 defaults → `00_owner/decisions/records/DL-086-confidence-index-calibration.md`
+- DL-087 — Strategic chain & onboarding positioning (+ plain-language labels) → `00_owner/decisions/records/DL-087-strategic-chain-positioning.md`
+- DL-088 — R1 UX-surface reconciliation (prototype-as-baseline) → `00_owner/decisions/records/DL-088-ux-surface-reconciliation.md`
+- DL-089 — Clarification flow contract (object-free; in-panel + chat — Option B) → `00_owner/decisions/records/DL-089-clarification-flow.md`
+- DL-090 — Overview cognitive-load trim + Attention-map as its own surface (amends DL-088) → `00_owner/decisions/records/DL-090-overview-trim.md`
+- DL-091 — Wave C (Advise) exit-gate pass + Phase V / Wave U authorization → `00_owner/decisions/records/DL-091-wave-c-exit-gate-phase-v-authorization.md`
+- DL-092 — Wave C (Advise) exit-gate pass + Phase V / Wave U authorization → `00_owner/decisions/records/DL-092-wave-c-exit-gate-phase-v-authorization.md`
+- DL-093 — Finding type + epistemic basis presentation (two-axis; RB-033 Phase R1) → `00_owner/decisions/records/DL-093-finding-type-and-epistemic-basis-r1.md`
 
 <!-- RECORDS-INDEX:END -->

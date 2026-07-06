@@ -372,6 +372,38 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 - **Proposal:** `00_owner/decisions/PROPOSAL_R2_PHASE_TIER_PLACEMENT_DRAFT.md`. **Draft record:** `records/DL-084-r2-phase-tier-placement.md`.
 - **Status:** Proposed.
 
+### RB-033 — Epistemic basis on Findings (two-axis type + basis; R1 presentation, R2 sub-typing)
+
+- **Source Finding:** Owner observation 2026-07-02 — Findings do not surface the epistemic language PMs use ("inferred," "assumed/assumption," "stated"), although canon already ratifies the vocabulary (Attested/Derived; assumption/constraint/dependency content types) and a **Disclose obligation** (`RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`). A consistency check found the Finding card non-conformant to `FINDING_PRESENTATION_SPECIFICATION_V1` §C (required "Finding type" not rendered), and that "inference" was conflated with a finding **type** rather than the Derived **basis** — conflicting with the ratified **Gap / Conflict / Risk** finding types (Architecture Foundation M-3; `WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING`).
+- **Affected Layer(s):** Product experience (`10_product/experience`) for R1 presentation; Finding object model + Wave B Infer/Evaluate contracts (`20_handoff`) for R2. Non-doctrinal.
+- **Affected Concepts:** Finding type (Gap/Conflict/Risk); epistemic state (Attested/Derived); content types (assumption/ambiguity); Disclose obligation; finding-type-as-label-not-coefficient (Outcome-Confidence Calibration); DL-087 plain-language labels.
+- **Proposal Scope:** A **two-axis** model — **type** (what the observation is: Gap/Conflict/Risk + finer kinds) separate from **basis** (how grounded: stated=Attested vs inferred=Derived). **Phase R1 (presentation — ready to ratify):** amend `FINDING_PRESENTATION_SPECIFICATION_V1` §C/§F + `FINDING_PANEL_SPECIFICATION_V1` so the card carries type + a stated/inferred basis tag and the panel names the basis in plain language (discharging the Disclose obligation at the finding level); drop "Inference" as a type. Realized in the reference prototype (baseline `03-findings`); presentation-only, no object/doctrine change. **Phase R2 (ontology — deferred):** formalize the finer kinds (Assumption/Ambiguity/Coverage-gap/Missing-info) as **sub-types of Gap/Conflict/Risk** in the Finding object model, and specify the **basis-assignment contract** (which of Infer/Evaluate sets a finding's Attested/Derived basis).
+- **Dependencies:** `RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`; Architecture Foundation M-3 + `WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING` (Gap/Conflict/Risk); `CANONICAL_GLOSSARY` (Attested/Derived, DL-087); `FINDING_PRESENTATION_SPECIFICATION_V1` §C/§F; `FINDING_PANEL_SPECIFICATION_V1`; `OUTCOME_CONFIDENCE_CALIBRATION_DECISION_001` (type is a label, not a coefficient). R2 additionally: Finding object model + Wave B Infer/Evaluate contracts.
+- **Proposal:** `00_owner/decisions/PROPOSAL_EPISTEMIC_BASIS_ON_FINDINGS_DRAFT.md`.
+- **Status:** R1 presentation **Adopted — DL-093** (amends `FINDING_PRESENTATION_SPECIFICATION_V1` §C/§O→§P + `FINDING_PANEL_SPECIFICATION_V1` §E/§F + glossary label-map). R2 sub-typing + basis-assignment contract remains **Proposed** (deferred phase).
+
+### RB-034 — Onboarding finding-coverage via grounded gap-detection (density without inference)
+
+- **Source Finding:** Owner concern 2026-07-02 — onboarding must show a **material** number of findings even when inputs are sparse, but the orientation currently surfaces few (~6–8) and leans on **inferred** findings. With the DL-093 basis tags visible, an inference-heavy set reads as "OSLO is guessing," undercutting trust. The honest density lever is **grounded gap-detection** (coverage-gap set-difference vs the 8 artifact types × completeness criteria), which scales *up* with sparseness; inference should stay a bounded minority. Demonstrated in the reference prototype (`03-findings`: the DevNorth sample expanded 6→15 findings — 10 grounded / 5 inferred — for the same sparse brief).
+- **Affected Layer(s):** Synthesis / understanding contracts (`20_handoff/contracts` — Wave S / Wave B) + Fast-Pass stage spec (`30_engineering/analysis_engine`). Non-doctrinal; **no new epistemic invariant**.
+- **Affected Concepts:** Coverage-gap detection; finding grounding (Wave B "anchor each Finding to Attested evidence"); no-silent-gap-filling (Wave S); Fast/Deep (DL-046); cost governance (DL-048); epistemic basis (DL-093); finding-type taxonomy (RB-033); Reliability (Coverage / Evidence availability / Assessability).
+- **Proposal Scope:** Ratify an **orientation-coverage rule** — the Fast Pass / Infer runs a **grounded completeness-criteria matrix** (8 artifact types × CAF dimensions × an owner-ratified completeness-criteria set); each unmet criterion is a **grounded** finding (`coverage_gap` / `missing_information` / `ambiguity`), anchored to the expected-artifact framework. Density is an **outcome** of the matrix, never a quota met by fabrication; inference remains explicitly flagged (`basis = inferred`) and a **bounded minority**. All numeric thresholds (criteria set, density floor, grounded:inferred target) **owner-set**; must stay within the DL-048 per-tier budget (graceful degradation → partial coverage deferred to Deep).
+- **Dependencies:** `WAVE_S_CONTRACT_PACKAGE_SYNTHESIS_ENGINE` (DL-047); `WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING`; `FAST_PASS_STAGE_IO_SPEC`; `RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`; DL-093; DL-046; DL-048; RB-033.
+- **Proposal:** `00_owner/decisions/PROPOSAL_ONBOARDING_FINDING_COVERAGE_DRAFT.md`.
+- **Status:** Proposed — owner to ratify the rule and set thresholds (or defer to Alpha telemetry tuning).
+
+---
+
+### RB-035 — Finding flow simplification (no-Acknowledge lifecycle + single-action resolution)
+
+- **Source Finding:** Owner-directed exploration during the R1 UX refinement pass (PR #116). The `acknowledged` lifecycle state records user sentiment with no effect on the assessment (contrary to "only reanalysis changes the assessment"), and resolution is a multi-step ceremony where OSLO can draft the fix.
+- **Affected Layer(s):** `10_product/domain` (`FINDING_SYSTEM_SPECIFICATION_V1 §C` + finding-status enum / State Model §10 / Data Model v1.1) with `10_product/experience` (Finding Panel / Presentation specs) realization.
+- **Affected Concepts:** Finding lifecycle states + transitions; acceptance-vs-reanalysis (only reanalysis changes the assessment); resolution flow (select → addressed → update → reanalysis → closed); recommendation/finding coupling.
+- **Proposal Scope:** Two separable decisions — **D1:** drop `acknowledged` (lifecycle `open → addressed → closed`); **D2:** single-action "Apply this fix" resolution where OSLO can draft. Both preserve the epistemic invariants (addressed-before-closed; reanalysis-only closure). Confirmed decoupled from the Wave U acceptance model and the Wave C/U contracts.
+- **Dependencies:** `FINDING_SYSTEM_SPECIFICATION_V1 §C` (HARD); State/Data Model finding-status enum (HARD); `FINDING_PANEL_SPECIFICATION_V1` / `FINDING_PRESENTATION_SPECIFICATION_V1` (MED); `RECOMMENDATION_FINDING_COUPLING_SPECIFICATION_V1 §3` (CHECK — keys on closed/superseded, not acknowledged); Wave B Infer/Evaluate contract (CHECK). No change to Wave C/U contracts or acceptance code.
+- **Proposal:** `00_owner/decisions/PROPOSAL_FINDING_FLOW_SIMPLIFICATION_DRAFT.md`. Exploration artifact: `90_research/design_artifacts/oslo_r1_proposed_findings_lifecycle.html`.
+- **Status:** Proposed — owner to ratify D1 and/or D2 (Framework 001A review complete; Decision pending). Realization recommended as Release 2.
+
 ---
 
 ## Governance Notes

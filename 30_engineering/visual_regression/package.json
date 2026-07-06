@@ -1,0 +1,19 @@
+{
+  "name": "oslo-r1-visual-regression",
+  "private": true,
+  "type": "module",
+  "description": "R1 visual-regression harness — enforces that the built app matches the ratified prototype (reference of record).",
+  "scripts": {
+    "baseline": "node capture.mjs --mode proto --out baselines",
+    "capture": "node capture.mjs --mode app --out candidate",
+    "compare": "node compare.mjs",
+    "behavioral": "node behavioral.mjs",
+    "behavioral:proto": "node behavioral.mjs --mode proto",
+    "test": "npm run capture && npm run compare && npm run behavioral"
+  },
+  "dependencies": {
+    "playwright-core": "^1.44.0",
+    "pixelmatch": "^5.3.0",
+    "pngjs": "^7.0.0"
+  }
+}

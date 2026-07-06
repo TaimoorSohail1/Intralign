@@ -189,4 +189,17 @@ Conformance is **all-or-nothing on these rules**; any prescriptive/opaque/unanch
 
 *This specification defines the canonical Release 1 presentation of Findings: descriptive, evidence-based, explainable, CAF-dimension-organized, finding-anchored surfaces with Recommendations beneath, and correct (non-causal) depiction of the Finding → CAF → Confidence relationship. It modifies no model, lifecycle, object, event, or assessment behavior, reintroduces no Resolution Path object, and introduces no governance, execution, automation, scoring, or ranking.*
 
+## O. Ratified update — Findings workspace & filters (DL-088, 2026-07-02)
+
+Ratified by **DL-088** (presentation-only). The **Findings list is a center-pane workspace** (the canonical "Findings Workspace") reachable from the left rail — consistent with Overview/History; the **finding detail remains a contextual Panel** (Panel Model preserved). Adds **Dimension / Severity / Section filters** and a **Group-by (Dimension | Section)** control; default grouping is **Dimension** (findings map to the CAF dimensions that drive Confidence). Finding cards stay scannable (title · severity · location · status); type, evidence count, and resolution paths live in the finding detail. No new object, scoring, or ranking. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html`.
+
+## P. Ratified update — Finding type + epistemic basis (DL-093, 2026-07-02)
+
+Ratified by **DL-093** (presentation-only; realizes RB-033 Phase R1; **amends §O** re: card content — the type now appears on the card). A Finding is presented on **two independent axes**:
+
+- **Type** (the §C required "Finding type") — *what the observation is*: the canonical **Gap / Conflict / Risk** family (Architecture Foundation M-3; `WAVE_B_CONTRACT_PACKAGES_UNDERSTANDING`), shown with its finer user-facing kind (Coverage gap, Missing information, **Assumption**, **Ambiguity**). Type is a **label, not a coefficient** — severity comes from the Impact Assessment, never from type (`OUTCOME_CONFIDENCE_CALIBRATION_DECISION_001`).
+- **Basis** — *how grounded the finding is*: **stated (Attested)** — anchored in something the plan states — vs **inferred (Derived)** — OSLO's read of a not-yet-stated gap/assumption. This is the canonical **Attested/Derived** distinction (`RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`) applied at the finding level; **"inferred" is a basis, never a type.**
+
+The **card** carries the type plus a compact **basis tag** (`stated` / `inferred`); the **finding detail** (§F; Finding-Panel §E/§F) states the basis in plain language ("OSLO inferred this — it isn't stated in your inputs" / "Grounded in a stated item in your plan"), discharging the Epistemic-State-Model **Disclose obligation** at the finding level (Derived understanding surfaced *as* Derived). Basis colour is calm/neutral — **never** the action/attention accent. Presentation-only: no object, scoring, or ranking. Formal sub-typing of the finer kinds under Gap/Conflict/Risk and the **basis-assignment contract** (which of Infer/Evaluate sets a finding's Attested/Derived basis) are **deferred to R2** (RB-033 Phase R2). Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html` (baseline `03-findings`).
+
 **Finding Presentation Specification v1 complete.**

@@ -117,5 +117,20 @@ qualified canonical form below.** (This register *qualifies* — it does not red
 > `AUTHORITY_PLANE_MODEL_V1` (renamed from `GOVERNANCE_MODEL_V1`) so the product sense is unmistakable; the
 > dedup field is `dedup_key` (renamed from `canonical_key`). doc-integrity WARNs on bare colliding words in active specs.
 
+**User-facing presentation labels (positioning — DL-087, 2026-07-02):** friendly product labels that map to **unchanged** canonical/internal terms; the internal term stays authoritative in specs, code, and contracts (presentation-only, per DL-087).
+
+| User-facing label | Canonical / internal term (unchanged) | Note |
+|---|---|---|
+| **Strategic project leadership** (product tagline) | *Planning Intelligence* — governed cognitive architecture in the **Outcome Orchestration** category (DL-050) | presentation only |
+| **AI-first PM** (a PM augmented by OSLO's understanding) | **AI-First delivery** — build/delivery governance (`00_owner/build_governance`); unrelated scope | augmentation claim; never automation/replacement |
+| **Initial Analysis** | **Fast Pass** / Fast Analysis Pass (DL-046) | UI label |
+| **Extended Analysis** | **Deep Pass** / Deep Analysis Pass (DL-046) | UI label |
+| **Plan artifacts** | **Planning Artifacts** / plan artifacts (DL-077) | UI label; supersedes prior "Plan sections" (DL-087 amendment, 2026-07-03) — presentation now tracks the canonical term |
+| **Work breakdown** | **WBS** (Work Breakdown Structure) | UI label |
+| **Stated** (finding basis — grounded in your inputs) | **Attested** (source-attributed assertion; `RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`) | finding basis, presentation only (DL-093) |
+| **Inferred** (finding basis — OSLO's read, not yet stated) | **Derived** (Infer/Evaluate understanding; Epistemic State Model) | finding basis, presentation only (DL-093); **not** a finding *type* |
+| **Clarity · Alignment · Feasibility** | **CAF** (the acronym) | spell out in UI; CAF stays internal |
+| **Strategic Judgement** (the human act of weighing OSLO's understanding) | **not** the retired **Judgment Layer** (banned as a primary identifier; use **Evaluate**) | positioning uses "Judgement" only in the human-act sense |
+
 ---
 *This glossary fixes one canonical name per concept across the epistemic core (Attested/Derived, the assertion + record types), the seven cognitive responsibilities, the cognition outputs (Finding/Issue/Confidence/CAF/Recommendation/SuggestedFix), and the DL-046/047 additions (Fast/Deep, confidence stages, SynthesizedPlanningModel, PlanningArtifact, CRR objects, Chat, Time-to-First-MRI), listing the banned synonyms beside each so an external team/LLM cannot silently drift terminology; it also marks what is commodity/non-cognition so those terms aren't mistaken for governed concepts.*

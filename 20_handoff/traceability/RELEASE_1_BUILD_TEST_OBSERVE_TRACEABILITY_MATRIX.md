@@ -36,6 +36,7 @@
 | REC-05 | Validation Recommendations | **WAVE_I · IC-WI-INTERACT** | Validation type; routes to CRR on user action | Recommendation Emitted (Validation) | IV |
 | OVL-01/02/03 | CAF Overlay engine / panel / actions | WAVE_E · IC-WE-DISCLOSE | overlay maps to CAF; in-context | (presentation) | VI |
 | CHAT-01…04 | OSLO Chat (+context/functions/improvements) | **WAVE_I · IC-WI-INTERACT** | **neg: writes canonical / mutates artifact / changes assessment** | Chat Exchange | VI |
+| CLR-01 | Clarification capture (OSLO asks → user answers → reanalysis; in-panel + chat) | **WAVE_I · IC-WI-INTERACT** + WAVE_A_00R recompute (**DL-089**) | answer captured as project-information change (Attested); marks stale; feeds Deep Pass; **neg: modeled Clarification object/lifecycle · assessment change without a run** | `clarification_answer_captured` | IV/VI |
 | CRR-01…05 | CAF Review Requests | **WAVE_I · IC-WI-INTERACT** (seam) + WAVE_A_001 intake; **workflow UI = commodity** | response→evidence→Deep Pass; **neg: response-as-truth** | Stakeholder Response Submitted | II/VI |
 | AW-04/05 | Assisted Editing / Persistent Intelligence | WAVE_E (DL-047) | always-visible Confidence/CAF/state; routes to Chat/Fix | (presentation) | VI |
 | (User Acceptance) | Accept + plan fact + Acceptance-Impact | WAVE_U · IC-WU-ACCEPT | user-attested; version-pinned; **neg: self-accept / overwrite** | Acceptance-Impact Assessed | V |

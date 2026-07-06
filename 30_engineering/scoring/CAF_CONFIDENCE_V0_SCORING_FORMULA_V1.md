@@ -5,6 +5,8 @@
 
 > **Provisional, not canonical.** v0 parameters live in Calibration Defaults §4h and are **owner-review-pending**. This realizes deferred arithmetic; it **redefines no meaning** and introduces **no new dimension, finding, entity, state, probability, or project-health** concept.
 
+> **R1 ratification — DL-086 (2026-07-02).** The owner ratified this v0 as the **R1 formula**: the **band scheme is resolved to 5 bands** (§3), and `p = −0.5`, `ε = 5`, and the impact-magnitude table are **adopted as R1-provisional** (refine from data; structure unchanged). The determinism tolerance is **±7 / same-band** (measured to confirm). Resolves `OPEN_TBD` D1/F1 for R1.
+
 ---
 
 ## 0. Doctrinal constraints the v0 MUST satisfy (and does)
@@ -52,7 +54,7 @@ Conf_raw  =  power_mean_p(c, a, f)
 ## 3. Reliability qualifier (NON-arithmetic) + bands + false-confidence
 
 - **Reliability `R ∈ {High, Moderate, Low}`** is carried **alongside** `Conf_raw`, **never multiplied in** (Reliability Model v2). Presentation: *"Confidence «band» · Reliability «level»."*
-- **Band** (Calibration §2): `0–49 Low · 50–74 Medium · 75–100 High`, with the **±3-point band-edge guard**.
+- **Band** (owner-ratified 5-band — **DL-086, 2026-07-02**; supersedes the earlier 3-band `0–49/50–74/75–100`): `Very Low 0–34 · Low 35–49 · Moderate 50–74 · High 75–89 · Very High 90–100`, with the **±3-point band-edge guard**. Preserves the pressure-tested **50 & 75** edges and subdivides the extremes to the canonical five bands (Master Spec §20 / Data Model / Interpretation Doctrine). *(False-Confidence below reads on the top band — now "High or Very High".)*
 - **False-Confidence (CONF-06):** if band = **High** **and** `R = Low` → **flag the dangerous 4th state** (high confidence on weak supportability). The v0 supports this precisely because confidence and reliability are kept separate.
 - **Confidence stages (DL-046):** the same formula runs at **Orientation → Expanded → Validated** with the evidence available at each — the stage is *when*, not a different formula.
 

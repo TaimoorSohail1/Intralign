@@ -37,7 +37,7 @@
 
 | # | Item | Status | Source |
 |---|---|---|---|
-| D1 | **Bounded-equivalence tolerance** for AI non-determinism (the numeric band; *that* it must be bounded over the governable outputs is fixed) | TBD | Analysis Engine §; Testing §20.1; Calibration §1 proposes ±7/same-band — **owner to confirm** |
+| D1 | **Bounded-equivalence tolerance** for AI non-determinism (the numeric band; *that* it must be bounded over the governable outputs is fixed) | **OWNER-CONFIRMED (DL-086, 2026-07-02): ±7 / same-band** for R1 (provisional — measured to confirm once the pipeline runs) | Analysis Engine §; Testing §20.1; Calibration §1; DL-086 |
 
 ## E. Platform / compatibility / tiering (commodity — normal engineering until set)
 
@@ -52,7 +52,7 @@
 
 | # | Item | Status | Source |
 |---|---|---|---|
-| F1 | **CAF / Confidence scoring formula** — how Clarity/Alignment/Feasibility compute to 0–100 and how Confidence aggregates | **v0 FORMULA PRESENT for R1 build/test (2026-06-05):** `models/CAF_CONFIDENCE_V0_SCORING_FORMULA_V1.md` — baseline-minus-impact dimensions + symmetric power-mean aggregation (default geometric, "between an average and a minimum") + non-arithmetic reliability qualifier + bands. Doctrine-compliant, transparent, **owner-ratifiable**. **Still owner-open:** ratify v0 + **calibrate `p`/`ε`/the impact-magnitude table from real data** (Calibration §4h). Confidence remains **maturity, not probability** (S6). *(Corrects the earlier "do not hardcode" framing — R1 needs a v0 to compute/test against; the canonical formula is what's deferred.)* | Capability Matrix gap #1; KIA-11; Calibration §4h; v0 spec |
+| F1 | **CAF / Confidence scoring formula** — how Clarity/Alignment/Feasibility compute to 0–100 and how Confidence aggregates | **v0 FORMULA PRESENT for R1 build/test (2026-06-05):** `models/CAF_CONFIDENCE_V0_SCORING_FORMULA_V1.md` — baseline-minus-impact dimensions + symmetric power-mean aggregation (default geometric, "between an average and a minimum") + non-arithmetic reliability qualifier + bands. Doctrine-compliant, transparent, **owner-ratifiable**. **OWNER-RATIFIED for R1 (DL-086, 2026-07-02):** v0 adopted as the R1 formula; **5-band scheme resolved** (Very Low 0–34 · Low 35–49 · Moderate 50–74 · High 75–89 · Very High 90–100); `p=−0.5` / `ε=5` / the impact-magnitude table adopted as **R1-provisional — calibrate from real data** (Calibration §4h). Confidence remains **maturity, not probability** (S6). *(R1 needs a v0 to compute/test against; the canonical formula stays a telemetry-informed refinement.)* | Capability Matrix gap #1; KIA-11; Calibration §4h; v0 spec; DL-086 |
 
 ## What is NOT on this register (already decided — do not re-open)
 

@@ -19,6 +19,7 @@
 | Evidence | `/projects/{pid}/evidence` | POST | Add evidence; emits `evidence_added` |
 | Evidence | `/evidence/{eid}` | PATCH | Update evidence; re-extraction signal |
 | Evidence | `/evidence/{eid}` | DELETE | Remove evidence (soft; retention TBD) |
+| Clarification | `/projects/{pid}/clarification-answers` | POST | Capture a clarification answer as a **project-information change** (no Clarification object/lifecycle); marks analysis stale; emits `clarification_answer_captured` (DL-089) |
 | AnalysisRun | `/projects/{pid}/analysis-runs:fast` | POST | Start Fast Analysis (→ run `queued`); emits `fast_analysis_requested` |
 | AnalysisRun | `/projects/{pid}/analysis-runs:deep` | POST | Start Deep Analysis (→ run `queued`); emits `deep_analysis_requested` |
 | AnalysisRun | `/analysis-runs/{rid}:cancel` | POST | Cancel run (→ `cancelled`); emits `analysis_cancelled` |
