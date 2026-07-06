@@ -6,7 +6,9 @@ requires-python = ">=3.11"
 
 # Ratified stack only (DL-043 + DL-054). No new dependency/technology without human approval.
 dependencies = [
-    "fastapi>=0.111",          # transport layer (api/); emits the OpenAPI consumed by Orval
+    "fastapi>=0.111,<0.137",   # transport layer (api/); emits the OpenAPI consumed by Orval.
+                               # Ceiling: 0.137 made include_router lazy (_IncludedRouter),
+                               # breaking route-introspection tests; the app is vetted on 0.136.x.
     "uvicorn[standard]>=0.30",
     "pydantic>=2.7",           # epistemic types + contract schemas
     "pydantic-ai>=1.107,<2",   # LLM provider abstraction (DL-054 §5). Pinned to the 1.x line
