@@ -6,8 +6,10 @@ import { defineConfig } from "orval";
 export default defineConfig({
   oslo: {
     input: {
-      // Local: FastAPI serves the schema at /openapi.json (run the backend first).
-      target: "http://localhost:8000/openapi.json",
+      // Offline, deterministic codegen: read the schema from a dumped file, not a
+      // live backend (CI never starts localhost:8000). Regenerate the file with
+      // `npm run api:schema` (backend installed), or `python code/scripts/export_openapi.py`.
+      target: "./openapi.json",
     },
     output: {
       mode: "tags-split",

@@ -1,1 +1,6 @@
 .vercel
+
+# Generated API client + dumped schema — build artifacts, generated in CI
+# (see scripts/export_openapi.py + orval.config.ts). Never commit.
+openapi.json
+src/api/generated/

@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "api:schema": "python ../scripts/export_openapi.py",
     "api:gen": "orval --config ./orval.config.ts",
+    "api:client": "npm run api:schema && npm run api:gen",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
