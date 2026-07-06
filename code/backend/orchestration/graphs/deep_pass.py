@@ -10,6 +10,9 @@ retain functions or an injected chain stage):
           -> stage_infer -> stage_evaluate -> stage_advise   (injected; Wave B/C
              placeholders in Phase II-A — no cognition, A4.3)
           -> mark_current  (live projection replaced, A3.4)        on success
+          -> materialize_projection (DTM-0030 — upsert derived.*_current from
+                            the appended CHRs so the read surfaces show live data,
+                            LDM §3.1; Derived-only, no canonical write)  on success
           -> mark_failed   (last-known-good RETAINED, A3.7;        on failure
                             recompute_failed emitted)
           -> END
@@ -36,6 +39,7 @@ from backend.orchestration.stages import (
 from backend.orchestration.state import GraphState
 from backend.responsibilities.adapt.states import CognitionState, CognitionStateMachine
 from backend.responsibilities.adapt.triggers import validate_trigger
+from backend.responsibilities.disclose import ProjectionMaterializer
 from backend.responsibilities.retain import ChrRepository
 from backend.services.observability.events import CollectingEventEmitter, EventEmitter
 
@@ -47,6 +51,7 @@ def build_deep_pass_graph(
     checkpointer: object | None = None,
     emitter: EventEmitter | None = None,
     chr_repo: ChrRepository | None = None,
+    materializer: ProjectionMaterializer | None = None,
     stages: dict[str, StageFn] | None = None,
     interrupt_before: list[str] | None = None,
 ):
@@ -136,6 +141,22 @@ def build_deep_pass_graph(
             },
         }
 
+    def materialize_projection(state: GraphState) -> dict[str, Any]:
+        """DTM-0030 — upsert the live ``derived.*_current`` rows from this run's CHRs.
+
+        Runs ONLY on the success path, AFTER ``mark_current`` (the topology is
+        unchanged otherwise): the canonical CHRs are already appended, so this
+        thin step maps each appended CHR onto its Derived projection row (LDM §3.1)
+        so the Disclose read surfaces show live data. Derived-only — it writes no
+        canonical row and mutates no CHR. When no materializer is injected (e.g.
+        the durable-resume / topology tests) it is a pass-through, so the frozen
+        backbone behavior is preserved.
+        """
+        if materializer is None:
+            return {}
+        materializer.materialize_chr_ids(list(state.appended_chr_ids))
+        return {}
+
     def mark_failed(state: GraphState) -> dict[str, Any]:
         """Failure: Reanalyzing -> Failed; last-known-good RETAINED (A3.7).
 
@@ -171,6 +192,7 @@ def build_deep_pass_graph(
     graph.add_node("stage_evaluate", stage_evaluate)
     graph.add_node("stage_advise", stage_advise)
     graph.add_node("mark_current", mark_current)
+    graph.add_node("materialize_projection", materialize_projection)
     graph.add_node("mark_failed", mark_failed)
 
     graph.add_edge(START, "validate_trigger")
@@ -182,7 +204,8 @@ def build_deep_pass_graph(
     graph.add_conditional_edges(
         "stage_advise", route_outcome, ["mark_current", "mark_failed"]
     )
-    graph.add_edge("mark_current", END)
+    graph.add_edge("mark_current", "materialize_projection")
+    graph.add_edge("materialize_projection", END)
     graph.add_edge("mark_failed", END)
 
     return graph.compile(

@@ -128,6 +128,65 @@ EXPECTED_EVENT_NAMES_WU_ACCEPT: tuple[str, ...] = (
 # DL-048 cost-governance — the single shared spend event (DTM-0009; decision #9).
 EXPECTED_EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
 
+# Event Model §8.8 analysis-command events (DTM-0032 — :fast/:deep/:cancel).
+EXPECTED_EVENT_NAMES_ANALYSIS: tuple[str, ...] = (
+    "fast_analysis_requested",
+    "deep_analysis_requested",
+    "analysis_cancelled",
+)
+
+# Event Model §8.11 recommendation-command events (DTM-0033 — :accept/:reject/
+# :defer/:implement). The USER actions recorded by Wave U (DL-055 rec lifecycle);
+# ``recommendation_generated`` (the engine emission) lives in WC_ADVISE, not here.
+EXPECTED_EVENT_NAMES_RECOMMENDATION: tuple[str, ...] = (
+    "recommendation_accepted",
+    "recommendation_rejected",
+    "recommendation_deferred",
+    "recommendation_implemented",
+)
+
+# Event Model §5 project-command events (DTM-0034 — create / patch / archive).
+EXPECTED_EVENT_NAMES_PROJECT: tuple[str, ...] = (
+    "project_created",
+    "project_updated",
+    "project_archived",
+)
+
+# Event Model §6 artifact-intake-command events (DTM-0034 — create / version).
+# ``artifact_updated`` (a later state-command slice) is NOT in this vocabulary.
+EXPECTED_EVENT_NAMES_ARTIFACT: tuple[str, ...] = (
+    "artifact_created",
+    "artifact_version_created",
+)
+
+# Event Model §7 evidence-intake-command event (DTM-0034 — add evidence). The
+# ``context_item_*`` events are extraction-engine emissions, not this command.
+EXPECTED_EVENT_NAMES_EVIDENCE: tuple[str, ...] = ("evidence_added",)
+
+# Event Model §10 finding-lifecycle-command events (DTM-0035 — :acknowledge /
+# :address / :reopen). Per API Contract §5 + catalog, :acknowledge and :address
+# carry ``finding_updated`` (resulting status in payload); :reopen carries
+# ``finding_reopened``. ``finding_detected``/``finding_superseded`` (engine) live
+# in WB_INFER; ``finding_created``/``finding_closed`` are not this command.
+EXPECTED_EVENT_NAMES_FINDING: tuple[str, ...] = (
+    "finding_updated",
+    "finding_reopened",
+)
+
+# Event Model §12 notification-state-command events (DTM-0035 — :view / :dismiss).
+# PLATFORM awareness state (non-canonical): zero recompute consumers; never alters
+# a Finding/Recommendation. ``notification_created``/``notification_expired`` are
+# not client commands and are not in this vocabulary.
+EXPECTED_EVENT_NAMES_NOTIFICATION: tuple[str, ...] = (
+    "notification_viewed",
+    "notification_dismissed",
+)
+
+# OBS-WI-INTERACT chat event (DTM-0037 — POST /projects/{pid}/chat). The single
+# NON-CANONICAL "Chat Exchange" event; the chat consumes/triggers cognition but
+# emits no canonical event (the triggered Deep Pass owns its WA00R emissions).
+EXPECTED_EVENT_NAMES_CHAT: tuple[str, ...] = ("chat_exchange",)
+
 # The union the emitters must accept (back-compat alias in events.py).
 EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     EXPECTED_EVENT_NAMES_WA00R
@@ -140,6 +199,14 @@ EXPECTED_EVENT_NAMES: tuple[str, ...] = (
     + EXPECTED_EVENT_NAMES_WC_FIX
     + EXPECTED_EVENT_NAMES_WU_ACCEPT
     + EXPECTED_EVENT_NAMES_COST
+    + EXPECTED_EVENT_NAMES_ANALYSIS
+    + EXPECTED_EVENT_NAMES_RECOMMENDATION
+    + EXPECTED_EVENT_NAMES_PROJECT
+    + EXPECTED_EVENT_NAMES_ARTIFACT
+    + EXPECTED_EVENT_NAMES_EVIDENCE
+    + EXPECTED_EVENT_NAMES_FINDING
+    + EXPECTED_EVENT_NAMES_NOTIFICATION
+    + EXPECTED_EVENT_NAMES_CHAT
 )
 
 # (contract-tuple variable name, expected value, contract label) for check (b).
@@ -154,6 +221,22 @@ _CONTRACT_VOCABULARIES: tuple[tuple[str, tuple[str, ...], str], ...] = (
     ("EVENT_NAMES_WC_FIX", EXPECTED_EVENT_NAMES_WC_FIX, "DL-047 SuggestedFix"),
     ("EVENT_NAMES_WU_ACCEPT", EXPECTED_EVENT_NAMES_WU_ACCEPT, "IC-WU-ACCEPT C3"),
     ("EVENT_NAMES_COST", EXPECTED_EVENT_NAMES_COST, "DL-048 cost"),
+    ("EVENT_NAMES_ANALYSIS", EXPECTED_EVENT_NAMES_ANALYSIS, "EM §8.8 analysis"),
+    (
+        "EVENT_NAMES_RECOMMENDATION",
+        EXPECTED_EVENT_NAMES_RECOMMENDATION,
+        "EM §8.11 recommendation",
+    ),
+    ("EVENT_NAMES_PROJECT", EXPECTED_EVENT_NAMES_PROJECT, "EM §5 project"),
+    ("EVENT_NAMES_ARTIFACT", EXPECTED_EVENT_NAMES_ARTIFACT, "EM §6 artifact"),
+    ("EVENT_NAMES_EVIDENCE", EXPECTED_EVENT_NAMES_EVIDENCE, "EM §7 evidence"),
+    ("EVENT_NAMES_FINDING", EXPECTED_EVENT_NAMES_FINDING, "EM §10 finding"),
+    (
+        "EVENT_NAMES_NOTIFICATION",
+        EXPECTED_EVENT_NAMES_NOTIFICATION,
+        "EM §12 notification",
+    ),
+    ("EVENT_NAMES_CHAT", EXPECTED_EVENT_NAMES_CHAT, "OBS-WI-INTERACT chat"),
 )
 
 # The union must be the per-contract names concatenated in this exact order.
@@ -168,6 +251,14 @@ _UNION_NAME_ORDER: tuple[str, ...] = (
     "EVENT_NAMES_WC_FIX",
     "EVENT_NAMES_WU_ACCEPT",
     "EVENT_NAMES_COST",
+    "EVENT_NAMES_ANALYSIS",
+    "EVENT_NAMES_RECOMMENDATION",
+    "EVENT_NAMES_PROJECT",
+    "EVENT_NAMES_ARTIFACT",
+    "EVENT_NAMES_EVIDENCE",
+    "EVENT_NAMES_FINDING",
+    "EVENT_NAMES_NOTIFICATION",
+    "EVENT_NAMES_CHAT",
 )
 
 APPEND_EVENT = "cognition_history_record_appended"
@@ -322,7 +413,7 @@ def _flatten_name_concatenation(value: ast.expr) -> tuple[str, ...] | None:
 
 
 def _union_is_consistent(value: ast.expr) -> bool:
-    """EVENT_NAMES is the WA00R+WA001+WA002 concatenation (by name) or the literal union."""
+    """EVENT_NAMES is the per-contract concatenation (by name) or the literal union."""
     if _flatten_name_concatenation(value) == _UNION_NAME_ORDER:
         return True
     try:

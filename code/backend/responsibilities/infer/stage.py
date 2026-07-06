@@ -40,6 +40,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any
 
+from backend.responsibilities.infer.honest_limit import honest_limit_for_result
 from backend.responsibilities.infer.synthesis import (
     SYNTHESIS_VERSION,
     SynthesisEngine,
@@ -312,6 +313,11 @@ def build_infer_stage(
                 "generated_artifact_types": [a.artifact_type for a in result.artifacts],
                 "deferred_artifact_types": list(result.deferred_artifact_types),
                 "synthesis_degraded": result.degraded,
+                # DL-048 UP-4 honest-limit signal — the truthful partial-analysis
+                # disclosure the DTM-0029 HonestLimitDisclosure frontend renders.
+                # Rides the non-canonical run outputs envelope (no schema change,
+                # no migration); {"limited": False} on a complete run.
+                "honest_limit": honest_limit_for_result(result),
             }
         }
 

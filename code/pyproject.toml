@@ -6,7 +6,9 @@ requires-python = ">=3.11"
 
 # Ratified stack only (DL-043 + DL-054). No new dependency/technology without human approval.
 dependencies = [
-    "fastapi>=0.111",          # transport layer (api/); emits the OpenAPI consumed by Orval
+    "fastapi>=0.111,<0.137",   # transport layer (api/); emits the OpenAPI consumed by Orval.
+                               # Ceiling: 0.137 made include_router lazy (_IncludedRouter),
+                               # breaking route-introspection tests; the app is vetted on 0.136.x.
     "uvicorn[standard]>=0.30",
     "pydantic>=2.7",           # epistemic types + contract schemas
     "pydantic-ai>=1.107,<2",   # LLM provider abstraction (DL-054 §5). Pinned to the 1.x line
@@ -19,6 +21,10 @@ dependencies = [
     "langgraph-checkpoint-postgres>=2",  # durable PostgresSaver — DTM-0005 approved (brings psycopg)
     "psycopg[binary]>=3.1",    # explicit: bundles libpq so the PostgresSaver boots on a clean machine/CI (reproducibility fix; IC-WA-00R)
     "supabase>=2.5",           # Supabase Postgres + Auth/GoTrue + Storage (DL-054)
+    "pyjwt[crypto]>=2.12",     # DTM-0036 auth seam — verify Supabase Auth (GoTrue) HS256 access
+                               # tokens offline. NOT a new transitive: `supabase`(>=2.5) already
+                               # pulls it via `supabase_auth` (Requires-Dist pyjwt[crypto]>=2.12);
+                               # declared explicitly because app code imports it directly.
     "neo4j>=5.20",             # knowledge graph
     "redis>=5.0",              # sessions / cache / event buffers
     "opentelemetry-sdk>=1.25", # observability (retained)

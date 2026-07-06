@@ -41,6 +41,10 @@ The vocabulary is pinned PER CONTRACT (deep-task decision #1, DTM-0007):
   CHR output_kind).
 - ``EVENT_NAMES_COST`` — the single shared DL-048 spend event
   (``ai_spend_recorded``), introduced in DTM-0009 and reused by Wave B/C.
+- ``EVENT_NAMES_ANALYSIS`` — EXACTLY the three Event Model §8.8 analysis-COMMAND
+  events (DTM-0032), in §8.8 order — "Fast/Deep Analysis Requested" /
+  "Analysis Cancelled". The run lifecycle (``*_analysis_started/completed``) is
+  engine-produced through the recompute backbone (WA00R), never a command event.
 - ``EVENT_NAMES`` — the union (concatenation) the emitters accept; kept as the
   back-compat alias for existing consumers.
 
@@ -161,6 +165,89 @@ EVENT_NAMES_WU_ACCEPT: tuple[str, ...] = (
 # introduced in DTM-0009 and reused by Wave B/C. "AI Spend Recorded" (OBS §3).
 EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
 
+# Event Model §8.8 "Analysis" — the three analysis-COMMAND events emitted by the
+# DTM-0032 REST command router (:fast / :deep / :cancel), exactly, in §8.8 order.
+# The run lifecycle (``*_analysis_started`` / ``*_analysis_completed``) is
+# engine-produced through the existing recompute backbone (WA00R), not a command
+# event — those names are NOT pinned here. Pinned verbatim against EM §8.8.
+EVENT_NAMES_ANALYSIS: tuple[str, ...] = (
+    "fast_analysis_requested",
+    "deep_analysis_requested",
+    "analysis_cancelled",
+)
+
+# Event Model §8.11 "Recommendations" — the four recommendation-COMMAND events
+# emitted by the DTM-0033 REST command router (:accept / :reject / :defer /
+# :implement), exactly, in §8.11 order. Each is a USER action recorded by Wave U
+# (DL-055 rec lifecycle); ``recommendation_generated`` (the engine emission) lives
+# in the WC_ADVISE set and is NOT repeated here. Pinned verbatim against EM §8.11.
+EVENT_NAMES_RECOMMENDATION: tuple[str, ...] = (
+    "recommendation_accepted",
+    "recommendation_rejected",
+    "recommendation_deferred",
+    "recommendation_implemented",
+)
+
+# Event Model §5 "Project Events" — the three project-COMMAND events emitted by
+# the DTM-0034 REST command router (create / patch / archive), exactly, in §5
+# order. Pinned verbatim against EM §5.
+EVENT_NAMES_PROJECT: tuple[str, ...] = (
+    "project_created",
+    "project_updated",
+    "project_archived",
+)
+
+# Event Model §6 "Artifact Events" — the two artifact-intake-COMMAND events
+# emitted by the DTM-0034 router (create artifact / append version), exactly, in
+# §6 order. ``artifact_updated`` (§6) is a later state-command slice and is NOT
+# pinned here. Pinned verbatim against EM §6.
+EVENT_NAMES_ARTIFACT: tuple[str, ...] = (
+    "artifact_created",
+    "artifact_version_created",
+)
+
+# Event Model §7 "Context Events" — the single evidence-intake-COMMAND event
+# emitted by the DTM-0034 router (add evidence), exactly. The ``context_item_*``
+# events (§7) are extraction-engine emissions, not this command, and are NOT
+# pinned here. Pinned verbatim against EM §7.
+EVENT_NAMES_EVIDENCE: tuple[str, ...] = ("evidence_added",)
+
+# Event Model §10 "Finding Events" — the two finding-LIFECYCLE-COMMAND events
+# emitted by the DTM-0035 REST command router (:acknowledge / :address / :reopen),
+# exactly, in EM §10 order. Per API Contract §5 + the endpoint catalog,
+# ``:acknowledge`` and ``:address`` both carry ``finding_updated`` (the resulting
+# status — acknowledged / addressed — rides the payload; the granular
+# ``finding_acknowledged``/``finding_addressed`` are documented status FACETS of
+# this canonical event, NOT new event types), and ``:reopen`` carries
+# ``finding_reopened``. ``finding_detected``/``finding_superseded`` (engine emissions)
+# live in the WB_INFER set; ``finding_created``/``finding_closed`` are engine/`:close`
+# emissions NOT in this command vocabulary. Pinned verbatim against EM §10.
+EVENT_NAMES_FINDING: tuple[str, ...] = (
+    "finding_updated",
+    "finding_reopened",
+)
+
+# Event Model §12 "Notification Events" — the two notification-STATE-COMMAND events
+# emitted by the DTM-0035 REST command router (:view / :dismiss), exactly, in EM §12
+# order. PLATFORM awareness state (non-canonical): a notification event has ZERO
+# recompute consumers and never alters a Finding or Recommendation (§12 clarification).
+# ``notification_created`` (source-object change) / ``notification_expired`` (scheduler)
+# are NOT client commands and are NOT pinned here. Pinned verbatim against EM §12.
+EVENT_NAMES_NOTIFICATION: tuple[str, ...] = (
+    "notification_viewed",
+    "notification_dismissed",
+)
+
+# OBS-WI-INTERACT — the single OSLO Chat event emitted by the DTM-0037 chat
+# router (POST /projects/{pid}/chat), exactly. NON-CANONICAL: a ``chat_exchange``
+# is an interaction record (like a notification) — zero recompute consumers, it
+# alters no Finding/Recommendation/assessment. Chat's Improve TRIGGERS a Deep
+# Pass whose run lifecycle (``*_analysis_*``) rides the recompute backbone
+# (WA00R) and its CHR append rides ``cognition_history_record_appended`` (WA00R)
+# — those are NOT this event. Pinned verbatim against OBS-WI-INTERACT §3
+# ("Chat Exchange", non-canonical).
+EVENT_NAMES_CHAT: tuple[str, ...] = ("chat_exchange",)
+
 # Union vocabulary accepted by emitters (back-compat alias for consumers).
 EVENT_NAMES: tuple[str, ...] = (
     EVENT_NAMES_WA00R
@@ -173,6 +260,14 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_WC_FIX
     + EVENT_NAMES_WU_ACCEPT
     + EVENT_NAMES_COST
+    + EVENT_NAMES_ANALYSIS
+    + EVENT_NAMES_RECOMMENDATION
+    + EVENT_NAMES_PROJECT
+    + EVENT_NAMES_ARTIFACT
+    + EVENT_NAMES_EVIDENCE
+    + EVENT_NAMES_FINDING
+    + EVENT_NAMES_NOTIFICATION
+    + EVENT_NAMES_CHAT
 )
 
 _EVENT_NAME_SET: frozenset[str] = frozenset(EVENT_NAMES)

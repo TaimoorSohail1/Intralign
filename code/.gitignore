@@ -17,6 +17,11 @@ dist/
 frontend/src/api/generated/
 *.tsbuildinfo
 
+# Playwright (E2E) artifacts
+frontend/test-results/
+frontend/playwright-report/
+frontend/.playwright/
+
 # Supabase local
 supabase/.branches/
 supabase/.temp/

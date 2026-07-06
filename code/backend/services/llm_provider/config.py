@@ -31,6 +31,13 @@ import os
 from dataclasses import dataclass
 from typing import Literal
 
+# The primary provider selector. Internal remains the default per DL-069; deploys
+# may opt into the already-ratified OpenAI fallback routing with
+# ``LLM_PRIMARY_PROVIDER=openai``.
+PRIMARY_PROVIDER_ENV = "LLM_PRIMARY_PROVIDER"
+PRIMARY_PROVIDER_INTERNAL = "internal"
+PRIMARY_PROVIDER_OPENAI = "openai"
+
 # The internal model id (the local Llama runtime's gemma model). Owner-given
 # default is ``gemma4`` (DL-069 / ADR-0007); read from env so the exact id is
 # config, not a hardcoded constant (ANTI_ASSUMPTION). The live base_url is read
@@ -42,6 +49,12 @@ DEFAULT_INTERNAL_MODEL = "gemma4"
 def internal_model_id() -> str:
     """The internal (gemma) model id from env, defaulting to ``gemma4``."""
     return os.environ.get(INTERNAL_MODEL_ENV, "").strip() or DEFAULT_INTERNAL_MODEL
+
+
+def primary_provider_id() -> str:
+    """The configured primary provider id, defaulting to the ratified internal provider."""
+    provider = os.environ.get(PRIMARY_PROVIDER_ENV, "").strip().lower()
+    return provider or PRIMARY_PROVIDER_INTERNAL
 
 # The model-routing *stages* the engine routes (Wave S: extraction +
 # synthesis/generation; Wave C adds advise — recommendation text is AI-text).
@@ -159,10 +172,12 @@ def routing_for_tier(tier: Tier) -> TierRouting:
     PRIMARY (DL-069 / ADR-0007): the internal gemma model on the local Llama
     runtime serves every tier/stage — ``free``, ``internal``, and any unknown
     tier all resolve to the internal routing (the default). OpenAI/Anthropic are
-    a defined-but-disabled fallback (``_OPENAI_FALLBACK_ROUTING``), not the
-    primary the engines resolve. Built fresh so an env change to the model id is
-    honored without a reimport.
+    a defined fallback that can be selected for hosted deploys with
+    ``LLM_PRIMARY_PROVIDER=openai``. Built fresh so env changes are honored
+    without a reimport.
     """
+    if primary_provider_id() == PRIMARY_PROVIDER_OPENAI:
+        return _OPENAI_FALLBACK_ROUTING
     return _internal_routing()
 
 

@@ -88,6 +88,7 @@ def run(
     checkpointer: object | None = None,
     emitter: EventEmitter | None = None,
     chr_repo: object | None = None,
+    materializer: object | None = None,
     stages: dict[str, StageFn] | None = None,
     interrupt_before: list[str] | None = None,
 ) -> GraphState:
@@ -96,6 +97,12 @@ def run(
     ``state=None`` resumes the checkpointed run identified by ``thread_id``.
     The checkpointer defaults to the durable Supabase-Postgres saver
     (durable-by-default); run lifecycle events go through the same A6 seam.
+
+    ``materializer`` (DTM-0030) is an optional Derived-only projection writer the
+    deep-pass success path calls AFTER ``mark_current`` to upsert
+    ``derived.*_current`` from the appended CHRs (LDM §3.1). It is passed through
+    to the graph factory; when None the materialize step is a pass-through (the
+    backbone behavior is unchanged — no canonical write either way).
     """
     # DTM-0006 (C2): observe the seam — structured log + OTel span events.
     # ObservedEventEmitter.wrap is idempotent and DELEGATES to the given
@@ -109,6 +116,7 @@ def run(
         checkpointer=saver,
         emitter=seam,
         chr_repo=chr_repo,
+        materializer=materializer,
         stages=stages,
         interrupt_before=interrupt_before,
     )
@@ -153,6 +161,7 @@ def submit_trigger(
     checkpointer: object | None = None,
     emitter: EventEmitter | None = None,
     chr_repo: object | None = None,
+    materializer: object | None = None,
     stages: dict[str, StageFn] | None = None,
 ) -> RunOutcome:
     """Backbone entry: validate -> mark stale -> durable Deep Pass run (coalesced).
@@ -229,6 +238,7 @@ def submit_trigger(
             checkpointer=checkpointer,
             emitter=seam,
             chr_repo=chr_repo,
+            materializer=materializer,
             stages=stages,
         )
     finally:
@@ -243,6 +253,7 @@ def submit_trigger(
             checkpointer=checkpointer,
             emitter=seam,
             chr_repo=chr_repo,
+            materializer=materializer,
             stages=stages,
         )
 

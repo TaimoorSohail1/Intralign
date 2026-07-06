@@ -7,7 +7,7 @@ Synthetic trees prove each failure mode independently:
 - a tampered A6 vocabulary (renamed, extra, or non-literal EVENT_NAMES) across
   every per-contract tuple — WA00R / WA001 / WA002 / WS / WB_INFER (DTM-0010) /
   WB_EVAL (DTM-0011) / WC_ADVISE (DTM-0014) / WC_FIX (DTM-0015) /
-  WU_ACCEPT (DTM-0016) / COST — plus a drifted or short 10-way union.
+  WU_ACCEPT (DTM-0016) / COST / ANALYSIS (DTM-0032) — plus a drifted/short union.
 """
 
 from __future__ import annotations
@@ -90,6 +90,44 @@ EVENT_NAMES_WU_ACCEPT: tuple[str, ...] = (
 
 EVENT_NAMES_COST: tuple[str, ...] = ("ai_spend_recorded",)
 
+EVENT_NAMES_ANALYSIS: tuple[str, ...] = (
+    "fast_analysis_requested",
+    "deep_analysis_requested",
+    "analysis_cancelled",
+)
+
+EVENT_NAMES_RECOMMENDATION: tuple[str, ...] = (
+    "recommendation_accepted",
+    "recommendation_rejected",
+    "recommendation_deferred",
+    "recommendation_implemented",
+)
+
+EVENT_NAMES_PROJECT: tuple[str, ...] = (
+    "project_created",
+    "project_updated",
+    "project_archived",
+)
+
+EVENT_NAMES_ARTIFACT: tuple[str, ...] = (
+    "artifact_created",
+    "artifact_version_created",
+)
+
+EVENT_NAMES_EVIDENCE: tuple[str, ...] = ("evidence_added",)
+
+EVENT_NAMES_FINDING: tuple[str, ...] = (
+    "finding_updated",
+    "finding_reopened",
+)
+
+EVENT_NAMES_NOTIFICATION: tuple[str, ...] = (
+    "notification_viewed",
+    "notification_dismissed",
+)
+
+EVENT_NAMES_CHAT: tuple[str, ...] = ("chat_exchange",)
+
 EVENT_NAMES: tuple[str, ...] = (
     EVENT_NAMES_WA00R
     + EVENT_NAMES_WA001
@@ -101,6 +139,14 @@ EVENT_NAMES: tuple[str, ...] = (
     + EVENT_NAMES_WC_FIX
     + EVENT_NAMES_WU_ACCEPT
     + EVENT_NAMES_COST
+    + EVENT_NAMES_ANALYSIS
+    + EVENT_NAMES_RECOMMENDATION
+    + EVENT_NAMES_PROJECT
+    + EVENT_NAMES_ARTIFACT
+    + EVENT_NAMES_EVIDENCE
+    + EVENT_NAMES_FINDING
+    + EVENT_NAMES_NOTIFICATION
+    + EVENT_NAMES_CHAT
 )
 '''
 
@@ -449,12 +495,52 @@ def test_missing_wu_accept_tuple_fails_vocabulary_check(tmp_path) -> None:
     assert any("union of the per-contract vocabularies" in v for v in violations)
 
 
+def test_renamed_finding_command_event_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0035 — tampering the EM §10 finding-command vocabulary fails the gate."""
+    tampered = GOOD_EVENTS_PY.replace(
+        '    "finding_updated",\n    "finding_reopened",',
+        '    "finding_updated",\n    "finding_resurfaced",',
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "EVENT_NAMES_FINDING != the EM §10 finding vocabulary" in violations[0]
+
+
+def test_renamed_notification_command_event_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0035 — tampering the EM §12 notification-command vocabulary fails the gate."""
+    tampered = GOOD_EVENTS_PY.replace("notification_dismissed", "notification_cleared")
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert len(violations) == 1
+    assert "EVENT_NAMES_NOTIFICATION != the EM §12 notification vocabulary" in violations[0]
+
+
+def test_missing_finding_command_tuple_fails_vocabulary_check(tmp_path) -> None:
+    """DTM-0035 — dropping the FINDING tuple (and its union leg) fails both checks."""
+    tampered = GOOD_EVENTS_PY.replace(
+        'EVENT_NAMES_FINDING: tuple[str, ...] = (\n'
+        '    "finding_updated",\n'
+        '    "finding_reopened",\n'
+        ')\n\n',
+        "",
+    ).replace(
+        "    + EVENT_NAMES_FINDING\n",
+        "",
+    )
+    root = _make_tree(tmp_path, events_src=tampered)
+    violations = check_event_vocabulary(root)
+    assert any("EVENT_NAMES_FINDING not found" in v for v in violations)
+    assert any("union of the per-contract vocabularies" in v for v in violations)
+
+
 def test_missing_event_names_assignment_fails(tmp_path) -> None:
     root = _make_tree(tmp_path, events_src="OTHER = 1\n")
     violations = check_event_vocabulary(root)
-    # all ten contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/WC_ADVISE/
-    # WC_FIX/WU_ACCEPT/COST) AND the union.
-    assert len(violations) == 11
+    # all eighteen contract tuples (WA00R/WA001/WA002/WS/WB_INFER/WB_EVAL/WC_ADVISE/
+    # WC_FIX/WU_ACCEPT/COST/ANALYSIS/RECOMMENDATION/PROJECT/ARTIFACT/EVIDENCE/FINDING/
+    # NOTIFICATION/CHAT) AND the union (DTM-0037).
+    assert len(violations) == 19
     assert any("EVENT_NAMES_WA00R not found" in v for v in violations)
     assert any("EVENT_NAMES_WA001 not found" in v for v in violations)
     assert any("EVENT_NAMES_WA002 not found" in v for v in violations)
@@ -465,6 +551,12 @@ def test_missing_event_names_assignment_fails(tmp_path) -> None:
     assert any("EVENT_NAMES_WC_FIX not found" in v for v in violations)
     assert any("EVENT_NAMES_WU_ACCEPT not found" in v for v in violations)
     assert any("EVENT_NAMES_COST not found" in v for v in violations)
+    assert any("EVENT_NAMES_ANALYSIS not found" in v for v in violations)
+    assert any("EVENT_NAMES_RECOMMENDATION not found" in v for v in violations)
+    assert any("EVENT_NAMES_PROJECT not found" in v for v in violations)
+    assert any("EVENT_NAMES_ARTIFACT not found" in v for v in violations)
+    assert any("EVENT_NAMES_EVIDENCE not found" in v for v in violations)
+    assert any("EVENT_NAMES_CHAT not found" in v for v in violations)
     assert any("EVENT_NAMES not found" in v for v in violations)
 
 
@@ -510,6 +602,14 @@ def test_union_dropping_ws_and_cost_legs_fails(tmp_path) -> None:
         "    + EVENT_NAMES_WC_FIX\n"
         "    + EVENT_NAMES_WU_ACCEPT\n"
         "    + EVENT_NAMES_COST\n"
+        "    + EVENT_NAMES_ANALYSIS\n"
+        "    + EVENT_NAMES_RECOMMENDATION\n"
+        "    + EVENT_NAMES_PROJECT\n"
+        "    + EVENT_NAMES_ARTIFACT\n"
+        "    + EVENT_NAMES_EVIDENCE\n"
+        "    + EVENT_NAMES_FINDING\n"
+        "    + EVENT_NAMES_NOTIFICATION\n"
+        "    + EVENT_NAMES_CHAT\n"
         ")",
         "EVENT_NAMES: tuple[str, ...] = (\n"
         "    EVENT_NAMES_WA00R + EVENT_NAMES_WA001 + EVENT_NAMES_WA002\n"

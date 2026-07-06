@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
+from backend.api.platform import router as platform_router
 from backend.api.v1 import router as v1_router
 from backend.services.observability.setup import configure_observability
 
@@ -22,10 +23,5 @@ app = FastAPI(
 
 configure_observability(app)  # env-driven (DTM-0003); degrades to a warning when OTLP is off
 
+app.include_router(platform_router)
 app.include_router(v1_router)
-
-
-@app.get("/health", tags=["platform"])
-def health() -> dict[str, str]:
-    """Liveness probe — infra smoke-test target for Phase I (no domain behavior)."""
-    return {"status": "ok"}

@@ -1,0 +1,42 @@
+{
+  "name": "wi_chat_v0",
+  "model_version": "gemma4@wi-chat-v0",
+  "config": {
+    "tier": "free",
+    "stage": "advise",
+    "temperature": 0,
+    "routing": "chat->internal-gemma"
+  },
+  "responses": [
+    {
+      "key": "explain",
+      "tokens_in": 260,
+      "tokens_out": 90,
+      "text": "OSLO's current understanding shows a conflict Finding: two attested assertions about the Q3 finish date contradict each other, so the schedule clarity is reduced. This is OSLO's derived reading of your plan, not a settled fact — it surfaces the contradiction rather than resolving it."
+    },
+    {
+      "key": "clarify",
+      "tokens_in": 240,
+      "tokens_out": 70,
+      "text": "The recommendation \"Clarify scope\" is anchored to the conflict Finding f-1. It is a candidate response OSLO generated — it has not been accepted and changes no assessment until you act on it and a recompute runs."
+    },
+    {
+      "key": "resolve",
+      "tokens_in": 250,
+      "tokens_out": 80,
+      "text": "To move forward, confirm which of the two contradictory Q3 dates is authoritative. Recording that as an attested input would let a recompute close the conflict — OSLO cannot decide it for you."
+    },
+    {
+      "key": "improve",
+      "tokens_in": 230,
+      "tokens_out": 60,
+      "text": "I have triggered a deeper analysis pass to expand OSLO's understanding of this area. The assessment will only change when that recompute completes — this chat itself changes nothing."
+    },
+    {
+      "key": "explain_no_context",
+      "tokens_in": 180,
+      "tokens_out": 50,
+      "text": "There is no governed cognition for this project yet, so there is nothing for OSLO to explain. Run a Fast Pass to orient first."
+    }
+  ]
+}

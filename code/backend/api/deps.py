@@ -1,17 +1,34 @@
-"""Shared FastAPI dependencies for the /v1 surface (API Contract Spec §3, §10).
+"""Shared FastAPI dependencies for the /v1 surface (API Contract Spec §3, §10, §12).
 
-- Authentication: bearer JWT (Supabase Auth) resolves the caller's user_id.
-- Workspace scoping: every request resolves to the caller's single workspace_id;
-  reads/writes are filtered by it (enforced in-app AND by Supabase RLS).
-- Idempotency: commands accept an `Idempotency-Key` header.
+- **Authentication:** a bearer token (Supabase Auth JWT) identifies the caller and
+  resolves the single ``workspace_id`` (Data Model §6 — single-workspace per user
+  in R1). A missing/blank bearer ⇒ 401 (API Contract Spec §9 ``unauthenticated``).
+- **Workspace scoping:** every read resolves to the caller's ``workspace_id``; the
+  read seam filters by it (in-app AND Supabase RLS). A resource outside the scope
+  is 404 (existence not leaked, §12).
+- **Read seam:** ``get_projection_reader`` provides the SELECT-only
+  ``ProjectionReader`` (the Disclose read model) — overridable in tests via
+  ``app.dependency_overrides`` (the house pattern), wired to Supabase in prod.
 
-Stubs — wired in Phase II under the relevant Wave contract. No un-contracted auth
-logic is implemented here.
+Read-mostly: these dependencies expose NO write/accept/compute path. JWT-claim
+verification (signature/exp + claims → Principal) is performed by the
+Supabase-Auth seam in ``backend/platform/auth.py`` (DTM-0036), using the
+env-injected ``SUPABASE_JWT_SECRET`` (no secret in the repo).
 """
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
+from typing import Any
+
+from fastapi import Depends, Header, HTTPException, status
+
+from backend.services.render import (
+    HistoryReader,
+    ProjectionReader,
+    SupabaseProjectionReader,
+)
 
 
 @dataclass(frozen=True)
@@ -23,6 +40,273 @@ class Principal:
     role: str  # owner | admin | member (Data Model §6)
 
 
-def current_principal() -> Principal:
-    """Resolve the Supabase JWT → Principal. Stub (Phase II)."""
-    raise NotImplementedError("Wire Supabase JWT verification + workspace scoping (Phase II).")
+def current_principal(
+    authorization: str | None = Header(default=None),
+) -> Principal:
+    """Resolve + verify the bearer token → Principal (401 on any failure).
+
+    Verifies the Supabase Auth (GoTrue) HS256 access token offline — signature +
+    expiry — against the env-injected ``SUPABASE_JWT_SECRET`` (no secret in the
+    repo; Deployment Governance §7), then maps its claims to the R1 single-
+    workspace Principal: ``sub`` → ``user_id``; ``workspace_id`` + RBAC ``role``
+    (owner/admin/member) from ``app_metadata`` (API Contract Spec §3, 51–59;
+    Runtime Env §4). Missing/blank/tampered/expired/missing-claim ⇒ a single
+    ``401 unauthenticated`` (the verifier never leaks *why*).
+
+    Tests override this dependency (``app.dependency_overrides[current_principal]``)
+    to inject a fixed Principal — that path is untouched.
+    """
+    from backend.platform.auth import AuthError, extract_bearer, verify_token
+
+    try:
+        token = extract_bearer(authorization)
+        claims = verify_token(token)
+    except AuthError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"error": {"code": "unauthenticated", "message": str(exc)}},
+        ) from exc
+
+    return Principal(
+        user_id=claims.user_id,
+        workspace_id=claims.workspace_id,
+        role=claims.role,
+    )
+
+
+def get_projection_reader() -> ProjectionReader:
+    """Provide the SELECT-only read seam (Supabase in prod; overridden in tests)."""
+    from backend.services.persistence import get_supabase_client
+
+    return SupabaseProjectionReader(get_supabase_client())
+
+
+def get_history_reader() -> HistoryReader:
+    """Provide the SELECT-only Cognition-History trail reader (DTM-0038).
+
+    Reads the append-only ``cognition_history_record`` log for the history feed
+    (Supabase in prod; overridden in tests). It is read-only — the append-only
+    write path stays the Retain-owned ``ChrRepository`` (the read surface mutates
+    nothing).
+    """
+    from backend.services.persistence import get_supabase_client
+    from backend.services.render.read_seam import SupabaseHistoryReader
+
+    return SupabaseHistoryReader(get_supabase_client())
+
+
+def require_principal(principal: Principal = Depends(current_principal)) -> Principal:
+    """Router-facing auth dependency (a single import point for the routers)."""
+    return principal
+
+
+# --- Command-surface seams (DTM-0032) ----------------------------------------
+# The command routers (analysis :fast/:deep/:cancel, …) consume these provider
+# dependencies. Each is overridable via ``app.dependency_overrides`` in tests so
+# the transport can be exercised over HTTP without a backing store, and wired to
+# the real Supabase-backed seams in production. The command transport invents NO
+# orchestration: it calls the existing ``submit_trigger`` seam (materializer
+# injected, DTM-0030) and persists the platform ``analysis_run`` via the repo.
+
+
+def get_analysis_run_repo() -> Any:
+    """Provide the platform ``analysis_run`` repo (DTM-0031; Supabase in prod)."""
+    from backend.platform.analysis_run_repo import SupabaseAnalysisRunRepository
+    from backend.services.persistence import get_supabase_client
+
+    return SupabaseAnalysisRunRepository(get_supabase_client())
+
+
+def get_trigger_submitter() -> Any:
+    """Provide the orchestration ``submit_trigger`` seam (runner; DTM-0030)."""
+    from backend.orchestration.runner import submit_trigger
+
+    return submit_trigger
+
+
+def get_materializer() -> Any:
+    """Provide the DTM-0030 ``ProjectionMaterializer`` (so derived.*_current fills).
+
+    Injected into ``submit_trigger`` so a successful deep pass upserts the
+    ``derived.*_current`` projection rows the read surfaces read (LDM §3.1).
+    """
+    from backend.responsibilities.disclose.projection_writer import ProjectionMaterializer
+    from backend.responsibilities.retain.repository import ChrRepository
+    from backend.services.persistence import get_supabase_client
+    from backend.services.persistence.projection_store import SupabaseProjectionStore
+
+    client = get_supabase_client()
+    return ProjectionMaterializer(SupabaseProjectionStore(client), ChrRepository(client))
+
+
+def get_event_emitter() -> Any:
+    """Provide the observed event emitter (the A6 seam; collecting by default)."""
+    from backend.services.observability.emitters import ObservedEventEmitter
+    from backend.services.observability.events import CollectingEventEmitter
+
+    return ObservedEventEmitter.wrap(CollectingEventEmitter())
+
+
+# --- Project-CRUD + evidence/artifact-intake seams (DTM-0034) -----------------
+# The project-command + evidence/artifact-intake router consumes these providers.
+# The transport invents NO persistence: project writes go through the DTM-0031
+# ``project_repo`` (the platform ``project`` table); evidence/artifact go through
+# the EXISTING ``submit_artifact`` intake seam (the append-only ``artifact``
+# anchor + ``promotion_candidate`` via the intake store, body via Storage). Each
+# provider is overridable via ``app.dependency_overrides`` in tests and wired to
+# the real Supabase-backed seams in production.
+
+
+def get_project_repo() -> Any:
+    """Provide the platform ``project`` repo (DTM-0031; Supabase in prod)."""
+    from backend.platform.project_repo import SupabaseProjectRepository
+    from backend.services.persistence import get_supabase_client
+
+    return SupabaseProjectRepository(get_supabase_client())
+
+
+def get_intake_store() -> Any:
+    """Provide the intake ``artifact``/``promotion_candidate`` store (DTM-0007)."""
+    from backend.services.persistence import SupabaseIntakeStore, get_supabase_client
+
+    return SupabaseIntakeStore(get_supabase_client())
+
+
+def get_body_store() -> Any:
+    """Provide the artifact-body Storage seam (bucket ``artifacts``; DTM-0007)."""
+    from backend.services.persistence import ArtifactBodyStore, get_supabase_client
+
+    return ArtifactBodyStore(get_supabase_client())
+
+
+# --- Acceptance-command seams (DTM-0033) -------------------------------------
+# The acceptance command router (recommendations :accept/:reject/:defer/:implement)
+# consumes these providers. The transport invents NO acceptance logic: it resolves
+# the recommendation's current CHR as the mandatory version_pin, builds the capture,
+# and calls the EXISTING ``record_acceptance`` retain seam (UAR always; plan fact on
+# accept only). Each provider is overridable via ``app.dependency_overrides`` in
+# tests and wired to the real Supabase-backed seams in production.
+
+
+def get_retention_store() -> Any:
+    """Provide the append-only retention store (UAR/plan-fact INSERT; Supabase)."""
+    from backend.services.persistence import get_supabase_client
+    from backend.services.persistence.retention_store import SupabaseRetentionStore
+
+    return SupabaseRetentionStore(get_supabase_client())
+
+
+def get_acceptance_chr_reader() -> Any:
+    """Provide the CHR reader ``record_acceptance`` uses to read the pinned CHR.
+
+    On ``accept`` the plan-fact content is a DATA read of the pinned CHR's
+    ``output_payload`` (no LLM) — the existing ``ChrRepository`` satisfies the
+    ``ChrReader`` protocol.
+    """
+    from backend.responsibilities.retain.repository import ChrRepository
+    from backend.services.persistence import get_supabase_client
+
+    return ChrRepository(get_supabase_client())
+
+
+# --- Finding-lifecycle + notification-state command seams (DTM-0035) ----------
+# The finding-lifecycle command router (:acknowledge/:address/:reopen) updates the
+# DERIVED finding projection's workflow ``status`` (State Model §10 — a status
+# ATTRIBUTE on the Derived projection, NOT a user-attested record): it reads the
+# ``derived.finding_current`` row via the read seam, advances the payload status,
+# and UPSERTs it back through the projection store. It writes NO canonical row,
+# appends NO CHR, and is NOT an acceptance (no UAR). The notification-state command
+# router (:view/:dismiss) transitions the PLATFORM ``notification`` awareness state
+# via the DTM-0031 ``notification_repo`` (mark_viewed/mark_dismissed) — non-canonical,
+# it changes no assessment and drives no analysis. Each provider is overridable via
+# ``app.dependency_overrides`` in tests and wired to Supabase in production.
+
+
+def get_projection_store() -> Any:
+    """Provide the Derived ``derived.*_current`` projection store (DTM-0030; Supabase)."""
+    from backend.services.persistence import get_supabase_client
+    from backend.services.persistence.projection_store import SupabaseProjectionStore
+
+    return SupabaseProjectionStore(get_supabase_client())
+
+
+def get_notification_repo() -> Any:
+    """Provide the platform ``notification`` repo (DTM-0031; Supabase in prod)."""
+    from backend.platform.notification_repo import SupabaseNotificationRepository
+    from backend.services.persistence import get_supabase_client
+
+    return SupabaseNotificationRepository(get_supabase_client())
+
+
+# --- OSLO Chat seam (DTM-0037) -----------------------------------------------
+# The chat router (POST /projects/{pid}/chat) consumes this responder. The
+# responder CONSUMES cognition (Explain/Clarify/Resolve = read + phrase via the
+# fixture-backed LLM seam) and may TRIGGER it (Improve → the EXISTING
+# ``submit_trigger`` seam, materializer injected — the frozen recompute owns its
+# CHR append). It is constructed with NO canonical-write collaborator: it holds
+# ONLY the LLM provider, the ``submit_trigger`` seam, and the DTM-0030
+# materializer. Overridable via ``app.dependency_overrides`` in tests (a recorded
+# fixture drives the LLM offline, ADR-0004); wired to the real seams in prod.
+
+
+def get_chat_responder() -> Any:
+    """Provide the OSLO Chat responder (DTM-0037; consume + trigger, non-canonical).
+
+    Live: the LLM provider routes to the internal gemma model (the ``advise``
+    stage, DL-069 — no new model/routing); Improve wires the existing
+    ``submit_trigger`` seam with the DTM-0030 materializer injected. In CI the
+    responder is overridden with a recorded-fixture-backed provider (zero network,
+    ADR-0004). It holds NO retention/CHR/intake/projection-store handle — the chat
+    writes no canonical and mutates no artifact (DL-047 Critical).
+    """
+    from backend.responsibilities.disclose.chat import ChatResponder
+    from backend.services.llm_provider import LLMProvider
+
+    return ChatResponder(
+        provider=LLMProvider(),
+        submit_trigger=get_trigger_submitter(),
+        materializer=get_materializer(),
+    )
+
+
+class _IdempotencyStore:
+    """In-process Idempotency-Key → response cache (API Contract §10).
+
+    A repeated command with the same key returns the first run unchanged — no
+    second persist, no second trigger. R1 single-dyno scope; the durable
+    cross-dyno store (Redis) is the flagged follow-up. Keyed by (key, route) so
+    the same key on different commands does not collide.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._records: dict[tuple[str, str], dict[str, Any]] = {}
+
+    def get(self, key: str, route: str) -> dict[str, Any] | None:
+        with self._lock:
+            return self._records.get((key, route))
+
+    def put(self, key: str, route: str, value: dict[str, Any]) -> None:
+        with self._lock:
+            self._records[(key, route)] = value
+
+
+_IDEMPOTENCY_STORE = _IdempotencyStore()
+
+
+def reset_idempotency_store() -> None:
+    """Replace the process-wide idempotency store (test isolation seam)."""
+    global _IDEMPOTENCY_STORE
+    _IDEMPOTENCY_STORE = _IdempotencyStore()
+
+
+def get_idempotency_store() -> _IdempotencyStore:
+    """Provide the Idempotency-Key cache (overridable in tests)."""
+    return _IDEMPOTENCY_STORE
+
+
+def idempotency_key(
+    idempotency_key: str | None = Header(default=None),
+) -> str | None:
+    """Read the optional ``Idempotency-Key`` header (API Contract §10)."""
+    return idempotency_key

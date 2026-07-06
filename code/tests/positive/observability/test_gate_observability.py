@@ -12,12 +12,20 @@ from pathlib import Path
 
 from ci.gate_observability import (
     EXPECTED_EVENT_NAMES,
+    EXPECTED_EVENT_NAMES_ANALYSIS,
+    EXPECTED_EVENT_NAMES_ARTIFACT,
+    EXPECTED_EVENT_NAMES_CHAT,
     EXPECTED_EVENT_NAMES_COST,
+    EXPECTED_EVENT_NAMES_EVIDENCE,
+    EXPECTED_EVENT_NAMES_FINDING,
+    EXPECTED_EVENT_NAMES_NOTIFICATION,
+    EXPECTED_EVENT_NAMES_PROJECT,
     EXPECTED_EVENT_NAMES_WA00R,
     EXPECTED_EVENT_NAMES_WA001,
     EXPECTED_EVENT_NAMES_WA002,
     EXPECTED_EVENT_NAMES_WB_EVAL,
     EXPECTED_EVENT_NAMES_WB_INFER,
+    EXPECTED_EVENT_NAMES_RECOMMENDATION,
     EXPECTED_EVENT_NAMES_WC_ADVISE,
     EXPECTED_EVENT_NAMES_WC_FIX,
     EXPECTED_EVENT_NAMES_WS,
@@ -32,12 +40,20 @@ from ci.gate_observability import (
 )
 from backend.services.observability.events import (
     EVENT_NAMES,
+    EVENT_NAMES_ANALYSIS,
+    EVENT_NAMES_ARTIFACT,
+    EVENT_NAMES_CHAT,
     EVENT_NAMES_COST,
+    EVENT_NAMES_EVIDENCE,
+    EVENT_NAMES_FINDING,
+    EVENT_NAMES_NOTIFICATION,
+    EVENT_NAMES_PROJECT,
     EVENT_NAMES_WA00R,
     EVENT_NAMES_WA001,
     EVENT_NAMES_WA002,
     EVENT_NAMES_WB_EVAL,
     EVENT_NAMES_WB_INFER,
+    EVENT_NAMES_RECOMMENDATION,
     EVENT_NAMES_WC_ADVISE,
     EVENT_NAMES_WC_FIX,
     EVENT_NAMES_WS,
@@ -71,9 +87,18 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
     assert EXPECTED_EVENT_NAMES_WC_FIX == EVENT_NAMES_WC_FIX
     assert EXPECTED_EVENT_NAMES_WU_ACCEPT == EVENT_NAMES_WU_ACCEPT
     assert EXPECTED_EVENT_NAMES_COST == EVENT_NAMES_COST
+    assert EXPECTED_EVENT_NAMES_ANALYSIS == EVENT_NAMES_ANALYSIS
+    assert EXPECTED_EVENT_NAMES_RECOMMENDATION == EVENT_NAMES_RECOMMENDATION
+    assert EXPECTED_EVENT_NAMES_PROJECT == EVENT_NAMES_PROJECT
+    assert EXPECTED_EVENT_NAMES_ARTIFACT == EVENT_NAMES_ARTIFACT
+    assert EXPECTED_EVENT_NAMES_EVIDENCE == EVENT_NAMES_EVIDENCE
+    assert EXPECTED_EVENT_NAMES_FINDING == EVENT_NAMES_FINDING
+    assert EXPECTED_EVENT_NAMES_NOTIFICATION == EVENT_NAMES_NOTIFICATION
+    assert EXPECTED_EVENT_NAMES_CHAT == EVENT_NAMES_CHAT
     assert EXPECTED_EVENT_NAMES == EVENT_NAMES
-    # Union consistency: the alias is exactly the 10-way per-contract concatenation
-    # (DTM-0016 — WU_ACCEPT added between WC_FIX and COST; the union grows, never reorders).
+    # Union consistency: the alias is exactly the 15-way per-contract concatenation
+    # (DTM-0034 — PROJECT/ARTIFACT/EVIDENCE appended after RECOMMENDATION; the union
+    # grows, never reorders).
     assert EVENT_NAMES == (
         EVENT_NAMES_WA00R
         + EVENT_NAMES_WA001
@@ -85,6 +110,14 @@ def test_expected_vocabulary_matches_the_live_seam() -> None:
         + EVENT_NAMES_WC_FIX
         + EVENT_NAMES_WU_ACCEPT
         + EVENT_NAMES_COST
+        + EVENT_NAMES_ANALYSIS
+        + EVENT_NAMES_RECOMMENDATION
+        + EVENT_NAMES_PROJECT
+        + EVENT_NAMES_ARTIFACT
+        + EVENT_NAMES_EVIDENCE
+        + EVENT_NAMES_FINDING
+        + EVENT_NAMES_NOTIFICATION
+        + EVENT_NAMES_CHAT
     )
     # stale_detected lives in the WA00R set only — referenced, never duplicated.
     assert "stale_detected" in EVENT_NAMES_WA00R
@@ -195,6 +228,148 @@ def test_wu_accept_vocabulary_is_the_three_ic_wu_accept_c3_names_verbatim() -> N
         assert name not in EVENT_NAMES_COST
     # The single ai_spend_recorded is the COST event, reused — not a WU_ACCEPT event.
     assert "ai_spend_recorded" not in EVENT_NAMES_WU_ACCEPT
+
+
+def test_analysis_vocabulary_is_the_three_em_8_8_names_verbatim() -> None:
+    """DTM-0032 — the Event Model §8.8 analysis-command list, exactly, in order."""
+    assert EVENT_NAMES_ANALYSIS == (
+        "fast_analysis_requested",
+        "deep_analysis_requested",
+        "analysis_cancelled",
+    )
+    # The per-emission append event is REUSED from WA00R, never duplicated here.
+    assert "cognition_history_record_appended" not in EVENT_NAMES_ANALYSIS
+    # Analysis-command events live in the ANALYSIS set only — never leaking elsewhere.
+    for name in EVENT_NAMES_ANALYSIS:
+        assert name not in EVENT_NAMES_WS
+        assert name not in EVENT_NAMES_WB_INFER
+        assert name not in EVENT_NAMES_WB_EVAL
+        assert name not in EVENT_NAMES_WC_ADVISE
+        assert name not in EVENT_NAMES_WC_FIX
+        assert name not in EVENT_NAMES_WU_ACCEPT
+        assert name not in EVENT_NAMES_COST
+    # The run lifecycle (started/completed) rides the recompute backbone (WA00R),
+    # not a command event — those names are NOT in this command vocabulary.
+    assert "fast_analysis_started" not in EVENT_NAMES
+    assert "deep_analysis_completed" not in EVENT_NAMES
+
+
+def test_recommendation_vocabulary_is_the_four_em_8_11_names_verbatim() -> None:
+    """DTM-0033 — the Event Model §8.11 recommendation-command list, exactly, in order."""
+    assert EVENT_NAMES_RECOMMENDATION == (
+        "recommendation_accepted",
+        "recommendation_rejected",
+        "recommendation_deferred",
+        "recommendation_implemented",
+    )
+    # The per-emission append event is REUSED from WA00R, never duplicated here.
+    assert "cognition_history_record_appended" not in EVENT_NAMES_RECOMMENDATION
+    # Recommendation-command events live in the RECOMMENDATION set only.
+    for name in EVENT_NAMES_RECOMMENDATION:
+        assert name not in EVENT_NAMES_WS
+        assert name not in EVENT_NAMES_WB_INFER
+        assert name not in EVENT_NAMES_WB_EVAL
+        assert name not in EVENT_NAMES_WC_ADVISE
+        assert name not in EVENT_NAMES_WC_FIX
+        assert name not in EVENT_NAMES_WU_ACCEPT
+        assert name not in EVENT_NAMES_COST
+        assert name not in EVENT_NAMES_ANALYSIS
+    # ``recommendation_generated`` (the engine emission) lives in WC_ADVISE, not here.
+    assert "recommendation_generated" in EVENT_NAMES_WC_ADVISE
+    assert "recommendation_generated" not in EVENT_NAMES_RECOMMENDATION
+
+
+def test_project_artifact_evidence_command_vocabularies_are_verbatim() -> None:
+    """DTM-0034 — the EM §5/§6/§7 command vocabularies, exactly, in contract order."""
+    assert EVENT_NAMES_PROJECT == (
+        "project_created",
+        "project_updated",
+        "project_archived",
+    )
+    assert EVENT_NAMES_ARTIFACT == ("artifact_created", "artifact_version_created")
+    assert EVENT_NAMES_EVIDENCE == ("evidence_added",)
+    # The per-emission append event is REUSED from WA00R, never duplicated here.
+    for s in (EVENT_NAMES_PROJECT, EVENT_NAMES_ARTIFACT, EVENT_NAMES_EVIDENCE):
+        assert "cognition_history_record_appended" not in s
+    # These command events live in their own sets only — never leaking elsewhere.
+    for name in EVENT_NAMES_PROJECT + EVENT_NAMES_ARTIFACT + EVENT_NAMES_EVIDENCE:
+        assert name not in EVENT_NAMES_WS
+        assert name not in EVENT_NAMES_WB_INFER
+        assert name not in EVENT_NAMES_WB_EVAL
+        assert name not in EVENT_NAMES_WC_ADVISE
+        assert name not in EVENT_NAMES_WU_ACCEPT
+        assert name not in EVENT_NAMES_ANALYSIS
+        assert name not in EVENT_NAMES_RECOMMENDATION
+    # The engine-produced artifact_received/artifact_modified (WA001) and
+    # context_item_* (extraction) are NOT these command events.
+    assert "artifact_received" in EVENT_NAMES_WA001
+    assert "artifact_received" not in EVENT_NAMES_ARTIFACT
+    assert "artifact_updated" not in EVENT_NAMES  # a later state-command slice
+
+
+def test_finding_and_notification_command_vocabularies_are_verbatim() -> None:
+    """DTM-0035 — the EM §10 finding + §12 notification command vocabularies.
+
+    Per API Contract §5 + catalog: :acknowledge/:address carry ``finding_updated``
+    (the resulting status rides the payload — the granular acknowledged/addressed
+    names are FACETS, not new event types); :reopen carries ``finding_reopened``.
+    :view/:dismiss carry ``notification_viewed``/``notification_dismissed`` (platform
+    awareness state, non-canonical).
+    """
+    assert EVENT_NAMES_FINDING == ("finding_updated", "finding_reopened")
+    assert EVENT_NAMES_NOTIFICATION == (
+        "notification_viewed",
+        "notification_dismissed",
+    )
+    # The per-emission append event is REUSED from WA00R, never duplicated here.
+    assert "cognition_history_record_appended" not in EVENT_NAMES_FINDING
+    assert "cognition_history_record_appended" not in EVENT_NAMES_NOTIFICATION
+    # The engine finding emissions (WB_INFER) are NOT these command events — no new
+    # event types are introduced beyond the Event Model (API §5 facet note).
+    assert "finding_detected" in EVENT_NAMES_WB_INFER
+    assert "finding_detected" not in EVENT_NAMES_FINDING
+    assert "finding_superseded" not in EVENT_NAMES_FINDING
+    # ``finding_acknowledged``/``finding_addressed`` are status facets, NOT separate
+    # contract event names — they never enter the vocabulary.
+    assert "finding_acknowledged" not in EVENT_NAMES
+    assert "finding_addressed" not in EVENT_NAMES
+    # ``finding_created``/``finding_closed`` are engine/`:close` emissions — not this
+    # command slice — and are not pinned in this vocabulary.
+    assert "finding_created" not in EVENT_NAMES_FINDING
+    assert "finding_closed" not in EVENT_NAMES_FINDING
+    # ``notification_created``/``notification_expired`` are source-change/scheduler
+    # emissions, not these client commands.
+    assert "notification_created" not in EVENT_NAMES
+    assert "notification_expired" not in EVENT_NAMES
+    # These command events live in their own sets only — never leaking elsewhere.
+    for name in EVENT_NAMES_FINDING + EVENT_NAMES_NOTIFICATION:
+        assert name not in EVENT_NAMES_WS
+        assert name not in EVENT_NAMES_WB_EVAL
+        assert name not in EVENT_NAMES_WC_ADVISE
+        assert name not in EVENT_NAMES_WU_ACCEPT
+        assert name not in EVENT_NAMES_ANALYSIS
+        assert name not in EVENT_NAMES_RECOMMENDATION
+        assert name not in EVENT_NAMES_COST
+
+
+def test_chat_vocabulary_is_the_one_obs_wi_interact_name_verbatim() -> None:
+    """DTM-0037 — the OBS-WI-INTERACT chat list, exactly: 'chat_exchange'."""
+    assert EVENT_NAMES_CHAT == ("chat_exchange",)
+    # NON-CANONICAL: the chat event never pairs with a CHR append (chat writes no
+    # canonical; an Improve's recompute owns ``cognition_history_record_appended``).
+    assert "cognition_history_record_appended" not in EVENT_NAMES_CHAT
+    # The chat event lives in the CHAT set only — never leaking into other sets.
+    for other in (
+        EVENT_NAMES_WS, EVENT_NAMES_WB_INFER, EVENT_NAMES_WB_EVAL,
+        EVENT_NAMES_WC_ADVISE, EVENT_NAMES_WC_FIX, EVENT_NAMES_WU_ACCEPT,
+        EVENT_NAMES_ANALYSIS, EVENT_NAMES_RECOMMENDATION, EVENT_NAMES_NOTIFICATION,
+        EVENT_NAMES_COST,
+    ):
+        assert "chat_exchange" not in other
+    # The chat-triggered Deep Pass lifecycle rides the recompute backbone (WA00R),
+    # not a chat event — those names are NOT in the chat vocabulary.
+    assert "deep_analysis_requested" in EVENT_NAMES_ANALYSIS
+    assert "deep_analysis_requested" not in EVENT_NAMES_CHAT
 
 
 def test_wa002_vocabulary_is_the_ic_wa_002_a6_names_verbatim() -> None:

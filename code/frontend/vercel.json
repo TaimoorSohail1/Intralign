@@ -1,0 +1,33 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/v1/:path*",
+      "destination": "https://oslo-2-0-f0f243e60348.herokuapp.com/v1/:path*"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://oslo-2-0-f0f243e60348.herokuapp.com/auth/:path*"
+    },
+    {
+      "source": "/health/:path*",
+      "destination": "https://oslo-2-0-f0f243e60348.herokuapp.com/health/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://oslo-2-0-f0f243e60348.herokuapp.com/health"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "https://oslo-2-0-f0f243e60348.herokuapp.com/openapi.json"
+    },
+    {
+      "source": "/((?!v1|auth|health|openapi.json|assets|.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

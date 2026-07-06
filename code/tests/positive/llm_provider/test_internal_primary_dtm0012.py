@@ -16,8 +16,10 @@ from backend.services.llm_provider import (
     LIVE_ENV_FLAG,
     LLMProvider,
     ModelRef,
+    PRIMARY_PROVIDER_ENV,
     estimate_cost_usd,
     internal_model_id,
+    primary_provider_id,
     routing_for_tier,
 )
 from backend.services.llm_provider.adapter import INTERNAL_API_KEY_ENV
@@ -36,6 +38,19 @@ def test_internal_is_the_primary_routing_for_every_stage() -> None:
     # The internal tier resolves the same primary.
     routing = routing_for_tier("internal")
     assert routing.synthesis == ModelRef("internal", gemma)
+
+
+def test_openai_can_be_selected_as_hosted_primary(monkeypatch) -> None:
+    """Hosted deploys can select the OpenAI routing without changing code."""
+    monkeypatch.setenv(PRIMARY_PROVIDER_ENV, "openai")
+    assert primary_provider_id() == "openai"
+    routing = routing_for_tier("free")
+    assert routing.extraction == ModelRef("openai", "gpt-4.1-nano")
+    assert routing.synthesis == ModelRef("openai", "gpt-4.1-mini")
+    assert routing.generation == ModelRef("openai", "gpt-4.1-mini")
+    assert routing.advise == ModelRef("openai", "gpt-4.1-mini")
+    provider = LLMProvider()
+    assert provider.resolve(tier="free", stage="synthesis").provider == "openai"
 
 
 def test_model_id_is_config_from_env(monkeypatch) -> None:
