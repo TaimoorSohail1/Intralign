@@ -6,6 +6,7 @@
   "description": "OSLO Release 1 frontend — React + Vite + MUI + TanStack, Vercel. Orval-generated API client.",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm run api:client",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "api:schema": "python ../scripts/export_openapi.py",
