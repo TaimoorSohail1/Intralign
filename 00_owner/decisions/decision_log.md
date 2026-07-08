@@ -862,5 +862,7 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-091 — Wave C (Advise) exit-gate pass + Phase V / Wave U authorization → `00_owner/decisions/records/DL-091-wave-c-exit-gate-phase-v-authorization.md`
 - DL-092 — Wave C (Advise) exit-gate pass + Phase V / Wave U authorization → `00_owner/decisions/records/DL-092-wave-c-exit-gate-phase-v-authorization.md`
 - DL-093 — Finding type + epistemic basis presentation (two-axis; RB-033 Phase R1) → `00_owner/decisions/records/DL-093-finding-type-and-epistemic-basis-r1.md`
+- DL-094 — Finding flow simplification: no-Acknowledge lifecycle + single-action resolution (RB-035) → `00_owner/decisions/records/DL-094-finding-flow-simplification.md`
+- DL-095 — Findings to Issues user-facing label (RB-036) → `00_owner/decisions/records/DL-095-findings-as-issues-user-facing-label.md`
 
 <!-- RECORDS-INDEX:END -->

@@ -985,6 +985,20 @@ Each changelog entry contains:
 - **Change Summary:** Finding type + epistemic basis presentation (two-axis; RB-033 Phase R1). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-129 — DL-094: Finding flow simplification: no-Acknowledge lifecycle + single-action resolution (RB-035)
+
+- **Date:** 2026-07-08 · **Authorizing Decision:** DL-094.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-094-finding-flow-simplification.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Finding flow simplification: no-Acknowledge lifecycle + single-action resolution (RB-035). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
+### CHG-130 — DL-095: Findings to Issues user-facing label (RB-036)
+
+- **Date:** 2026-07-08 · **Authorizing Decision:** DL-095.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-095-findings-as-issues-user-facing-label.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Findings to Issues user-facing label (RB-036). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

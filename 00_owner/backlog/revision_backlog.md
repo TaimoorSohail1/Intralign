@@ -406,6 +406,18 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 
 ---
 
+### RB-036 — "Findings" → "Issues" user-facing label (presentation-only)
+
+- **Source Finding:** Owner-directed R1 UX refinement, 2026-07-07 ("simplify UI labels; users see only 'Issues'; weaknesses read as issues"). The UI exposes three overlapping vocabularies — Findings, Issues, weaknesses — for one underlying signal.
+- **Affected Layer(s):** `00_owner` (`CANONICAL_GLOSSARY` Disambiguation Register, DL-087 label table) with `10_product/experience` (`FINDING_PRESENTATION_SPECIFICATION_V1` / `FINDING_PANEL_SPECIFICATION_V1`, IssuePanel/OvlPanel copy) realization.
+- **Affected Concepts:** user-facing terminology (Finding vs Issue vs weakness); the 1:1 Issue-per-Finding projection (ISS-01); overlay language (OVL-01). Finding stays the first-class internal object.
+- **Proposal Scope:** One decision — adopt "Issues" as the single user-facing label; retire user-facing "Findings"/"weaknesses"; internals unchanged. Mechanism = the ratified **DL-087** user-facing-presentation-label pattern (as for CAF, Fast/Deep Pass). 1:1 finding→issue held for R1; aggregation is a separate future decision.
+- **Dependencies:** `CANONICAL_GLOSSARY` Disambiguation Register (HARD — add two label rows); `FINDING_PRESENTATION_SPECIFICATION_V1` / `FINDING_PANEL_SPECIFICATION_V1` (MED); Issue Engine / Finding object / contracts (CHECK — none; presentation-only).
+- **Proposal:** `00_owner/decisions/PROPOSAL_FINDINGS_AS_ISSUES_USER_FACING_LABEL_DRAFT.md`. Supporting analysis: `R1_ADDITIONAL_CAPABILITIES_SCOPING_BRIEF` (owner working session, 2026-07-07).
+- **Status:** Proposed — owner to ratify (Framework 001A review complete; Decision pending). Recommend pairing with RB-035 (same Issue surface).
+
+---
+
 ## Governance Notes
 
 1. This backlog is a draft. Entries reflect findings from initial repository review, not ratified governance positions.
