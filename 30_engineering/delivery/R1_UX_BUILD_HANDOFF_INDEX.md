@@ -5,11 +5,11 @@
 > **Before you build — read `20_handoff/R1_BUILD_SEQUENCE_AND_GATES.md`.** It defines the build **order** and the gates that enforce it. Two hard prerequisites and one guardrail apply to everything below:
 >
 > 1. **BLOCKER — the R1 app is not on `main` yet.** The Disclose application lives on `feat/phase6-wavee-disclose`; `main` holds only a skeleton (`code/frontend/src/` is just `main.tsx`, `api/v1/routers/` just `__init__.py`). **Integrate it first** (Issue #113) — do **not** start wiring the UI until it lands. Only the specs, prototype, and baselines referenced here are on `main`.
-> 2. **The prototype + all 9 visual baselines were updated (PR #116).** Pull latest `main` and build to the **current** `product-design/oslo_r1_experience_mockup_v2.html` — not any earlier read.
+> 2. **The prototype + all 9 visual baselines were updated (PR #116).** Pull latest `main` and build to the **current** `product-design/oslo_r1_experience_mockup_v3.html` — not any earlier read.
 > 3. **GUARDRAIL — RB-035 (PR #117) is UNRATIFIED; do not build it.** It proposes dropping the `acknowledged` finding state and single-action resolution. Build the **ratified** `FINDING_SYSTEM_SPECIFICATION_V1 §C` (`detected → acknowledged → addressed → closed`, multi-step resolution) until the owner ratifies the DL.
 
 ## The build contract (read first)
-1. **The prototype is the spec.** `product-design/oslo_r1_experience_mockup_v2.html` is the **reference of record** — build the UX to match it exactly (layout, states, interactions, copy). The experience specs describe intent; where a detail is only visible in the prototype, the prototype wins.
+1. **The prototype is the spec.** `product-design/oslo_r1_experience_mockup_v3.html` is the **reference of record** — build the UX to match it exactly (layout, states, interactions, copy). The experience specs describe intent; where a detail is only visible in the prototype, the prototype wins.
 2. **Two gates make "exact" verifiable, not trusted** (`30_engineering/visual_regression/`):
    - **Visual** — screenshot diff of each built surface vs the committed baselines (≤ 2%).
    - **Behavioral** — the per-surface checks in `ACCEPTANCE_CRITERIA.md`, each traced to a decision.
@@ -20,7 +20,7 @@
 ## What to read, in order
 
 **A. The design (what to build)**
-- Prototype (reference of record): `product-design/oslo_r1_experience_mockup_v2.html` (+ `OSLO_R1_UX_PROTOTYPE_NOTES_AND_GAP_AUDIT.md`).
+- Prototype (reference of record): `product-design/oslo_r1_experience_mockup_v3.html` (+ `OSLO_R1_UX_PROTOTYPE_NOTES_AND_GAP_AUDIT.md`).
 - Experience specs: `10_product/experience/` — especially `PROJECT_OVERVIEW_SCREEN_SPECIFICATION_V1` (§P/§Q), `FINDING_PRESENTATION_SPECIFICATION_V1` (§O), `FINDING_PANEL_SPECIFICATION_V1`, `GLOBAL_NAVIGATION_AND_APPLICATION_SHELL_SPECIFICATION_V1` (§U), `HISTORY_AND_TIMELINE_SURFACE_SPECIFICATION_V1` (§U), `MRI_EXPERIENCE_SPECIFICATION_V1` (§R), `OSLO_CHAT_AND_CLARIFICATION_EXPERIENCE_SPECIFICATION_V1` (Q3), `UI_SCREEN_INVENTORY` (12 primary screens; Recommendation Workspace retired).
 - Screen list: `10_product/experience/UI_SCREEN_INVENTORY.md`.
 

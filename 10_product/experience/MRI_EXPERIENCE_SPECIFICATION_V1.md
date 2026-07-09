@@ -159,7 +159,7 @@ Explicitly **deferred / out of scope:** the **Artifact Workspace** full spec; go
 
 ## R. Ratified update — Outcome Confidence presentation (DL-085, 2026-07-02)
 
-Ratified by **DL-085**. Where the MRI understanding-overview surfaces the **Outcome Confidence** signal, it follows DL-085: the sanctioned **numeric index (0–100) is focal, with band + reliability as qualifiers, never bare** (Master Spec §20). This applies **only** to the Outcome Confidence signal. **MRIE-9 / MRIE-C4 are unchanged and binding:** finding **prioritization** and **weakness-map (heatmap) intensity** remain **qualitative** (severity) with **no scores, percentages, or ranking numbers** — the Outcome Confidence index is not a finding/heatmap score. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html`.
+Ratified by **DL-085**. Where the MRI understanding-overview surfaces the **Outcome Confidence** signal, it follows DL-085: the sanctioned **numeric index (0–100) is focal, with band + reliability as qualifiers, never bare** (Master Spec §20). This applies **only** to the Outcome Confidence signal. **MRIE-9 / MRIE-C4 are unchanged and binding:** finding **prioritization** and **weakness-map (heatmap) intensity** remain **qualitative** (severity) with **no scores, percentages, or ranking numbers** — the Outcome Confidence index is not a finding/heatmap score. Visual reference of record: `product-design/oslo_r1_experience_mockup_v3.html`.
 
 ---
 
@@ -167,6 +167,6 @@ Ratified by **DL-085**. Where the MRI understanding-overview surfaces the **Outc
 
 ## S. Ratified update — reached via its own surface (DL-090, 2026-07-02)
 
-Ratified by **DL-090** (presentation-only). The MRI Experience (weakness map / heatmap) is reached via its own **"Attention map" left-rail surface**, **not** embedded in the Project Overview (which previously hosted the heatmap). All MRI integrity rules stand (qualitative; no scores/ranks; only reanalysis changes assessment). Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html` (baseline `07-attention-map`).
+Ratified by **DL-090** (presentation-only). The MRI Experience (weakness map / heatmap) is reached via its own **"Attention map" left-rail surface**, **not** embedded in the Project Overview (which previously hosted the heatmap). All MRI integrity rules stand (qualitative; no scores/ranks; only reanalysis changes assessment). Visual reference of record: `product-design/oslo_r1_experience_mockup_v3.html` (baseline `07-attention-map`).
 
 **MRI Experience Specification v1 complete.**

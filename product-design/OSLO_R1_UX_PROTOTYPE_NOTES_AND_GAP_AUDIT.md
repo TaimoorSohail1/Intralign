@@ -1,8 +1,10 @@
 # OSLO R1 — UX Prototype: Notes, Decisions & Spec-Gap Audit
 
-**Artifact:** `oslo_r1_experience_mockup_v2.html` (single self-contained file; dark Intralign theme)
+**Artifact:** `oslo_r1_experience_mockup_v3.html` (single self-contained file; dark Intralign theme)
 **Status:** Working target-experience prototype — **illustrative, not canon.** Structure traces to ratified specs; sample text/numbers are demo data on the DevNorth 2026 sample.
 **Date:** 2026-06-30
+
+> **v3 update (2026-07-08) — current baseline.** `oslo_r1_experience_mockup_v3.html` supersedes v2 and is the reference of record. v3 realizes two ratified decisions: **DL-095** — the user-facing label is **"Issues"** (Findings/weaknesses retired from the UI; Finding stays the internal object; the find/severity toggle is relabeled **By dimension / By severity**); and **DL-094** — the issue lifecycle is simplified to **Open -> Addressed -> Resolved** (the *Acknowledge* stage removed), with single-action **"Apply this fix"** where OSLO can draft (`validated`/`recommended` are internal-only — no UI change). v2 is preserved (marked superseded) because ratified records **DL-088/090/093** reference it. **Follow-up:** the visual-regression baseline screenshots (`30_engineering/visual_regression/`) must be regenerated from v3 for the issue/lifecycle surfaces.
 
 > This is a design exploration. Per the Authority Constraint, none of this is ratified UX; when the direction is locked it should route through Framework 001 as a UX-revision proposal against `10_product/experience` for owner ratification.
 

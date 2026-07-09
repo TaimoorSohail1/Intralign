@@ -1,6 +1,6 @@
 # R1 Visual-Regression Harness
 
-Enforces that the **built app matches the ratified prototype** (`product-design/oslo_r1_experience_mockup_v2.html` — the reference of record). Pairs pixel-diff baselines with the objective `ACCEPTANCE_CRITERIA.md` so "built exactly as designed" is verified at the gate, not trusted.
+Enforces that the **built app matches the ratified prototype** (`product-design/oslo_r1_experience_mockup_v3.html` — the reference of record). Pairs pixel-diff baselines with the objective `ACCEPTANCE_CRITERIA.md` so "built exactly as designed" is verified at the gate, not trusted.
 
 ## Layout
 - `surfaces.json` — the surface manifest (viewport, diff threshold, per-surface prototype prep + app route).

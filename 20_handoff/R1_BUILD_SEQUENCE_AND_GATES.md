@@ -15,7 +15,7 @@
 - **Depends on.** Nothing — this is the root. Everything app-side is blocked until it lands.
 
 ### Step 2 — Reconcile the Disclose UI to the **updated** reference prototype
-- **What.** PR #116 (merged) moved the reference-of-record prototype (`product-design/oslo_r1_experience_mockup_v2.html`) substantially — heatmap layout, finding panel, onboarding chat, closed-findings filter, share/export icons, tour anchoring, artifact-editable affordance — and refreshed **all 9** visual-regression baselines. The built UI must match the new target.
+- **What.** PR #116 (merged) moved the reference-of-record prototype (`product-design/oslo_r1_experience_mockup_v3.html`) substantially — heatmap layout, finding panel, onboarding chat, closed-findings filter, share/export icons, tour anchoring, artifact-editable affordance — and refreshed **all 9** visual-regression baselines. The built UI must match the new target.
 - **Gate (enforces the step).** **Visual-regression** (behavioral + pixel) compares the app against the updated baselines; divergence **fails CI**. This step is enforced automatically — no manual sign-off needed.
 - **Depends on.** Step 1 (app on `main`).
 

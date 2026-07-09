@@ -1,6 +1,6 @@
 # R1 UX Acceptance Criteria (per surface)
 
-> Makes "built exactly as designed" **verifiable**, not trusted. Two gates per surface: **(A) visual** — the built surface matches the committed baseline within `diffThreshold` (see `surfaces.json`); and **(B) structural/behavioral** — the objective checks below, each traceable to a ratified decision (DL-085…089) and to the UI↔backend binding. A surface passes only if **both** gates pass. Baselines are captured from `product-design/oslo_r1_experience_mockup_v2.html` (reference of record). Date: 2026-07-02.
+> Makes "built exactly as designed" **verifiable**, not trusted. Two gates per surface: **(A) visual** — the built surface matches the committed baseline within `diffThreshold` (see `surfaces.json`); and **(B) structural/behavioral** — the objective checks below, each traceable to a ratified decision (DL-085…089) and to the UI↔backend binding. A surface passes only if **both** gates pass. Baselines are captured from `product-design/oslo_r1_experience_mockup_v3.html` (reference of record). Date: 2026-07-02.
 
 ## Global (apply to every surface)
 - **Confidence never bare** — wherever Confidence appears it shows band + reliability qualifier; never health/probability framing (DL-085; Interpretation Doctrine).

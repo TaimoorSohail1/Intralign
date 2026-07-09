@@ -244,6 +244,6 @@ Explicitly **deferred / out of scope:** compliance-grade audit logs; exportable 
 
 ## U. Ratified update — History as center pane (DL-088, 2026-07-02)
 
-Ratified by **DL-088** (presentation-only). History is presented as a **center pane** reachable from the left rail (consistent with Overview/Findings), while remaining a **secondary, append-only, read-only** surface — no restore/rollback, no structured actions, no decision-record framing; viewing changes no assessment. Center-pane presentation does not elevate it to a primary understanding surface. Visual reference of record: `product-design/oslo_r1_experience_mockup_v2.html`.
+Ratified by **DL-088** (presentation-only). History is presented as a **center pane** reachable from the left rail (consistent with Overview/Findings), while remaining a **secondary, append-only, read-only** surface — no restore/rollback, no structured actions, no decision-record framing; viewing changes no assessment. Center-pane presentation does not elevate it to a primary understanding surface. Visual reference of record: `product-design/oslo_r1_experience_mockup_v3.html`.
 
 **History & Timeline Surface Specification v1 complete.**

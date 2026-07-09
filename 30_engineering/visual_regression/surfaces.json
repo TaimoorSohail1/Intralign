@@ -1,8 +1,8 @@
 {
-  "_note": "Surface manifest for R1 visual-regression. Baselines are captured from the reference-of-record prototype (product-design/oslo_r1_experience_mockup_v2.html). The built app is compared against these baselines. 'proto.prep' drives the prototype; 'app.path'/'app.prep' are how the dev reaches the equivalent surface in the built app (fill these in for your app's routes).",
+  "_note": "Surface manifest for R1 visual-regression. Baselines are captured from the reference-of-record prototype (product-design/oslo_r1_experience_mockup_v3.html). The built app is compared against these baselines. 'proto.prep' drives the prototype; 'app.path'/'app.prep' are how the dev reaches the equivalent surface in the built app (fill these in for your app's routes).",
   "viewport": { "width": 1440, "height": 960 },
   "diffThreshold": 0.02,
-  "prototype": "../../product-design/oslo_r1_experience_mockup_v2.html",
+  "prototype": "../../product-design/oslo_r1_experience_mockup_v3.html",
   "surfaces": [
     { "name": "01-onboarding",   "proto": { "prep": "" },                                            "app": { "path": "/" } },
     { "name": "02-overview",     "proto": { "prep": "jumpToWorkspace()" },                            "app": { "path": "/projects/{sampleId}/overview" } },

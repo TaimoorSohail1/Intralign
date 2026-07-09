@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- STATUS: Historical — superseded by oslo_r1_experience_mockup_v3.html (2026-07-08). v3 realizes DL-094 (issue lifecycle) + DL-095 (Issues label). Preserved because ratified records DL-088/090/093 reference this file. -->
+<!-- CURRENT R1 UX BASELINE (2026-07-08) — supersedes oslo_r1_experience_mockup_v2.html. Realizes DL-094 (issue lifecycle: Open->Addressed->Resolved; Acknowledge removed; single-action Apply) + DL-095 (user-facing 'Issues' label). -->
 <html lang="en" style="background:#111315">
 <head>
 <meta charset="UTF-8">
@@ -843,7 +843,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
 <div id="onboarding">
   <div class="ob-brand" onclick="showWorkspace()" style="cursor:pointer" title="Workspace Home"><div class="logo">I</div><div><div class="nm">Intralign</div><div class="sb">OSLO · Strategic project leadership</div></div></div>
   <div class="ob-h">See your plan like a strategic leader.</div>
-  <div class="ob-sub">Drop in a plan, brief, or notes. OSLO shows how clear, aligned, and feasible it is — and what's weakening it.</div>
+  <div class="ob-sub">Drop in a plan, brief, or notes. OSLO shows how clear, aligned, and feasible it is — and where the issues are.</div>
   <div class="composer">
     <textarea id="obtext" oninput="checkIntake()" placeholder="e.g. We're running DevNorth 2026, a one-day developer conference on Sep 18 for ~450 attendees. Sponsors fund it. Venue, speakers, registration and on-site logistics are the big unknowns…"></textarea>
     <div class="crow">
@@ -897,7 +897,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
       <div class="ws-card" onclick="enterWorkspace()">
         <div class="ws-cardtop"><div class="ws-name">DevNorth 2026</div><span class="chip">sample · event</span></div>
         <div class="ws-conf"><span class="conf-dot"></span> Understanding <b style="color:var(--text)">Moderate</b> · qualified by Moderate reliability</div>
-        <div class="ws-meta">Analyzed · 2h ago · 6 findings · 7 artifacts</div>
+        <div class="ws-meta">Analyzed · 2h ago · 6 issues · 7 artifacts</div>
         <div class="ws-tags"><span class="ws-tag">Owned</span><span class="ws-tag pin">★ Pinned</span></div>
       </div>
     </div>
@@ -907,13 +907,13 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
       <div class="ws-card" onclick="alert('Opens Q3 Platform Migration → Project Overview. (Demo focuses on DevNorth.)')">
         <div class="ws-cardtop"><div class="ws-name">Q3 Platform Migration</div><span class="chip">shared</span></div>
         <div class="ws-conf"><span class="conf-dot" style="background:var(--conf-low)"></span> Understanding <b style="color:var(--text)">Low</b> · qualified by Limited reliability</div>
-        <div class="ws-meta ws-stale">⚠ Analysis stale · edited since last run · 3 findings</div>
+        <div class="ws-meta ws-stale">⚠ Analysis stale · edited since last run · 3 issues</div>
         <div class="ws-tags"><span class="ws-tag">Shared with me</span></div>
       </div>
       <div class="ws-card" onclick="alert('Opens Brand Refresh → Project Overview. (Demo focuses on DevNorth.)')">
         <div class="ws-cardtop"><div class="ws-name">Brand Refresh 2026</div><span class="chip">marketing</span></div>
         <div class="ws-conf"><span class="conf-dot" style="background:var(--conf-high)"></span> Understanding <b style="color:var(--text)">High</b> · qualified by High reliability</div>
-        <div class="ws-meta">Analyzed · 1d ago · 1 finding · 6 artifacts</div>
+        <div class="ws-meta">Analyzed · 1d ago · 1 issue · 6 artifacts</div>
         <div class="ws-tags"><span class="ws-tag">Owned</span></div>
       </div>
       <div class="ws-card ws-new" onclick="newProject()">
@@ -949,7 +949,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
     <aside class="explorer">
       <div class="ex-sec">Project</div>
       <div class="ex-item active" id="exHome" onclick="openTab('understanding')"><span class="ic">◎</span> Overview</div>
-      <div class="ex-item" id="exFindings" onclick="openAllFindings()"><span class="ic">⚑</span> Findings <span class="fb tot" id="exFindCount">6</span></div>
+      <div class="ex-item" id="exFindings" onclick="openAllFindings()"><span class="ic">⚑</span> Issues <span class="fb tot" id="exFindCount">6</span></div>
       <div class="ex-item" id="exHistory" onclick="openHistory()"><span class="ic">◴</span> History</div>
       <div class="ex-item" id="exMRI" onclick="openMRI()"><span class="ic">▦</span> Attention map</div>
       <div class="ex-sec">Plan artifacts</div>
@@ -994,8 +994,8 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
         <!-- FINDINGS (center pane — filterable index; leaves the OSLO panel visible) -->
         <section class="pane" id="pane-findings">
           <div class="finds-pane">
-            <div class="finds-head"><div class="lens-tabs"><button class="lens on" data-lens="find" onclick="setLens('find',this)">Findings</button><button class="lens" data-lens="issue" onclick="setLens('issue',this)">Issues</button></div><span id="fa-count" style="color:var(--subtle);font-size:13px"></span></div>
-            <div class="fa-lenssub" id="fa-lenssub">What's weakening your understanding — grouped by dimension.</div>
+            <div class="finds-head"><div class="lens-tabs"><button class="lens on" data-lens="find" onclick="setLens('find',this)">By dimension</button><button class="lens" data-lens="issue" onclick="setLens('issue',this)">By severity</button></div><span id="fa-count" style="color:var(--subtle);font-size:13px"></span></div>
+            <div class="fa-lenssub" id="fa-lenssub">Your issues — grouped by dimension.</div>
             <div class="fa-filters"><div class="ff-row"><span class="fa-lab">Status</span><div class="ff-chips"><button class="ff on" data-f="status" data-v="open" onclick="setFilt('status','open',this)">Open</button><button class="ff" data-f="status" data-v="closed" onclick="setFilt('status','closed',this)">Closed</button><button class="ff" data-f="status" data-v="all" onclick="setFilt('status','all',this)">All</button></div></div>
               <div class="ff-row"><span class="fa-lab">Dimension</span><div class="ff-chips">
                 <button class="ff on" data-f="dim" data-v="all" onclick="setFilt('dim','all',this)">All</button>
@@ -1025,8 +1025,8 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
         <section class="pane active" id="pane-understanding">
           <div class="uc">
             <div class="errbar" id="errbar" style="display:none"><span class="ar-i" style="color:var(--danger)">⚠</span><span style="flex:1">Reanalysis couldn't complete — showing your <b style="color:var(--text)">last-good understanding</b>, unchanged. <a onclick="retryAnalysis()">Retry</a></span><span class="coach-x" onclick="document.getElementById('errbar').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
-            <div class="arrival" id="arrival" style="display:none"><span class="ar-i">✦</span><span class="ar-t"><b>Initial analysis complete in <span id="arrival-t">41</span>s.</b> OSLO read your brief, drafted <a onclick="openArtifact('Intent')">7 plan artifacts</a>, assessed Clarity · Alignment · Feasibility, and surfaced <a onclick="openAllFindings()">15 findings</a>.</span><a onclick="startTour()" style="color:var(--primary-light);cursor:pointer;white-space:nowrap;font-weight:600;align-self:center" title="A 60-second tour of how to use OSLO">Take a quick tour →</a><span class="coach-x" onclick="document.getElementById('arrival').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
-            <div class="coach" id="coach-ov" style="display:none"><span>This is your <b>strategic read</b>. Confidence is how well OSLO understands the plan. Start with what's weakening understanding, then decide what to act on.</span><span class="coach-x" onclick="document.getElementById('coach-ov').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
+            <div class="arrival" id="arrival" style="display:none"><span class="ar-i">✦</span><span class="ar-t"><b>Initial analysis complete in <span id="arrival-t">41</span>s.</b> OSLO read your brief, drafted <a onclick="openArtifact('Intent')">7 plan artifacts</a>, assessed Clarity · Alignment · Feasibility, and surfaced <a onclick="openAllFindings()">15 issues</a>.</span><a onclick="startTour()" style="color:var(--primary-light);cursor:pointer;white-space:nowrap;font-weight:600;align-self:center" title="A 60-second tour of how to use OSLO">Take a quick tour →</a><span class="coach-x" onclick="document.getElementById('arrival').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
+            <div class="coach" id="coach-ov" style="display:none"><span>This is your <b>strategic read</b>. Confidence is how well OSLO understands the plan. Start with your issues, then decide what to act on.</span><span class="coach-x" onclick="document.getElementById('coach-ov').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
             <div class="card hero">
               <div class="ch"><h3>Confidence</h3><span class="info" data-tip="Confidence is understanding maturity — not a health score, probability, or grade. It is always qualified by reliability. Understanding matures in stages: Orientation → Expanded → Validated.">i</span><span class="ustate cur" id="ustate" style="margin-left:auto" title="Analysis state — still updating while analysis runs, current when complete. Only reanalysis changes the assessment.">Current</span><span class="elabel derived" style="margin-left:8px">From OSLO</span></div>
               <div class="conf-head">
@@ -1036,7 +1036,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
                 </svg><div class="ctr"><span class="idx-wrap"><span class="idx mono" id="ring-idx">58</span><span class="idx-max">/100</span></span><span class="band" id="ring-band">Moderate</span></div></div>
                 <div class="conf-meta">
                   <div class="big">Understanding is forming. <span class="info" data-tip="How this is calculated: OSLO derives Confidence from the CAF dimensions (Clarity · Alignment · Feasibility), qualified by reliability. It changes only when something changes the read — a finding resolved, evidence added — and can rise or fall. The named band is the meaningful unit; small shifts within a band aren't material.">i</span></div>
-                  <div class="nh">Qualified by <b style="color:var(--muted)">Moderate reliability</b> — held back by a Feasibility weakness. <span class="info" data-tip="The signal sits here because of a Feasibility weakness (one of the three dimensions), not a reliability shortfall. When the three dimensions look strong but the read is weakly supported (low reliability), Confidence is held back and flagged — never shown bare. Reliability basis (Coverage · Evidence availability · Assessability) lives in the Confidence pill explainer — click the Confidence chip.">i</span></div>
+                  <div class="nh">Qualified by <b style="color:var(--muted)">Moderate reliability</b> — held back by weak Feasibility. <span class="info" data-tip="The signal sits here because Feasibility is weak (one of the three dimensions), not a reliability shortfall. When the three dimensions look strong but the read is weakly supported (low reliability), Confidence is held back and flagged — never shown bare. Reliability basis (Coverage · Evidence availability · Assessability) lives in the Confidence pill explainer — click the Confidence chip.">i</span></div>
                   <div class="nh" id="conf-change" style="display:none;margin-top:7px"></div>
                 </div>
               </div>
@@ -1058,7 +1058,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
         <section class="pane" id="pane-mri">
           <div class="mri-pane">
             <div class="mri-head"><h1>Attention map</h1><span class="mri-sub">Where the plan needs work</span></div>
-            <div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px"><div style="flex:1;font-size:12.5px;color:var(--subtle)">Brighter = more attention. Click a cell to investigate.</div><div class="mfilter"><button class="mf on" onclick="mview(this,'heat')">▦ Heatmap</button><button class="mf" onclick="mview(this,'field')">⌖ Dimensions</button><button class="mf" onclick="openAllFindings()">⚑ All findings</button></div></div>
+            <div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px"><div style="flex:1;font-size:12.5px;color:var(--subtle)">Brighter = more attention. Click a cell to investigate.</div><div class="mfilter"><button class="mf on" onclick="mview(this,'heat')">▦ Heatmap</button><button class="mf" onclick="mview(this,'field')">⌖ Dimensions</button><button class="mf" onclick="openAllFindings()">⚑ All issues</button></div></div>
               <div class="attn-canvas"><div class="mcanvas" id="mcanvas">
               <div class="gridbg"></div>
 
@@ -1103,7 +1103,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
     <aside class="chatp">
       <div class="chat-h"><div class="o">O</div><div class="nm">OSLO</div><button class="chat-min" onclick="toggleChat()" title="Hide the OSLO panel" aria-label="Hide the OSLO panel">›</button></div>
       <div class="chat-scroll" id="chatscroll">
-        <div class="cmsg" id="mapmsg"><div class="who">OSLO</div><div class="bub">I've mapped DevNorth 2026 into your plan artifacts. Understanding is at <b style="color:var(--text)">Moderate</b> maturity — the main thing holding it back is a Critical feasibility gap in <a onclick="openArtifact('Resources')">Resources</a> (venue Wi-Fi capacity). Ask me anything, or open <a onclick="openAllFindings()">all findings</a> to see all 15.</div></div>
+        <div class="cmsg" id="mapmsg"><div class="who">OSLO</div><div class="bub">I've mapped DevNorth 2026 into your plan artifacts. Understanding is at <b style="color:var(--text)">Moderate</b> maturity — the main thing holding it back is a Critical feasibility gap in <a onclick="openArtifact('Resources')">Resources</a> (venue Wi-Fi capacity). Ask me anything, or open <a onclick="openAllFindings()">all issues</a> to see all 15.</div></div>
       </div>
       <div class="chat-foot">
         <div class="chat-input">
@@ -1174,7 +1174,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
     <div class="orient-sub">This is how you work as an <b style="color:var(--muted)">AI-first PM</b> — you stay in control at every step, with OSLO's understanding beside you.</div>
     <div class="orient-steps">
       <div class="ostep"><div class="ostep-b">Understanding</div><div class="ostep-who oslo">OSLO</div><p>OSLO reads your plan and shows how sound it is — where it's clear, where it's weak, and what could derail the outcome.</p></div>
-      <div class="ostep"><div class="ostep-b">Judgement</div><div class="ostep-who">You</div><p>You weigh what matters. OSLO surfaces the findings and options; the call is always yours.</p></div>
+      <div class="ostep"><div class="ostep-b">Judgement</div><div class="ostep-who">You</div><p>You weigh what matters. OSLO surfaces the issues and options; the call is always yours.</p></div>
       <div class="ostep"><div class="ostep-b">Decision</div><div class="ostep-who">You</div><p>You commit the path. OSLO records it — it never decides for you.</p></div>
       <div class="ostep"><div class="ostep-b">Oversight</div><div class="ostep-who">You</div><p>As reality shifts, OSLO re-reads and updates the picture, so you can adjust and stay on course.</p></div>
     </div>
@@ -1250,7 +1250,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
 <div class="scrim" id="exportModal"><div class="modal" style="max-width:460px">
   <h2>Export snapshot <span class="info" data-tip="Export generates no new assessment and never triggers reanalysis.">i</span></h2><p>Package what OSLO already understands.</p>
   <div class="set-row"><span>Analysis currency</span><b style="color:var(--success)">Current</b></div>
-  <div class="set-row"><span>Include</span><span>Overview · findings · recommendations · artifacts</span></div>
+  <div class="set-row"><span>Include</span><span>Overview · issues · recommendations · artifacts</span></div>
   <div style="display:flex;gap:8px;margin:14px 0"><button class="btn btn-ghost btn-sm" onclick="alert('PDF snapshot (demo). Free tier: PDF only.')">📄 PDF</button><button class="btn btn-ghost btn-sm" onclick="alert('Copyable summary (demo).')">📋 Copy summary</button><button class="btn btn-ghost btn-sm" onclick="openShare();closeModal('exportModal')">🔗 View-only link</button></div>
   <div class="callout">This export presents OSLO’s understanding — <b>not</b> project health, readiness, outcome probability, approval, or certification. Confidence is shown with its reliability qualifier; Clarity, Alignment &amp; Feasibility stay qualitative.</div>
   <div style="text-align:right;margin-top:14px"><button class="btn btn-ghost btn-sm" onclick="closeModal('exportModal')">Close</button></div>
@@ -1319,7 +1319,7 @@ const _ahead=(n,layer)=>`<div class="art-head"><h1>${dispName(n)}</h1><span clas
    Execution (Work breakdown · Schedule · Resources) = STRUCTURED tables. Format follows artifact type by design, not by accident.
    CAF weaknesses render as inline colored spans in both. */
 const _layer=(n)=>['Intent','Context','Scope','Requirements'].includes(n)?'Understanding core · DL-077':'Execution plan · classical-PM';
-const _a=(fid,sev,dim,txt)=>`<span class="anno ${sev}" contenteditable="false" data-fid="${fid}" onclick="openFindingPanel('${fid}')" title="${dim} weakness · ${sev==='crit'?'Critical':sev==='mod'?'Moderate':'Warning'} — click to investigate">${txt}</span>`;
+const _a=(fid,sev,dim,txt)=>`<span class="anno ${sev}" contenteditable="false" data-fid="${fid}" onclick="openFindingPanel('${fid}')" title="${dim} issue · ${sev==='crit'?'Critical':sev==='mod'?'Moderate':'Warning'} — click to investigate">${txt}</span>`;
 const ARTPROSE={
  Intent:`<p>Run <b>DevNorth 2026</b>, a one-day in-person developer conference on <b>September 18</b>, to strengthen the regional developer community and generate qualified pipeline for the sponsor.</p>
   <h3>Success</h3><ul><li>A well-attended, well-rated event.</li><li>Produces qualified sponsor leads.</li></ul>`,
@@ -1463,10 +1463,11 @@ const FINDINGS={
    rec:'Add catering, registration, and signage to the resource plan.',
    paths:['Venue-provided catering','External caterer + volunteers']}
 };
-/* ---- finding lifecycle (FINDING_SYSTEM §C): detected→acknowledged→addressed→closed (+reopened/superseded). Never resolved by hand — only reanalysis closes. ---- */
+/* ---- finding lifecycle (DL-094 / FINDING_SYSTEM §C): detected(Open)→addressed→closed(Resolved) (+reopened/superseded); acknowledge stage removed. Never resolved by hand — only reanalysis resolves. ---- */
 const _fstatus={};Object.keys(FINDINGS).forEach(id=>_fstatus[id]='detected');
-const LIFE=['detected','acknowledged','addressed','closed'];
-const _statusword={detected:'Open · detected',acknowledged:'Acknowledged',addressed:'Addressed · awaiting reanalysis',closed:'Closed',reopened:'Reopened',superseded:'Superseded'};
+const LIFE=['detected','addressed','closed'];
+const _lifelabel={detected:'Open',addressed:'Addressed',closed:'Resolved',reopened:'Reopened',superseded:'Superseded'};
+const _statusword={detected:'Open',addressed:'Addressed · awaiting reanalysis',closed:'Resolved',reopened:'Reopened',superseded:'Superseded'};
 function setStatus(id,s){_fstatus[id]=s;pushHistory('finding_lifecycle_changed',FINDINGS[id].title+' → '+_statusword[s]);renderFocus();updateFindCount();}
 function updateFindCount(){const n=Object.keys(FINDINGS).filter(id=>!['closed','superseded'].includes(_fstatus[id])).length;const e=document.getElementById('exFindCount');if(e){e.textContent=n;e.style.display=n?'':'none';}updateSectionBadges();}
 /* live per-section rail badges from FINDINGS (count + max-severity colour) */
@@ -1476,13 +1477,13 @@ const _sevrankF={critical:0,moderate:1,warning:2};
 function renderFocus(){const el=document.getElementById('focus');if(!el)return;
   const open=Object.entries(FINDINGS).filter(([id])=>!['closed','superseded'].includes(_fstatus[id]));
   open.sort((a,b)=>_sevrankF[a[1].sev]-_sevrankF[b[1].sev]);
-  if(open.length===0){el.innerHTML=`<div class="focus-h">Nothing is weakening understanding right now.</div>`;return;}
+  if(open.length===0){el.innerHTML=`<div class="focus-h">Nothing needs your attention right now.</div>`;return;}
   const [tid,tf]=open[0];const tc=tf.sev==='critical'?'crit':tf.sev==='moderate'?'mod':'warn';const rest=open.slice(1,3);
   el.innerHTML=`<div class="focus-h">Start here<span class="focus-sub">the most consequential open item</span></div>`+
     `<div class="focus-lead sev-${tc}" onclick="openFindingPanel('${tid}')" role="button" tabindex="0"><span class="fi-sev ${tc}">${_sevword[tf.sev]}</span><span class="fi-t">${tf.title}</span><span class="fi-in">${dispName(tf.art)}</span><span class="fl-cta">Review →</span></div>`+
     (rest.length?`<div class="focus-then">Then: `+rest.map(([id,f])=>`<a onclick="openFindingPanel('${id}')">${f.title}</a>`).join(' · ')+`</div>`:'')+
-    `<div class="focus-more" onclick="openAllFindings()">See all ${open.length} findings →</div>`;}
-function ackFinding(id){if(_fstatus[id]==='detected'){setStatus(id,'acknowledged');profBump('findingFlow');openFindingPanel(id);}}
+    `<div class="focus-more" onclick="openAllFindings()">See all ${open.length} issues →</div>`;}
+/* ackFinding removed — acknowledge stage retired (DL-094); Open items advance to Addressed by acting. */
 let _curArt='Resources';
 function openArtifact(name){name=name||_curArt;_curArt=name;
   const v=document.getElementById('artview');if(v)v.innerHTML=artHTML(name);
@@ -1494,7 +1495,7 @@ function openArtifact(name){name=name||_curArt;_curArt=name;
 let _wi=-1;
 function curAnnos(){return Array.from(document.querySelectorAll('#artdoc .anno'));}
 function updateWnav(){const a=curAnnos();const el=document.getElementById('wnav');if(!el)return;
-  el.innerHTML=a.length?`<span class="wnav-lab">Jump to weakness</span><button class="wbtn" onclick="weaknessNav(-1)" title="Previous weakness" aria-label="Previous weakness">⌃</button><span class="wct" id="wct-n">${a.length} found</span><button class="wbtn" onclick="weaknessNav(1)" title="Next weakness" aria-label="Next weakness">⌄</button>`:`<span class="wct" style="color:var(--success)">✓ No weaknesses in view</span>`;_wi=-1;}
+  el.innerHTML=a.length?`<span class="wnav-lab">Jump to issue</span><button class="wbtn" onclick="weaknessNav(-1)" title="Previous issue" aria-label="Previous issue">⌃</button><span class="wct" id="wct-n">${a.length} found</span><button class="wbtn" onclick="weaknessNav(1)" title="Next issue" aria-label="Next issue">⌄</button>`:`<span class="wct" style="color:var(--success)">✓ No issues in view</span>`;_wi=-1;}
 function weaknessNav(d){const a=curAnnos();if(!a.length)return;_wi=(_wi+d+a.length)%a.length;const t=a[_wi];
   const n=document.getElementById('wct-n');if(n)n.textContent=(_wi+1)+' of '+a.length;
   a.forEach(x=>{x.style.outline='';});t.style.outline='2px solid var(--primary)';t.style.outlineOffset='2px';t.scrollIntoView({behavior:'smooth',block:'center'});}
@@ -1507,48 +1508,47 @@ function _prof(){try{return JSON.parse(localStorage.getItem('oslo-prof')||'{}');
 function profBump(k){try{const p=_prof();p[k]=(p[k]||0)+1;localStorage.setItem('oslo-prof',JSON.stringify(p));}catch(e){}}
 function learned(k){return (_prof()[k]||0)>=(LEARN_THRESHOLD[k]||3);}
 function resetTips(){try{localStorage.removeItem('oslo-prof');}catch(e){}alert('Tips reset — the full guidance will show again.');}
-/* plain-language, state-aware guidance — the detected/acknowledged teaching sunsets once learned; status feedback (addressed/closed) always shows */
+/* plain-language, state-aware guidance — the detected teaching sunsets once learned; status feedback (addressed/resolved) always shows */
 function findingGuide(st,hasDraft){const teach=!learned('findingFlow');
-  if(st==='detected') return teach?`<b>OSLO flagged this.</b> Acknowledge to record your take, or resolve it by changing the plan below — OSLO re-checks automatically.`:'';
-  if(st==='acknowledged') return teach?`<b>✓ Acknowledged.</b> Resolve by picking an option below or updating the plan — findings close only through reanalysis.`:'';
-  if(st==='addressed') return hasDraft?`<b>Path selected.</b> Review OSLO’s drafted change and confirm it as part of your plan — then OSLO reanalyzes and the finding closes if it no longer holds.`:`<b>Path selected.</b> Update the plan to put it in place — OSLO reanalyzes, and the finding closes if it no longer holds.`;
+  if(st==='detected') return teach?`<b>OSLO flagged this.</b> Resolve it by choosing an option or changing the plan below — OSLO re-checks automatically.`:'';
+  if(st==='addressed') return hasDraft?`<b>Path selected.</b> Review OSLO’s drafted change and confirm it as part of your plan — then OSLO reanalyzes and the issue is resolved if it no longer holds.`:`<b>Path selected.</b> Update the plan to put it in place — OSLO reanalyzes, and the issue is resolved if it no longer holds.`;
   if(st==='closed') return `<b>✓ Resolved.</b> Reanalysis confirmed this no longer holds after you updated the plan.`;
   return `<b>${_statusword[st]||''}</b>`;}
 function toggleMore(el){const b=el.nextElementSibling;const open=b.style.display==='block';b.style.display=open?'none':'block';el.innerHTML=open?(el.dataset.more||'Show more ▾'):(el.dataset.less||'Show less ▴');}
 function openFindingPanel(id){const f=FINDINGS[id];if(!f)return;const st=_fstatus[id]||'detected';const cur=LIFE.indexOf(st);
-  const track=LIFE.map((s,i)=>`<span class="st${i<cur?' done':''}${i===cur?' on':''}">${s}</span>${i<LIFE.length-1?'<span class="a">→</span>':''}`).join('');
+  const track=LIFE.map((s,i)=>`<span class="st${i<cur?' done':''}${i===cur?' on':''}">${_lifelabel[s]||s}</span>${i<LIFE.length-1?'<span class="a">→</span>':''}`).join('');
   const foot = st==='detected'
-    ? `<button class="btn btn-primary btn-sm" onclick="ackFinding('${id}')">Acknowledge</button><button class="btn btn-ghost btn-sm" onclick="askOSLO('${id}')">✦ Ask OSLO</button><button class="btn btn-ghost btn-sm" onclick="closeFindingPanel()">Defer</button>`
+    ? `<button class="btn btn-ghost btn-sm" onclick="askOSLO('${id}')">✦ Ask OSLO</button><button class="btn btn-ghost btn-sm" onclick="closeFindingPanel()">Defer</button>`
     : st==='closed'
-    ? `<button class="btn btn-ghost btn-sm" onclick="askOSLO('${id}')">✦ Ask OSLO</button><span style="font-size:12px;color:var(--success)">✓ Closed by reanalysis after you updated the plan.</span>`
+    ? `<button class="btn btn-ghost btn-sm" onclick="askOSLO('${id}')">✦ Ask OSLO</button><span style="font-size:12px;color:var(--success)">✓ Resolved by reanalysis after you updated the plan.</span>`
     : `<button class="btn btn-primary btn-sm" onclick="applyFix('${id}')">Update the plan</button><button class="btn btn-ghost btn-sm" onclick="askOSLO('${id}')">✦ Ask OSLO</button>`;
   document.getElementById('findbody').innerHTML=
-    `<div class="fp-h"><div class="fp-top"><span class="chip sev${f.sev[0]==='c'?'c':f.sev[0]==='m'?'m':'w'}">${_sevword[f.sev]}</span><span class="chip">${f.type}</span><span class="fp-close" onclick="closeFindingPanel()">×</span></div><h2>${f.title}</h2><div style="font-size:11.5px;color:var(--subtle);margin-top:6px">${id} · affects ${f.dim} · in <a style="color:var(--primary-light);cursor:pointer" onclick="openArtifact('${f.art}');closeFindingPanel()" title="Open the ${dispName(f.art)} artifact — where this weakness lives">${dispName(f.art)}</a></div><div class="fp-life">${track}</div></div>
+    `<div class="fp-h"><div class="fp-top"><span class="chip sev${f.sev[0]==='c'?'c':f.sev[0]==='m'?'m':'w'}">${_sevword[f.sev]}</span><span class="chip">${f.type}</span><span class="fp-close" onclick="closeFindingPanel()">×</span></div><h2>${f.title}</h2><div style="font-size:11.5px;color:var(--subtle);margin-top:6px">${id} · affects ${f.dim} · in <a style="color:var(--primary-light);cursor:pointer" onclick="openArtifact('${f.art}');closeFindingPanel()" title="Open the ${dispName(f.art)} artifact — where this issue lives">${dispName(f.art)}</a></div><div class="fp-life">${track}</div></div>
      <div class="fp-scroll">
        ${(g=>g?`<div class="fp-guide">${g}</div>`:'')(findingGuide(st, !!f.draft))}
        <div class="fp-sec"><p class="fp-lead">${f.summary}</p>${f.detail?`<a class="fp-more-toggle" data-more="Show more detail ▾" data-less="Show less ▴" onclick="toggleMore(this)">Show more detail ▾</a><div class="fp-more-body" style="display:none">${f.detail}</div>`:''}</div>
        <div class="fp-sec fp-ev-sec collapsed"><div class="t fp-ev-h" onclick="this.closest('.fp-ev-sec').classList.toggle('collapsed')"><span class="tchev">▸</span>Evidence <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--subtle)">· ${f.ev.length} source${f.ev.length>1?'s':''}, traceable to your inputs</span></div><div class="fp-ev-body">${f.ev.map(e=>`<div class="fp-ev"><div class="src">${e[0]}</div>${e[1]}</div>`).join('')}</div></div>
        <div class="fp-sec"><div class="t">What this weakens</div><p>${f.caf}</p></div>
        ${f.clar?`<div class="fp-sec fp-clar"><div class="t">OSLO needs a clarification</div><p>${f.clar}</p><div class="dcbox"><input class="tinput" id="clar-${id}" placeholder="Your answer…"><button class="btn btn-primary btn-sm" onclick="answerClarification('${id}')">Send</button></div><div style="font-size:11px;color:var(--subtle);margin-top:6px">Answering updates your plan info and OSLO reanalyzes. You clarify.</div></div>`:''}
-       <div class="fp-sec"><div class="t">Ways to resolve <span class="info" data-tip="A grouping of recommendations — selecting one records your chosen approach (your decision), distinct from OSLO’s suggestion. Acceptance alone is not success — the finding closes only after you act and reanalysis re-runs.">i</span></div><div class="fp-rec"><div class="tag">◆ OSLO Recommended <span class="elabel derived">From OSLO</span></div><p style="color:var(--text)">${f.rec}</p><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="selectPath(this,'rec','${id}')">Choose this approach</button></div><div style="font-size:11px;color:var(--subtle);margin:13px 0 6px">Other options</div>${f.paths.map(p=>`<div class="fp-path" onclick="selectPath(this,'path','${id}')">○ ${p}<span class="selmark">Select</span></div>`).join('')}<div class="fp-ownfix" onclick="closeFindingPanel();openArtifact('${f.art}')" role="button" tabindex="0">✎ Write my own fix in ${dispName(f.art)} →</div></div>
+       <div class="fp-sec"><div class="t">Ways to resolve <span class="info" data-tip="A grouping of recommendations — selecting one records your chosen approach (your decision), distinct from OSLO’s suggestion. Acceptance alone is not success — the issue is resolved only after you act and reanalysis re-runs.">i</span></div><div class="fp-rec"><div class="tag">◆ OSLO Recommended <span class="elabel derived">From OSLO</span></div><p style="color:var(--text)">${f.rec}</p><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="selectPath(this,'rec','${id}')">Apply this fix</button></div><div style="font-size:11px;color:var(--subtle);margin:13px 0 6px">Other options</div>${f.paths.map(p=>`<div class="fp-path" onclick="selectPath(this,'path','${id}')">○ ${p}<span class="selmark">Select</span></div>`).join('')}<div class="fp-ownfix" onclick="closeFindingPanel();openArtifact('${f.art}')" role="button" tabindex="0">✎ Write my own fix in ${dispName(f.art)} →</div></div>
        ${renderComments(id)}
        <div class="fp-sec"><div class="t">History</div><p>Detected in the last Initial Analysis. <a style="color:var(--primary-light);cursor:pointer" onclick="openHistory()">Open full timeline →</a></p></div>
      </div>
-     <div class="fp-foot">${foot}<div class="fp-note">How this resolves <span class="info" data-tip="You can’t resolve a finding by hand — change the plan and OSLO reanalyzes automatically.">i</span></div></div>`;
+     <div class="fp-foot">${foot}<div class="fp-note">How this resolves <span class="info" data-tip="You can’t resolve an issue by hand — change the plan and OSLO reanalyzes automatically.">i</span></div></div>`;
   document.getElementById('findpanel').classList.add('open');
   document.getElementById('findscrim').classList.add('open');}
 /* loop continuation (advisory): after a finding closes, surface the next priority — OSLO suggests, you decide */
 function nextOpenFinding(){const o=Object.entries(FINDINGS).filter(([id])=>!['closed','superseded'].includes(_fstatus[id]));o.sort((a,b)=>_sevrankF[a[1].sev]-_sevrankF[b[1].sev]);return o[0];}
 function nudgeNext(){const s=document.getElementById('chatscroll');if(!s)return;const nx=nextOpenFinding();
   if(nx){const id=nx[0],f=nx[1];s.insertAdjacentHTML('beforeend',`<div class="cmsg"><div class="who">OSLO</div><div class="bub">Next, the most consequential open item is <b style="color:var(--text)">${f.title}</b> (${_sevword[f.sev]} · ${dispName(f.art)}). <a onclick="openFindingPanel('${id}')">Investigate →</a></div></div>`);}
-  else{s.insertAdjacentHTML('beforeend',`<div class="cmsg"><div class="who">OSLO</div><div class="bub">That clears the open findings — nothing is weakening understanding right now. Keep refining, or you're in good shape.</div></div>`);}
+  else{s.insertAdjacentHTML('beforeend',`<div class="cmsg"><div class="who">OSLO</div><div class="bub">That clears your open issues — nothing needs your attention right now. Keep refining, or you're in good shape.</div></div>`);}
   s.scrollTop=s.scrollHeight;}
 /* Apply-Suggested-Fix loop (RECOMMENDATION_SYSTEM §11): accept path → update info → reanalyze → finding weakens/closes; confidence moves downstream. */
 function applyFix(id){const f=FINDINGS[id];profBump('findingFlow');closeFindingPanel();openArtifact(f.art);
   const ss=document.getElementById('savestate');if(ss){ss.className='savestate reana';ss.innerHTML='<span class="ss-dot"></span> Reanalyzing…';}
   pushHistory('reanalysis_run','Reanalysis triggered after you updated '+f.art);
   const s=document.getElementById('chatscroll');
-  if(s)s.insertAdjacentHTML('beforeend',`<div class="cmsg"><div class="who">OSLO</div><div class="bub">You updated <a onclick="openArtifact('${f.art}')">${dispName(f.art)}</a>. Reanalyzing… acceptance alone isn't success — I re-check whether the finding actually weakens.</div></div>`);
+  if(s)s.insertAdjacentHTML('beforeend',`<div class="cmsg"><div class="who">OSLO</div><div class="bub">You updated <a onclick="openArtifact('${f.art}')">${dispName(f.art)}</a>. Reanalyzing… acceptance alone isn't success — I re-check whether the issue still holds.</div></div>`);
   setTimeout(()=>{setStatus(id,'closed');
     if(ss){ss.className='savestate ok';ss.innerHTML='<span class="ss-dot"></span> Up to date';}
     bumpConfidence();
@@ -1563,7 +1563,7 @@ function answerClarification(id){const inp=document.getElementById('clar-'+id);c
   setUState('prov','Reanalyzing…');
   setTimeout(()=>{setStatus(id,'closed');setUState('cur','Current');bumpConfidence();
     const an=document.querySelector('.anno[data-fid="'+id+'"]');if(an){an.className='anno';an.style.textDecoration='none';an.style.color='var(--success)';an.title='Clarified — resolved';}
-    if(s){s.insertAdjacentHTML('beforeend',`<div class="cmsg win"><div class="who">OSLO</div><div class="bub">✓ <b style="color:var(--text)">Nice — your answer cleared this up.</b> The finding is resolved and your <b style="color:var(--success)">understanding is stronger</b> (Clarity). <a onclick="openTab('understanding')">See your Confidence read →</a> · <a onclick="openHistory()">timeline</a></div></div>`);s.scrollTop=s.scrollHeight;}nudgeNext();},1600);}
+    if(s){s.insertAdjacentHTML('beforeend',`<div class="cmsg win"><div class="who">OSLO</div><div class="bub">✓ <b style="color:var(--text)">Nice — your answer cleared this up.</b> The issue is resolved and your <b style="color:var(--success)">understanding is stronger</b> (Clarity). <a onclick="openTab('understanding')">See your Confidence read →</a> · <a onclick="openHistory()">timeline</a></div></div>`);s.scrollTop=s.scrollHeight;}nudgeNext();},1600);}
 /* draft-and-confirm (advisory-compliant): OSLO drafts the change (Derived); you confirm → Attested → reanalysis. Never auto-applied. */
 function reviewDraft(id){const f=FINDINGS[id];closeFindingPanel();
   document.getElementById('draftbody').innerHTML=`<h2 style="display:flex;align-items:center;gap:9px">OSLO drafted this change <span class="elabel derived" style="font-size:9px">From OSLO</span></h2><p style="color:var(--muted);font-size:13px;margin-bottom:12px">For <b style="color:var(--text)">${f.title}</b> · ${dispName(f.art)}. Review it — confirming records it as <b style="color:var(--text)">part of your plan</b>, and OSLO reanalyzes. Nothing changes until you confirm.</p><div class="draft-prop">${f.draft}</div><div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="attestDraft('${id}')">Confirm — add it to my plan</button><button class="btn btn-ghost btn-sm" onclick="closeModal('draftModal');applyFix('${id}')">Edit it myself</button><button class="btn btn-ghost btn-sm" onclick="closeModal('draftModal')">Cancel</button></div>`;
@@ -1606,7 +1606,7 @@ function bumpConfidence(){
     '<div class="cc-grid">'+
       '<div><span class="cc-k">Confidence</span><span class="cc-v">Moderate '+before+' → <b style="color:var(--success)">'+after+'</b> <span style="color:var(--subtle);font-weight:400">▲'+(after-before)+'</span></span></div>'+
       '<div><span class="cc-k">Feasibility</span><span class="cc-v">Limited → <b style="color:var(--success)">Forming</b></span></div>'+
-      '<div><span class="cc-k">Findings</span><span class="cc-v"><b style="color:var(--success)">'+RESOLVED_COUNT+' resolved</b> · '+(6-RESOLVED_COUNT)+' open</span></div>'+
+      '<div><span class="cc-k">Issues</span><span class="cc-v"><b style="color:var(--success)">'+RESOLVED_COUNT+' resolved</b> · '+(6-RESOLVED_COUNT)+' open</span></div>'+
     '</div>'+
     '<div style="margin-top:6px;color:var(--muted)">Cause: you resolved the critical Resources gap — the read is more complete. <a class="cc-why" data-more="Why ▾" data-less="Hide ▴" onclick="toggleMore(this)" style="color:var(--primary-light);cursor:pointer">Why ▾</a><div class="cc-why-body" style="display:none;margin-top:5px">This is a <b style="color:var(--muted)">CAF change</b> (Clarity · Alignment · Feasibility) — reliability is unchanged. Confidence can also fall when analysis finds something new.</div><div style="margin-top:5px"><a onclick="openHistory()" style="color:var(--primary-light);cursor:pointer">See the timeline →</a></div></div>';
     cc.classList.remove('flash');void cc.offsetWidth;cc.classList.add('flash');}
@@ -1616,7 +1616,7 @@ function acceptRec(b){b.textContent='✓ Chosen';b.style.background='var(--succe
 function openFinding(){openFindingPanel('FND-2041');}
 const _filt={dim:'all',sev:'all',art:'all',status:'open'};let _group='dim';let _lens='find';const DIMORDER=['Feasibility','Clarity','Alignment'];const SEVORDER=['critical','moderate','warning'];const _sevrank={critical:0,moderate:1,warning:2};
 /* Two lenses on the same evaluated findings (canon Finding→Issue): 'find' = by understanding/dimension (descriptive); 'issue' = by severity (action, urgency-forward). Not a rename, not a second destination. */
-function setLens(l,btn){_lens=l;document.querySelectorAll('.lens').forEach(b=>b.classList.toggle('on',b.dataset.lens===l));_group=l==='issue'?'sev':'dim';const sub=document.getElementById('fa-lenssub');if(sub)sub.textContent=l==='issue'?'What needs your attention — most urgent first. Severity is qualitative; only reanalysis resolves.':"What's weakening your understanding — grouped by dimension.";const gr=document.getElementById('ff-grouprow');if(gr)gr.style.display=l==='issue'?'none':'';renderFinds();}
+function setLens(l,btn){_lens=l;document.querySelectorAll('.lens').forEach(b=>b.classList.toggle('on',b.dataset.lens===l));_group=l==='issue'?'sev':'dim';const sub=document.getElementById('fa-lenssub');if(sub)sub.textContent=l==='issue'?'What needs your attention — most urgent first. Severity is qualitative; only reanalysis resolves.':"Your issues — grouped by dimension.";const gr=document.getElementById('ff-grouprow');if(gr)gr.style.display=l==='issue'?'none':'';renderFinds();}
 const _ARTORDER=['Intent','Context','Scope','Requirements','WBS','Schedule','Resources'];
 /* Section filter row — built from the sections that actually have active findings, so it stays in sync as findings close (mirrors the heatmap's section×dimension scoping). */
 function renderArtFilters(){const el=document.getElementById('fa-artf');if(!el)return;
@@ -1625,7 +1625,7 @@ function renderArtFilters(){const el=document.getElementById('fa-artf');if(!el)r
   el.innerHTML=chip('all','All',-1)+_ARTORDER.map(s=>chip(s,dispName(s),cnt[s]||0)).join('');}
 function _syncFiltBtns(){document.querySelectorAll('[data-f="status"]').forEach(b=>b.classList.toggle('on',b.dataset.v===_filt.status));document.querySelectorAll('[data-f="dim"]').forEach(b=>b.classList.toggle('on',b.dataset.v===_filt.dim));document.querySelectorAll('[data-f="sev"]').forEach(b=>b.classList.toggle('on',b.dataset.v===_filt.sev));renderArtFilters();}
 /* Findings is a center pane (consistent with Overview/History) — the individual finding still opens as a contextual panel over it (Panel Model). */
-function _showFindingsPane(){document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));const pane=document.getElementById('pane-findings');if(pane)pane.classList.add('active');document.querySelectorAll('.ex-item').forEach(e=>e.classList.remove('active'));const fx=document.getElementById('exFindings');if(fx)fx.classList.add('active');document.getElementById('crumb').textContent='Findings';document.getElementById('cscroll').scrollTop=0;}
+function _showFindingsPane(){document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));const pane=document.getElementById('pane-findings');if(pane)pane.classList.add('active');document.querySelectorAll('.ex-item').forEach(e=>e.classList.remove('active'));const fx=document.getElementById('exFindings');if(fx)fx.classList.add('active');document.getElementById('crumb').textContent='Issues';document.getElementById('cscroll').scrollTop=0;}
 function openAllFindings(){_filt.dim='all';_filt.sev='all';_filt.art='all';_filt.status='open';_syncFiltBtns();renderFinds();_showFindingsPane();}
 function openResolvedFindings(){_filt.dim='all';_filt.sev='all';_filt.art='all';_filt.status='closed';_syncFiltBtns();renderFinds();_showFindingsPane();}
 function closeAllFindings(){openTab('understanding');}
@@ -1654,8 +1654,8 @@ function setGroup(g,btn){_group=g;renderFinds();}
 function syncGroupBtns(){document.querySelectorAll('.gb').forEach(b=>b.classList.toggle('on',b.dataset.g===_group));}
 /* canonical empty states (distinct: none-found / not-yet-analyzed / unavailable) */
 function _empty(kind){const M={
-  'none':['✓','good','No findings — understanding looks clear','Nothing is weakening this project right now.'],
-  'none-lens':['✓','good','Nothing under this lens','No weaknesses match the current filter.'],
+  'none':['✓','good','No findings — understanding looks clear','Nothing needs your attention right now.'],
+  'none-lens':['✓','good','Nothing under this lens','No issues match the current filter.'],
   'wait':['◴','wait','Not yet analyzed','Analysis hasn’t run yet — findings appear once it completes.'],
   'unavail':['!','err','Temporarily unavailable','Findings couldn’t load. This is a technical issue, not an all-clear.']};
   const m=M[kind]||M['none'];return `<div class="empty ${m[1]}"><div class="ei">${m[0]}</div><div style="color:var(--text);font-weight:500">${m[2]}</div><div style="margin-top:4px">${m[3]}</div></div>`;}
@@ -1664,7 +1664,7 @@ const _ftypeLabel={'Missing information':'Missing info'};
 const _basisTip={inferred:'Epistemic basis — OSLO inferred this; it is not stated in your inputs (Derived).',stated:'Epistemic basis — grounded in something stated in your inputs (Attested).'};
 const _fcard=([id,f])=>{const c=f.sev==='critical'?'danger':f.sev==='moderate'?'warning':'subtle';return `<div class="fcard" onclick="openFindingPanel('${id}')"><div class="sevbar" style="background:var(--${c})"></div><div style="flex:1"><div class="ft">${f.title}</div><div class="fm"><span class="chip sev${f.sev[0]==='c'?'c':f.sev[0]==='m'?'m':'w'}">${_sevword[f.sev]}</span><span class="ftype" title="Finding type — what the observation is (Gap / Conflict / Risk family).">${_ftypeLabel[f.type]||f.type}</span>${f.basis?`<span class="fbasis ${f.basis}" title="${_basisTip[f.basis]||''}">${f.basis}</span>`:''}<span>· ${_group==='art'?f.dim:'in '+dispName(f.art)}</span><span>· <span class="fstatus ${_fstatus[id]}" style="font-size:9px">${_statusword[_fstatus[id]]}</span></span>${f.clar&&!['closed','superseded'].includes(_fstatus[id])?'<span>· <span class="fstatus" style="font-size:9px;color:var(--primary-light);border-color:rgba(217,122,58,.4)">❓ clarification</span></span>':''}</div></div><span style="color:var(--subtle);align-self:center">›</span></div>`;};
 function renderFinds(){renderArtFilters();syncGroupBtns();const all=Object.entries(FINDINGS).filter(([id])=>{const st=_fstatus[id];if(_filt.status==='closed')return st==='closed';if(_filt.status==='all')return st!=='superseded';return !['closed','superseded'].includes(st);});const total=all.length;let shown=0,html='';
-  if(total===0){document.getElementById('fa-list').innerHTML=_filt.status==='closed'?'<div style="text-align:center;color:var(--subtle);font-size:13px;padding:38px 16px">No resolved findings yet. Findings you resolve will appear here.</div>':_empty('none');document.getElementById('fa-count').textContent=(_filt.status==='closed'?'0 resolved':'0 active');return;}
+  if(total===0){document.getElementById('fa-list').innerHTML=_filt.status==='closed'?'<div style="text-align:center;color:var(--subtle);font-size:13px;padding:38px 16px">No resolved issues yet. Issues you resolve will appear here.</div>':_empty('none');document.getElementById('fa-count').textContent=(_filt.status==='closed'?'0 resolved':'0 active');return;}
   const match=([id,f])=>(_filt.dim==='all'||f.dim===_filt.dim)&&(_filt.sev==='all'||f.sev===_filt.sev)&&(_filt.art==='all'||f.art===_filt.art);
   const bySev=_group==='sev', byArt=_group==='art';
   const keys=bySev?SEVORDER:(byArt?_ARTORDER:DIMORDER), kf=bySev?'sev':(byArt?'art':'dim');
@@ -1676,22 +1676,22 @@ function renderFinds(){renderArtFilters();syncGroupBtns();const all=Object.entri
     if(bySev&&_filt.sev!=='all'&&_filt.sev!==k)return;
     let items=all.filter(e=>e[1][kf]===k&&match(e));
     items.sort((a,b)=>_sevrank[a[1].sev]-_sevrank[b[1].sev]);
-    if(items.length===0){if(_group==='dim'&&_filt.dim==='all'&&_filt.sev==='all'&&_filt.art==='all'&&k==='Alignment')html+='<div class="fa-group"><div class="fa-gh">Alignment · 0</div><div style="font-size:12px;color:var(--subtle)">Nothing is weakening Alignment.</div></div>';return;}
+    if(items.length===0){if(_group==='dim'&&_filt.dim==='all'&&_filt.sev==='all'&&_filt.art==='all'&&k==='Alignment')html+='<div class="fa-group"><div class="fa-gh">Alignment · 0</div><div style="font-size:12px;color:var(--subtle)">No issues under Alignment.</div></div>';return;}
     shown+=items.length;
     const label=bySev?_sevword[k]:(byArt?dispName(k):k);
     html+=`<div class="fa-group"><div class="fa-gh">${label} · ${items.length}</div>`+items.map(_fcard).join('')+'</div>';
   });
   const hidden=total-shown,filtered=(_filt.dim!=='all'||_filt.sev!=='all'||_filt.art!=='all');
   if(shown===0)html=_empty('none-lens');
-  document.getElementById('fa-list').innerHTML=triage+html+(filtered&&hidden>0&&shown>0?`<div class="fa-hidden">${hidden} finding${hidden>1?'s':''} hidden by filters · <a style="color:var(--primary-light);cursor:pointer" onclick="clearFilt()">clear filters</a></div>`:'');
+  document.getElementById('fa-list').innerHTML=triage+html+(filtered&&hidden>0&&shown>0?`<div class="fa-hidden">${hidden} issue${hidden>1?'s':''} hidden by filters · <a style="color:var(--primary-light);cursor:pointer" onclick="clearFilt()">clear filters</a></div>`:'');
   document.getElementById('fa-count').textContent=shown+(_filt.status==='closed'?' resolved':_filt.status==='all'?' total':' active')+(filtered?' (filtered)':'');}
 function selectPath(el,kind,id){const sec=el.closest('.fp-scroll');if(!sec)return;
   sec.querySelectorAll('.fp-path').forEach(p=>{p.classList.remove('sel');const m=p.querySelector('.selmark');if(m)m.textContent='Select';});
-  const rb=sec.querySelector('.fp-rec .btn-primary');if(rb){rb.textContent='Choose this approach';rb.style.background='';rb.style.color='';}
+  const rb=sec.querySelector('.fp-rec .btn-primary');if(rb){rb.textContent='Apply this fix';rb.style.background='';rb.style.color='';}
   if(kind==='path'){el.classList.add('sel');const m=el.querySelector('.selmark');if(m)m.textContent='✓ Chosen';}
   else{el.textContent='✓ Chosen';el.style.background='var(--success)';el.style.color='var(--on-accent)';}
   if(id&&_fstatus[id]!=='closed'){setStatus(id,'addressed');pushHistory('selected_recommendation','chosen approach recorded for '+FINDINGS[id].title);
-    const life=document.querySelector('.fp-life');if(life){const _c=LIFE.indexOf('addressed');life.innerHTML=LIFE.map((s,i)=>`<span class="st${i<_c?' done':''}${i===_c?' on':''}">${s}</span>${i<LIFE.length-1?'<span class="a">→</span>':''}`).join('');}
+    const life=document.querySelector('.fp-life');if(life){const _c=LIFE.indexOf('addressed');life.innerHTML=LIFE.map((s,i)=>`<span class="st${i<_c?' done':''}${i===_c?' on':''}">${_lifelabel[s]||s}</span>${i<LIFE.length-1?'<span class="a">→</span>':''}`).join('');}
     const hasDraft=!!FINDINGS[id].draft;
     const foot=document.querySelector('.fp-foot');if(foot)foot.innerHTML=hasDraft
       ? `<button class="btn btn-primary btn-sm" onclick="reviewDraft('${id}')">Review OSLO's draft →</button><button class="btn btn-ghost btn-sm" onclick="applyFix('${id}')">Edit it myself</button><div class="fp-note">OSLO can draft this change; you confirm it as part of your plan. Nothing changes until you do.</div>`
@@ -1699,13 +1699,13 @@ function selectPath(el,kind,id){const sec=el.closest('.fp-scroll');if(!sec)retur
     const scroll=document.querySelector('.fp-scroll');let g=document.querySelector('.fp-guide');
     if(!g&&scroll){g=document.createElement('div');g.className='fp-guide';scroll.insertBefore(g,scroll.firstChild);}
     if(g){g.innerHTML=findingGuide('addressed',hasDraft);g.classList.add('go');}
-    if(scroll)scroll.scrollTop=0;}}
+    if(scroll)scroll.scrollTop=0;if(kind==='rec'&&FINDINGS[id]&&FINDINGS[id].draft){reviewDraft(id);}}}
 /* ---- append-only History / Timeline (HISTORY_AND_TIMELINE §J: prior states retained, never overwritten) ---- */
 const HISTORY=[
-  {t:'now − 2h',type:'analysis_run',lab:'Initial Analysis complete',d:'7 artifacts drafted · Clarity/Alignment/Feasibility assessed · Confidence Moderate (58) · 6 findings detected',cur:true},
+  {t:'now − 2h',type:'analysis_run',lab:'Initial Analysis complete',d:'7 artifacts drafted · Clarity/Alignment/Feasibility assessed · Confidence Moderate (58) · 6 issues detected',cur:true},
   {t:'now − 2h',type:'reanalysis_run',lab:'Extended Analysis complete',d:'Superseded the provisional orientation · Confidence refined 58 → 62',cur:true},
   {t:'now − 2h',type:'artifact_version_saved',lab:'7 artifact versions saved (v1)',d:'Intent · Context · Scope · Requirements · WBS · Schedule · Resources'},
-  {t:'now − 2h',type:'finding_detected',lab:'6 findings detected',d:'across Requirements, WBS, Schedule, Resources'}
+  {t:'now − 2h',type:'finding_detected',lab:'6 issues detected',d:'across Requirements, WBS, Schedule, Resources'}
 ];
 function pushHistory(type,text){HISTORY.unshift({t:'just now',type:type,lab:text,d:'',cur:true});const ph=document.getElementById('pane-history');if(ph&&ph.classList.contains('active'))renderHistory();}
 const _histicon={analysis_run:'✦',reanalysis_run:'↻',artifact_version_saved:'▤',finding_detected:'⚑',finding_lifecycle_changed:'◆',selected_recommendation:'✓',reanalysis_failed:'!',analysis_stale:'…'};
@@ -1947,7 +1947,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const t
 let _cmdItems=[],_cmdSel=0;
 function cmdRegistry(){const it=[];
   it.push({g:'Go to',ic:'◎',label:'Overview',run:()=>openTab('understanding'),kw:'home confidence'});
-  it.push({g:'Go to',ic:'⚑',label:'Findings',run:()=>openAllFindings(),kw:'issues weaknesses'});
+  it.push({g:'Go to',ic:'⚑',label:'Issues',run:()=>openAllFindings(),kw:'issues weaknesses'});
   it.push({g:'Go to',ic:'◴',label:'History',run:()=>openHistory(),kw:'timeline audit'});
   _ARTORDER.forEach(s=>it.push({g:'Plan artifacts',ic:'▤',label:dispName(s),run:()=>openArtifact(s),kw:'artifact '+dispName(s)}));
   Object.entries(FINDINGS).filter(([id])=>!['closed','superseded'].includes(_fstatus[id])).forEach(([id,f])=>it.push({g:'Open a finding',ic:'•',label:f.title,sub:_sevword[f.sev]+' · '+dispName(f.art),run:()=>openFindingPanel(id),kw:'finding '+f.dim+' '+dispName(f.art)}));
@@ -1995,8 +1995,8 @@ function renderLedger(){const el=document.getElementById('ledger');if(!el)return
   const meter=(lab,n,d)=>`<div class="pv-meter"><div class="pv-mh"><span>${lab}</span><b>${n} / ${d}</b></div><div class="pv-bar"><i style="width:${d?Math.round(n/d*100):0}%"></i></div></div>`;
   el.innerHTML=`<div class="pv-2col">`+
     `<div class="pv-col">`+
-      `<div class="pv-stat"${res?' style="cursor:pointer" onclick="openResolvedFindings()" role="button" tabindex="0" title="View resolved findings"':''}><span class="pv-n"${res?' style="color:var(--primary-light)"':''}>${res}</span><span class="pv-l">findings resolved · ${open} open${res?' <span style="color:var(--primary-light)">· view →</span>':''}</span></div>`+
-      `<div class="pv-stat"><span class="pv-n ${crit?'danger':''}">${crit}</span><span class="pv-l">critical findings open${crit?'':' · all clear'}</span></div>`+
+      `<div class="pv-stat"${res?' style="cursor:pointer" onclick="openResolvedFindings()" role="button" tabindex="0" title="View resolved findings"':''}><span class="pv-n"${res?' style="color:var(--primary-light)"':''}>${res}</span><span class="pv-l">issues resolved · ${open} open${res?' <span style="color:var(--primary-light)">· view →</span>':''}</span></div>`+
+      `<div class="pv-stat"><span class="pv-n ${crit?'danger':''}">${crit}</span><span class="pv-l">critical issues open${crit?'':' · all clear'}</span></div>`+
     `</div>`+
     `<div class="pv-col">`+
       meter('Dependencies confirmed',dep,3)+
@@ -2029,7 +2029,7 @@ if(/^#(overview|workspace|test|demo)/i.test(location.hash||'')){try{jumpToWorksp
   <div class="arr-scrim" onclick="closeArrivalSpot()"></div>
   <div class="arr-card" role="dialog" aria-label="Initial analysis complete">
     <div class="arr-h"><span class="i">✦</span> Initial analysis complete in 41s</div>
-    <div class="arr-t">OSLO read your brief, drafted <b>7 plan artifacts</b>, assessed Clarity · Alignment · Feasibility, and surfaced <b style="color:var(--primary-light)">15 findings</b> — 1 critical. Here's where to start.</div>
+    <div class="arr-t">OSLO read your brief, drafted <b>7 plan artifacts</b>, assessed Clarity · Alignment · Feasibility, and surfaced <b style="color:var(--primary-light)">15 issues</b> — 1 critical. Here's where to start.</div>
     <div class="arr-row"><button class="arr-btn" onclick="startTour();closeArrivalSpot()">Take a quick tour →</button><span class="arr-skip" onclick="closeArrivalSpot()" role="button" tabindex="0">Skip — explore on my own</span></div>
   </div>
 </div>
