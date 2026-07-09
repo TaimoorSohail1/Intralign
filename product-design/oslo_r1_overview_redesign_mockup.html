@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<!-- REVIEW MOCKUP (2026-07-08) — Overview redesign: leaner confidence section + aligned Start here / Progress / More.
+     Illustrative, not canon. Routes through Framework 001 as a UX-revision proposal against 10_product/experience
+     before it supersedes the Overview surface in the prototype. Band words (Strong/Moderate/Limited) are
+     placeholders pending the canonical CAF band vocabulary. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSLO — Overview redesign mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --page:#0a0d0c; --card:#0e1512; --raised:#141b18; --bd:rgba(255,255,255,.08);
+    --tp:#eef1ee; --ts:#99a29b; --tm:#6c756e; --eb:#7f887f;
+    --amber:#e0954f; --amberlink:#d98b4a; --green:#7fb890;
+    --track:rgba(255,255,255,.09); --fill:#b9c0bb;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page);color:var(--tp);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 24px 80px;}
+  .card{background:var(--card);border:0.5px solid var(--bd);border-radius:16px;padding:24px 30px;margin-bottom:20px;}
+  .eb{font-size:11px;letter-spacing:.15em;color:var(--eb);text-transform:uppercase;}
+  .desc{font-size:12.5px;color:#5f6862;text-transform:none;letter-spacing:0;margin-left:10px;}
+  .ts{color:var(--ts);} .tm{color:var(--tm);}
+  .i{display:inline-flex;width:15px;height:15px;border:1px solid rgba(255,255,255,.2);border-radius:50%;color:var(--tm);font-size:9px;align-items:center;justify-content:center;vertical-align:2px;margin-left:5px;}
+  .chip{display:inline-flex;align-items:center;gap:8px;font-size:13px;padding:7px 14px;border-radius:999px;border:0.5px solid rgba(255,255,255,.13);background:rgba(255,255,255,.03);}
+  .dot{width:7px;height:7px;border-radius:50%;background:#8f988f;flex:none;}
+  .trk{height:8px;background:var(--track);border-radius:999px;overflow:hidden;}
+  .fil{height:100%;background:var(--fill);border-radius:999px;}
+  .lnk{font-size:12.5px;color:var(--amberlink);cursor:pointer;display:inline-flex;align-items:center;gap:5px;text-decoration:none;}
+  .arrow::after{content:"\2192";}
+  .btn{background:var(--amber);color:#141b18;font-size:13px;font-weight:500;border-radius:9px;padding:9px 17px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+  .drow{position:relative;cursor:help;}
+  .tip{position:absolute;left:114px;top:26px;z-index:8;background:#1b2420;border:0.5px solid rgba(255,255,255,.13);border-radius:10px;padding:10px 13px;font-size:11.5px;color:#c3ccc5;line-height:1.55;width:320px;opacity:0;pointer-events:none;transition:opacity .12s;}
+  .drow:hover .tip{opacity:1;}
+  .divi{height:0.5px;background:var(--bd);margin:22px 0;}
+  .dlab{width:96px;font-size:14px;padding-bottom:2px;border-bottom:1px dotted rgba(255,255,255,.18);}
+  .band{width:78px;text-align:right;font-size:13px;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ CONFIDENCE ============ -->
+  <section class="card">
+    <div class="eb">Confidence<span class="i">i</span></div>
+
+    <div style="display:flex;align-items:flex-start;gap:30px;margin-top:14px;flex-wrap:wrap;">
+      <div style="line-height:.85;">
+        <span style="font-size:62px;font-weight:600;font-variant-numeric:tabular-nums;">66</span><span style="font-size:21px;color:var(--tm);"> / 100</span>
+      </div>
+      <div style="flex:1;min-width:270px;padding-top:4px;">
+        <div style="font-size:28px;font-weight:600;letter-spacing:-.01em;">Understanding is forming</div>
+        <div class="ts" style="font-size:15px;margin-top:6px;">Moderate · qualified by <span style="color:var(--tp);font-weight:500;">moderate reliability</span></div>
+        <div style="display:flex;align-items:center;gap:13px;margin-top:15px;">
+          <svg width="152" height="34" viewBox="0 0 152 34" preserveAspectRatio="none" role="img" aria-label="Trend rising from 58 to 66">
+            <polyline points="0,26 38,22 76,24 114,14 152,6" fill="none" stroke="#8f988f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="152" cy="6" r="3.5" fill="#eef1ee"/>
+          </svg>
+          <span class="ts" style="font-size:13px;">&#8599; 8 since your change · from 58</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divi"></div>
+
+    <div class="ts" style="font-size:13px;margin-bottom:16px;">What's driving it <span class="tm">— hover a dimension for detail</span></div>
+    <div style="display:flex;flex-direction:column;gap:15px;">
+      <div class="drow" style="display:flex;align-items:center;gap:18px;">
+        <span class="dlab">Clarity</span>
+        <div class="trk" style="flex:1;"><div class="fil" style="width:78%;"></div></div>
+        <span class="band ts">Strong</span>
+        <div class="tip"><b style="color:#eef1ee;font-weight:500;">Clarity · strong</b><br>Goals, scope, and requirements are well-defined and trace to your inputs.</div>
+      </div>
+      <div class="drow" style="display:flex;align-items:center;gap:18px;">
+        <span class="dlab">Alignment</span>
+        <div class="trk" style="flex:1;"><div class="fil" style="width:55%;"></div></div>
+        <span class="band ts">Moderate</span>
+        <div class="tip"><b style="color:#eef1ee;font-weight:500;">Alignment · moderate</b><br>Most objectives agree, but a few dependencies aren't yet reconciled.</div>
+      </div>
+      <div class="drow" style="display:flex;align-items:center;gap:18px;">
+        <span class="dlab" style="color:var(--amber);border-bottom-color:rgba(224,149,79,.4);">Feasibility</span>
+        <div class="trk" style="flex:1;"><div class="fil" style="width:30%;background:var(--amber);"></div></div>
+        <span class="band" style="color:var(--amber);">Limited</span>
+        <div class="tip"><b style="color:#f0b57e;font-weight:500;">Feasibility · limited — the limit</b><br>Resourcing and sequencing aren't yet supportable. This is the dimension holding your confidence back.</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;flex-wrap:wrap;gap:10px;">
+      <span class="ts" style="font-size:13px;"><span style="color:#c3ccc5;">5</span> issues open · <span style="color:#c3ccc5;">1</span> resolved</span>
+      <div style="display:flex;gap:22px;">
+        <span class="lnk" onclick="var w=document.getElementById('why');var o=w.style.display==='block';w.style.display=o?'none':'block';this.firstElementChild.style.transform=o?'rotate(-90deg)':'';"><span style="display:inline-block;transition:transform .15s;">&#9662;</span> Why</span>
+        <a class="lnk" href="#">Timeline <span class="arrow"></span></a>
+      </div>
+    </div>
+
+    <div id="why" style="display:block;margin-top:14px;padding:14px 16px;background:rgba(255,255,255,.03);border-radius:10px;">
+      <div class="ts" style="font-size:13px;line-height:1.65;">You resolved the critical <span style="color:#c3ccc5;">Resources</span> gap, so the plan is more complete — Feasibility rose from <span style="color:#c3ccc5;">Limited</span> to <span style="color:#c3ccc5;">Forming</span>. It's still the lowest dimension, so it holds the read back. Only reanalysis changes this.</div>
+    </div>
+  </section>
+
+  <!-- ============ START HERE ============ -->
+  <section class="card">
+    <div><span class="eb">Start here</span><span class="desc">the most consequential open item</span></div>
+    <div style="background:var(--raised);border-radius:11px;border-left:3px solid var(--amber);padding:15px 18px;margin-top:16px;display:flex;align-items:center;gap:15px;flex-wrap:wrap;">
+      <span class="chip" style="border-color:rgba(224,149,79,.35);background:rgba(224,149,79,.1);color:#e6a869;padding:5px 12px;font-size:12px;"><span class="dot" style="background:var(--amber);"></span>Moderate</span>
+      <span style="font-size:16px;font-weight:500;flex:1;min-width:200px;">Keynote backups are unconfirmed</span>
+      <span class="ts" style="font-size:13px;">Resources</span>
+      <button class="btn">Review <span class="arrow"></span></button>
+    </div>
+    <div class="ts" style="font-size:13px;margin-top:14px;line-height:1.6;"><span class="tm">Then:</span> Sponsor-lead metric has no tracking method · Registration pace is unevidenced against the 450 target</div>
+    <a class="lnk" style="margin-top:14px;" href="#">See all 14 issues <span class="arrow"></span></a>
+  </section>
+
+  <!-- ============ PROGRESS ============ -->
+  <section class="card">
+    <div><span class="eb">Progress</span><span class="desc">since the last analysis</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:30px;margin-top:18px;align-items:center;">
+      <div>
+        <div style="display:flex;align-items:baseline;gap:11px;">
+          <span style="font-size:36px;font-weight:600;">1</span>
+          <span class="ts" style="font-size:13px;">issue resolved · 14 open · <a class="lnk" style="display:inline;" href="#">view</a></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px;">
+          <span style="font-size:22px;font-weight:500;">0</span>
+          <span class="ts" style="font-size:13px;">critical open</span>
+          <span class="chip" style="border-color:rgba(127,184,144,.3);background:rgba(127,184,144,.1);color:#8fc7a4;padding:4px 11px;font-size:11.5px;"><span class="dot" style="background:var(--green);"></span>all clear</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;"><span class="ts">Dependencies confirmed</span><span style="font-variant-numeric:tabular-nums;">3 / 3</span></div>
+          <div class="trk" style="height:6px;"><div class="fil" style="width:100%;"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;"><span class="ts">Plan artifacts read</span><span style="font-variant-numeric:tabular-nums;">7 / 7</span></div>
+          <div class="trk" style="height:6px;"><div class="fil" style="width:100%;"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MORE ============ -->
+  <section class="card" style="margin-bottom:0;">
+    <div><span class="eb">More</span><span class="desc">optional — the read above is the summary</span></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-top:15px;cursor:pointer;">
+      <span style="font-size:15px;font-weight:500;">Project summary</span>
+      <span class="ts" style="font-size:13px;flex:1;">One-day dev conference · understanding Moderate, forming</span>
+      <span class="tm" style="font-size:18px;">&#8250;</span>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

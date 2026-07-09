@@ -999,6 +999,13 @@ Each changelog entry contains:
 - **Change Summary:** Findings to Issues user-facing label (RB-036). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-131 — DL-096: Overview surface redesign: confidence-led, low-cognitive-load (RB-037)
+
+- **Date:** 2026-07-08 · **Authorizing Decision:** DL-096.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-096-overview-redesign.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Overview surface redesign: confidence-led, low-cognitive-load (RB-037). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

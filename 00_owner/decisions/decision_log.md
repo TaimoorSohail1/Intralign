@@ -864,5 +864,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-093 — Finding type + epistemic basis presentation (two-axis; RB-033 Phase R1) → `00_owner/decisions/records/DL-093-finding-type-and-epistemic-basis-r1.md`
 - DL-094 — Finding flow simplification: no-Acknowledge lifecycle + single-action resolution (RB-035) → `00_owner/decisions/records/DL-094-finding-flow-simplification.md`
 - DL-095 — Findings to Issues user-facing label (RB-036) → `00_owner/decisions/records/DL-095-findings-as-issues-user-facing-label.md`
+- DL-096 — Overview surface redesign: confidence-led, low-cognitive-load (RB-037) → `00_owner/decisions/records/DL-096-overview-redesign.md`
 
 <!-- RECORDS-INDEX:END -->

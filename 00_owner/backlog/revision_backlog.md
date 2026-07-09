@@ -418,6 +418,18 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 
 ---
 
+### RB-037 — Overview surface redesign: confidence-led, low-cognitive-load (presentation-only)
+
+- **Source Finding:** Owner-directed UX refinement, 2026-07-08 (Confidence panel too prose-heavy, competing encodings, unclear focus; green delta reads as "health" — in tension with Visual §1.2).
+- **Affected Layer(s):** `10_product/experience` (`PROJECT_OVERVIEW_SCREEN_SPECIFICATION_V1`; Confidence presentation; token usage vs `RELEASE_1_VISUAL_DESIGN_AND_BRANDING_SPECIFICATION_V1 §1.2`) with `product-design` prototype (v-next) realization.
+- **Affected Concepts:** Overview layout; Confidence presentation (focal score + neutral CAF maturity bars + band words + hover detail + Why disclosure); per-dimension CAF band surfacing (CAF-01); color discipline (amber = action/attention, green = good state, neutral maturity ramp). Confidence/CAF models unchanged.
+- **Proposal Scope:** One decision — adopt the redesigned Overview (presentation-only); retire the ring gauge, the green "your change moved the read" box, and the persistent Current/From OSLO pills; align Start here / Progress / More to one grammar. Strengthens Visual §1.2 conformance.
+- **Dependencies:** `PROJECT_OVERVIEW_SCREEN_SPECIFICATION_V1` (HARD); `VISUAL_DESIGN_AND_BRANDING_SPECIFICATION_V1 §1.2` (CONFIRM); per-dimension CAF band surfacing (MED, CAF-01 supplies values); prototype Overview (MED); Confidence/CAF models (CHECK — none). **Open (anti-assumption):** canonical CAF band vocabulary must be pinned before build.
+- **Proposal:** `00_owner/decisions/PROPOSAL_OVERVIEW_REDESIGN_DRAFT.md`. Visual reference of record: `product-design/oslo_r1_overview_redesign_mockup.html`.
+- **Status:** Proposed — owner to ratify (Framework 001A review complete; Decision pending). Uses "Issues" per DL-095 (Start here).
+
+---
+
 ## Governance Notes
 
 1. This backlog is a draft. Entries reflect findings from initial repository review, not ratified governance positions.
