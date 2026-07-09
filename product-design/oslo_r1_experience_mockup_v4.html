@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- STATUS: Historical — superseded by oslo_r1_experience_mockup_v4.html (2026-07-09). v3 realized DL-094 + DL-095; v4 adds DL-096 (Overview redesign) + the CAF band vocabulary (DL-097, pending). Preserved as the prior baseline. -->
+<!-- CURRENT R1 UX BASELINE (2026-07-09) — supersedes oslo_r1_experience_mockup_v3.html. Realizes DL-094 (issue lifecycle), DL-095 (Issues label), and DL-096 (Overview redesign, confidence-led). CAF-dimension bands Limited/Forming/Solid/Strong per DL-097 (pending ratification). -->
 <html lang="en" style="background:#111315">
 <head>
 <meta charset="UTF-8">
@@ -322,6 +322,25 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .drv:hover{border-color:var(--primary);color:var(--text)}
 .drv i{width:8px;height:8px;border-radius:99px;display:inline-block;flex-shrink:0}
 .drv b{color:var(--text);font-weight:600}
+.conf-focus{display:flex;align-items:flex-start;gap:26px;flex-wrap:wrap}
+.conf-focus .num{line-height:.85;color:var(--text)}
+.conf-focus .num .idx{font-size:52px;font-weight:700;font-variant-numeric:tabular-nums}
+.conf-focus .num .idx-max{font-size:20px;font-weight:500;color:var(--subtle)}
+.conf-focus .conf-meta{flex:1;min-width:250px;padding-top:2px}
+.cafwrap{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.caflab{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+.cafrow{display:flex;align-items:center;gap:16px;padding:5px 0;position:relative;cursor:pointer}
+.cafrow .cn{width:92px;font-size:13.5px;color:var(--text);border-bottom:1px dotted var(--border-2);padding-bottom:1px}
+.caftrk{flex:1;height:8px;background:var(--border-2);border-radius:99px;overflow:hidden}
+.caffil{height:100%;background:var(--muted);border-radius:99px}
+.cafband{width:70px;text-align:right;font-size:13px;color:var(--muted)}
+.cafrow.lim .cn{color:var(--primary-light);border-bottom-color:var(--primary)}
+.cafrow.lim .caffil{background:var(--primary)}
+.cafrow.lim .cafband{color:var(--primary-light)}
+.caftip{position:absolute;left:110px;top:32px;z-index:30;background:var(--surface-2);border:1px solid var(--border-2);border-radius:9px;padding:9px 12px;font-size:11.5px;color:var(--muted);line-height:1.5;width:300px;opacity:0;pointer-events:none;transition:opacity .12s}
+.cafrow:hover .caftip{opacity:1}
+.conf-foot{display:flex;align-items:center;justify-content:space-between;margin-top:18px;flex-wrap:wrap;gap:10px}
+.conf-foot .lnk2{font-size:12.5px;color:var(--primary-light);cursor:pointer}
 .card.hero .conftrend{border-top:none;margin-top:10px;padding-top:0}
 .mri-pane{padding:22px 26px 40px;max-width:900px;margin:0 auto}
 .mri-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
@@ -1028,20 +1047,31 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
             <div class="arrival" id="arrival" style="display:none"><span class="ar-i">✦</span><span class="ar-t"><b>Initial analysis complete in <span id="arrival-t">41</span>s.</b> OSLO read your brief, drafted <a onclick="openArtifact('Intent')">7 plan artifacts</a>, assessed Clarity · Alignment · Feasibility, and surfaced <a onclick="openAllFindings()">15 issues</a>.</span><a onclick="startTour()" style="color:var(--primary-light);cursor:pointer;white-space:nowrap;font-weight:600;align-self:center" title="A 60-second tour of how to use OSLO">Take a quick tour →</a><span class="coach-x" onclick="document.getElementById('arrival').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
             <div class="coach" id="coach-ov" style="display:none"><span>This is your <b>strategic read</b>. Confidence is how well OSLO understands the plan. Start with your issues, then decide what to act on.</span><span class="coach-x" onclick="document.getElementById('coach-ov').style.display='none'" role="button" tabindex="0" title="Dismiss">×</span></div>
             <div class="card hero">
-              <div class="ch"><h3>Confidence</h3><span class="info" data-tip="Confidence is understanding maturity — not a health score, probability, or grade. It is always qualified by reliability. Understanding matures in stages: Orientation → Expanded → Validated.">i</span><span class="ustate cur" id="ustate" style="margin-left:auto" title="Analysis state — still updating while analysis runs, current when complete. Only reanalysis changes the assessment.">Current</span><span class="elabel derived" style="margin-left:8px">From OSLO</span></div>
-              <div class="conf-head">
-                <div class="ring"><svg width="112" height="112" viewBox="0 0 112 112">
-                  <circle cx="56" cy="56" r="46" fill="none" stroke="var(--border-2)" stroke-width="8"/>
-                  <circle id="ring-arc" cx="56" cy="56" r="46" fill="none" stroke="var(--conf-medium)" stroke-width="8" stroke-dasharray="289" stroke-dashoffset="121" stroke-linecap="round" style="transition:stroke-dashoffset 1s ease"/>
-                </svg><div class="ctr"><span class="idx-wrap"><span class="idx mono" id="ring-idx">58</span><span class="idx-max">/100</span></span><span class="band" id="ring-band">Moderate</span></div></div>
+              <div class="ch"><h3>Confidence</h3><span class="info" data-tip="Confidence is understanding maturity — not a health score, probability, or grade. It is always qualified by reliability. Understanding matures in stages: Orientation → Expanded → Validated.">i</span><span class="ustate cur" id="ustate" style="margin-left:auto" title="Analysis state — still updating while analysis runs, current when complete. Only reanalysis changes the assessment.">Current</span></div>
+              <div class="conf-focus">
+                <div class="num"><span class="idx mono" id="ring-idx">66</span><span class="idx-max">/100</span></div>
                 <div class="conf-meta">
-                  <div class="big">Understanding is forming. <span class="info" data-tip="How this is calculated: OSLO derives Confidence from the CAF dimensions (Clarity · Alignment · Feasibility), qualified by reliability. It changes only when something changes the read — a finding resolved, evidence added — and can rise or fall. The named band is the meaningful unit; small shifts within a band aren't material.">i</span></div>
-                  <div class="nh">Qualified by <b style="color:var(--muted)">Moderate reliability</b> — held back by weak Feasibility. <span class="info" data-tip="The signal sits here because Feasibility is weak (one of the three dimensions), not a reliability shortfall. When the three dimensions look strong but the read is weakly supported (low reliability), Confidence is held back and flagged — never shown bare. Reliability basis (Coverage · Evidence availability · Assessability) lives in the Confidence pill explainer — click the Confidence chip.">i</span></div>
+                  <div class="big">Understanding is forming <span class="info" data-tip="Confidence is understanding maturity — not a health score, probability, or grade. OSLO derives it from the CAF dimensions (Clarity · Alignment · Feasibility), qualified by reliability, and it changes only when something changes the read.">i</span></div>
+                  <div class="nh"><span id="ring-band">Moderate</span> · qualified by <b style="color:var(--muted)">moderate reliability</b></div>
+                  <div style="display:flex;align-items:center;gap:12px;margin-top:12px"><svg width="130" height="30" viewBox="0 0 130 30" preserveAspectRatio="none" role="img" aria-label="Trend rising from 58 to 66"><polyline points="0,23 33,19 66,21 99,13 130,5" fill="none" stroke="var(--subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="130" cy="5" r="3" fill="var(--text)"/></svg><span class="nh" style="margin:0">&#8599; 8 since your change &middot; from 58</span></div>
                   <div class="nh" id="conf-change" style="display:none;margin-top:7px"></div>
                 </div>
               </div>
-              <div class="drivers"><span class="drv-lab">What's driving it</span><button class="drv" onclick="openFindingsDim('Clarity')"><i style="background:var(--conf-medium)"></i>Clarity <b>Forming</b></button><button class="drv" onclick="openFindingsDim('Alignment')"><i style="background:var(--conf-low)"></i>Alignment <b>Limited</b></button><button class="drv" id="cg-feas" onclick="openFindingsDim('Feasibility')"><i id="cg-feas-dot" style="background:var(--conf-low)"></i>Feasibility <b id="cg-feas-lvl">Limited</b></button></div>
-              <div class="conftrend" id="conftrend"></div>
+              <div class="cafwrap">
+                <div class="caflab">What's driving it <span style="color:var(--subtle)">— hover a dimension for detail</span></div>
+                <div class="cafrow" onclick="openFindingsDim('Clarity')"><span class="cn">Clarity</span><div class="caftrk"><div class="caffil" style="width:78%"></div></div><span class="cafband">Strong</span><div class="caftip"><b style="color:var(--text)">Clarity · strong</b><br>Goals, scope, and requirements are well-defined and trace to your inputs.</div></div>
+                <div class="cafrow" onclick="openFindingsDim('Alignment')"><span class="cn">Alignment</span><div class="caftrk"><div class="caffil" style="width:55%"></div></div><span class="cafband">Forming</span><div class="caftip"><b style="color:var(--text)">Alignment · forming</b><br>Most objectives agree, but a few dependencies aren't yet reconciled.</div></div>
+                <div class="cafrow lim" id="cg-feas" onclick="openFindingsDim('Feasibility')"><span class="cn">Feasibility</span><div class="caftrk"><div class="caffil" style="width:30%"></div></div><span class="cafband" id="cg-feas-lvl">Limited</span><span id="cg-feas-dot" style="display:none"></span><div class="caftip"><b style="color:var(--primary-light)">Feasibility · limited — the limit</b><br>Resourcing and sequencing aren't yet supportable. This is the dimension holding your confidence back.</div></div>
+              </div>
+              <div class="conf-foot">
+                <span style="font-size:12.5px;color:var(--muted)"><span style="color:var(--text)">5</span> issues open · <span style="color:var(--text)">1</span> resolved</span>
+                <div style="display:flex;gap:20px">
+                  <span class="lnk2" onclick="var w=document.getElementById('whybox2');w.style.display=w.style.display==='block'?'none':'block';">Why ▾</span>
+                  <span class="lnk2" onclick="openHistory()">Timeline →</span>
+                </div>
+              </div>
+              <div id="whybox2" style="display:none;margin-top:12px;padding:12px 14px;background:var(--surface-2);border-radius:10px;font-size:12.5px;color:var(--muted);line-height:1.6">Confidence sits at Moderate because Feasibility is the lowest dimension — resourcing and sequencing aren't yet supportable — while Clarity is strong and Alignment is forming. Reliability is moderate. Only reanalysis changes this; resolving the top issues raises the read.</div>
+              <div class="conftrend" id="conftrend" style="display:none"></div>
             </div>
             <div class="card focuscard"><div class="focus" id="focus"></div></div>
             <div class="card ledgercard"><div class="ch"><h3>Progress</h3><span class="info" data-tip="Concrete, countable progress — the auditable objects behind the read. Findings and evidence are measurable; the confidence index above is not, below band granularity.">i</span></div><div id="ledger"></div></div>

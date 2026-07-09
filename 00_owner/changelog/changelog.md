@@ -1006,6 +1006,13 @@ Each changelog entry contains:
 - **Change Summary:** Overview surface redesign: confidence-led, low-cognitive-load (RB-037). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-132 — DL-097: Canonical CAF-dimension maturity band vocabulary (RB-038)
+
+- **Date:** 2026-07-08 · **Authorizing Decision:** DL-097.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-097-caf-dimension-band-vocabulary.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Canonical CAF-dimension maturity band vocabulary (RB-038). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

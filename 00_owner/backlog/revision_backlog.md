@@ -430,6 +430,18 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 
 ---
 
+### RB-038 — Canonical CAF-dimension maturity band vocabulary (glossary definition)
+
+- **Source Finding:** DL-096 open item (2026-07-08): canon defines CAF and the Confidence bands (Low/Moderate/High) but not a per-dimension band vocabulary; the prototype used ad-hoc `Limited`/`Forming`. Owner selected a ramp 2026-07-09.
+- **Affected Layer(s):** `00_owner` (`CANONICAL_GLOSSARY`) with `10_product/domain` (`CAF_ASSESSMENT_MODEL_V1`) and `10_product/experience` (Overview/Confidence presentation) reference.
+- **Affected Concepts:** per-dimension CAF band labels (presentation of the CAF-01 assessment); distinct from the Confidence band, Understanding State (AE-04), and MRI states (MRI-03). Maturity ramp per Visual §1.2.
+- **Proposal Scope:** One decision — adopt the canonical CAF-dimension maturity ramp **Limited · Forming · Solid · Strong** (low→high). Resolves the DL-096 open item. **Open (anti-assumption):** band→CAF-score thresholds are a separate owner/calibration item, not ratified here.
+- **Dependencies:** `CANONICAL_GLOSSARY` (HARD — add the band set); `CAF_ASSESSMENT_MODEL_V1` (MED); Overview/Confidence presentation (MED); CAF scoring/calibration (OPEN — thresholds). Presentation-only; no model/scoring change.
+- **Proposal:** `00_owner/decisions/PROPOSAL_CAF_DIMENSION_BAND_VOCABULARY_DRAFT.md`. Realized in `product-design/oslo_r1_experience_mockup_v4.html`.
+- **Status:** Proposed — owner to ratify (Framework 001A review complete; Decision pending). Resolves DL-096 open item.
+
+---
+
 ## Governance Notes
 
 1. This backlog is a draft. Entries reflect findings from initial repository review, not ratified governance positions.

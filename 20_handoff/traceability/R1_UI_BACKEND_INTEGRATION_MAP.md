@@ -1,6 +1,6 @@
 # R1 UI ↔ Backend Integration Map
 
-> Binds every **dynamic** element of the R1 prototype (`product-design/oslo_r1_experience_mockup_v3.html`) to the canonical **State Model / Event Model / API Contract** so the developer wires the exact UX to real data — and so UI/backend fit is proven *before* code, not discovered at integration. AI-produced; owner ratifies contract changes (Framework 001). Date: 2026-07-01.
+> Binds every **dynamic** element of the R1 prototype (`product-design/oslo_r1_experience_mockup_v4.html`) to the canonical **State Model / Event Model / API Contract** so the developer wires the exact UX to real data — and so UI/backend fit is proven *before* code, not discovered at integration. AI-produced; owner ratifies contract changes (Framework 001). Date: 2026-07-01.
 
 > **Gap status (updated 2026-07-02):** **G1 (clarification) — RESOLVED** by DL-089 (`clarification_answer_captured` + `POST /projects/{pid}/clarification-answers`; in-panel + chat). **G2 (notification view/dismiss) — COVERED** by existing `POST /notifications/{nid}:view|:dismiss` in the API catalog. **G3–G8 remain open** build/owner items (history feed read, ledger-derived metrics, confidence-change cause linkage, numeric trend series, auto-reanalysis debounce semantics, recommendation `deferred` surface).
 
