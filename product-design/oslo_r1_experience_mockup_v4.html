@@ -925,7 +925,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
     <div class="ws-grid">
       <div class="ws-card" onclick="alert('Opens Q3 Platform Migration → Project Overview. (Demo focuses on DevNorth.)')">
         <div class="ws-cardtop"><div class="ws-name">Q3 Platform Migration</div><span class="chip">shared</span></div>
-        <div class="ws-conf"><span class="conf-dot" style="background:var(--conf-low)"></span> Understanding <b style="color:var(--text)">Low</b> · qualified by Limited reliability</div>
+        <div class="ws-conf"><span class="conf-dot" style="background:var(--conf-low)"></span> Understanding <b style="color:var(--text)">Low</b> · qualified by Low reliability</div>
         <div class="ws-meta ws-stale">⚠ Analysis stale · edited since last run · 3 issues</div>
         <div class="ws-tags"><span class="ws-tag">Shared with me</span></div>
       </div>
@@ -1173,15 +1173,15 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
   <div class="cpp-band"><span class="conf-dot"></span> <b>Moderate</b> <span class="mono" style="color:var(--subtle);font-size:11px">58/100</span></div>
   <div class="cpp-sub">Understanding maturity — not health or probability. Qualified by <b style="color:var(--muted)">Moderate reliability</b>.</div>
   <div class="cpp-dims">
-    <div class="cpp-d"><span>Clarity</span><span class="cpp-bar"><i style="width:64%;background:var(--conf-medium)"></i></span><b>Forming</b></div>
-    <div class="cpp-d"><span>Alignment</span><span class="cpp-bar"><i style="width:38%;background:var(--conf-low)"></i></span><b>Limited</b></div>
-    <div class="cpp-d"><span>Feasibility</span><span class="cpp-bar"><i style="width:34%;background:var(--conf-low)"></i></span><b>Limited</b></div>
+    <div class="cpp-d"><span>Clarity</span><span class="cpp-bar"><i style="width:64%;background:var(--conf-medium)"></i></span><b>Moderate</b></div>
+    <div class="cpp-d"><span>Alignment</span><span class="cpp-bar"><i style="width:38%;background:var(--conf-low)"></i></span><b>Low</b></div>
+    <div class="cpp-d"><span>Feasibility</span><span class="cpp-bar"><i style="width:34%;background:var(--conf-low)"></i></span><b>Very Low</b></div>
   </div>
   <div class="cpp-h" style="margin-top:14px">Reliability basis <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--subtle)">· qualifies confidence</span></div>
   <div class="cpp-dims">
     <div class="cpp-d" title="How much of the project reality was observable in your inputs."><span>Coverage</span><span class="cpp-bar"><i style="width:60%;background:var(--conf-medium)"></i></span><b>Moderate</b></div>
     <div class="cpp-d" title="Presence and accessibility of evidence supporting the read."><span>Evidence</span><span class="cpp-bar"><i style="width:60%;background:var(--conf-medium)"></i></span><b>Moderate</b></div>
-    <div class="cpp-d" title="Feasibility is hard to assess while key dependencies are unconfirmed."><span>Assessable</span><span class="cpp-bar"><i style="width:35%;background:var(--conf-low)"></i></span><b style="color:var(--warning)">Limited</b></div>
+    <div class="cpp-d" title="Feasibility is hard to assess while key dependencies are unconfirmed."><span>Assessable</span><span class="cpp-bar"><i style="width:35%;background:var(--conf-low)"></i></span><b style="color:var(--warning)">Low</b></div>
   </div>
   <div class="cpp-sub" style="margin-top:9px;margin-bottom:0">Determined independently of Clarity/Alignment/Feasibility — it reflects the evidence behind the read, not the plan's integrity, and can rise as evidence improves.</div>
   <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:12px" onclick="closeConfPop();openTab('understanding')">Open Overview →</button>
@@ -1624,7 +1624,7 @@ function bumpConfidence(){
   const b=document.getElementById('cp-band');if(b)b.innerHTML='Moderate '+upmark;
   const ci=document.getElementById('cp-idx');if(ci)ci.textContent=after;
   const pill=document.getElementById('confpill');if(pill){pill.classList.remove('improved');void pill.offsetWidth;pill.classList.add('improved');}
-  // Feasibility dimension: Limited → Forming (the dimension the resolved finding sat under)
+  // Feasibility dimension: Very Low → Low (the dimension the resolved finding sat under)
   const setTxt=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
   setTxt('cg-feas-lvl','Low');const cgd=document.getElementById('cg-feas-dot');if(cgd)cgd.style.background='var(--conf-medium)';
   // Feasibility rose Very Low → Low (still the weakest, so it keeps the amber limit flag); its bar rises with it
