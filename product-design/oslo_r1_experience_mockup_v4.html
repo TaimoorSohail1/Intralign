@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CURRENT R1 UX BASELINE (2026-07-09) — supersedes oslo_r1_experience_mockup_v3.html. Realizes DL-094 (issue lifecycle), DL-095 (Issues label), and DL-096 (Overview redesign, confidence-led). CAF-dimension bands Limited/Forming/Solid/Strong per DL-097. -->
+<!-- CURRENT R1 UX BASELINE (2026-07-09) — supersedes oslo_r1_experience_mockup_v3.html. Realizes DL-094 (issue lifecycle), DL-095 (Issues label), and DL-096 (Overview redesign, confidence-led). CAF-dimension bands per the ratified DL-086 5-band scheme (DL-098 supersedes the earlier 4-band vocabulary). -->
 <html lang="en" style="background:#111315">
 <head>
 <meta charset="UTF-8">
@@ -1059,9 +1059,9 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
               </div>
               <div class="cafwrap">
                 <div class="caflab">What's driving it <span style="color:var(--subtle)">— hover a dimension for detail</span></div>
-                <div class="cafrow" onclick="openFindingsDim('Clarity')"><span class="cn">Clarity</span><div class="caftrk"><div class="caffil" style="width:78%"></div></div><span class="cafband">Strong</span><div class="caftip"><b style="color:var(--text)">Clarity · strong</b><br>Goals, scope, and requirements are well-defined and trace to your inputs.</div></div>
-                <div class="cafrow" onclick="openFindingsDim('Alignment')"><span class="cn">Alignment</span><div class="caftrk"><div class="caffil" style="width:55%"></div></div><span class="cafband">Forming</span><div class="caftip"><b style="color:var(--text)">Alignment · forming</b><br>Most objectives agree, but a few dependencies aren't yet reconciled.</div></div>
-                <div class="cafrow lim" id="cg-feas" onclick="openFindingsDim('Feasibility')"><span class="cn">Feasibility</span><div class="caftrk"><div class="caffil" style="width:30%"></div></div><span class="cafband" id="cg-feas-lvl">Limited</span><span id="cg-feas-dot" style="display:none"></span><div class="caftip"><b style="color:var(--primary-light)">Feasibility · limited — the limit</b><br>Resourcing and sequencing aren't yet supportable. This is the dimension holding your confidence back.</div></div>
+                <div class="cafrow" onclick="openFindingsDim('Clarity')"><span class="cn">Clarity</span><div class="caftrk"><div class="caffil" style="width:78%"></div></div><span class="cafband">High</span><div class="caftip"><b style="color:var(--text)">Clarity · high</b><br>Goals, scope, and requirements are well-defined and trace to your inputs.</div></div>
+                <div class="cafrow" onclick="openFindingsDim('Alignment')"><span class="cn">Alignment</span><div class="caftrk"><div class="caffil" style="width:55%"></div></div><span class="cafband">Moderate</span><div class="caftip"><b style="color:var(--text)">Alignment · moderate</b><br>Most objectives agree, but a few dependencies aren't yet reconciled.</div></div>
+                <div class="cafrow lim" id="cg-feas" onclick="openFindingsDim('Feasibility')"><span class="cn">Feasibility</span><div class="caftrk"><div class="caffil" style="width:30%"></div></div><span class="cafband" id="cg-feas-lvl">Very Low</span><span id="cg-feas-dot" style="display:none"></span><div class="caftip"><b style="color:var(--primary-light)">Feasibility · very low — the limit</b><br>Resourcing and sequencing aren't yet supportable. This is the dimension holding your confidence back.</div></div>
               </div>
               <div class="conf-foot">
                 <span style="font-size:12.5px;color:var(--muted)"><span style="color:var(--text)">5</span> issues open · <span style="color:var(--text)">1</span> resolved</span>
@@ -1070,7 +1070,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
                   <span class="lnk2" onclick="openHistory()">Timeline →</span>
                 </div>
               </div>
-              <div id="whybox2" style="display:none;margin-top:12px;padding:12px 14px;background:var(--surface-2);border-radius:10px;font-size:12.5px;color:var(--muted);line-height:1.6">Confidence sits at Moderate because Feasibility is the lowest dimension — resourcing and sequencing aren't yet supportable — while Clarity is strong and Alignment is forming. Reliability is moderate. Only reanalysis changes this; resolving the top issues raises the read.</div>
+              <div id="whybox2" style="display:none;margin-top:12px;padding:12px 14px;background:var(--surface-2);border-radius:10px;font-size:12.5px;color:var(--muted);line-height:1.6">Confidence sits at Moderate because Feasibility is the lowest dimension — resourcing and sequencing aren't yet supportable — while Clarity is high and Alignment is moderate. Reliability is moderate. Only reanalysis changes this; resolving the top issues raises the read.</div>
               <div class="conftrend" id="conftrend" style="display:none"></div>
             </div>
             <div class="card focuscard"><div class="focus" id="focus"></div></div>
@@ -1626,7 +1626,7 @@ function bumpConfidence(){
   const pill=document.getElementById('confpill');if(pill){pill.classList.remove('improved');void pill.offsetWidth;pill.classList.add('improved');}
   // Feasibility dimension: Limited → Forming (the dimension the resolved finding sat under)
   const setTxt=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
-  setTxt('cg-feas-lvl','Forming');const cgd=document.getElementById('cg-feas-dot');if(cgd)cgd.style.background='var(--conf-medium)';
+  setTxt('cg-feas-lvl','Low');const cgd=document.getElementById('cg-feas-dot');if(cgd)cgd.style.background='var(--conf-medium)';
   setTxt('feas-lvl','Forming');setTxt('feas-num','54');const fbar=document.getElementById('feas-bar');if(fbar){fbar.style.width='54%';fbar.style.background='var(--conf-medium)';}
   // countable work-ledger (persistent, quantified)
   renderLedger();

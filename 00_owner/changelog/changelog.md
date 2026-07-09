@@ -1013,6 +1013,13 @@ Each changelog entry contains:
 - **Change Summary:** Canonical CAF-dimension maturity band vocabulary (RB-038). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-133 — DL-098: Reconcile CAF-dimension bands to the DL-086 5-band scheme (supersedes DL-097) (RB-039)
+
+- **Date:** 2026-07-09 · **Authorizing Decision:** DL-098.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-098-caf-dimension-band-reconcile.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Reconcile CAF-dimension bands to the DL-086 5-band scheme (supersedes DL-097) (RB-039). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

@@ -438,7 +438,19 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 - **Proposal Scope:** One decision — adopt the canonical CAF-dimension maturity ramp **Limited · Forming · Solid · Strong** (low→high). Resolves the DL-096 open item. **Open (anti-assumption):** band→CAF-score thresholds are a separate owner/calibration item, not ratified here.
 - **Dependencies:** `CANONICAL_GLOSSARY` (HARD — add the band set); `CAF_ASSESSMENT_MODEL_V1` (MED); Overview/Confidence presentation (MED); CAF scoring/calibration (OPEN — thresholds). Presentation-only; no model/scoring change.
 - **Proposal:** `00_owner/decisions/PROPOSAL_CAF_DIMENSION_BAND_VOCABULARY_DRAFT.md`. Realized in `product-design/oslo_r1_experience_mockup_v4.html`.
-- **Status:** Proposed — owner to ratify (Framework 001A review complete; Decision pending). Resolves DL-096 open item.
+- **Status:** Ratified as DL-097 (2026-07-09) — **superseded by RB-039 / DL-098** (reconciled to the DL-086 5-band scheme; the 4-band vocabulary retired).
+
+---
+
+### RB-039 — Reconcile CAF-dimension bands to the DL-086 5-band scheme (supersedes RB-038 / DL-097)
+
+- **Source Finding:** 2026-07-09 — DL-097's 4-band CAF-dimension vocabulary (Limited/Forming/Solid/Strong) conflicts with the earlier-ratified **DL-086** scoring scheme, where CAF dimensions compute to 0–100 and the authoritative unit is the **5-band scheme** (Very Low/Low/Moderate/High/Very High). DL-097 was ratified on an incomplete read that missed the scoring formula spec.
+- **Affected Layer(s):** `00_owner` (decision — supersede DL-097) with `10_product/experience` + `product-design` (relabel dimensions to the 5-band) and `30_engineering/scoring` (confirm §3 dimension bands).
+- **Affected Concepts:** per-dimension CAF band vocabulary; single shared band ramp for Confidence + dimensions; DL-086 scoring formula (unchanged). Closes the DL-097 threshold open item (DL-086 owns the edges).
+- **Proposal Scope:** One decision — CAF dimensions use the ratified DL-086 5-band scheme; DL-097's 4-band vocabulary is superseded and retired. No new thresholds; presentation-only.
+- **Dependencies:** DL-097 (SUPERSEDE); `CAF_CONFIDENCE_V0_SCORING_FORMULA_V1 §3` (CONFIRM); Overview/Confidence presentation + v4 prototype (relabel); glossary (none — DL-097 entry never added).
+- **Proposal:** `00_owner/decisions/PROPOSAL_CAF_DIMENSION_BAND_RECONCILE_DL086_DRAFT.md`.
+- **Status:** Proposed — owner to ratify (Framework 001A review complete; Decision pending). Supersedes RB-038 / DL-097.
 
 ---
 
