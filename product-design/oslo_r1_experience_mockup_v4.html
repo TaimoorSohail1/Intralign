@@ -166,7 +166,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .conf-pill.improved{animation:pillglow 1.9s ease-out}
 @keyframes pillglow{0%{box-shadow:0 0 0 0 rgba(77,139,107,.55);border-color:var(--success)}100%{box-shadow:0 0 0 9px rgba(77,139,107,0)}}
 #conf-change{background:rgba(77,139,107,.10);border:1px solid rgba(77,139,107,.35);border-radius:8px;padding:10px 14px;font-size:12px!important;color:var(--muted)!important;line-height:1.55;max-width:none}
-#conf-change.flash{animation:cflash 1.9s ease-out}
+#conf-change.flash,#whybox2.flash{animation:cflash 1.9s ease-out}
 .cc-grid{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:2px}
 .cc-grid>div{display:flex;flex-direction:column;gap:1px}
 .cc-k{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--subtle)}
@@ -1627,19 +1627,13 @@ function bumpConfidence(){
   // Feasibility dimension: Limited → Forming (the dimension the resolved finding sat under)
   const setTxt=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
   setTxt('cg-feas-lvl','Low');const cgd=document.getElementById('cg-feas-dot');if(cgd)cgd.style.background='var(--conf-medium)';
-  setTxt('feas-lvl','Forming');setTxt('feas-num','54');const fbar=document.getElementById('feas-bar');if(fbar){fbar.style.width='54%';fbar.style.background='var(--conf-medium)';}
+  // Feasibility rose Very Low → Low (still the weakest, so it keeps the amber limit flag); its bar rises with it
+  const ffil=document.querySelector('#cg-feas .caffil');if(ffil)ffil.style.width='48%';
   // countable work-ledger (persistent, quantified)
   renderLedger();
-  // cause-bound "what changed": number delta + band transition + countable work, all tied to the cause
-  const cc=document.getElementById('conf-change');if(cc){cc.style.display='block';cc.innerHTML=
-    '<div style="font-weight:600;color:var(--success);margin-bottom:5px">↑ Your change moved the read</div>'+
-    '<div class="cc-grid">'+
-      '<div><span class="cc-k">Confidence</span><span class="cc-v">Moderate '+before+' → <b style="color:var(--success)">'+after+'</b> <span style="color:var(--subtle);font-weight:400">▲'+(after-before)+'</span></span></div>'+
-      '<div><span class="cc-k">Feasibility</span><span class="cc-v">Limited → <b style="color:var(--success)">Forming</b></span></div>'+
-      '<div><span class="cc-k">Issues</span><span class="cc-v"><b style="color:var(--success)">'+RESOLVED_COUNT+' resolved</b> · '+(6-RESOLVED_COUNT)+' open</span></div>'+
-    '</div>'+
-    '<div style="margin-top:6px;color:var(--muted)">Cause: you resolved the critical Resources gap — the read is more complete. <a class="cc-why" data-more="Why ▾" data-less="Hide ▴" onclick="toggleMore(this)" style="color:var(--primary-light);cursor:pointer">Why ▾</a><div class="cc-why-body" style="display:none;margin-top:5px">This is a <b style="color:var(--muted)">CAF change</b> (Clarity · Alignment · Feasibility) — reliability is unchanged. Confidence can also fall when analysis finds something new.</div><div style="margin-top:5px"><a onclick="openHistory()" style="color:var(--primary-light);cursor:pointer">See the timeline →</a></div></div>';
-    cc.classList.remove('flash');void cc.offsetWidth;cc.classList.add('flash');}
+  // DL-096: no green "your change moved the read" box. The quiet trend line carries the delta; the Why disclosure auto-opens once after a material user-initiated change (the user can then collapse it).
+  const cc=document.getElementById('conf-change');if(cc){cc.style.display='none';cc.innerHTML='';}
+  const wb=document.getElementById('whybox2');if(wb){wb.innerHTML='You resolved the critical <b style="color:var(--text)">Resources</b> gap, so the plan is more complete — Feasibility rose from <b style="color:var(--text)">Very Low</b> to <b style="color:var(--text)">Low</b>. It\'s still the lowest dimension, so it holds the read back. Only reanalysis changes this.';wb.style.display='block';wb.classList.remove('flash');void wb.offsetWidth;wb.classList.add('flash');}
   TREND.push({run:'After your fix',c:'rose',n:after,r:'Moderate'});renderTrend();}
 function closeFindingPanel(){document.getElementById('findpanel').classList.remove('open');document.getElementById('findscrim').classList.remove('open');}
 function acceptRec(b){b.textContent='✓ Chosen';b.style.background='var(--success)';b.style.color='var(--on-accent)';}
