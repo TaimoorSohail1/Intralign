@@ -4,3 +4,11 @@ Thumbs.db
 *.swp
 *.swo
 .obsidian/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# ship_canon.sh scratch output
+tools/.last_ship.json
+tools/.last_ship.log
