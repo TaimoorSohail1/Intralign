@@ -1049,11 +1049,11 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
             <div class="card hero">
               <div class="ch"><h3>Confidence</h3><span class="info" data-tip="Confidence is understanding maturity — not a health score, probability, or grade. It is always qualified by reliability. Understanding matures in stages: Orientation → Expanded → Validated.">i</span><span class="ustate cur" id="ustate" style="margin-left:auto" title="Analysis state — still updating while analysis runs, current when complete. Only reanalysis changes the assessment.">Current</span></div>
               <div class="conf-focus">
-                <div class="num"><span class="idx mono" id="ring-idx">66</span><span class="idx-max">/100</span></div>
+                <div class="num"><span class="idx mono" id="ring-idx">58</span><span class="idx-max">/100</span></div>
                 <div class="conf-meta">
                   <div class="big">Understanding is forming <span class="info" data-tip="Confidence is understanding maturity — not a health score, probability, or grade. OSLO derives it from the CAF dimensions (Clarity · Alignment · Feasibility), qualified by reliability, and it changes only when something changes the read.">i</span></div>
                   <div class="nh"><span id="ring-band">Moderate</span> · qualified by <b style="color:var(--muted)">moderate reliability</b></div>
-                  <div style="display:flex;align-items:center;gap:12px;margin-top:12px"><svg width="130" height="30" viewBox="0 0 130 30" preserveAspectRatio="none" role="img" aria-label="Trend rising from 58 to 66"><polyline points="0,23 33,19 66,21 99,13 130,5" fill="none" stroke="var(--subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="130" cy="5" r="3" fill="var(--text)"/></svg><span class="nh" style="margin:0">&#8599; 8 since your change &middot; from 58</span></div>
+                  <div id="conf-trend-row" style="display:none;align-items:center;gap:12px;margin-top:12px"><svg width="130" height="30" viewBox="0 0 130 30" preserveAspectRatio="none" role="img" aria-label="Trend rising from 58 to 66"><polyline points="0,23 33,19 66,21 99,13 130,5" fill="none" stroke="var(--subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="130" cy="5" r="3" fill="var(--text)"/></svg><span class="nh" style="margin:0">&#8599; 8 since your change &middot; from 58</span></div>
                   <div class="nh" id="conf-change" style="display:none;margin-top:7px"></div>
                 </div>
               </div>
@@ -1064,7 +1064,7 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
                 <div class="cafrow lim" id="cg-feas" onclick="openFindingsDim('Feasibility')"><span class="cn">Feasibility</span><div class="caftrk"><div class="caffil" style="width:30%"></div></div><span class="cafband" id="cg-feas-lvl">Very Low</span><span id="cg-feas-dot" style="display:none"></span><div class="caftip"><b style="color:var(--primary-light)">Feasibility · very low — the limit</b><br>Resourcing and sequencing aren't yet supportable. This is the dimension holding your confidence back.</div></div>
               </div>
               <div class="conf-foot">
-                <span style="font-size:12.5px;color:var(--muted)"><span style="color:var(--text)">5</span> issues open · <span style="color:var(--text)">1</span> resolved</span>
+                <span style="font-size:12.5px;color:var(--muted)"><span style="color:var(--text)" id="cf-open">6</span> issues open · <span style="color:var(--text)" id="cf-resolved">0</span> resolved</span>
                 <div style="display:flex;gap:20px">
                   <span class="lnk2" onclick="var w=document.getElementById('whybox2');w.style.display=w.style.display==='block'?'none':'block';">Why ▾</span>
                   <span class="lnk2" onclick="openHistory()">Timeline →</span>
@@ -1170,12 +1170,12 @@ a,button,input,select,textarea,[onclick],[tabindex]{}
 <!-- top-bar confidence popover (first-level dimensions; full detail in Overview) -->
 <div class="confpop" id="confpop">
   <div class="cpp-h">Confidence <span class="elabel derived" style="font-size:9px">From OSLO</span></div>
-  <div class="cpp-band"><span class="conf-dot"></span> <b>Moderate</b> <span class="mono" style="color:var(--subtle);font-size:11px">58/100</span></div>
+  <div class="cpp-band"><span class="conf-dot"></span> <b>Moderate</b> <span class="mono" style="color:var(--subtle);font-size:11px" id="cpp-idx">58/100</span></div>
   <div class="cpp-sub">Understanding maturity — not health or probability. Qualified by <b style="color:var(--muted)">Moderate reliability</b>.</div>
   <div class="cpp-dims">
-    <div class="cpp-d"><span>Clarity</span><span class="cpp-bar"><i style="width:64%;background:var(--conf-medium)"></i></span><b>Moderate</b></div>
-    <div class="cpp-d"><span>Alignment</span><span class="cpp-bar"><i style="width:38%;background:var(--conf-low)"></i></span><b>Low</b></div>
-    <div class="cpp-d"><span>Feasibility</span><span class="cpp-bar"><i style="width:34%;background:var(--conf-low)"></i></span><b>Very Low</b></div>
+    <div class="cpp-d"><span>Clarity</span><span class="cpp-bar"><i style="width:78%;background:var(--conf-high)"></i></span><b>High</b></div>
+    <div class="cpp-d"><span>Alignment</span><span class="cpp-bar"><i style="width:55%;background:var(--conf-medium)"></i></span><b>Moderate</b></div>
+    <div class="cpp-d"><span>Feasibility</span><span class="cpp-bar"><i id="cpp-feas-bar" style="width:30%;background:var(--conf-low)"></i></span><b id="cpp-feas">Very Low</b></div>
   </div>
   <div class="cpp-h" style="margin-top:14px">Reliability basis <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--subtle)">· qualifies confidence</span></div>
   <div class="cpp-dims">
@@ -1631,6 +1631,13 @@ function bumpConfidence(){
   const ffil=document.querySelector('#cg-feas .caffil');if(ffil)ffil.style.width='48%';
   // countable work-ledger (persistent, quantified)
   renderLedger();
+  // load state is pre-change: reveal the change-delta trend line, update the open/resolved counts, and sync the top-bar popover to the new read
+  const tr=document.getElementById('conf-trend-row');if(tr)tr.style.display='flex';
+  const cfo=document.getElementById('cf-open');if(cfo)cfo.textContent=(6-RESOLVED_COUNT);
+  const cfr=document.getElementById('cf-resolved');if(cfr)cfr.textContent=RESOLVED_COUNT;
+  const pidx=document.getElementById('cpp-idx');if(pidx)pidx.textContent=after+'/100';
+  const pf=document.getElementById('cpp-feas');if(pf)pf.textContent='Low';
+  const pfb=document.getElementById('cpp-feas-bar');if(pfb)pfb.style.width='48%';
   // DL-096: no green "your change moved the read" box. The quiet trend line carries the delta; the Why disclosure auto-opens once after a material user-initiated change (the user can then collapse it).
   const cc=document.getElementById('conf-change');if(cc){cc.style.display='none';cc.innerHTML='';}
   const wb=document.getElementById('whybox2');if(wb){wb.innerHTML='You resolved the critical <b style="color:var(--text)">Resources</b> gap, so the plan is more complete — Feasibility rose from <b style="color:var(--text)">Very Low</b> to <b style="color:var(--text)">Low</b>. It\'s still the lowest dimension, so it holds the read back. Only reanalysis changes this.';wb.style.display='block';wb.classList.remove('flash');void wb.offsetWidth;wb.classList.add('flash');}
