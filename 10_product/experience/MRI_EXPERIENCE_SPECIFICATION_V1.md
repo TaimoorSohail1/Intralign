@@ -173,4 +173,8 @@ Ratified by **DL-090** (presentation-only). The MRI Experience (weakness map / h
 
 Ratified by **DL-099** (Conditions 1–7). Where the MRI understanding-overview surfaces the **Reliability** qualifier alongside Outcome Confidence, it follows DL-099: the three Reliability components compose into a **single read-solidity qualifier**, **quiet by default** and **prominent only on divergence** (the CONF-06 false-confidence flag); full component detail is available **on demand** only. Reliability remains a **qualifier of the Confidence signal, never a second number**. This applies **only** to the Reliability/Confidence signal — **MRIE-9 / MRIE-C4 remain unchanged and binding** (finding prioritization and heatmap intensity stay qualitative; no scores, percentages, or ranking numbers). Companion to DL-085. Visual reference of record: `product-design/oslo_r1_experience_mockup_v4.html`.
 
+## U. Ratified update — Reliability qualifier copy finalized (DL-100, 2026-07-10)
+
+Ratified by **DL-100** (closes RB-040). The reliability qualifier surfaced alongside Outcome Confidence uses the finalized copy: quiet badge **Solid read / Partial read / Thin read** (Reliability High / Moderate / Low); loud message **"This reads strong, but on thin evidence — treat as provisional"**, shown only when the existing **CONF-06** false-confidence flag is raised (band ∈ {High, Very High} ∧ `R = Low`; no new threshold). Presentation-only; MRIE-9 / MRIE-C4 unchanged. Companion to DL-099. Visual reference of record: `product-design/oslo_r1_experience_mockup_v4.html`.
+
 **MRI Experience Specification v1 complete.**

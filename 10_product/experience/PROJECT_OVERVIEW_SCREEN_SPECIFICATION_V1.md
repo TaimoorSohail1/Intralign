@@ -196,4 +196,13 @@ Ratified by **DL-099** (Accept-in-substance with Conditions 1–7). This block u
   - **Reliability always presented as a qualifier of confidence, never as a second number**, and never as something findings change. Neutral (non health-color) ramp except where the false-confidence flag intentionally draws attention.
   - The "diverged" trigger **reuses the existing CONF-06 false-confidence flag** — no new, separately-tuned threshold (any new threshold is a calibration / Class-B item).
 
+## T. Ratified update — Reliability qualifier copy finalized (DL-100, 2026-07-10)
+
+Ratified by **DL-100** (closes RB-040). Finalizes the "copy TBD" placeholder in §S. The single reliability qualifier's user-facing copy is:
+
+- **Quiet-by-default badge** (by Reliability level `R`): **High → "Solid read"** · **Moderate → "Partial read"** · **Low → "Thin read"**.
+- **Loud / divergence message** (shown only when the CONF-06 false-confidence flag is raised — band ∈ {High, Very High} ∧ `R = Low`): **"This reads strong, but on thin evidence — treat as provisional."**
+
+The loud state reuses the **existing CONF-06 flag** (`30_engineering/scoring/CAF_CONFIDENCE_V0_SCORING_FORMULA_V1.md` §3; bands DL-086; flag DL-047) — no new, separately-tuned threshold. Presentation-only; meaning and model unchanged. Companion to DL-099. Visual reference of record: `product-design/oslo_r1_experience_mockup_v4.html`.
+
 **Project Overview Screen Specification v1 complete.**

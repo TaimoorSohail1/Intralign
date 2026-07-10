@@ -1027,6 +1027,13 @@ Each changelog entry contains:
 - **Change Summary:** Reliability qualifier presentation — single quiet-by-default state (loud on CONF-06 divergence). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-135 — DL-100: Reliability qualifier — finalize copy + confirm CONF-06 trigger reuse (closes RB-040)
+
+- **Date:** 2026-07-10 · **Authorizing Decision:** DL-100.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-100-reliability-qualifier-copy-finalize.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Reliability qualifier — finalize copy + confirm CONF-06 trigger reuse (closes RB-040). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
