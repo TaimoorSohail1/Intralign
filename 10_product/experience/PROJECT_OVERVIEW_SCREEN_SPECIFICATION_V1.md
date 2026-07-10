@@ -185,4 +185,15 @@ CAF driver chips are **qualitative** (level only; per-dimension 0–100 numbers 
 
 **Readability presentation (realization, presentation-only).** The §Q/§R hierarchy renders as **three whitespace-separated cards** — (1) *the read* (Confidence ring + number, reliability qualifier, "What's driving it" CAF chips, trend), (2) *Start here* (the single next action), (3) *Progress* (a 4-cell stat row: findings resolved · critical open · dependencies confirmed · plan sections read). Segmentation is by whitespace/cards, not hairline dividers. Type roles are limited to: hero number · section headline (~21px) · body/qualifier (~13px `muted`) · caption (~11px `subtle`); the reliability qualifier is never the smallest text. The first-run coaching banner does not persist on the steady-state Overview. This changes presentation hierarchy only — order, content set (DL-090), Confidence doctrine, and Panel Model are unchanged. Verified by baselines `02-overview`, `04-finding-panel`, `08-confidence-explainer`.
 
+## S. Ratified update — Reliability qualifier presentation (DL-099, 2026-07-10)
+
+Ratified by **DL-099** (Accept-in-substance with Conditions 1–7). This block updates the Reliability *presentation* in §F (Reliability Card); all other integrity rules are unchanged, and meaning (Interpretation Doctrine) is unchanged. Companion to DL-085. Visual reference of record: `product-design/oslo_r1_experience_mockup_v4.html`.
+
+- **Reliability Card (supersedes the §F "Reliability Card" lines):**
+  - **Visible (quiet by default):** a single **read-solidity qualifier** (one state — e.g. Solid / Partial / Thin read; copy TBD) presented as a low-emphasis qualifier of the Confidence Card. The three components are **not** surfaced as three standing readouts.
+  - **Loud on divergence:** when a high CAF band sits on low reliability — the existing **CONF-06 false-confidence flag** — the qualifier becomes prominent and carries the plain-language provisional message ("reads strong, but on thin evidence — treat as provisional"). Prominence is **divergence-triggered, not continuous**.
+  - **Expandable (on demand):** the basis (Coverage / Evidence Availability / Assessability; how it qualifies confidence) remains available via the "how this is calculated" affordance.
+  - **Reliability always presented as a qualifier of confidence, never as a second number**, and never as something findings change. Neutral (non health-color) ramp except where the false-confidence flag intentionally draws attention.
+  - The "diverged" trigger **reuses the existing CONF-06 false-confidence flag** — no new, separately-tuned threshold (any new threshold is a calibration / Class-B item).
+
 **Project Overview Screen Specification v1 complete.**

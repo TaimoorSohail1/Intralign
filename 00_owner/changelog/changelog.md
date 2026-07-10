@@ -1020,6 +1020,13 @@ Each changelog entry contains:
 - **Change Summary:** Reconcile CAF-dimension bands to the DL-086 5-band scheme (supersedes DL-097) (RB-039). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-134 — DL-099: Reliability qualifier presentation — single quiet-by-default state (loud on CONF-06 divergence)
+
+- **Date:** 2026-07-10 · **Authorizing Decision:** DL-099.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-099-reliability-qualifier-presentation.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Reliability qualifier presentation — single quiet-by-default state (loud on CONF-06 divergence). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

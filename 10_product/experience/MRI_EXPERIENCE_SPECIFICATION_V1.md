@@ -169,4 +169,8 @@ Ratified by **DL-085**. Where the MRI understanding-overview surfaces the **Outc
 
 Ratified by **DL-090** (presentation-only). The MRI Experience (weakness map / heatmap) is reached via its own **"Attention map" left-rail surface**, **not** embedded in the Project Overview (which previously hosted the heatmap). All MRI integrity rules stand (qualitative; no scores/ranks; only reanalysis changes assessment). Visual reference of record: `product-design/oslo_r1_experience_mockup_v4.html` (baseline `07-attention-map`).
 
+## T. Ratified update — Reliability qualifier presentation (DL-099, 2026-07-10)
+
+Ratified by **DL-099** (Conditions 1–7). Where the MRI understanding-overview surfaces the **Reliability** qualifier alongside Outcome Confidence, it follows DL-099: the three Reliability components compose into a **single read-solidity qualifier**, **quiet by default** and **prominent only on divergence** (the CONF-06 false-confidence flag); full component detail is available **on demand** only. Reliability remains a **qualifier of the Confidence signal, never a second number**. This applies **only** to the Reliability/Confidence signal — **MRIE-9 / MRIE-C4 remain unchanged and binding** (finding prioritization and heatmap intensity stay qualitative; no scores, percentages, or ranking numbers). Companion to DL-085. Visual reference of record: `product-design/oslo_r1_experience_mockup_v4.html`.
+
 **MRI Experience Specification v1 complete.**

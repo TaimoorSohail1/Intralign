@@ -867,5 +867,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-096 — Overview surface redesign: confidence-led, low-cognitive-load (RB-037) → `00_owner/decisions/records/DL-096-overview-redesign.md`
 - DL-097 — Canonical CAF-dimension maturity band vocabulary (RB-038) → `00_owner/decisions/records/DL-097-caf-dimension-band-vocabulary.md`
 - DL-098 — Reconcile CAF-dimension bands to the DL-086 5-band scheme (supersedes DL-097) (RB-039) → `00_owner/decisions/records/DL-098-caf-dimension-band-reconcile.md`
+- DL-099 — Reliability qualifier presentation — single quiet-by-default state (loud on CONF-06 divergence) → `00_owner/decisions/records/DL-099-reliability-qualifier-presentation.md`
 
 <!-- RECORDS-INDEX:END -->
