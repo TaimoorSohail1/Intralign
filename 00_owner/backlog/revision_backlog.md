@@ -454,6 +454,14 @@ _Added 2026-06-28 by explicit owner direction. Captures the roadmap-sequencing p
 
 ---
 
+### RB-040 — Reliability qualifier presentation: finalize copy + confirm CONF-06 divergence trigger (DL-099 follow-ups)
+
+- **Source Finding:** 2026-07-10 — DL-099 ratified the single "read-solidity" reliability qualifier (quiet by default; loud only on CONF-06 divergence), but left two items open at ratification: (a) the user-facing qualifier **copy** ("Solid / Partial / Thin read" or similar) is TBD; (b) the Review's **binding condition** — that the "loud" divergence trigger reuses the **existing CONF-06 false-confidence flag** and introduces **no new, separately-tuned threshold** — must be confirmed against the calibration work.
+- **Affected Layer(s):** `10_product/experience` (PROJECT_OVERVIEW §S / MRI §T copy) + `product-design` (v4 mockup labels) for the copy; `00_owner` / calibration (`PROPOSAL_CONFIDENCE_INDEX_CALIBRATION_DRAFT`) for the trigger confirmation.
+- **Affected Concepts:** reliability qualifier presentation (DL-099); CONF-06 false-confidence divergence; anti-probability-misread copy posture (Interpretation Doctrine).
+- **Proposal Scope:** (1) ratify final qualifier copy — presentation-only, no model/threshold change; (2) **confirm** (not create) that the divergence trigger is the existing CONF-06 flag; any genuinely new threshold routes to calibration (Class B), not here. Companion to DL-099 / DL-085.
+- **Status:** Proposed — owner-directed 2026-07-10 (exempt from the Proposal-000 backlog restriction per owner direction); awaiting Proposal under Framework 001.
+
 ## Governance Notes
 
 1. This backlog is a draft. Entries reflect findings from initial repository review, not ratified governance positions.
