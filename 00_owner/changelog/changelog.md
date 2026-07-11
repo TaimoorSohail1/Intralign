@@ -1034,6 +1034,13 @@ Each changelog entry contains:
 - **Change Summary:** Reliability qualifier — finalize copy + confirm CONF-06 trigger reuse (closes RB-040). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-136 — DL-102: Controlled Release & Tiering-in-Alpha (reconciles CHG-061; amends DL-048 scope, extends DL-049/DL-055/DL-062)
+
+- **Date:** 2026-07-11 · **Authorizing Decision:** DL-102.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-102-controlled-release-and-tiering-in-alpha.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Controlled Release & Tiering-in-Alpha (reconciles CHG-061; amends DL-048 scope, extends DL-049/DL-055/DL-062). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

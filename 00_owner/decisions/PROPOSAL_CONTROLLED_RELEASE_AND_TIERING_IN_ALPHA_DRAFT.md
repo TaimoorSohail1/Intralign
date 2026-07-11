@@ -1,8 +1,8 @@
 # Proposal — Controlled Release & Tiering-in-Alpha (reconciles CHG-061; amends DL-048 scope, extends DL-049/DL-055/DL-062)
 
-**Document Type:** Governance Proposal (Framework 001 / 001A) — **plan only; nothing ratified** · **Status:** **Draft — awaiting owner ratification** · **Date:** 2026-07-10
+**Document Type:** Governance Proposal (Framework 001 / 001A) · **Status:** **Adopted (DL-102)** — landed via the `dl-land` serializer (DL-067), changelog CHG-136 · **Date:** 2026-07-10
 **Origin:** Owner direction (working session, 2026-07-10) during the R1 product-grill of Slice 9 (Collaboration, Sharing & Export). Authored by AI contributor as scribe — **non-ratifying** (`CLAUDE.md` Authority Constraint: only the repository owner may ratify).
-**Backlog:** RB-TBD. **Draft record:** `records/DL-101-controlled-release-and-tiering-in-alpha.md`.
+**Backlog:** RB-TBD. **Decision record:** `records/DL-102-controlled-release-and-tiering-in-alpha.md`.
 **Layer:** Product scope / monetization + collaboration seam (`10_product`, `20_handoff`). **Non-doctrinal** — no epistemic invariant is amended; D115/CRR bounds are *tightened*, never loosened.
 **Consolidation note (deliberate):** this is **one** proposal, not five. Its constituents are **interdependent** — constituent B is the *sole* resolution of constituent A, and C exists only because of B. Splitting them would permit a reviewer to ratify one while silently breaking another.
 
@@ -90,7 +90,7 @@ Recommended alongside adoption:
 
 ## Status
 
-**Draft — awaiting owner ratification.** Nothing herein is canon. AI authored this as scribe and **may not ratify, reject, supersede, or adopt** (`CLAUDE.md` Authority Constraint). On ratification: assign the number at landing (`python3 tools/dl_records.py next`), regenerate the records index, land via branch → PR → green doc-integrity gate → owner merge.
+**Adopted as DL-102** (landed via the `dl-land` serializer, DL-067; changelog CHG-136). Ratification is the owner's act — AI authored this as scribe and **may not ratify, reject, supersede, or adopt** (`CLAUDE.md` Authority Constraint). AI authored this as scribe and **may not ratify, reject, supersede, or adopt** (`CLAUDE.md` Authority Constraint). On ratification: assign the number at landing (`python3 tools/dl_records.py next`), regenerate the records index, land via branch → PR → green doc-integrity gate → owner merge.
 
 ## Provenance
 
