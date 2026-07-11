@@ -869,5 +869,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-098 — Reconcile CAF-dimension bands to the DL-086 5-band scheme (supersedes DL-097) (RB-039) → `00_owner/decisions/records/DL-098-caf-dimension-band-reconcile.md`
 - DL-099 — Reliability qualifier presentation — single quiet-by-default state (loud on CONF-06 divergence) → `00_owner/decisions/records/DL-099-reliability-qualifier-presentation.md`
 - DL-100 — Reliability qualifier — finalize copy + confirm CONF-06 trigger reuse (closes RB-040) → `00_owner/decisions/records/DL-100-reliability-qualifier-copy-finalize.md`
+- DL-101 — Controlled Release & Tiering-in-Alpha (reconciles CHG-061; amends DL-048 scope, extends DL-049/DL-055/DL-062) → `00_owner/decisions/records/DL-101-controlled-release-and-tiering-in-alpha.md`
 
 <!-- RECORDS-INDEX:END -->
