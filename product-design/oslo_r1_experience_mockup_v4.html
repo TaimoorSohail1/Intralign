@@ -1640,7 +1640,7 @@ function bumpConfidence(){
   const pfb=document.getElementById('cpp-feas-bar');if(pfb)pfb.style.width='48%';
   // DL-096: no green "your change moved the read" box. The quiet trend line carries the delta; the Why disclosure auto-opens once after a material user-initiated change (the user can then collapse it).
   const cc=document.getElementById('conf-change');if(cc){cc.style.display='none';cc.innerHTML='';}
-  const wb=document.getElementById('whybox2');if(wb){wb.innerHTML='You resolved the critical <b style="color:var(--text)">Resources</b> gap, so the plan is more complete — Feasibility rose from <b style="color:var(--text)">Very Low</b> to <b style="color:var(--text)">Low</b>. It\'s still the lowest dimension, so it holds the read back. Only reanalysis changes this.';wb.style.display='block';wb.classList.remove('flash');void wb.offsetWidth;wb.classList.add('flash');}
+  const wb=document.getElementById('whybox2');if(wb){wb.innerHTML='You resolved the critical <b style="color:var(--text)">Resources</b> gap, so the plan\'s feasibility is better supported — Feasibility rose from <b style="color:var(--text)">Very Low</b> to <b style="color:var(--text)">Low</b>. It\'s still the lowest dimension, so it holds the read back. Only reanalysis changes this.';wb.style.display='block';wb.classList.remove('flash');void wb.offsetWidth;wb.classList.add('flash');}
   TREND.push({run:'After your fix',c:'rose',n:after,r:'Moderate'});renderTrend();}
 function closeFindingPanel(){document.getElementById('findpanel').classList.remove('open');document.getElementById('findscrim').classList.remove('open');}
 function acceptRec(b){b.textContent='✓ Chosen';b.style.background='var(--success)';b.style.color='var(--on-accent)';}
