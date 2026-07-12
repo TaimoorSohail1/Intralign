@@ -1048,6 +1048,13 @@ Each changelog entry contains:
 - **Change Summary:** Analysis cost basis & tier re-derivation — never tier judgment quality; commission incremental recompute + prompt caching (supersedes 'Pro adds model quality'; suspends the §4c numeric basis). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-138 — DL-104: Errata to DL-103 — strike the priority/latency residue; retire UP-1/UP-2/UP-5; number UP-APPLY and UP-REPORT; refresh DL-102 E; add the P1 health-framing defect class
+
+- **Date:** 2026-07-12 · **Authorizing Decision:** DL-104.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-104-errata-dl-103-priority-lever-and-up-taxonomy.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Errata to DL-103 — strike the priority/latency residue; retire UP-1/UP-2/UP-5; number UP-APPLY and UP-REPORT; refresh DL-102 E; add the P1 health-framing defect class. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
