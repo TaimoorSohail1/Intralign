@@ -101,6 +101,8 @@ qualified canonical form below.** (This register *qualifies* — it does not red
 | **Policy** | OSLO product policies → **Product Policy** · build constraints → **Build-Policy** | product / build |
 | **Founder Console** | the founder's command surface (GTM cockpit v2 + build / Dev-Readiness v3) → **Intralign Founder Console** *(this is the surface meant by unqualified prior uses; the Dev-Readiness panel renders here)* | company/build (`intralign-founder-console`) |
 | | the OSLO **product's** observability/economics surface → **OSLO Observability Console** *(reserved name; never "Founder Console")* | product (`30_engineering/telemetry/OSLO_RELEASE_1_OBSERVABILITY_AND_ECONOMICS_PLATFORM_SPECIFICATION_V1`) |
+| **R1 / R2 …** | the **product release** → **Release 1** *(never bare "R1"; the `RELEASE_1_*` document prefix)* | product / spec |
+| | the **audience-scale rung** (DL-076: *"R1 = owner + <5 users; R2 = 10–20; 50+ = the Beta gate"*) → **Audience Rung R1** *(never bare "R1")* | rollout / GTM |
 
 **Semantic landmines** (same word, unrelated/opposite meaning):
 
@@ -108,6 +110,7 @@ qualified canonical form below.** (This register *qualifies* — it does not red
 |---|---|---|---|
 | **Canonical** | "Canonical = Attested" (truth tier) | the dedup field → **`dedup_key`** (renamed, DL-053) | "Canonical" = truth tier only; never name the act "make canonical" for dedup |
 | **Drift** | **Outcome Drift** — understanding changed, *surfaced as value* (feature) | **Determinism Drift** — *a bug that fails the build* | bare "Drift" banned; always qualify |
+| **R1** | **Release 1** — the product release (every `RELEASE_1_*` spec) | **Audience Rung R1** — fewer than 5 users (DL-076) | bare "R1" banned. The two appear **in the same sentence** ("E1–E3 in R1" is ambiguous: *Release 1*, or *the <5-user rung*?). Always qualify. |
 | **Model** | **Domain Model** (`CONFIDENCE_MODEL` — conceptual, no formula) | **Data Model** (schema) · **Scoring Model** (formula) · **LLM model** | bare "Model" banned in specs; qualify which |
 | **Attested / Derived** | doctrine concepts (truth vs interpretation) | the `epistemic_state` field value | concept stays capitalized; the column is `epistemic_state` |
 | **Dimension** (confidence) | **first-class confidence dimension** = **CAF** only — Clarity / Alignment / Feasibility (DL-062) | Reliability sub-axis (Coverage / Evidence Availability / Assessability) · Doctrine-06 driver/contributor | "first-class dimension" = CAF; never call a Reliability axis or a folded driver a "dimension"; drivers stay decomposable in the confidence basis |
