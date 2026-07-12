@@ -1076,6 +1076,13 @@ Each changelog entry contains:
 - **Change Summary:** Obey the doctrine, don't narrate it — and commission the two specs the repo has cited but never possessed: RELEASE_1_TIER_DEFINITIONS_V1 and RELEASE_1_REPORTING_SPECIFICATION_V1 (M4). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-142 — DL-108: Reconcile design-guidance 'Executive Translation' with the reporting doctrine — tailor the ask, never the read
+
+- **Date:** 2026-07-12 · **Authorizing Decision:** DL-108.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-108-executive-translation-reconciliation.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Reconcile design-guidance 'Executive Translation' with the reporting doctrine — tailor the ask, never the read. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
