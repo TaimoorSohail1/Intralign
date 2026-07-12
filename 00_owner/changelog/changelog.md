@@ -1062,6 +1062,13 @@ Each changelog entry contains:
 - **Change Summary:** Commission E1–E3 analysis cost optimization into R1 — prompt caching, scoped recompute (Evaluate always full + equivalence gate), evidence coalescing; instrument, do not gate. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-140 — DL-106: Commission the DL-069 model-judgment evaluation — and record that DL-103 §1 raised its bar (no 'Gemma for Free, frontier for Pro' hatch); per-call-site qualification; AC-V3 is disqualifying
+
+- **Date:** 2026-07-12 · **Authorizing Decision:** DL-106.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-106-commission-dl069-model-judgment-evaluation.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Commission the DL-069 model-judgment evaluation — and record that DL-103 §1 raised its bar (no 'Gemma for Free, frontier for Pro' hatch); per-call-site qualification; AC-V3 is disqualifying. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
