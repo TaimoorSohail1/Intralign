@@ -14,7 +14,8 @@
 | OD-7 | **CAF → Confidence synthesis method** | TBD | formula-free; method unspecified | confidence | Confidence model; Matrix §22 g1 |
 | OD-8 | **Reliability scale** (High/Moderate/Low ↔ numeric) | TBD | — | reliability qualifier | Reliability §12 |
 | OD-9 | **Deep Pass completion target & timeout** | TBD | — | Deep UX, ops | NFR §4 |
-| OD-10 | **Debounce / coalescing window** (deep recompute) | TBD | — | recompute, cost | Event §15; NFR |
+| OD-10 | **Debounce / coalescing window** (deep recompute) | TBD | settle/idle-based (proposal — `RELEASE_1_ANALYSIS_COST_OPTIMIZATION_SPECIFICATION_V1` §7) | recompute, cost | Event §15; NFR |
+| OD-CRR | **CRR coalescing window** (reviewer responses → one run) — **may differ from OD-10; reviewers answer over hours, not seconds** | TBD | — | recompute, cost, CR-2 | `RELEASE_1_ANALYSIS_COST_OPTIMIZATION_SPECIFICATION_V1` §3; DL-105 |
 | OD-11 | **Retry limits / backoff** (LLM call + run) | TBD | bounded retry (proposal) | reliability | Engine §17 |
 | OD-12 | **Bounded-equivalence determinism tolerance** | TBD | tolerance over governable outputs (framework only) | determinism tests | Engine §15 |
 | OD-13 | **Global-skeleton pattern adoption** | proposal | adopt 2-stage global+local | global semantics, parallelism | pack |
