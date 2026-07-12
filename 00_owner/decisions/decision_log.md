@@ -871,5 +871,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-100 — Reliability qualifier — finalize copy + confirm CONF-06 trigger reuse (closes RB-040) → `00_owner/decisions/records/DL-100-reliability-qualifier-copy-finalize.md`
 - DL-101 — VOID (duplicate of DL-102; landed outside the serializer) → `00_owner/decisions/records/DL-101-controlled-release-and-tiering-in-alpha.md`
 - DL-102 — Controlled Release & Tiering-in-Alpha (reconciles CHG-061; amends DL-048 scope, extends DL-049/DL-055/DL-062) → `00_owner/decisions/records/DL-102-controlled-release-and-tiering-in-alpha.md`
+- DL-103 — Analysis cost basis & tier re-derivation — never tier judgment quality; commission incremental recompute + prompt caching (supersedes 'Pro adds model quality'; suspends the §4c numeric basis) → `00_owner/decisions/records/DL-103-analysis-cost-basis-and-tier-rederivation.md`
 
 <!-- RECORDS-INDEX:END -->

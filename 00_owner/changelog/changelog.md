@@ -1041,6 +1041,13 @@ Each changelog entry contains:
 - **Change Summary:** Controlled Release & Tiering-in-Alpha (reconciles CHG-061; amends DL-048 scope, extends DL-049/DL-055/DL-062). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-137 — DL-103: Analysis cost basis & tier re-derivation — never tier judgment quality; commission incremental recompute + prompt caching (supersedes 'Pro adds model quality'; suspends the §4c numeric basis)
+
+- **Date:** 2026-07-12 · **Authorizing Decision:** DL-103.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-103-analysis-cost-basis-and-tier-rederivation.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Analysis cost basis & tier re-derivation — never tier judgment quality; commission incremental recompute + prompt caching (supersedes 'Pro adds model quality'; suspends the §4c numeric basis). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
