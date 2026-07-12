@@ -202,14 +202,15 @@ All entries below are **Proposed**.
 - **Dependencies:** Blocked by RB-004, RB-008.
 - **Status:** Proposed.
 
-### RB-017 — Define Assumption Expiration Semantics
+### RB-017 — Define Assumption Lifecycle & Expiration Semantics
 
-- **Source Finding:** `00_owner/doctrine/07_governance_policy_doctrine.md` offers "Assumptions expire after 30 days" as an example policy. No expiration semantics, revival rules, or propagation to confidence are defined.
+- **Source Finding:** `00_owner/doctrine/07_governance_policy_doctrine.md` offers "Assumptions expire after 30 days" as an example policy. No expiration semantics, revival rules, or propagation to confidence are defined. **(Elaborated 2026-07-12, owner-directed):** the design philosophy *"Designing for Evolving Organizational Understanding"* (§1, §3, §6, Examples 3 & 5) requests that an assumption's validation state be visible, that OSLO prompt for re-validation when confidence rests on unvalidated assumptions, and that a project be able to answer "which assumptions failed." These are surface behaviors that require this doctrine-stub to exist first.
 - **Affected Layer(s):** Doctrine.
-- **Affected Concepts:** Assumption; Confidence; Outcome Integrity Policy.
-- **Proposal Scope:** Doctrine-stub for assumption lifecycle states and confidence impact. Do not specify thresholds.
-- **Dependencies:** Blocked by RB-004.
+- **Affected Concepts:** Assumption; Confidence; confidence driver "assumption stability" (currently *Conflicting*, `ontology_registry.md`); Reliability qualifier; Outcome Integrity Policy; Understanding Timeline / History.
+- **Proposal Scope:** Doctrine-stub for assumption **lifecycle states** and the **direction** of their confidence impact. Candidate state set for owner ratification: *unvalidated → validated / invalidated*, plus *expired* and *revived* (the expiration-policy transitions). **Do not specify thresholds, decay rates, or magnitudes** (those route to calibration, Class B). Constraints the stub must honor: (a) epistemic **grounding is permanent** (`RELEASE_1_EPISTEMIC_STATE_MODEL_DECISION_001`) — validation state lives on the **Confidence/quality plane**, never as an Attested↔Derived move; (b) **no new stored object** — Assumption stays a content sub-type of AttestedAssertion; (c) any re-validation prompt is governed by **Progressive Visibility** (Constitution Art. 25) and drift warning #6 — it fires on material consequence, never routinely.
+- **Dependencies:** Blocked by RB-004. Related to **RB-007** (separate epistemic *kind* from *strength* labels incl. "Validated") and **RB-016** (confidence-scoring doctrine-stub); do **not** name a "Validated" state until RB-007's kind-vs-strength reconciliation is settled.
 - **Status:** Proposed.
+
 
 ### RB-018 — Establish Policy Grammar Doctrine
 
