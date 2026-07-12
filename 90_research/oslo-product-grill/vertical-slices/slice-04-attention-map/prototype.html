@@ -48,7 +48,22 @@
        D061 — Empty/all-clear. An artifact×dimension with no open issue renders as a neutral, inert (non-clickable) l0 cell;
               when nothing needs attention at all, the map shows an all-clear empty state.
        D062 — Co-primary placement + context. The Attention Map is reachable as a co-primary top-center view AND from the
-              Overview's Attention pointer; closing/returning preserves prior context (last view + last scroll). -->
+              Overview's Attention pointer; closing/returning preserves prior context (last view + last scroll).
+
+     CASCADED IN (D108 — Conversational OSLO, scoped to Slice-4 surfaces):
+       The persistent chat rail is now FUNCTIONAL — a working composer (Send · Enter · Shift+Enter), state-derived prompt
+       chips, a first-run empty state, an aria-live thread, and SIMULATED but STATE-GROUNDED replies built only from the live
+       Slice-4 model (currentRead(), ISSUES/_istatus, the CAF rows, ANALYSIS_STATE, heatModel()). askOslo(ctx) is the one
+       shared context hand-off (#chatCtx pill + × clear). Entry points are ONLY the surfaces that exist here: the Overview
+       confidence ("✦ Ask OSLO why"), the light issue panel ("✦ Ask OSLO about this issue"), and — Slice 4's signature —
+       the ATTENTION-MAP CELL ("✦" on each attention cell + "✦ Ask OSLO about this cell" in the scoped-issues header),
+       which explains what that artifact × dimension bucket means and what is driving its brightness. ADVISORY-ONLY (D001):
+       the chat never mutates — every action is a link that runs an EXISTING function (openIssue / openFindingsFor /
+       openFindingsForArtifact / showView). Clarifications answered in chat route through the SAME _submitClarification()
+       path as the Issue panel — one project-info update, one issue close, one set of surface refreshes; no side channel.
+       NOT offered (they don't exist in Slice 4): the artifact editor (Slice 5), the full Issues/recommendations surface
+       (Slice 6), History (Slice 7). -->
+
 <html lang="en" style="background:#111315">
 <head>
 <meta charset="UTF-8">
@@ -110,7 +125,7 @@ a{color:inherit}
 
 /* ============ PHASE BANNER (demo scaffolding — labels release phase + Slice-2 demo triggers) ============ */
 #phasebar{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;gap:12px;
-  padding:7px 16px;background:var(--surface-2);border-bottom:1px solid var(--border-2);font-size:11.5px;color:var(--muted)}
+  padding:7px 16px;background:var(--surface-2);border-bottom:1px solid var(--border-2);font-size:11.5px;color:var(--muted);white-space:nowrap;overflow-x:auto}
 #phasebar b{color:var(--primary-light);font-weight:700}
 #phasebar .seg{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:2px}
 #phasebar .seg button{font-size:11px;font-weight:600;color:var(--muted);border-radius:6px;padding:4px 10px}
@@ -234,22 +249,95 @@ a{color:inherit}
 @media(max-width:720px){.orient-steps{grid-template-columns:repeat(2,1fr)}}
 
 /* ============ APP SHELL ============ */
-/* Slice 2: app is a 2-col grid — main content + persistent OSLO chat rail (Fix 1/D043). Topbar spans both cols. */
-#app{display:none;height:100vh;grid-template-rows:48px 1fr;grid-template-columns:1fr 340px;transition:grid-template-columns .2s}
+/* D093: app is a 3-col grid — persistent left nav sidebar + main content + persistent OSLO chat rail. Topbar spans all cols. */
+#app{display:none;height:calc(100vh - 44px - 32px);margin-top:44px;grid-template-rows:48px 1fr;grid-template-columns:240px 1fr 340px;transition:grid-template-columns .2s}
 #app.show{display:grid}
-#app.chat-collapsed{grid-template-columns:1fr 0}
+#app.chat-collapsed{grid-template-columns:240px 1fr 0}
 .topbar{grid-row:1;grid-column:1 / -1;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--border);background:var(--bg-2)}
 .tb-brand{display:flex;align-items:center;gap:9px;font-weight:600;cursor:pointer}
 .tb-brand .logo{width:22px;height:22px;border-radius:6px;background:var(--primary);display:grid;place-items:center;color:var(--primary-fg);font-weight:700;font-size:13px}
-.tb-crumb{font-size:12.5px;color:var(--subtle)} .tb-crumb b{color:var(--text);font-weight:500}
+.tb-crumb{font-size:12.5px;color:var(--text);font-weight:500} .tb-crumb b{color:var(--text);font-weight:500}
 .crumb-sep{color:var(--subtle);font-size:13px}
-/* top-center co-primary view switch (Overview · Attention) — D038 / NAV-C3 */
-.vswitch{display:flex;gap:2px;margin-left:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:2px}
-.vseg{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--muted);border-radius:6px;padding:5px 11px}
-.vseg:hover{color:var(--text)}
-.vseg.active{background:rgba(217,122,58,.14);color:var(--primary-light)}
-.vseg .vbadge{background:var(--danger);color:var(--on-accent);font-size:9px;font-weight:600;padding:0 6px;border-radius:99px;line-height:15px}
+/* D093 approved — top-bar chrome: project switcher · sample tag · right-cluster icon buttons · Free plan chip */
+.topbar{gap:10px}
+.tb-proj{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:8px;padding:4px 9px;font-size:12.5px;color:var(--text);cursor:pointer;font-weight:600}
+.tb-proj:hover{border-color:var(--primary)} .tb-proj:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+.tb-proj b{font-weight:600} .tb-chev{color:var(--subtle);font-size:9px}
+.tb-tag{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);background:var(--surface-3);border:1px solid var(--border-2);border-radius:5px;padding:2px 6px;font-weight:600}
+.tb-ic{width:30px;height:30px;border:1px solid transparent;background:none;border-radius:7px;color:var(--muted);font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.tb-ic:hover{color:var(--text);background:var(--hover-tint)} .tb-ic:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+.tb-plan{font-size:11px;font-weight:600;color:var(--muted);background:var(--surface-3);border:1px solid var(--border-2);border-radius:99px;padding:4px 11px;cursor:pointer;flex-shrink:0}
+.tb-plan:hover{color:var(--text);border-color:var(--primary)} .tb-plan:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+/* D093 — the top-center view switch is GONE; primary nav now lives in the persistent left sidebar (below). */
+/* narrow-width ☰ toggle in the top bar (opens the sidebar drawer); hidden on wide screens */
+.sb-hamburger{display:none;width:30px;height:30px;border:1px solid var(--border-2);background:var(--surface);border-radius:7px;color:var(--muted);font-size:15px;line-height:1;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.sb-hamburger:hover,.sb-hamburger:focus-visible{color:var(--text);border-color:var(--primary)}
 .tb-sp{flex:1}
+
+/* ============ D093 — PERSISTENT LEFT NAV SIDEBAR (primary nav; all project views) ============ */
+.sidebar{grid-row:2;grid-column:1;display:flex;flex-direction:column;background:var(--bg-2);border-right:1px solid var(--border);min-width:0;overflow:hidden}
+.sb-scroll{flex:1;overflow-y:auto;padding:12px 10px 8px}
+.sb-group{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--subtle);font-weight:600;padding:14px 8px 6px}
+.sb-group:first-child{padding-top:2px}
+/* D093 approved — Plan-artifacts subgroup labels (Understanding / Execution) */
+.sb-subgroup{font-size:10px;letter-spacing:.2px;color:var(--muted);font-weight:600;padding:8px 8px 3px 10px}
+.sb-nav{width:100%;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer;background:none;border:none;text-align:left;transition:background .12s,color .12s}
+.sb-nav:hover{background:var(--hover-tint);color:var(--text)}
+.sb-nav:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+.sb-nav.active{background:rgba(217,122,58,.12);color:var(--primary-light);font-weight:600}
+.sb-nav .ic{width:16px;text-align:center;opacity:.85;flex-shrink:0}
+.sb-nav .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* project-view count badge — NEUTRAL nav chrome (never severity color as chrome, D003) */
+.sb-badge{font-size:9.5px;font-weight:700;min-width:17px;height:17px;padding:0 5px;border-radius:99px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--surface-3);border:1px solid var(--border-2);color:var(--muted)}
+.sb-badge:empty,.sb-badge.zero{display:none}
+/* pinned bottom utilities (approved: bordered Tour button · Free-plan tier chip · Your-account row) */
+.sb-foot{border-top:1px solid var(--border);padding:10px;display:flex;flex-direction:column;gap:9px}
+.sb-foot .sb-nav{font-size:12.5px}
+/* bordered "Take a quick tour" button */
+.sb-tour{width:100%;display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--border-2);border-radius:8px;background:var(--surface-2);color:var(--muted);font-size:12.5px;cursor:pointer;text-align:left;transition:border-color .12s,color .12s}
+.sb-tour:hover{border-color:var(--primary);color:var(--text)} .sb-tour:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+.sb-tour .ic{width:16px;text-align:center;opacity:.9;flex-shrink:0} .sb-tour .nm{flex:1}
+/* Free-plan tier chip — NEUTRAL/brand chrome (D003), Upgrade button on the right */
+.sb-tier{display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--border-2);border-radius:8px;background:var(--surface)}
+.sb-tier-ic{color:var(--primary-light);font-size:12px;flex-shrink:0}
+.sb-tier-txt{display:flex;flex-direction:column;line-height:1.25;min-width:0;flex:1}
+.sb-tier-txt b{font-size:12px;color:var(--text);font-weight:600}
+.sb-tier-sub{font-size:10px;color:var(--subtle)}
+.sb-tier-up{font-size:11px;font-weight:600;color:var(--primary-light);background:none;border:1px solid var(--border-2);border-radius:6px;padding:3px 9px;cursor:pointer;flex-shrink:0}
+.sb-tier-up:hover{border-color:var(--primary);background:rgba(217,122,58,.1)} .sb-tier-up:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+/* Your account row — avatar + name/subtext; opens the account menu / settings */
+.sb-acct{display:flex;align-items:center;gap:9px;padding:7px 8px;border:none;border-radius:8px;background:none;cursor:pointer;text-align:left;width:100%}
+.sb-acct:hover{background:var(--hover-tint)} .sb-acct:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+.sb-acct-av{width:28px;height:28px;border-radius:50%;background:var(--surface-3);border:1px solid var(--border-2);color:var(--muted);font-size:11px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.sb-acct-txt{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.sb-acct-txt b{font-size:12.5px;color:var(--text);font-weight:600}
+.sb-acct-sub{font-size:10.5px;color:var(--subtle)}
+/* History pane center seam (Slice 7 not yet built) */
+.hist-seam{max-width:520px;margin:8vh auto 0;text-align:center;padding:26px}
+.hist-seam-ic{font-size:30px;color:var(--subtle);margin-bottom:10px}
+.hist-seam-t{font-size:17px;font-weight:600;color:var(--text);margin-bottom:8px}
+.hist-seam-s{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+/* tiny settings stub toast (D093 — Settings lands in a later slice) */
+.sb-toast{position:fixed;z-index:210;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);opacity:0;pointer-events:none;background:var(--surface-2);border:1px solid var(--border-2);border-radius:10px;padding:10px 15px;font-size:12.5px;color:var(--muted);box-shadow:0 14px 40px rgba(0,0,0,.5);transition:opacity .18s,transform .18s}
+.sb-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+/* drawer scrim (narrow widths) */
+.sb-scrim{position:fixed;inset:38px 0 0 0;z-index:149;background:rgba(0,0,0,.5);display:none}
+#app.sidebar-open .sb-scrim{display:block}
+
+/* D093 — narrow widths: the persistent sidebar collapses to an overlay drawer opened by the ☰ button. */
+@media(max-width:860px){
+  #app{grid-template-columns:1fr 340px}
+  #app.chat-collapsed{grid-template-columns:1fr 0}
+  .sb-hamburger{display:inline-flex}
+  .sidebar{position:fixed;z-index:150;top:86px;left:0;bottom:0;width:240px;border-right:1px solid var(--border-2);
+    box-shadow:0 18px 44px rgba(0,0,0,.5);transform:translateX(-100%);transition:transform .2s}
+  #app.sidebar-open .sidebar{transform:none}
+}
+@media(max-width:760px){
+  /* the persistent chat rail collapses under its own column at narrow widths (still reachable via the ✦ OSLO tab) */
+  #app{grid-template-columns:1fr 0}
+  #app .chatp{display:none}
+}
 .conf-pill{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:99px;padding:5px 12px 5px 10px;cursor:pointer}
 .conf-dot{width:8px;height:8px;border-radius:50%;background:var(--conf-medium)}
 .conf-pill .t1{font-size:10px;color:var(--subtle)} .conf-pill .t2{font-size:15px;font-weight:700;color:var(--text)} .conf-pill .t2b{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
@@ -325,12 +413,12 @@ a{color:inherit}
 .am-note{font-size:10.5px;color:var(--subtle);padding:6px 9px 3px;line-height:1.5}
 
 /* body layout */
-.body{grid-row:2;grid-column:1;overflow-y:auto;background:var(--bg);min-width:0}
+.body{grid-row:2;grid-column:2;overflow-y:auto;background:var(--bg);min-width:0}
 .pane{display:none;animation:fade .2s}.pane.active{display:block}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 
 /* ============ GLOBAL OSLO CHAT RAIL (Slice 2 — persistent advisor; completion notices land here per D043) ============ */
-.chatp{grid-row:2;grid-column:2;border-left:1px solid var(--border);background:var(--bg-2);display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.chatp{grid-row:2;grid-column:3;border-left:1px solid var(--border);background:var(--bg-2);display:flex;flex-direction:column;overflow:hidden;min-width:0}
 #app.chat-collapsed .chatp{display:none}
 .chat-h{display:flex;align-items:center;gap:9px;padding:12px 15px;border-bottom:1px solid var(--border)}
 .chat-h .o{width:22px;height:22px;border-radius:6px;background:var(--primary);display:grid;place-items:center;color:var(--primary-fg);font-weight:700;font-size:12px}
@@ -356,6 +444,53 @@ a{color:inherit}
 /* re-open the chat rail when collapsed */
 .chat-toggle{position:absolute;top:56px;right:12px;z-index:20;border:1px solid var(--border-2);background:var(--surface);border-radius:7px;padding:5px 10px;font-size:12px;color:var(--muted);display:none;align-items:center;gap:6px}
 #app.chat-collapsed .chat-toggle{display:flex}
+
+/* ============ D108 — CONVERSATIONAL OSLO: context pill · suggested chips · user turn · in-chat clarification ============
+   Neutral chrome only (D003) — the chat never wears severity color as decoration; severity words stay inline in copy.
+   Advisory-only (D001): every action the chat offers is a LINK the user clicks; the chat itself changes nothing.
+   Slice 4 scope: the chat is grounded in the surfaces that EXIST here — the confidence read, the Attention map
+   (artifact × dimension cells), the light issue panel, and the clarification loop. No artifact editor (Slice 5),
+   no full Issues/recommendations surface (Slice 6), no History (Slice 7) — those stay labeled seams. */
+.chat-ctx{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface);font-size:11.5px;color:var(--muted)}
+.chat-ctx .cx-lab{flex:none;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--subtle)}
+.chat-ctx .cx-v{flex:1;min-width:0;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-ctx .cx-x{flex:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-2);background:var(--surface-2);border-radius:5px;color:var(--muted);font-size:12px;line-height:1;cursor:pointer;font-family:inherit}
+.chat-ctx .cx-x:hover{color:var(--text);border-color:var(--primary)}
+/* first-run / empty state — present until the first message lands */
+.chat-empty{font-size:12.5px;line-height:1.7;color:var(--subtle);padding:4px 2px}
+.chat-empty .ce-t{color:var(--muted);font-weight:600;margin-bottom:6px}
+.chat-empty b{color:var(--muted)}
+/* suggested prompt chips (inside the composer, above the input) */
+.chat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+.chat-chip{border:1px solid var(--border-2);background:var(--surface-2);border-radius:99px;padding:4px 10px;font-size:11px;color:var(--muted);cursor:pointer;font-family:inherit;line-height:1.4}
+.chat-chip:hover,.chat-chip:focus-visible{color:var(--text);border-color:var(--primary);outline:none}
+/* OSLO's in-chat action links → they run the SAME functions the surfaces run (never a side channel) */
+.chat-acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.chat-act{border:1px solid var(--border-2);background:var(--surface);border-radius:7px;padding:4px 9px;font-size:11.5px;font-weight:600;color:var(--primary-light);cursor:pointer;font-family:inherit}
+.chat-act:hover,.chat-act:focus-visible{border-color:var(--primary);background:var(--surface-2);outline:none}
+/* an open clarification raised conversationally — answering routes through the SAME path as the Issue panel */
+.chat-clar{margin-top:10px;border:1px solid var(--border-2);border-radius:9px;padding:9px 10px;background:var(--surface)}
+.chat-clar .cc-q{font-size:12.5px;line-height:1.6;color:var(--text);margin-bottom:8px}
+.chat-clar textarea{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:inherit;font-size:12.5px;line-height:1.5;padding:7px 8px;resize:vertical;min-height:44px;outline:none}
+.chat-clar textarea:focus{border-color:var(--primary)}
+.chat-clar .cc-foot{display:flex;align-items:center;gap:8px;margin-top:7px}
+.chat-clar .cc-note{flex:1;font-size:10.5px;color:var(--subtle)}
+.chat-clar.answered textarea,.chat-clar.answered .cc-foot{display:none}
+/* "Ask OSLO why" pill beside the confidence number (Overview) — same shape as "How this is calculated" */
+.howcalc.askwhy{margin-top:7px;background:none}
+.howcalc.askwhy .hc-ic{font-style:normal;font-family:inherit;font-size:10px;color:var(--primary-light)}
+/* the Attention-map cell ask (Slice 4's signature entry point) — a quiet ✦ affordance on each attention cell.
+   It inherits the cell's own text color (severity stays on the cell, D003) and appears on hover/focus. */
+.heat-cell .cellask{position:absolute;top:3px;left:4px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;
+  border:none;background:none;color:inherit;font-size:10px;line-height:1;cursor:pointer;opacity:0;transition:opacity .12s;font-family:inherit;padding:0}
+.heat-cell:hover .cellask,.heat-cell .cellask:focus-visible{opacity:.95}
+.heat-cell .cellask:focus-visible{outline:2px solid var(--color-focus);outline-offset:1px;border-radius:4px}
+/* "Ask OSLO about this cell" — in the scoped-issues header (where a multi-issue cell routes) */
+.sp-ask{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--primary-light);border:1px solid var(--border-2);background:var(--surface);border-radius:7px;padding:4px 10px;cursor:pointer;font-family:inherit;margin-left:auto}
+.sp-ask:hover,.sp-ask:focus-visible{border-color:var(--primary);background:var(--surface-2);outline:none}
+/* "Ask OSLO about this issue" — in the light issue panel */
+.ip-ask{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--primary-light);border:1px solid var(--border-2);background:var(--surface-2);border-radius:8px;padding:6px 11px;cursor:pointer;font-family:inherit;margin-top:14px}
+.ip-ask:hover,.ip-ask:focus-visible{border-color:var(--primary);outline:none}
 
 /* ============ OPTIONAL FEATURE TOUR (spotlight coachmarks; opt-in, never gates value) — Fix 2/D044 ============ */
 .tourmask{position:fixed;z-index:150;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.6);pointer-events:none;display:none}
@@ -522,6 +657,29 @@ a{color:inherit}
 .heat-clear .hc-tick{width:46px;height:46px;border-radius:50%;background:rgba(77,139,107,.14);border:1px solid rgba(77,139,107,.4);color:var(--success);display:grid;place-items:center;font-size:22px}
 .heat-clear .hc-t{font-size:15px;font-weight:600;color:var(--text)}
 .heat-clear .hc-s{font-size:12.5px;color:var(--subtle);max-width:360px;line-height:1.55}
+
+/* ============ COMMAND PALETTE (D094) — search / jump-to. Centered modal; grouped, filtered results.
+   z-index above the app chrome (phasebar 200 / toast 210) but below the issue flyout (260) — the two
+   are mutually exclusive (opening the palette closes an open flyout). Highlight = neutral surface tint,
+   never a severity color. ============ */
+#palScrim{position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.55);display:none;align-items:flex-start;justify-content:center;padding:13vh 16px 16px}
+#palScrim.show{display:flex}
+.palette{width:560px;max-width:96vw;max-height:66vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border-2);border-radius:14px;box-shadow:0 26px 74px rgba(0,0,0,.6);overflow:hidden;animation:palin .16s var(--ease)}
+@keyframes palin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.pal-inwrap{display:flex;align-items:center;gap:11px;padding:14px 17px;border-bottom:1px solid var(--border)}
+.pal-inwrap .pal-mag{color:var(--subtle);font-size:16px;flex:0 0 auto}
+#palInput{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;font-family:var(--sans)}
+#palInput::placeholder{color:var(--subtle)}
+.pal-results{overflow-y:auto;overscroll-behavior:contain;padding:6px 6px 8px}
+.pal-group{padding:5px 4px 2px}
+.pal-glabel{font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--subtle);padding:7px 10px 5px}
+.pal-item{display:flex;align-items:center;gap:11px;padding:8px 11px;border-radius:8px;cursor:pointer;color:var(--text)}
+.pal-item .pal-ic{width:18px;text-align:center;color:var(--muted);font-size:13px;flex:0 0 auto}
+.pal-item .pal-nm{flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pal-item .pal-meta{font-size:11.5px;color:var(--subtle);white-space:nowrap;flex:0 0 auto;margin-left:12px}
+.pal-item.active{background:var(--surface-2)}
+.pal-empty{padding:24px 12px;text-align:center;color:var(--subtle);font-size:12.5px}
+.pal-foot{padding:9px 15px;border-top:1px solid var(--border);font-size:11px;color:var(--subtle);text-align:center}
 
 /* ============ SCOPED ISSUES LIST (D058 seam) — a light scoped container that opens when a cell holds >1 open issue.
    The FULL Issues surface (grouping, By dimension/By severity toggle, triage) is Slice 6; here we build the scoped
@@ -750,20 +908,26 @@ a{color:inherit}
 <!-- ============ APP SHELL — real Overview + reachable Attention Map (Slice 2) ============ -->
 <div id="app">
   <header class="topbar">
+    <!-- D093 (approved) — narrow-width sidebar drawer toggle (hidden on wide screens via CSS) -->
+    <button class="sb-hamburger" id="sbHamburger" onclick="toggleSidebar()" title="Show navigation" aria-label="Show navigation" aria-controls="appSidebar" aria-expanded="false">☰</button>
+    <!-- Left cluster: Intralign brand → project switcher → sample chip → breadcrumb (current view/artifact) -->
     <div class="tb-brand" title="Workspace Home"><div class="logo">I</div> Intralign</div>
+    <!-- Project switcher (Slice-8 multi-project = seam; the name span keeps the projName id so existing project-name wiring stays intact) -->
+    <button class="tb-proj" id="tbProj" onclick="openProjectSwitcher()" title="Switch project — multi-project arrives in Slice 8" aria-haspopup="true"><span id="projName"><b>New project</b></span> <span class="tb-chev">▾</span></button>
+    <span class="tb-tag" title="Sample project data">sample</span>
     <span class="crumb-sep">›</span>
-    <span class="tb-crumb" id="projName"><b>New project</b></span>
-    <!-- co-primary top-center view switch — D038 / NAV-C3 -->
-    <div class="vswitch" role="tablist" aria-label="Primary views">
-      <button class="vseg active" id="vsOverview" role="tab" aria-selected="true" onclick="showView('overview')">◎ Overview</button>
-      <button class="vseg" id="vsAttention" role="tab" aria-selected="false" onclick="showView('attention')">▦ Attention <span class="vbadge" id="vsAttnBadge">0</span></button>
-    </div>
+    <span class="tb-crumb" id="tbCrumb">Overview</span>
     <div class="tb-sp"></div>
-    <!-- D050: the pill is the ONE home for the metrics; click opens the compact console (popover) -->
+    <!-- D050: the confidence pill is the ONE home for the metrics; click opens the compact console (popover). KEEP AS-IS. -->
     <button class="conf-pill pending" id="confpill" onclick="toggleConfPop(event)" title="Confidence — understanding maturity, not a health score. Click for the dimensions and reliability basis." aria-haspopup="dialog" aria-expanded="false">
       <span class="conf-dot"></span><span class="t1">Confidence</span><span class="t2 mono" id="cp-idx">—</span><span class="t2b" id="cp-band">Forming</span><span class="q" id="cp-rel">Initial read</span><span class="flagdot" title="Read the flag in the popover"></span><span class="cpchev">▾</span>
     </button>
-    <button class="acct" id="acctBtn" onclick="toggleAcctMenu(event)" title="Account" aria-haspopup="true" aria-expanded="false">ID</button>
+    <!-- Right cluster (approved): search · Share (Slice 9 seam) · Export (Slice 9 seam) · report · Free plan chip -->
+    <button class="tb-ic" id="tbSearch" onclick="openSearch()" title="Search or jump to (⌘K)" aria-label="Search or jump to" aria-haspopup="dialog">⌕</button>
+    <button class="tb-ic" id="tbShare" onclick="openShareSeam()" title="Share — arrives in Slice 9" aria-label="Share">⤴</button>
+    <button class="tb-ic" id="tbExport" onclick="openExportSeam()" title="Export — arrives in Slice 9" aria-label="Export">⤓</button>
+    <button class="tb-ic" id="tbReport" onclick="openReportStub()" title="Reports" aria-label="Reports">◕</button>
+    <button class="tb-plan" id="tbPlan" onclick="openUpgrade()" title="Free plan — click to upgrade">Free</button>
   </header>
 
   <!-- account menu — D028 -->
@@ -774,6 +938,7 @@ a{color:inherit}
     </div>
     <div class="am-note" id="amStayNote">Session persists on this device (simulated via localStorage; real timeout policy owner-TBD).</div>
     <div class="am-sep"></div>
+    <button class="am-item" role="menuitem" onclick="closeAcctMenu();openSettings()"><span class="ic">⚙</span> Settings</button>
     <button class="am-item" role="menuitem" onclick="replayOrientation()"><span class="ic">◎</span> How OSLO works (replay)</button>
     <div class="am-sep"></div>
     <button class="am-item danger" role="menuitem" onclick="logout()"><span class="ic">⏻</span> Log out</button>
@@ -811,6 +976,36 @@ a{color:inherit}
     <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:12px" onclick="closeConfPop();showView('overview')">Open full breakdown → Overview</button>
   </div>
 
+  <!-- ============ D093 — PERSISTENT LEFT NAV SIDEBAR (primary nav) — Slice 4 = PROJECT nav + utilities.
+       The PLAN ARTIFACTS section is intentionally OMITTED here (the artifact editor arrives in Slice 5). ============ -->
+  <aside class="sidebar" id="appSidebar" aria-label="Primary navigation">
+    <div class="sb-scroll">
+      <!-- PROJECT — Overview (live) · Issues (Slice-6 seam) · History (Slice-7 seam) · Attention map (live) -->
+      <div class="sb-group">Project</div>
+      <button class="sb-nav active" id="sbOverview" onclick="showView('overview')" aria-current="page"><span class="ic">◎</span><span class="nm">Overview</span></button>
+      <button class="sb-nav" id="sbIssues" onclick="openIssuesSeam()" aria-current="false" title="Full Issues view arrives in Slice 6"><span class="ic">⚑</span><span class="nm">Issues</span><span class="sb-badge" id="vsIssuesBadge">0</span></button>
+      <button class="sb-nav" id="sbHistory" onclick="openHistorySeam()" aria-current="false" title="History &amp; timeline — arrives in Slice 7"><span class="ic">◔</span><span class="nm">History</span></button>
+      <button class="sb-nav" id="sbAttention" onclick="showView('attention')" aria-current="false"><span class="ic">▦</span><span class="nm">Attention map</span><span class="sb-badge" id="vsAttnBadge">0</span></button>
+    </div>
+    <!-- Bottom utilities (pinned) — bordered Tour button · Free-plan tier chip w/ Upgrade · Your account row -->
+    <div class="sb-foot">
+      <button class="sb-tour" id="railTour" onclick="startTour()" title="A short tour of how to use OSLO"><span class="ic">✦</span><span class="nm">Take a quick tour</span></button>
+      <div class="sb-tier" title="You're on the Free plan (1 active project)">
+        <span class="sb-tier-ic">◆</span>
+        <span class="sb-tier-txt"><b>Free plan</b><span class="sb-tier-sub">1 active project</span></span>
+        <button class="sb-tier-up" onclick="openUpgrade()" title="Upgrade your plan">Upgrade</button>
+      </div>
+      <button class="sb-acct" id="acctBtn" onclick="toggleAcctMenu(event)" title="Your account &amp; settings" aria-haspopup="true" aria-expanded="false">
+        <span class="sb-acct-av">ID</span>
+        <span class="sb-acct-txt"><b>Your account</b><span class="sb-acct-sub">Settings</span></span>
+      </button>
+    </div>
+  </aside>
+  <!-- narrow-width drawer scrim (closes the sidebar on click) -->
+  <div class="sb-scrim" onclick="closeSidebar()"></div>
+  <!-- settings stub toast (D093 — full Settings lands in a later slice) -->
+  <div class="sb-toast" id="sbToast" role="status" aria-live="polite">Settings — coming in a later slice</div>
+
   <div class="body">
     <!-- OVERVIEW pane (confidence-led, DL-096 redesign) — sections are EXACTLY: Confidence → Start here → Progress → More.
          Fix 1/D043: completion notices moved OUT to OSLO chat (no arrival/deep banners here).
@@ -843,6 +1038,13 @@ a{color:inherit}
                   </ul>
                 </div>
               </div>
+              <!-- D108 — the confidence entry point into the conversation. Hands the confidence context to the
+                   chat (askOslo) — OSLO explains the band, the reliability qualifier and the limiting dimension
+                   from the LIVE read. Advisory: it explains, it never changes the number. -->
+              <button type="button" class="howcalc askwhy" id="askWhy" onclick="askOslo({type:'confidence'})"
+                      title="Ask OSLO why the read sits here — it explains, it never changes the number">
+                <span class="hc-ic">✦</span> Ask OSLO why
+              </button>
               <!-- quiet confidence-stage marker (D053) — subtle, not standing chrome.
                    Fix 4 — a visible ⓘ info affordance now explains what the stages mean and which one is current. -->
             </div>
@@ -957,19 +1159,32 @@ a{color:inherit}
   <!-- ============ GLOBAL OSLO CHAT RAIL — persistent advisor; completion notices land here (Fix 1/D043) ============ -->
   <aside class="chatp" id="chatp">
     <div class="chat-h"><div class="o">O</div><div class="nm">OSLO</div><span class="mode">Advisory</span><button class="chat-min" onclick="toggleChat()" title="Hide the OSLO panel" aria-label="Hide the OSLO panel">›</button></div>
-    <div class="chat-scroll" id="chatscroll"></div>
+    <!-- D108 — CONTEXT PILL: set when a surface hands context to the chat (askOslo). × clears it. -->
+    <div class="chat-ctx" id="chatCtx" style="display:none">
+      <span class="cx-lab">Context</span><span class="cx-v" id="chatCtxLabel"></span>
+      <button type="button" class="cx-x" id="chatCtxClear" onclick="clearChatContext()" title="Clear the context" aria-label="Clear the conversation context">×</button>
+    </div>
+    <!-- D108 — the message list is a live region; OSLO's replies are announced as they land -->
+    <div class="chat-scroll" id="chatscroll" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation with OSLO">
+      <!-- first-run / empty state — replaced by the first message -->
+      <div class="chat-empty" id="chatEmpty">
+        <div class="ce-t">Ask OSLO anything about your plan.</div>
+        I read and explain — <b>your confidence read</b>, <b>an issue</b>, <b>a cell on the Attention map</b>, or <b>what to do next</b>. I never change your plan: I can only point you at the action, you take it.
+      </div>
+    </div>
     <div class="chat-foot">
       <div class="chat-input">
-        <textarea placeholder="Ask OSLO about the read, an issue, or what to do next…" aria-label="Ask OSLO"></textarea>
-        <div class="cr"><span class="sp">↳ advisory <span class="info" data-tip="OSLO reads and explains — you stay in control; nothing changes your plan without you.">i</span></span><button class="btn btn-primary btn-sm">Send</button></div>
+        <!-- D108 — suggested prompt chips (state-derived; rebuilt whenever the read or the context changes) -->
+        <div class="chat-chips" id="chatChips" role="group" aria-label="Suggested questions"></div>
+        <textarea id="chatInput" placeholder="Ask OSLO about the read, an issue, or what to do next…" aria-label="Ask OSLO a question" onkeydown="chatKey(event)"></textarea>
+        <div class="cr"><span class="sp">↳ advisory <span class="info" data-tip="OSLO reads and explains — you stay in control; nothing changes your plan without you.">i</span></span><button class="btn btn-primary btn-sm" id="chatSend" onclick="sendChat()" title="Send (Enter · Shift+Enter for a new line)">Send</button></div>
       </div>
     </div>
   </aside>
   <!-- re-open the chat rail when collapsed -->
   <button class="chat-toggle" onclick="toggleChat()" title="Show the OSLO panel">✦ OSLO</button>
 
-  <!-- small left-rail "Take a quick tour" affordance (Fix 2/D044) -->
-  <div class="rail-tour" id="railTour" onclick="startTour()" role="button" tabindex="0" title="A short tour of how to use OSLO"><span class="tic">✦</span> Take a quick tour</div>
+  <!-- Fix 2/D044 — the "Take a quick tour" affordance now lives in the persistent sidebar footer (id="railTour"). -->
 </div>
 
 <!-- ============ OPTIONAL FEATURE TOUR — spotlight coachmarks over the real UI (opt-in, never gates) — Fix 2/D044 ============ -->
@@ -979,6 +1194,38 @@ a{color:inherit}
   <div class="tt-title" id="tt-title"></div>
   <div class="tt-text" id="tt-text"></div>
   <div class="tt-foot"><button class="btn btn-ghost btn-sm" onclick="tourEnd()">Skip</button><span style="flex:1"></span><button class="btn btn-ghost btn-sm" id="tt-back" onclick="tourGo(_tourI-1)">Back</button><button class="btn btn-primary btn-sm" id="tt-next" onclick="tourNext()">Next</button></div>
+</div>
+
+<!-- ============ COMMAND PALETTE (D094) — search / jump-to. Centered modal overlay: input at top,
+     grouped filtered results (GO TO · OPEN AN ISSUE). Opens from the top-bar ⌕ and ⌘/Ctrl+K; keyboard-operable.
+     (The PLAN ARTIFACTS palette group is OMITTED in Slice 4 — the artifact editor arrives in Slice 5.) ============ -->
+<div id="palScrim" onclick="if(event.target===this)closeSearch()">
+  <div class="palette" role="dialog" aria-modal="true" aria-label="Search or jump to">
+    <div class="pal-inwrap">
+      <span class="pal-mag" aria-hidden="true">⌕</span>
+      <input id="palInput" type="text" placeholder="Search or jump to…" autocomplete="off" spellcheck="false"
+             role="combobox" aria-expanded="true" aria-controls="palResults" aria-autocomplete="list"
+             aria-label="Search or jump to" oninput="_palFilter()" onkeydown="_palKeydown(event)">
+    </div>
+    <div class="pal-results" id="palResults" role="listbox" aria-label="Results"></div>
+    <div class="pal-foot" aria-hidden="true">↑↓ navigate · ↵ open · esc close</div>
+  </div>
+</div>
+
+<!-- Issues SEAM — the full Issues surface (all-issues list, By dimension/By severity, triage, resolved tab)
+     arrives in Slice 6. The sidebar/palette "Issues" entries open this clearly-labeled stub (NOT a wrong view).
+     Investigating a single issue is live via the Attention map -> light issue panel. -->
+<div id="issuesSeamScrim" onclick="if(event.target===this)closeIssuesSeam()"
+     style="position:fixed;inset:0;z-index:175;display:none;place-items:center;background:rgba(0,0,0,.6);padding:24px">
+  <div role="dialog" aria-modal="true" aria-label="Issues" style="background:var(--surface);border:1px solid var(--border-2);border-radius:16px;padding:26px 28px;max-width:440px;width:100%;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.5)">
+    <div style="width:44px;height:44px;border-radius:11px;background:var(--surface-2);border:1px solid var(--border-2);display:grid;place-items:center;font-size:20px;margin:0 auto 14px;color:var(--primary-light)">⚑</div>
+    <div style="font-size:17px;font-weight:600;margin-bottom:6px">Full Issues view arrives in Slice 6</div>
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:18px">The complete Issues surface — every open issue grouped, the By dimension / By severity toggle, triage counts and the resolved tab — lands in Slice 6. For now, open the <b>Attention map</b> and click a cell to investigate an issue, or press <span class="mono">⌘K</span> and pick one under “Open an issue”.</div>
+    <div style="display:flex;gap:9px;justify-content:center">
+      <button class="btn btn-ghost btn-sm" onclick="closeIssuesSeam()">Got it</button>
+      <button class="btn btn-primary btn-sm" onclick="closeIssuesSeam();showView('attention')">Open the Attention map →</button>
+    </div>
+  </div>
 </div>
 
 <!-- ============ LIGHT ISSUE PANEL (Slice 2 — clarification loop; full Issues UI = Slice 6) ============ -->
@@ -1286,22 +1533,433 @@ function afterOrientation(){
   if(ANON_RUN){ setTimeout(showSaveBar, 1200); } // GA only
 }
 
-/* ============ GLOBAL OSLO CHAT RAIL — persistent advisor + completion notices (Fix 1/D043) ============ */
+/* ============================================================================================================
+   GLOBAL OSLO CHAT RAIL — persistent advisor + completion notices (Fix 1/D043) + CONVERSATION (D108)
+   ------------------------------------------------------------------------------------------------------------
+   D108 in SLICE 4 — the chat is FUNCTIONAL and grounded in the surfaces that exist HERE:
+     · a working composer (Send · Enter to send · Shift+Enter for a newline) with state-derived prompt chips;
+     · replies are SIMULATED but STATE-GROUNDED — every answer derives from the live model (currentRead(),
+       ISSUES/_istatus, the CAF rows, ANALYSIS_STATE, the heat model). No invented numbers, no invented issues;
+     · ADVISORY-ONLY (D001): the chat NEVER mutates the plan, never resolves an issue, never changes the
+       assessment. It OFFERS actions as links; the user clicks, and the action runs through the EXISTING Slice-4
+       functions (openIssue / openFindingsFor / openFindingsForArtifact / showView / answerClarification);
+     · the ATTENTION-MAP CELL is Slice 4's signature entry point: askOslo({type:'cell',art,dim}) sets a
+       "Context · <Artifact> × <Dimension>" pill and OSLO explains what that bucket means and what drives it;
+     · issues close only when an analysis update confirms the gap is gone — the chat says so and never claims to
+       have closed one; "issues", never "findings" (D017); "analysis update", never "reanalysis" as a mechanism.
+   Surfaces NOT in Slice 4 (artifact editor · full Issues/recommendations · History) are NOT offered by the chat.
+   ============================================================================================================ */
 function toggleChat(){ document.getElementById('app').classList.toggle('chat-collapsed'); }
+function _chatEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* drop the first-run/empty state as soon as anything lands in the thread */
+function _chatDropEmpty(){ const e=document.getElementById('chatEmpty'); if(e && e.parentNode) e.parentNode.removeChild(e); }
 function pushChat(html, cls){
   const s = document.getElementById('chatscroll'); if(!s) return;
+  _chatDropEmpty();
   const el = document.createElement('div');
   el.className = 'cmsg' + (cls ? ' ' + cls : '');
   el.innerHTML = '<div class="who">OSLO</div><div class="bub">' + html + '</div>';
   s.appendChild(el); s.scrollTop = s.scrollHeight;
   // if collapsed, surface the notice
   document.getElementById('app').classList.remove('chat-collapsed');
+  return el;
+}
+/* the user's turn in the thread (D108) — plain text, always escaped */
+function pushUserChat(text){
+  const s = document.getElementById('chatscroll'); if(!s) return;
+  _chatDropEmpty();
+  const el = document.createElement('div');
+  el.className = 'cmsg user';
+  el.innerHTML = '<div class="who">You</div><div class="bub">' + _chatEsc(text) + '</div>';
+  s.appendChild(el); s.scrollTop = s.scrollHeight;
+  document.getElementById('app').classList.remove('chat-collapsed');
+  return el;
 }
 function seedChat(){
   const s = document.getElementById('chatscroll'); if(!s || s.dataset.seeded) return;
   s.dataset.seeded = '1';
   const name = ANON_RUN ? 'this project' : 'DevNorth 2026';
-  pushChat('I’ve mapped ' + name + ' into your seven plan artifacts. Ask me anything about the read, an issue, or what to do next — I read and explain; you stay in control.');
+  pushChat('I’ve mapped ' + name + ' into your seven plan artifacts. Ask me anything about the read, an issue, a cell on the Attention map, or what to do next — I read and explain; you stay in control.');
+  renderChatChips();
+}
+
+/* ---------- LIVE STATE the replies are grounded in (never fabricated) ---------- */
+/* The CAF rows the Overview paints: Clarity/Alignment are fixed in the drafted read; Feasibility tracks the
+   live ConfidenceReading (it is the dimension that moves as the critical Resources gap clears). */
+function _chatCaf(r){
+  return [ {dim:'Clarity', lvl:'High', w:76}, {dim:'Alignment', lvl:'Moderate', w:55}, {dim:'Feasibility', lvl:r.feasLvl, w:r.feasW} ];
+}
+function _chatState(){
+  const r = currentRead();
+  const openIds = Object.keys(ISSUES).filter(id=>_istatus[id]!=='resolved').sort((a,b)=>_sevrank[ISSUES[a].sev]-_sevrank[ISSUES[b].sev]);
+  const resolved = Object.keys(ISSUES).filter(id=>_istatus[id]==='resolved');
+  const caf = _chatCaf(r);
+  const limiting = caf.slice().sort((a,b)=>a.w-b.w)[0];
+  const stateWord = (ANALYSIS_STATE==='current') ? 'current — Extended Analysis has landed'
+                  : (ANALYSIS_STATE==='error')   ? 'your last-good understanding — the last analysis update didn’t complete'
+                  : 'provisional — Extended Analysis is still deepening it';
+  const hm = heatModel();
+  const hot = hm.cells.filter(c=>c.count>0).sort((a,b)=>(_sevrank[a.sev]-_sevrank[b.sev]) || (b.count-a.count));
+  return { r, openIds, resolved, caf, limiting, stateWord, top: openIds[0]||null,
+           cells: hm.cells, openTotal: hm.openTotal, hot,
+           clarIds: (typeof _openClarIds==='function' ? _openClarIds() : []) };
+}
+/* ---------- links back to the SURFACE (replies point at the real thing, they don't just describe it) ---------- */
+function _cAct(onclick, label){ return '<button type="button" class="chat-act" onclick="'+onclick+'">'+label+'</button>'; }
+function _cActs(list){ return '<div class="chat-acts">'+list.join('')+'</div>'; }
+/* keyboard-operable inline links inside the thread (a11y) */
+document.addEventListener('keydown', e=>{
+  const t = e.target;
+  if(!t || !t.closest) return;
+  if((e.key==='Enter'||e.key===' ') && t.matches && t.matches('#chatscroll a[role="button"]')){ e.preventDefault(); t.click(); }
+});
+
+/* ---------- CONTEXT (askOslo) — one shared entry point every Slice-4 surface hands context through ---------- */
+let _chatCtx = null;   // {type:'issue'|'confidence'|'cell'|'artifact', id?, art?, dim?}
+function _chatCtxLabel(ctx){
+  if(!ctx) return '';
+  switch(ctx.type){
+    case 'issue':      return ISSUES[ctx.id] ? ISSUES[ctx.id].title + ' (' + ctx.id + ')' : ctx.id;
+    case 'artifact':   return dispName(ctx.id) + ' · plan artifact';
+    case 'confidence': return 'Your confidence read';
+    case 'cell':       return dispName(ctx.art) + ' × ' + ctx.dim + ' · Attention map';
+    default: return '';
+  }
+}
+function renderChatCtx(){
+  const bar = document.getElementById('chatCtx'); if(!bar) return;
+  if(!_chatCtx){ bar.style.display='none'; return; }
+  bar.style.display = 'flex';
+  document.getElementById('chatCtxLabel').textContent = _chatCtxLabel(_chatCtx);
+  const x = document.getElementById('chatCtxClear');
+  if(x) x.setAttribute('title', 'Clear the context — ' + _chatCtxLabel(_chatCtx));
+}
+function clearChatContext(){
+  if(!_chatCtx){ renderChatCtx(); return; }
+  _chatCtx = null;
+  renderChatCtx();
+  renderChatChips();
+  pushChat('Context cleared — I’m answering across the whole project again.');
+}
+/* THE shared entry point. Opens/focuses the chat, sets the context pill, seeds a grounded opening message.
+   It never mutates anything: opening a conversation about a cell is not acting on it. */
+function askOslo(ctx){
+  ctx = ctx || {};
+  // the issue panel / scoped list are overlays that would sit on top of the rail — stand them down
+  const isc = document.getElementById('issueScrim');
+  if(isc && isc.classList.contains('show') && typeof closeIssue==='function') closeIssue();
+  const ssc = document.getElementById('scopedScrim');
+  if(ssc && ssc.classList.contains('show') && typeof closeScoped==='function') closeScoped();
+  const app = document.getElementById('app'); if(app) app.classList.remove('chat-collapsed');
+  _chatCtx = (ctx.type ? ctx : null);
+  renderChatCtx();
+  const open = _chatOpening(ctx);
+  if(open) pushChat(open, 'ctx');
+  renderChatChips();
+  const ta = document.getElementById('chatInput'); if(ta && ta.focus) ta.focus();
+}
+/* the opening message for each context — built from live state */
+function _chatOpening(ctx){
+  const S = _chatState();
+  switch(ctx.type){
+    case 'issue':      return _ansIssue(ctx.id, S, true);
+    case 'artifact':   return _ansArtifact(ctx.id, S, true);
+    case 'confidence': return _ansConfidence(S, true);
+    case 'cell':       return _ansCell(ctx.art, ctx.dim, S);
+    default:           return _ansSummary(S);
+  }
+}
+
+/* ---------- SUGGESTED PROMPT CHIPS — derived from the live read + the active context ---------- */
+function _chatChipList(){
+  const S = _chatState();
+  const chips = [];
+  if(_chatCtx && _chatCtx.type==='issue' && ISSUES[_chatCtx.id]){
+    chips.push('Why does this matter?', 'What are my options?', 'What happens if I leave it?');
+  } else if(_chatCtx && _chatCtx.type==='cell'){
+    chips.push('What’s driving this cell?', 'How severe is it?', 'What should I do next?');
+  } else if(_chatCtx && _chatCtx.type==='artifact'){
+    chips.push('What’s weak in this artifact?', 'What should I do next?', 'How reliable is this read?');
+  } else if(_chatCtx && _chatCtx.type==='confidence'){
+    chips.push('What would move it?', 'How reliable is this read?', 'What should I do next?');
+  } else {
+    chips.push('What should I do next?');
+    if(S.limiting) chips.push('Why is ' + S.limiting.dim + ' ' + S.limiting.lvl + '?');
+    if(S.top) chips.push('Explain the top issue');
+    if(S.openTotal) chips.push('What needs the most attention?');
+  }
+  return chips;
+}
+function renderChatChips(){
+  const el = document.getElementById('chatChips'); if(!el) return;
+  el.innerHTML = _chatChipList().map(c=>
+    '<button type="button" class="chat-chip" onclick="chatChip(this)">'+_chatEsc(c)+'</button>').join('');
+}
+/* a chip fills the composer and sends — the same path a typed question takes */
+function chatChip(btn){
+  const q = btn ? (btn.textContent||'').trim() : '';
+  if(!q) return;
+  const ta = document.getElementById('chatInput'); if(ta) ta.value = q;
+  sendChat();
+}
+
+/* ---------- THE COMPOSER — Send (click) · Enter to send · Shift+Enter for a newline ---------- */
+function chatKey(e){
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendChat(); }
+}
+function sendChat(){
+  const ta = document.getElementById('chatInput'); if(!ta) return;
+  const q = (ta.value||'').trim();
+  if(!q) return;
+  ta.value = '';
+  pushUserChat(q);
+  pushChat(_oslloReply(q));    // simulated, state-grounded, advisory-only
+  renderChatChips();
+}
+
+/* ---------- INTENT ROUTING (prototype-grade keyword matching; no real AI) ---------- */
+const _CHAT_STOP = {this:1,that:1,with:1,from:1,have:1,what:1,when:1,does:1,about:1,issue:1,issues:1,plan:1,tell:1,more:1,into:1,your:1,mine:1,should:1};
+function _matchIssueQ(t){
+  const m = t.match(/iss[\s-]?0?(\d)/);
+  if(m){ const id = 'ISS-0'+m[1]; if(ISSUES[id]) return id; }
+  let best=null, bs=0;
+  Object.keys(ISSUES).forEach(id=>{
+    const f = ISSUES[id];
+    const words = (f.title+' '+f.dim+' '+dispName(f.sec)).toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/)
+      .filter(w=>w.length>3 && !_CHAT_STOP[w]);
+    let s = 0; words.forEach(w=>{ if(t.indexOf(w)>=0) s++; });
+    if(id==='ISS-01' && (t.indexOf('wifi')>=0 || t.indexOf('wi-fi')>=0)) s += 2;
+    if(s>bs){ bs=s; best=id; }
+  });
+  return bs>=2 ? best : null;
+}
+function _matchArtQ(t){
+  if(/\bwbs\b|work breakdown/.test(t)) return 'WBS';
+  const hit = PLAN_SECTIONS.find(p => p.id!=='WBS' && (t.indexOf(p.id.toLowerCase())>=0 || t.indexOf(p.name.toLowerCase())>=0));
+  return hit ? hit.id : null;
+}
+function _oslloReply(q){
+  const t = String(q||'').toLowerCase();
+  const S = _chatState();
+  const ctx = _chatCtx;
+  // 0) explicit context talk
+  if(/\b(clear|forget|drop)\b.*\bcontext\b/.test(t)){ const had=!!ctx; _chatCtx=null; renderChatCtx(); renderChatChips();
+    return had ? 'Context cleared — I’m answering across the whole project again.' : 'There’s no context set — I’m already answering across the whole project.'; }
+  // 1) "what should I do next" → the top open issue / Start here
+  if(/\bnext\b|what should i do|where (do|should) i (start|begin)|priorit|most important|first thing/.test(t)) return _ansNext(S);
+  // 2) the Attention map itself — "what needs the most attention", "the map", "the heatmap"
+  if(/attention map|heat ?map|\bthe map\b|needs (the )?most attention|where.*attention|brighter/.test(t)) return _ansAttention(S);
+  // 3) an issue by id, by name, or "the top issue"
+  if(/top issue|first issue|biggest issue|worst issue|lead issue/.test(t) && S.top) return _ansIssue(S.top, S);
+  const iss = _matchIssueQ(t);
+  if(iss) return _ansIssue(iss, S);
+  // 4) how do issues close / can you fix it (advisory boundary — D001)
+  if(/\b(resolve|close|clear|fix|apply|do it for me|can you (just )?(fix|change|update))\b/.test(t) && !/how (is|do) .*calculat/.test(t)) return _ansHowIssuesClose(S, t);
+  // 5) a CAF dimension by name
+  const dim = _HEATDIMS.find(d=>t.indexOf(d.toLowerCase())>=0);
+  if(dim) return _ansDimension(dim, S);
+  // 6) the confidence read — asked for EXPLICITLY (a bare "why" inside a context belongs to that context)
+  if(/confiden|reliab|\bscore\b|\bband\b|how .*calculat|\bnumber\b|(my|the) read/.test(t)) return _ansConfidence(S);
+  // 7) a plan artifact by name
+  const art = _matchArtQ(t);
+  if(art) return _ansArtifact(art, S);
+  // 8) clarifications
+  if(/clarif|\bquestion\b|\bconfirm\b/.test(t)) return _ansClarifications(S);
+  // 9) inside an active context, everything else is answered WITHIN that context (until it's cleared)
+  if(ctx){
+    if(ctx.type==='issue')      return _ansIssue(ctx.id, S);
+    if(ctx.type==='artifact')   return _ansArtifact(ctx.id, S);
+    if(ctx.type==='cell')       return _ansCell(ctx.art, ctx.dim, S);
+    if(ctx.type==='confidence') return _ansConfidence(S);
+  }
+  // 10) an unscoped "why"/"explain" is a question about the read
+  if(/\bwhy\b|\bexplain\b/.test(t)) return _ansConfidence(S);
+  // 11) grounded fallback — the state summary + where to go next
+  return _ansSummary(S);
+}
+
+/* ---------- THE ANSWERS — every sentence traces to live state; every action is a link the USER clicks ---------- */
+function _ansConfidence(S, opening){
+  const r = S.r, L = S.limiting;
+  const rb = r.reliability;
+  let h = (opening ? 'Here’s your confidence read. ' : '');
+  h += 'It sits at <b>'+r.idx+'/100 · '+r.band+'</b>, qualified by <b>'+r.relWord.toLowerCase()+' reliability</b> — that’s how mature my understanding of your plan is, not a grade or a probability.';
+  h += '<br><br><b>'+L.dim+' ('+L.lvl+')</b> is the limiting dimension — it’s the lowest of Clarity · Alignment · Feasibility, so it’s what holds the number back. Clarity is '+S.caf[0].lvl+', Alignment is '+S.caf[1].lvl+'.';
+  h += '<br><br>The reliability basis is <b>Coverage</b> '+rb.coverage+' · <b>Evidence availability</b> '+rb.evidence+' · <b>How assessable</b> '+rb.assessable+' — judged independently of the plan’s integrity. The read is <b>'+S.stateWord+'</b>.';
+  if(falseConfidenceHolds(r)) h += '<br><br><b>Read this with care</b> — a '+r.band+' band on '+r.relWord+' reliability rests on thin evidence, not a strong plan.';
+  if(S.top){
+    const f = ISSUES[S.top];
+    h += '<br><br><b>What would move it:</b> the most consequential open issue is “'+_chatEsc(f.title)+'” ('+_sevword[f.sev]+' · '+f.dim+' · '+dispName(f.sec)+'). '+S.openIds.length+' issue'+(S.openIds.length===1?' is':'s are')+' still open. The number only changes when an analysis update changes the read — never because something was dismissed.';
+    h += _cActs([ _cAct("openIssue('"+S.top+"')", 'Open this issue →'), _cAct("showView('attention')", 'Open the Attention map →') ]);
+  } else {
+    h += '<br><br>Nothing is open right now — the read moves next when an analysis update changes it.';
+    h += _cActs([ _cAct("showView('attention')", 'Open the Attention map →') ]);
+  }
+  return h;
+}
+function _ansNext(S){
+  if(!S.top) return 'Nothing needs your attention right now — no issues are open, and your read sits at <b>'+S.r.idx+'/100 · '+S.r.band+'</b>. '+_cActs([_cAct("showView('overview')",'Open the Overview →'), _cAct("showView('attention')",'Open the Attention map →')]);
+  const f = ISSUES[S.top];
+  let h = 'Start here: <b>'+_chatEsc(f.title)+'</b> — '+_sevword[f.sev]+', '+f.dim+', in '+dispName(f.sec)+'. It’s the most consequential of your '+S.openIds.length+' open issue'+(S.openIds.length===1?'':'s')+', and '+f.dim+' is '+(S.limiting.dim===f.dim ? 'the dimension holding your confidence back' : 'a dimension the read is watching')+'.';
+  h += '<br><br>'+_chatEsc(f.why);
+  if(f.fixes && f.fixes.length) h += '<br><br><b>Suggested fixes:</b> '+f.fixes.map(x=>'“'+_chatEsc(x)+'”').join(' · ')+' — advisory; the call is yours.';
+  if(f.clar && _istatus[S.top]!=='resolved') h += '<br><br>I also have a question tied to it — you can answer it right here.';
+  h += _cActs([ _cAct("openIssue('"+S.top+"')", 'Open this issue →'),
+                _cAct("askOslo({type:'cell',art:'"+f.sec+"',dim:'"+f.dim+"'})", 'Ask about '+_chatEsc(dispName(f.sec))+' × '+f.dim),
+                _cAct("showView('attention')", 'Open the Attention map →') ]);
+  if(f.clar && _istatus[S.top]!=='resolved') h += _chatClarBlock(S.top);
+  return h;
+}
+function _ansIssue(id, S, opening){
+  const f = ISSUES[id]; if(!f) return _ansSummary(S);
+  const resolved = _istatus[id]==='resolved';
+  let h = (opening ? 'Let’s look at <b>'+_chatEsc(f.title)+'</b> ('+id+'). ' : '<b>'+_chatEsc(f.title)+'</b> ('+id+'). ');
+  h += 'It’s '+_sevword[f.sev]+', on <b>'+f.dim+'</b>, in <b>'+dispName(f.sec)+'</b>, and it’s currently <b>'+(resolved?'Resolved':'Open')+'</b>.';
+  h += '<br><br><b>Why it matters:</b> '+_chatEsc(f.why);
+  if(f.ev && f.ev.length) h += '<br><br><b>What I read it from:</b> '+_chatEsc(f.ev[0][0])+' — '+_chatEsc(f.ev[0][1]);
+  if(resolved){
+    h += '<br><br>You acted on it and an analysis update closed it — it’s done.';
+    return h + _cActs([ _cAct("openIssue('"+id+"')", 'Open the issue →'), _cAct("showView('attention')", 'Open the Attention map →') ]);
+  }
+  if(f.fixes && f.fixes.length) h += '<br><br><b>Suggested fixes:</b> '+f.fixes.map(x=>'“'+_chatEsc(x)+'”').join(' · ')+'. This is advisory — I don’t change your plan, and this issue only moves to Resolved when an analysis update confirms it no longer holds.';
+  h += _cActs([ _cAct("openIssue('"+id+"')", 'Open this issue →'),
+                _cAct("openFindingsFor('"+f.sec+"','"+f.dim+"')", 'See '+_chatEsc(dispName(f.sec))+' × '+f.dim+' →'),
+                _cAct("askOslo({type:'cell',art:'"+f.sec+"',dim:'"+f.dim+"'})", 'Ask about this cell') ]);
+  if(f.clar) h += _chatClarBlock(id);
+  return h;
+}
+function _ansDimension(dim, S){
+  const row = S.caf.find(c=>c.dim===dim) || S.caf[0];
+  const ids = S.openIds.filter(id=>ISSUES[id].dim===dim);
+  let h = '<b>'+dim+'</b> reads <b>'+row.lvl+'</b>'+(S.limiting.dim===dim ? ' — and it’s the limiting dimension: the lowest of the three, so it’s what’s holding your confidence at '+S.r.idx+'/100 · '+S.r.band+'.' : ' — Clarity '+S.caf[0].lvl+' · Alignment '+S.caf[1].lvl+' · Feasibility '+S.caf[2].lvl+'. The limit right now is <b>'+S.limiting.dim+'</b> ('+S.limiting.lvl+').');
+  if(ids.length){
+    const f = ISSUES[ids[0]];
+    h += '<br><br>'+ids.length+' open issue'+(ids.length===1?'':'s')+' sit'+(ids.length===1?'s':'')+' on '+dim+' — that’s the <b>'+dim+'</b> column of the Attention map. The most severe is “'+_chatEsc(f.title)+'” ('+_sevword[f.sev]+', in '+dispName(f.sec)+') — '+_chatEsc(f.why);
+    h += _cActs([ _cAct("openIssue('"+ids[0]+"')", 'Open this issue →'),
+                  _cAct("openFindingsFor('"+f.sec+"','"+dim+"')", 'See '+_chatEsc(dispName(f.sec))+' × '+dim+' →'),
+                  _cAct("showView('attention')", 'Open the Attention map →') ]);
+  } else {
+    h += '<br><br>No open issues sit on '+dim+' right now.';
+    h += _cActs([ _cAct("showView('attention')", 'Open the Attention map →') ]);
+  }
+  return h;
+}
+/* the Attention map itself — the picture, in words: what's lit, how brightly, and where to look first */
+function _ansAttention(S){
+  if(!S.openTotal){
+    return 'Your Attention map is <b>all clear</b> — every plan artifact reads clear across Clarity, Alignment and Feasibility, so nothing is lit. That’s an all-clear on <b>attention</b>, not a guarantee of success; I re-read as your plan changes.'
+      + _cActs([ _cAct("showView('attention')", 'Open the Attention map →') ]);
+  }
+  const lit = S.hot.length;
+  const worst = S.hot[0];
+  const byDim = _HEATDIMS.map(d=>({d, n: S.cells.filter(c=>c.dim===d).reduce((a,c)=>a+c.count,0)}));
+  let h = 'The Attention map is your plan artifacts × Clarity · Alignment · Feasibility. <b>Brighter = more attention</b> — it’s severity, not a health score.';
+  h += '<br><br><b>'+lit+'</b> cell'+(lit===1?'':'s')+' need'+(lit===1?'s':'')+' attention, carrying <b>'+S.openTotal+'</b> open issue'+(S.openTotal===1?'':'s')+'. By dimension: '+byDim.map(x=>x.d+' '+x.n).join(' · ')+'.';
+  if(worst){
+    const f = ISSUES[worst.ids[0]];
+    h += '<br><br>The brightest cell is <b>'+_chatEsc(dispName(worst.art))+' × '+worst.dim+'</b> ('+_sevword[worst.sev]+' · '+worst.count+' open issue'+(worst.count===1?'':'s')+') — most severe there: “'+_chatEsc(f.title)+'”.';
+    h += _cActs([ _cAct("showView('attention')", 'Open the Attention map →'),
+                  _cAct("askOslo({type:'cell',art:'"+worst.art+"',dim:'"+worst.dim+"'})", 'Ask about that cell'),
+                  _cAct("openFindingsFor('"+worst.art+"','"+worst.dim+"')", 'Open '+(worst.count===1?'that issue':'those issues')+' →') ]);
+  }
+  return h;
+}
+/* Slice 4's SIGNATURE answer — an artifact × dimension bucket on the Attention map: what it means, what drives it */
+function _ansCell(art, dim, S){
+  const ids = S.openIds.filter(id=>ISSUES[id].sec===art && ISSUES[id].dim===dim);
+  let h = '<b>'+_chatEsc(dispName(art))+' × '+dim+'</b> on the Attention map — that cell is <b>'+_chatEsc(dispName(art))+'</b> read through <b>'+dim+'</b>. Brighter means more attention, not a worse score.';
+  if(!ids.length){
+    h += '<br><br>Nothing is open in this cell right now — it reads clear, so it sits inert on the map.';
+    return h + _cActs([ _cAct("showView('attention')", 'Back to the Attention map →') ]);
+  }
+  const f = ISSUES[ids[0]];
+  h += '<br><br><b>What’s driving it:</b> '+ids.length+' open issue'+(ids.length===1?'':'s')+' here, and the cell takes its brightness from the most severe — “'+_chatEsc(f.title)+'” ('+_sevword[f.sev]+'). '+_chatEsc(f.why);
+  if(ids.length>1) h += '<br><br>The other'+(ids.length===2?'':'s')+' in this cell: '+ids.slice(1).map(id=>'“'+_chatEsc(ISSUES[id].title)+'” ('+_sevword[ISSUES[id].sev]+')').join(' · ')+'.';
+  h += '<br><br>'+(S.limiting.dim===dim
+      ? '<b>'+dim+'</b> is also the dimension holding your confidence back ('+S.limiting.lvl+'), so this cell is worth your time.'
+      : 'Your limiting dimension is <b>'+S.limiting.dim+'</b> ('+S.limiting.lvl+') — weigh this cell against that.');
+  h += _cActs([ _cAct("openFindingsFor('"+art+"','"+dim+"')", 'Open '+(ids.length===1?'this issue':'these issues')+' →'),
+                _cAct("openFindingsForArtifact('"+art+"')", 'See all of '+_chatEsc(dispName(art))+' →'),
+                _cAct("showView('attention')", 'Back to the Attention map →') ]);
+  if(f.clar && _istatus[ids[0]]!=='resolved') h += _chatClarBlock(ids[0]);
+  return h;
+}
+/* a plan artifact by name (the artifact EDITOR is Slice 5 — here I read the drafted artifact and its row on the map) */
+function _ansArtifact(name, S, opening){
+  const p = PLAN_SECTIONS.find(x=>x.id===name);
+  const ids = S.openIds.filter(id=>ISSUES[id].sec===name);
+  let h = (opening ? 'Let’s look at <b>'+_chatEsc(dispName(name))+'</b>. ' : '<b>'+_chatEsc(dispName(name))+'</b>. ');
+  if(p){
+    h += 'It’s one of your seven plan artifacts ('+p.grp+'), it’s <b>'+(p.basis==='attested'?'Confirmed by you':'From OSLO')+'</b>, and its reliability reads <b>'+p.rel+'</b>.';
+    h += '<br><br>'+_chatEsc(p.body);
+  }
+  if(ids.length){
+    const f = ISSUES[ids[0]];
+    const dims = _HEATDIMS.filter(d=>ids.some(id=>ISSUES[id].dim===d));
+    h += '<br><br>'+ids.length+' open issue'+(ids.length===1?'':'s')+' live'+(ids.length===1?'s':'')+' here — lit on the map under '+dims.join(' · ')+'. Most severe: “'+_chatEsc(f.title)+'” ('+_sevword[f.sev]+' · '+f.dim+'). '+_chatEsc(f.why);
+    h += _cActs([ _cAct("openFindingsForArtifact('"+name+"')", 'See its issues →'),
+                  _cAct("openIssue('"+ids[0]+"')", 'Open this issue →'),
+                  _cAct("askOslo({type:'cell',art:'"+name+"',dim:'"+f.dim+"'})", 'Ask about '+_chatEsc(dispName(name))+' × '+f.dim) ]);
+  } else {
+    h += '<br><br>No open issues here right now — its row on the Attention map reads clear.';
+    h += _cActs([ _cAct("showView('attention')", 'Open the Attention map →') ]);
+  }
+  return h;
+}
+function _ansHowIssuesClose(S, t){
+  let h = 'I can’t change your plan — I read and explain, you decide. Nothing I say here moves an issue, edits an artifact, or shifts the assessment.';
+  h += '<br><br>An issue closes only when an <b>analysis update</b> confirms it no longer holds: you act (answer the question tied to it, or act on a suggested fix in your own plan), and the update closes it. There is no button that closes it by hand.';
+  if(S.top){
+    const f = ISSUES[S.top];
+    h += '<br><br>For “'+_chatEsc(f.title)+'”'+(f.fixes && f.fixes.length ? ', the fixes I’d weigh are '+f.fixes.map(x=>'“'+_chatEsc(x)+'”').join(' and ') : '')+'.';
+    if(f.clar && _istatus[S.top]!=='resolved') h += ' It also carries a question I need answered — answering it updates your project information and lets the analysis update close the issue.';
+    h += _cActs([ _cAct("openIssue('"+S.top+"')", 'Open the issue →'),
+                  _cAct("showView('attention')", 'Open the Attention map →') ]);
+    if(f.clar && _istatus[S.top]!=='resolved') h += _chatClarBlock(S.top);
+  }
+  return h;
+}
+function _ansClarifications(S){
+  if(!S.clarIds.length) return 'I have nothing left to confirm — no open questions. '+_cActs([_cAct("showView('overview')",'Open the Overview →')]);
+  const id = S.clarIds[0], f = ISSUES[id];
+  let h = 'I have <b>'+S.clarIds.length+'</b> thing'+(S.clarIds.length===1?'':'s')+' to confirm. Where your inputs are thin, I ask rather than assume.';
+  h += '<br><br>The first is tied to <b>'+_chatEsc(f.title)+'</b> ('+dispName(f.sec)+').';
+  h += _chatClarBlock(id);
+  return h;
+}
+function _ansSummary(S){
+  const r = S.r;
+  let h = 'Here’s where your plan stands. Confidence <b>'+r.idx+'/100 · '+r.band+'</b> on <b>'+r.relWord.toLowerCase()+' reliability</b> ('+S.stateWord+'). <b>'+S.limiting.dim+'</b> is the limiting dimension at <b>'+S.limiting.lvl+'</b>.';
+  h += '<br><br><b>'+S.openIds.length+'</b> issue'+(S.openIds.length===1?'':'s')+' open'+(S.resolved.length?' · <b>'+S.resolved.length+'</b> resolved':'')+', lit across <b>'+S.hot.length+'</b> cell'+(S.hot.length===1?'':'s')+' on the Attention map.';
+  if(S.top){ const f=ISSUES[S.top]; h += ' The one I’d take first: “'+_chatEsc(f.title)+'” ('+_sevword[f.sev]+' · '+f.dim+' · '+dispName(f.sec)+').'; }
+  h += '<br><br>Ask me <i>why the read sits here</i>, <i>what to do next</i>, about <i>an issue</i>, or about <i>a cell on the Attention map</i>.';
+  const acts = [];
+  if(S.top) acts.push(_cAct("openIssue('"+S.top+"')", 'Open the top issue →'));
+  acts.push(_cAct("showView('attention')", 'Open the Attention map →'));
+  acts.push(_cAct("askOslo({type:'confidence'})", 'Explain my confidence'));
+  h += _cActs(acts);
+  return h;
+}
+
+/* ---------- CLARIFICATIONS ARE CONVERSATIONAL (D108) ----------
+   The inline answer box below. Submitting it routes through the SAME path as the Issue-panel answer
+   (_submitClarification) — the same project-info update, the same issue lifecycle, the same analysis update.
+   No side channel: the chat cannot bypass the loop the panel runs. */
+function _chatClarBlock(id){
+  const f = ISSUES[id]; if(!f || !f.clar) return '';
+  return '<div class="chat-clar" id="chatClarBox-'+id+'">'
+    + '<div class="cc-q">❓ '+_chatEsc(f.clar.q)+'</div>'
+    + '<textarea id="chatClarInput-'+id+'" placeholder="Type your answer…" aria-label="Answer the clarification about '+_chatEsc(f.title)+'"></textarea>'
+    + '<div class="cc-foot"><span class="cc-note">'+_chatEsc(f.clar.hint||'Add the detail OSLO is missing.')+'</span>'
+    + '<button type="button" class="btn btn-primary btn-sm" onclick="answerClarificationFromChat(\''+id+'\')">Submit answer</button></div></div>';
+}
+function answerClarificationFromChat(id){
+  const ta = document.getElementById('chatClarInput-'+id);
+  const val = ta ? (ta.value||'') : '';
+  if(!val.trim()){ if(ta){ ta.style.borderColor='var(--danger)'; ta.focus(); } return; }
+  const box = document.getElementById('chatClarBox-'+id); if(box) box.classList.add('answered');
+  pushUserChat(val);                       // the answer appears as the user's turn
+  _submitClarification(id, val, 'chat');   // …and then runs the EXACT same path the Issue panel runs
 }
 /* Fast Pass completion notice — delivered as a chat message at fast-pass completion (D043) with the tour offer (D044) */
 function postFastPassComplete(secs){
@@ -1320,7 +1978,7 @@ const TOUR = [
   {sel:'.card.hero', view:'overview', t:'Your strategic read', x:'Confidence is how well OSLO understands your plan — maturity, not a grade. The 0–100 read is the focal point, always shown with its reliability qualifier and a quiet understanding-stage marker.'},
   {sel:'#confpill', view:'overview', t:'Your read, always visible', x:'Confidence + reliability stay in the top bar. Click it for the Clarity · Alignment · Feasibility breakdown and the reliability basis — Coverage, Evidence, and How assessable.'},
   {sel:'#focus', view:'overview', t:'Where to start', x:'The most consequential open issue, most severe first — OSLO suggests where to begin. Advisory; the call stays yours.'},
-  {sel:'.vswitch', view:'overview', t:'The Attention map', x:'Switch to the Attention map to see where the plan needs attention — plan artifacts × Clarity/Alignment/Feasibility. Brighter = more attention (not a health score). Click a cell: one issue opens it; several open the Issues list scoped there.'},
+  {sel:'#sbAttention', view:'overview', t:'The Attention map', x:'Switch to the Attention map to see where the plan needs attention — plan artifacts × Clarity/Alignment/Feasibility. Brighter = more attention (not a health score). Click a cell: one issue opens it; several open the Issues list scoped there.'},
   {sel:'#chatp', pos:'left', view:'overview', t:'Ask OSLO anything', x:'A persistent advisor — ask about the read, an issue, or what to do next. Completion notices land here too. It reads and explains; nothing changes your plan without you.'}
   /* Slice 5 seam: {sel:'.plan-sec', t:'Edit an artifact', x:'Edit any plan artifact and OSLO reanalyzes — only reanalysis changes the assessment.'} */
 ];
@@ -1367,21 +2025,150 @@ let CURVIEW = 'overview';
 const _scrollMem = { overview:0, attention:0 };
 function showView(v){
   const body = document.querySelector('.body');
-  if(body) _scrollMem[CURVIEW] = body.scrollTop;   // remember where we were before leaving (context preservation)
+  if(body) _scrollMem[CURVIEW] = body.scrollTop;   // remember where we were (context preservation)
   CURVIEW = v;
   document.getElementById('pane-overview').classList.toggle('active', v==='overview');
   document.getElementById('pane-attention').classList.toggle('active', v==='attention');
-  document.getElementById('vsOverview').classList.toggle('active', v==='overview');
-  document.getElementById('vsAttention').classList.toggle('active', v==='attention');
-  document.getElementById('vsOverview').setAttribute('aria-selected', String(v==='overview'));
-  document.getElementById('vsAttention').setAttribute('aria-selected', String(v==='attention'));
-  // Fix 1 — always re-render the Attention map on entry so displayed cell counts are LIVE (never stale),
-  // keeping the shown count and openFindingsFor routing in agreement.
+  _setCrumb(_viewLabel(v));           // top-bar breadcrumb reflects the current view
+  _syncNav();                         // D093 — keep the persistent left-sidebar nav in sync
+  // Fix 1 — always re-render the Attention map on entry so displayed cell counts are LIVE (never stale).
   if(v==='attention'){ renderHeat(); updateIssueCounts(); }
-  // restore the target pane's remembered scroll (0 the first time) — preserves prior context on return
-  if(body) body.scrollTop = _scrollMem[v] || 0;
+  if(body) body.scrollTop = _scrollMem[v] || 0;   // restore prior context on return
+  _collapseSidebarOnNarrow();         // D093 — auto-close the drawer after a pick on narrow screens
 }
-function openPlanSections(){ showView('attention'); } /* plan-section list removed from Overview (D046); Attention rows are the 7 sections. Full explorer is Slice 5. */
+function openPlanSections(){ showView('attention'); } /* plan-section list removed from Overview (D046); Attention rows are the 7 artifacts. Full explorer is Slice 5. */
+
+/* ============ D093 — PERSISTENT SIDEBAR NAV: breadcrumb + active-state sync + drawer + seams ============ */
+function _viewLabel(v){ const m={overview:'Overview', attention:'Attention map', issues:'Issues', history:'History'}; return m[v] || 'Overview'; }
+function _setCrumb(txt){ const c=document.getElementById('tbCrumb'); if(c) c.textContent = txt; }
+/* _syncNav() is the single source of truth for the sidebar's active highlight. Slice 4 has two live views
+   (Overview · Attention map); Issues/History are labeled seams (they never become CURVIEW). */
+function _syncNav(){
+  const v = CURVIEW;
+  [['sbOverview','overview'],['sbAttention','attention'],['sbIssues','issues'],['sbHistory','history']].forEach(function(pair){
+    const el = document.getElementById(pair[0]); if(!el) return;
+    const on = v===pair[1];
+    el.classList.toggle('active', on);
+    el.setAttribute('aria-current', on ? 'page' : 'false');
+  });
+}
+/* narrow-width sidebar drawer */
+function toggleSidebar(){
+  const app=document.getElementById('app'); if(!app) return;
+  const open=app.classList.toggle('sidebar-open');
+  const btn=document.getElementById('sbHamburger'); if(btn) btn.setAttribute('aria-expanded', open?'true':'false');
+}
+function closeSidebar(){
+  const app=document.getElementById('app'); if(app) app.classList.remove('sidebar-open');
+  const btn=document.getElementById('sbHamburger'); if(btn) btn.setAttribute('aria-expanded','false');
+}
+function _collapseSidebarOnNarrow(){
+  if(window.matchMedia && window.matchMedia('(max-width:860px)').matches) closeSidebar();
+}
+/* Shared seam/stub toast — features that land in later slices (labeled, never a broken link). */
+let _sbToastT=null;
+function _stubToast(msg){
+  _collapseSidebarOnNarrow();
+  const el=document.getElementById('sbToast'); if(!el) return;
+  el.textContent = msg; el.classList.add('on');
+  if(_sbToastT) clearTimeout(_sbToastT);
+  _sbToastT=setTimeout(function(){ el.classList.remove('on'); }, 2600);
+}
+function openSettings(){ _stubToast('Settings — coming in a later slice'); }
+function openProjectSwitcher(){ _stubToast('Projects — multi-project switching arrives in Slice 8'); }
+function openShareSeam(){ _stubToast('Sharing — arrives in Slice 9'); }
+function openExportSeam(){ _stubToast('Export — arrives in Slice 9'); }
+function openReportStub(){ _stubToast('Reports — arrives in a later slice'); }
+function openUpgrade(){ _stubToast("Upgrade — you're on the Free plan (1 active project). Plan management arrives later."); }
+/* Issues SEAM (Slice 6 not yet built) — opens the labeled stub, NOT a wrong view. Single-issue investigation
+   is live via the Attention map -> light issue panel (and the palette "Open an issue" group). */
+function openIssuesSeam(){ _collapseSidebarOnNarrow(); const s=document.getElementById('issuesSeamScrim'); if(s) s.style.display='grid'; }
+function closeIssuesSeam(){ const s=document.getElementById('issuesSeamScrim'); if(s) s.style.display='none'; }
+
+/* ============ COMMAND PALETTE (D094) — search / jump-to ============
+   Grouped, filtered results. Slice 4: GO TO (Overview/Attention live; Issues/History -> labeled seams) and
+   OPEN AN ISSUE (each still-open issue -> the light issue panel). The PLAN ARTIFACTS group is OMITTED in
+   Slice 4 (the artifact editor arrives in Slice 5). Highlight is a neutral surface tint (never severity). */
+let _palActive = 0, _palVisible = [];
+function _palEsc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function _palModel(){
+  const groups = [];
+  groups.push({label:'GO TO', items:[
+    {icon:'◎', name:'Overview',      search:'overview',      run:function(){ showView('overview'); }},
+    {icon:'▦', name:'Attention map', search:'attention map', run:function(){ showView('attention'); }},
+    {icon:'⚑', name:'Issues',        search:'issues',        run:function(){ openIssuesSeam(); }},
+    {icon:'◔', name:'History',       search:'history',       run:function(){ openHistorySeam(); }}
+  ]});
+  const openIds = Object.keys(ISSUES).filter(function(id){ return _istatus[id]!=='resolved'; });
+  if(openIds.length){
+    groups.push({label:'OPEN AN ISSUE', items: openIds.map(function(id){
+      const f=ISSUES[id], meta=_sevword[f.sev]+' · '+dispName(f.sec);
+      return {name:f.title, meta:meta,
+              search:(f.title+' '+_sevword[f.sev]+' '+dispName(f.sec)).toLowerCase(),
+              run:function(){ openIssue(id); }};
+    })});
+  }
+  return groups;
+}
+function _palFilter(){
+  const inp=document.getElementById('palInput'); const wrap=document.getElementById('palResults'); if(!wrap) return;
+  const q=(inp&&inp.value||'').trim().toLowerCase();
+  _palVisible=[]; let html='';
+  _palModel().forEach(function(g){
+    const matched=g.items.filter(function(it){ return !q || it.search.indexOf(q)!==-1; });
+    if(!matched.length) return;
+    html+='<div class="pal-group" role="group" aria-label="'+_palEsc(g.label)+'"><div class="pal-glabel">'+_palEsc(g.label)+'</div>';
+    matched.forEach(function(it){
+      const idx=_palVisible.length; _palVisible.push({run:it.run});
+      html+='<div class="pal-item" role="option" id="pal-opt-'+idx+'" data-idx="'+idx+'" aria-selected="false" '
+        +'onclick="_palActivate('+idx+')" onmousemove="_palSetActive('+idx+')">'
+        +'<span class="pal-ic" aria-hidden="true">'+(it.icon?_palEsc(it.icon):'')+'</span>'
+        +'<span class="pal-nm">'+_palEsc(it.name)+'</span>'
+        +(it.meta?'<span class="pal-meta">'+_palEsc(it.meta)+'</span>':'')
+        +'</div>';
+    });
+    html+='</div>';
+  });
+  if(!_palVisible.length){ html='<div class="pal-empty">No matches for “'+_palEsc(q)+'”</div>'; }
+  wrap.innerHTML=html; _palActive=0; _palPaint();
+}
+function _palPaint(){
+  const items=document.querySelectorAll('#palResults .pal-item');
+  const inp=document.getElementById('palInput');
+  items.forEach(function(el,i){
+    const on=(i===_palActive);
+    el.classList.toggle('active', on);
+    el.setAttribute('aria-selected', on?'true':'false');
+    if(on){ if(el.scrollIntoView) el.scrollIntoView({block:'nearest'}); if(inp) inp.setAttribute('aria-activedescendant', el.id); }
+  });
+  if(!items.length && inp) inp.removeAttribute('aria-activedescendant');
+}
+function _palSetActive(i){ if(i!==_palActive){ _palActive=i; _palPaint(); } }
+function _palKeydown(e){
+  if(e.key==='ArrowDown'){ e.preventDefault(); if(_palVisible.length){ _palActive=(_palActive+1)%_palVisible.length; _palPaint(); } }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); if(_palVisible.length){ _palActive=(_palActive-1+_palVisible.length)%_palVisible.length; _palPaint(); } }
+  else if(e.key==='Enter'){ e.preventDefault(); _palActivate(_palActive); }
+  else if(e.key==='Escape'){ e.preventDefault(); closeSearch(); }
+}
+function _palActivate(i){ const item=_palVisible[i]; if(!item) return; closeSearch(); try{ item.run(); }catch(err){} }
+function openSearch(){
+  const isc=document.getElementById('issueScrim');
+  if(isc && isc.classList.contains('show') && typeof closeIssue==='function') closeIssue();
+  _collapseSidebarOnNarrow();
+  const scrim=document.getElementById('palScrim'); if(!scrim) return;
+  const inp=document.getElementById('palInput'); if(inp) inp.value='';
+  scrim.classList.add('show'); _palFilter();
+  if(inp){ try{ inp.focus(); }catch(e){} }
+}
+function closeSearch(){ const scrim=document.getElementById('palScrim'); if(scrim) scrim.classList.remove('show'); }
+function _palIsOpen(){ const s=document.getElementById('palScrim'); return !!(s && s.classList.contains('show')); }
+function openSearchStub(){ openSearch(); }
+document.addEventListener('keydown', function(e){
+  if((e.metaKey||e.ctrlKey) && !e.altKey && !e.shiftKey && (e.key==='k'||e.key==='K')){
+    e.preventDefault();
+    if(_palIsOpen()) closeSearch(); else openSearch();
+  }
+});
 
 /* ============ CONFIDENCE POPOVER — compact understanding console (D050) ============ */
 function toggleConfPop(e){
@@ -1596,8 +2383,11 @@ function renderHeat(){
           h+=`<div class="heat-cell l0" aria-label="${dispName(s)} × ${d} · no open issues" title="${dispName(s)} × ${d} · no attention needed">·</div>`; return;
         }
         const multi = c.count>1;
-        const tip = multi ? `${c.count} open issues · ${dispName(s)} × ${d} — opens the Issues list scoped here` : `1 open issue · ${dispName(s)} × ${d} — opens it`;
-        h+=`<div class="heat-cell ${c.level}" onclick="openFindingsFor('${s}','${d}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openFindingsFor('${s}','${d}')}" role="button" tabindex="0" aria-label="${tip}" title="${tip}">${c.count}<div class="mini">${c.sev}</div>${multi?'<div class="multi">▤</div>':''}</div>`; });
+        const tip = (multi ? `${c.count} open issues · ${dispName(s)} × ${d} — opens the Issues list scoped here` : `1 open issue · ${dispName(s)} × ${d} — opens it`) + ' · ✦ asks OSLO about this cell';
+        // D108 — the CELL ASK (Slice 4's signature chat entry point). The ✦ hands {type:'cell',art,dim} to the chat;
+        // it stops propagation so it never fires the cell's own routing. Advisory: it explains, it changes nothing.
+        const ask = `<button type="button" class="cellask" title="Ask OSLO about ${dispName(s)} × ${d}" aria-label="Ask OSLO about ${dispName(s)} × ${d}" onclick="event.stopPropagation();askOslo({type:'cell',art:'${s}',dim:'${d}'})" onkeydown="event.stopPropagation()">✦</button>`;
+        h+=`<div class="heat-cell ${c.level}" onclick="openFindingsFor('${s}','${d}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openFindingsFor('${s}','${d}')}" role="button" tabindex="0" aria-label="${tip}" title="${tip}">${ask}${c.count}<div class="mini">${c.sev}</div>${multi?'<div class="multi">▤</div>':''}</div>`; });
       h+='</div>'; }); });
   el.innerHTML = h;
 }
@@ -1651,9 +2441,15 @@ function renderScoped(){
   const chips = [];
   if(_scope.art) chips.push(`<span class="sp-chip lit">Plan artifact · ${dispName(_scope.art)} <span class="fx" role="button" tabindex="0" title="Clear this filter" onclick="clearScopeFilter('art')">×</span></span>`);
   if(_scope.dim) chips.push(`<span class="sp-chip lit">Dimension · ${_scope.dim} <span class="fx" role="button" tabindex="0" title="Clear this filter" onclick="clearScopeFilter('dim')">×</span></span>`);
+  // D108 — the CELL ASK where a multi-issue cell routes: hand this artifact × dimension to the chat.
+  const cellAsk = (_scope.art && _scope.dim)
+    ? `<button type="button" class="sp-ask" onclick="askOslo({type:'cell',art:'${_scope.art}',dim:'${_scope.dim}'})" title="Ask OSLO what this cell means and what's driving it">✦ Ask OSLO about this cell</button>`
+    : (_scope.art
+      ? `<button type="button" class="sp-ask" onclick="askOslo({type:'artifact',id:'${_scope.art}'})" title="Ask OSLO about this plan artifact">✦ Ask OSLO about ${dispName(_scope.art)}</button>`
+      : '');
   let h = `<div class="sp-top"><div class="sp-title">Issues · ${scopeName}</div><span class="sp-x" onclick="closeScoped()" role="button" tabindex="0" aria-label="Close">×</span></div>
     <div class="sp-sub">${ids.length} open issue${ids.length===1?'':'s'} in this cell. Scoped from the Attention map — the filters below are active.</div>
-    <div class="sp-filters"><span class="sp-flab">Filtered:</span>${chips.join('')}<span class="sp-clear" role="button" tabindex="0" onclick="closeScoped()">Back to map</span></div>
+    <div class="sp-filters"><span class="sp-flab">Filtered:</span>${chips.join('')}<span class="sp-clear" role="button" tabindex="0" onclick="closeScoped()">Back to map</span>${cellAsk}</div>
     <div class="sp-seam">This is a scoped view. The full Issues surface — grouping, the By dimension / By severity toggle, triage counts and the resolved tab — arrives in Slice 6.</div>`;
   h += '<div class="sp-list">';
   if(!ids.length){ h += '<div class="sp-empty">No open issues under this scope. <a class="sp-clear" onclick="closeScoped()">Back to the map →</a></div>'; }
@@ -1691,9 +2487,12 @@ function updateIssueCounts(){
   const depsTotal = Object.keys(ISSUES).filter(id=>ISSUES[id].clar).length;
   document.getElementById('pg-deps').textContent = depsConfirmed + ' / ' + depsTotal;
   document.getElementById('pg-deps-fill').style.width = (depsTotal? Math.round(depsConfirmed/depsTotal*100):0) + '%';
-  document.getElementById('vsAttnBadge').textContent = open;
+  const _ab=document.getElementById('vsAttnBadge'); if(_ab){ _ab.textContent=open; _ab.classList.toggle('zero', open===0); }
+  const _ib=document.getElementById('vsIssuesBadge'); if(_ib){ _ib.textContent=open; _ib.classList.toggle('zero', open===0); }
   // keep the light clarification pointer in sync
   renderClarifications();
+  // D108 — the suggested prompts track the live read (chips are state-derived)
+  if(typeof renderChatChips==='function') renderChatChips();
 }
 
 /* ============ LIGHT ISSUE PANEL + clarification loop (D042) ============ */
@@ -1719,6 +2518,9 @@ function openIssue(id){
   h += `<div class="ip-h">Suggested fixes <span class="info" data-tip="OSLO drafts options — you choose. Applying/editing plan artifacts is Slice 5/6.">i</span></div><div class="ip-fixes">`;
   f.fixes.forEach(fx=>{ h += `<div class="ip-fix"><span class="fx-i">→</span> ${fx}</div>`; });
   h += `</div>`;
+  // D108 — the ISSUE entry point into the conversation. Hands {type:'issue',id} to the chat; OSLO explains it
+  // from the live model and offers the cell it sits in. Advisory: it explains, it never resolves the issue.
+  h += `<button type="button" class="ip-ask" onclick="askOslo({type:'issue',id:'${id}'})" title="Ask OSLO about this issue — it explains, it never resolves it for you">✦ Ask OSLO about this issue</button>`;
   if(resolved){
     h += `<div class="ip-resolved">✓ <b>Resolved by reanalysis.</b> You answered the clarification, OSLO updated your project information and re-ran the analysis, and this issue closed. Confidence was refined accordingly — only reanalysis moves an issue (never a manual toggle).</div>`;
   }
@@ -1727,25 +2529,43 @@ function openIssue(id){
 }
 function closeIssue(){ document.getElementById('issueScrim').classList.remove('show'); _openIssueId=null; }
 
-/* answering a clarification → updates project info → reanalysis → issue closes (D042) */
+/* answering a clarification → updates project info → analysis update → issue closes (D042)
+   D108 — the Issue panel and the CHAT both answer through _submitClarification: ONE path, one set of state
+   changes, one set of surface refreshes. The chat is not a side channel — it cannot bypass the loop. */
 function answerClarification(id){
   const val = (document.getElementById('clarInput')||{}).value || '';
   if(!val.trim()){ const ta=document.getElementById('clarInput'); if(ta){ ta.style.borderColor='var(--danger)'; ta.focus(); } return; }
+  _submitClarification(id, val, 'panel');
+}
+/* THE shared clarification path (src: 'panel' | 'chat' — the ONLY difference is which surface reports back) */
+function _submitClarification(id, val, src){
   // 1) update project info (mark the tied section attested — Confirmed by you, D011)
   const f = ISSUES[id];
   const ps = PLAN_SECTIONS.find(p=>p.id===f.sec);
   if(ps){ ps.basis='attested'; if(ps.rel==='Low') ps.rel='Moderate'; else if(ps.rel==='Moderate') ps.rel='High'; }
-  // 2) simulate reanalysis, then 3) close the issue
+  // 2) simulate the analysis update, then 3) close the issue
   _istatus[id] = 'resolved';
-  // show a light "re-analyzing" state in the panel, then re-open resolved
-  document.getElementById('issuepanel').innerHTML = '<div style="padding:60px 10px;text-align:center;color:var(--muted)"><div class="an-pill" style="margin:0 auto 14px"><span class="adot"></span> Re-analyzing…</div><div style="font-size:13px">OSLO is updating your project information and re-running the analysis.</div></div>';
+  // report back on the surface the answer came from
+  if(src==='chat'){
+    pushChat('Thanks — I’ve updated your project information for <b>'+dispName(f.sec)+'</b>. That artifact is now <b>Confirmed by you</b>, and an analysis update is running; only that update can close <b>'+id+'</b>. I’ll say so here when it lands.');
+  } else {
+    // show a light "re-analyzing" state in the panel, then re-open resolved
+    document.getElementById('issuepanel').innerHTML = '<div style="padding:60px 10px;text-align:center;color:var(--muted)"><div class="an-pill" style="margin:0 auto 14px"><span class="adot"></span> Re-analyzing…</div><div style="font-size:13px">OSLO is updating your project information and re-running the analysis.</div></div>';
+  }
   setTimeout(()=>{
     // Feasibility improves a touch when the critical Resources clarification is answered (illustrative)
     if(f.sec==='Resources' && f.sev==='critical'){ READ.provisional.feasLvl='Low'; READ.provisional.feasW=38; READ.provisional.idx=62; }
     renderOverview(); renderFocus(); renderClarifications(); renderPlanSections(); renderHeat(); updateIssueCounts();
     // if the scoped Issues list is open behind the panel, keep it in sync (the resolved issue drops out)
     if(document.getElementById('scopedScrim').classList.contains('show')) renderScoped();
-    openIssue(id); // now shows resolved state
+    if(src==='chat'){
+      const S = _chatState();
+      pushChat('<b>Analysis update complete</b> — “'+_chatEsc(f.title)+'” no longer holds, so it’s now <b>Resolved</b>. Your read is <b>'+S.r.idx+'/100 · '+S.r.band+'</b>, and '+S.limiting.dim+' now reads '+S.limiting.lvl+'. '+S.openIds.length+' issue'+(S.openIds.length===1?'':'s')+' still open, and that cell on the Attention map has stood down.'
+        + _cActs([ _cAct("showView('overview')", 'See the updated read →'), _cAct("showView('attention')", 'Open the Attention map →') ]), 'done');
+      renderChatChips();
+    } else {
+      openIssue(id); // now shows resolved state
+    }
   }, 2200);
 }
 
@@ -1793,6 +2613,7 @@ function deepComplete(){
   renderOverview(); // flips the provisional↔current chip on the Confidence card
   // D043 — deep-pass completion is delivered as an OSLO CHAT message (supersede/refined-confidence line)
   postDeepPassComplete();
+  if(typeof renderChatChips==='function') renderChatChips(); // D108 — chips follow the updated read
 }
 function deepFail(){
   ANALYSIS_STATE = 'error'; // keep last-good (provisional) read; only the chip label changes

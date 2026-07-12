@@ -29,7 +29,21 @@
        D041 — Extended Analysis failure → "couldn't complete — showing your last-good understanding · Retry"; retry recovers
               provisional→current (reachable via a demo trigger in the phase bar).
        D042 — Clarification Requests surface as a light prompt at orientation AND inside the relevant Issue; answering updates
-              project info → reanalysis → issue closes. (Light Issue panel; full Issues UI is Slice 6.) -->
+              project info → reanalysis → issue closes. (Light Issue panel; full Issues UI is Slice 6.)
+
+     D108 (chat cascade, 2026-07-10) — the OSLO chat rail is now FUNCTIONAL here, scoped to the surfaces Slice 2 has:
+       · working composer (Send · Enter sends · Shift+Enter newline) with state-derived suggested prompt chips;
+       · replies are SIMULATED but STATE-GROUNDED — derived from the live Slice-2 model (READ/ANALYSIS_STATE, ISSUES/
+         _istatus, the CAF rows, PLAN_SECTIONS, open clarifications). Nothing is invented;
+       · ADVISORY-ONLY (D001) — the chat never mutates the plan and never resolves an issue; it offers actions as links
+         that call the EXISTING Slice-2 functions (openIssue / showView / openCell / showSectionIssues / openPlanSections);
+       · context handoff — askOslo(ctx) + the #chatCtx pill (× clears). Entry points: the Overview confidence card
+         ("✦ Ask OSLO why") and the light Issue panel ("✦ Ask OSLO about this issue" + "Answer in chat →");
+       · clarifications are conversational — OSLO raises the open clarification in the thread and the user can answer
+         there; it routes through the SAME shared _submitClarification(id,val,src) path the Issue panel uses (same
+         project-info update, same issue transition, same downstream re-renders). No side channel.
+       Slice-2 boundary (deliberately NOT ported): Discuss/resolution paths (Slice 6), artifact ask/editor (Slice 5),
+       History/timeline references (Slice 7), Attention-cell ask (Slice 4). -->
 <html lang="en" style="background:#111315">
 <head>
 <meta charset="UTF-8">
@@ -288,6 +302,42 @@ a{color:inherit}
 /* re-open the chat rail when collapsed */
 .chat-toggle{position:absolute;top:56px;right:12px;z-index:20;border:1px solid var(--border-2);background:var(--surface);border-radius:7px;padding:5px 10px;font-size:12px;color:var(--muted);display:none;align-items:center;gap:6px}
 #app.chat-collapsed .chat-toggle{display:flex}
+
+/* ============ D108 — CONVERSATIONAL OSLO: context pill · suggested chips · user turn · in-chat clarification ============
+   Neutral chrome only (D003) — the chat never wears severity color as decoration; severity words stay inline in copy.
+   Advisory-only (D001): every action the chat offers is a LINK the user clicks; the chat itself changes nothing. */
+.chat-ctx{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface);font-size:11.5px;color:var(--muted)}
+.chat-ctx .cx-lab{flex:none;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--subtle)}
+.chat-ctx .cx-v{flex:1;min-width:0;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-ctx .cx-x{flex:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-2);background:var(--surface-2);border-radius:5px;color:var(--muted);font-size:12px;line-height:1;cursor:pointer;font-family:inherit}
+.chat-ctx .cx-x:hover{color:var(--text);border-color:var(--primary)}
+/* first-run / empty state — present until the first message lands */
+.chat-empty{font-size:12.5px;line-height:1.7;color:var(--subtle);padding:4px 2px}
+.chat-empty .ce-t{color:var(--muted);font-weight:600;margin-bottom:6px}
+.chat-empty b{color:var(--muted)}
+/* suggested prompt chips (inside the composer, above the input) */
+.chat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+.chat-chip{border:1px solid var(--border-2);background:var(--surface-2);border-radius:99px;padding:4px 10px;font-size:11px;color:var(--muted);cursor:pointer;font-family:inherit;line-height:1.4}
+.chat-chip:hover,.chat-chip:focus-visible{color:var(--text);border-color:var(--primary);outline:none}
+/* OSLO's in-chat action links → they run the SAME functions the surfaces run (never a side channel) */
+.chat-acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.chat-act{border:1px solid var(--border-2);background:var(--surface);border-radius:7px;padding:4px 9px;font-size:11.5px;font-weight:600;color:var(--primary-light);cursor:pointer;font-family:inherit}
+.chat-act:hover,.chat-act:focus-visible{border-color:var(--primary);background:var(--surface-2);outline:none}
+/* an open clarification raised conversationally — answering routes through the SAME path as the Issue panel (D042) */
+.chat-clar{margin-top:10px;border:1px solid var(--border-2);border-radius:9px;padding:9px 10px;background:var(--surface)}
+.chat-clar .cc-q{font-size:12.5px;line-height:1.6;color:var(--text);margin-bottom:8px}
+.chat-clar textarea{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:inherit;font-size:12.5px;line-height:1.5;padding:7px 8px;resize:vertical;min-height:44px;outline:none}
+.chat-clar textarea:focus{border-color:var(--primary)}
+.chat-clar .cc-foot{display:flex;align-items:center;gap:8px;margin-top:7px}
+.chat-clar .cc-note{flex:1;font-size:10.5px;color:var(--subtle)}
+.chat-clar.answered textarea,.chat-clar.answered .cc-foot{display:none}
+/* "Ask OSLO why" pill — sits beside the confidence number it explains (Overview) */
+.conf-numcol{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+.askwhy{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--primary-light);border:1px solid var(--border-2);background:var(--surface-2);border-radius:99px;padding:4px 11px;font-family:inherit;cursor:pointer}
+.askwhy:hover,.askwhy:focus-visible{border-color:var(--primary);color:var(--primary-light);outline:none}
+/* "Ask OSLO about this issue" — the Issue panel hands the issue to the chat (never a second answer path) */
+.ip-ask{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--primary-light);border:1px solid var(--border-2);background:var(--surface-2);border-radius:99px;padding:4px 11px;font-family:inherit;cursor:pointer;margin-bottom:4px}
+.ip-ask:hover,.ip-ask:focus-visible{border-color:var(--primary);outline:none}
 
 /* ============ OPTIONAL FEATURE TOUR (spotlight coachmarks; opt-in, never gates value) — Fix 2/D044 ============ */
 .tourmask{position:fixed;z-index:150;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.6);pointer-events:none;display:none}
@@ -687,7 +737,12 @@ a{color:inherit}
             <span class="ustate prov" id="ustate" style="margin-left:auto" title="Analysis state — provisional while Extended Analysis runs; current once it completes. Only reanalysis changes the assessment.">Provisional</span>
           </div>
           <div class="conf-focus">
-            <div class="num"><span class="idx mono" id="ov-idx">58</span><span class="idx-max">/100</span></div>
+            <!-- D108 — "Ask OSLO why" sits beside the number it explains: hands the confidence read to the chat,
+                 where OSLO names the limiting dimension, the reliability qualifier, and what would move it. -->
+            <div class="conf-numcol">
+              <div class="num"><span class="idx mono" id="ov-idx">58</span><span class="idx-max">/100</span></div>
+              <button type="button" class="askwhy" id="askWhyConf" onclick="askOslo({type:'confidence'})" title="Ask OSLO why the read sits here"><span>✦</span> Ask OSLO why</button>
+            </div>
             <div class="conf-meta">
               <div class="big">Understanding is forming <span class="info" data-tip="OSLO derives confidence from the CAF dimensions (Clarity · Alignment · Feasibility), qualified by reliability. It changes only when something changes the read.">i</span></div>
               <!-- reliability is an INLINE qualifier (Fix 4) — detail via the Why disclosure below -->
@@ -779,11 +834,25 @@ a{color:inherit}
   <!-- ============ GLOBAL OSLO CHAT RAIL — persistent advisor; completion notices land here (Fix 1/D043) ============ -->
   <aside class="chatp" id="chatp">
     <div class="chat-h"><div class="o">O</div><div class="nm">OSLO</div><span class="mode">Advisory</span><button class="chat-min" onclick="toggleChat()" title="Hide the OSLO panel" aria-label="Hide the OSLO panel">›</button></div>
-    <div class="chat-scroll" id="chatscroll"></div>
+    <!-- D108 — CONTEXT PILL: set when a surface hands context to the chat (askOslo). × clears it. -->
+    <div class="chat-ctx" id="chatCtx" style="display:none">
+      <span class="cx-lab">Context</span><span class="cx-v" id="chatCtxLabel"></span>
+      <button type="button" class="cx-x" id="chatCtxClear" onclick="clearChatContext()" title="Clear the context" aria-label="Clear the conversation context">×</button>
+    </div>
+    <!-- D108 — the message list is a live region; OSLO's replies are announced as they land -->
+    <div class="chat-scroll" id="chatscroll" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation with OSLO">
+      <!-- first-run / empty state — replaced by the first message -->
+      <div class="chat-empty" id="chatEmpty">
+        <div class="ce-t">Ask OSLO anything about your plan.</div>
+        I read and explain — <b>your confidence read</b>, <b>an issue</b>, <b>a plan artifact</b>, or <b>what to do next</b>. I never change your plan: I can only point you at the action, you take it.
+      </div>
+    </div>
     <div class="chat-foot">
       <div class="chat-input">
-        <textarea placeholder="Ask OSLO about the read, an issue, or what to do next…" aria-label="Ask OSLO"></textarea>
-        <div class="cr"><span class="sp">↳ advisory <span class="info" data-tip="OSLO reads and explains — you stay in control; nothing changes your plan without you.">i</span></span><button class="btn btn-primary btn-sm">Send</button></div>
+        <!-- D108 — suggested prompt chips (state-derived; rebuilt whenever the read or the context changes) -->
+        <div class="chat-chips" id="chatChips" role="group" aria-label="Suggested questions"></div>
+        <textarea id="chatInput" placeholder="Ask OSLO about the read, an issue, or what to do next…" aria-label="Ask OSLO a question" onkeydown="chatKey(event)"></textarea>
+        <div class="cr"><span class="sp">↳ advisory <span class="info" data-tip="OSLO reads and explains — you stay in control; nothing changes your plan without you.">i</span></span><button class="btn btn-primary btn-sm" id="chatSend" onclick="sendChat()" title="Send (Enter · Shift+Enter for a new line)">Send</button></div>
       </div>
     </div>
   </aside>
@@ -1086,22 +1155,385 @@ function afterOrientation(){
   if(ANON_RUN){ setTimeout(showSaveBar, 1200); } // GA only
 }
 
-/* ============ GLOBAL OSLO CHAT RAIL — persistent advisor + completion notices (Fix 1/D043) ============ */
+/* ============================================================================================================
+   GLOBAL OSLO CHAT RAIL — persistent advisor + completion notices (Fix 1/D043) + CONVERSATION (D108)
+   ------------------------------------------------------------------------------------------------------------
+   D108 (Slice-2 scope) — the chat is FUNCTIONAL and INTEGRATED into the Slice-2 workflows:
+     · a working composer (Send · Enter to send · Shift+Enter for a newline) with state-derived prompt chips;
+     · replies are SIMULATED but STATE-GROUNDED — every answer is derived from the live Slice-2 model
+       (READ/ANALYSIS_STATE, ISSUES/_istatus, the CAF rows, PLAN_SECTIONS, the open clarifications).
+       No invented numbers, no invented issues;
+     · ADVISORY-ONLY (D001): the chat NEVER mutates the plan, never resolves an issue, never changes the
+       assessment. It OFFERS actions as links; the user clicks, and the action runs through the EXISTING
+       Slice-2 functions (openIssue / showView / openPlanSections / showSectionIssues / _submitClarification);
+     · issues close ONLY via an analysis update — the chat says so and never claims to have closed one;
+     · D092 framing — "analysis update", never "reanalysis"; "issues", never "findings".
+   Slice-2 boundary: no Discuss/resolution paths (Slice 6), no artifact editor (Slice 5), no History (Slice 7).
+   ============================================================================================================ */
 function toggleChat(){ document.getElementById('app').classList.toggle('chat-collapsed'); }
+function _chatEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* drop the first-run/empty state as soon as anything lands in the thread */
+function _chatDropEmpty(){ const e=document.getElementById('chatEmpty'); if(e && e.parentNode) e.parentNode.removeChild(e); }
 function pushChat(html, cls){
   const s = document.getElementById('chatscroll'); if(!s) return;
+  _chatDropEmpty();
   const el = document.createElement('div');
   el.className = 'cmsg' + (cls ? ' ' + cls : '');
   el.innerHTML = '<div class="who">OSLO</div><div class="bub">' + html + '</div>';
   s.appendChild(el); s.scrollTop = s.scrollHeight;
   // if collapsed, surface the notice
   document.getElementById('app').classList.remove('chat-collapsed');
+  return el;
+}
+/* the user's turn in the thread (D108) — plain text, always escaped */
+function pushUserChat(text){
+  const s = document.getElementById('chatscroll'); if(!s) return;
+  _chatDropEmpty();
+  const el = document.createElement('div');
+  el.className = 'cmsg user';
+  el.innerHTML = '<div class="who">You</div><div class="bub">' + _chatEsc(text) + '</div>';
+  s.appendChild(el); s.scrollTop = s.scrollHeight;
+  document.getElementById('app').classList.remove('chat-collapsed');
+  return el;
 }
 function seedChat(){
   const s = document.getElementById('chatscroll'); if(!s || s.dataset.seeded) return;
   s.dataset.seeded = '1';
   const name = ANON_RUN ? 'this project' : 'DevNorth 2026';
   pushChat('I’ve mapped ' + name + ' into your seven plan artifacts. Ask me anything about the read, an issue, or what to do next — I read and explain; you stay in control.');
+  renderChatChips();
+}
+
+/* ---------- LIVE STATE the replies are grounded in (never fabricated) ---------- */
+/* The CAF rows the Overview paints: Clarity/Alignment are fixed in the drafted read; Feasibility tracks the
+   live read (it is the dimension that moves as the critical Resources gap clears). */
+const _lifeword = {open:'Open', resolved:'Resolved'};
+const _ARTORDER = PLAN_SECTIONS.map(p=>p.id);
+function currentRead(){ return READ[ANALYSIS_STATE==='current' ? 'current' : 'provisional']; }
+function _chatCaf(r){
+  return [ {dim:'Clarity', lvl:'High', w:76}, {dim:'Alignment', lvl:'Moderate', w:55}, {dim:'Feasibility', lvl:r.feasLvl, w:r.feasW} ];
+}
+function _chatState(){
+  const r = currentRead();
+  const openIds = Object.keys(ISSUES).filter(id=>_istatus[id]==='open').sort((a,b)=>_sevrank[ISSUES[a].sev]-_sevrank[ISSUES[b].sev]);
+  const resolved = Object.keys(ISSUES).filter(id=>_istatus[id]==='resolved');
+  const caf = _chatCaf(r);
+  const limiting = caf.slice().sort((a,b)=>a.w-b.w)[0];
+  const relWord = String(r.rel||'moderate reliability').replace(/\s*reliability$/,'');
+  const stateWord = (ANALYSIS_STATE==='current') ? 'current — Extended Analysis has landed'
+                  : (ANALYSIS_STATE==='error')   ? 'your last-good understanding — the last analysis update didn’t complete'
+                  : 'provisional — Extended Analysis is still deepening it';
+  return { r, relWord, openIds, resolved, caf, limiting, stateWord, top: openIds[0]||null,
+           clarIds: (typeof _openClarIds==='function' ? _openClarIds() : []) };
+}
+/* ---------- links back to the SURFACE (replies point at the real thing, they don't just describe it) ---------- */
+function _cAct(onclick, label){ return '<button type="button" class="chat-act" onclick="'+onclick+'">'+label+'</button>'; }
+function _cActs(list){ return '<div class="chat-acts">'+list.join('')+'</div>'; }
+/* keyboard-operable inline links inside the thread (a11y) */
+document.addEventListener('keydown', e=>{
+  const t = e.target;
+  if(!t || !t.closest) return;
+  if((e.key==='Enter'||e.key===' ') && t.matches && t.matches('#chatscroll a[role="button"]')){ e.preventDefault(); t.click(); }
+});
+
+/* ---------- CONTEXT (askOslo) — one shared entry point every surface hands context through ---------- */
+let _chatCtx = null;   // {type:'issue'|'confidence'|'artifact', id?}
+function _chatCtxLabel(ctx){
+  if(!ctx) return '';
+  switch(ctx.type){
+    case 'issue':      return ISSUES[ctx.id] ? ISSUES[ctx.id].title + ' (' + ctx.id + ')' : ctx.id;
+    case 'artifact':   return dispName(ctx.id) + ' · plan artifact';
+    case 'confidence': return 'Your confidence read';
+    default: return '';
+  }
+}
+function renderChatCtx(){
+  const bar = document.getElementById('chatCtx'); if(!bar) return;
+  if(!_chatCtx){ bar.style.display='none'; return; }
+  bar.style.display = 'flex';
+  document.getElementById('chatCtxLabel').textContent = _chatCtxLabel(_chatCtx);
+  const x = document.getElementById('chatCtxClear');
+  if(x) x.setAttribute('title', 'Clear the context — ' + _chatCtxLabel(_chatCtx));
+}
+function clearChatContext(){
+  if(!_chatCtx){ renderChatCtx(); return; }
+  _chatCtx = null;
+  renderChatCtx();
+  renderChatChips();
+  pushChat('Context cleared — I’m answering across the whole project again.');
+}
+/* THE shared entry point. Opens/focuses the chat, sets the context pill, seeds a grounded opening message.
+   It never mutates anything: opening a conversation about an issue is not acting on it. */
+function askOslo(ctx){
+  ctx = ctx || {};
+  // the Issue panel is a modal-ish overlay that would sit on top of the rail — stand it down
+  const scrim = document.getElementById('issueScrim');
+  if(scrim && scrim.classList.contains('show') && typeof closeIssue==='function') closeIssue();
+  const app = document.getElementById('app'); if(app) app.classList.remove('chat-collapsed');
+  _chatCtx = (ctx.type ? ctx : null);
+  renderChatCtx();
+  const open = _chatOpening(ctx);
+  if(open) pushChat(open, 'ctx');
+  renderChatChips();
+  const ta = document.getElementById('chatInput'); if(ta && ta.focus) ta.focus();
+}
+/* the opening message for each context — built from live state */
+function _chatOpening(ctx){
+  const S = _chatState();
+  switch(ctx.type){
+    case 'issue':      return _ansIssue(ctx.id, S, true);
+    case 'artifact':   return _ansArtifact(ctx.id, S, true);
+    case 'confidence': return _ansConfidence(S, true);
+    default:           return _ansSummary(S);
+  }
+}
+
+/* ---------- SUGGESTED PROMPT CHIPS — derived from the live read + the active context ---------- */
+function _chatChipList(){
+  const S = _chatState();
+  const chips = [];
+  if(_chatCtx && _chatCtx.type==='issue' && ISSUES[_chatCtx.id]){
+    chips.push('Why does this matter?', 'What are my options?', 'What happens if I leave it?');
+  } else if(_chatCtx && _chatCtx.type==='artifact'){
+    chips.push('What’s weak in this artifact?', 'Where did this come from?', 'What should I do next?');
+  } else if(_chatCtx && _chatCtx.type==='confidence'){
+    chips.push('What would move it?', 'How reliable is this read?', 'What should I do next?');
+  } else {
+    chips.push('What should I do next?');
+    if(S.limiting) chips.push('Why is ' + S.limiting.dim + ' ' + S.limiting.lvl + '?');
+    if(S.top) chips.push('Explain the top issue');
+    if(S.clarIds.length) chips.push('What do you need me to confirm?');
+  }
+  return chips;
+}
+function renderChatChips(){
+  const el = document.getElementById('chatChips'); if(!el) return;
+  el.innerHTML = _chatChipList().map(c=>
+    '<button type="button" class="chat-chip" onclick="chatChip(this)">'+_chatEsc(c)+'</button>').join('');
+}
+/* a chip fills the composer and sends — the same path a typed question takes */
+function chatChip(btn){
+  const q = btn ? (btn.textContent||'').trim() : '';
+  if(!q) return;
+  const ta = document.getElementById('chatInput'); if(ta) ta.value = q;
+  sendChat();
+}
+
+/* ---------- THE COMPOSER — Send (click) · Enter to send · Shift+Enter for a newline ---------- */
+function chatKey(e){
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendChat(); }
+}
+function sendChat(){
+  const ta = document.getElementById('chatInput'); if(!ta) return;
+  const q = (ta.value||'').trim();
+  if(!q) return;
+  ta.value = '';
+  pushUserChat(q);
+  pushChat(_oslloReply(q));    // simulated, state-grounded, advisory-only
+  renderChatChips();
+}
+
+/* ---------- INTENT ROUTING (prototype-grade keyword matching; no real AI) ---------- */
+const _CHAT_STOP = {this:1,that:1,with:1,from:1,have:1,what:1,when:1,does:1,about:1,issue:1,issues:1,plan:1,tell:1,more:1,into:1,your:1,mine:1,should:1};
+function _matchIssueQ(t){
+  const m = t.match(/iss[\s-]?0?(\d)/);
+  if(m){ const id = 'ISS-0'+m[1]; if(ISSUES[id]) return id; }
+  let best=null, bs=0;
+  Object.keys(ISSUES).forEach(id=>{
+    const f = ISSUES[id];
+    const words = (f.title+' '+f.dim+' '+dispName(f.sec)).toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/)
+      .filter(w=>w.length>3 && !_CHAT_STOP[w]);
+    let s = 0; words.forEach(w=>{ if(t.indexOf(w)>=0) s++; });
+    if(id==='ISS-01' && (t.indexOf('wifi')>=0 || t.indexOf('wi-fi')>=0)) s += 2;
+    if(s>bs){ bs=s; best=id; }
+  });
+  return bs>=2 ? best : null;
+}
+function _matchArtQ(t){
+  if(/\bwbs\b|work breakdown/.test(t)) return 'WBS';
+  return _ARTORDER.find(a => a!=='WBS' && t.indexOf(a.toLowerCase())>=0) || null;
+}
+function _oslloReply(q){
+  const t = String(q||'').toLowerCase();
+  const S = _chatState();
+  const ctx = _chatCtx;
+  // 0) explicit context talk
+  if(/\b(clear|forget|drop)\b.*\bcontext\b/.test(t)){ const had=!!ctx; _chatCtx=null; renderChatCtx(); renderChatChips();
+    return had ? 'Context cleared — I’m answering across the whole project again.' : 'There’s no context set — I’m already answering across the whole project.'; }
+  // 1) "what should I do next" → the top open issue / Start here
+  if(/\bnext\b|what should i do|where (do|should) i (start|begin)|priorit|most important|first thing/.test(t)) return _ansNext(S);
+  // 2) an issue by id, by name, or "the top issue"
+  if(/top issue|first issue|biggest issue|worst issue|lead issue/.test(t) && S.top) return _ansIssue(S.top, S);
+  const iss = _matchIssueQ(t);
+  if(iss) return _ansIssue(iss, S);
+  // 3) how do issues close / can you fix it (advisory boundary — D001/D092)
+  if(/\b(resolve|close|clear|fix|apply|do it for me|can you (just )?(fix|change|update))\b/.test(t) && !/how (is|do) .*calculat/.test(t)) return _ansHowIssuesClose(S);
+  // 4) a CAF dimension by name
+  const dim = _HEATDIMS.find(d=>t.indexOf(d.toLowerCase())>=0);
+  if(dim) return _ansDimension(dim, S);
+  // 5) the confidence read — asked for EXPLICITLY (a bare "why" inside a context belongs to that context)
+  if(/confiden|reliab|\bscore\b|\bband\b|how .*calculat|\bnumber\b|(my|the) read/.test(t)) return _ansConfidence(S);
+  // 6) a plan artifact by name
+  const art = _matchArtQ(t);
+  if(art) return _ansArtifact(art, S);
+  // 7) clarifications
+  if(/clarif|\bquestion\b|\bconfirm\b/.test(t)) return _ansClarifications(S);
+  // 8) inside an active context, everything else is answered WITHIN that context (until it's cleared)
+  if(ctx){
+    if(ctx.type==='issue') return _ansIssue(ctx.id, S);
+    if(ctx.type==='artifact') return _ansArtifact(ctx.id, S);
+    if(ctx.type==='confidence') return _ansConfidence(S);
+  }
+  // 9) an unscoped "why"/"explain" is a question about the read
+  if(/\bwhy\b|\bexplain\b/.test(t)) return _ansConfidence(S);
+  // 10) grounded fallback — the state summary + where to go next
+  return _ansSummary(S);
+}
+
+/* ---------- THE ANSWERS — every sentence traces to live state; every action is a link the USER clicks ---------- */
+function _ansConfidence(S, opening){
+  const r = S.r, L = S.limiting;
+  let h = (opening ? 'Here’s your confidence read. ' : '');
+  h += 'It sits at <b>'+r.idx+'/100 · '+r.band+'</b>, qualified by <b>'+r.rel+'</b> — that’s how mature my understanding of your plan is, not a grade or a probability.';
+  h += '<br><br><b>'+L.dim+' ('+L.lvl+')</b> is the limiting dimension — it’s the lowest of Clarity · Alignment · Feasibility, so it’s what holds the number back. Clarity is '+S.caf[0].lvl+', Alignment is '+S.caf[1].lvl+'.';
+  h += '<br><br>Reliability is <b>'+S.relWord+'</b> — the read rests on the documents you gave me (coverage: 5 of 7 plan artifacts well-evidenced), judged independently of the plan’s integrity. The read is <b>'+S.stateWord+'</b>.';
+  if(S.top){
+    const f = ISSUES[S.top];
+    h += '<br><br><b>What would move it:</b> the most consequential open issue is “'+_chatEsc(f.title)+'” ('+_sevword[f.sev]+' · '+f.dim+' · '+dispName(f.sec)+'). '+S.openIds.length+' issue'+(S.openIds.length===1?' is':'s are')+' still open. The number only changes when an analysis update changes the read — never because something was dismissed.';
+    h += _cActs([ _cAct("openIssue('"+S.top+"')", 'Open this issue →'), _cAct("showView('attention')", 'Open the Attention map →') ]);
+  } else {
+    h += '<br><br>Nothing is open right now — the read moves next when an analysis update changes it.';
+    h += _cActs([ _cAct("showView('overview')", 'Open the Overview →') ]);
+  }
+  return h;
+}
+function _ansNext(S){
+  if(!S.top) return 'Nothing needs your attention right now — no issues are open, and your read sits at <b>'+S.r.idx+'/100 · '+S.r.band+'</b>. '+_cActs([_cAct("showView('overview')",'Open the Overview →')]);
+  const f = ISSUES[S.top];
+  let h = 'Start here: <b>'+_chatEsc(f.title)+'</b> — '+_sevword[f.sev]+', '+f.dim+', in '+dispName(f.sec)+'. It’s the most consequential of your '+S.openIds.length+' open issue'+(S.openIds.length===1?'':'s')+', and '+f.dim+' is '+(S.limiting.dim===f.dim ? 'the dimension holding your confidence back' : 'a dimension the read is watching')+'.';
+  h += '<br><br><b>Why it matters:</b> '+_chatEsc(f.why);
+  if(f.fixes && f.fixes.length) h += '<br><br><b>Suggested fixes:</b> '+f.fixes.map(x=>'“'+_chatEsc(x)+'”').join(' · ')+' — advisory; the call is yours.';
+  if(f.clar && _istatus[S.top]==='open') h += '<br><br>I also have a question tied to it — you can answer it right here.';
+  const acts = [ _cAct("openIssue('"+S.top+"')", 'Open this issue →') ];
+  if(S.openIds.length>1) acts.push(_cAct("showView('attention')", 'See all open issues →'));
+  h += _cActs(acts);
+  if(f.clar && _istatus[S.top]==='open') h += _chatClarBlock(S.top);
+  return h;
+}
+function _ansIssue(id, S, opening){
+  const f = ISSUES[id]; if(!f) return _ansSummary(S);
+  const st = _istatus[id];
+  let h = (opening ? 'Let’s look at <b>'+_chatEsc(f.title)+'</b> ('+id+'). ' : '<b>'+_chatEsc(f.title)+'</b> ('+id+'). ');
+  h += 'It’s '+_sevword[f.sev]+', on <b>'+f.dim+'</b>, in <b>'+dispName(f.sec)+'</b>, and it’s currently <b>'+(_lifeword[st]||st)+'</b>.';
+  h += '<br><br><b>Why it matters:</b> '+_chatEsc(f.why);
+  if(f.ev && f.ev.length) h += '<br><br><b>What it rests on:</b> '+f.ev.map(e=>_chatEsc(e[0])+' — '+_chatEsc(e[1])).join(' · ');
+  if(st==='resolved'){
+    h += '<br><br>You answered the question tied to it and an analysis update closed it — it’s done.';
+    h += _cActs([ _cAct("openIssue('"+id+"')", 'Open the issue →'), _cAct("showView('overview')", 'See the updated read →') ]);
+    return h;
+  }
+  if(f.fixes && f.fixes.length) h += '<br><br><b>Suggested fixes:</b> '+f.fixes.map(x=>'“'+_chatEsc(x)+'”').join(' · ')+'. This is advisory — I don’t change your plan, and this issue only moves to Resolved when an analysis update confirms it no longer holds.';
+  h += _cActs([ _cAct("openIssue('"+id+"')", 'Open this issue →'),
+                _cAct("showSectionIssues('"+f.sec+"')", 'See '+_chatEsc(dispName(f.sec))+' →'),
+                _cAct("showView('attention')", 'Open the Attention map →') ]);
+  if(f.clar && st==='open') h += _chatClarBlock(id);
+  return h;
+}
+function _ansDimension(dim, S){
+  const row = S.caf.find(c=>c.dim===dim) || S.caf[0];
+  const ids = S.openIds.filter(id=>ISSUES[id].dim===dim);
+  let h = '<b>'+dim+'</b> reads <b>'+row.lvl+'</b>'+(S.limiting.dim===dim ? ' — and it’s the limiting dimension: the lowest of the three, so it’s what’s holding your confidence at '+S.r.idx+'/100 · '+S.r.band+'.' : ' — Clarity '+S.caf[0].lvl+' · Alignment '+S.caf[1].lvl+' · Feasibility '+S.caf[2].lvl+'. The limit right now is <b>'+S.limiting.dim+'</b> ('+S.limiting.lvl+').');
+  if(ids.length){
+    const f = ISSUES[ids[0]];
+    h += '<br><br>'+ids.length+' open issue'+(ids.length===1?'':'s')+' sit'+(ids.length===1?'s':'')+' on '+dim+'. The most severe is “'+_chatEsc(f.title)+'” ('+_sevword[f.sev]+', in '+dispName(f.sec)+') — '+_chatEsc(f.why);
+    h += _cActs([ _cAct("openIssue('"+ids[0]+"')", 'Open this issue →'),
+                  _cAct("openCell('"+f.sec+"','"+dim+"')", 'See '+_chatEsc(dispName(f.sec))+' × '+dim+' →'),
+                  _cAct("showView('attention')", 'Open the Attention map →') ]);
+  } else {
+    h += '<br><br>No open issues sit on '+dim+' right now.';
+    h += _cActs([ _cAct("showView('attention')", 'Open the Attention map →') ]);
+  }
+  return h;
+}
+/* Slice-2 scope: plan artifacts are DATA (D035) and rows on the Attention map — there is no artifact editor
+   here (that's Slice 5), so this answer explains the artifact and points at the map. */
+function _ansArtifact(name, S, opening){
+  const p = PLAN_SECTIONS.find(x=>x.id===name);
+  const ids = S.openIds.filter(id=>ISSUES[id].sec===name);
+  let h = (opening ? 'Let’s look at <b>'+_chatEsc(dispName(name))+'</b>. ' : '<b>'+_chatEsc(dispName(name))+'</b>. ');
+  if(p){
+    h += 'It’s one of your seven plan artifacts ('+p.grp+'), it’s <b>'+(p.basis==='attested'?'Confirmed by you':'From OSLO')+'</b>, and its reliability reads <b>'+p.rel+'</b>.';
+    h += '<br><br>'+_chatEsc(p.body);
+  }
+  if(ids.length){
+    const f = ISSUES[ids[0]];
+    h += '<br><br>'+ids.length+' open issue'+(ids.length===1?'':'s')+' live'+(ids.length===1?'s':'')+' here — most severe: “'+_chatEsc(f.title)+'” ('+_sevword[f.sev]+' · '+f.dim+'). '+_chatEsc(f.why);
+    h += _cActs([ _cAct("openIssue('"+ids[0]+"')", 'Open this issue →'),
+                  _cAct("showSectionIssues('"+name+"')", 'See its issues →'),
+                  _cAct("showView('attention')", 'Open the Attention map →') ]);
+  } else {
+    h += '<br><br>No open issues here right now.';
+    h += _cActs([ _cAct("openPlanSections()", 'See it on the Attention map →') ]);
+  }
+  return h;
+}
+function _ansHowIssuesClose(S){
+  let h = 'I can’t change your plan — I read and explain, you decide. Nothing I say here moves an issue, edits an artifact, or shifts the assessment.';
+  h += '<br><br>An issue closes only when an <b>analysis update</b> confirms it no longer holds: you act — answer the question I’ve raised, or take one of the suggested fixes into your plan — and the update closes it. There is no button that closes it by hand.';
+  if(S.top){
+    const f = ISSUES[S.top];
+    h += '<br><br>For “'+_chatEsc(f.title)+'”'+((f.fixes&&f.fixes.length)?', the fixes I’d weigh are '+f.fixes.map(x=>'“'+_chatEsc(x)+'”').join(' and ')+'.':'.');
+    if(f.clar && _istatus[S.top]==='open') h += ' The fastest route is answering my question about '+dispName(f.sec)+' — that updates your project information and lets the analysis update close it.';
+    h += _cActs([ _cAct("openIssue('"+S.top+"')", 'Open the issue →'), _cAct("askOslo({type:'issue',id:'"+S.top+"'})", 'Talk it through') ]);
+    if(f.clar && _istatus[S.top]==='open') h += _chatClarBlock(S.top);
+  }
+  return h;
+}
+function _ansClarifications(S){
+  if(!S.clarIds.length) return 'I have nothing left to confirm — no open questions. '+_cActs([_cAct("showView('overview')",'Open the Overview →')]);
+  const id = S.clarIds[0], f = ISSUES[id];
+  let h = 'I have <b>'+S.clarIds.length+'</b> thing'+(S.clarIds.length===1?'':'s')+' to confirm. Where your inputs are thin, I ask rather than assume.';
+  h += '<br><br>The first is tied to <b>'+_chatEsc(f.title)+'</b> ('+dispName(f.sec)+'). Answering it updates your project information and lets an analysis update close the issue.';
+  h += _chatClarBlock(id);
+  return h;
+}
+function _ansSummary(S){
+  const r = S.r;
+  let h = 'Here’s where your plan stands. Confidence <b>'+r.idx+'/100 · '+r.band+'</b> on <b>'+r.rel+'</b> ('+S.stateWord+'). <b>'+S.limiting.dim+'</b> is the limiting dimension at <b>'+S.limiting.lvl+'</b>.';
+  h += '<br><br><b>'+S.openIds.length+'</b> issue'+(S.openIds.length===1?'':'s')+' open'+(S.resolved.length?' · <b>'+S.resolved.length+'</b> resolved':'')+'.';
+  if(S.top){ const f=ISSUES[S.top]; h += ' The one I’d take first: “'+_chatEsc(f.title)+'” ('+_sevword[f.sev]+' · '+f.dim+' · '+dispName(f.sec)+').'; }
+  if(S.clarIds.length) h += ' I also have <b>'+S.clarIds.length+'</b> thing'+(S.clarIds.length===1?'':'s')+' to confirm with you.';
+  h += '<br><br>Ask me <i>why the read sits here</i>, <i>what to do next</i>, about <i>an issue</i>, or about <i>a plan artifact</i>.';
+  const acts = [];
+  if(S.top) acts.push(_cAct("openIssue('"+S.top+"')", 'Open the top issue →'));
+  acts.push(_cAct("showView('attention')", 'Open the Attention map →'));
+  acts.push(_cAct("askOslo({type:'confidence'})", 'Explain my confidence'));
+  h += _cActs(acts);
+  return h;
+}
+
+/* ---------- CLARIFICATIONS ARE CONVERSATIONAL (D108) ----------
+   The inline answer box below. Submitting it routes through the SAME path as the Issue-panel answer
+   (_submitClarification) — the same project-info update, the same issue transition, the same analysis update,
+   the same downstream re-renders. No side channel: the chat cannot bypass the loop the panel runs. */
+function _chatClarBlock(id){
+  const f = ISSUES[id]; if(!f || !f.clar) return '';
+  // exactly ONE live answer box per issue in the thread — drop any earlier one so the box the user types in is
+  // always the box that gets submitted (and the thread never carries duplicate ids).
+  document.querySelectorAll('[id="chatClarBox-'+id+'"]').forEach(el=>{ if(el.parentNode) el.parentNode.removeChild(el); });
+  return '<div class="chat-clar" id="chatClarBox-'+id+'">'
+    + '<div class="cc-q">❓ '+_chatEsc(f.clar.q)+'</div>'
+    + '<textarea id="chatClarInput-'+id+'" placeholder="Type your answer…" aria-label="Answer the clarification about '+_chatEsc(f.title)+'"></textarea>'
+    + '<div class="cc-foot"><span class="cc-note">'+_chatEsc(f.clar.hint||'Add the detail OSLO is missing.')+'</span>'
+    + '<button type="button" class="btn btn-primary btn-sm" onclick="answerClarificationFromChat(\''+id+'\')">Submit answer</button></div></div>';
+}
+function answerClarificationFromChat(id){
+  const ta = document.getElementById('chatClarInput-'+id);
+  const val = ta ? (ta.value||'') : '';
+  if(!val.trim()){ if(ta){ ta.style.borderColor='var(--danger)'; ta.focus(); } return; }
+  const box = document.getElementById('chatClarBox-'+id); if(box) box.classList.add('answered');
+  pushUserChat(val);                       // the answer appears as the user's turn
+  _submitClarification(id, val, 'chat');   // …and then runs the EXACT same path the Issue panel runs
 }
 /* Fast Pass completion notice — delivered as a chat message at fast-pass completion (D043) with the tour offer (D044) */
 function postFastPassComplete(secs){
@@ -1320,6 +1752,8 @@ function updateIssueCounts(){
   document.getElementById('vsAttnBadge').textContent = open;
   // keep the light clarification pointer in sync
   renderClarifications();
+  // D108 — the suggested prompts track the live read
+  if(typeof renderChatChips==='function') renderChatChips();
 }
 
 /* ============ LIGHT ISSUE PANEL + clarification loop (D042) ============ */
@@ -1332,6 +1766,8 @@ function openIssue(id){
   let h = `<div class="ip-top"><span class="ip-sev ${sc}">${_sevword[f.sev]}</span><div class="ip-title">${f.title}</div><span class="ip-x" onclick="closeIssue()" role="button" tabindex="0" aria-label="Close">×</span></div>
     <div class="ip-meta"><span><span class="k">Dimension</span> · ${f.dim}</span><span><span class="k">Section</span> · ${dispName(f.sec)}</span><span><span class="k">Type</span> · internal object: Finding</span></div>
     <div class="ip-life"><span class="st ${resolved?'done':'on'}">Open</span><span class="a">→</span><span class="st ${resolved?'done':''}">Addressed</span><span class="a">→</span><span class="st ${resolved?'done':''}">Resolved</span></div>
+    <!-- D108 — hand this issue to the OSLO chat (context pill + grounded opening). Advisory: talking changes nothing. -->
+    <button type="button" class="ip-ask" onclick="askOslo({type:'issue',id:'${id}'})" title="Talk this issue through with OSLO — discussing changes nothing"><span>✦</span> Ask OSLO about this issue</button>
     <div class="ip-h">Why this matters</div><div class="ip-p">${f.why}</div>
     <div class="ip-h">Evidence</div>`;
   f.ev.forEach(e=>{ h += `<div class="ip-ev"><span class="evk">${e[0]}</span><br>${e[1]}</div>`; });
@@ -1339,7 +1775,7 @@ function openIssue(id){
     h += `<div class="ip-clar"><div class="cl-h">❓ Clarification request</div>
       <div class="cl-q">${f.clar.q}</div>
       <textarea id="clarInput" placeholder="Type your answer — OSLO will update your project info and re-run analysis…"></textarea>
-      <div class="cl-foot"><span class="cl-note">OSLO asks; you answer; you decide. Answering re-runs analysis and closes this issue.</span>
+      <div class="cl-foot"><span class="cl-note">OSLO asks; you answer; you decide. Answering re-runs analysis and closes this issue. <a style="color:var(--primary-light);cursor:pointer" role="button" tabindex="0" onclick="askOslo({type:'issue',id:'${id}'})" title="Answer this in the OSLO chat — same update, same issue transition">Answer in chat →</a></span>
         <button class="btn btn-primary btn-sm" onclick="answerClarification('${id}')">Submit &amp; re-analyze</button></div></div>`;
   }
   h += `<div class="ip-h">Suggested fixes <span class="info" data-tip="OSLO drafts options — you choose. Applying/editing plan artifacts is Slice 5/6.">i</span></div><div class="ip-fixes">`;
@@ -1353,23 +1789,40 @@ function openIssue(id){
 }
 function closeIssue(){ document.getElementById('issueScrim').classList.remove('show'); _openIssueId=null; }
 
-/* answering a clarification → updates project info → reanalysis → issue closes (D042) */
+/* answering a clarification → updates project info → analysis update → issue closes (D042).
+   D108 — the Issue panel and the CHAT both answer through _submitClarification: ONE path, one set of state
+   changes, one issue transition. The chat is not a side channel — it just reports back in the thread. */
 function answerClarification(id){
   const val = (document.getElementById('clarInput')||{}).value || '';
   if(!val.trim()){ const ta=document.getElementById('clarInput'); if(ta){ ta.style.borderColor='var(--danger)'; ta.focus(); } return; }
+  _submitClarification(id, val, 'panel');
+}
+function _submitClarification(id, val, src){
   // 1) update project info (mark the tied section attested — Confirmed by you, D011)
   const f = ISSUES[id];
   const ps = PLAN_SECTIONS.find(p=>p.id===f.sec);
   if(ps){ ps.basis='attested'; if(ps.rel==='Low') ps.rel='Moderate'; else if(ps.rel==='Moderate') ps.rel='High'; }
-  // 2) simulate reanalysis, then 3) close the issue
+  // 2) simulate the analysis update, then 3) close the issue
   _istatus[id] = 'resolved';
-  // show a light "re-analyzing" state in the panel, then re-open resolved
-  document.getElementById('issuepanel').innerHTML = '<div style="padding:60px 10px;text-align:center;color:var(--muted)"><div class="an-pill" style="margin:0 auto 14px"><span class="adot"></span> Re-analyzing…</div><div style="font-size:13px">OSLO is updating your project information and re-running the analysis.</div></div>';
+  // report back on the surface the answer came from
+  if(src==='chat'){
+    pushChat('Thanks — I’ve updated your project information for <b>'+dispName(f.sec)+'</b>, and it’s now <b>Confirmed by you</b>. An analysis update is running; only that update can close <b>'+id+'</b>. I’ll say so here when it lands.');
+  } else {
+    // show a light "re-analyzing" state in the panel, then re-open resolved
+    document.getElementById('issuepanel').innerHTML = '<div style="padding:60px 10px;text-align:center;color:var(--muted)"><div class="an-pill" style="margin:0 auto 14px"><span class="adot"></span> Re-analyzing…</div><div style="font-size:13px">OSLO is updating your project information and re-running the analysis.</div></div>';
+  }
   setTimeout(()=>{
     // Feasibility improves a touch when the critical Resources clarification is answered (illustrative)
     if(f.sec==='Resources' && f.sev==='critical'){ READ.provisional.feasLvl='Low'; READ.provisional.feasW=38; READ.provisional.idx=62; }
     renderOverview(); renderFocus(); renderClarifications(); renderPlanSections(); renderHeat(); renderDims(); updateIssueCounts();
-    openIssue(id); // now shows resolved state
+    if(src==='chat'){
+      const S = _chatState();
+      pushChat('<b>Analysis update complete</b> — “'+_chatEsc(f.title)+'” no longer holds, so it’s now <b>Resolved</b>. Your read is <b>'+S.r.idx+'/100 · '+S.r.band+'</b>, and '+S.limiting.dim+' now reads '+S.limiting.lvl+'. '+S.openIds.length+' issue'+(S.openIds.length===1?'':'s')+' still open.'
+        + _cActs([ _cAct("showView('overview')", 'See the updated read →'), _cAct("openIssue('"+id+"')", 'Open the issue →') ]), 'done');
+      renderChatChips();
+    } else {
+      openIssue(id); // now shows resolved state
+    }
   }, 2200);
 }
 
@@ -1389,12 +1842,14 @@ function startDeepPass(){
 function deepComplete(){
   ANALYSIS_STATE = 'current';
   renderOverview(); renderDims(); // flips the provisional↔current chip on the Confidence card
+  if(typeof renderChatChips==='function') renderChatChips(); // D108 — the read moved; the chips follow
   // D043 — deep-pass completion is delivered as an OSLO CHAT message (supersede/refined-confidence line)
   postDeepPassComplete();
 }
 function deepFail(){
   ANALYSIS_STATE = 'error'; // keep last-good (provisional) read; only the chip label changes
   renderOverview();
+  if(typeof renderChatChips==='function') renderChatChips();
   // failure notice → chat (no Overview banner, no Progress state line)
   pushChat('Extended Analysis <b>couldn’t complete</b> — I’m showing your <b>last-good understanding</b>, unchanged. <a onclick="retryDeep()">Retry</a>', 'done');
 }

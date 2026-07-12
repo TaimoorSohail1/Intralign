@@ -60,3 +60,48 @@ Any confidence move is shown **direction-only** (▲/▼ with a **named cause**)
 5. The **Project summary** in More gives the full narrative.
 
 All calls stay with the user (D001). OSLO reads and explains; nothing changes the plan without the user.
+
+---
+
+## App shell (D093/D094/D095 — shell cascade, 2026-07-09)
+
+Slice 3 now wears the **approved OSLO app shell** (ported from Slice 6) so navigation is identical across every slice. The old top-center Overview·Attention toggle is gone; primary navigation lives in a **persistent left sidebar**.
+
+- **Persistent left sidebar — PROJECT nav.** Overview (**live** confidence-led console) · Issues · History · Attention map (**live**, basic map from Slice 2). The active view highlights with `aria-current="page"`, and the top-bar breadcrumb names where you are.
+- **Slice-3 live vs. seams:**
+  - **Overview** — live (the understanding console; nothing regresses).
+  - **Attention map** — live (basic heatmap + dimensions; from Slice 2).
+  - **Issues** — Slice 3 has only the **light issue panel** (open any issue from the Overview "Start here" list or an Attention cell). The Issues nav item and the palette's "Issues" jump route to a **clearly-labeled seam** — *"Full Issues view arrives in Slice 6."* Never a broken or wrong view.
+  - **History** — a **clearly-labeled seam** — *"History & timeline — arrives in Slice 7."* The Overview's "Timeline →" link routes here.
+- **PLAN ARTIFACTS section is omitted** from the sidebar in Slice 3 — the artifact editor first appears in Slice 5. (The Overview's "7 plan artifacts" narrative and the More list are unchanged; only the *editor* is absent.)
+- **Top bar.** Intralign brand · project switcher (Slice-8 seam) · `sample` tag · breadcrumb; the **Confidence pill stays the one home for the metrics** (D050); right cluster adds search · Share (Slice-9 seam) · Export (Slice-9 seam) · report · **Free** plan chip. A `☰` button opens the sidebar as a drawer on narrow screens; the OSLO chat rail, feature tour (now a sidebar-foot button), confidence popover, and phase-bar offset are all preserved.
+- **Command palette (⌘/Ctrl+K or the ⌕ button).** Keyboard-operable jump-to: **GO TO** the four project views, and **OPEN AN ISSUE** (each still-open issue opens the light panel). No PLAN ARTIFACTS group in Slice 3.
+- **Chrome stays neutral/brand** (D003) — sidebar badges are neutral; severity color remains on issue badges only.
+
+---
+
+## Chat integration (D108 cascade)
+
+The OSLO rail was a persistent advisor that **could not be talked to** — the composer and Send were inert. In Slice 3 the chat becomes a **real conversation**, grounded in the read that is on screen. It stays what it always was: **advisory** (D001). OSLO reads and explains; it points you at the action, you take it.
+
+**You can now ask.** Type a question and hit **Enter** (Shift+Enter for a new line) or click **Send**. Suggested prompt chips sit above the composer and are **derived from your live read** — "What should I do next?", "Why is Feasibility Very Low?", "Explain the top issue" — so the chat is never a blank box. Before the first message, an empty state says plainly what OSLO can and cannot do.
+
+**Every answer traces to your actual state.** OSLO answers from the confidence read, the CAF dimensions, the reliability basis, the analysis state, the open issues, and the seven plan artifacts as they stand *right now* — not from a script. Answer a clarification and the next reply reflects the new number.
+
+**"✦ Ask OSLO why" — the confidence read, explained.** Beside the number on the Overview (right under *How this is calculated*), this hands the confidence read to the chat and pins it as **Context**. Slice 3 is where the understanding console lives, so this answer is the rich one:
+
+- **What's holding it back** — the **limiting CAF dimension** (the weakest of Clarity · Alignment · Feasibility caps the number), with all three levels named.
+- **How much OSLO had to go on** — the **reliability basis**: Coverage · Evidence availability · How assessable — and the point that reliability is judged *independently of the plan's integrity*. Reliability says how firm the read is, not how good the plan is. That's why the number is never shown without it.
+- **Where the understanding is** — the **stage** (Orientation ▸ Expanded ▸ Validated) and whether the read is provisional, current, or last-good.
+- **The false-confidence condition**, but only when it actually holds — a High band on Low reliability is flagged, not hidden.
+- **What would move it** — named against the live open issues, with the honest boundary: the number moves only when an **analysis update** changes the read, never because something was dismissed.
+
+**"✦ Ask OSLO about this issue."** In the light issue panel, hand any issue to the chat: why it matters, what it rests on, the suggested fixes, and whether its dimension is the one capping your confidence. The panel steps aside so the conversation is visible.
+
+**Context, and clearing it.** When a surface hands something to the chat, a **Context** pill names it ("Your confidence read", "Venue Wi-Fi capacity is unconfirmed (ISS-01)"). Follow-ups stay inside that context — a bare "why?" means *why this*. The **×** clears it, and OSLO says so.
+
+**Answer a clarification without leaving the conversation.** When OSLO has a question tied to an issue, the answer box appears **in the chat**. Answering there does **exactly** what answering in the issue panel does — same project-information update, same *Confirmed by you* basis change, same reliability lift, same analysis update, same issue closure, same refreshed Overview. The chat is not a shortcut and not a side door; it is the same door. OSLO reports the update as it runs, and tells you when it lands — it never claims to have closed the issue itself.
+
+**What the chat will not do.** It will not change your plan, edit an artifact, resolve an issue, or move the assessment. Ask it to "just fix it" and it says so, then shows you where the real action is. Replies link straight to the surface — the issue, the Attention map, the confidence console — so a conversation always ends somewhere you can act.
+
+**Not in Slice 3.** No recommendation paths / "Discuss" (Slice 6), no artifact-editor ask (Slice 5), no History links (Slice 7). The chat never offers an action this slice cannot run.

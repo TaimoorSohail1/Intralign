@@ -6,21 +6,33 @@ Decisions: **D066–D071** (+ **D073** patient/debounced reanalysis, **D074** di
 
 ---
 
-## Layout
+## App shell (D093/D094/D095 — cascaded from Slice 6, shell cascade)
 
-- **View switch** (`.vswitch`): now three segments — `#vsOverview` · `#vsAttention` · `#vsArtifacts` (▤ Artifacts).
-- **Workspace pane** (`#pane-artifacts.aw-pane`): `display:grid; grid-template-columns:214px 1fr` when active — explorer + center editor. Lives in the `.body` column; the OSLO chat rail is unaffected.
+> **Shell cascade (D095, 2026-07-09).** Slice 5's old top-center view switch (`.vswitch`: Overview·Attention·Artifacts) and its in-Artifacts left-rail explorer are **retired**. The approved persistent app shell now matches Slice 6: a 3-column grid `#app` = `[sidebar | main | chat]` (`grid-template-columns:240px 1fr 340px`).
 
-## Explorer (`.aw-explorer`) — D066
+- **Persistent left sidebar** (`.sidebar#appSidebar`, `grid-column:1`): a scroll region + a pinned footer.
+  - **PROJECT** (`.sb-group`): `#sbOverview` (◎, LIVE) · `#sbIssues` (⚑, `.sb-badge#vsIssuesBadge` open count → **Slice-6 seam** `showView('issues')`) · `#sbHistory` (◔ → **Slice-7 seam** `showView('history')`) · `#sbAttention` (▦, `.sb-badge#vsAttnBadge`, LIVE).
+  - **PLAN ARTIFACTS** (`.sb-group`) split into `.sb-subgroup` **Understanding** (Intent·Context·Scope·Requirements) / **Execution** (Work breakdown·Schedule·Resources). Rows are `.sb-nav.sb-art[data-art]` with the live `.ex-fb[data-badge]` open-issue badge → `openArtifact(id)`.
+  - **Footer** (`.sb-foot`): bordered `.sb-tour#railTour` ("Take a quick tour") · `.sb-tier` Free-plan chip with **Upgrade** · `.sb-acct#acctBtn` ("Your account · Settings") → opens the account menu.
+  - Active state: `_syncNav()` toggles `.sb-nav.active` + `aria-current="page"` for the current view; an open artifact lights its `.sb-art` row (only while the Artifacts view shows). Nav chrome + badges are **neutral/brand** (never severity color as chrome, D003); issue badges keep severity color.
+- **Top bar** (`.topbar`, spans all cols): `.sb-hamburger` (narrow-width drawer toggle) · Intralign brand · **project switcher** `.tb-proj#tbProj` (holds `#projName`; multi-project = Slice-8 seam) · `sample` tag · breadcrumb `.tb-crumb#tbCrumb` (reflects current view / open artifact via `_setCrumb`/`_viewLabel`) · **confidence pill** `#confpill` (unchanged) · right cluster **search `#tbSearch`** (⌕ → palette) · Share/Export (Slice-9 seams) · Reports · **Free** plan chip.
+- **Command palette** (`#palScrim` / `.palette`, D094): opens from `#tbSearch` and **⌘/Ctrl+K**; "Search or jump to…" input; grouped, live-filtered results **GO TO** (Overview·Issues·History·Attention) · **PLAN ARTIFACTS** (7, live) · **OPEN AN ISSUE** (open issues → the light issue panel). Keyboard-operable (↑↓ / ↵ / esc); neutral highlight.
+- **Seams** are clearly-labeled center panes, never broken links: `#pane-issues` ("Full Issues view arrives in Slice 6", points to the Attention map / Start-here / palette) and `#pane-history` ("History & timeline — arrives in Slice 7"). Top-bar/sidebar seams (Projects/Share/Export/Reports/Settings/Upgrade) surface the `#sbToast` labeled stub.
+- Narrow widths: `@media(max-width:860px)` collapses the sidebar to an overlay drawer (☰ + `.sb-scrim`); `760px` drops the chat rail (reachable via the ✦ OSLO tab).
 
-- Section headers: `.ex-sec` ("Plan artifacts"), `.ex-subsec` ("Understanding" / "Execution").
-- Rows: `.ex-item[data-art]` with `.ic` icon, `.exnm` name, `.ex-fb` badge. Active row: `.ex-item.active` (primary-light).
-- Badge `.ex-fb`: severity classes `crit` (danger fill), `mod` (amber fill), `warn` (neutral outline), `clear` (hidden). **Color is severity-only (D003)**; the number is the open count. Populated by `renderExplorerBadges()`.
+## Workspace pane (Artifacts view)
+
+- **`#pane-artifacts.aw-pane`**: single-column (`grid-template-columns:1fr`) when active — **just the center editor** (`.aw-center#artCenter`). The in-Artifacts explorer is gone; the persistent sidebar's Plan-artifacts nav replaces it. The `.body` column and the OSLO chat rail are unaffected.
+
+## Explorer → sidebar (D066, cascaded to the sidebar)
+
+- The 7-artifact explorer moved from the in-Artifacts left rail to the **persistent sidebar** (above). Rows are `.sb-nav.sb-art[data-art]`; the live open-issue badge is still `.ex-fb[data-badge]` populated by `renderExplorerBadges()`.
+- Badge `.ex-fb`: severity classes `crit` (danger fill), `mod` (amber fill), `warn` (neutral outline), `clear` (hidden). **Color is severity-only (D003)**; the number is the open count.
 
 ## Editor header + toolbar
 
 - `.art-head`: `<h1>` display name + `.art-edit-badge` ("✎ Editable") + info `ⓘ` + `.art-grp` layer label.
-- `.art-bar`: **artifact nav** (`.art-nav` ‹ ›) · **version** (`vN`, mono) · **weakness stepper** (`#wnav`) · **savestate chip** (`#savestate`, right-aligned).
+- `.art-bar`: **artifact nav** (`.art-nav` ‹ ›) · **version** (`vN`, mono) · **weakness stepper** (`#wnav`) · **editor-action group** (`.art-actions` — undo · redo · insert · find, **D085**) · **savestate chip** (`#savestate`, right-aligned).
 - **Weakness stepper** (`.wnav`): label "Jump to weakness" + `.wbtn` ⌃ / ⌄ + `.wct` "k of N". Empty artifact → "✓ No weaknesses in view".
 - **Savestate chip** (`.savestate`): `.editing` (neutral, "Editing…" — the calm typing state, **D073**) · `.ok` (green dot, "Up to date") · `.saving` (neutral, legacy) · `.stale` (amber, "Saved · analysis stale") · `.reana` (amber pulsing, "Reanalyzing…"). Note: this reuses the maturity/state palette — the amber here signals **analysis state**, not health, and appears only on the state chip, not on confidence/CAF.
 - **D073 — patient / debounced reanalysis:** `onArtInput()` only sets the calm **"Editing…"** state and (re)arms a debounce timer; it does **not** advance toward reanalysis while the user is typing. The Saved→stale→Reanalyzing…→Up to date chain is committed by `commitArtEdit()`, fired on **~1500ms typing-idle** OR on **`#artdoc` `blur`** (entry complete). Post-commit stage timings are unchanged (~1300ms → ~1500ms). A single keystroke therefore shows only "Editing…", never an immediate "Reanalyzing…". D069 block-attestation still happens immediately on input.
@@ -52,10 +64,11 @@ Decisions: **D066–D071** (+ **D073** patient/debounced reanalysis, **D074** di
 
 - `.anno.crit` (danger), `.anno.mod` (warning), `.anno.warn` (neutral). Dotted underline + hover tint. **D074 — the `.anno` span is now directly (partially) editable:** it carries **no** `contenteditable="false"` and **no** text-onclick, so clicking places the caret (`cursor:text`) to edit part of the weak text; the flag styling (color + dotted underline) is retained.
 - **Single tooltip (Rev 3):** the `.anno` text span carries **no native `title`** — the weak text spawns exactly one tooltip source, the custom `.anno-pop` popover. The only native `title`/`aria-label` is on the ⚠ marker (accessibility).
-- **Issue reachability without clicking the text (D074):** (a) `.anno-pop` — a hover popover (shown via `.anno:hover>.anno-pop,.anno-pop:hover`) carrying the summary + a clickable **"Open issue →"** (`.anno-open` → `openIssueFromAnno(id)`), and (b) `.anno-mark` — a tiny ⚠ superscript immediately after the span (`contenteditable="false"`, `onclick="openIssueFromAnno(id)"`).
+- **Issue reachability without clicking the text (D074):** (a) the summary popover carrying **"Open issue →"** (`.anno-open` → `openIssueFromAnno(id)`), and (b) `.anno-mark` — a tiny ⚠ superscript immediately after the span (`contenteditable="false"`, `onclick="openIssueFromAnno(id)"`).
+- **Popover is a shared, viewport-anchored `#annoPop` (Rev 7 — fixes the bleed-through/transparency bug):** the per-annotation `.anno-pop` span was `position:absolute` **inside** the contenteditable, so under the app-shell it was clipped by the `.aw-center{overflow-y:auto}` scroll container and painted **under** the `.art-bar` toolbar — editor content showed through it (looked transparent), worst near the top of the editor. The inline `.anno-pop` is now `display:none !important` and kept **only as the content source**; a single `#annoPop` `<div>` is appended to `<body>`, `position:fixed`, `z-index:240` (**below** the issue flyout's 260, **above** the phasebar 200 / toast 210 / editor toolbar), fully opaque (`background:var(--surface)` + solid `--border-2` + shadow). On `.anno` hover (or ⚠ focus/tap), JS copies the inline span's `innerHTML` into `#annoPop` and positions it from the annotation's `getBoundingClientRect()`: **prefers ABOVE**, **flips BELOW** when the "above" box would cross the toolbar's bottom edge (`_annoPopTopFloor()` = `.art-bar` bottom + 4), and **clamps horizontally** to the viewport. It escapes every local stacking/overflow context, so it can never be clipped or overlapped. `curAnnos()` is unaffected — `#annoPop` is body-level, not inside `.doc`.
 - **⚠ marker = persistent, primary "investigate" affordance (Rev 3):** `.anno-mark` has an explicit `display:inline` base rule so it is **always visible** next to a flagged span, with a clear hover state (`opacity:1` + tinted background); it is hidden only inside `.anno.editing`. This is the dependable, never-disappearing path to the issue; the popover link is a convenience.
-- **Hover-stable popover (Rev 3):** the popover sits above the text (`bottom:calc(100% + 6px)`); a transparent bridge `.anno-pop::before` (`position:absolute;top:100%;height:9px`) spans the gap down to the text so `:hover` stays continuous as the cursor travels up to the "Open issue →" link — no dead space, link reliably clickable. CSS-only (no JS hover-intent/timers).
-- **D074 (optional signal):** `.anno.editing` drops the span's flag styling, hides the ⚠ marker, and suppresses the popover (`.anno.editing:hover>.anno-pop{display:none}`) when the caret enters it — reanalysis still owns closure; the edit never resolves the issue inline.
+- **Hover-stable popover (Rev 3 → Rev 7):** the `#annoPop` stays open while the pointer is over the annotation **or** over the popover itself — a **hover-intent** hide delay (`~140ms` via `_scheduleAnnoPopHide`) plus `mouseenter`/`mouseleave` on `#annoPop` bridge the gap, so the cursor can travel to the "Open issue →" link without the popover vanishing. (Replaces the old CSS-only `.anno-pop::before` bridge, which no longer applies to a fixed body-level element.) Editor scroll / window resize hide it (re-shows on next hover/focus); **Esc** and click-away close it.
+- **D074 (optional signal):** `.anno.editing` drops the span's flag styling and hides the ⚠ marker; entering the caret also calls `hideAnnoPop()` so the summary is suppressed while editing (Rev 7 — replaces `.anno.editing:hover>.anno-pop{display:none}`). Reanalysis still owns closure; the edit never resolves the issue inline.
 - `_artBodyLive()` unwrap (resolved issue) uses the weak **text only** — it strips `.anno-pop` and removes the trailing `.anno-mark` sibling.
 - `.anno.wstep`: outline applied by the weakness stepper on the current span (`curAnnos()` still selects `.anno`).
 - Severity color appears **only** on annotations (and the explorer badges / issue panel) — confidence and CAF stay neutral.
@@ -138,9 +151,9 @@ Five more prototype-grade additions (authoring + accessibility). All new control
 
 ### 3 · Keyboard/touch reachability of hover-only info (a11y, D015)
 - The annotation summary popover (D074), the block/cell epistemic label (D077/D083), and the cell provenance reveal were hover-only. `_wireA11yReveals()` (delegated on `#artdoc`) makes them reachable by **keyboard focus and click/tap** without disturbing hover:
-  - **Annotation:** `:focus-within` of the `.anno` reveals the `.anno-pop` summary (CSS); the **⚠ marker** on **focus/Enter** adds `.anno-peek` to reveal the summary (focus keeps it open if focus moves into the "Open issue →" link). **Tap** the marker reveals the summary on the **first** tap; a **second** tap (or the link) opens the issue.
-  - **Epistemic:** a **tap** on a prose block or a body cell toggles `.epi-peek` (reveals the "From OSLO / Confirmed by you" label); focus-within also reveals it (existing CSS). **Esc** and click-away clear peeks.
-- CSS: `.anno:focus-within>.anno-pop`, `.anno.anno-peek>.anno-pop`, `.epi-peek>.epi-tag`, `td.epi-peek>.cell-epi`. Works on touch (tap toggles).
+  - **Annotation (Rev 7 — now drives the shared `#annoPop`):** the **⚠ marker** on **focus/Enter** adds `.anno-peek` **and calls `showAnnoPop(an)`** to reveal the viewport-anchored summary (focus keeps it open if focus moves into the "Open issue →" link; blur calls `hideAnnoPop()`). **Tap** the marker shows the summary on the **first** tap; a **second** tap (or the link) opens the issue.
+  - **Epistemic:** a **tap** on a prose block or a body cell toggles `.epi-peek` (reveals the "From OSLO / Confirmed by you" label); focus-within also reveals it (existing CSS). **Esc** and click-away clear peeks and `hideAnnoPop()`.
+- The annotation summary is no longer CSS-revealed (the old `.anno:focus-within>.anno-pop` / `.anno.anno-peek>.anno-pop` rules were removed with the inline span); it is now driven from JS into `#annoPop`. Epistemic CSS unchanged: `.epi-peek>.epi-tag`, `td.epi-peek>.cell-epi`. Works on touch (tap toggles).
 
 ### 4 · Markdown input shortcuts
 - `_tryMarkdown()` (called first in `onArtInput`) auto-formats at the **start of a block** when the trigger space is typed: `# `→H1, `## `→H2, `### `→H3, `- `/`* `→bulleted list, `1. `→numbered list, `> `→quote, `--- `→divider (`_MD_RULES`). It reads the block's typed text **excluding grip/epi chrome + zero-width**, strips the trigger, applies the corresponding `formatBlock`/list command (or direct `<hr>` insertion), attests the block, and runs the quiet reanalysis. Pushes undo (one undoable step). **Never fires inside a table cell or a code span** (`_mdActiveBlock` guards).
@@ -174,6 +187,15 @@ Five polish additions. All new UI is `contenteditable="false"`, keyboard-accessi
 - **Floating surfaces** (RTF toolbar `_rtPosition`, slash menu `_positionSlash`, link popover `_positionLinkPop`) already **clamp within the viewport**; `@media(max-width:640px)` adds `max-width:calc(100vw - 16px)` + `flex-wrap` so they never overflow the edges.
 - **Two-column workspace collapse:** at `≤640px` the explorer becomes a **togglable drawer** (`.aw-explorer-toggle` "☰ Artifacts" → `toggleExplorer()`, `aria-expanded`); picking an artifact auto-closes it on narrow screens (`_collapseExplorerOnNarrow`). At `≤760px` the persistent chat rail collapses to its own zero column (still reachable via the ✦ OSLO tab). Header/bar/doc/find-bar drop to full width.
 
+## Visible editor-action toolbar (D085)
+
+Keyboard-only editor actions (undo/redo, "/" insert, ⌘F find) were previously invisible. A small **`.art-actions`** group is added to `.art-bar` (between `#wnav` and `#savestate`; `#savestate`'s `margin-left:auto` keeps the group in the left cluster and leaves the state chip right-aligned, so the existing items and layout are undisturbed). All four are real, focusable `<button>`s — `contenteditable="false"`, `title` + `aria-label` (shortcut shown in the title), neutral `--muted` chrome with a **brand `--primary-light`** hover/`:focus-visible` ring — **never severity color as chrome (D003)**.
+
+- **Undo (↶, `#artUndoBtn`)** → `artUndo()`; **Redo (↷, `#artRedoBtn`)** → `artRedo()` — the same functions the ⌘Z/⌘⇧Z/⌘Y handler calls. Each is `disabled` (dimmed, non-clickable) when its stack is empty.
+- **Insert (＋, `#artInsertBtn`, "Insert block (/)")** → `_insertBlockFromButton()`: focuses `#artdoc`, and if the selection isn't inside it, drops the caret at the **end of the doc** (creating an empty `<p>` if the doc is empty) before calling `_openSlash()` — so the "/" block menu opens robustly even when the caret isn't in an empty block.
+- **Find (⌕, `#artFindBtn`, "Find & replace (⌘F)")** → `openFind()`.
+- **Disabled-state sync:** `_syncUndoButtons()` reads `_undoStacks`/`_redoStacks[_curArt]` depth and toggles the two buttons' `disabled`. It is called after **`_pushUndo`**, inside **`_restoreSnapshot`** (covering undo/redo), and at the end of **`openArtifact`** (fresh open → both disabled). The ⌘Z/⌘⇧Z/⌘Y/⌘F/"/" shortcuts are unchanged and continue to work; the group only mirrors them.
+
 ## Accessibility (D015)
 
 - Explorer rows: `role="button" tabindex="0"`, Enter/Space handlers.
@@ -184,3 +206,40 @@ Five polish additions. All new UI is `contenteditable="false"`, keyboard-accessi
 ## Reused / unchanged
 
 - The **light issue panel** (`#issueScrim`/`.issuepanel`), **confidence pill/popover**, **Attention heatmap**, **chat rail**, **feature tour** are inherited unchanged; Slice 5 only adds an `onEnter` hook to one tour step and a re-render call in the resolve path.
+
+---
+
+## Chat integration (D108 cascade)
+
+**Cascaded from the Slice-8 D108 build.** The OSLO chat rail is no longer a decorative panel: the composer is **live**, replies are **state-grounded**, and every surface Slice 5 owns can hand context to it. Advisory-only (D001) — the chat renders **links**, it never mutates the plan, never closes an issue, never edits an artifact.
+
+### Rail structure (`#chatp`)
+| Element | Id / class | Behaviour |
+|---|---|---|
+| Context pill | `.chat-ctx` / `#chatCtx` · `#chatCtxLabel` · `#chatCtxClear` | Hidden until a surface calls `askOslo(ctx)`. Shows the handed-over subject; the **×** (`clearChatContext()`) drops it and says so in the thread. |
+| Thread | `#chatscroll` | `role="log" aria-live="polite" aria-relevant="additions"` — replies are announced as they land. |
+| Empty state | `.chat-empty` / `#chatEmpty` | First-run copy ("I read and explain… I never change your plan"); removed by the first message. |
+| Suggested chips | `.chat-chips` / `#chatChips` | State-derived (`renderChatChips()`); rebuilt on every read change (`updateIssueCounts()`), context change, and send. A chip fills the composer and sends. |
+| Composer | `#chatInput` + `#chatSend` | **Send** (click) · **Enter** sends · **Shift+Enter** newline (`chatKey(event)` → `sendChat()`). |
+| Turns | `.cmsg` / `.cmsg.user` / `.cmsg.done` | `pushChat()` (OSLO, HTML) · `pushUserChat()` (user, always escaped). |
+| Action links | `.chat-acts` / `.chat-act` | Buttons that call the **existing** functions: `openIssue` · `openArtifact` · `openFindingsFor` · `openFindingsForArtifact` · `showView` · `askOslo`. |
+
+### Entry points wired in Slice 5
+| Surface | Affordance | Call |
+|---|---|---|
+| Overview · confidence | `.howcalc.askwhy` / `#askWhyConf` — "✦ Ask OSLO why" (beside the number) | `askOslo({type:'confidence'})` |
+| Light issue panel | `.ip-ownfix` — "✦ Ask OSLO about this issue →"; plus "Answer in chat →" in the clarification foot | `askOslo({type:'issue',id})` |
+| Attention map | Scoped issues list header — "✦ Ask OSLO about this cell" (artifact × dimension) / "…about this artifact" | `askOslo({type:'cell',art,dim})` |
+| **Artifact editor — toolbar** | `#artAskBtn` (✦) in `.art-actions`, beside undo/redo/insert/find | `askOslo({type:'artifact',id:_curArt})` |
+| **Artifact editor — annotation popover** | Second link in the `.anno-pop` (mirrored into the shared `#annoPop`): "Ask about this →" | `askAboutSpan(id)` → `askOslo({type:'span',id,art})` |
+
+### Grounding (never fabricated)
+`_chatState()` reads the **live** model: `currentRead()` (index · band · reliability basis · analysis state), the CAF rows and the **limiting dimension**, `ISSUES` + `_istatus` (open list, severity-ranked top issue, resolved), `_openClarIds()`, and `_curArt`. `_artLive(name)` additionally reads the **open editor**: the marked weak spans (`#artdoc .anno[data-fid]`) and the provenance split (`[data-epi]` → Confirmed by you vs From OSLO). If the artifact is not open, nothing about its live state is asserted.
+
+`_ansArtifact()` is the Slice-5 signature answer: *what it says* (PLAN_SECTIONS body, layer, basis, reliability) → *where it's weak* (open issues here, most severe first) → *From OSLO vs Confirmed by you* (live counts when open) → *what would strengthen it* (the issue's suggested fixes), closing with "saving makes no assessment".
+
+### Clarifications — one path, one live box
+The Issue panel and the chat both answer through the shared **`_submitClarification(id, val, src)`** (`answerClarification()` → `src:'panel'`; `answerClarificationFromChat()` → `src:'chat'`). Identical state changes (section → *Confirmed by you*, reliability step-up, issue → Resolved by the analysis update, all surfaces re-rendered); only the reporting surface differs. **`_dedupeClarBoxes()`** guarantees exactly **one live `#chatClarBox-<id>`**: re-raising a clarification removes the earlier box (no duplicate DOM ids), and answering marks it `.answered`.
+
+### Non-goals held
+No Discuss / recommendation paths (Slice 6) and no History links (Slice 7) — the chat never routes to a seam pane. The editor is untouched by every ask: no caret move, no undo entry, no annotation change (only the annotation popover / issue flyout are stood down so they don't cover the rail).

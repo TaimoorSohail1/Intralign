@@ -30,7 +30,7 @@ The explorer lists the seven plan artifacts grouped **Understanding** (Intent ·
 - The whole draft is **editable in place** (contenteditable). Edits **autosave** — simulated in `localStorage`, with a version bump.
 
 ### Inline weakness annotations → the Issue panel (D068, revised by D074)
-Weak text is **inline-colored** on the contiguous weak span using the severity ramp (**red/amber only** — D003). **D074 — the annotated text is now directly (partially) editable:** clicking places the **caret** so the user can revise part of the weak phrase in place (it is no longer a locked island). **Hovering** shows a small popover with the summary and a clickable **"Open issue →"**; a tiny **non-editable ⚠ marker** just after the span also opens the **light Issue panel** — so the issue stays reachable **without** clicking (and thereby editing) the text. Weaknesses are **never resolved inline** — editing just runs the (now debounced) reanalysis, and the issue closes only via reanalysis, not the edit itself. When the caret enters an annotation its flag styling quietly drops to signal it's being addressed. Each annotation is wired to a real open issue, so its mark disappears when that issue resolves.
+Weak text is **inline-colored** on the contiguous weak span using the severity ramp (**red/amber only** — D003). **D074 — the annotated text is now directly (partially) editable:** clicking places the **caret** so the user can revise part of the weak phrase in place (it is no longer a locked island). **Hovering** shows a small popover with the summary and a clickable **"Open issue →"**; a tiny **non-editable ⚠ marker** just after the span also opens the **light Issue panel** — so the issue stays reachable **without** clicking (and thereby editing) the text. The popover renders **above** the annotation (flipping **below** when the annotation is near the top so it never sits under the toolbar) and is **fully opaque** — a Rev 7 fix that stopped editor content from bleeding through it when it overlapped the header. Weaknesses are **never resolved inline** — editing just runs the (now debounced) reanalysis, and the issue closes only via reanalysis, not the edit itself. When the caret enters an annotation its flag styling quietly drops to signal it's being addressed. Each annotation is wired to a real open issue, so its mark disappears when that issue resolves.
 
 ### Epistemic notation: From OSLO → Confirmed by you (D069, demoted to hover by D077)
 Every prose/list block is **"From OSLO" (Derived)** by default and flips to **"Confirmed by you" (Attested)** = a plan fact on edit. **D077 — the epistemic text tag is demoted from permanent chrome to hover.** The owner found a persistent tag on every block distracting, so the tag text now appears **only on hover or keyboard focus** of a block. What still reads **at a glance** is the epistemic **state** and its subtle **accent** — an attested block keeps its **left-border accent**, a derived block has none — so the derived/attested distinction stays visible without standing chrome. The accent **updates live** the moment a block flips derived→attested on edit. The "saving changes no assessment; only reanalysis does" note stays available on that hover (a tiny ⓘ inside the tag). Nothing else about D069 changes — editing still attests immediately.
@@ -107,9 +107,44 @@ Five polish refinements make the editor feel finished — findable, precise, and
 
 *(Prototype notes: find matches within a single text run (prototype-grade), highlighting via a removable wrapper rather than a search index; the save confirmation and placeholders are presentation-only; the responsive layout is CSS breakpoints + a drawer toggle, not a separate mobile app. A production build would use a proper search model and a responsive design system.)*
 
+### Visible editor-action buttons (D085)
+The editor's most-used actions used to be **keyboard-only** — you had to already know ⌘Z, ⌘F, and the "/" trick to reach them. A small, subtle button group now sits in the toolbar so they're **discoverable at a glance**, without changing how the calm editor feels:
+
+- **Undo (↶)** and **Redo (↷)** do exactly what ⌘Z / ⌘⇧Z do, and they **dim out when there's nothing to undo or redo** — so you can always tell where you are in your edit history. They enable the moment you make a change and update as you undo/redo.
+- **Insert (＋)** opens the same **"/" block menu** — headings, lists, tables, images, and more — even if your caret isn't sitting on an empty line (it tucks a new block at the end and opens the menu there).
+- **Find (⌕)** opens the **find & replace** bar, same as ⌘F.
+
+Each is a real, focusable button with a tooltip that also shows its keyboard shortcut, so keyboard and mouse users reach the same actions. The buttons use quiet neutral styling with a warm brand tint on hover — **never** the red/amber/green weakness colors, which stay reserved for assessment. The keyboard shortcuts, the weakness stepper, the version chip, and the save-state dot are all unchanged; the quiet debounced reanalysis is untouched.
+
 ---
 
+## App shell (D093/D094/D095 — shell cascade, 2026-07-09)
+
+The approved persistent shell from Slice 6 is now cascaded back into Slice 5, replacing the old top-center view switch (Overview·Attention·Artifacts) and the in-Artifacts left explorer. Behavior is otherwise unchanged.
+
+- **Persistent left sidebar.** A **PROJECT** group — Overview (LIVE) · Issues · History · Attention map (LIVE) — plus a **PLAN ARTIFACTS** group split into Understanding / Execution (the 7 artifacts, each with a live open-issue badge; a click opens the editor exactly as before). A pinned footer holds "Take a quick tour", a Free-plan chip with Upgrade, and "Your account · Settings". The active view (and open artifact) is reflected with `aria-current` and a highlight, and in the top-bar breadcrumb.
+- **What's LIVE vs seam in Slice 5:** Overview and the Attention map are **live**; **Issues** routes to a clearly-labeled **Slice-6 seam** ("Full Issues view arrives in Slice 6") — individual issues stay reachable via the Attention map, the Overview "Start here" focus, and the palette; **History** routes to a clearly-labeled **Slice-7 seam**. No broken links, never the wrong view.
+- **Top bar:** Intralign brand · project switcher (Slice-8 multi-project seam) · sample tag · breadcrumb · the unchanged confidence pill · a right cluster (search ⌕ · Share/Export Slice-9 seams · Reports · Free plan).
+- **Command palette (⌘/Ctrl+K or ⌕):** "Search or jump to…" with grouped, live results — **GO TO** (Overview·Issues·History·Attention) · **PLAN ARTIFACTS** (7) · **OPEN AN ISSUE** (open issues → the light issue panel). Keyboard-operable (↑↓ / ↵ / esc). Canonical terms ("Issues", "Plan artifacts") — never "Findings".
+
 ## What is deliberately NOT built (seams left)
-- The **full Issues surface** (grouping, By dimension / By severity, triage, resolved tab) remains **Slice 6**. Annotations route to the **light issue panel** — the seam is preserved.
-- **History / timeline** (append-only version history) remains **Slice 7**; the version chip shows a bumping `vN` but the "Timeline →" pointer still opens the labeled Slice-7 stub.
+- The **full Issues surface** (grouping, By dimension / By severity, triage, resolved tab) remains **Slice 6**. The **Issues** nav + palette entry route to a labeled Slice-6 seam; annotations, Attention cells, and the palette's "Open an issue" still open the **light issue panel**.
+- **History / timeline** (append-only version history) remains **Slice 7**; the **History** nav routes to the labeled Slice-7 seam, and the version chip shows a bumping `vN`.
 - **Apply-a-fix that drafts into the artifact** is Slice 6; here the workspace is read/edit + reanalysis only.
+
+---
+
+## Chat integration (D108 cascade)
+
+**The OSLO rail becomes a conversation.** Until now the composer was inert. In Slice 5 it works — and it is wired into the surfaces this slice actually has: the Overview read, the Attention map, the light issue panel, the clarification loop, and above all **the artifact editor**.
+
+**What the user can do**
+- **Ask, and get a grounded answer.** Type (or press a suggested chip) and press **Enter** — Shift+Enter for a new line. OSLO answers from the *live* state: the confidence read and its reliability qualifier, the **limiting dimension**, the open issues and which one to take first, the artifact open in front of them. No invented numbers, no invented issues.
+- **Hand a surface to the chat.** "**✦ Ask OSLO why**" sits beside the confidence number. "**✦ Ask OSLO about this issue**" sits in the issue panel. An Attention cell can be talked through from the scoped list. Each sets a **context pill** at the top of the rail, so the user always knows what OSLO is talking about — and an **×** clears it ("I'm answering across the whole project again").
+- **Ask about the artifact they're writing.** This is the Slice-5 signature. In the editor toolbar, **✦** hands the open artifact to OSLO, who explains **what it says**, **where it's weak** (the open issues living there, most severe first), **what's From OSLO and what's Confirmed by you** (counted from the document in front of them), and **what would strengthen it**. Nothing in the document moves.
+- **Ask about a single weak span.** Hovering a colored span already offers "Open issue →"; it now also offers "**Ask about this →**". OSLO explains why *that sentence* is marked, restates that the colour means attention (not a verdict on their writing), and names what would strengthen it. The caret, the text, the toolbar and the undo history are untouched.
+- **Answer OSLO's question in the conversation.** When a clarification is open, OSLO raises it inline with an answer box. Submitting it runs **exactly the path the Issue panel runs** — the project information updates, the section becomes *Confirmed by you*, and the analysis update closes the issue. The chat is not a side channel, and asking twice never leaves two answer boxes: the newest supersedes the earlier one.
+
+**What OSLO will not do (and says so).** Ask it to "just fix it" and it answers plainly: *"I can't change your plan — I read and explain, you decide."* It never resolves an issue, never edits an artifact, never moves the number. Its actions are always **links the user clicks** — open the issue, open the artifact, look at the cell — which run the same functions the surfaces run. An issue reaches **Resolved** only when an analysis update confirms the gap no longer holds.
+
+**Boundaries in this slice.** The chat never offers Discuss / resolution paths (Slice 6) and never links to History (Slice 7). It only points at surfaces Slice 5 has.

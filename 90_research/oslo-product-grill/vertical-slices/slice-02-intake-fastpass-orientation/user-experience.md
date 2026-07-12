@@ -88,3 +88,20 @@ Persistent advisory footer [INHERITED]. All Slice-2 copy stays advisory: "OSLO a
 
 ## Revision 2 (2026-07-09)
 Owner-directed fixes applied: **D043** completion notices moved from Overview banners to the OSLO chat rail (status pill + Progress state line kept as status); **D044** optional feature tour added (chat + rail launch, 4 Slice-2 surfaces, localStorage-seen, Slice 5/8 seams); **D045** confirmations live in the Issue detail, Overview shows summary counts only; **D046** Overview reconciled to DL-096 (Confidence → Start here → Progress → More; standalone Reliability card removed → inline qualifier + Why disclosure). Slice 1 funnel and the rest of Slice 2 unchanged.
+
+---
+
+## Chat integration (D108 cascade)
+
+The OSLO chat rail becomes a **working advisor** in Slice 2, not just a place completion notices land. It is advisory-only (D001): OSLO reads and explains, and the user acts.
+
+**What the user can now do**
+- **Ask, and get a grounded answer.** Type a question (Send, or Enter — Shift+Enter for a newline) and OSLO answers from the *live* read: the confidence index/band and its reliability qualifier, the limiting CAF dimension, the open-issue count and the top issue, the analysis state (provisional / current / last-good). The replies are simulated, but nothing in them is invented — every number and every issue traces to what the Overview and the Attention map are showing.
+- **Hand a surface to the chat.** "**✦ Ask OSLO why**" beside the confidence number, and "**✦ Ask OSLO about this issue**" in the Issue panel, open the conversation *about that thing*. A **context pill** at the top of the rail names what OSLO is scoped to; the **×** clears it and OSLO says so ("Context cleared — I'm answering across the whole project again").
+- **Start from a suggestion.** State-derived prompt chips sit above the composer ("What should I do next?", "Why is Feasibility Very Low?", "Explain the top issue", "What do you need me to confirm?"). They change as the read changes.
+- **Answer a clarification in the conversation.** Where the inputs are thin, OSLO raises the question *in the thread* with an answer box. Answering there does exactly what answering in the Issue panel does — the same project-information update ("From OSLO" → "Confirmed by you"), the same issue transition, the same analysis update, the same refreshed read. There is no side channel and no second answer path; the panel also offers "Answer in chat →" as a route into the same loop.
+- **Be told the boundary, plainly.** Ask OSLO to fix, close, or resolve something and it says it can't: *"I read and explain, you decide."* An issue closes only when an **analysis update** confirms it no longer holds. Every action OSLO offers is a **link the user clicks**, which runs the same surface the UI already exposes (open the issue, open the Attention map, see the read).
+
+**Journey impact:** unchanged funnel (activation → intake → Fast Pass → orientation → Overview). The chat now carries the *why* alongside the *what* — the orientation moment ends with an advisor the user can interrogate, not just a report they must decode.
+
+**Scope boundary (kept deliberately):** no Discuss / resolution-path conversation (Slice 6), no artifact ask or editing (Slice 5), no History or timeline references (Slice 7), no Attention-cell ask (Slice 4). OSLO never claims to have changed the plan, and "analysis update" — never "reanalysis" — is how the read moves.

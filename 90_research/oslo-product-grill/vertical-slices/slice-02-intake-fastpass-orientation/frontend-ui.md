@@ -57,3 +57,20 @@ Phase banner, activation/invite flow, intake composer + 4 start methods, analyzi
 
 ## Revision 2 (2026-07-09)
 D043 completion notices → OSLO chat rail (`.arrival`/`.deepbar` banners removed); D044 feature tour added; D045 confirmations in the Issue detail (Overview counts only); D046 Overview reconciled to DL-096 (standalone Reliability card removed → inline qualifier + Why disclosure; sections Confidence/Start here/Progress/More). No new colors; all Slice-1 classes/IDs preserved.
+
+## Chat integration (D108 cascade)
+
+The chat rail is no longer an inert shell — the composer works, and every reply is derived from the live Slice-2 state. No new colors; all existing classes/IDs preserved.
+
+**New components**
+- **Context pill** `.chat-ctx` (`#chatCtx`) — sits between the chat header and the thread. `#chatCtxLabel` names the handed-in context; `#chatCtxClear` (×) clears it (`clearChatContext()`).
+- **Thread** `#chatscroll` is now `role="log"` + `aria-live="polite"` + `aria-relevant="additions"`; `.cmsg.user` = the user's turn (always escaped), `.cmsg.ctx` = a context-opening reply. First-run/empty state `.chat-empty` (`#chatEmpty`) is dropped on the first message.
+- **Composer** — `#chatInput` (`onkeydown="chatKey(event)"`: Enter sends, Shift+Enter newlines) + `#chatSend` (`sendChat()`).
+- **Suggested chips** `.chat-chips` / `.chat-chip` (`#chatChips`) — state-derived, rebuilt on every read/context change (`renderChatChips()`, also called from `updateIssueCounts()` and `deepComplete()`/`deepFail()`).
+- **In-reply actions** `.chat-acts` / `.chat-act` — buttons that call the *existing* Slice-2 functions (`openIssue`, `showView`, `openCell`, `showSectionIssues`, `openPlanSections`, `askOslo`). The chat itself mutates nothing (D001).
+- **In-chat clarification** `.chat-clar` — the open clarification raised in the thread with an inline answer box; exactly one live box per issue.
+- **Entry points** — `.askwhy` (`#askWhyConf`, in the Confidence card's `.conf-numcol`) → `askOslo({type:'confidence'})`; `.ip-ask` (light Issue panel) → `askOslo({type:'issue',id})`; plus an "Answer in chat →" link in the panel's clarification footer.
+
+**Contract:** `askOslo(ctx)` is the single entry point every surface hands context through (`{type:'confidence'|'issue'|'artifact', id?}`). It stands the Issue panel down, opens the rail, sets the pill, posts a grounded opening message, and focuses the composer. `_submitClarification(id, val, src)` is the single clarification path — the panel (`answerClarification`) and the chat (`answerClarificationFromChat`) both route through it.
+
+**Not ported (out of Slice-2 scope):** Discuss / resolution paths (Slice 6), artifact ask + editor (Slice 5), History/timeline links (Slice 7), Attention-cell ask affordance (Slice 4).

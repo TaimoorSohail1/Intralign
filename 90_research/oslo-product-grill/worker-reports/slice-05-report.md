@@ -298,3 +298,59 @@ Single pill `~36px` tall on `--surface-2` / `--border-2` with a layered `box-sha
 - `node --check` **PASS** on the single extracted `<script>` block.
 - jsdom drive-through (**26/26 assertions pass**): ⌘F opens the bar; find **highlights** matches (4 for "sponsor" in Context) with a **count** ("1/4") and **next** advances the current match; **Replace** edits text and **preserves annotations**; **Replace-all** runs; **closing find clears every `.find-hit` cleanly**. An existing link shows the **popover with its URL**; **Edit** updates the href and **Remove** unwraps the `<a>` keeping its text. The **"Saved · vN · just now"** confirmation shows after a commit (reads `Saved · v3 · just now`). A fully-empty `#artdoc` gets `.doc-empty`; it clears when content is present. `toggleExplorer()` opens/closes the drawer. `curAnnos()`/stepper/`weaknessNav`/`_slashChoose`/`redraftArtifact`/`_pushUndo` intact.
 - Docs updated: `frontend-ui.md` (new "Editor gap fold-in — Batch C (D084)" section + decisions line) and `user-experience.md` (new Batch C subsection + decisions line).
+
+## Revision 13 (2026-07-09)
+**Visible editor-action toolbar (D085): discoverable keyboard actions.** Added a small, subtle `.art-actions` button group to the artifact toolbar (`.art-bar`) in `slice-05-artifact-workspace/prototype.html` so the previously keyboard-only editor actions are discoverable. All existing behavior preserved (D073/D076/D079 quiet debounced reanalysis + dot; D074 annotations; table controls + provenance; D078/D080 rich-text toolbar; D084 Batch A undo/redo, Batch B slash menu/embeds/markdown/block-drag, Batch C find/replace, link popover, save confirmation, empty states, responsive). New chrome is `contenteditable="false"`, keyboard-accessible, theme-consistent, neutral/brand tints only (never severity color as chrome, D003).
+
+### The button group (`.art-actions`)
+- Placed in `.art-bar` **between `#wnav` and `#savestate`**; `#savestate`'s `margin-left:auto` keeps the group in the left cluster and the state chip right-aligned — the version chip, `#wnav` stepper, and `#savestate` dot and their layout are undisturbed, and the group `flex-wrap`s with the bar (no body reflow).
+- Four real, focusable `<button>`s, each with `title` (shortcut shown) + `aria-label`; CSS `.art-actions button` mirrors `.art-nav` chrome (24px, `--border-2`, `--muted`) with `--primary-light` hover + `:focus-visible` ring:
+  1. **Undo (↶, `#artUndoBtn`)** → `artUndo()` — `disabled` when `_undoStacks[_curArt]` is empty.
+  2. **Redo (↷, `#artRedoBtn`)** → `artRedo()` — `disabled` when `_redoStacks[_curArt]` is empty.
+  3. **Insert (＋, `#artInsertBtn`, "Insert block (/)")** → `_insertBlockFromButton()`: focuses `#artdoc`; if the selection isn't inside it, drops the caret at the **end of the doc** (creating an empty `<p>` if the doc is empty) before `_openSlash()` — robust when the caret isn't in an empty block.
+  4. **Find (⌕, `#artFindBtn`, "Find & replace (⌘F)")** → `openFind()`.
+
+### Disabled-state sync
+- New helper **`_syncUndoButtons()`** reads `_undoStacks`/`_redoStacks[_curArt]` depth and toggles the two buttons' `disabled`. Called after **`_pushUndo`**, inside **`_restoreSnapshot`** (covers both `artUndo` and `artRedo`), and at the end of **`openArtifact`** (fresh open → both disabled, per `_resetHistory`). Undo/Redo enable the moment the first edit pushes a snapshot and update as the stacks change.
+
+### Coexistence (verified)
+- The ⌘Z/⌘⇧Z/⌘Y (undo/redo), ⌘F (find), and "/" (slash) shortcuts are **unchanged** — the buttons call the same functions; the keydown handler and `_syncSlashFromInput` paths are untouched. Existing `.art-bar` items (nav ‹ ›, version, `#wnav`, `#savestate`, `#saveConfirm`) intact. Quiet debounced reanalysis unaffected (buttons only invoke existing undoable/quiet paths).
+
+### Verification (this revision)
+- `node --check` **PASS** on the single extracted `<script>` block.
+- jsdom drive-through (**22/22 assertions pass**): the four buttons render in `.art-bar` as real focusable `<button>`s with `title`+`aria-label` (shortcuts in titles); Undo/Redo **disabled at fresh open**; after a `_pushUndo`+edit Undo **enables** (Redo still disabled); **clicking Undo reverses the change** (same result as the ⌘Z path) and then Redo enables / Undo disables; **Insert opens `#slashMenu` (`.show`)**; **Find opens the find bar**; existing toolbar items (version chip, `#wnav`, `#savestate`, nav arrows) all intact; `onclick` handlers wired to the existing `artUndo`/`artRedo`/`openFind` functions. (Slash `.show` confirms the menu opens; `_slashOpen` is a `let` binding not exposed on `window` under jsdom, so it's asserted via the `.show` class.)
+- Docs updated: `frontend-ui.md` (toolbar line + new "Visible editor-action toolbar (D085)" section) and `user-experience.md` (new "Visible editor-action buttons (D085)" subsection).
+
+## Revision 14 (2026-07-09, shell cascade D095)
+**Ported the approved OSLO app shell (persistent left sidebar + top bar + command palette — D093/D094/D095) into the Slice-5 prototype so it matches the Slice-6 shell.** Edited `slice-05-artifact-workspace/prototype.html` in place; every Slice-5 behavior and the full artifact editor are preserved. The old top-center view switch (`.vswitch`: Overview·Attention·Artifacts) and the in-Artifacts left-rail explorer are removed.
+
+### What changed
+- **Grid → 3 columns.** `#app` is now `[sidebar | main | chat]` (`240px 1fr 340px`); `.body` moved to `grid-column:2`, `.chatp` to `grid-column:3`. Ported the full Slice-6 shell CSS: `.sidebar/.sb-*` sidebar, top-bar chrome (`.tb-proj/.tb-tag/.tb-ic/.tb-plan/.sb-hamburger`), `#palScrim/.pal-*` command palette, `.hist-seam`, `.sb-toast/.sb-scrim`, and the 860px sidebar-drawer + 760px chat-collapse media queries. Account menu re-anchored to the sidebar footer.
+- **Persistent left sidebar (`#appSidebar`).** PROJECT nav — Overview (LIVE) · Issues · History · Attention map (LIVE) with `.sb-badge` open-issue counts — and PLAN ARTIFACTS grouped Understanding / Execution (the 7 `.sb-art` rows with live `.ex-fb` badges → `openArtifact`). Footer: Take-a-quick-tour (`#railTour`, moved from the floating affordance — no duplicate id) · Free-plan chip + Upgrade · Your account · Settings.
+- **Top bar.** `sb-hamburger` · Intralign brand · project switcher (`#tbProj` holding `#projName`) · `sample` tag · breadcrumb (`#tbCrumb`) · unchanged confidence pill · right cluster (⌕ search · Share · Export · Reports · Free).
+- **Command palette (D094).** `#palScrim` + `_palModel/_palFilter/_palKeydown/_palActivate/openSearch/closeSearch`; opens via `#tbSearch` and a new global ⌘/Ctrl+K listener. Groups: GO TO · PLAN ARTIFACTS (7, live) · OPEN AN ISSUE (open issues → the light issue panel). Canonical terms; keyboard-operable.
+- **Nav sync + routing.** `showView()` now toggles `pane-issues` + `pane-history` and calls `_setCrumb(_viewLabel(v))` + `_syncNav()` (single source of truth for the sidebar highlight + `aria-current`); `openArtifact()` lights its sidebar row and drives the breadcrumb. `updateIssueCounts()` also seeds `#vsIssuesBadge`.
+- **LIVE vs seams in Slice 5.** Overview + Attention map = **LIVE**. **Issues** → labeled Slice-6 seam pane (`#pane-issues`, "Full Issues view arrives in Slice 6"; individual issues still reachable via Attention map / Start-here / palette). **History** → labeled Slice-7 seam pane (`#pane-history`). Top-bar/sidebar seams (Projects/Share/Export/Reports/Settings/Upgrade) → labeled `#sbToast`. No broken links, never the wrong view.
+- **Editor intact.** The Artifacts view center is now just the editor. Undo/redo, slash menu, tables + column ops, annotations, provenance, find/replace, RTF toolbar, quiet reanalysis, weakness stepper, save confirmation, responsive/touch — all preserved. Sidebar Plan-artifact clicks open the editor exactly as before. Retired the `.vswitch` tour-step selector → `#sbAttention`.
+
+### Verification
+- **`node --check`** on the single extracted `<script>` block: **PASS**.
+- **jsdom static parse** (no scripts): `body.children.length>0`; `#appSidebar` + PROJECT nav (Overview/Issues/History/Attention) + PLAN ARTIFACTS (7 `.sb-art`, Understanding+Execution) + palette (`#palScrim`, "Search or jump to…") + confidence pill all present; **old `.vswitch`/`.vseg`/`.aw-explorer` gone**; single `#railTour` (no dup id). All 22 checks PASS.
+- **jsdom runtime** (`runScripts:"dangerously"`), **25/25 PASS, 0 errors:** Overview/Attention switch views + light badge seeded; History = labeled seam (not the map); Issues = labeled seam (not broken); opening an artifact from the sidebar shows the editor (`#artdoc`, toolbar undo/insert/find) with the breadcrumb + sidebar row synced; ⌘K and `openSearch()` open the palette with the three canonical groups + 7 artifacts + working filter; palette "Open an issue" opens the light panel; seam stubs fire the toast without throwing.
+
+## Revision 15 (2026-07-10)
+
+**Same annotation-popover bleed-through fix as Slice 6 Rev 7 (the two slices share the editor). Edit-in-place; every editor behavior preserved; HTML structurally valid.**
+
+The inline `.anno-pop` summary popover was `position:absolute` inside the contenteditable, so under the app-shell it was clipped by `.aw-center{overflow-y:auto}` and painted **under** the `.art-bar` toolbar — editor content bled through it (looked transparent), worst near the top of the editor. Converted it to a single body-level, **viewport-anchored** popover:
+
+- **`#annoPop`** appended to `<body>`, `position:fixed`, `z-index:240` (below the issue flyout 260, above editor chrome), fully opaque, `display:none` by default. Inline `.anno-pop` is now `display:none !important` and kept only as the content source; the old CSS reveals were removed.
+- **`showAnnoPop(anno)`** copies the inline span's `innerHTML` (summary + "Open issue →") into `#annoPop` and **`_positionAnnoPop()`** places it from `getBoundingClientRect()`: prefers **above**, **flips below** when it would cross the `.art-bar` bottom (`_annoPopTopFloor()`), **clamps horizontally** to the viewport.
+- **Hover-stable** (open while over the `.anno` or `#annoPop`, ~140ms hover-intent hide); editor scroll / resize / Esc / click-away hide it; the ⚠ marker focus/tap paths drive it; `openIssueFromAnno(id)` and the `.editing` caret path call `hideAnnoPop()`. **Editability (D074) and `curAnnos()` (`.anno` only) preserved** — `#annoPop` is body-level, not inside `.doc`.
+
+Docs updated: `frontend-ui.md` (§ annotation reachability / hover-stable popover / a11y reveals rewritten for `#annoPop`) and `user-experience.md` (popover now renders above/flip-below and fully opaque).
+
+**Verification (Revision 15):**
+- **`node --check`** on the extracted inline `<script>`: **PASS**.
+- **jsdom static parse** (no `runScripts`): `body.children.length = 16` (> 0); `#annoPop` CSS present; inline `.anno-pop{display:none !important}` present.
+- **Positioning unit-test** (extracted `showAnnoPop`/`_positionAnnoPop`, toolbar bottom y120, pop 280×90, viewport 1000×800): first-line anno → **flips below** (`top=136px`); mid anno → **above** (`top=304px`); right-edge anno → **clamped** (`left=712px`); `.editing` anno → **suppressed**. All as expected.

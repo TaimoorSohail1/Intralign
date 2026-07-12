@@ -37,3 +37,29 @@ Copied from the signed-off Slice-2 prototype; every Slice-1/2 route/screen/inter
 1. **Reliability level scale.** D051/D020: confidence + CAF use the **5-band** scale; reliability qualifier uses a **3-level** High/Moderate/Low scale (matches v4 `cpp` reliability rows and the Reliability Model V1 wording). Encoded as-is; if the owner wants reliability on the 5-band scale too, that's a decision to ratify.
 2. **False-confidence demo values.** The armed demo read (index 81, High band, Low reliability) is **illustrative mockup data** (consistent with the v4 "demo values are mockup data, not an on-screen label" note). No magnitude is presented as canonical (D056 honored).
 3. **Confidence internal index still changes** under the hood on supersede/clarification (58→62) but is **never surfaced as a delta** — only direction + cause is shown (D056). Real deltas remain owner-TBD.
+
+---
+
+## Revision 1 (2026-07-09, shell cascade D095)
+
+Ported the approved OSLO app shell (D093 persistent left sidebar + top bar; D094 command palette) from the Slice-6 prototype into `slice-03-overview-understanding-console/prototype.html`, editing in place. Slice 3 now matches the Slice-6 shell while every prior behavior is preserved.
+
+**Shell ported (copied 1:1 from Slice 6, adapted CSS/HTML/JS):**
+- `#app` 3-column grid `[240px sidebar | 1fr main | 340px chat]`, offset `margin-top:38px` below the phase bar; `.chat-collapsed`, `@media(max-width:860px)` sidebar drawer (`.sb-hamburger`/`.sb-scrim`/`#app.sidebar-open`), `@media(max-width:760px)` chat drop.
+- Persistent left sidebar `#appSidebar` with `_syncNav()` active-highlight + `aria-current`; pinned foot (Tour `#railTour`, Free-plan tier chip + Upgrade, Your-account row `#acctBtn`); account menu re-anchored bottom-left.
+- Top bar: `☰` · Intralign brand · project switcher `#tbProj` (keeps `#projName`) · `sample` tag · breadcrumb `#tbCrumb` · Confidence pill (unchanged) · right cluster (search · Share · Export · report · Free).
+- Command palette `#palScrim`/`.palette` via `openSearch()` + **⌘/Ctrl+K**, full keyboard nav.
+- Seam stub toast + labeled seam panes.
+
+**Slice-3 live vs. seams/omitted:**
+- **LIVE:** Overview (understanding console) · Attention map (basic, from Slice 2).
+- **SEAM:** Issues nav + palette "Issues" jump → `#pane-issues` labeled *"Full Issues view arrives in Slice 6"* (the light `openIssue()` panel remains the way to open a single issue); History nav + Overview "Timeline →" → `#pane-history` labeled *"History & timeline — arrives in Slice 7."*
+- **OMITTED:** the **PLAN ARTIFACTS** sidebar section and the palette's PLAN ARTIFACTS group (the artifact editor arrives in Slice 5).
+- Removed the old top-center `.vswitch`/`.vseg` view switch and the floating `.rail-tour` (its `#railTour` id moved to the sidebar-foot Tour button — no duplicate id).
+
+**Preserved (no regression):** Overview console (Confidence → Start here → Progress → More), confidence pill + popover, "how this is calculated," stage marker, basic Attention map, persistent OSLO chat + completion notices, clarification loop, feature tour, phase-bar demo triggers/offset, responsive drawer, account menu. Canonical term **"Issues"**; nav chrome neutral/brand, severity color issue-only (D003). New nav/seam controls are keyboard-accessible with `aria-current`; the breadcrumb reflects the current view.
+
+**Verify:**
+- Extracted the single app `<script>` (60,204 chars) → **`node --check` PASS**.
+- **jsdom structural parse** (no runScripts): `body.children.length > 0`; `#appSidebar` + PROJECT nav (Overview/Issues/History/Attention) + `#palScrim` + `#confpill` present; **no** `.sb-art`/`.sb-subgroup` (Plan-artifacts omitted); old `.vswitch`/`.vseg` gone; `#pane-issues`/`#pane-history` seams present; single `#railTour`; `#acctBtn` inside `#appSidebar`. **25/25 PASS.**
+- **jsdom runtime** (runScripts, booted via `landOnApp()`): Overview↔Attention switch; History & Issues resolve to labeled seams (not broken); `aria-current`/breadcrumb sync; `openSearch()` + ⌘K open the palette (GO TO + OPEN AN ISSUE groups, **no** PLAN ARTIFACTS); Overview console (`ov-idx`) + conf pill (`cp-idx`) populated; confidence popover opens; sidebar drawer + seam toast work. **17/17 PASS, 0 console errors.**

@@ -6,8 +6,96 @@
 | 2 · Intake & Fast-Pass Orientation | **Signed off** | vertical-slices/slice-02-intake-fastpass-orientation/prototype.html | 8 files ✓ | none | 2026-07-09 |
 | 3 · Project Overview & Understanding Console | **Signed off** | vertical-slices/slice-03-overview-understanding-console/prototype.html | 8 files ✓ | none | 2026-07-09 |
 | 4 · Attention Map (MRI) | **Signed off** | vertical-slices/slice-04-attention-map/prototype.html | 8 files ✓ | none | 2026-07-09 |
-| 5 · Plan Artifacts / Artifact Workspace | In review (grill) | — | — | — | — |
-| 6–10 | Not started | — | — | — | — |
+| 5 · Plan Artifacts / Artifact Workspace | **Signed off** | vertical-slices/slice-05-artifact-workspace/prototype.html | 8 files + editor gap fold-in | none | 2026-07-09 |
+| 6 · Issues & Recommendations (Panel Model) | **Signed off** | vertical-slices/slice-06-issues-recommendations/prototype.html | 8 files + shell/palette + fixes | none | 2026-07-09 |
+| 7 · History & Confidence Trend | **Signed off** | vertical-slices/slice-07-history-trend/prototype.html | 8 files + D101 refinements | none | 2026-07-09 |
+| 8 · Multi-Project Workspace & Awareness | **Signed off** | vertical-slices/slice-08-workspace-awareness/prototype.html | 8 files + D107 refinements | none | 2026-07-09 |
+| — · OSLO Chat integration (cross-cutting) | **Done** (D108 cascade to Slices 2–8; D109 refinements in Slice 8) | all slices 2–8 | analyses + docs | none | 2026-07-09 |
+| 9 · Collaboration, Sharing & Export | **Signed off** (D110–D132) | vertical-slices/slice-09-collaboration-sharing-export/prototype.html | 9 files ✓ | none (3 owner-open, not blocking) | 2026-07-10 |
+| 10 · Tiering & Limits **(THE DELIVERABLE)** | **Signed off** (D134–D142) · **DL-103 folded in 2026-07-12** | vertical-slices/slice-10-tiering-limits/prototype.html | 7 files + edge-cases + open-items + **tier-definitions-census.md** | none (owner-open values → §"Final state") | **2026-07-12** |
+
+---
+
+## FINAL STATE — 2026-07-12 · engagement closed
+
+**DL-102, DL-103 and DL-104 are RATIFIED canon.** The package is closed against them.
+
+| Decision | What it settles |
+|---|---|
+| **DL-102** — Controlled Release & Tiering-in-Alpha | The **invite IS the authentication** (token-granted Reviewer Principal, DL-049) · **CR-2: bound seats, never bound evidence** — load-bearing, and the **sole** resolution of the CHG-061 conflict · two limits never conflated (D124) · never meter the epistemic record, never sell safety (D128) · no eviction on downgrade. |
+| **DL-103** — Analysis cost basis & tier re-derivation | **Never tier judgment quality** (doctrinal) · the §4c numeric basis is **suspended** — the ladder was priced on rented frontier tokens **one day after canon ratified local inference** (DL-069) · **E1–E3 commissioned** (~12 → ~74 analyses at the same $3) · **one honest limit, in analyses** · §7 — the Free→Basic conversion model (*meter the inputs and the outputs; never the understanding in between*; **latency struck**; assisted-apply retained; **outcome pricing prohibited**; **reporting is the #1 lever — a STATUS lever**). |
+| **DL-104** — Errata to DL-103 | DL-103 **contradicted itself** (§7c struck the priority queue; §7e/§1/§5 still assumed it) — **and the Slice-10 build could not implement it. That is how it surfaced.** Residue struck · **UP-1/UP-2/UP-5 retired at source** · **UP-APPLY + UP-REPORT numbered** · **DL-102 E refreshed** · **new P1 defect class:** any report mistakable for a health rating / RAG / readiness / probability of success. |
+
+### DL-103 fold-in — Slice 10 (the deliverable), 2026-07-12
+
+The tier model Slice 10 was originally built on was **superseded before sign-off dried**. It was rebuilt, not patched:
+
+- **Prototype → 13,237 lines.** The per-tier `ROUTING` ladder is **struck** → `MODEL_ROUTING_BY_STEP`; every "Pro is where
+  the models get better" line is gone. Pro = **execution & programme support**.
+- **One honest limit.** The token governor is gone; the budget is **in ANALYSES, never tokens**, and renders **pending
+  re-derivation — nothing enforced**. **Chat is uncapped on every tier.** UP-1 / UP-2 / UP-5 removed from the prompt
+  table outright (a prompt that merely *cannot fire* is a prompt somebody re-wires).
+- **UP-APPLY** built with **no cap** (threshold owner-TBD, from Alpha instrumentation, never a cost model) and the binding
+  line enforced: *recommendation always visible · only the assisted apply is metered · manual editing always free*.
+- **"Update now" is free on every tier** — no tier check exists in `updateNow()`, and none may be added.
+- **NEW: the Reports surface** (nav + modal + `REPORTS` registry) — reliability-qualified throughout, currency-marked,
+  standing disclaimer, **packages, never produces** (generating a report runs **no** analysis), report names labelled
+  descriptively and flagged *"naming pending"*.
+- **The retired levers are shown as struck, out loud, on the Plans page** — the priority queue is named as *"the upgrade
+  we deliberately did not build"*; outcome-based pricing is named as prohibited.
+- **Boot guards → 17/17.** Eight new ones added by this fold-in: `noTierQuality` · `budgetInAnalyses` · `chatUncapped` ·
+  `recNeverHidden` · `updateNowFree` · `noLatencyLever` · `downgradeKeepsRead` · `noOutcomePricing` · `reportsNoHealth`.
+  They are the doctrine, executable — each fails loudly if a future contributor undoes it.
+- **Census → 58 values: 39 ratified · 3 pending re-derivation · 8 retired/struck · 5 unset · 3 recommendation.**
+  Struck values are **kept, visibly struck**, so nobody re-derives them from a blank in six months.
+
+**Verification (final):** `node --check` **PASS** (9,929 JS lines) · jsdom body children **32** · **17/17 boot assertions**
+· **0 console errors/warnings** · `prototype-index.html` **11/11 links resolve**.
+
+**Escalations raised by the fold-in (T10-8…T10-12) were all resolved by DL-104** — the priority-lever residue, the Pro
+"+ speed/priority" claims, the stale UP-* taxonomy, the health-framing P1 class, and DL-102 E's staleness.
+
+**Still owner-open** (nothing assumed; each renders visibly unset): monthly analyses (Free/Basic) · Basic price **basis** ·
+UP-APPLY threshold · collaborator seats (Basic = 10 withdrawn as cannibalizing a per-seat Team) · OD-10 coalescing window ·
+Free CRR cost ceiling · MON-04 global prompt cap · report names · which reports are R1 / scheduling / branding / `REP-*`
+rows · billing rail · CR-2-vs-budget-gate (*record · defer · disclose*, recommended) · reverse-trial duration.
+See `final-package-summary.md` §5.
+
+---
+
+## Slice 10 — signed off 2026-07-11 · FINAL SLICE, and the deliverable
+*(The record below is the sign-off as it stood before the DL-103 fold-in. Retained; superseded where it conflicts with
+the Final State section above — the correction must stay legible.)*
+Decisions **D134–D142**. Governing rule: **canon decides; the build adopts and cites; zero tier numbers invented.**
+Live Free→Basic tier in Alpha (D135; `BASIC_PRICE = null` renders owner-TBD; Pro named, not purchasable) · honest counters with real reset times (D136) · the full **UP-1…UP-8** prompt engine with all four MON-04 global guards (D137) · **the limit-reached rule at every cap** — controls stay enabled, the *attempt* is gated, every prompt names the specific limit **and** the specific tier that relieves it (D138) · partial-orientation disclosure on one surface, envelope unset (D139) · **`tier-definitions-census.md`** — 32 values, **21 ratified · 11 UNSET** (D140) · **D141: Basic = 3 projects (UP-3)**, correcting the AI-invented 10, with every displayed tier number now painted from its constant.
+**Slice-9 defects corrected:** the seat cap **blocked** instead of prompting; non-PDF export buttons were `disabled`; the persistent sidebar "Upgrade" button was upgrade wallpaper (MON-04) — all fixed. A real bug was also found and fixed: typing a new reviewer's email into the CRR dialog wiped the input on every keystroke — it broke precisely the path CR-2 exists to protect.
+**Consolidation pass (2026-07-11):** terminology sweep (user-facing "finding" → **Issues**, DL-095/D017 · "Fast Pass" → **Initial Analysis**, D012 · mechanism-language "reanalysis" → **analysis update**, D092) + four hard-coded tier numbers repainted from their constants (D141 anti-drift).
+**Verification:** `node --check` PASS · jsdom body 31 · **6/6 boot assertions** (`window._S10`) · **0 console errors** · handler integrity 292/292 · light-mode AA PASS · non-regression 10/10 slices.
+**Escalated, not invented:** the 11 UNSET values · the missing `RELEASE_1_TIER_DEFINITIONS_V1` (DL-102 Concern 7 — blocking Basic in Alpha) · **T10-2** (UP-5 caps an affordance D006 forbids) · **T10-3** (seats/export have no UP slot) · **T10-4** (MON-04's global prompt cap is never set) · Suggest-Alternative alignment signal (deliberately unbuilt) · whether revenue expands onboarding capacity (would reopen CR-7).
+
+## Slice 9 — signed off 2026-07-10
+Decisions **D110–D132**. Sharing (Owner/Collaborator/Viewer + view-only snapshot link) · threaded comments + @mentions on issues (append-only; "Comments never change the assessment") · export snapshot (currency marker + disclaimer; Free = PDF-only) · collab notifications un-gated · **CRR-01…05 reinstated as ratified canon** (my earlier "spec gap" escalation was wrong: DL-049 had already resolved gap #337) · **D115** third epistemic class "Attested by <name>" — evidence, not truth; never auto-resolves; OSLO never self-accepts · **controlled release + waitlist** (D119–D126) · **tier live in Alpha** (D123) · **two-limit model, never conflated** (D124) · **never meter the epistemic record; never sell safety** (D128) · seats/viewers/refunds/no-eviction (D129–D132) · **dark default** (D127).
+**Governing principle (D126):** *Meter who gets a seat. Never meter who gets an answer. And always say which limit you just hit.*
+**Defects caught & fixed:** Share-for-review disabled itself at the cap (D120 violation); Plans/Settings were **selling the epistemic record** ("more artifacts", "longer retention") — deleted, with comment guards + runtime assertions so neither can be reintroduced.
+53/53 behavioural assertions pass. **Zero escalations carried out.**
+**Owner-open (not blocking):** Basic price (T-3) · "Does a Reject move CAF?" (recommend: yes, via Alignment — needs Framework 001) · whether revenue ever expands onboarding capacity (would reopen CR-7 pay-to-skip).
+**Framework 001:** ONE consolidated proposal — *"Controlled Release & Tiering-in-Alpha"* (D131).
+
+## OSLO Chat (cross-cutting, 2026-07-09)
+D108 — chat was non-functional (inert composer/Send); made it work + integrated into workflows (context handoff + pill; entry points: Ask-why, Ask-about-issue, **Discuss** on recommendations, artifact/span ask, Attention-cell ask, History "what changed"); clarifications route through one shared path with byte-identical History entries. Cascaded to Slices 2–7 (each wired only to its own surfaces). D109 — epistemic (reliability-qualified, derived/attested) replies, clickable citations, honest capability-scoped fallback (never fabricates), streaming + message actions (copy/retry/feedback/save-to-History), follow-ups, @-mention multi-context, expand mode, persistence. Advisory-only held throughout: chat mutates nothing.
+
+## Slice 8 — signed off 2026-07-09
+Decisions D102–D106 (Workspace Home, project switcher, notifications, Settings, Appearance) + D107 refinements (dead Settings links removed → Profile/Workspace/notification-prefs/Account functional; collab notif categories gated; Alpha 1-project dashboard; light-mode AA sweep 21/21 pass; polish) + GA save-bar hidden-state fix. No open P1/P2.
+
+## Slice 7 — signed off 2026-07-09
+Decisions D096–D100 (append-only timeline, understanding-over-runs trend, last-good/read-only, version lineage, first-run) + D101 refinements (type-leak removed, run-grouping + what-changed deltas, trend↔timeline link, type filters, polish) + lifecycle Resolved→green fix. No open P1/P2.
+
+## Slice 6 — signed off 2026-07-09
+Decisions D086–D095: full Issues surface (Artifact/Dimension/Severity filters + By dimension/severity/artifact grouping), full Issue Panel, Open→Addressed→Resolved, recommendations + Apply this fix (Panel Model), clarification loop, empty states; panel declutter (D092) + drop user-facing "reanalysis"; issue-flyout scroll fix; **persistent left sidebar + top bar (D093) + command palette (D094)** cascaded to Slices 3–5 (D095, which re-signs those under this approval); top/bottom layout fix; annotation-popover stacking fix; link-popover close. History/Share/Export/project-switcher are seams to Slices 7/8/9.
+Note: Slices 3–5 re-signed under D095 shell cascade.
+
+## Slice 5 — signed off 2026-07-09
+Decisions D066–D085 (type-aware editor, annotations, epistemic notation + table provenance, event-driven reanalysis, weakness→issue stepper, tables add/insert/delete/reorder + columns, phase-bar fix, hover fixes, calm indicator, rich-text toolbar, and the full editor gap fold-in Batches A/B/C incl. undo/redo, reanalysis-merge, cell nav, paste sanitize, slash menu, image embed, a11y reveals, markdown, block drag, find/replace, link mgmt, save affordance, empty states, responsive, action buttons). Verified structurally + syntactically; large owner-directed editor expansion beyond v4 (flagged for canon). No open P1/P2.
 
 ## Slice 4 — signed off 2026-07-09
 Decisions D057–D062 + feedback (D063 remove Dimensions view; D064 positive description; D065 stale-count/Timeline/how-calc/stage/CAF-hover fixes; D053 rev stage→popover-only; invitation copy → "Intralign Alpha" + AI-first value prop + "from the Intralign team"; Clarification-request casing sweep). No open P1/P2.

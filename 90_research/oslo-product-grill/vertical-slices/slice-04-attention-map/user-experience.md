@@ -61,3 +61,33 @@ Every live cell and row header is keyboard-focusable and activates on **Enter/Sp
 - **"How this is calculated" placement:** the chip now sits **directly under the confidence number** it explains, and its duplicate native tooltip was removed (only the custom popup remains).
 - **Stage context:** the confidence **Stage** marker now has a visible **ⓘ** explaining Orientation → Expanded → Validated and which stage the read is at (Overview and popover).
 - **CAF hover scope:** the dimension detail tip opens only when hovering the **dimension word** (Clarity / Alignment / Feasibility), not anywhere on the row. Row click-to-navigate is unchanged.
+
+---
+
+## Revision 4 (2026-07-09) — persistent app shell (shell cascade, D095)
+
+The approved Slice-6 app shell was cascaded down to Slice 4 so navigation matches across slices (D093/D094/D095). The old top-center **Overview · Attention** switch is replaced by a **persistent left sidebar** and a **command palette** — no Slice-4 behavior regresses.
+
+- **Left sidebar (always visible):** a **Project** group — **Overview**, **Issues**, **History**, **Attention map** — plus pinned utilities (Take a quick tour, Free-plan chip, Your account). In Slice 4, **Overview** and **Attention map** are live views; **Issues** opens a clearly-labeled *"Full Issues view arrives in Slice 6"* stub (single-issue investigation stays live via the Attention map and the palette); **History** opens the *"arrives in Slice 7"* stub. **There is no Plan-artifacts list yet** — the artifact editor arrives in Slice 5, so that sidebar section is intentionally absent here.
+- **Top bar:** Intralign brand, a project switcher, a `sample` tag, and a **breadcrumb** that names where you are (Overview / Attention map), with the confidence pill and a right-hand cluster (search, Share, Export, report, Free plan). Share/Export are Slice-9 stubs.
+- **Command palette (⌘/Ctrl+K or the `⌕` button):** type to jump to a view or **open an issue**. Fully keyboard-operable (↑↓ navigate, ↵ open, esc close). The Plan-artifacts group is omitted in Slice 4.
+- **Navigation feel:** the current view is highlighted in the sidebar (`aria-current="page"`) and named in the breadcrumb; seams are unmistakable labeled stubs, never a wrong or broken view. On narrow screens the sidebar becomes a `☰` drawer and the chat rail collapses.
+- **Unchanged:** the whole Attention map experience, the confidence-led Overview, the pill popover, the tour, the persistent OSLO chat, and the clarification loop.
+
+## Chat integration (D108 cascade)
+
+OSLO's rail stops being a noticeboard and becomes a **conversation** — one you can hold *about the thing you're looking at*. In Slice 4 that thing is, above all, a **cell on the Attention map**.
+
+**You can now ask.** Type into the composer and press Enter (or click Send). OSLO answers from the read that is actually on your screen — the confidence band and its reliability qualifier, the limiting dimension, your open issues and the one it would take first, and the attention picture (which cells are lit, how brightly, and why). It does not invent numbers or issues. If you ask it to fix something, it says plainly that it cannot: it reads and explains; you decide.
+
+**Ask about a cell — the signature move.** Hover any lit cell on the Attention map and a quiet **✦** appears; click it and OSLO takes that cell as context. A pill at the top of the rail reads **Context · Resources × Feasibility**, and OSLO opens with what that bucket actually means — *Resources read through Feasibility* — what is driving its brightness (the most severe open issue wins the cell's color), what else sits in it, and whether that dimension is the one holding your confidence back. The same "✦ Ask OSLO about this cell" sits in the header of the scoped issues list, so it is there whichever way the cell routed you. Everything after that is answered *inside* that cell until you clear the pill with **×**.
+
+**Ask why the number is where it is.** "✦ Ask OSLO why" under the confidence number hands the read to the chat: the band, the reliability basis, the limiting dimension, and what would move it.
+
+**Ask about an issue.** "✦ Ask OSLO about this issue" in the issue panel: why it matters, what it was read from, the fixes worth weighing — and links straight back to the issue and the cell it lives in.
+
+**Answer a question without leaving the conversation.** When an issue carries one of OSLO's questions, the question comes with an answer box right in the thread. Answering there is *exactly* the same act as answering in the issue panel: your project information updates, that plan artifact becomes Confirmed by you, and the analysis update closes the issue — OSLO tells you when it lands, and the cell on the map stands down. There is no shortcut and no side door; the chat cannot do anything the surfaces cannot.
+
+**Suggestions, not a blank box.** Above the composer sit a few suggested questions drawn from your actual state, and they change with it — with a cell in context they become "What's driving this cell?"; with nothing in context, "Why is Feasibility Very Low?" or "What needs the most attention?".
+
+**Unchanged:** the heatmap and its routing, the inert all-clear cells, the confidence-led Overview, the light issue panel, the clarification loop, the tour, and OSLO's completion notices — which still land in the same rail, now alongside the conversation.

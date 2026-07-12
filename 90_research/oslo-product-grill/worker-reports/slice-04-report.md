@@ -63,3 +63,22 @@ Kept / verified:
 - Legend and all other surfaces intact. No other slices touched.
 
 **Verification:** `node --check` on the extracted `<script>` **PASS**. Grep confirms **no remaining** `renderDims`, `mview(`, `MVIEW`, `#mfDim`/`#mfHeat`, `#dimGrid`, `.dimwrap`, `openFindingsDim`, or Field/Dimensions toggle references. The D059 header-comment entry is annotated as removed per D063. Docs updated: `frontend-ui.md` and `user-experience.md` note the D063 removal.
+
+## Revision 4 (2026-07-09, shell cascade D095)
+
+**Ported the approved Slice-6 app shell (persistent left sidebar + top bar + command palette — D093/D094/D095) into the Slice-4 prototype, edited in place.** All Slice 1–4 behavior preserved (Attention heatmap, Overview, confidence pill/popover, account menu, tour, chat, clarification loop). The old top-center `.vswitch` (Overview · Attention) switch is fully removed.
+
+**Ported from `slice-06-issues-recommendations/prototype.html`:**
+- **CSS** — 3-col `#app` grid (`240px | 1fr | 340px`, phase-bar offset via `margin-top:38px`), top-bar chrome (`.tb-proj/.tb-tag/.tb-ic/.tb-plan/.sb-hamburger`), the full persistent-sidebar CSS (`.sidebar/.sb-nav/.sb-badge/.sb-foot/.sb-tour/.sb-tier/.sb-acct/.sb-toast/.sb-scrim`), the command-palette CSS (`#palScrim/.palette/.pal-*`), and the narrow-width drawer/chat media queries. `.body`→col 2, `.chatp`→col 3.
+- **HTML** — Slice-6 top bar (brand · `#tbProj`/`#projName` · `sample` · `#tbCrumb` breadcrumb · confidence pill · `⌕`/Share/Export/report/Free · `☰`); the `#appSidebar` aside; `#palScrim` palette; a `#sbToast`; account-menu Settings item.
+- **JS** — rewrote `showView()` to drive the sidebar + breadcrumb (`_syncNav`, `_setCrumb`, `_viewLabel`); added `toggleSidebar`/`closeSidebar`/`_collapseSidebarOnNarrow`, the `_stubToast` seam helpers (`openSettings`/`openProjectSwitcher`/`openShareSeam`/`openExportSeam`/`openReportStub`/`openUpgrade`), `openIssuesSeam`/`closeIssuesSeam`, and the full D094 command palette (`_palModel`/`_palFilter`/`_palPaint`/`_palKeydown`/`_palActivate`/`openSearch`/`closeSearch` + the ⌘/Ctrl+K listener). `updateIssueCounts` now feeds both `#vsAttnBadge` and `#vsIssuesBadge` (neutral, hidden at zero). Tour step 4 selector `.vswitch` → `#sbAttention`.
+
+**Slice-4 live vs seams vs omitted:**
+- **LIVE:** Overview, Attention map (heatmap + cell/row routing + scoped list + light issue panel + all-clear). Palette **Open an issue** opens issues live via the light panel.
+- **SEAMS (labeled stubs, never a wrong view):** **Issues** → `#issuesSeamScrim` "Full Issues view arrives in Slice 6"; **History** → `#historyScrim` "arrives in Slice 7". Share/Export/Reports/Settings/Projects/Upgrade → labeled toasts.
+- **OMITTED (correctly):** the **PLAN ARTIFACTS** sidebar section and the palette **PLAN ARTIFACTS** group — the artifact editor is Slice 5 (no broken artifact links created).
+
+**Verification:**
+- `node --check` on the extracted `<script>` — **PASS**.
+- **Static jsdom parse** (no scripts): `body.children.length>0` (17); `#appSidebar` + PROJECT nav + `#palScrim`/`#palInput` + `#confpill` present; **no** `.vswitch`/`.vseg`; **no** `.sb-art`/PLAN ARTIFACTS in the sidebar; single instances of `#railTour`/`#acctBtn`/`#projName`/`#appSidebar`; no stale `vsOverview`/`vsAttention` references — **all PASS**.
+- **Runtime jsdom** (`runScripts`): Overview⇄Attention switch (pane + `aria-current` + breadcrumb), heatmap renders 21 cells, Issues/History open labeled seams (do not hijack the active view), `openSearch()` and ⌘K open/close the palette with GO TO + OPEN AN ISSUE groups and **no** PLAN ARTIFACTS group, `openIssue` opens the light panel, Attention cell routing works, sidebar drawer toggles — **20/20 PASS, 0 runtime errors**.

@@ -444,6 +444,11 @@ Status: Client override · Type: Screen/Interaction · Area: Editor · Slice: 5 
 Decision: The editor gaps from the critical analysis are folded into Slice 5 (prototype-grade), in priority batches. **Batch A (trust-critical + core table):** undo/redo (snapshot-based history incl. structural ops), reanalysis-merge preservation (a reanalysis/re-draft preserves "Confirmed by you" attested content; only "From OSLO" derived content refreshes), table cell Tab/arrow navigation, table column add/delete/reorder/resize, paste sanitization. **Batch B (authoring + a11y):** block insertion / "/" menu, image/file embedding, keyboard/touch reachability of hover-only info (annotation summary, epistemic, how-calculated), markdown input shortcuts, whole-block drag-reorder. **Batch C (polish):** in-artifact find/replace, link edit/remove, explicit save affordance, empty/placeholder states, mobile/touch pass. Deferred items stay out: version history/diff/revert → Slice 7; inline comments/@mentions → Slice 9.
 Impacts: slice-05 prototype + docs (multiple revisions).
 
+## Decision 085: Editor action buttons (discoverability for keyboard-only actions)
+Status: Client override · Type: Screen/Interaction · Area: Editor · Slice: 5 · Source: owner 2026-07-09
+Decision: Surface keyboard-only editor actions as visible toolbar buttons where it makes sense: **Undo / Redo** (with disabled state when the stack is empty), **Insert (＋)** opening the slash/block menu, and **Find (⌕)**. Placed in the artifact toolbar, wired to the existing functions, keyboard-accessible, themed/subtle. Shortcuts still work; buttons add discoverability.
+Impacts: slice-05 prototype + docs.
+
 ## Decision 073: Reanalysis is patient/debounced (refines D070)
 Status: Client override · Type: AI Behavior · Area: Editor · Slice: 5 · Source: owner 2026-07-09
 Decision: Editing does not churn the analysis state on every keystroke. While the user is actively typing, the editor stays quiet (a calm "Editing…"); the Saved → analysis stale → Reanalyzing… → Up to date chain only advances after the user has plausibly finished a block — i.e. after a typing-idle debounce (~1.5s) or when the block loses focus (blur). A single character never triggers a reanalysis notification.
@@ -459,7 +464,618 @@ Status: Client override (bug fix) · Type: Screen/Interaction · Area: App shell
 Decision: The demo phase bar (`position:fixed`, 38px) was overlapping `#app`, hiding the top-center view switch (Overview·Attention·Artifacts) and the confidence pill. Fixed by offsetting `#app` below the phase bar (`margin-top:38px; height:calc(100vh - 38px)`). Latent since Slice 1; fix carries forward in the cumulative prototype.
 Impacts: slice-05 prototype (and forward).
 
+# Slice 6 — Issues & Recommendations (Panel Model) (locked 2026-07-09, all recs accepted)
+
+## Decision 093b: Issue Panel is a bounded, scrollable flyout
+Status: Client override (fix) · Type: Screen/Interaction · Area: Issues · Slice: 6 · Source: owner 2026-07-09
+Decision: The Issue Panel was clipped (phase bar covered its top; app chrome clipped its bottom). Fixed: raise the scrim above app chrome (z-index 260), full-viewport height with internal `overflow-y:auto`, a persistent ✕ close (top-right) + Esc-to-close, extra bottom padding so the header and History are always reachable.
+Impacts: slice-06 prototype.
+
+## Decision 095: Cascade the approved shell back to Slices 3–5
+Status: Client override · Type: Screen/Interaction · Area: App shell · Slice: 3/4/5 (reopened) · Source: owner 2026-07-09
+Decision: The approved shell (persistent left sidebar + top bar + command palette, D093/D094) is cascaded into the Slice 3, 4, 5 prototypes so it appears consistently from the orientation hand-off onward. Per cumulative discipline, each slice wires nav to views that EXIST in that slice and shows labeled seams for the rest (History → Slice 7 always; Issues surface → Slice 6 seam in Slices 3–5 unless a light list exists; the Plan-artifacts sidebar section appears only from Slice 5 where the editor exists). Reopens Slices 3–5 for the shell change (re-signoff). The shell's canonical owner remains Slice 8 (global nav/switcher/settings/palette); this is a presentation cascade.
+Impacts: slice-03/04/05 prototypes + docs.
+
+## Decision 094: Command palette (search / jump-to) — approved design
+Status: Client override · Type: Screen/Interaction · Area: App shell · Slice: 6 (carries forward) · Source: owner 2026-07-09 (approved design)
+Decision: The top-bar search (⌕) button and **⌘/Ctrl+K** open a command palette: input "Search or jump to…"; grouped, fuzzy-filtered results — **GO TO** (Overview · Issues · History · Attention map), **PLAN ARTIFACTS** (the 7 artifacts → openArtifact), **OPEN AN ISSUE** (open issues → openIssue). Keyboard: ↑↓ navigate · ↵ open · esc close; footer shows the hint. User-facing term "Issues"/"Open an issue" (approved image says "Findings/Open a finding" — pre-rename; we keep the ratified "Issues", DL-095).
+Impacts: slice-06 prototype (carries forward).
+
+## Decision 093: Persistent left navigation sidebar (app-shell IA change; supersedes top-center switch)
+Status: Client override · Type: Routing · Area: App shell · Slice: 6 (carries forward) · Source: owner 2026-07-09
+Decision: Replace the top-center view switch with a **persistent left navigation sidebar**, visible by default across all project views. Sections: (a) **Project views** — Overview · Attention map · Issues (active-state links); (b) **Plan artifacts** — the 7-artifact list with issue badges (opens the artifact editor); (c) **bottom utilities** — Product tour, Settings, Help/account. The top bar keeps brand + confidence pill + account (or account moves to the sidebar bottom). Responsive: collapses to a drawer on narrow (reuse the Slice-5 explorer-drawer pattern). Supersedes the top-center co-primary switch aspect of D013/D038/NAV-C3 — **divergence from NAV-C3 flagged; owner may want the navigation canon updated** (AI recommends; owner ratifies).
+Impacts: slice-06 prototype (app shell, carries forward), REPOSITORY navigation canon (recommend update). 
+Assumption flagged: sidebar becomes primary nav; top-center tabs removed to avoid duplication — owner may adjust.
+**Refined to the owner's approved design (2026-07-09):** Sidebar — PROJECT: Overview · Issues · History · Attention map (History nav routes to a Slice-7 seam); PLAN ARTIFACTS grouped Understanding (Intent·Context·Scope·Requirements) / Execution (Work breakdown·Schedule·Resources) with badges; bottom: "✦ Take a quick tour" button, "Free plan · 1 active project · Upgrade" chip (visibility-first, DL-048), "Your account · Settings" row. Top bar — Intralign brand + project switcher ("DevNorth 2026 ▾", Slice-8 seam) + sample chip + breadcrumb (current view/artifact); right: confidence pill + search + Share + Export (Slice-9 seams) + report icon + Free chip. Note: approved design image labels it "Findings 14" — we keep the ratified user-facing term **"Issues"** (DL-095/D017); flagged for owner.
+
+## Decision 092: Declutter the Issue Panel; drop user-facing "reanalysis" language (refines D008/D087/D090)
+Status: Client override · Type: Product Design · Area: Issues/Copy · Slice: 6 · Source: owner 2026-07-09
+Decision: The Issue Panel is over-verbose; several static explanatory descriptions reduce readability and go stale. Trim them, and **stop surfacing "reanalysis / re-analyze" as a user-facing mechanism** — users care about the outcome, not the mechanism. Specifically: remove standing lines like "OSLO asks; you answer; you decide. Answering updates your project info, re-runs analysis, and closes this issue." and "OSLO will update your project info and run re-analysis" and "Only reanalysis changes this assessment. You can't resolve an issue by hand…". The honesty invariant (issues close as OSLO's understanding updates, not by hand — the behavior enforces it) lives in **exactly one subtle hover** (ⓘ), phrased in plain outcome language (prefer "updates" over "reanalysis"). Buttons: "Submit & re-analyze" → "Submit answer"; "Addressed · awaiting reanalysis" → "Addressed · updating…" (or just the lifecycle). Applies across the panel, the clarification block, and the apply-fix flow. Keep advisory framing implicitly (OSLO advises; you decide) without repeating it as chrome.
+Impacts: slice-06 prototype + docs; consistent with §6.7 (single-home + hover) and §6.9 (sunset teaching copy).
+
+
+## Decision 086: All-Issues surface (filters + group toggle)
+Status: Accepted recommendation + client edit · Type: Screen/Interaction · Area: Issues · Slice: 6 · Question ID: F6.1Q1 · Source: v4 §6.11
+Decision: All-issues list (center pane) with filters **Artifact · Dimension · Severity** (the artifact-scoping filter is labeled **"Artifact"**, not "Section" — client edit, per D049) + a group toggle **By dimension / By severity / By artifact** (D092b — By artifact added at owner request); honest "N hidden by filters · clear"; per-issue card = title + severity + location + status. Subtitle kept minimal ("What needs your attention") — the group buttons already convey the grouping (D092b declutter).
+Impacts: slice-06.
+
+## Decision 087: Full Issue Panel
+Status: Accepted recommendation · Type: Screen/Interaction · Area: Issues · Slice: 6 · Question ID: F6.2Q1 · Source: Finding Panel spec (Option A)
+Decision: Issue Panel: Header (title · severity · dimension·artifact · lifecycle) → Why this matters → Evidence (collapsible) → What this weakens (Clarity/Alignment/Feasibility) → Recommendations → History (pointer; full timeline = Slice 7) → reanalysis note.
+Impacts: slice-06.
+
+## Decision 088: Lifecycle Open → Addressed → Resolved
+Status: Accepted recommendation · Type: Product Requirement · Area: Issues · Slice: 6 · Question ID: F6.3Q1 · Source: D018/DL-094
+Decision: Open → Addressed ("by acting · awaiting reanalysis") → Resolved. Never resolved by hand; Resolved only via reanalysis.
+Impacts: slice-06.
+
+## Decision 089: Recommendations + Apply this fix (Panel Model)
+Status: Accepted recommendation · Type: Screen/Interaction · Area: Recommendations · Slice: 6 · Question ID: F6.4Q1 · Source: D009
+Decision: OSLO Recommended + Possible Resolution Paths, selectable → Selected Path (Confirmed by you); single-action "Apply this fix" where OSLO can draft → applies → reanalysis. Acceptance ≠ success; confidence direction-only (D056). No recommendations outside the Issue.
+Impacts: slice-06, slice-05.
+
+## Decision 090: Clarification loop in the panel
+Status: Accepted recommendation · Type: AI Behavior · Area: Issues · Slice: 6 · Question ID: F6.5Q1 · Source: D042
+Decision: Clarification block (question + answer input); answering → Update project info → reanalysis → the issue closes.
+Impacts: slice-06.
+
+## Decision 091: Empty states + honesty
+Status: Accepted recommendation · Type: Screen/Interaction · Area: Issues · Slice: 6 · Question ID: F6.6Q1 · Source: Tier 1 empty states
+Decision: Four honest empty states (none-found / none-under-lens / not-yet-analyzed / unavailable) + honest "hidden by filters" count. Comments/@mentions → Slice 9; full History → Slice 7.
+Impacts: slice-06.
+
+# OSLO Chat integration (cross-cutting; introduced Slice 2, lands in latest cumulative)
+
+## Decision 109: Chat UX refinements (epistemic replies, citations, honest fallback, AI-native patterns)
+Status: Client override · Type: AI Behavior / Screen-Interaction · Area: Chat · Slice: 8 (reference; cascade optional) · Source: owner 2026-07-09; oslo-chat-ux-critical-analysis.md
+Decision: (1) **Epistemic replies** — chat inherits OSLO's doctrine: every answer is **reliability-qualified** ("Reliability is Moderate — this rests on the documents you gave me; treat it as directional"), distinguishes **From OSLO (derived)** vs **Confirmed by you (attested)** when asserting a plan fact, and says when evidence is thin instead of answering confidently. (2) **Citations/provenance** — replies cite their basis as clickable chips (issue `ev[]` sources, artifact spans, history events) that route to the surface. (3) **Honest capability-scoped fallback** — off-script questions get an honest "I can't answer that yet; here's what I can do…", NEVER a fabricated/canned answer. (4) **Streaming/thinking affordance** + **message actions** (copy · retry · 👍/👎 · **save to History**). (5) **Follow-up suggestions** after each reply; **@-mention + multi-context** pinning; **expand mode** for the rail; action links **state their consequence**. (6) **Per-project conversation persistence**; polish (so-what-first formatting, ⌘K focus / ⌘Enter send / Esc clear, teaching empty state, advisory copy single-home per §6.7). Anti-pattern guard: **no chat-washing** — canonical surfaces stay primary; chat augments and hands the user back to the owning surface.
+Impacts: slice-08 prototype + docs (reference build); optional cascade to Slices 2–7.
+
+
+## Decision 108: Make OSLO chat functional + integrate it into the workflows
+Status: Client override · Type: AI Behavior / Screen-Interaction · Area: Chat (cross-cutting) · Slice: 8 (carries forward; cascade to earlier) · Source: owner 2026-07-09; oslo-chat-integration-analysis.md
+Decision: OSLO chat was non-functional (composer + Send had no handlers; no send/reply logic) — a read-only notice feed. Fix and integrate:
+(1) **Make chat work** — composer + Send (Enter to send, Shift+Enter newline); OSLO replies are **simulated but state-grounded** (current confidence band + reliability, the limiting dimension, open issues, active artifact). Advisory-only (D001): chat reads, explains, recommends — it NEVER mutates the plan or resolves an issue.
+(2) **Context handoff + context pill** — a single `askOslo(context)` entry point; chat shows "Context · <what>" with a clear-context control.
+(3) **Wire the entry points** (each in the slice where its surface exists): Issue Panel → "Ask OSLO about this issue"; Recommendations → **"Discuss"** (a canonical v4 recommendation action that was entirely missing); Artifact annotation/toolbar → "Ask about this"; Overview confidence card → "Ask why"; Attention cell → ask about it.
+(4) **Clarifications are conversational** — OSLO can raise a clarification in chat and the user can answer there; the answer routes to the SAME project-info update, issue transition, and **History** entry (no side-channel that bypasses governance, D096).
+(5) Polish — suggested prompt chips, replies link to the surface they reference, chat empty/first-run state, live-region a11y.
+Impacts: slice-08 prototype + docs (reference); cascade the core (working chat + context pill + slice-appropriate entry points) back to Slices 2–7 per cumulative discipline.
+
+
+## Decision 107: Fold Slice 8 gap-analysis refinements
+Status: Client override · Type: Screen/Interaction · Area: Workspace/Settings · Slice: 8 · Source: owner 2026-07-09; slice-08-critical-analysis.md
+Decision: (1) **Remove dead Settings affordances** — every row must work, be a clearly-labeled seam/visibility-first state, or not look interactive. Make FUNCTIONAL now (prototype-grade, localStorage): Profile (editable display name/role), Workspace (editable name), **Notification preferences** (per-category toggles — legitimate because awareness is presentation-only, D104), Account (surface sign-out + stay-signed-in, D028). Keep visibility-first but LABEL honestly: Subscription/Billing ("handled outside the app in Alpha" — DL-048/D014), Integrations/Membership (later), Collaboration (Slice 9 seam). Remove internal spec language ("Confirmation-gated"); Delete account gets a real confirm dialog or an honest label. (2) **Gate/label the collaboration notification categories** (mention/reply/shared) until Slice 9 — they can't occur in Alpha; don't imply capability. (3) **Lean the Alpha dashboard** to the 1-active-project reality (honest presentation; full Pinned/Recent grid when multi-project is real). (4) **Light-mode AA contrast sweep** (brand orange, neutral maturity ramp vs severity separation). (5) Polish: stale → "open to bring the read up to date" action, Settings search, notification + workspace empty states, plain language.
+Impacts: slice-08 prototype + docs.
+
+
+## Decision 102: Workspace Home / Dashboard
+Status: Accepted recommendation · Type: Screen/Interaction · Area: Workspace · Slice: 8 · Question ID: F8.1Q1 · Source: PROJECT_DASHBOARD spec; DL-048
+Decision: Global Workspace Home (via the Intralign/OSLO logo + Workspace context): Pinned + Recent project cards (name · ownership/shared · analysis status incl. stale · reliability-qualified understanding indicator · recency · open-issues count); Archived projects area (non-destructive, restore anytime); "no computed scores across projects" honesty note; at-cap Create → upgrade-or-archive prompt (DL-048). Alpha shows the structure with illustrative projects + "1 active project" note.
+Impacts: slice-08.
+
+## Decision 103: Project switcher
+Status: Accepted recommendation · Type: Routing · Area: Nav · Slice: 8 · Question ID: F8.2Q1 · Source: GLOBAL_NAVIGATION §N
+Decision: The top-bar "DevNorth 2026 ▾" chip opens a real switcher: project list + Workspace Home + New project (at-cap → honest prompt). Replaces the Slice-6 switcher seam.
+Impacts: slice-08.
+
+## Decision 104: Notifications / awareness panel
+Status: Accepted recommendation · Type: Screen/Interaction · Area: Awareness · Slice: 8 · Question ID: F8.3Q1 · Source: NOTIFICATION_AND_AWARENESS spec
+Decision: Awareness panel, R1 categories (mention · reply · shared-with-me · analysis complete/failed · stale); read/unread presentation-only; routes to source; never triggers analysis; unread badge in top bar.
+Impacts: slice-08.
+
+## Decision 105: Settings (visibility-first)
+Status: Accepted recommendation · Type: Screen/Interaction · Area: Settings · Slice: 8 · Question ID: F8.4Q1 · Source: ACCOUNT_AND_WORKSPACE_SETTINGS spec
+Decision: Settings surface (wires the seam) with areas: Account · Profile · Workspace · Project defaults · Collaboration · Notifications · Subscription · Billing · Integrations · Membership. Visibility-first for Subscription/Billing/Integrations/Membership (facts + upgrade paths; no enforcement).
+Impacts: slice-08.
+
+## Decision 106: Appearance (theme + a11y)
+Status: Accepted recommendation · Type: Product Design · Area: Settings/Theme · Slice: 8 · Question ID: F8.5Q1 · Source: D015; VISUAL_DESIGN §1
+Decision: Settings → Appearance: dark/light theme toggle (dark default; one semantic token set flips via data-theme), plus accessibility controls (reduced-motion honored, focus rings).
+Impacts: slice-08, theme-system.md.
+
+# Slice 7 — History & Confidence Trend (locked 2026-07-09, all recs accepted)
+
+## Decision 101: Fold History gap-analysis refinements into Slice 7
+Status: Client override · Type: Screen/Interaction · Area: History · Slice: 7 · Source: owner 2026-07-09; slice-07-history-critical-analysis.md
+Decision: Fold these History refinements (prototype-grade): (1) remove the internal event-type identifier leak (`analysis_run`, etc.) from the UI — replace with human category labels; (2) group the timeline by **analysis run** (collapsible clusters: each run + the events it caused) and/or by day; (3) per-run **"what changed" delta** (issues +/resolved · CAF band moves · stage · confidence direction); (4) **link the trend to the timeline** (click a trend point → its run; run events show the confidence band produced); (5) event-type **filter chips** (All · Analysis · Issues · Versions · Your decisions) with honest hidden-count; plus light polish: absolute timestamp on hover, cleaner current-state (not per-event "current") semantics, list a11y. Preserve append-only + read-only + last-good honesty. Deferred: full version diff/restore (build-phase/versioning model), history search, export/share (Slice 9), windowing.
+Impacts: slice-07 prototype + docs.
+
+
+## Decision 096: Append-only History/timeline
+Status: Accepted recommendation · Type: Screen/Interaction · Area: History · Slice: 7 · Question ID: F7.1Q1 · Source: HISTORY_AND_TIMELINE §J; v4
+Decision: History center pane (`#pane-history`, from the sidebar) = chronological, append-only event list — analysis runs (Initial/Extended), artifact versions (vN), issue lifecycle (Open→Addressed→Resolved), selected resolution paths, clarifications answered. Current vs prior labels; nothing overwritten; viewing is read-only and changes no assessment. Replaces the Slice-6 History seam.
+Impacts: slice-07.
+
+## Decision 097: Understanding-over-runs trend
+Status: Accepted recommendation · Type: Product Design · Area: Confidence · Slice: 7 · Question ID: F7.2Q1 · Source: v4; D056
+Decision: "Understanding over runs" trend sparkline — each point cause-bound + band-qualified; can rise OR fall (a fall after deeper analysis usually means it found something real). Shown in History; mirrored by the Overview confidence trend row. Direction-only; real magnitudes owner-TBD.
+Impacts: slice-07, slice-03.
+
+## Decision 098g: Last-good + read-only honesty
+Status: Accepted recommendation · Type: Product Requirement · Area: History · Slice: 7 · Question ID: F7.3Q1 · Source: ORIENTATION_STATE_MODEL
+Decision: Last-good understanding preserved (e.g., on failed analysis); History is read-only — prior states viewable, never editable, and viewing changes nothing. (Grill decision 98 — distinct from canonical DL-098.)
+Impacts: slice-07.
+
+## Decision 099: Version lineage
+Status: Accepted recommendation · Type: Product Data · Area: History · Slice: 7 · Question ID: F7.4Q1 · Source: v4
+Decision: Artifact versions (vN) are append-only; History links to prior versions as view-only snapshots.
+Impacts: slice-07, slice-05.
+
+## Decision 100: First-run state
+Status: Accepted recommendation · Type: Screen/Interaction · Area: History · Slice: 7 · Question ID: F7.5Q1 · Source: empty-state model
+Decision: Before multiple runs, History shows a minimal state (initial analysis) with an honest "more appears as your plan evolves." Threaded comments as timeline events deferred to Slice 9.
+Impacts: slice-07.
+
 - ~~ND-1: Hero headline~~ → **Resolved (D029): A + "Strategic project leadership".**
 - ~~ND-2: Confidence movement magnitude~~ → **Resolved (D056): direction-only.**
-- ND-3: Scope of multi-project / collaboration / export surfaces as fat slices (recommend include; CRR out).
+- ~~ND-3: Scope of multi-project / collaboration / export surfaces~~ → **Resolved (D110–D118): included as Slices 8–9. CRR *reinstated* — it is ratified canon (CRR-01…05, DL-049), not a gap; the earlier 'CRR out' position was a documented over-escalation, corrected 2026-07-10.**
 - ~~ND-4: MRI co-primary vs nested~~ → **Resolved (D038): land on Overview; Attention co-primary. Owner may flip.**
+
+
+---
+
+# Slice 9 — Collaboration, Sharing & Export (2026-07-10)
+
+**D110 — Sharing dialog.** Invite by email + participant types **Owner · Collaborator · Viewer** (each with a plain statement of what they can do), plus a **view-only snapshot link**. Presentation-only in R1: no permission enforcement. A stale link is labeled **"previous analysis"** — never silently presented as current.
+
+**D111 — Threaded comments + @mentions on issues.** Comments attach to an **Issue** (Panel Model — no orphan comment surface), are **append-only**, and support **@mention** autocomplete (registered teammates, or invite someone new). Persistent honesty line: **"Comments never change the assessment."** Comments append to History (D096).
+
+**D112 — Export / share-out.** Export a **snapshot** of current understanding carrying an **analysis-currency marker** and the **required disclaimer** (understanding maturity — *not* project health, readiness, or probability of success). PDF / copy / link. **Free = PDF-only.** Export generates no new assessment and never triggers an analysis.
+
+**D113 — Collaboration notifications un-gated.** The **mention · reply · shared-with-me** categories (gated in Slice 8 / D107) are now live; they route to source and remain presentation-only.
+
+**D114 — CRR reinstated as ratified canon (corrects the prior "spec gap" escalation).**
+CRR-01…05 are Alpha-scope, High-priority canon with the M4 exit criterion (C14); **DL-049 (ratified) resolved gap #337** (external-reviewer identity: single `Principal`, `type: reviewer|user`, in-place promotion); **DL-055 (ratified)** reclassified *Share For Review* as a collaboration affordance. Build:
+- **CRR-01** *Share for review* on an issue (Issue Panel + issue-overlay action; **Validation Recommendations are prime candidates** per REC-05).
+- **CRR-02** **Review Package** = finding + context + recommendation + artifact reference.
+- **CRR-03** Reviewer responses: **Comment · Approve · Reject · Suggest Alternative** — structured and preserved.
+- **CRR-04** Response → **evidence** → triggers **Extended Analysis**; confidence / Attention (MRI) update.
+- **CRR-05** **Review-status visibility** across the workspace, driving **MRI-07 Understanding Dependencies** ("2 issues awaiting sponsor review") on Overview + Attention.
+
+**D115 — Reviewer-response semantics (doctrinal).** A stakeholder response is **evidence, not truth**. It enters the record as a **third-party attestation** — a *third* epistemic class, distinct from **From OSLO** (derived) and **Confirmed by you** (owner-attested). It triggers an analysis update and confidence may move, but it **never auto-resolves the issue**, and **OSLO never self-accepts it** (no autonomous acceptance). An "Approve" is evidence *that a stakeholder approves* — never proof the plan is sound.
+
+**D116 — Reviewer (recipient) experience — PROPOSAL, not asserted canon.** Build a **low-friction, no-account-required reviewer view** (lands directly in the review package; responds without a signup wall) with a **convert-moment at realized value** ("create your own project" *after* they respond, never before). Per the Virality/K-Factor audit this is **P0** — the binding constraint on k — and is explicitly **owner-open**. It is therefore built and **labeled in-product and in the docs as an owner proposal requiring ratification**, not as settled canon. Anti-Assumption is honored: proposed, not inferred.
+
+**D117 — Share-link hygiene (gap #339, unspecified).** Links are **revocable** and **scoped** (one issue package, or one snapshot). **Expiry is an explicit owner-TBD** — surfaced in-product as an unset value, not invented.
+
+**D118 — Free-tier CRR cap.** The **bounded-cap mechanism** is canon (CRR-01); **the number is not ratified.** Build the cap + counter with the value as an explicit **owner-TBD placeholder**. Doctrine: **virality seeds on Free** — gate collaboration *depth*, never the *seed* of the loop.
+
+**Out of scope (Slice 9):** real auth/permission enforcement, real email delivery, real PDF generation, billing.
+
+---
+
+# Controlled Release & Demand (owner-directed, 2026-07-10) — amends D116/D117/D118
+
+**D119 — Reviewer access is GATED in Alpha/Beta via token-granted Reviewer Principal.** Supersedes D116's "no-account-required" reviewer view. A review-request link carries a **token that grants Reviewer Principal access (DL-049)** scoped to exactly that review package. **The invite IS the authentication** — so a reviewer is *identified and invited*, never anonymous, satisfying D021 (Alpha/Beta invite-only, never anonymous) **without** a signup wall and **without** breaking the CRR evidence loop. Resolves the worker's escalation #1 and gap #337's residue.
+
+**D120 — Bound seats, never bound evidence (the crux rule).** An invite is consumed **only when a NEW principal is admitted** (collaborator seat, or first-time reviewer). **Sending a review request to an existing principal is free, forever, and is never metered.** Rationale: a review request is not a marketing share — it is how the user gets their answer. Bounding new-principal grants controls *supply*; bounding evidence-seeking *sabotages the product* and degrades the user's understanding by design.
+
+**D121 — Controlled-release / waitlist demand mechanics (Alpha/Beta).** Per `controlled-release-demand-framework.md`:
+- **Bounded, replenishing invite allocation** — {N} invites per {period}, balance + replenish date always visible (real numbers only).
+- **Waitlist with earned position** — improved by converted referrals, by **being review-requested** (strongest inbound demand signal), and by role/org fit.
+- **Skip-the-line** — a user may spend an invite to admit someone immediately (the status good).
+- **Convert-moment = the waitlist, not a signup** — offered to a reviewer **only after they respond** (post-value, never pre-value); the inviter may grant a seat from their allocation.
+- **Phase ramp with an explicit sunset:** Alpha (tight) → Beta (loosening) → **GA: open, anonymous permitted (D021/D024), waitlist retired, limits become tier-based.** The scarcity mechanism is phase-scoped and self-terminating — not the business model.
+- **Instrumented** — waitlist size/velocity, invite utilization, review-request→admit conversion, k per loop (TEL-06). Throttling supply without measuring demand is just throttling growth.
+- **Guardrails (non-negotiable):** no fabricated scarcity, no dark patterns, the waitlist states plainly what it is, evidence-seeking is never bounded, reviewers are never spammed. OSLO's growth engine *is* its epistemic credibility; it cannot lie in its growth surfaces.
+
+**D122 — Canon tension escalated (NOT resolved unilaterally).** This framework **deliberately gates the seed of the loop** in Alpha/Beta, conflicting with **CHG-061 / Virality-audit P2 (applied): "guarantee the viral primitives on Free… never gate the seed."** *Recommended reconciliation (owner to ratify via Framework 001):* the two are **orthogonal axes** — CHG-061 is a **tier** rule governing GA-phase freemium economics; controlled release is a **phase** rule that **sunsets at GA**, exactly when CHG-061 takes effect. Both then hold, and neither is substantively amended. **This is a recommendation, not canon** — it must route Backlog → Proposal → Review → Decision.
+
+**Owner-TBD (DO NOT ASSUME):** CR-1 {N}/period · CR-2 does a first-time reviewer grant consume an invite (*rec: free/cheap*) · CR-3 waitlist admit rate + curation · CR-4 referral weighting · CR-5 does an inbound review request move the requested person up the queue (*rec: yes*) · CR-6 link expiry (gap #339) · CR-7 is the convert-moment R1 or fast-follow.
+
+---
+
+# Tiering in Alpha (owner-directed, 2026-07-10) — reverses my N-1 advice
+
+**D123 — Basic tier is purchasable during Alpha; tier gating stays LIVE in Alpha.** Supersedes my N-1 recommendation ("make tier limits inert until GA"), which was predicated on the now-false premise that all Alpha users are on Free with no upgrade path. Consequences:
+
+1. **Two orthogonal axes, both live in Alpha, never conflated in UI:**
+   - **PHASE (supply)** — who gets a *seat*: bounded invite allocation + waitlist (D119–D121).
+   - **TIER (depth)** — what a seat *can do*: Free vs Basic (D112 Free = PDF-only, etc.).
+   A user can be blocked by one and not the other; the product must always say **which**, and never present a phase limit as a tier limit (that would be a dark pattern — manufacturing an upsell out of a supply constraint).
+
+2. **CHG-061 is now OPERATIVE IN ALPHA, not just at GA.** This **kills the D122 "tier vs phase, sunsets at GA" reconciliation** — the tier rule no longer waits for GA. The tension now rests **entirely** on **CR-2 (reviewer grants free/unmetered)**: with reviewer grants free, the *seed* of the loop (CRR evidence-seeking) is **not gated on any tier or in any phase**; only **seats** are metered. CHG-061 then holds **literally**. **CR-2 = free is therefore load-bearing, not a preference.**
+
+3. **DL-048 "paid-tier limits TBD" is now blocking, not deferred.** Basic cannot ship in Alpha without a ratified Free↔Basic boundary. Escalated (T-1).
+
+4. **Slice 10 (Tiering & Limits) is now an Alpha-live surface**, not a GA preview: it must show a real Free→Basic upgrade path.
+
+**Owner-TBD (DO NOT ASSUME):**
+- **T-1 — the Free ↔ Basic boundary** (DL-048 paid-tier limits). *Recommendation:* **Free must be enough to fully experience the core read** on a real plan (intake → Fast Pass → Overview → Attention → Issues → CRR). **Basic sells depth and volume** (projects, Extended Analysis frequency, artifacts, collaborators/seats, export formats, history retention). Rationale: a crippled Free tier destroys the honest product signal Alpha exists to buy — churned alpha users tell you nothing.
+- **T-2 — does tier change the seat allocation {N}?** *Recommendation:* **Yes — invites scale with tier** (Basic > Free). It is an honest monetization lever that meters *seats*, never the *seed*. Consistent with D120 and CR-2.
+- **T-3 — is Alpha Basic actually charged, or comped / founding-member priced?** Not assumed. (Superhuman charged full price from a waitlist; scarcity + payment are compatible.) Real willingness-to-pay signal is only obtained if money actually changes hands.
+- **T-4 — does billing/payment infrastructure exist in the Alpha build?** Currently out of prototype scope; needs an owner call.
+
+---
+
+# Controlled Release register — RATIFIED (owner: "accept", 2026-07-10)
+
+**D124 — Two limits, never conflated. Always say which one you hit.**
+- **Phase allocation** — how many NEW humans a user may bring into the OSLO alpha (waitlist bypass).
+- **Tier seat cap** — how many collaborators a PROJECT may hold (Free vs Basic).
+A user may have invites remaining and still hit a tier cap, or vice versa. The product must always name **which limit** blocked them. Presenting a *phase* (supply) constraint as a *tier* (upsell) constraint is a **dark pattern** and is prohibited (D123).
+
+**D125 — The ratified register.**
+- **CR-1 / T-2 — allocation scales with tier: Basic 5/month · Free 2/month**, replenishing, **non-cumulative**. Free is non-zero because virality must seed on Free (CHG-061). *Correction of record:* my earlier "set N from the 3–6 working-set size" argument **conflated seats with reviewers**. Because CR-2 makes reviewer grants free, the room for **evidence** is already unlimited; **seats** are only for people who must *work inside* OSLO. Seats can therefore be metered tightly **without starving the product** — but only *because* CR-2 is free.
+- **CR-2 — reviewer grants FREE and unmetered. Structurally required (not a preference).** Anti-abuse ceiling only. Cost tie: each response triggers an Extended Analysis → DL-048 token budget (a **cost** control, never a monetization gate). This is the sole load-bearing resolution of D122/CHG-061 (per D123).
+- **CR-3 — waitlist admits are HAND-CURATED in Alpha**, throttled by **owner onboarding capacity**, not a formula.
+- **CR-4 — no points economy.** Three honest bands, date-ordered within each: (1) review-requested, (2) referred by an active user, (3) cold. **No referral-for-credit/discount in Alpha** (canon: referral rewards bounded by unit economics).
+- **CR-5 — an inbound review request places you in the TOP band.** Strongest available demand signal.
+- **CR-6 — scope link lifetime to purpose.** Share link: **30 days**, revocable, auto-labeled "previous analysis" when stale. **Review grant: expires when the issue resolves, or 14 days, whichever first** — the key was cut for one question. (Configurable expiry for Basic: NOT assumed — owner-open.)
+- **CR-7 — convert-moment = WAITLIST ONLY in R1**, shown post-response (never pre-value). **PAY-TO-SKIP IS PROHIBITED IN ALPHA.** Per CR-3 the queue is throttled by onboarding capacity — **payment does not create capacity**, so selling passage past it is a toll booth on an invented constraint: prohibited under the §5 no-dark-patterns guardrail, and it would spend the credibility the product is built on. Pay-to-skip becomes legitimate **only if revenue genuinely expands supply** (e.g. onboarding staffed against revenue) — revisit then, and say so plainly.
+- **N-1 — WITHDRAWN/REVERSED** (see D123): tier gating stays **live** in Alpha.
+- **N-2 — one identity.** `Principal` is the single identity (DL-049). "Participant" is a **view**: `Membership` (principal × project × role) + `ReviewGrant` (principal × package, scoped). **Membership is where the tier seat cap is enforced.**
+- **N-3 — admit as VIEWER by default**, one-click upgrade to Collaborator. Least privilege *and* least cost (a Collaborator consumes a tier seat; a Viewer need not).
+- **T-1 — Free ↔ Basic boundary (unblocks Basic-in-Alpha):** **Free fully delivers the core read** (intake → Fast Pass → Overview → Attention → Issues → CRR). **Basic sells depth and volume** — projects, Extended Analysis frequency, artifacts, seats, export formats, history retention. A crippled Free tier destroys the honest product signal Alpha exists to buy.
+- **T-3 — Alpha Basic is CHARGED** (founding-member pricing permitted). Comping teaches nothing about willingness to pay; scarcity + payment are compatible (Superhuman charged full price from a waitlist).
+- **T-4 — billing/payment in the Alpha build:** required by T-3; **outside prototype scope** — carried to Slice 10 / engineering.
+
+**D126 — Governing principle (canonical statement).**
+> **Meter who gets a seat. Never meter who gets an answer. And always say which limit you just hit.**
+
+**Still routing to Framework 001 (recommendation, not canon):** D122 (CHG-061 reconciliation via CR-2) · D123 (tier-live-in-Alpha consequences) · CR-6 numbers · T-1 boundary. **Owner-open:** configurable expiry for Basic; whether revenue ever expands onboarding capacity (re-opens CR-7).
+
+**D127 — Dark is the product default (owner-directed, 2026-07-10).** Amends D106. Root cause of the prior behaviour: `initTheme()` fell back to the OS `prefers-color-scheme`, so a fresh user on a light-mode machine opened OSLO in light. Now: **a fresh user always opens in dark**, regardless of OS. System preference is honoured **only as an explicit opt-in** — "Match system" sets `theme='system'`, and only then does the OS setting (and live OS changes) drive the theme. Explicit Dark/Light choices persist as before. Applied to Slices 8–9 (the slices carrying Settings/Appearance).
+
+---
+
+# Open-items register — RATIFIED (owner: "accept", 2026-07-10)
+
+**D128 — Two governing principles for metering.**
+1. **Meter only what costs money or defines scope. NEVER meter the epistemic record.** Extended Analysis runs cost real tokens (DL-048) → honest lever. Projects and seats define scope → honest lever. **History retention and artifact counts are the epistemic record** — the append-only trace of how understanding evolved (D096) *is* the product's core promise. **Artifacts are never capped. History never expires.** Monetizing the epistemic record would sell the one thing OSLO declares inviolable.
+2. **Never sell safety.** Link revocation and purpose-scoped expiry (CR-6) are **trust hygiene for everyone** — never a Basic-only feature. Charging for the secure default is disqualified on a product whose pitch is trustworthiness. **CR-6 configurable-expiry: NOT BUILT, closed.**
+
+**D129 — The ratified open-items register.**
+- **X-1 — seats: meter COLLABORATORS only.** **Viewers are unlimited** (read-only changes nothing — closer to a reviewer than a seat; unlimited read-only spread is pure upside). **Reviewers free/unmetered (CR-2).** **Free = 3 collaborator seats (incl. owner) · Basic = 10.** Free must permit *real* collaboration (a co-lead + a stakeholder) — experiencing it is what creates the want, and a one-seat Free tier would breach CHG-061 (comments guaranteed on Free).
+- **X-2 — invite refunds:** **no refund once ACCEPTED** (an invite admits a *human to OSLO*, not a membership to a project; refunding on removal creates an add/remove recycling exploit). **NEW — refund on UNACCEPTED/EXPIRED invites:** no human was admitted, so no supply was consumed. Must be added (the build does not do this).
+- **X-3 — allocation period: CALENDAR MONTH** (confirm as built). Legible ("resets Aug 1") and shares a cycle with billing now Basic is charged (T-3). Rolling windows are opaque.
+- **T-1 numeric caps** — ⚠️ **CORRECTED (see D141): "Basic = 10 projects" was WRONG.** Canon (**UP-3**) ratifies **Basic = 3 projects**. Correct values: **Free = 1 project · Basic = 3 projects**; small/generous monthly Extended Analysis budget (numbers owner-open); **UNLIMITED artifacts · FULL History** on every tier. Per D128, the only metered dimensions are **analysis runs** (cost-linked) and **projects + collaborator seats** (scope-linked). *(Seat caps Free 3 / Basic 10 are a different number and are NOT affected.)*
+- **"Sponsor" = `TEAMMATES[].role`** — confirmed as-is (cosmetic).
+
+**D130 — Numbers are instrumented hypotheses, not settled canon.** Every value above (3 / 10 / 1 project) is a judgment, not a derivation. They were chosen to be **easy to loosen and painful to tighten** — the right direction of error before real alpha data exists. They must be instrumented and revisited against alpha behaviour.
+
+**Still OWNER-OPEN (not assumed):**
+- **T-3 — Basic price.** Business call; not invented. *Method recommended:* price against **the alternative** (the plan review a consultant would run), **not** against PM tools ($10–25/seat). Pick a **founding-member price you would be embarrassed to lower later**, declare it time-limited, and lock it for early users.
+- **"Does a Reject move CAF?"** *Recommendation (requires Framework 001 — NOT built):* **yes, via Alignment.** A stakeholder rejecting a finding is literally evidence about **Alignment**, a first-class CAF dimension (DL-062) — so it may move Alignment and Reliability, while still **never auto-resolving the issue and never overwriting OSLO's read** (D115). Nothing ratifies this today, so it stays out of the build.
+- **Whether revenue ever expands onboarding capacity** (would reopen CR-7 pay-to-skip).
+
+**D131 — Framework 001 routing: ONE consolidated proposal, not four.** Package title: **"Controlled Release & Tiering-in-Alpha."** Contents: D122 (CHG-061 reconciliation via CR-2) · D123 (tier live in Alpha) · T-1 boundary + caps · CR-6 closure · Reject-moves-CAF. Rationale: these are **interdependent** — CR-2 is the *sole* resolution of D122, and T-1 exists only because of D123. Split into separate proposals, a reviewer could ratify one while silently breaking another.
+
+**D132 — Final Slice 9 closures (owner: accepted, 2026-07-10).**
+- **X-2a — pending invite expiry = 14 days.** Long enough for a busy stakeholder; short enough that supply isn't parked indefinitely. On expiry the invite **refunds** to the balance (D129) with a History event.
+- **Seat cap vs downgrade — NO EVICTION.** Basic (10 seats used) → Free (cap 3): **nobody is removed.** The account simply cannot **add** another Collaborator until it is back under the cap. Evicting humans from a project to enforce a billing change is a severe act on a trust product; the non-destructive rule costs nothing and is now canon.
+
+**D133 — A Reject MOVES CAF, via Alignment (owner: ratified, 2026-07-10).** Closes the last Slice 9 escalation.
+A stakeholder **Reject** on a CRR review request is **evidence about Alignment** — a first-class CAF dimension (DL-062) — not merely a comment. It may therefore move **Alignment** (and **Reliability**, as any attested evidence does) through a normal Extended Analysis run.
+**Bounded exactly as D115 binds every reviewer response:**
+- It is **evidence, not truth** — recorded as a **third-party attestation** ("Attested by <name>"), never as OSLO's own read.
+- It **never auto-resolves and never re-opens** an issue by itself; only an analysis update moves the read.
+- **OSLO never self-accepts it.** A Reject is evidence *that a stakeholder disagrees* — never proof the plan is wrong.
+- Symmetry note: an **Approve** is *also* Alignment evidence. Neither direction is privileged; both are attested inputs to the same run.
+Rationale: refusing to let a Reject touch CAF would mean OSLO watched a sponsor reject a finding and learned **nothing about alignment** — which is precisely the dimension the event speaks to. Requires the Framework 001 package (D131) to become repository canon.
+
+---
+
+# Slice 10 — Tiering & Limits (FINAL SLICE) — owner: "accept all", 2026-07-10
+
+**Governing rule for this slice: canon decides; I adopt and cite.** Where canon has ratified a number, it is used with its citation and **not re-proposed**. This is the direct correction of the Basic-10-projects failure (DL-102 Correction #3).
+
+**D134 — Adopted from canon, unchanged (cited, not re-decided):**
+| Value | Source |
+|---|---|
+| Free = **1** active project · Basic = **3** | UP-3 |
+| Daily fixes: Free **5** · Basic **20** | MON-02 / UP-1 |
+| Daily chat: Free **20** | MON-03 / UP-2 |
+| Deep runs/day: Free **2** | UP-5 |
+| Export: Free = **PDF only** | MON-01 / SHARE-04 |
+| Free scope = full Workspace · Confidence · CAF · MRI · Issues · Recommendations · Sharing · Comments · **CRR** | MON-01 + CHG-061 |
+| Seats: Free **3** · Basic **10**; **Viewers unlimited**; **reviewers free** | DL-102 B/E |
+
+**D135 — Plans / upgrade surface.** Real (simulated) Free → Basic upgrade. **Pro is named only as a forward capability** (continuous monitoring, UP-7) — not purchasable in R1. **Basic price renders as an explicit owner-TBD. No invented number.**
+
+**D136 — Honest counters.** Visible counters for projects · daily fixes · daily chat · deep runs/day, with real values and real reset times. Values canon has not settled (Extended-Analysis budget, size envelope, monthly budget gate) render **visibly unset** — never as fabricated numbers, never as fake scarcity.
+
+**D137 — Upgrade prompts: UP-1…UP-8 exactly as ratified (MON-04).** Two trigger classes — **value-moment** (fires at a positive peak; sells the *next* capability; rare, strict cooldown) and **friction-moment** (an **honest limit disclosure + the specific relief**). **Standing rules:** *no persistent upgrade wallpaper*; every prompt is **contextual, value-based, and names the specific limit hit AND the specific tier that relieves it** — never a generic "upgrade." **Global guards:** never interrupt an active Fast/Deep pass · never fire before first value (first MRI delivered) · per-trigger cooldown + a global per-day cap.
+
+**D138 — The limit-reached interaction rule (DL-102 E-1 / Seam Audit 001) applies to EVERY cap.** A limit-bearing affordance **stays enabled**; the *attempt* is gated and surfaces the matching prompt **with resolutions** — e.g. a 2nd project → *"upgrade **or** archive the current project"* (archiving is reversible and frees the slot, DL-058). **Never disabled, never hidden** — disabling suppresses the highest-intent moment — and **never a raw error.** **This corrects Slice 9**, where the collaborator seat cap *blocked* instead of *prompting*.
+
+**D139 — Envelope exceeded → partial orientation (UP-4).** When a project exceeds the Free size envelope, OSLO delivers a **partial** analysis with an **honest disclosure**, fired on **one surface** together with the prompt — never two competing notices. **This is an epistemic-honesty requirement first and a monetization surface second:** if OSLO only saw part of the plan, it says so, plainly, whether or not anyone upgrades. The envelope size is **owner-TBD** (UP-4's "~100k words" is illustrative in canon, not ratified).
+
+**D140 — The Tier-Definitions census (the real deliverable).** Slice 10 is the surface that **consumes every tier number**. The build produces `tier-definitions-census.md`: every number the product needs, each marked **RATIFIED (with citation)** or **UNSET (owner decision required)**. This is the evidence-based table of contents for the missing **`RELEASE_1_TIER_DEFINITIONS_V1`** — cited as authoritative by **18 documents**, never written, and escalated in **DL-102 Concern 7** as a **blocking prerequisite for shipping Basic in Alpha**.
+
+**Deliberately NOT invented (render unset):** Basic price · Extended-Analysis budget numbers (shape ratified: Free small / Basic generous) · Free size envelope · monthly budget gate (UP-6).
+
+
+---
+
+**D141 — T10-1 correction: Basic = 3 projects (canon UP-3), not 10.** Closes the last contradiction from the Basic-projects error.
+Two of my own records disagreed: **D129 T-1 said "Basic = 10 projects"**; canon **UP-3** (`12_freemium_tier_behavior_logic.md`) ratifies **Basic = 3**. The Slice 10 build followed canon (3); **D129 T-1 is now corrected above** so the contradiction does not outlive the session. **DL-102 already carries the correction** in repository canon (Correction of record #3).
+**Scope of the error, for the record:** the invented number propagated from a recommendation → an owner ratification made on my advice → the D129 register → the Slice 9 prototype (`BASIC_PROJECT_CAP = 10`) → **and into a hard-coded copy string** (`'10 projects · 10 seats'`) that would have survived a constant-only fix. All corrected in Slice 10; **every displayed tier number is now painted from its constant**, so copy can no longer drift from canon.
+*(The **seat** caps — Free 3 / Basic 10 — are a different quantity and were never in conflict.)*
+
+**D142 — Remaining Slice 10 escalations (NOT resolved; carried to the owner).**
+- **T10-2 — UP-5 presumes an affordance D006 forbids.** UP-5 caps a manual "reanalyze" control, but **D006 ratifies event-driven reanalysis only** — there is no manual button to cap. The build gates user-initiated triggers and **never** gates an evidence run (CR-2 holds). **Owner must state what the deep-run cap attaches to.**
+- **T10-3 — seats and export formats have no slot in the ratified UP-1…UP-8 taxonomy**, though D138 governs their behaviour. Built as `UP-SEAT` / `UP-EXPORT`; **no canon numbers assigned** — owner to place them.
+- **T10-4 — MON-04 requires a global per-day prompt cap and never sets it.** Guard enforced; number renders unset; the build **errs toward silence**.
+- **The 11 UNSET tier values** (see `slice-10-tiering-limits/tier-definitions-census.md`): Basic price · billing rail · Basic daily chat · Basic deep-runs/day · Free + Basic monthly Extended-Analysis budget · UP-6 gate threshold · Free + Basic size envelope · Free CRR cap · global prompt cap/day.
+
+---
+
+# Reporting (M4) — design locked (owner: "accept all", 2026-07-12)
+
+**D143 — ONE composable readout, not six report types.** Revises my own scope brief. Grilling it: **"leverage read" is not a report — it is the §2 section** (what's limiting the read); **"reliability disclosure" is not a report — it is §5, and it appears in EVERY report**; and alignment / assumptions / decisions are **not artifacts a PM sends separately — they are sections of one memo.** Fewer objects, less to name, less to spec, and it matches what a PM actually wants: **one artifact they can shape for the room.**
+
+**D144 — The spine (fixed; §1–§5 always present).** What makes a report *strategic* rather than a data dump is **selection and framing, not volume**. A dump ("here are 12 issues") makes the PM look like a **clerk**. The spine is the shape of a good executive memo — **so what · how do we know · what now**:
+1. **The read** — one line; understanding maturity, reliability-qualified. **Never health, readiness, RAG, or probability of success.**
+2. **What's limiting it** — the limiting CAF dimension **and the specific reason**. Prioritization *with a reason*, not a list.
+3. **What we don't know** — unvalidated assumptions, open clarifications. **The status-conferring part** — *"here's what we haven't validated"* is how senior people talk.
+4. **What I need from you** — decisions owed, evidence outstanding (MRI-07 Understanding Dependencies). **Turns the PM from reporter into agenda-setter.**
+5. **How to read this** — reliability basis (Coverage · Evidence · Assessability), analysis-currency marker, standing disclaimer. **A report without §5 is not shippable.**
+**Optional sections (Basic):** Alignment · Assumptions · How our understanding matured (History narrative) · Artifact detail.
+
+**D145 — BINDING: tailor the ASK, never the READ.**
+> **Re-framing the assessment by audience is SPIN** — the *"make me look good by shading the truth"* failure — **and it would destroy the PM's credibility in front of the exact people they are trying to impress.**
+- **§4 (what I need from you) IS addressed to the recipient.** ✅
+- **§1–§3 (the read, the limiter, the unknowns) are IDENTICAL for every audience.** ❌ **never re-framed.**
+**One honest read. Many asks.** This is what keeps the status lever from becoming a spin machine — the single way this feature could turn on the product.
+
+**D146 — Live composer → dated snapshot.** The readout is a **live composer in-app** (pick sections; watch it assemble from current understanding) producing a **dated snapshot** on export. **The snapshot is what travels.** Carries the **analysis-currency marker**; a stale one is labeled **"previous analysis"**, never presented as current. **Packages, never produces — generating a report runs NO analysis** (Export doctrine, already asserted in the build).
+
+**D147 — Tiering + scheduling + names.**
+- **Free** — the **read snapshot**: spine §1–§5, PDF, OSLO-marked. **CHG-061: the seed is never gated** — it must be able to travel into an exec's inbox.
+- **Basic** — the **composable readout**: optional sections, branding, scheduling, all export formats. **The seed is not gated; the depth is.**
+- **Scheduling** at Basic (R1 if cheap — a weekly readout is the PM's recurring obligation, and automating it is the labour half of the lever). **A scheduled report MUST re-check currency**: if the analysis is stale it says so; it **never quietly ships a stale read as current.** *(R1-vs-fast-follow: owner-open.)*
+- **Names: owner/glossary decision (DL-053).** Build labels descriptively, flags "naming pending." **Avoid "status report"** — that is the clerk artifact this feature exists to escape — and **anything implying health or readiness** (DL-104 §5 P1).
+
+**The binding risk (carried in-product):** the PM puts OSLO's output in front of their leadership **under their own name**. A mis-framed claim in a status update is **embarrassing**; **in a board-level strategic read it can end a career.** Rigorous reliability-qualification is therefore **not doctrinal fussiness — it is protection of the user's reputation, which is what they are buying.**
+
+---
+
+# Reporting — REDESIGN (owner-directed, 2026-07-12). Revises D144/D146/D147.
+
+**D148 — Reports is a WORKSPACE, not a modal.** Peer to Overview · Attention · Artifacts · Issues · History. Left: the live composer. Right: the readout rendering as an actual document.
+
+**D149 — THE GOVERNING WRITING RULE (corrects my own spine).**
+> **The doctrine governs what the report may CLAIM. It must NEVER govern how the report SOUNDS.**
+My spine (D144) was **OSLO describing its own epistemic state** — a section literally titled *"How to read this"*, headings like *"What we don't know"* and *"What's limiting it."* That is a report **about OSLO's understanding**, not a report **about the project**. **Struck.**
+**The report is written for its reader, in their language.** It is an **executive summary** — familiar style, layout and vocabulary. **ZERO OSLO vocabulary:** no *confidence · CAF · reliability · understanding maturity · assessability · artifacts · the read · Outcome Orchestration*.
+**The epistemic honesty appears as ORDINARY GOOD WRITING.** Canonical example — derived-vs-attested, rendered without jargon:
+> *"80% support coverage is sufficient. **This came from the plan, not from Support.**"*
+The sponsor now knows exactly how much to trust that number. No doctrine was spoken.
+
+**D150 — Structure (owner-set).**
+1. **Summary** — executive-level, **standalone**. A sponsor who reads only this has the whole picture.
+2. **What's changed since previous week** (versus \<date\>).
+3. **Key risks** — **before** assumptions.
+4. **Key assumptions** — what the plan rests on that is unconfirmed.
+5. **Plan of action** — strategic next steps.
+6. **Decisions needed from you** — with owner + what each unblocks.
+7. **Appendix — per-workstream detail** (for the leads; the sponsor can ignore it).
+
+**D151 — TWO ALTITUDES on every risk (the strategic differentiator, owner-set).**
+Every risk is framed at **both** altitudes:
+- **For the plan** — what breaks in the schedule/scope (**deliverable impact**).
+- **For the goal** — what it means for what the project exists to achieve (**outcome impact**).
+*A delay is a schedule problem. A delay that means you miss the thing the project exists for is an outcome problem. **Same fact, different altitude** — and knowing which one you are looking at is what separates a senior read from a status update.* This is also what lets the PM **subtly elevate** an item by outcome impact or feasibility.
+> ⚠️ **KNIFE-EDGE — binding.** **Outcome impact = "does the plan, AS WRITTEN, still reach its stated intent?"** — a **structural claim about the plan** (Intent is a plan artifact; it is what Clarity and Alignment are measured against).
+> **It is NOT "will this project succeed?"** — a **prediction**, which doctrine forbids. **Frame BY outcome; never FORECAST the outcome.**
+
+**D152 — "Plan of action" is the PM's, in the PM's first person. OSLO seeds; the PM owns.**
+> **If that section reads as OSLO's plan, the PM becomes a PASSENGER IN THEIR OWN REPORT — and the entire status lever collapses.** The sponsor does not think *"my PM is sharp"*; they think *"the tool wrote this."*
+OSLO **seeds** next steps from its recommendations; **the PM edits and owns them.** This is also the only form compatible with **advisory-only** — OSLO never decides. **Everything above the plan of action is OSLO's honest read in plain English; the plan of action is the PM's judgment.** That division is what makes the artifact both **trustworthy and career-safe**.
+
+**D153 — The disclaimer is a property of the PACKAGE, not a paragraph in the PROSE.** (Revises D146.)
+`EXPORT_AND_SHARE_OUT_EXPERIENCE_SPECIFICATION_V1` (ratified) requires **"every package carries an explicit disclaimer"** — so it **stays**, but it moves to the **PDF cover / share-link metadata — the wrapper the artifact travels in** — and **out of the memo body**. Canon satisfied (*the package* carries it); the writing is saved.
+*Rationale:* a line saying *"this isn't a forecast"* **invites the reader to wonder whether it was trying to be one.** The real protection is that the memo **never makes a forecast claim** — no score, no RAG, no probability. Belt-and-braces here **undermines the credibility it is meant to protect.**
+The **currency marker stays in the body** as plain attribution: *"Riverside relocation · plan as of 12 July · \<PM name\>"*.
+
+**D154 — Editing is FREE. The gate is REUSE, not EDIT.** (Revises D147.)
+**Rejected:** gating in-app editing on Free. Two reasons —
+1. **It would make the PM sign words they could not correct.** The report goes out **under their name**; selling back the ability to control it monetizes their credibility, in the one artifact where it is on the line.
+2. **It is a commercial own-goal.** They would export and edit in Word — **stripping the currency marker, the provenance and OSLO's fingerprint**, and killing the viral surface. You would be gating your way out of the loop.
+
+**The gate instead:**
+- **Free** — **full edit, every time, from scratch.** Full read, all sections, PDF export. **Nothing persists.**
+- **Basic** — **your edits PERSIST.** Standing text, tone, section choices and boilerplate carry week to week and auto-apply. Plus optional sections, branding, scheduling, all formats.
+*The readout is a **recurring obligation**. Rewriting the same framing every Friday is the tedium; **not having to** is the product.* Pure labour lever, fires weekly, entirely sayable out loud — and **it never makes a PM sign words they could not change.**
+
+**D155 — The PM's own prose: a gentle note, never a block (owner: accepted, 2026-07-12).** Closes the escalation the rebuild raised.
+The vocabulary and forecast guards **exempt the PM's own sections — and they must** (policing the user's prose would be the tool writing the report again, which D152 forbids). But that leaves a real hole: **a PM can type *"we're 80% likely to hit 450"* into their own summary, and it ships under OSLO's mark, on OSLO's cover, carrying OSLO's disclaimer** — a forecast wearing OSLO's credibility.
+**Resolution — OSLO offers a gentle, NON-BLOCKING note. It never blocks, never edits, never refuses to send.**
+e.g. *"Heads up — this reads as a forecast. OSLO doesn't predict outcomes, and this goes out under OSLO's mark."*
+*Rationale:* **blocking would be the tool overruling the human** (violates advisory-only, D001). **Silence would be OSLO lending its name to a claim it forbids itself.** The note is the only honest position — and it protects the PM from the exact reputational hit the feature exists to prevent. **The PM may dismiss it and send anyway. Always.**
+
+**D156 — The `To:` line stays.** D145 (*tailor the ask, never the read*) forbids **re-framing the assessment** by audience — it does not forbid **addressing** the document. A memo without a recipient is not a memo. The guard remains **section-scoped**: §1–§4 are byte-identical across recipients; only the decisions section varies.
+
+**D157 — Report length: selection is the value; the cut is spec'd, not invented.** Risks capped at 5 (highest impact first); the appendix walks every workstream and is explicitly skippable. **What gets cut and who decides** is carried as an open item for the M4 spec — *no truncation rule invented*.
+
+**D158 — Defect fix: `_assertNoGenericUpgradeCopy()` (MON-04).** The guard failed when `TIER==='basic'` because **UP-6 only names "Basic" in its Free branch** — a Basic user got a red console at boot. **The guard was checking the wrong condition:** MON-04 requires a prompt to name **the specific tier that relieves the limit**, which is only meaningful when the user is **below** that tier. Fixed: require the tier name only when the user is beneath it.
+
+---
+
+# D159 — OBEY THE DOCTRINE. DON'T NARRATE IT. (owner-directed, 2026-07-12 — GLOBAL, applies to every surface)
+
+**The failure, and its cause.** Across the prototypes the product **explains its own reasoning to the user**: canon citations (DL-/D-numbers, CR-2, CHG-061), rationale paragraphs, escalation notes, "the upgrade we deliberately did not build", "naming pending", governance meta. **This is my error.** I repeatedly instructed workers to *"carry the note in-product"* and *"say it out loud."* The **say-it-out-loud test was a constraint on BEHAVIOUR** — *don't do things you'd be embarrassed to explain* — **and I turned it into a CONTENT REQUIREMENT** — *explain everything*. They are not the same thing, and conflating them turned the app into a museum placard about itself.
+
+**The rule (generalizes D149 from the report to the whole app):**
+> **The doctrine governs what the product may CLAIM and DO. It must NEVER govern how much the product TALKS.**
+> **Obey it everywhere. Speak it almost nowhere.**
+
+**Binding:**
+1. **Default to the content.** The user's work is the surface. Chrome, options and explanation are **not** resident on it.
+2. **No meta in product copy.** No canon references, no rationale, no governance vocabulary, no design commentary.
+3. **Progressive disclosure.** Explanations exist **on demand** (info affordance / hover / "why") — **never resident**.
+4. **Bias to simplicity and readability**, everywhere — modals included. *(Owner: "across many modals in app, there is too much meta information disclosed, and no consideration of readability and simplicity.")*
+
+**D160 — Reports workspace: the reading surface is sacred.**
+**Default view = THE REPORT, AND ONLY THE REPORT.** Full-width, centred, comfortable measure. **Remove from the reading surface:** the recipient picker, section toggles, the package wrapper, option panels, advisory chrome, meta commentary.
+**Controls move OFF the reading surface** — a slim toolbar / drawer (Recipient · Sections · Format · Export · Schedule). Opened on demand, closed by default.
+Mandatory items keep their homes: the **currency marker** stays in the body as plain attribution (D153); the **disclaimer** stays on the **package wrapper** (shown at export, not while reading); the **forecast note** (D155) appears **only when triggered**, inline, subtle, dismissible — never resident.
+
+**D161 — "Prototype notes" toggle (OFF by default).**
+The prototype must carry owner-TBDs, guards, canon citations and escalations **for review** — but they must not pollute the product. **Move ALL of it behind a single "Prototype notes" toggle, OFF by default.**
+- **Off** → it looks and reads like a product.
+- **On** → every owner-TBD, canon citation, retired lever, guard and escalation is revealed for governance review.
+This is what the owner meant by *"mandatory informational sections must be enabled via a different path than taking up valuable reporting real estate."*
+
+---
+
+# D162 — Issue Panel: progressive disclosure, and the D159 sweep missed the panels (owner, 2026-07-12)
+
+**The D159 sweep hit modals and big surfaces and MISSED THE PANELS — where the doctrine copy accumulated worst**, because the Issue Panel is where *every* doctrinal rule has a touchpoint (evidence · provenance · comments-never-change · share-never-changes · append-only · CR-2). **It became a museum.** Observed:
+- *"Sends the issue + its context + the recommendation + the artifact reference. It never changes the issue."* — the product explaining its own contract.
+- *"This is a **validation recommendation** — the kind that a second pair of eyes settles fastest. Prime candidate for a review request."* — **design rationale, out loud.**
+- *"0 review requests sent · **free and unlimited** — on every plan"* — **reassuring the user that CR-2 is honoured.** That is a note to the owner, not to the user.
+- **Comments states "never change the assessment" TWICE**, plus *"a conversation about the read, recorded next to it"*, plus an append-only lecture.
+
+**D162a — THE COPY RULE (extends D159).**
+> **Say the honest thing ONCE, in the fewest words, at the moment it matters. Never twice. Never with its rationale.**
+Honest **labels** stay (*"Comments never change the assessment"* — D111). Everything wrapped around them goes. Contracts and explanations move to an **info affordance**, never resident.
+
+**D162b — Progressive disclosure, driven by user intent.**
+The user opens an issue to learn **"what's wrong, and what do I do about it?"** Everything else is an action they may or may not want.
+- **Always visible:** title · severity · dimension · where it lives · the plain-language read. Plus **ONE primary action**, contextual (*Apply this fix* if there is a recommendation; *Answer* if OSLO is asking).
+- **Everything else collapses to a single scannable row** — count, chevron, **real hover state**: Evidence · Recommendations · Clarification · Comments · Share for review · Discuss.
+
+**D162c — Affordance defects (owner-reported).**
+- **Evidence looks flat.** It has a `▸` but **no hover state and no affordance** — the user cannot tell it expands. **Fix:** hover background, pointer cursor, rotating chevron, count.
+- **Clarification defaults EXPANDED** with a large empty textarea. **A big empty textarea shouts "do work now"** and dominates a panel the user opened to *read*. **Fix: default MINIMIZED** — one line stating what OSLO needs, expanding to the input on click.
+- **Share for review** carries three lines of explanation. **Fix: just the button.** The contract moves to an info tooltip; the "validation recommendation" hint and the CR-2 counter are **deleted**.
+
+**D162d — Same treatment cascades** to the Recommendation panel and the artifact flyout (same disease).
+
+---
+
+# D163 — HARD WORD BUDGETS. The sweep is not done until every surface fits. (owner, 2026-07-12)
+
+**Exhibit:** the Basic upgrade prompt shipped as a **~300-word, six-paragraph essay** — *"What we are NOT selling you is the right to your own words"* · *"spin, in front of the exact people you are trying to impress, is what would end you"* · *"OSLO does not produce those, at any price."* **That is the decision log pasted into a dialog.** Every sentence was written to persuade the **owner**, not to serve the **user**.
+
+**"Be concise" is a wish. A budget is a constraint.** Binding, on every surface:
+
+| Surface | Budget (user-visible words) |
+|---|---|
+| **Upgrade / limit prompt** | **≤ 30** — MON-04 requires exactly three things: **the limit hit · the tier that relieves it · the resolutions.** That is a sentence, not an essay. |
+| **Tooltip / ⓘ** | ≤ 20 |
+| **Modal body** | ≤ 60 |
+| **Empty state** | ≤ 15 |
+| **Panel row / label** | ≤ 8 |
+| **Toast** | ≤ 12 |
+
+**Ban outright, everywhere in product copy:**
+- Any sentence explaining **why** we do something.
+- Any sentence about what we **"will never do."**
+- Any sentence that **names or paraphrases a doctrine**.
+- Any **second sentence** that restates the first.
+- Any **reassurance addressed to the owner** rather than the user.
+
+**The test for every string:** *If a real product shipped this sentence, would a user read it — or is this the team talking to itself?*
+
+**What survives:** the **honest label**, once, short. *"Editing is always free."* — yes. A paragraph about credibility and what we would never charge for — **no**.
+
+**Scope: EVERY surface.** Modals · popovers · panels · prompts · tooltips · empty states · toasts · drawers · dialogs · banners. **The sweep is not complete until every one is inside its budget.**
+
+---
+
+# D164 — The Readout is a DOCUMENT. Give it the artifact editor. (owner, 2026-07-12)
+
+**The Readout workspace must look, feel and behave like the Artifact workspace.**
+- **WYSIWYG editing** — not a stack of textareas.
+- **The user engages with readout content exactly as they engage with artifact content**: same editor, same interaction model, same affordances (inline rich text, selection, formatting, undo/redo, slash menu, find/replace, keyboard behaviour).
+
+**Rationale:** a readout **is** a document, and artifacts **are** documents. One editor, one mental model — and all the editor work already done (D066–D085) applies for free.
+
+**Constraints preserved:** the PM's sections stay PM-owned and byte-verbatim (D152/D155) · OSLO-authored sections remain reliability-qualified and free of OSLO vocabulary (D149) · *tailor the ask, never the read* (D145) · editing free on every tier; the gate is reuse (D154).
+
+---
+
+# D165 — OSLO Chat: make it a CONVERSATION, not a wall (owner, 2026-07-12)
+
+**The disease.** One "ask about this issue" reply currently contains: title + severity + dimension + artifact + status · *Why it matters* · *What it weakens* · *My recommendation* · an epistemic chip · an "I inferred this" paragraph · a reliability-basis paragraph · 2 evidence cards · 2 context cards · **4 action cards each with an explanatory subtitle** · a clarification form with an open textarea · 3 "Ask next" chips — **and then the composer offers 3 DIFFERENT chips of its own.**
+**That is a document pretending to be a message.** It pushes everything at once and asks for one decision. **Chat is the one surface where detail can be PULLED — and it was the one place we pushed hardest.**
+
+**D165a — Progressive, user-driven depth.**
+- **OSLO's opening turn is SHORT** — what it is, why it matters, and **one honest epistemic line**. That is all.
+- **Every turn ends with a HANDOFF** — 2–3 contextual next moves. *This is what makes it a conversation, and it is what creates engagement.*
+- **Detail is PULLED, never pushed.** Evidence · options · recommendation · reliability basis each arrive **only when asked for**, one at a time.
+- **ONE IDEA PER TURN.** OSLO says one thing and stops.
+
+**D165b — Actions appear when relevant, not all at once.** The four action cards (Open issue · Discuss · Apply fix · Open artifact), each with an explanatory subtitle, are **cut**. Surface the **one** action that fits the moment; the rest are reachable, not resident. **Subtitles → deleted** (they are the product explaining its own contracts — D159/D163).
+
+**D165c — ONE set of suggestions at a time (fixes a real confusion).**
+Two competing prompt sets ("ASK NEXT" in the message vs the composer's chips) leave the user unsure which to use.
+- **In-message chips = the conversation's next moves** (contextual to what OSLO just said).
+- **Composer chips = an EMPTY-STATE affordance only.** They **disappear once a conversation is underway.**
+**Never both at once.**
+
+**D165d — Visual separation of context blocks.** A new issue's thread must **read as a new thread**. Insert a clear context divider when the context changes; adjacent blocks currently appear merged.
+
+**D165e — The clarification form collapses**, as everywhere else (D162c): a one-line prompt that expands to the input on click. **An open textarea shouts "do work now"** in a surface the user came to *read*.
+
+**Preserved (compressed, never removed):** the epistemic honesty stays — but as **ONE line** (*"I inferred this — it isn't in your inputs."*), not a chip **plus** a paragraph **plus** a reliability block. Reliability basis is available **on request**. Advisory-only holds: chat never mutates, never selects a path, never resolves an issue.
+
+---
+
+# D166 — GUARDS MUST TEST MECHANISM, NOT COPY (2026-07-12)
+
+**Four vacuous guards have now been caught in this prototype** — each one *passing while the thing it protected was broken*:
+1. **Export drawer** — the button wasn't in the DOM when the drawer was shut, so the check passed for free.
+2. **Recommendation row** — it checked the element's own `display`, but the *ancestor row* was hidden.
+3. **Closed panel** — it graded a stale, closed panel's DOM.
+4. **Chat reliability** — it looked for the bare word *"Moderate"*, which the qualifier sentence already contains. **Deleting the entire reliability basis still passed.**
+
+**The pattern is unmistakable:**
+> **A guard written against COPY rots the moment the copy changes. A guard written against MECHANISM survives.**
+> **A guard that cannot fail is worse than no guard — it is a false assurance that a doctrine is being honoured.**
+
+**Binding, for every doctrinal guard:**
+1. **Test the mechanism, not the string.** Prefer a **state proof** (snapshot the model, exercise the path, assert nothing moved) or a **mechanism proof** (assert the code path cannot reach the prohibited state) over a **DOM/copy scan**.
+2. **Every guard ships with a NEGATIVE CONTROL** — an injected regression proving the guard bites. **A guard without one is presumed vacuous.**
+3. **When copy changes, re-verify the guards that referenced it.** Fix the **guard**, never the doctrine.
+
+---
+
+# D167 — Chat: the O-D closures (owner: approved, 2026-07-12)
+
+**O-D165-1 — the clarification prompt stays VISIBLE in the opening turn (collapsed).** A chip is enough surfacing for **detail**. **But a question OSLO needs answered is not detail — it is a REQUEST**, and hiding a request one click deep means a blocked issue can sit unanswered because the ask was never seen. **Keep the one-line prompt in the opening (collapsed, expands on click, per D162c/D165e); the chip remains a shortcut.**
+
+**O-D165-2 — the opening carries ONE action** (*Open this issue →*), consistent with D162b. Confirmed as built.
+
+**O-D165-3 — D163 gains chat word budgets:**
+
+| Surface | Budget |
+|---|---|
+| **Chat — opening turn** | **≤ 50** |
+| **Chat — pull turn** (evidence · options · recommendation · reliability) | **≤ 40** |
+
+**O-D165-4 — cosmetic:** with prototype-notes ON, the `pn()` block renders **below** the handoff chips in the tier answers. Move it above them.
+
+---
+
+# D168 — REPORT vs MEMO: two objects, one lifecycle (owner, 2026-07-12)
+
+**The document has two states, and they are different objects:**
+
+| | **REPORT** | **MEMO** |
+|---|---|---|
+| **What it is** | The **living document inside OSLO** | A **dated snapshot that has LEFT OSLO** — exported, shared, sent |
+| **State** | Editable · current · tracks the read | **Fixed. It never changes again.** |
+| **Presentation** | **A working document — looks and edits exactly like a plan artifact** (flush, top-left, `.doc`, continuous WYSIWYG) | **A memo — paper presentation**, its own quieter typographic voice, the cover, the **disclaimer**, the **currency marker** |
+| **Doctrine** | **Live understanding** | **A package** — *"packages existing understanding"* (Export spec) |
+
+**This reconciles both prior instincts: each was right, in the wrong place.** The paper-sheet styling was not wrong — **it was applied to the wrong object.** A memo *should* look like a memo; but only once it **is** one. While it is being written, it is a **report**, and a report is a document.
+
+**It lands exactly on D146** (live composer → dated snapshot): **you edit a REPORT; what travels is a MEMO.**
+
+**Binding:**
+1. **The live editing surface is a REPORT.** Flush, top-left, `.doc` typography, continuous WYSIWYG — **artifact parity** (D164). **No card, no shadow, no paper.**
+2. **The snapshot / export preview / the thing that travels is a MEMO.** **Restore the paper presentation there** — card, measure, and the memo's own typographic voice (this closes the escalation about the deleted 13px body type: **that voice belongs to the memo, not the report**).
+3. **`REPORT_SNAPSHOTS[]` are MEMOS.** Every dated snapshot in History is a memo. **A memo is immutable.**
+4. **Naming (partially closes R-O1):** the working document is a **report**; the sent artifact is a **memo**. *(Whether the workspace is called "Reports" remains an owner/glossary decision.)*
+5. **Never call the live document a memo, and never call the sent artifact a report.** They are different objects with different rules.
+
+**D169 — History opens the sent memo (owner: approved, 2026-07-12).** Closes O-D168-2.
+Every dated snapshot **is** a memo (D168 §3), and a sent memo is **the most auditable artifact in the product** — the thing that went to the board, **under the PM's name, on a date**. *"What did I actually tell them in June?"* is a question a PM will ask, and OSLO already holds the answer **frozen and byte-exact**. Leaving it unreachable wastes the one immutable record the product has.
+- A **"memo sent"** History event **opens the memo** — the exact bytes that travelled, with its cover, disclaimer and currency marker.
+- **Read-only, always** (Slice 7's contract holds; D168 §3 immutability holds). Opening a memo **changes nothing** and **runs no analysis**.
+- The memo is shown **as it was sent** — never re-rendered from current understanding. *(Re-rendering it would silently rewrite history.)*

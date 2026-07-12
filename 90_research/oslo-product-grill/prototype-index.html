@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSLO R1 — Prototype Index (10 vertical slices)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* OSLO theme — one semantic token set; dark is the product default (D015 / D127). */
+:root{
+  color-scheme:dark;
+  --bg:#111315; --bg-2:#15181C; --surface:#1B1F24; --surface-2:#242A31; --surface-3:#2C333B;
+  --text:#F5F4F0; --muted:#B8BDC5; --subtle:#8C939D; --border:#343B44; --border-2:#3E4650;
+  --primary:#D97A3A; --primary-hover:#C86A2B; --primary-light:#E59A63; --primary-fg:#111315;
+  --cool:#7FA0C9; --color-focus:#E59A63;
+  --sans:"Inter",system-ui,-apple-system,sans-serif;
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#FBFAF7; --bg-2:#F2F1EC; --surface:#FFFFFF; --surface-2:#F5F4F0; --surface-3:#E9E7E1;
+  --text:#1B1F24; --muted:#4A515A; --subtle:#666D77; --border:#DEDBD3; --border-2:#CAC7BF;
+  --primary:#D97A3A; --primary-hover:#C86A2B; --primary-light:#A34A07; --primary-fg:#1B1F24;
+  --cool:#3F6193; --color-focus:#A34A07;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;
+     -webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:44px 24px 80px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{width:30px;height:30px;border-radius:8px;background:var(--primary);color:var(--primary-fg);
+      display:grid;place-items:center;font-weight:800;font-size:14px}
+h1{font-size:21px;font-weight:700;margin:0;letter-spacing:-.2px}
+.sub{font-size:12.5px;color:var(--subtle);margin-top:2px}
+.tbtn{background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:8px;
+      padding:7px 12px;font:inherit;font-size:12px;cursor:pointer}
+.tbtn:hover{border-color:var(--primary);color:var(--text)}
+.tbtn:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+
+.lede{margin-top:26px;font-size:13.5px;color:var(--muted);max-width:74ch}
+.lede b{color:var(--text)}
+
+/* THE DELIVERABLE */
+.hero{margin-top:26px;border:1px solid var(--primary);border-radius:14px;background:var(--surface);
+      padding:20px 22px;position:relative;box-shadow:0 0 0 1px rgba(217,122,58,.16)}
+.hero .tag{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.6px;
+      text-transform:uppercase;color:var(--primary-fg);background:var(--primary);border-radius:999px;padding:3px 9px}
+.hero h2{margin:11px 0 0;font-size:18px;font-weight:700}
+.hero .scope{margin-top:7px;font-size:13px;color:var(--muted);max-width:70ch}
+.hero .why{margin-top:12px;font-size:12.5px;color:var(--subtle);max-width:74ch;border-top:1px solid var(--border);padding-top:12px}
+.hero .why b{color:var(--muted)}
+.cta{display:inline-flex;align-items:center;gap:8px;margin-top:16px;background:var(--primary);color:var(--primary-fg);
+     text-decoration:none;font-weight:700;font-size:13px;border-radius:9px;padding:10px 16px}
+.cta:hover{background:var(--primary-hover)}
+.cta:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+.range{font-family:ui-monospace,monospace;font-size:11px;color:var(--primary-light);
+       border:1px solid var(--border-2);border-radius:999px;padding:2px 8px;white-space:nowrap}
+
+.sechead{margin:38px 0 4px;font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--subtle)}
+.sechead + .note{font-size:12.5px;color:var(--subtle);margin:0 0 16px;max-width:76ch}
+.sechead + .note b{color:var(--muted)}
+
+.grid{display:flex;flex-direction:column;gap:9px}
+.card{display:grid;grid-template-columns:34px 1fr auto;gap:14px;align-items:center;text-decoration:none;color:inherit;
+      border:1px solid var(--border);border-radius:11px;background:var(--surface);padding:13px 15px}
+.card:hover{border-color:var(--border-2);background:var(--surface-2)}
+.card:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+.num{font-family:ui-monospace,monospace;font-size:13px;font-weight:700;color:var(--subtle);text-align:center}
+.card:hover .num{color:var(--primary-light)}
+.nm{font-size:13.5px;font-weight:600}
+.sc{font-size:12px;color:var(--subtle);margin-top:2px}
+.meta{display:flex;align-items:center;gap:10px}
+.open{font-size:12px;color:var(--muted)}
+.card:hover .open{color:var(--primary-light)}
+
+.foot{margin-top:40px;border-top:1px solid var(--border);padding-top:18px;font-size:12px;color:var(--subtle);max-width:80ch}
+.foot b{color:var(--muted)}
+.foot a{color:var(--primary-light)}
+@media (max-width:640px){ .card{grid-template-columns:28px 1fr} .meta{grid-column:1/-1;justify-content:flex-start;padding-left:42px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="mark">O</div>
+      <div>
+        <h1>OSLO R1 — Prototype Index</h1>
+        <div class="sub">Ten cumulative vertical slices · product-grill output · decisions D001–D142</div>
+      </div>
+    </div>
+    <button class="tbtn" id="themeBtn" onclick="flipTheme()">Light mode</button>
+  </header>
+
+  <p class="lede">
+    Each slice prototype is a single, openable HTML file — no server, no build step. The prototypes are
+    <b>cumulative</b>: slice&nbsp;N contains slices 1…N. <b>Slice 10 is the deliverable.</b> Everything else on
+    this page is a historical snapshot of how the build got there.
+  </p>
+
+  <!-- THE DELIVERABLE -->
+  <div class="hero">
+    <span class="tag">The deliverable · demo this one</span>
+    <h2>Slice 10 — Tiering &amp; Limits <span class="range" style="margin-left:6px">D134–D142</span></h2>
+    <div class="scope">
+      The cumulative build — <b>Slices 1 through 10 in one file</b>, 13,237 lines, with <b>DL-102 · DL-103 · DL-104</b>
+      folded in. Live Free→Basic tier in Alpha. <b>One honest limit — analyses per month, never tokens</b> (rendered
+      <i>pending re-derivation</i>; nothing enforced). Judgment quality is <b>never tiered</b>. The upgrade-prompt engine,
+      with the limit-reached rule at every cap — controls stay enabled, the <i>attempt</i> is gated, and every prompt
+      names <i>which</i> limit you hit. The new <b>Reports</b> surface (reliability-qualified; it packages understanding,
+      it never produces it). And the in-product <b>tier-definitions census</b>, which shows the user exactly what nobody
+      has decided yet.
+    </div>
+    <a class="cta" href="vertical-slices/slice-10-tiering-limits/prototype.html">Open the final prototype →</a>
+    <div class="why" style="border-top:none;padding-top:6px;margin-top:14px">
+      <b>The retired levers are shown as struck, out loud.</b> The <s>priority queue / "Basic runs it now"</s> lever is
+      named on the Plans page as <i>the upgrade we deliberately did not build</i> — an async product cannot sell speed.
+      <s>Outcome-based pricing</s> is named as prohibited. <s>UP-1 (daily fixes)</s> · <s>UP-2 (daily chat)</s> ·
+      <s>UP-5 (deep runs/day)</s> are retired: chat is now uncapped on every tier. <b>17 runtime boot assertions</b> fail
+      loudly if any of it is quietly undone.
+    </div>
+    <div class="why">
+      <b>Why this one, and only this one.</b> Refinements were folded <i>forward</i>, never backward. A defect
+      corrected in slice 8 was fixed in slices 8, 9 and 10 — it was not back-ported into slices 1–7. So the earlier
+      files carry known refinement debt (superseded copy, pre-cascade shells, decisions later reversed) and are kept
+      as a record of the sequence, not as a spec. <b>Demo slice 10. Read the earlier slices only to see how a
+      decision landed.</b>
+    </div>
+  </div>
+
+  <div class="sechead">The ten slices</div>
+  <p class="note">
+    Decision ranges are per slice. <b>D001–D020</b> are the global baseline (advisory-only · confidence = understanding
+    maturity · severity-only colour · seven plan artifacts · event-driven analysis updates) and bind every slice.
+    The authoritative record is <b>decision-log.md</b>.
+  </p>
+
+  <div class="grid">
+
+    <a class="card" href="vertical-slices/slice-01-access-onboarding/prototype.html">
+      <div class="num">01</div>
+      <div>
+        <div class="nm">Access &amp; Onboarding</div>
+        <div class="sc">Invite-gated Alpha activation, four start methods, one-time strategic-chain orientation (anonymous access is GA-only).</div>
+      </div>
+      <div class="meta"><span class="range">D021–D034</span><span class="open">Open →</span></div>
+    </a>
+
+    <a class="card" href="vertical-slices/slice-02-intake-fastpass-orientation/prototype.html">
+      <div class="num">02</div>
+      <div>
+        <div class="nm">Intake &amp; Fast-Pass Orientation</div>
+        <div class="sc">Intake → Initial Analysis → the 60-second orientation; Extended Analysis auto-runs, non-blocking, and supersedes.</div>
+      </div>
+      <div class="meta"><span class="range">D035–D049</span><span class="open">Open →</span></div>
+    </a>
+
+    <a class="card" href="vertical-slices/slice-03-overview-understanding-console/prototype.html">
+      <div class="num">03</div>
+      <div>
+        <div class="nm">Project Overview &amp; Understanding Console</div>
+        <div class="sc">Confidence-led Overview — focal score, CAF maturity bars, reliability qualifier, false-confidence flag, confidence pill.</div>
+      </div>
+      <div class="meta"><span class="range">D050–D056</span><span class="open">Open →</span></div>
+    </a>
+
+    <a class="card" href="vertical-slices/slice-04-attention-map/prototype.html">
+      <div class="num">04</div>
+      <div>
+        <div class="nm">Attention Map (MRI)</div>
+        <div class="sc">Heatmap of the seven plan artifacts × Clarity·Alignment·Feasibility; cells route to the matching issue or a scoped list.</div>
+      </div>
+      <div class="meta"><span class="range">D057–D065</span><span class="open">Open →</span></div>
+    </a>
+
+    <a class="card" href="vertical-slices/slice-05-artifact-workspace/prototype.html">
+      <div class="num">05</div>
+      <div>
+        <div class="nm">Plan Artifacts / Artifact Workspace</div>
+        <div class="sc">Seven-artifact explorer, type-aware editor (prose + tables), inline issue annotations, From OSLO / Confirmed by you.</div>
+      </div>
+      <div class="meta"><span class="range">D066–D085</span><span class="open">Open →</span></div>
+    </a>
+
+    <a class="card" href="vertical-slices/slice-06-issues-recommendations/prototype.html">
+      <div class="num">06</div>
+      <div>
+        <div class="nm">Issues &amp; Recommendations (Panel Model)</div>
+        <div class="sc">All-issues surface, full Issue Panel, Open→Addressed→Resolved, Apply this fix, clarification loop; sidebar + ⌘K palette.</div>
+      </div>
+      <div class="meta"><span class="range">D086–D095</span><span class="open">Open →</span></div>
+    </a>
+
+    <a class="card" href="vertical-slices/slice-07-history-trend/prototype.html">
+      <div class="num">07</div>
+      <div>
+        <div class="nm">History &amp; Confidence Trend</div>
+        <div class="sc">Append-only timeline grouped by analysis run, per-run "what changed" deltas, understanding-over-runs trend (direction-only).</div>
+      </div>
+      <div class="meta"><span class="range">D096–D101</span><span class="open">Open →</span></div>
+    </a>
+
+    <a class="card" href="vertical-slices/slice-08-workspace-awareness/prototype.html">
+      <div class="num">08</div>
+      <div>
+        <div class="nm">Multi-Project Workspace &amp; Awareness</div>
+        <div class="sc">Workspace Home, project switcher, notifications, Settings + Appearance — and OSLO chat made functional and advisory-only.</div>
+      </div>
+      <div class="meta"><span class="range">D102–D109</span><span class="open">Open →</span></div>
+    </a>
+
+    <a class="card" href="vertical-slices/slice-09-collaboration-sharing-export/prototype.html">
+      <div class="num">09</div>
+      <div>
+        <div class="nm">Collaboration, Sharing &amp; Export</div>
+        <div class="sc">Roles + snapshot links, comments and @mentions, export with disclaimer, CRR review requests and the reviewer view, controlled release + waitlist.</div>
+      </div>
+      <div class="meta"><span class="range">D110–D133</span><span class="open">Open →</span></div>
+    </a>
+
+    <a class="card" href="vertical-slices/slice-10-tiering-limits/prototype.html"
+       style="border-color:var(--primary);background:var(--surface-2)">
+      <div class="num" style="color:var(--primary-light)">10</div>
+      <div>
+        <div class="nm">Tiering &amp; Limits — <span style="color:var(--primary-light)">THE DELIVERABLE (Slices 1–10)</span></div>
+        <div class="sc">DL-102/103/104 folded in. Live Free→Basic tier, one honest limit (analyses — never tokens), judgment quality never tiered, the upgrade-prompt engine + limit-reached rule at every cap, the Reports surface, the in-product tier census. Retired levers shown as struck.</div>
+      </div>
+      <div class="meta"><span class="range">D134–D142</span><span class="open">Open →</span></div>
+    </a>
+
+  </div>
+
+  <div class="foot">
+    <b>Non-canonical.</b> This package is a product-grill output. It <b>recommends</b>; only the repository owner
+    ratifies, and canonical changes route through Framework 001 and the <code>dl-land</code> serializer.
+    Every value the product needs is either ratified-and-cited or rendered visibly <b>unset</b> — nothing here
+    invents a tier number.<br><br>
+    <b>Canon ratified out of this engagement:</b> <b>DL-102</b> (controlled release &amp; tiering-in-Alpha — the invite
+    is the authentication; bound seats, never bound evidence) · <b>DL-103</b> (never tier judgment quality; the cost
+    basis is stale and the ladder's numeric basis is suspended; reporting is the #1 lever) · <b>DL-104</b> (errata —
+    struck the latency residue DL-103 left behind, which the Slice-10 build could not implement).<br><br>
+    <b>Read next:</b> <code>final-package-summary.md</code> (close-out + the owner decisions still open) ·
+    <code>decision-log.md</code> (D001–D142, authoritative) ·
+    <code>vertical-slices/slice-10-tiering-limits/tier-definitions-census.md</code> (58 values · 39 ratified ·
+    3 pending re-derivation · 8 struck · 5 unset · 3 recommendation) ·
+    <code>reporting-specification-scope.md</code> (the M4 gap — the strongest conversion lever, still unspecified).
+  </div>
+
+</div>
+
+<script>
+/* Dark is the product default (D127): a fresh visitor opens dark regardless of OS. */
+function flipTheme(){
+  var r=document.documentElement;
+  var next = r.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+  r.setAttribute('data-theme', next);
+  try{ localStorage.setItem('oslo-index-theme', next); }catch(e){}
+  document.getElementById('themeBtn').textContent = next==='dark' ? 'Light mode' : 'Dark mode';
+}
+(function(){
+  var saved=null; try{ saved=localStorage.getItem('oslo-index-theme'); }catch(e){}
+  var t = (saved==='light'||saved==='dark') ? saved : 'dark';   /* never OS-derived — D127 */
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeBtn').textContent = t==='dark' ? 'Light mode' : 'Dark mode';
+})();
+</script>
+</body>
+</html>
