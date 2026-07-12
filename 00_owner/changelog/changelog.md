@@ -1055,6 +1055,13 @@ Each changelog entry contains:
 - **Change Summary:** Errata to DL-103 — strike the priority/latency residue; retire UP-1/UP-2/UP-5; number UP-APPLY and UP-REPORT; refresh DL-102 E; add the P1 health-framing defect class. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-139 — DL-105: Commission E1–E3 analysis cost optimization into R1 — prompt caching, scoped recompute (Evaluate always full + equivalence gate), evidence coalescing; instrument, do not gate
+
+- **Date:** 2026-07-12 · **Authorizing Decision:** DL-105.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-105-commission-e1-e3-analysis-cost-optimization.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Commission E1–E3 analysis cost optimization into R1 — prompt caching, scoped recompute (Evaluate always full + equivalence gate), evidence coalescing; instrument, do not gate. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

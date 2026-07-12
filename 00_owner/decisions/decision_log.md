@@ -873,5 +873,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-102 — Controlled Release & Tiering-in-Alpha (reconciles CHG-061; amends DL-048 scope, extends DL-049/DL-055/DL-062) → `00_owner/decisions/records/DL-102-controlled-release-and-tiering-in-alpha.md`
 - DL-103 — Analysis cost basis & tier re-derivation — never tier judgment quality; commission incremental recompute + prompt caching (supersedes 'Pro adds model quality'; suspends the §4c numeric basis) → `00_owner/decisions/records/DL-103-analysis-cost-basis-and-tier-rederivation.md`
 - DL-104 — Errata to DL-103 — strike the priority/latency residue; retire UP-1/UP-2/UP-5; number UP-APPLY and UP-REPORT; refresh DL-102 E; add the P1 health-framing defect class → `00_owner/decisions/records/DL-104-errata-dl-103-priority-lever-and-up-taxonomy.md`
+- DL-105 — Commission E1–E3 analysis cost optimization into R1 — prompt caching, scoped recompute (Evaluate always full + equivalence gate), evidence coalescing; instrument, do not gate → `00_owner/decisions/records/DL-105-commission-e1-e3-analysis-cost-optimization.md`
 
 <!-- RECORDS-INDEX:END -->
