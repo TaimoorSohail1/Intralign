@@ -1069,6 +1069,13 @@ Each changelog entry contains:
 - **Change Summary:** Commission the DL-069 model-judgment evaluation — and record that DL-103 §1 raised its bar (no 'Gemma for Free, frontier for Pro' hatch); per-call-site qualification; AC-V3 is disqualifying. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-141 — DL-107: Obey the doctrine, don't narrate it — and commission the two specs the repo has cited but never possessed: RELEASE_1_TIER_DEFINITIONS_V1 and RELEASE_1_REPORTING_SPECIFICATION_V1 (M4)
+
+- **Date:** 2026-07-12 · **Authorizing Decision:** DL-107.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-107-obey-dont-narrate-commission-tier-definitions-and-reporting.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Obey the doctrine, don't narrate it — and commission the two specs the repo has cited but never possessed: RELEASE_1_TIER_DEFINITIONS_V1 and RELEASE_1_REPORTING_SPECIFICATION_V1 (M4). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

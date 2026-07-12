@@ -875,5 +875,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-104 — Errata to DL-103 — strike the priority/latency residue; retire UP-1/UP-2/UP-5; number UP-APPLY and UP-REPORT; refresh DL-102 E; add the P1 health-framing defect class → `00_owner/decisions/records/DL-104-errata-dl-103-priority-lever-and-up-taxonomy.md`
 - DL-105 — Commission E1–E3 analysis cost optimization into R1 — prompt caching, scoped recompute (Evaluate always full + equivalence gate), evidence coalescing; instrument, do not gate → `00_owner/decisions/records/DL-105-commission-e1-e3-analysis-cost-optimization.md`
 - DL-106 — Commission the DL-069 model-judgment evaluation — and record that DL-103 §1 raised its bar (no 'Gemma for Free, frontier for Pro' hatch); per-call-site qualification; AC-V3 is disqualifying → `00_owner/decisions/records/DL-106-commission-dl069-model-judgment-evaluation.md`
+- DL-107 — Obey the doctrine, don't narrate it — and commission the two specs the repo has cited but never possessed: RELEASE_1_TIER_DEFINITIONS_V1 and RELEASE_1_REPORTING_SPECIFICATION_V1 (M4) → `00_owner/decisions/records/DL-107-obey-dont-narrate-commission-tier-definitions-and-reporting.md`
 
 <!-- RECORDS-INDEX:END -->
