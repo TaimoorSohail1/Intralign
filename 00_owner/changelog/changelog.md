@@ -1083,6 +1083,13 @@ Each changelog entry contains:
 - **Change Summary:** Reconcile design-guidance 'Executive Translation' with the reporting doctrine — tailor the ask, never the read. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-143 — DL-109: Surface the provenance OSLO already tracks — grounded vs inferred, load-bearing inferences, the assumption register, the Inference Map; REJECT the 'Understanding Debt' frame (AE-06 not adopted); escalate inference lineage as a schema decision
+
+- **Date:** 2026-07-13 · **Authorizing Decision:** DL-109.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-109-surface-provenance-reject-the-debt-frame.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Surface the provenance OSLO already tracks — grounded vs inferred, load-bearing inferences, the assumption register, the Inference Map; REJECT the 'Understanding Debt' frame (AE-06 not adopted); escalate inference lineage as a schema decision. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
