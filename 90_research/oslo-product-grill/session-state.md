@@ -3,7 +3,7 @@
 **Updated:** 2026-07-12
 
 - **Current phase:** Phase 5 — engagement closed 2026-07-12 (Slices 1–10 signed off). **One reopened work item in review: WI-R1.**
-- **Baseline of record:** `product-design/oslo_r1_experience_mockup_v4.html` (connected `oslo-knowledge-base` repo). Slice prototypes cumulative in `vertical-slices/`.
+- **Baseline of record:** `product-design/oslo_r1_experience_mockup_v5.html` (merged #152, 2026-07-13 — converged Strategic Readout composer; realizes DL-107+DL-108). Supersedes v4, which is preserved alongside v2/v3. Slice prototypes cumulative in `vertical-slices/`.
 - **Signed-off slices:** Slices 1–10 (Slice 10 "Tiering & Limits — THE DELIVERABLE" signed off 2026-07-12, DL-103 folded in). OSLO Chat cross-cutting: Done.
 - **Reopened work items:**
   - **WI-R1 — Strategic Readout composer** (Slice 10 · Reports surface). Status: **WI-R1 SIGNED OFF (2026-07-13). WI-R2 convergence COMPLETE + verified — pending owner re-signoff of the converged Reports surface.** Realizes DL-107 (readout spine) + DL-108 (tailor the ask, never the read) + DL-104 (P1 guards). Design input built & verified: `oslo_r1_experience_mockup_v5_readout_DRAFT.html`. Record: `vertical-slices/slice-10-tiering-limits/work-item-WI-R1-readout-composer.md`.
