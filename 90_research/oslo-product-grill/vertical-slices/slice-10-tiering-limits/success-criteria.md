@@ -387,3 +387,164 @@ Cumulative Slices 1–10. A criterion passes only if it holds in the single open
 | **SC-D165-10** | Chat **never mutates** | `chatNeverMutates` — 12-question battery, whole-model snapshot |
 | **SC-D165-11** | Chat-answered clarification ⇒ **byte-identical** History entry | verified by diffing both paths — identical |
 | **SC-D165-12** | 37 boot assertions pass on Free × Basic × notes-OFF × notes-ON | **37/37 × 4** · **0 console errors** |
+
+---
+
+# D170 / D170c / D171 — CRITERIA
+
+| # | Criterion | Met |
+|---|---|---|
+| **C-D170-1** | ⛔ **No gated attempt anywhere in the product produces no visible outcome.** Every limit-bearing affordance, **fired for real**, renders a prompt naming **the limit**, **the tier that relieves it**, and **its resolutions**. | ✅ 11/11 |
+| **C-D170-2** | The proof holds against a **saturated prompt log** — the exact state a real browser reaches after a day's use. | ✅ |
+| **C-D170-3** | The prompt surface renders **above every surface it can be fired from**, proven from the authored cascade. | ✅ |
+| **C-D170-4** | Cadence caps govern **only** what the product initiates. A gated attempt is **never** throttled — and, where canon forbids the prompt *right now*, it is **deferred, never dropped**. | ✅ |
+| **C-D170-5** | **Every guard touched or added ships a negative control, and every one bites.** | ✅ 16/16 |
+| **C-D170c-1** | The toolbar menus are **popovers**: out of the flow, anchored, Esc/click-outside close, focus trapped, one at a time. **The reading surface does not move.** | ✅ |
+| **C-D171-1** | The readout **has a SEND**, beside Export. | ✅ |
+| **C-D171-2** | ⛔ **Sharing is FREE on every tier.** No tier branch, no lock, no meter, no prompt. Proven **three ways**. | ✅ |
+| **C-D171-3** | Send and Export freeze a memo through **ONE factory**; `sent_via` records the journey. | ✅ |
+| **C-D171-4** | Both **run no analysis** and both **append a History event that opens the frozen memo**. | ✅ |
+| **C-D171-5** | A shared memo is **read-only**, carries its cover/disclaimer/currency marker, and is **relabelled "previous analysis"** — never silently refreshed. | ✅ |
+| **C-NR-1** | **Non-regression:** 54 boot assertions pass on Free × Basic × notes-OFF × notes-ON; 0 console errors; 47 D164 negative controls still bite; D168 + D169 state proofs pass; 31 body children (unchanged). | ✅ |
+
+---
+
+# D172 — CRITERIA
+
+| # | Criterion | Status |
+|---|---|---|
+| **C-D172a-1** | A scheduled readout is an **automated SHARE**: `sent_via:'shared'`, a scoped grant, a **sent** History event. | ✅ |
+| **C-D172a-2** | **D147 still binds** — the schedule **re-checks currency at send time**, labels a stale read **"previous analysis"**, and **never runs an analysis to freshen itself**. | ✅ |
+| **C-D172a-3** | **D169 opens the frozen memo** from a scheduled send — byte-identical, never a re-render. | ✅ |
+| **C-D172b-1** | ⛔ **The SHARE is FREE on every tier — manual, unlimited.** No tier branch, no lock, no meter, no prompt. | ✅ |
+| **C-D172b-2** | ⛔ **The AUTOMATION is Basic.** The scheduling attempt is gated and **renders a prompt** naming the limit, naming Basic, with resolutions — **the free one first, and it is _Send it now_.** | ✅ |
+| **C-D172b-3** | The at-limit prompt sells **the automation**, never the ability to share. ≤30 user-visible words (D163). | ✅ (27) |
+| **C-D172c-1** | A shared memo is a **scoped, token-granted, read-only view** — the **reviewer grant's mechanism** (DL-102 A). One admission path (`_grantScopedAccess`), one link factory (`_mkLink`). | ✅ |
+| **C-D172c-2** | **No signup wall** (the link IS the invite); **nobody is anonymous** (DL-021); read-only; cover + disclaimer + currency marker; **relabelled "previous analysis"**, never silently refreshed. | ✅ |
+| **C-D172c-3** | A memo grant takes **no seat, no invite, no meter, no tier check** (N-2 / CR-2 / CHG-061). | ✅ |
+| **C-D172d-1** | The **workspace is Reports**; the **document is the Readout**. Nav, crumb, tooltip, toolbar, History and toasts all agree. | ✅ |
+| **C-D172d-2** | ⛔ **ONE report type** in the registry; a second is an **addition**. **No speculative report-type UI** — **D143 holds; the dead six stay dead.** | ✅ |
+| **C-NR-2** | **Non-regression:** 58 boot assertions pass on Free × Basic × notes-OFF × notes-ON; **0 console errors**; **73 negative controls all bite** (47 D164 + 26 D170/D171/D172); D168 + D169 state proofs pass; 31 body children (unchanged). | ✅ |
+
+### Reports surface — Strategic Readout (WI-R1)
+
+| # | Criterion | Status |
+|---|-----------|--------|
+| **C-WIR1-1** | The Reports/export surface renders the **DL-107 five-section spine** (§1 The read · §2 What's limiting it · §3 What we don't know yet · §4 What I need from you · §5 How to read this), assembled from existing understanding — **generating runs no analysis** (`readoutRunsNoAnalysis`: assembling every section × every audience × all optional sections leaves `HISTORY`/`TREND` unchanged). | ✅ |
+| **C-WIR1-2** | **DL-108 enforced in code:** §1–§3 and §5 are **byte-identical** for all four recipients (Sponsor / Programme lead / Operations / Executive-board — the shared `REPORT_RECIPIENTS`, WI-R2); **only §4** reads `SRO.aud`. Proven by `readIdenticalAcrossAudience` and by the DOM invariance check (§1/§2/§3/§5 identical across all four recipients; §4 distinct across all six pairs). The rule + citation are visible on-screen (`.sro-bind`). | ✅ |
+| **C-WIR1-3** | **DL-104 P1 guards:** §1 carries the explicit "not health / RAG / readiness / probability of success" line; **derived (`From OSLO`) is never dressed as attested (`Confirmed by you`)**; a currency marker is on every snapshot; a stale read reads **"previous analysis."** | ✅ |
+| **C-WIR1-4** | **Tiering:** Free = the read snapshot (§1–§5, PDF); Basic = optional sections + branding + scheduling. **The seed is never gated** (`sharingIsFree` still ✅). | ✅ |
+| **C-WIR1-5** | **Names** stay owner/glossary (DL-053): labelled descriptively, "naming pending"; **no "status report"** or health/readiness implication (`reportsNoHealth` still ✅). | ✅ |
+| **C-WIR1-6** | Two new boot guards registered alongside `reportsNoHealth`: **`readIdenticalAcrossAudience`** · **`readoutRunsNoAnalysis`**. | ✅ |
+| **C-WIR1-NR** | **Non-regression:** boot self-check **58 → 60**, **all 60 green**; **0 page errors**; the seven-section editable Readout document (`#rptDoc`) and all D148–D172 guards unchanged. (Verified headless: Playwright/Chromium, `file://`.) | ✅ |
+| **C-WIR1-OOS** | **Out of scope, confirmed NOT built:** cognitive-event / Understanding-Debt feed; assumption validated/invalidated lifecycle (RB-017); cross-project pattern call-outs; Uncertainty/Trade-off objects; audience-reframed *reads*. "Unvalidated assumptions" is presentation-only. | ✅ |
+
+## D175 — The analysis-state chip is neutral; the allowlist governs the whole hero card (amends D040 · closes O-D174-1)
+
+| # | Criterion | Status |
+|---|---|---|
+| **C-D175-1** | **ZERO severity/health colour anywhere in the confidence hero card** — no `--success` / `--warning` / `--danger` / `--conf-*`, and **no chromatic literal** (the defect was written as raw `rgba(217,164,65,.08)`). Proven from the **authored cascade** across **64 in-scope rules**, plus every inline style. | ✅ |
+| **C-D175-2** | The **Provisional / Current** chip is neutral — it obeys the **ramp's strict allowlist** (`--text · --muted · --subtle · --border* · --surface*`), **not even the brand `--primary`**. | ✅ |
+| **C-D175-3** | **The information stays (D040):** the labels read exactly **Provisional · Current · Last-good**, driven from state through `renderOverview()`. **Only the colour went.** | ✅ |
+| **C-D175-4** | **Provisional vs Current remain distinguishable at a glance — by weight and shape, never by hue** (hollow dot / `--muted` / 600 vs filled dot / `--text` / 700). The D174 precedent: the lit ramp step is separated by **weight**, not hue. | ✅ |
+| **C-D175-5** | **AA in both themes** (dark default, D127): *Provisional* **7.7 / 7.3** · *Current* **11.6 / 13.4** (4.5:1 floor) · the dot as a meaningful graphic **4.7 / 4.8** hollow and **11.6 / 13.4** filled (3:1 floor). | ✅ |
+| **C-D175-6** | **The guard's SCOPE is the CARD, not the focus** — the D174 guard graded `.conf-focus` and the defect sat outside it. The scope is **derived from the live card** and **does not leak** onto other surfaces (must-not-fire control: `.issue .card{--danger}` and `.tog.on{--success}` leave the guards green). | ✅ |
+| **C-D175-7** | **Three new boot guards**: `heroCardNoSeverity` · `chipIsNeutral` · `chipIsLegible`. Boot self-check **69 → 72**; **72/72 green** on Free × Basic × notes-OFF × notes-ON, **0 console errors**. | ✅ |
+| **C-D175-8** | **17 negative controls** — 15 bite (including *reintroduce `--warning` on the chip*, *raw amber literal*, *severity outside the focus but inside the card*, *severity hidden in an `@media` block*, *inline severity*, *both states made identical*, *label rewritten*, *chip deleted*, *chip rules vanish*) and **2 must-not-fire controls stay green**. | ✅ |
+| **C-D175-9** | **The adjacency sweep**: every severity/health colour on or beside a maturity/confidence surface is accounted for. Only defect: the chip (**fixed**). Attention-map heat cells stay **red/amber — they are ISSUES** (D003/D060). ~~The CAF limiter row's brand orange is escalated → O-D175-1.~~ ⛔ **CLOSED BY D176a — the orange is gone.** | ✅ |
+| **C-D175-NR** | **Non-regression:** Slices 1–9 + the rest of Slice 10 — all views, every artifact, every issue, report generation, Extended pass, notes toggle: **0 console errors**, **72/72 guards green afterwards**; jsdom body children **31** (unchanged). | ✅ |
+
+---
+
+## D176 — the limiter row, and the CAF bands (owner: approved, 2026-07-12)
+
+| # | Criterion | Status |
+|---|---|---|
+| **C-D176-1** | **Zero hue in the confidence hero card.** The banned list is now `--success · --warning · --danger · --error · --crit · --conf-* · --primary*` **+ every chromatic literal**, graded from the **authored cascade** (chroma, `@media`-aware) **and** inline styles **and** bare-subject rules. | ✅ |
+| **C-D176-2** | The **limiter** is marked by **weight** and by the word **"the limit"** — never by hue — and it is `_limitingOf()`, computed. | ✅ |
+| **C-D176-3** | **No percentage fill on ANY confidence / CAF / reliability element** — proven in the **cascade**, the **DOM** and the **render path**. | ✅ |
+| **C-D176-4** | Each CAF dimension renders as a **band on the hero's five-step ordinal ramp** (DL-086/098), **byte-for-byte from `_rampHTML`**, on **both** surfaces, **computed from state** (re-graded on a moved read). | ✅ |
+| **C-D176-5** | The **reliability basis** carries its **level word** and no fill — and is **not** drawn on a scale canon has not fixed (**O-D176-1**). | ✅ |
+| **C-D176-6** | **The Attention heat map is unchanged** — severity colour stays on **ISSUES** (D003). Proven by a **must-not-fire** control. | ✅ |
+| **C-D176-7** | **True counts survive** — the Progress card's `2 / 3` bars are not reached by the fill guard (**must-not-fire** control). *"No fills"* never became *"no counts"* (**O-D176-2** open). | ✅ |
+| **C-D176-8** | **AA in both themes** on the limiter row and the CAF ramps: limiter **15.1 / 16.6** · level word `--muted` **8.8 / 8.0** · lit bar **15.1 / 16.6** (graphic, 3:1) · unlit bar **5.3 / 5.2** (dark/light; popover **4.7 / 4.8**). | ✅ |
+| **C-D176-9** | **`_d176NegativeControls()`** — 15 injected regressions **all bite**, 2 must-not-fire controls **stay green**, and the three subjects **pass as shipped** (a control suite whose subject already fails proves nothing). | ✅ |
+
+---
+
+# D177 — the Extended pass moves BOTH the band and the counts
+
+| # | Criterion | Status |
+|---|---|---|
+| **C-D177-1** | The Extended pass **surfaces 2 issues the Fast Pass did not find** (1 **critical**), bound to **real plan artifacts** (Schedule · Scope), **real CAF dimensions** (Feasibility · Clarity), **real citations**, and **real spans** in the drafted artifacts. **No new facts.** | ✅ |
+| **C-D177-2** | The band still **rises** in the same run — **Feasibility: Very Low → Low**. **Both, in one payoff.** | ✅ |
+| **C-D177-3** | The payoff renders **all three parts, computed from state**: band transition · **the counts that moved** (`Issues 6 → 8` · `Critical 1 → 2` · **`Open questions 2 → 3`**, D178) · the consequence (*Feasibility is still the limit*). | ✅ |
+| **C-D177-4** | The plain-language line is present and **never apologetic, never alarmed**: *"I looked deeper and found two more. The read is firmer because I know more."* **No negative colour** anywhere on the block (D003/D173c). | ✅ |
+| **C-D177-5** | **Word budget** — the rendered payoff is **39 words** (budget **45**, D163) *(was 30 before D178 added the ask)*. No meta, no doctrine vocabulary. | ✅ |
+| **C-D177-6** | A count that did **not** move is **not shown** — *Confirmed artifacts* stays at `0 of 7` through the pass and is correctly **absent** (a Deep Pass re-reads; it attests nothing). ***Amended by D178:** Open questions now **does** move — see C-D178-2.* | ✅ |
+| **C-D177-7** | The new issues **behave exactly like the six before them** — panel, evidence, recommendation, paths, share-for-review, Attention map, Issues list, badges, memo risks, timeline. Nothing is special-cased. | ✅ |
+| **C-D177-8** | **`_assertDeepPassMovesBandAndCounts()`** — a **state proof** that runs the real `deepComplete()` and leaves no trace. Registered in `_s10SelfCheck()`. | ✅ |
+| **C-D177-9** | **`_d177NegativeControls()`** — **11 injected regressions all bite** (incl. **the bug that shipped**: the pass moves no counts; and the **three D178 controls**), and **more-issues-with-a-higher-band stays green**. | ✅ |
+
+---
+
+# D178 — a Deep Pass **ASKS**, it does not only find (closes O-D177-2)
+
+> **Finding an issue and knowing what would close it are different acts — and OSLO can do both.**
+
+| # | Criterion | Status |
+|---|---|---|
+| **C-D178-1** | The Extended pass **raises a clarification request** alongside its findings — bound to **ISS-07** (the issue it would close) and to **evidence already on the record**: *"Is there a minimum signed-sponsorship floor — or a cancellation point — that has to be cleared before the AV and catering commitments go firm?"* **No fabricated facts** (Schedule `Aug 15` · AV/Caterer `Confirmed` · sponsor-funded Intent — all cited by ISS-07 already). | ✅ |
+| **C-D178-2** | It moves a **third true count** — **`Open questions 2 → 3`** — **computed from state** by `_openClarIds()`, through the same `PAYOFF_COUNTS` registry as every other number. **A question that is not in state cannot move it; a question that is cannot be hidden.** | ✅ |
+| **C-D178-3** | **The clarification is the honest form of the ask: OSLO does not know the answer and says so.** It asks; it never asserts. (Guarded: the `clar.q` must be a **question**.) | ✅ |
+| **C-D178-4** | **Advisory-only.** Answering it moves ISS-07 **open → Addressed**, and **only the analysis update** moves it to **Resolved**. **It never resolves an issue by hand** (D088). | ✅ verified on **both** surfaces |
+| **C-D178-5** | The payoff carries **the full shape of a deeper read** — *it firmed the read · it found more · **and it knows what it still needs to ask***: *"I looked deeper and found two more. **I have one more question.** The read is firmer because I know more."* **Never apologetic, never alarmed** (D003/D173c). | ✅ |
+| **C-D178-6** | **Word budget — 39 words** (budget **45**, D163). **No meta, no doctrine vocabulary** (D159). | ✅ |
+| **C-D178-7** | The new clarification **behaves exactly like the existing ones**: it renders **collapsed** in the Issue panel (D162c) and **collapsed** in the chat turn (D165e), and it is answerable in **either** — both routing through `_submitClarification()`. | ✅ |
+| **C-D178-8** | **Panel and chat produce a BYTE-IDENTICAL History entry.** Verified in jsdom by comparing the two `clarification` events field-for-field. | ✅ |
+| **C-D178-9** | **The ask can never outlive its count.** `asked` is the **rise** in the `questions` row — so answering (`3 → 2`) yields `asked = 0` and **no ask is claimed**, and if the budget ever trimmed the row, `_payoffFit` drops the sentence with it. | ✅ |
+| **C-D178-10** | **Neutral.** No severity/health colour anywhere on the payoff block — the ask renders in the **same** classes and weight as a rise and a fall (D003/D175/D176). Severity colour stays on **issues** alone. | ✅ |
+| **C-D178-11** | **Guard extended, not copy-graded:** `_assertDeepPassMovesBandAndCounts()` now proves — **from state, running the real `deepComplete()`** — that the pass moved **the band AND the issue counts AND the open-questions count**, and that the payoff **rendered all of them**. **New negative control: the Deep Pass raises no clarification → the guard goes RED.** | ✅ |
+| **C-D178-12** | **The guard leaves no trace.** Raising a clarification retires the earlier live answer box for that issue; inside a guard that would reach into the user's own thread. `_CHAT_PROBE` fences it — the live thread is **unchanged** after the guard and all 13 controls run. | ✅ |
+
+---
+
+# D179 — Overview layout: acceptance criteria
+
+| ID | Criterion | Status |
+|----|-----------|--------|
+| **C-D179-1** | **The Confidence card is the FIRST panel of the Overview.** Mechanism proof on **DOM order** — `#pane-overview .card[0]` **is** `.card.hero`, with a vacuity check (≥3 panels). **An event never outranks state.** | ✅ `_assertConfidenceIsTheFirstPanel()` |
+| **C-D179-2** | **The payoff is a DELTA ON THE CARD, not a panel.** It is a **descendant of `.card.hero`**, it renders **after** `.conf-focus`, it carries **no `.card` class**, and it has a working dismiss. | ✅ `_assertPayoffLivesInsideTheConfidenceCard()` |
+| **C-D179-3** | **Dismiss takes the ghosts with it.** Proven by **injecting a movement**, asserting a ghost renders, dismissing, and asserting the ghost is gone. **The movement is part of the event, not part of the state.** | ✅ same guard, part (c) |
+| **C-D179-4** | **The payoff is not persisted.** No payoff path touches `localStorage` / `sessionStorage` / cookies. **Gone by the next visit.** | ✅ `_assertPayoffIsNotPersisted()` |
+| **C-D179-5** | **The movement is DRAWN — previous band ghosted, current lit, arrow between.** All **25** (prev, current) band pairs graded through the one builder: same band ⇒ **no ghost**; different ⇒ **exactly one** ghost, **at the previous band's index**, with an arrow. | ✅ `_assertGhostBandIsComputedFromPreviousSnapshot()` |
+| **C-D179-6** | **The ghost is computed from the previous SNAPSHOT — never hard-coded.** With `_MOVE` cleared, **no ramp draws a ghost**. With `_MOVE` set, the ramp draws **exactly what it names**. | ✅ same guard, part (b) |
+| **C-D179-7** | **NEVER FAKE A MOVEMENT THAT DID NOT HAPPEN.** The overall band holds at *Moderate* through the Extended pass, so the **hero ramp draws no ghost** — while **Feasibility's** row draws its own. | ✅ `_assertDeepPassMovesBandAndCounts()` (extended) |
+| **C-D179-8** | **The ramp is still not a health bar.** **At most ONE** unlit step may be ghosted, and only when state says so. A *trail* of filled-in steps would be a progress bar — and a progress bar is a health bar with better manners. | ✅ `_assertRampIsNotAHealthBar()` (extended, not weakened) |
+| **C-D179-9** | **COUNTS HAVE ONE HOME.** For every registry count, the **whole Overview** is scanned for hosts rendering its value with its label: **more than one is a violation, zero is vacuity.** | ✅ `_assertNoCountIsRenderedTwice()` |
+| **C-D179-10** | **Every Progress count is computed — through the same `PAYOFF_COUNTS` registry.** The chips are byte-for-byte `_progressRows()`. An **uncomputable** probe never reaches them; a **computable** one does. | ✅ `_assertProgressCountsAreComputed()` |
+| **C-D179-11** | **The delta is COMPUTED against the previous analysis run** — never typed. With `_PREV_RUN = null` there is **no delta at all**. | ✅ same guard, part (e) + `_assertEveryPayoffCountIsComputed()` |
+| **C-D179-12** | **No fabricated count survives anywhere.** *"5 of 7 plan artifacts well-evidenced"* (prose nothing computed), *"Dependencies confirmed 0/3"* (no dependency register), *"Plan artifacts read 7/7"* (typed into the markup) — **all gone, and guarded.** | ✅ `_assertNoFabricatedProgressCount()` |
+| **C-D179-13** | **The hero carries the COOL ACCENT — and still no severity colour and no percentage fill.** `--maturity` on the lit step, the band word, the limiter marker, the arrow. **Blue is not in the RAG vocabulary.** | ✅ `_assertHeroCardCarriesNoSeverityColour()` · `_assertRampIsNeutral()` · `_assertNoPercentageFillOnMaturitySurfaces()` |
+| **C-D179-14** | **Brand orange is for ACTIONS and LINKS — never for STATE.** Graded **by subject** in the cascade *and* inline; every element wearing an interactive class is **proven interactive on the DOM**; **no state class may join the action list**. | ✅ `_assertBrandOrangeIsActionsOnly()` |
+| **C-D179-15** | **The guard still grades CHROMA, not token names.** The original amber (`rgba(217,164,65,.08)` — hue 39°) and the orange with its name filed off (`rgb(217,122,58)` — hue 26°) **still bite.** The cool accent (hue 214°) passes. Greyscale passes. | ✅ NC-D179-14 · NC-D176-04 |
+| **C-D179-16** | **AA in BOTH themes on every accented element.** Lit step / band word / limiter marker / arrow: **6.13:1** dark · **6.28:1** light. Payoff label on its strip: **4.87 / 5.45**. Hero links: **7.20 / 5.93**. Delta chip: **4.67 / 4.75**. **Zero failures.** | ✅ |
+| **C-D179-17** | **The payoff fits ≤20 words** (down from 39 against a budget of 45) — as a **rise** and as a **fall** — and **the budget can no longer cost the user a number or a transition**: the counts are in Progress and the movement is on the ramp. | ✅ `_assertPayoffWithinBudget()` — **19 words** as rendered |
+| **C-D179-18** | **A rise is not green. A fall is not red.** One strip, one set of classes; `↑`/`↓` share one class, one weight, one colour. **The must-not-fire control stays green: MORE ISSUES + A HIGHER BAND is not a contradiction — it is the point.** | ✅ `_assertRiseAndFallAreVisuallyEquivalent()` (extended to the delta chip and the ramp ghost) · NC-D179-21 |
+| **C-D179-19** | **Guards are order-independent.** The self-check is **83/83 green** at boot, and **after** applying a fix, answering a clarification and running the Extended pass — in any order. *(It was not: `applyFix()` mutates `READ.provisional`, and the deep-pass guard had nothing honest to run from. `_READ0` fixes it.)* | ✅ found by the D179 behavioural harness |
+| **C-D179-20** | **28 negative controls, every one bites** — including all four owner findings re-injected through the real mechanism; and **three must-not-fire controls stay green** (issue severity · the cool accent · more-issues-with-a-higher-band). | ✅ `_d179NegativeControls()` |
+
+---
+
+# D180 — PROGRESS IS GROUNDING, NOT CLEARING (owner: approved, 2026-07-12)
+
+| # | Criterion | Met |
+|---|---|---|
+| **C-D180-1** | **GROUNDED is the star, and it is computed from the artifact basis.** *"N of 7 artifacts rest on your evidence"* — `basis === 'attested'` over `PLAN_SECTIONS`. It **rises when the user grounds an artifact** (apply a fix · answer a clarification · edit an artifact). | ✅ jsdom: `_submitClarification()` → **grounded 0 → 1 ↑1**; `applyFix()` → **0 → 1 ↑1** |
+| **C-D180-2** | **"Artifacts read 7 / 7" is GONE, and no constant-dressed-as-progress remains anywhere.** Proven by a **state perturbation**, not a phrase scan: every rendered row must MOVE. | ✅ `_assertNoConstantDressedAsProgress()` · NC `theDefect_aConstantReturnsAsProgress` bites |
+| **C-D180-3** | **No burndown grammar** — registry (no denominator on an open/closed count) · copy (no %, no "remaining", no "complete", no "on/off track") · DOM (no bar, no `<progress>`, no `role=progressbar`, no inline % fill) · cascade · render path. | ✅ `_assertNoBurndownGrammar()` · 4 NCs bite |
+| **C-D180-4** | ***Resolved* is back, under CLOSED, and never a target.** No denominator, no %, no "remaining"; it may not leave the CLOSED row. **(Closes O-D179-3.)** | ✅ `_assertClosedIsNeverATarget()` · NCs `theSubtleBurndown_aDenominatorOnResolved` + `c_resolvedLeavesTheClosedRow` bite |
+| **C-D180-5** | ⛔⛔ **THE PROPERTY (D180c): grounding rises WHILE the issue count rises — and nothing reads it as a regression.** Same class, same weight, same colour on both arrows; no direction class; no severity colour in the Progress cascade; no regression vocabulary. | ✅ `_assertGroundingRisesWhileIssuesRise()` (state proof) · NC `theLeak_theRisingIssueCountIsPaintedAsBad` bites · **must-not-fire `mustNotFire_groundingRisesWhileIssuesRise` stays green** |
+| **C-D180-6** | **Counts still have ONE home** — six of them now, two sharing a noun. Each Progress host **declares** its count; prose is still graded on the noun, so the shipped *"8 issues open"* footer defect still bites. | ✅ `_assertNoCountIsRenderedTwice()` (graded 6/6, vacuity floor raised to 6) · NC `theSharpestDefect_theCountIsRenderedTwice` bites |
+| **C-D180-7** | **87 boot assertions green · 0 console errors · Free × Basic × notes-OFF × notes-ON.** Negative controls: **D180 19/19 · D179 28/28 · D177 · D176 all bite; every must-not-fire stays green.** | ✅ jsdom |
+| **C-D180-8** | **AA in both themes** on every Progress element (worst case **4.67 : 1** — the delta chip). | ✅ computed from the live tokens |

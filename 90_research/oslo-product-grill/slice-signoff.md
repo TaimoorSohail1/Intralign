@@ -113,3 +113,22 @@ Re-signoff required if reopened: none.
 
 ## D049 term change (2026-07-09)
 User-facing "Plan sections" → "Plan artifacts" applied across both prototypes + all slice/package docs (decision-log left as historical record). Slice 1 reopened for the copy change and re-applied under owner direction (no behavioral change; re-signed). Slice 2 in review carries the term.
+
+---
+
+## Reopened work items (post-closure)
+
+| Item | Slice / surface | Status | Realizes | Design input | Opened |
+|---|---|---|---|---|---|
+| **WI-R1 — Strategic Readout composer** | 10 · **Reports surface** | **SIGNED OFF (re-signoff 2026-07-13)** — owner approved (a) | DL-107 (readout spine) · DL-108 (tailor the ask) · DL-104 (P1 guards) | `oslo_r1_experience_mockup_v5_readout_DRAFT.html` (verified) | 2026-07-12 |
+
+**WI-R1 rationale:** Slice 10 signed off 2026-07-12 with a Reports surface, but **DL-108 (tailor the ASK, never the READ) was ratified after sign-off** and the surface doesn't yet encode it; DL-107's five-section readout spine is also not yet folded in. Additive over "packages-never-produces / no-health" (preserved). Detail + acceptance criteria + guardrails + worker task: `vertical-slices/slice-10-tiering-limits/work-item-WI-R1-readout-composer.md`. **Requires owner approval to reopen → worker fold-in → re-signoff of the Slice-10 Reports portion.**
+
+
+**WI-R1 update (2026-07-12):** worker fold-in complete + verified (boot self-check 58→60 all green; 0 pageerrors before/after = non-regression; new guards `readIdenticalAcrossAudience` + `readoutRunsNoAnalysis` pass; DL-108 invariance proven at DOM level — §1–§3+§5 byte-identical across Practitioner/Sponsor/Executive, only §4 differs). **Finding:** slice-10 already carried a richer seven-section workspace Readout encoding tailor-the-ask (**D145 / D148–D172**), so WI-R1 added a composer variant into the export/snapshot modal (`#sroDoc`, deliberately outside `REPORT_SURFACES`) rather than net-new reporting. **Two open decisions for the owner: (a) re-signoff the Reports portion; (b) convergence — reconcile the new composer's Practitioner/Sponsor/Executive model with the existing workspace Readout `REPORT_RECIPIENTS`, or keep both. Also note the reference `v4` lags the slice-10 build on the Reports surface.**
+
+**WI-R2 — Audience-model convergence (2026-07-13): COMPLETE + verified.** Owner approved (b) — consolidate onto the workspace Readout audience model *if it preserves objectives + Readout UX*. Safety analysis: convergence preserves DL-107/108/104 (invariants are taxonomy-independent) and leaves the `#rptDoc` memo (the anchor) untouched → **no conflict, no conditional stop**. The composer's audience set → the four `REPORT_RECIPIENTS` (Sponsor/Programme/Operations/Executive); internal "Practitioner" dropped (not a memo recipient). Surfaces stay distinct (composer OSLO-facing; `#rptDoc` doctrine-free). **Verified live on device:** prototype 1.90MB, boot 87/0-fail/0-pageerror; DL-108 invariance across all 4 recipients (§1–§3+§5 byte-identical, §4 distinct across all 6 pairs); `readIdenticalAcrossAudience`/`readoutRunsNoAnalysis`/`reportsNoHealth` ✅. **O-WIR1-2 (coexistence) → RESOLVED.** Report: `worker-reports/WI-R2-audience-convergence.md`. **Converged Reports surface RE-SIGNED OFF by owner 2026-07-13.**
+
+**⚠ Concurrency note (2026-07-13):** during WI-R1→WI-R2 a **concurrent process edited the same slice-10 files** (prototype 1.60→1.90MB, boot 60→87). WI-R2 was applied as a **surgical atomic in-place patch** (assert-once-or-abort, backed up) to avoid clobbering ~300KB of that concurrent work — which is preserved. Recommend only one session edit the grill package at a time. Residual: 4 zero-byte scratch files in slice-10 (mount forbids unlink; delete from desktop) + open O-WIR1-1 (report name) / O-WIR1-3 (§4 asks curated).
+
+**WI-R3 — reference `v4` Reports catch-up (opened 2026-07-13):** bring the baseline-of-record `v4` up to the slice-10 converged Reports surface (readout composer, 4-recipient `REPORT_RECIPIENTS` model). Executed as a non-canonical marked draft (`oslo_r1_experience_mockup_v5_readout_DRAFT.html`) → to land in repo `product-design/` via owner-gated PR; reference `v4` not overwritten in place.

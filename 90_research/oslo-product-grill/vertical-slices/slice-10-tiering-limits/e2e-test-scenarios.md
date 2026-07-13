@@ -233,3 +233,93 @@ that did **not** — `d138` (the validation exemption swallowed the subject) · 
 `budgetInAnalyses` (graded an absent `#meterBox`) · the shared copy scanner (silent coverage rot) — **were vacuous, and
 are fixed.** One control is a deliberate **non-bite**: the Invite button disabled on an **empty** address is *validation,
 not a limit*, and the guard must not fire.
+
+---
+
+# D170 / D170c / D171 — SCENARIOS
+
+| # | Scenario | Expected | Verified |
+|---|---|---|---|
+| **S-D170-1** | ⛔ **THE P1.** Free · Format = *Export link* · Export. | The **UP-EXPORT prompt renders**: eyebrow *"Limit — Export formats"* · title *"Free exports as PDF"* · **2 resolutions**. | ✅ |
+| **S-D170-2** | Do it **again**, same day. And again. | It renders **every time**. (It used to render **once**, then never — `cool:'day'` + a persisted prompt log.) | ✅ |
+| **S-D170-3** | Free · toggle an extra section → then branding → then schedule. | **Three prompts, three times.** (Previously: the first fired, the rest were **silent**.) | ✅ |
+| **S-D170-4** | `doExport('link')` **from inside the Export dialog**. | The prompt renders **on top of the dialog**, not behind it. | ✅ |
+| **S-D170-5** | **Every** limit-bearing affordance, fired against a **saturated prompt log**. | **11/11 rows PASS** — a prompt renders, naming the limit, the tier that relieves it, and ≥1 resolution. | ✅ (table below) |
+| **S-D170-6** | Free + **PDF** → Export. | It **exports**: a frozen memo is cut (`sent_via:'exported'`), History gains an event, **no prompt**, **no analysis**. | ✅ |
+| **S-D170c-1** | Open each toolbar menu in turn. | Each is a **popover** (`position:fixed`), anchored, `aria-expanded=true`, **one open at a time**, and **the document does not move**. | ✅ |
+| **S-D170c-2** | Esc · click-outside · Tab. | Closes · closes · **focus stays trapped** inside; focus returns to the anchor button. | ✅ |
+| **S-D171-1** | **Free** · Send → *"Send to the sponsor"*. | A **frozen memo** (`sent_via:'shared'`), a History `share` event, a toast. **No prompt. No lock. No meter. No analysis.** | ✅ |
+| **S-D171-2** | **Basic** · Send. | **Identical.** Sharing does not differ by tier. | ✅ |
+| **S-D171-3** | History → click the **"Memo sent to …"** row. | Opens the **frozen memo**, read-only, on its cover, `data-via="shared"`. | ✅ |
+| **S-D171-4** | History → click the **"Memo exported"** row. | Opens the **frozen memo**, read-only, `data-via="exported"`. **Same object, both roads.** | ✅ |
+| **S-D171-5** | Send · then edit the report · then run a new analysis · then re-open the memo. | **Byte-identical.** Relabelled *"previous analysis."* **Never silently refreshed.** | ✅ (`_d169StateProof()`) |
+
+## The affordance × prompt table (the D170b guard) — **every row must PASS**
+
+| Affordance | Prompt | Renders | Names the limit | Names the relieving tier | Resolutions | |
+|---|---|---|---|---|---|---|
+| Export format — the readout toolbar (`genReport`) | UP-EXPORT | ✅ | ✅ | ✅ | 2 | **PASS** |
+| Export format — the Export dialog (`doExport`) | UP-EXPORT | ✅ | ✅ | ✅ | 2 | **PASS** |
+| Readout — an extra section | UP-REPORT | ✅ | ✅ | ✅ | 2 | **PASS** |
+| Readout — your own branding | UP-REPORT | ✅ | ✅ | ✅ | 2 | **PASS** |
+| Readout — sending it on a schedule | UP-REPORT | ✅ | ✅ | ✅ | 2 | **PASS** |
+| Readout — keeping last week's wording | UP-REPORT | ✅ | ✅ | ✅ | 2 | **PASS** |
+| Monthly analysis budget ("Update now") | UP-6 | ✅ | ✅ | ✅ | 2 | **PASS** |
+| Assisted apply — the fix cap | UP-APPLY | ✅ | ✅ | ✅ | 2 | **PASS** |
+| Active projects — the project cap | UP-3 | ✅ | ✅ | ✅ | 2 | **PASS** |
+| Collaborator seats — the seat cap | UP-SEAT | ✅ | ✅ | ✅ | 2 | **PASS** |
+| Plan size envelope — partial analysis | UP-4 | ✅ | ✅ | ✅ | 2 | **PASS** |
+
+---
+
+# D172 — SCENARIOS
+
+| # | Steps | Expected | Result |
+|---|---|---|---|
+| **S-D172-1** | **Free** · Send → *"Send to the sponsor"*, three times. | **Three frozen memos**, `sent_via:'shared'`, three scoped grants. **No prompt, no lock, no meter, no analysis.** The share is free and unlimited. | ✅ |
+| **S-D172-2** | **Free** · Schedule → *"Schedule weekly"*. | **The schedule does NOT turn on.** A prompt renders: **"Basic sends it for you every Friday"** · limit *Sending it on a schedule* · **Basic** · two resolutions, **free first: _Send it now_**. | ✅ |
+| **S-D172-3** | **Free** · after S-D172-2, send it manually. | **It sends.** Hitting the automation limit never disables the free primitive. | ✅ |
+| **S-D172-4** | **Basic** · Schedule on → *Fire the schedule now (demo)*. | A frozen memo with `sent_via:'shared'` · a **scoped memo grant** · History: **"Scheduled memo sent to …"** (`type:'share'`, carrying the memo id) · **trend and governor unmoved** (no analysis). | ✅ |
+| **S-D172-5** | Mark the read **stale**, then fire the schedule. | The memo goes out **labelled "previous analysis"** (`cover.currency`), and says so on its face. **Never passed off as current. No analysis was run to freshen it.** | ✅ |
+| **S-D172-6** | History → click **"Scheduled memo sent to …"** — after editing the report. | Opens the **frozen memo**, **byte-identical** to what was sent. Nothing was re-run. | ✅ |
+| **S-D172-7** | Notes ON · Send popover → *Open it as the recipient (demo)*. | The **grant landing**: *"Idris sent you the readout…"* · **one click, no password, no signup** · scope stated. Accept → the **read-only memo**, on its cover, with its disclaimer and currency marker. | ✅ |
+| **S-D172-8** | Nav / crumb / toolbar. | Nav = **Reports** · crumb = **Reports** · the document's toolbar = **Readout**. Never swapped. | ✅ |
+| **S-D172-9** | Look for a report-type picker. | **There isn't one.** One type in the registry (`readout`); no cards, no gallery, no chooser. **D143 holds.** | ✅ |
+
+### Reports surface — Strategic Readout (WI-R1)
+
+| ID | Steps | Expected | Status |
+|----|-------|----------|--------|
+| **S-WIR1-1** | Open **Export a snapshot**. Read the composer. Capture §1/§2/§3/§5 text. Switch across all four recipients **Sponsor → Programme lead → Operations → Executive-board** (WI-R2 — the shared `REPORT_RECIPIENTS` model). | The five-section spine renders (§1–§5). **§1/§2/§3/§5 are byte-identical across all four recipients**; **only §4 (the ask) changes**. The `.sro-bind` banner states the rule and cites **DL-108**. *(Proven headless: `readIdenticalAcrossAudience` ✅; §1/§2/§3/§5 identical across all four recipients; §4 distinct across all six pairs.)* | ✅ |
+| **S-WIR1-2** | Inspect §1 and §5; check the audience never touches the read; check the epistemic markers. | §1 says the read is **understanding maturity — not project health / RAG / readiness / probability of success**. §5 carries reliability, the **currency marker** (stale ⇒ **"previous analysis"**) and the **derived (`From OSLO`) vs attested (`Confirmed by you`)** rule — derived never dressed as attested (**DL-104 P1**). | ✅ |
+| **S-WIR1-3** | Toggle all four optional sections; then generate a snapshot. Watch `HISTORY`/`TREND` and the boot self-check. | Optional sections (Alignment · Unvalidated assumptions · How understanding matured · Artifact detail) render as **presentation only** (no assumption lifecycle). Generating **runs no analysis** — `HISTORY`/`TREND` unchanged (`readoutRunsNoAnalysis` ✅). Boot self-check **60/60 green**; the seven-section Readout document unchanged. | ✅ |
+
+### Overview layout — D179
+
+| ID | Steps | Expected | Status |
+|----|-------|----------|--------|
+| **S-D179-1** | Load the app. Look at the Overview, top to bottom. | **Confidence is the first panel.** Ramp · band word (**cool accent, not orange**) · *"on moderate reliability"* · *"Feasibility is holding it back."* · the small 0–100 index. **No "What changed" panel anywhere** — nothing has changed yet. Then **Start here**, then **Progress**: `Issues 6 · Critical 1 · Open questions 2 · Confirmed artifacts 0 / 7` — **no arrows** (there is no previous run to compute a delta against). | ✅ |
+| **S-D179-2** | Run **Extended Analysis**. Watch the Overview. | **The Confidence card does not move.** A strip appears **inside it, under the read**: **WHAT CHANGED ✕ · "Extended Analysis landed." · "I looked deeper: found two more, and one more question. The read is firmer."** — **19 words.** | ✅ |
+| **S-D179-3** | Look at the **Feasibility** row. | **⟨Very Low⟩ ⟶ [Low]** — the previous band **ghosted**, the current **lit**, an **arrow** between them. **Zero reading.** | ✅ |
+| **S-D179-4** | Look at the **hero** ramp. | **No ghost.** The overall band **held at Moderate**, and OSLO does not draw a movement that did not happen. | ✅ |
+| **S-D179-5** | Look at **Progress**. | `Issues **8** ↑2 · Critical **2** ↑1 · Open questions **3** ↑1 · Confirmed artifacts **0 / 7**`. **MORE ISSUES *AND* A HIGHER BAND** — and the page says both, once each, without arguing with itself. | ✅ |
+| **S-D179-6** | Hunt for a duplicated number anywhere on the Overview. | **There isn't one.** No count in the confidence footer, none in the clarification pointer, none in *"See all open issues"*, none in the payoff. **Counts have one home.** | ✅ `_assertNoCountIsRenderedTwice()` |
+| **S-D179-7** | Dismiss the payoff (**✕**). | The strip goes **and the ghost/arrow go with it.** The **read is untouched** — ramp, band, qualifier, limiter, index. The **Progress deltas stay** (*"since the last run"*). | ✅ |
+| **S-D179-8** | Reload. | **The payoff does not come back.** The state does. | ✅ |
+| **S-D179-9** | Apply a fix, or answer a clarification. | The strip returns with **its own** act line (*"You applied OSLO's fix to Resources."*), the **Feasibility ramp** draws the movement, and **Progress re-derives every delta against that run's baseline** (`Issues 5 ↓1 · Critical 0 ↓1 · Open questions 1 ↓1 · Confirmed artifacts 1 / 7 ↑1`). | ✅ |
+| **S-D179-10** | Look for **orange** on the confidence card. | Only on the **links** (*Why ▾ · Timeline → · Attention map →*). **Never on the ramp, the band word, the limiter or the chip.** Those wear the **cool accent**. | ✅ |
+| **S-D179-11** | Switch to **light theme**. Repeat S-D179-1 → S-D179-10. | Identical behaviour; the cool accent is `#3F6193`; **every accented element clears AA**. | ✅ |
+| **S-D179-12** | Open the **Attention map**. | **Untouched.** Severity colour (red/amber) still on the heat cells — **those cells *are* issues** (D003). | ✅ |
+
+
+---
+
+# D180 — Progress (grounding, not clearing) — E2E
+
+| # | Scenario | Steps | Expected |
+|---|---|---|---|
+| **T-D180-1** | **The star rises when the user grounds an artifact.** | Overview → open the top clarification → answer it → wait for the analysis update. | Progress: **GROUNDED 0 → 1 ↑1** · CLOSED: **Issues resolved 0 → 1 ↑1 · Questions answered 0 → 1 ↑1** · OPEN falls. **No bar, no %, no "remaining".** |
+| **T-D180-2** | **Progress goes UP while issues go UP.** | Run the **Extended Analysis** pass. | OPEN: **Issues 6 → 8 ↑2 · Critical 1 → 2 ↑1 · Open questions 2 → 3 ↑1**, and the read **firms** (Feasibility Very Low → Low). **Both arrows are drawn identically. Nothing says "worse".** |
+| **T-D180-3** | **Then ground an artifact on top of the deeper read.** | After the Extended pass, **Apply this fix** on the critical Resources issue. | **GROUNDED 0 → 1 ↑1** while the issue count is still **elevated** from the deeper read. **That is the doctrine, on screen, in one panel.** |
+| **T-D180-4** | **The counts have one home.** | Read the whole Overview. | Every count appears **exactly once** — in Progress. The confidence card **points**; it does not tally. |
+| **T-D180-5** | **No constant.** | Search the Overview for a number that cannot move. | None. *"Artifacts read 7/7"* does not exist. |

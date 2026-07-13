@@ -224,3 +224,54 @@ clarification answered in chat:
 **The chat still acts on nothing.** Every action above is a link the **user** clicks, running the function that the
 **owning surface** already owns. `_assertChatNeverMutates()` proves it at every boot by snapshotting the whole model
 across a 12-question battery.
+
+---
+
+# D171 — THE SEND PATH
+
+```
+REPORT (living, editable, artifact-parity)
+   │
+   ├── SEND ─────────► _mkMemo(SHARE_CHANNEL, false, ++seq, 'shared')
+   │                     · freezes a MEMO (cover · disclaimer · currency marker) — D168
+   │                     · NO tier check · NO meter · NO prompt        — CHG-061 (free on every tier)
+   │                     · runs NO analysis                            — D146
+   │                     · pushHistory('share', …, {memo: id})         — D169
+   │                     · read-only for the recipient; relabelled "previous analysis" when the read moves on
+   │
+   └── EXPORT ───────► _mkMemo(format,        false, ++seq, 'exported')
+                         · the SAME factory, the SAME freeze, the SAME cover  — D171 §2
+                         · FORMATS are tier-bound (Free = PDF)               — MON-01
+                         · runs NO analysis                                   — D146
+                         · pushHistory('export', …, {memo: id})               — D169
+
+HISTORY ── click a memo row ──► openMemoFromHistory(id) ──► the FROZEN bytes, from either road.
+                                 Selects out of the register. Never re-renders. Runs nothing.
+```
+**One factory. One freeze. One immutability. `sent_via` records the journey — never the object.**
+
+---
+
+# D172 — THE SCHEDULED SHARE, AND THE GRANT
+
+```
+SCHEDULE (Basic) ── cron fires ──► runScheduledReport()
+                                     │  ⛔ re-checks currency FIRST (D147) — of the LIVE state
+                                     │  ⛔ runs NO analysis. Ever. (D146)
+                                     ├─► _mkMemo(SHARE_CHANNEL, scheduled, seq, 'shared')   — ONE factory (D171 §2)
+                                     ├─► _shareMemoGrant(memo, recipient)
+                                     │     ├─ _mkLink('memo', memo.id)        — scoped · revocable (D117/CR-6)
+                                     │     └─ _grantMemoAccess(…) ─► _grantScopedAccess('memo', …)
+                                     │           ⛔ THE ONE ADMISSION PATH — the same one the reviewer grant takes.
+                                     │           no seat (N-2) · no invite (CR-2) · no tier check (CHG-061)
+                                     └─► pushHistory('share', 'Scheduled memo sent to …', {memo: id})   — D169
+
+RECIPIENT ── opens the link ──► openSharedMemo(id) ──► the grant landing (the link IS the invite)
+                                  └─ rvvAcceptGrant() ──► _renderSharedMemoView()
+                                       SELECTS the frozen memo. Never rebuilds it. Runs nothing.
+                                       read-only · cover · disclaimer · currency marker · "previous analysis" when overtaken
+
+THE TIER RULE (D172b):   sendMemo()            → NO tier check, and there may never be one.   THE SHARE IS FREE.
+                         toggleReportSchedule() → TIER check + fireUP('UP-REPORT', {sched}).  THE AUTOMATION IS BASIC.
+```
+**Meter the labour, never the understanding.** The same shape as D154: *editing is free; persistence is the gate.*

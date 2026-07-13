@@ -609,3 +609,548 @@ chips **and** 3 different composer chips underneath. All of it **pushed**, in on
 - `_S10_CHAT_DISCLAIMER` — *"I can't upgrade you, buy anything, or lift a limit…"*, reprinted on every tier answer.
   It is a sentence about **what OSLO will never do** (banned, D163) and it is already stated **once**, in the
   composer's `↳ advisory ⓘ`. **The boundary is enforced in code, not recited in copy.**
+
+---
+
+# D170 / D170c / D171 — THE PROMPT ENGINE, THE POPOVERS, AND THE SEND
+
+## The prompt surface — `.upx-scrim`
+| | |
+|---|---|
+| **z-index** | **420** — strictly above **every** other rule in the cascade. It was **96**: the **lowest overlay in the product**, below the export dialog (`.scrim` 172), the issue flyout (`#issueScrim` 260 / `#issueClose` 262), the palette (250), the notifications panel (236), the phase bar (200), settings (122) and the workspace home (120). **Gated attempts are made from those surfaces** — the prompt rendered *behind the thing the user was looking at.* |
+| **Guard** | `_assertPromptSurfaceIsOnTop()` — parses the **authored cascade**, takes the max z-index of every rule, and demands `.upx-scrim` beat it. **Derived, so it cannot go stale**: add a surface above the prompt and it goes red at the next boot. |
+
+## The prompt engine — two kinds of prompt
+| | **SOLICITED** (`cls:'value'`) | **GATED ATTEMPT** (`cls:'friction'`) |
+|---|---|---|
+| Who started it | **the product** (UP-7, UP-8) | **the user** — they clicked a live control and the product refused |
+| What it is | a nudge | **the reason the click did nothing**, plus the way out |
+| Cadence caps (cooldown · per-day) | **apply** | ⛔ **never apply.** A cap on nagging may not silence an answer. |
+| Before first value / mid-pass | not fired | **DEFERRED, never dropped** — queued, fired at the first legal moment; the user is told immediately (toast, ≤12 words, no CTA) |
+| Derived from | `UPROMPTS[id].cls` — **the ratified table**, never a flag at the call site | same |
+
+**Router:** `fireUP()` → `_upRoute()`. **There is no path out of `_upRoute()` that renders nothing.**
+UP-8 → chat · UP-4 → `renderPartial()` · UP-3 → `openUpgrade()` · UP-SEAT → the Share dialog · everything else → `_renderUP()`.
+
+## The Readout toolbar — **popovers, not drawers** (D170c)
+`Readout` · undo/redo/insert/find · **Recipient** · **Sections** · **Format** · **Schedule** · ⟶ · **Send** *(primary)* · **Export**
+
+| | |
+|---|---|
+| **Was** | `.rw-drawer` — a full-width band **in the flow**. Opening *Recipient* **pushed the document down the screen**; closing it yanked it back. **The user was reading a paragraph, and the paragraph moved.** |
+| **Now** | `.rw-pop` — `position:fixed`, **anchored to the button that opened it** (`_anchorRptPop()` measures the button and clamps to the viewport). **Out of the flow entirely: the document does not move by a pixel** (D160). |
+| **Keyboard** | **Esc closes** · **focus trapped** (Tab cycles inside) · focus **returns to the anchor button** on close · `aria-expanded` + `aria-haspopup="dialog"` on every button |
+| **Mouse** | click-outside closes · one open at a time |
+| **Guard** | `_assertToolbarMenusArePopovers()` — reads the cascade (**last `position:` wins**, as the cascade does) and the live DOM |
+
+**The memo is not a toolbar menu.** `#rptMemoHost` (was `#rptPkgHost`) shows **only when the PM asks for it** — a
+preview ("Preview what travels"), a memo they sent, or a memo opened from History. Opening a *menu* no longer drags the
+memo onto the screen.
+
+## SEND (D171) — `#rptSendBtn` → `sendMemo()`
+| | **SHARE / SEND** | **EXPORT** |
+|---|---|---|
+| What | the memo goes to **named people** — a read-only copy on a link that routes **back into OSLO** | the memo becomes a **file** the PM handles themselves — **it leaves OSLO** |
+| Tier | ⛔ **FREE ON EVERY TIER.** No lock chip. No tier branch. No meter. **CHG-061 — the seed is never gated.** | **formats** are tier-bound (MON-01 — Free = PDF) |
+| Both | freeze a **MEMO** through **ONE factory** (`_mkMemo`, `sent_via:'shared'\|'exported'`) · run **NO analysis** (D146) · append a **History event** that **opens that exact memo** (D169) | |
+
+---
+
+# D172 — REPORTS (the workspace) · READOUT (the document)
+
+## The registry — `REPORT_TYPES`
+```js
+const REPORT_TYPES = [ {k:'readout', nm:'Readout', doc:'Readout', workspace:'Reports', render:…} ];
+```
+**One entry. The Readout.** A second report type is an **ADDITION to this array**, not a rebuild of the workspace.
+⛔ **NO SPECULATIVE UI FOR REPORTS THAT DO NOT EXIST** — no picker, no gallery, no cards. *That is exactly how the
+six-card scaffold happened the first time.* **D143 stands.** → `_assertReportsHostsOneReportType()` (registry **and**
+DOM **and** the names) · NCs `aSecondReportTypeMayNotBeRegistered` · `theSixCardScaffoldMayNotReturn`.
+
+| Surface | Says |
+|---|---|
+| Sidebar `#sbReports` · top-bar `#tbReport` · crumb (`_viewLabel('reports')`) | **Reports** — the workspace |
+| The readout toolbar `.rb-t` (from `_readoutDocName()`) | **Readout** — the document |
+| The thing that travels (`_mkMemo` → `.m-stamp`) | **Memo** — dated, frozen, gone (D168) |
+
+## SCHEDULE (D172a/D172b) — `#rptSchBtn` → `toggleReportSchedule()` → `runScheduledReport()`
+- **The automation is Basic** — the tier check lives at the **toggle**, and nowhere else. The control stays **live** on
+  Free (D138); the **attempt** fires `UP-REPORT {sched:true}` → **"Basic sends it for you every Friday"**, ≤30 words,
+  resolutions **free-first** (*Send it now*).
+- **The send is free** — `sendMemo()` has **no tier branch and may never have one** (CHG-061).
+- When it fires it takes the **manual send's path exactly**: `sent_via:'shared'`, a scoped grant, a **`share`** History
+  event that **opens the frozen memo** (D169) — and a **currency re-check** (D147) that labels a stale read
+  **"previous analysis."**
+
+## THE SHARED MEMO (D172c) — `openSharedMemo()` → `#reviewerView`
+Rendered on the **reviewer-grant surface**, because it **is** a reviewer-grant: a **scoped, token-granted, read-only
+view**. `_mkLink('memo', id)` + `_grantScopedAccess('memo', …)` — **the same two functions the CRR grant uses.**
+**The link IS the invite, and the invite IS the authentication** — no signup wall, nobody anonymous (DL-021).
+The recipient's memo (`#rvvMemo`) is `contenteditable="false"`, wears `.memo` (never `.report`), and is rendered from
+**the memo's own frozen bytes** (`_memoPaperHTML`) — the open path **cannot reach** `_mkMemo` / `_memoBodyHTML`.
+
+---
+
+## Reports surface — Strategic Readout (WI-R1)
+
+**Where it lives.** Inside the existing **export/snapshot modal** (`#exportScrim`), rendered by `renderExport()`
+(which now calls `sroRender()`). No new route, nav item or modal — the composer sits between the export
+currency/disclaimer block and the Format picker. The reference `#exportModal` → this `#exportScrim` is the 1:1
+mapping (the reference upgraded "only the export surface").
+
+**Markup (inside `.wm-b`).**
+- `.wm-lab` — "Strategic readout — the five-section read · naming pending".
+- `.sro-draftbar` — "Assembled from what OSLO already understands… Generating a snapshot runs no analysis."
+- `.sro-bind` — the **DL-108 binding banner**: "The read (§1–§3 and §5) is identical for every audience. Only §4
+  is addressed to the recipient… forbidden by DL-108."
+- `.sro-aud#sroAud` — audience selector: **four** `.sro-audbtn` built by `sroRender()` from `REPORT_RECIPIENTS` (Sponsor / Programme lead / Operations / Executive-board — WI-R2); `.on` marks the active
+  one; each `onclick="sroSetAudience(k)"`.
+- `.sro-doc#sroDoc` — the live spine, assembled by `sroRender()` into `.sro-sec` blocks (`.sro-sh`/`.sro-num` head,
+  `.sro-sb` body; §4 carries `.sro-ask` dashed outline + `.sro-askmark` note).
+- `.sro-opts` — four optional-section checkboxes with a `.sro-tier` "Basic" chip; `onchange="sroToggleOpt(k,…)"`.
+- `.sro-cap` — Free-vs-Basic framing; "the seed… is never gated".
+
+**CSS.** All classes are **namespaced `.sro-*`** on purpose — the Readout **workspace** already owns `.ro-*`
+(`.ro-h` / `.ro-cur` / `.ro-foot`); the two must never be merged. Tokens are the slice-10 theme (`--primary`,
+`--surface`, `--success`, etc.); nothing hard-codes a colour.
+
+**JS.** `const SRO = {aud, opts}` holds composer state. Builders: `sroRead` `sroLimit` `sroUnknowns` `sroAsk`
+`sroHow` `sroOpt`; `sroRender()` re-assembles `#sroDoc` and syncs the audience buttons; `sroSetAudience` /
+`sroToggleOpt` mutate `SRO` then re-render. Every builder reads slice-10's own data (`ISSUES`, `_istatus`,
+`_readCurrency`, `_chatState`, `_openClarIds`, `_epiOf`, `_ARTORDER`, `dispName`, `TREND`) — **v4's model was not
+imported.** Only `sroAsk()` reads `SRO.aud`.
+
+---
+
+# D173 — THE PAYOFF (owner-directed, 2026-07-12)
+
+## The card
+`#payoff` — a `.card.payoff` at the **top of the Overview**, above Confidence. Hidden until an analysis update
+lands. Five slots, in this order, always: `#pay-act` (what you did) · `#pay-band` (the band transition) ·
+`#pay-note` (the fall sentence, or the released-limiter clause) · `#pay-counts` (the true counts, as `.pay-count`
+pills) · `#pay-limit` (what the limit is now). `.pn-slot#pnPayoff` carries the D161 notes layer.
+
+⛔ **There is no `.payoff.up` and no `.payoff.down`.** The block has **one** styling, and it contains **no colour
+token at all** (`--success` / `--danger` / `--warning` / `--conf-*` are absent from every `.payoff` rule). A rise
+and a fall render through the same classes at the same weight (D173c / D003).
+
+## The engine
+| Function | What it does |
+|---|---|
+| `_cafOf(r)` / `_limitingOf(r)` | the CAF triple and the lowest dimension. **One source** — `_chatCaf()` now delegates here, so the chat, the payoff and the Overview cannot disagree about the limit. |
+| `PAYOFF_COUNTS[]` | **the only numbers the payoff may speak.** Each row is `{key, label, get(), of?}`; `get()` reads live state. There is nowhere to type a number in. |
+| `_readSnapshot()` | `{caf, rel, limiting, counts, of}`. A `get()` that cannot produce a number ⇒ **the key is absent** ⇒ it cannot be rendered. ⛔ **`idx` is deliberately not in the snapshot**, so a delta on the index is not formable. |
+| `_payoffModel(before, after, act)` | differences only: band transitions (CAF + reliability), moved counts, `fell`, `limitHeld`, `released`. |
+| `_payoffParts(m)` / `_payoffProbe(m)` | the copy and a detached render — **the same parts the card uses**, so the guards grade the real thing. |
+| `_payoffFit(m)` | D163 budget (**≤45 words**). Drops the optional clause, then trailing counts. **Never** the action, the band, the fall note or the limiter. |
+| `renderPayoff(before, act)` | called by `applyFix` · `_submitClarification` · `deepComplete` · `_reviewAnalysisRun`. `before` is snapshotted **before the user acted**. |
+| `_firmFeasibility(f)` | the one place Feasibility moves on a cleared critical resourcing gap. Width moves; **the band is derived** by `_cafLevelFor` — never typed in. |
+
+## ⛔⛔ THE HERO IS THE MATURITY RAMP (D174 — supersedes the D173d band-word hero)
+
+D173d demoted the index and left **one word in 40px**. That is a *label*, not a hero. **D003 already mandated a
+neutral maturity ramp** and it had never been drawn. It is drawn now: **five ordinal steps, the current one lit.**
+
+```
+Very Low   ·   Low   ·   [ MODERATE ]   ·   High   ·   Very High
+ ▬▬▬▬       ▬▬▬▬        ██████████        ▬▬▬▬        ▬▬▬▬
+```
+
+| Element | DOM / CSS | Computed from |
+|---|---|---|
+| **1. The ramp** | `#ov-ramp` · `.ramp > .rstep(.on) > .rbar + (.rlab \| .bandhero)` | `_rampHTML(band)` maps **`_BANDORD`** (DL-086/098). The lit step is `_BANDORD.indexOf(currentRead().band)`. **No band word exists in the static markup.** |
+| **2. The reliability qualifier** | `.cr-qual` → `#ov-rel` | `currentRead().rel` — *"on moderate reliability"* (D002/D051) |
+| **3. The limiter** | `#ov-limit` | `_limitingOf(r).dim` — the lowest CAF dimension. The same computation that marks the `.cafrow.lim` row |
+| **4. The direction + its cause** | `#ov-trend` / `#ov-trend-lab` | `_readDirection()` + `_readCause()` (= the last `TREND` run's cause). **Only rendered when `_directionIsComputable()`** — a direction needs two runs; one run ⇒ it is not shown (D173) |
+| **5. The 0–100 index** | `.conf-focus .num .idxline` → `#ov-idx` (**15px**) | `currentRead().idx`. **Secondary aggregate. No delta, ever** |
+
+**ONE painter:** `renderHero(r)` writes all five; `renderOverview()` and the boot both call it, so the hero is never
+a stale hand-written value. **`pushTrend()` re-paints the hero** — the direction lives on the record, and
+`deepComplete()` re-renders the read *before* it appends the run (defect found in build: the direction stayed
+hidden after the Extended pass).
+
+### Neutrality — the ramp is a MATURITY scale, not a HEALTH bar (D003 · DL-104 §5)
+- **Colour allowlist, enforced in the CASCADE** (`RAMP_ALLOWED_COLOUR_TOKENS`): only `--text · --muted · --subtle ·
+  --border · --border-2 · --surface*` may colour the ramp. **No `--success` / `--danger` / `--warning`, no
+  `--conf-*`, and not even the brand `--primary`** — an amber-adjacent orange is exactly how a user reads "at risk".
+- **No percentage fill.** Every step is an identical fixed segment; **exactly one is lit** (`.rstep.on`). Steps
+  below the read are **not** filled in — a 1..n fill is a progress bar, and a progress bar is a health bar with
+  better manners.
+- The lit step is separated by **weight**, never hue: `--text` at 9px vs `--subtle` at 7px; the word is 32px.
+- **AA, both themes**: lit word 15.1:1 (dark) / 16.6:1 (light) · labels 8.8 / 8.0 · unlit bar **5.3 / 5.2** (it was
+  `--border-2` at **1.7:1** — under the 3:1 graphics floor — and was fixed to `--subtle`).
+
+## ⛔⛔ D175 — THE ANALYSIS-STATE CHIP IS NEUTRAL, AND THE ALLOWLIST NOW GOVERNS THE WHOLE CARD
+
+**The D174 guard was scoped to the confidence FOCUS. The defect was one element outside it, inside the same CARD.**
+
+`.ustate.prov` was `--warning` (**amber**) and `.ustate.cur` was `--success` (**green**) — the Provisional ↔ Current
+chip (**D040**), sitting in the hero card's header **one line above the five-step maturity ramp**. Each was
+*technically* honest on its own: it describes the **analysis state**, not the project. **But amber-and-green
+directly above a five-step scale is exactly the adjacency a reader turns into RAG** — the **P1 health-framing class
+(DL-104 §5)** arriving **through a side door**: not from what either element *says*, but from **what they say
+together**. *(And the amber was written as a raw literal — `rgba(217,164,65,.08)` — so a token blacklist would have
+missed it too.)*
+
+| | Before (D040) | After (D175) |
+|---|---|---|
+| **Provisional** | `--warning` text · amber border · amber wash | **hollow ring dot** · `--muted` · weight **600** · `--surface-2` |
+| **Current** | `--success` text · green border · green wash | **filled dot** · `--text` · weight **700** · `--surface-3` · `--subtle` border |
+| **Last-good** | (the provisional treatment) | (the provisional treatment — the read on screen *is* the last good one) |
+
+- **The labels are UNCHANGED** (D040). *Provisional · Current · Last-good* are honest and they stay. **Only the
+  colour went.** The information was **de-judged, not deleted** — Provisional/Current is a **STATE**, not a
+  **JUDGMENT**, and **a dot and a word carry it**.
+- **Legible by WEIGHT and SHAPE, never by HUE** — the D174 precedent (the lit ramp step is separated by weight, not
+  hue). A colour-blind reader sees the same two states everyone else does.
+- **AA, both themes:** *Provisional* **7.7:1** (dark) / **7.3:1** (light) · *Current* **11.6 / 13.4** · the dot (a
+  meaningful graphic, 3:1 floor) **4.7 / 4.8** hollow, **11.6 / 13.4** filled. All pass.
+
+### The guard's scope is now THE CARD (`_assertHeroCardCarriesNoSeverityColour()`)
+- **No severity/health token may colour ANY rule that can select a hero-card element** — `--success` · `--warning` ·
+  `--danger` · `--conf-*` — **and no chromatic literal** (graded by **chroma**, because the defect was written as a
+  raw `rgba()` with the token name filed off; greyscale and transparent pass, hue does not). Inline styles too.
+- **Read from the AUTHORED CASCADE, not the DOM.** The green lived on `.cur` — **a state that was not on screen**.
+  No DOM guard was ever going to see it.
+- **The scope is DERIVED from the live card** (every class/id on a hero element, minus generic state modifiers like
+  `.on`, plus the card's real ancestor chain), so it cannot go stale — and it **does not leak** onto other surfaces
+  (`.issue .card`, `.tog.on` stay out; proven by a must-not-fire control).
+- ~~**Two tiers, deliberately: brand ≠ severity.** `--primary` stays legal **on the card**…~~ ⛔ **SUPERSEDED BY
+  D176a: `--primary` IS NOW BANNED CARD-WIDE.** *Brand ≠ severity* was the right distinction and the wrong
+  conclusion: **D174 banned `--primary` from the ramp precisely because an amber-adjacent orange invites "amber =
+  at risk"**, and the CAF **limiter row** wore it **three lines under the ramp, inside the same card**. The card's
+  banned list is now `HERO_CARD_BANNED_TOKEN_RE` = `--success · --warning · --danger · --error · --crit · --conf-* ·
+  --primary*` **+ every chromatic literal**. **Emphasis by weight, never by hue.**
+- **The D161 notes rail is excluded** — it *legitimately* speaks in `--warning`; a guard that graded it would be
+  failing on its own documentation.
+- ⚠️ **Its own negative control found a hole in it:** the first draft read a selector as everything before the
+  *first* `{`, so a severity rule hidden in an **`@media` block** was invisible. `_cssSelOf()` / `_cssBodyOf()` now
+  shed the at-rule prefix. **Fix the guard, never the doctrine** (D166 §3).
+
+## The index (D173d, unchanged in substance)
+`#ov-idx` survives at **15px** in `.idxline` — a **secondary aggregate**, printing `58/100` and **nothing else**:
+no delta, no arrow, no verdict. **Demoted, not deleted** — the owner may calibrate it (DL-062 F1) and take the hero
+slot back; `_assertNoIndexDelta()` fails **both** if a delta appears **and** if the number is deleted or climbs back
+above the lit band (the CSS clause now grades `.ramp .rstep.on .bandhero` vs `.conf-focus .num .idx`).
+
+## Neutral direction, everywhere
+`.trend-arrow`, the History run chips and the `.ct-x` trend arrows were **green ▲ / amber ▼**. They are now
+`var(--muted)` in both directions (D003), and the Overview trend row is computed (`renderOvTrend()` /
+`_readDirection()`) — it was **hard-coded to rise**, so a read that fell was drawn as a read that rose.
+
+## ⛔⛔ D176 — THE LIMITER ROW LOSES THE ORANGE; THE CAF BARS WERE FALSE PRECISION
+
+### D176a — the limiter is a FACT, not a WARNING (closes O-D175-1)
+`.cafrow.lim` marked the limiting CAF dimension in **brand orange** (`--primary` / `--primary-light`, **#D97A3A**) —
+the row name, the bar fill and the band word — **three lines under the maturity ramp, inside the same hero card**.
+`--primary` is not a severity token, so D175's rule did not reach it. **D174's own reasoning does:** it banned
+`--primary` *from the ramp* **precisely because an amber-adjacent orange invites "amber = at risk."**
+
+> **The limiter is a FACT — *"Feasibility is holding it back"* — not a WARNING.** It needs **emphasis**, and
+> **weight gives emphasis**. Orange gives it a temperature it has not earned.
+
+| | Before | After (D176a) |
+|---|---|---|
+| **Limiter row name** (`.cafrow.lim .cn`) | `--primary-light` | `--text`, weight **600**, `--subtle` underline |
+| **Limiter band word** (`.cafrow.lim .cafband`) | `--primary-light` | `--text`, weight **700** |
+| **Limiter marker** | *(the colour was the marker)* | the **word "the limit"** (`.cafmark`), rendered from `_limitingOf()` |
+| **Footer links** (`.conf-foot .lnk2`) | `--primary-light` | `--text` + a dotted underline (the affordance, without the hue) |
+| **How-calc bullet** (`.howcalc-pop li .d`) | `--primary-light` | `--muted` (AA: `--subtle` on `--surface-3` is 4.1:1) |
+| **Stage word** (`.cpp-stage b`, popover) | `--primary-light` | `--text` (same rule, one line above the CAF ramps) |
+
+**Zero hue in the hero card.** AA holds in both themes: limiter row **15.1 : 1** (dark) / **16.6 : 1** (light);
+level word and marker `--muted` **8.8 / 8.0**; links **15.1 / 16.6**.
+
+### D176b — the CAF dimensions are BANDS, not percentages (closes O-D175-2)
+The confidence popover drew each dimension as **a bar filled to a percentage** (`cpp-feas-bar`,
+`style.width = r.feasW + '%'`), and the hero card's rows did the same (`.caftrk` / `.caffil`).
+
+> **A bar filled to 55% asserts a CARDINAL MAGNITUDE OSLO cannot defend**, on the same uncalibrated scale
+> (**DL-062 F1 — Open-TBD**). **It is WORSE than the 0–100 index**, because **a filled bar reads as a measurement
+> without even showing its number** — and a **partial fill is the visual grammar of a PROGRESS / HEALTH bar**
+> (**DL-104 §5 — P1**).
+
+- **Every CAF dimension now renders on the hero's own five-step ordinal ramp** — *Very Low · Low · Moderate · High ·
+  Very High* (**DL-086/098**) — on **both** surfaces (Overview hero card **and** confidence popover).
+- **ONE BUILDER, ONE MENTAL MODEL.** `_rampHTML(lvl, {compact:true})` — the same function that draws the hero.
+  Equal segments, **exactly one lit**, no fill, no hue. The level word sits beside the row; the ramp's `aria-label`
+  states the ordinal position (*"Feasibility: Very Low. Step 1 of 5 — Very Low, Low, Moderate, High, Very High."*).
+- **The limiter is marked in words and weight**, on both surfaces, from `_limitingOf()`. The popover carries a
+  one-line note: ***"Feasibility is holding it back — the lowest of the three. It is a fact about the read, not a
+  warning about the project."***
+- **The reliability basis rows lost their fills too** (Coverage · Evidence availability · How assessable). They now
+  carry **their level word alone**. They are **not** drawn on the five-band ramp: reliability is a **different
+  scale** and OSLO does not invent one → **O-D176-1**.
+- **`_RELPCT` and `_RELCOLOR` are deleted.** A level is not a percentage; a maturity level is not a colour.
+- **The widths stay in the MODEL.** `feasW` / `alignW` still compute the band through `_cafLevelFor()` — the model
+  may hold a number the product may not draw.
+- ⛔ **The Attention heat map is UNCHANGED and CORRECT AS-IS.** Those cells **are issues**, and **severity colour
+  belongs to issues alone** (D003 / D060).
+
+### The guards (mechanism, not copy — D166)
+| Guard | What it proves |
+|---|---|
+| `_assertHeroCardCarriesNoSeverityColour()` | **No hue on the hero card** — severity **and** `--primary` **and** any chromatic literal, graded from the **authored cascade** (chroma, not token names; `@media`-aware), inline styles included. Its own NC forced a scope fix: a **bare subject** (`.cr-limit b{color:rgb(217,122,58)}`) used to slip through. |
+| `_assertNoPercentageFillOnMaturitySurfaces()` | **No percentage fill on any confidence/CAF/reliability element** — proven in **three places**: the **cascade** (any rule mentioning a maturity class), the **DOM** (inline styles), and the **RENDER PATH** (no painter may write `style.width`). The old fill was written by **JavaScript** — a cascade-only guard would have been theatre. |
+| `_assertCafDimensionsRenderAsBands()` | Each dimension's ramp is graded **byte-for-byte** against `_rampHTML(lvl,{compact:true})`; the **lit step is computed from the read**; the **limiter is `_limitingOf()`**; and the whole thing is re-graded after **moving the read** (a hard-coded band passes the first pass and fails this one). |
+
+**`_d176NegativeControls()` — 15 injected regressions, every one bites; 2 must-not-fire controls stay green**
+(severity colour on **ISSUES** is untouched; the Progress card's **true-count** bars with their denominators on
+screen are not reached → **O-D176-2**).
+
+---
+
+# D177 — THE EXTENDED PASS MOVES BOTH THE BAND AND THE COUNTS (owner, 2026-07-12)
+
+**A data fix, not a code fix.** `_readSnapshot()` / `_payoffModel()` / `renderPayoff()` were already correct. What
+was missing was a Deep Pass that **changed anything countable**.
+
+## The mechanism
+
+| Symbol | Contract |
+|---|---|
+| `DEEP_FINDINGS` | The two issues a deeper read of the **same** artifacts surfaces (ISS-07 critical · ISS-08 moderate). Same shape as `ISSUES`. **Absent from `ISSUES` and `_istatus` at boot.** |
+| `_deepPassSurfaceFindings()` | **The one door.** Merges them into `ISSUES` + `_istatus`, idempotently, and **returns the ids it surfaced** — so the payoff, the chat line and the History delta are all computed from what actually happened. |
+| `deepComplete()` | `before = _readSnapshot()` → **surface the findings** → `ANALYSIS_STATE='current'` → re-render the issue surfaces (focus · clarifications · heat · counts · issues list · the open artifact) → `renderPayoff(before, 'Extended Analysis landed.')`. |
+| `_payoffModel()` | Adds **`learned`** — true when a CAF band rose **and** the `issues` count rose **and** nothing fell. **No flag is passed in**: it is read off the transitions, so **a run that did not earn the sentence cannot claim it.** `foundN` is the count delta. |
+| `_payoffParts()` | The note: *"I looked deeper and found two more. The read is firmer because I know more."* — `_numWord(foundN)`, computed. |
+| `_payoffFit()` | If the budget ever trimmed the `issues` row away, **`learned` is dropped with it** — the sentence may never outlive the count it describes. |
+| Markup order | `pay-act` · `pay-band` · **`pay-counts`** · `pay-note` · `pay-limit`. The counts land **before** the line about them. `_payoffProbe()` renders the same order, so the guards grade the real thing. |
+| `_a()` | Resolves its popover copy through `ISSUES` **or** `DEEP_FINDINGS` — the span is authored into the artifact at boot; `_artBodyLive()` keeps it **inert (plain text)** until `_istatus[id]==='open'`. **The weak text was always there.** |
+| CSS | `.pay-note{margin-top:9px}` (now under the counts). **No colour token enters `.payoff`, in either direction.** |
+
+## The guard
+
+**`_assertDeepPassMovesBandAndCounts()` — a STATE proof.** It snapshots the world, puts the app back on the
+Fast-Pass read with the findings unfound, **runs the real `deepComplete()`** (not a re-implementation), and asserts
+from state: the band **rose** · the issue count **rose** · the critical count **rose** · the payoff rendered **all
+three parts** plus the plain line · `foundN` equals the state delta · **≤45 words**. It also proves the findings
+are **not invented** (real artifact · real CAF dimension · real citations · a real span in `ARTBODY`). Then it
+restores `ISSUES` · `_istatus` · `HISTORY` · `TREND` · the chat · the payoff — **it leaves no trace** (D166).
+
+**`_d177NegativeControls()` — 11 injected regressions, every one bites; 1 must-not-fire control stays green.**
+**NC-D177-01 is the bug that shipped:** the Extended pass surfaces nothing, and the payoff claims a deeper read
+anyway. The must-not-fire control is the shipped state itself — **more issues with a higher band must stay green**,
+or the guard would be enforcing *"confidence = health"*, the exact misreading the doctrine exists to prevent.
+
+---
+
+# D178 — AND IT **ASKS** (owner, 2026-07-12 — closes O-D177-2)
+
+> **Finding an issue and knowing what would close it are different acts — and OSLO can do both.**
+
+**No new surface. No new component. One `clar` field, and the machinery that already existed does the rest.**
+
+| Symbol | Contract |
+|---|---|
+| `DEEP_FINDINGS['ISS-07'].clar` | The ask the deeper read raises: *"Is there a minimum signed-sponsorship floor — or a cancellation point — that has to be cleared before the AV and catering commitments go firm?"* Same field, same shape as ISS-01/ISS-02. **It re-reads the evidence ISS-07 already cites — no new facts.** |
+| `_openClarIds()` | **Unchanged** — and that is the point. It already backs the `questions` row of `PAYOFF_COUNTS`, so surfacing ISS-07 moves **Open questions 2 → 3** with no new code. **Computed, never typed in.** |
+| `_payoffModel()` | Adds **`asked`** — the **rise** in the `questions` row. Read off the transitions, exactly like `learned`: **no flag is passed in**, so a run that raised nothing cannot claim an ask, and **answering** a question (the row *falls*) yields `asked = 0`. |
+| `_payoffNote()` | **NEW** — assembles the note from the transitions: *found more* · *still asking* · *the read is firmer*. Each clause is spoken **only if the count behind it moved**. |
+| `_payoffFit()` | If the budget ever trimmed the `questions` row, **`asked` is dropped with it** — the ask may never outlive the count that evidences it (the same discipline as `learned`). |
+| `deepComplete()` | `_asked = _found.filter(id => ISSUES[id].clar)` — derived from what the pass **actually surfaced**. |
+| `postDeepPassComplete(found, crit, asked)` | The completion turn now ends with *"There's 1 thing I still need from you:"* + `_chatClarBlock(id)` — the ordinary **collapsed** chat request (D165e). Answering it there runs `_submitClarification()` — **the same path the panel runs**. |
+
+## The panel and the chat are the same event
+
+The ask renders **collapsed** in both (D162c/D165e) — a one-line prompt that expands to the input on click:
+
+| surface | rendered by | answered by | → |
+|---|---|---|---|
+| **Issue panel** | `_ipRowHTML(id,'clar',…)` | `answerClarification(id)` | `_submitClarification(id, val, **'panel'**)` |
+| **OSLO chat** | `_chatClarBlock(id)` | `answerClarificationFromChat(id)` | `_submitClarification(id, val, **'chat'**)` |
+
+**One path. One set of state changes. A byte-identical History entry** (D096 — verified field-for-field in jsdom).
+The **only** difference is which surface reports back. **Advisory-only: answering triggers an analysis update; it
+never resolves the issue by hand** (`open → Addressed → Resolved`, D088).
+
+## The guard
+
+**`_assertDeepPassMovesBandAndCounts()` now grades the ask, from state:** at least one finding carries a **real
+question** (a `clar.q` containing a `?` — **OSLO asks, it never asserts**) · the **open-questions count rose** ·
+`m.asked` **equals the state delta** · and the **`Open questions` row is on the rendered surface**, not merely in
+the model. **Three new negative controls, all biting:**
+
+- **NC-D178-01 — the Deep Pass raises no clarification.** It finds the gap and only **flags** it. **The guard goes red.**
+- **NC-D178-02 — the payoff swallows the ask.** The count moved; the user was never told. **Red.**
+- **NC-D178-03 — OSLO asserts instead of asking** (*"the sponsorship floor is $250k"*). **A fabricated fact. Red.**
+
+**⛔ And the guard leaves no trace.** The real pass now **raises a clarification in the chat**, and raising one
+retires any earlier live answer box for that issue (`_retireClarBoxes`) — which, run inside a guard, would reach
+into the user's own thread and **disable a box they were about to type into**. `_CHAT_PROBE` fences exactly that
+housekeeping. Verified: the live `chatClarBox-ISS-07` is **byte-for-byte unchanged** after the guard and all 13
+controls run (D166).
+
+---
+
+# D179 — OVERVIEW LAYOUT: **STATE OUTRANKS EVENT · COUNTS HAVE ONE HOME · COLOUR WITHOUT RAG** (owner, 2026-07-12)
+
+**Four owner findings, all correct.** The resulting layout:
+
+> **HERO (the state)  →  PAYOFF (the event: dismissible, movement drawn on the ramp, ≤20 words)  →  PROGRESS (the counts, one home, deltas annotated)**
+
+## D179a — the Confidence card is the **FIRST PANEL** of the Overview. Always.
+
+| | |
+|---|---|
+| **Was** | `.card.payoff` was authored **above** `.card.hero` in `#pane-overview .uc`, pushing the state down the page. |
+| **Now** | The hero is the **first** `.card` in the Overview column. The payoff is **not a `.card` at all**. |
+| **Why** | *"What changed"* is **EPISODIC** — true for one moment after an analysis lands. **Confidence is PERMANENT.** An event may never outrank state in the layout. |
+| **Guard** | `_assertConfidenceIsTheFirstPanel()` — **mechanism proof on DOM order** (`#pane-overview .card` → `[0]` must be `.card.hero`), plus a **vacuity check** (≥3 panels, or "first" is a statement about a list of one), plus: the payoff must not carry `.card`. |
+
+## D179b — the payoff is a **DELTA ON THE CONFIDENCE CARD**, not a panel
+
+| | |
+|---|---|
+| **Where** | Inside `.card.hero`, **immediately after `.conf-focus`** — under the hero it annotates, above the CAF rows. |
+| **Chrome** | `.payoff` is a **strip**: `--maturity-soft` background, `--maturity-line` border, a 10px uppercase `.pay-k` label, and a `.pay-x` dismiss. **No card, no `<h3>`, no `.ch` header.** |
+| **Dismissible** | `dismissPayoff()` hides the strip **and clears `_MOVE`**, then repaints the ramps — **the ghosts leave with the event**. |
+| **Not persisted** | Nothing about the payoff touches `localStorage` / `sessionStorage` / cookies. **Reload ⇒ gone.** |
+| **Guards** | `_assertPayoffLivesInsideTheConfidenceCard()` (descendant of `.card.hero` · sits *after* `.conf-focus` · the dismiss affordance is genuinely interactive · **dismiss removes the ghost**, proven by injecting a movement, asserting a ghost renders, then dismissing) · `_assertPayoffIsNotPersisted()` (source proof on every payoff path). |
+
+## D179c — the movement is **DRAWN ON THE RAMP**, not written in a paragraph
+
+```
+Very Low  ·  ⟨Low⟩ ⟶ [ MODERATE ]  ·  High  ·  Very High
+```
+
+| Piece | Mechanism |
+|---|---|
+| `_rampHTML(band, {prev})` | **ONE builder, one new option.** The step at `_BANDORD.indexOf(prev)` gets `class="rstep ghost"` and carries `<span class="rarr">⟶</span>` (or `⟵` for a fall). `prev === band` (or absent) ⇒ **no ghost, no arrow.** |
+| `_MOVE` | `{band:{from,to}|null, dims:{Feasibility:{from,to},…}}` — written **only** by `renderPayoff()`, from the **`before` snapshot**; read **only** by `renderRamp()` / `renderCafRows()`; cleared by `dismissPayoff()`. |
+| `_ghostBandFor(dim)` | The single reader. `'__band'` ⇒ the hero ramp; a dimension name ⇒ that CAF row. **Null when nothing moved.** |
+| **The demo case** | The Extended pass moves **Feasibility Very Low → Low** while the **overall band holds at Moderate**. So the **Feasibility row** ghosts step 0, lights step 1 and draws the arrow — and **the hero ramp draws nothing**. **NEVER FAKE A MOVEMENT THAT DID NOT HAPPEN.** |
+| **Reliability** | The one transition that still travels in **words** (in the strip): reliability has **no ramp**, because canon states no scale for it and OSLO does not invent one (Anti-Assumption). |
+| **Word budget** | `PAYOFF_WORD_BUDGET` **45 → 20**. The strip carries the **act** and **one short line**; the movement is a picture (uncounted) and the counts are in Progress. **A budget can no longer cost the user a number or a transition.** |
+| **Guards** | `_assertGhostBandIsComputedFromPreviousSnapshot()` — walks **all 25 (prev, current) band pairs**: same band ⇒ no ghost; different ⇒ exactly one ghost, **at the previous band's index**, with an arrow. Then the **live surfaces** with `_MOVE` set and cleared. · `_assertRampIsNotAHealthBar()` extended: **at most ONE** unlit step may wear `ghost`, and only when `_MOVE` says so — a *trail* of filled-in steps would be a progress bar. · `_assertCafDimensionsRenderAsBands()` now compares **byte-for-byte against `_rampHTML(lvl,{compact:true, prev:_ghostBandFor(dim)})`**, so the ghost is inside the one-builder proof. |
+
+## D179d — **NEUTRAL ≠ MONOCHROME.** A cool accent, and orange for actions only.
+
+> **OSLO's brand colour is ORANGE. Orange reads as AMBER. Amber reads as "AT RISK."** A real brand-vs-doctrine collision on a maturity surface. D175/D176 removed severity colour — correctly — and then removed **all** colour, which left the hero grey and dead.
+
+| Token | Dark | Light | Used for |
+|---|---|---|---|
+| `--maturity` | `#7FA0C9` | `#3F6193` | **the lit ramp step · the current band word · the limiter marker · the movement arrow · the payoff label** |
+| `--maturity-soft` | `rgba(127,160,201,.14)` | `rgba(63,97,147,.10)` | the payoff strip's ground |
+| `--maturity-line` | `rgba(127,160,201,.45)` | `rgba(63,97,147,.35)` | the payoff strip's edge |
+
+- **Blue/violet is NOT in the RAG vocabulary** and cannot be misread as health. It is the one hue that can carry emphasis on a maturity surface.
+- **`--primary` (brand orange) is reserved for ACTIONS and LINKS — never for STATE.** In the hero card that means exactly the `.conf-foot .lnk2` links. `HERO_INTERACTIVE_CLASSES` is the only door it has.
+- **Severity colour (red/amber/green) stays on ISSUES alone (D003).** The Attention heat map is **untouched** — those cells *are* issues.
+
+**The guard was AMENDED, not weakened:**
+
+| | |
+|---|---|
+| `HERO_CARD_BANNED_TOKEN_RE` | still `--success\|--warning\|--danger\|--error\|--crit\|--conf-*` — **severity is banned everywhere in the card, always.** |
+| `HERO_BRAND_TOKEN_RE` | `--primary*` — graded **by subject**: allowed on an interactive selector, **banned on state**, in the cascade *and* inline. |
+| `_chromaticLiterals()` | **still grades CHROMA, not token names** — and now also **HUE**. The RAG arc is hue ∈ [340°..360°] ∪ [0°..170°]. The original defect `rgba(217,164,65,.08)` is **39° (amber) → still bites**. `rgb(217,122,58)` is **26° → still bites**. `rgba(127,160,201,.14)` is 214° (cool) → passes. Greyscale (chroma ≤ 12) passes. |
+| `RAMP_ALLOWED_COLOUR_TOKENS` | neutrals **+ `--maturity*`**. Still no `--primary`, no `--conf-*`, no severity. |
+| `_assertBrandOrangeIsActionsOnly()` | **NEW.** Proves the half a cascade cannot see: **every element in the card wearing an interactive class is genuinely operable** (`<a>`/`<button>`/onclick/role=button/tabindex), **no state class is enrolled in the action list**, and **the cool accent is actually present** (a card that went back to grey has re-run the over-correction, not obeyed D179d). |
+| **AA** | every accented element clears AA in **both** themes: lit step / band word / limiter marker / arrow **6.13:1 (dark) · 6.28:1 (light)**; the payoff label on its own strip **4.87 / 5.45**; the hero links **7.20 / 5.93**; the delta chip **4.67 / 4.75**. |
+
+## D179e — **COUNTS HAVE ONE HOME** (the sharpest finding)
+
+**The payoff and Progress showed the same numbers twice** — one as a delta, one as an absolute.
+
+**Progress now carries the counts, with the delta annotated:**
+
+> Issues **8** ↑2 · Critical **2** ↑1 · Open questions **3** ↑1 · Confirmed artifacts **0 / 7**
+
+| | |
+|---|---|
+| `_progressRows()` | Reads the **`PAYOFF_COUNTS` registry** — the *same* registry the payoff model reads. A row whose `get()` cannot produce a number is **absent from the snapshot, therefore absent from the chips.** |
+| `_progressChipHTML()` | The one builder. `.pg-chip` = label + `<b>value [/ of]</b>` + `.pg-d` delta. |
+| **The delta** | `value − _PREV_RUN.counts[key]`, where `_PREV_RUN` is the **`before` snapshot of the last analysis update**. **No previous run ⇒ no delta. No movement ⇒ no delta.** |
+| **A rise is not green** | `↑` and `↓` wear **one** class (`.pg-d`), one weight, one colour. There is no `.pg-d.up` to style. **More issues is not bad news** (D177). |
+| **What was deleted** | · `.conf-foot`'s *"6 issues open · 0 resolved"* (a second home for the issue count) · the Progress ledger's `pg-resolved`/`pg-open`/`pg-crit` numbers · **`Dependencies confirmed 0/3` + its fill** (the model holds **no dependency register** — it was counting clarification-bearing *issues* and calling them dependencies) · **`Plan artifacts read 7/7` + its 100% fill** (**hard-coded in the markup; nothing computed it**) · the count in the clarification pointer (*"OSLO has **2** things to confirm"*) · the count in *"See all **8** open issues"*. |
+| **Guards** | `_assertNoCountIsRenderedTwice()` — a DOM scan of the **whole Overview**: for each registry count, find every **host** that renders its value *with its label beside it*; **more than one host is a violation, zero hosts is vacuity.** · `_assertProgressCountsAreComputed()` — the chips are byte-for-byte what `_progressRows()` builds; every chip traces to a registry row; an **uncomputable probe never reaches the chips** (and a **computable** one does, or the proof is vacuous); the **delta is derived**, and with `_PREV_RUN = null` there is **no delta at all**. · `_assertNoFabricatedProgressCount()` — *"N of 7 artifacts well-evidenced"* is gone from the Overview and cannot return. · `_assertEveryPayoffCountIsComputed()`'s **text proof was re-pointed at Progress** — it used to grade the payoff strip, which now prints **no numbers at all**, so it would have passed for free (**exactly the vacuity D166 §1 forbids**). |
+
+**Scope, stated rather than assumed:** the guard grades `#pane-overview`. The left **nav rail** badges (`#vsAttnBadge`, `#vsIssuesBadge`) are **wayfinding affordances on a different surface**, not a second home for the count; the **0–100 index** is a secondary aggregate, not a count.
+
+## The payoff, verbatim (Extended pass) — **19 words, budget 20**
+
+> **What changed**
+> **Extended Analysis landed.**
+> *I looked deeper: found two more, and one more question. The read is firmer.*
+
+…with **Feasibility ⟨Very Low⟩ ⟶ [Low]** drawn on its ramp, and **Issues 8 ↑2 · Critical 2 ↑1 · Open questions 3 ↑1** in Progress. **MORE ISSUES *AND* A HIGHER BAND — not a contradiction, the point** (D177).
+
+## Negative controls — `_d179NegativeControls()` · **28 rows, every one `true`**
+
+**The four owner findings, re-injected:** `theDefect_payoffIsAPanelAboveTheHero` · `theFakeMovement_ghostIsHardCoded` · `theSharpestDefect_theCountIsRenderedTwice` · `d_brandOrangeOnTheBandWord`.
+**And the three that must NOT fire:** severity colour on **issues** (the heat map is correct as-is) · the **cool accent** on the maturity surface (that *is* D179d) · **more issues + a higher band** (that *is* D177).
+
+
+---
+
+# D180 — PROGRESS IS GROUNDING, NOT CLEARING (owner: approved, 2026-07-12)
+
+**Progress toward WHAT?** **Not project completion — that is forbidden. Progress in UNDERSTANDING.**
+
+> ## ⛔ **PROGRESS IS NOT A BURNDOWN.**
+> If it looks like *issues → 0*, the product has rebuilt a **project-health tracker under another name** — and the
+> doctrine leaks out through **the one panel nobody was watching**.
+
+## The panel, verbatim (as rendered) — **25 words at boot, 41 after a run**
+
+```
+Progress                                                     (i)
+
+GROUNDED   1 of 7 artifacts rest on your evidence   ↑1        ← the star
+OPEN       Issues 7 ↓1 · Critical 1 ↓1 · Open questions 2 ↓1
+CLOSED     Issues resolved 1 ↑1 · Questions answered 0
+
+The arrows are the change since the last analysis update. Timeline →
+```
+
+## The three rows
+
+| Row | What it says | Where the number comes from |
+|---|---|---|
+| **GROUNDED** *(the star)* | *"N of 7 artifacts rest on your evidence."* **The only number that says how much of this read is REAL versus INFERRED** — *derived vs attested* (D011), made countable. **It is the product's entire epistemic claim, as a count**, and **it rises as the user confirms artifacts, applies fixes and answers questions.** | `PLAN_SECTIONS.filter(p => p.basis === 'attested').length` **/** `PLAN_SECTIONS.length` |
+| **OPEN** | What is outstanding. | `ISSUES` (active) · active `critical` · `_openClarIds()` |
+| **CLOSED** | What the user's work **landed**. *(Closes O-D179-3.)* | `_istatus[id] === 'resolved'` · `_clarAnswered` |
+
+**Every row is a row of `PAYOFF_COUNTS`** — the same registry the payoff model reads, whose `get()` reads live
+state. **There is no number in the Progress markup at all**, and **a count that cannot be computed is absent from
+the snapshot, therefore absent from the panel** (D173).
+
+## What was KILLED, and why
+
+| Killed | Why |
+|---|---|
+| **`Plan artifacts read 7 / 7`** *(closes O-D179-1)* | **OSLO always reads all seven. It is a CONSTANT, not progress** — hard-coded *because* it was meaningless. **A number that can never move is not information; it is decoration.** *"Read"* is not the interesting question; ***"grounded in evidence"* is.** |
+| **`Confirmed artifacts 0 / 7`** *(the chip that stood in for it)* | Same count, **wrong frame**. It is now the **star sentence**, carrying the weight the epistemic claim deserves. |
+| **`Dependencies confirmed 0 / 3` + fill** | The model holds **no dependency register**. **Omitted, not invented** (O-D179-2). |
+
+## The property that must hold (**D180c**)
+
+> **They ground more artifacts → reliability rises → confidence rises. AND ISSUES MAY RISE TOO, because grounding
+> reveals things.** **PROGRESS GOES UP WHILE THE ISSUE COUNT GOES UP. THAT IS NOT A BUG — IT IS THE POINT.**
+> **You cannot game GROUNDING. You can only game a BURNDOWN.**
+
+## Guards — **mechanism, not copy** (D166)
+
+| Guard | What it proves |
+|---|---|
+| `_assertGroundingRisesWhileIssuesRise()` | **THE STATE PROOF.** It grounds an artifact **while the issue count rises** (real state: the artifact basis flips to `attested`, a critical clar-bearing finding is surfaced, an update resolves one, the user answers one) and requires: **GROUNDED rises**, and **nothing treats the rising issue count as regression** — the `↑` on *Issues* and the `↑` on *Grounded* must carry **the identical class**, no direction class exists, **no severity colour reaches the panel's cascade**, and no regression vocabulary is printed. |
+| `_assertNoBurndownGrammar()` | **Four doors, all shut.** The **REGISTRY** (a denominator on an OPEN/CLOSED count *is* a burndown) · the **COPY** (`%`, "remaining", "complete", "to go", "on/off track", "target") · the **DOM** (`<progress>`/`<meter>`/`role=progressbar`/inline % fill) · the **CASCADE** and the **RENDER PATH** (the door the CAF bars came through — D176b). |
+| `_assertNoConstantDressedAsProgress()` | **PERTURBS STATE and requires every rendered row to MOVE.** A constant cannot survive it — a registry row returning `PLAN_SECTIONS.length` (i.e. "artifacts read 7/7", computed but immovable) goes **red**. |
+| `_assertClosedIsNeverATarget()` | *Resolved* **exists, is computed, lives in the CLOSED row**, and carries **no denominator, no %, no "remaining"**. |
+| `_assertNoCountIsRenderedTwice()` **(strengthened)** | Six counts now, and two share a noun (*Issues* / *Issues resolved*). Each Progress host **declares its count** (`data-count-key`) and is graded for that count alone; **a host that declares nothing is prose, and prose is still graded on the noun** — so the shipped footer defect (*"8 issues open"*) still bites. |
+
+## Negative controls — `_d180NegativeControls()` · **19 rows, every one `true`**
+
+**The defects, re-injected through the real mechanism:** `theDefect_aConstantReturnsAsProgress` (a registry row that
+returns a constant) · `theBurndown_aCompletionPercentage` · `theBurndown_aBarTowardZero` ·
+`theSubtleBurndown_aDenominatorOnResolved` · **`theLeak_theRisingIssueCountIsPaintedAsBad`** (the delta on *Issues*
+goes red — **this is the doctrine leak, and the guard bites**) · `theLeak_groundingDoesNotRise` ·
+`c_aDirectionClassReturns` · `c_resolvedLeavesTheClosedRow` · `c_refusesToGradeNothing` (vacuity).
+**And the two that must NOT fire:** **more issues + a higher band** (D177) · **grounding rising while the issue
+count rises** (D180c — *the property, not a bug*).
+
+## AA contrast — Progress, **both themes**
+
+`.pg-k` **5.34 / 5.23** · `.pg-say` **8.77 / 8.03** · `.pg-say b` **15.05 / 16.56** · `.pg-chip` **7.67 / 7.29** ·
+`.pg-chip b` **13.15 / 15.05** · `.pg-d` **4.67 / 4.75** · `.prog-since` **5.34 / 5.23**. **Zero failures.**

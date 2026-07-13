@@ -493,3 +493,340 @@ of suggestions on screen, and it belongs to the conversation.
 Before: a wall arrives, and the user has to **read a document to ask a question**.
 After: OSLO says one thing, and **offers the user the next move**. The depth is identical. **The user chooses when to
 go and get it.**
+
+---
+
+# D170 / D171 — WHAT CHANGED FOR THE USER
+
+**Before:** on Free, with an "Export link" format selected, the PM clicked **Export** and **nothing happened.** No file.
+No explanation. No prompt. The button looked alive, the click landed, and the product went quiet. **An enabled control
+that silently does nothing is worse than a disabled one** — a disabled control at least tells you something.
+
+**Now:** the click always has a consequence. The prompt appears — *"Free exports as PDF. **Export link** comes with
+**Basic**."* — with **two ways out**: export as PDF, free, right now; or upgrade. **Every time, not once a day.**
+
+**Before:** the PM opened *Recipient* to check who the memo was addressed to, and **the paragraph they were reading slid
+down the screen.**
+
+**Now:** the menus are popovers. **The document does not move.** You act *on* the reading surface, not *around* it.
+
+**Before:** the PM could address a readout **to the Sponsor** — and then had **no way to send it to the Sponsor.** The
+toolbar could address it and export it. The History event was called *"memo sent."* Sent by what?
+
+**Now:** **Send** sits beside Export. It goes to the person, as a **read-only copy on a link back into OSLO**. It is
+**free on every plan** — a Free user can put a memo in an executive's inbox, because that is the whole point.
+When the read moves on, their copy is **relabelled "previous analysis"** — **never silently refreshed.**
+
+---
+
+# D172 — WHAT CHANGED FOR THE USER
+
+**The schedule sends it to people.** *Nobody schedules a PDF onto their own disk.* A schedule now means what a PM means
+by it — **"send my sponsor the readout every Friday."** It goes out as a **share**: a read-only memo, on a link back
+into OSLO, recorded in History as **sent** — and openable there, exactly as it left.
+
+**And it still tells the truth about its own age.** If the analysis is behind the plan when the schedule fires, the memo
+goes out **labelled "previous analysis."** It is **never quietly shipped as current**, and OSLO **never runs an analysis
+to make it look fresh.**
+
+**The share is free. The automation is Basic.**
+You can send the readout **manually, to anyone, on any plan, as often as you like** — that is never limited, and it never
+will be. **What Basic sells is not having to remember.** Try to schedule it on Free and the prompt says the honest thing:
+***"Basic sends it for you every Friday"*** — and the first way out it offers you is **Send it now, free.**
+
+**The person who receives it just opens it.** No signup, no password, no account. **The link is their invite, and the
+invite is their key** — the same mechanism a reviewer gets. They see **that one memo**, read-only, on its cover, with its
+disclaimer and its currency marker. When the read moves on, their copy is **relabelled "previous analysis."** It is
+**never silently refreshed, and never rewritten.**
+
+**Names.** The workspace is **Reports**. The document inside it is the **Readout**. There is **one** report type today,
+and the product does not pretend otherwise: **no pickers, no galleries, no cards for reports that do not exist.**
+
+---
+
+## Reports surface — Strategic Readout (WI-R1)
+
+**The moment.** A PM about to share out opens **Export a snapshot**. Before choosing a format they see the
+**Strategic Readout composer**: one honest read, assembled live, with a single choice — *who is the ask for?*
+
+**What they do.**
+1. Read the five-section spine as it stands: **§1 The read**, **§2 What's limiting it**, **§3 What we don't know
+   yet**, **§4 What I need from you**, **§5 How to read this**.
+2. Toggle the audience — **Sponsor → Programme lead → Operations → Executive-board** (the four shared `REPORT_RECIPIENTS`, WI-R2). **Only §4 changes.** §1–§3 and §5 do not move a
+   pixel. The banner above says why, in plain terms, and cites the rule: *tailor the ask, never the read.* This is
+   the felt proof that OSLO will not spin the same plan three ways to three rooms.
+3. Optionally add **Basic** sections (Alignment · Unvalidated assumptions · How understanding matured · Artifact
+   detail) — presentation only.
+4. Export. **Free** takes the read snapshot (§1–§5) as PDF; **Basic** adds the optional sections, branding and
+   scheduling. Generating **runs no analysis** — it packages what OSLO already understands.
+
+**The honesty on the face of it.** §1 states plainly that this is *understanding maturity — not project health,
+readiness, a RAG status, or the probability of success.* §5 tells the reader how far to trust it: the reliability,
+the currency marker (a stale snapshot reads **"previous analysis"**, never passed off as current), and that
+*From OSLO* content is derived while *Confirmed by you* is attested — **a derived read is never dressed as
+attested.** This is the DL-104 P1 guard, worn openly, because the PM stakes their name on the output.
+
+**Why here and not in the memo.** The composer speaks OSLO's language on purpose — it is the PM's **workbench**,
+not the thing that lands in the sponsor's inbox. The memo that travels (the Readout document) still reads in the
+recipient's language, doctrine-free (D149). The workbench is where the PM sees the machinery; the memo is where
+it disappears.
+
+---
+
+# D173 — THE PAYOFF: the moment the read moves
+
+**The user acts. The analysis updates. The product says what changed — in numbers it can defend.**
+
+> **You applied OSLO's fix to Resources.**
+> **Feasibility: Very Low → Low.**
+> **Issues 6 → 5 · Critical 1 → 0 · Open questions 2 → 1 · Confirmed artifacts 0 → 1 of 7**
+> **Feasibility is still the limit.**
+
+Three things, always: **the band transition** (discrete, earned, visible — an ordinal scale is still a scale) ·
+**counts OSLO knows exactly** (every one computed from live state) · **the consequence** (what the limit is now).
+≤45 words. No meta, no doctrine, no rationale.
+
+## A fall is stated exactly like a rise
+The read can **fall** when you improve the plan — a stakeholder disagrees on the record, and Alignment drops. That
+is better understanding, not a worse project.
+
+> **Chris's response landed as evidence.**
+> **Alignment: Moderate → Low.** Your read fell — because you learned something.
+> **Feasibility is still the limit.**
+
+**Same block. Same classes. Same weight. No red, no alarm, no apology.** If a rise were a celebration, a fall would
+be a punishment — and the product would be training people to avoid answering the hard clarification and to avoid
+surfacing the ugly dependency. **That is the one behaviour OSLO cannot afford to create.**
+
+## The 0–100 index stepped down
+It used to be a 52px hero. It is **not calibrated** (DL-062 F1), so it did not get to look like a measurement — and
+`58 → 62` handed the user a magnitude by subtraction, which is precisely the fabricated magnitude D056 forbids. The
+index is now a small secondary aggregate that **states itself and nothing more**.
+
+## ⛔⛔ THE OVERVIEW HERO: WHERE YOU ARE ON THE RAMP (D174)
+
+Demoting the index left **one word in 40px** — a label, not a hero. So the Overview now shows **the thing the
+doctrine always asked for and nobody drew** (D003): **the neutral maturity ramp.**
+
+> **Very Low · Low · [ MODERATE ] · High · Very High**
+> **on moderate reliability**
+> **Feasibility is holding it back.**
+> **↗ Strengthened — deeper analysis firmed the read (Feasibility rose Very Low → Low)**
+> <sub>58/100</sub>
+
+**Why the ramp and not a number.** Confidence *is* understanding maturity — **five ordinal steps**. The ramp shows
+**how far along you are and what the next rung is**, which motivates **without being a score**; and because it is
+**ordinal**, OSLO can defend every pixel of it. (It cannot defend 62 against 63.)
+
+**It is a maturity scale, not a health bar.** A rise is **not green**; a fall is **not red** (D003 — severity colour
+belongs to issues alone). Nothing fills to a percentage. Nothing says *on track*. The steps below your position are
+**not "done"** — you are not progressing through a bar, you are **standing on a rung**.
+
+**Everything in it is computed.** The lit band is the read. The qualifier is the reliability. The limiter is the
+lowest of Clarity · Alignment · Feasibility — the same one marked on the bars below. The direction names **its
+cause** and never a magnitude (D056), and it appears **only once there are two runs to compare** — before that,
+there is no direction, so OSLO shows none.
+
+**When the read falls, the ramp simply moves down a step** — same weight, same colour, no alarm. *Your read fell,
+because you learned something.*
+
+---
+
+## D176 — what the user actually sees now
+
+**The hero card has no colour in it at all.** The ramp, the qualifier, the limiter, the direction, the index, the
+Provisional/Current chip — and now the **CAF rows** and the **footer links**. **Emphasis is carried by weight**, and
+nothing on a maturity surface has a temperature.
+
+**"What's driving it" is three little ramps, not three little bars.**
+
+| | Before | Now |
+|---|---|---|
+| Clarity | a bar filled to **76%** | **five steps, the 4th lit** · **High** |
+| Alignment | a bar filled to **55%** | **five steps, the 3rd lit** · **Moderate** |
+| Feasibility | an **orange** bar filled to **30%** | **five steps, the 1st lit** · **Very Low** · **the limit** |
+
+- **Nothing fills.** A filled bar says *"55 out of 100"* without showing the number — a measurement OSLO cannot
+  defend (the scale is **uncalibrated**, DL-062 F1). A **position on five named steps** says exactly what OSLO knows
+  and no more.
+- **The limiter is marked by weight and by the words "the limit"** — because *"Feasibility is holding it back"* is a
+  **fact**, not a warning. It is the same sentence the hero already speaks, on the row it is about.
+- **The same three ramps appear in the confidence popover**, under a line that names the limiter. **One ramp, one
+  mental model** — the dimension ramps and the hero ramp are the same scale and the same drawing.
+- **Reliability's basis** (Coverage · Evidence availability · How assessable) is now **just its level word**. No bar.
+- **The Attention map still uses red and amber** — because those cells are **issues**, and that is where severity
+  colour belongs.
+
+---
+
+# D177 — MORE ISSUES **AND** HIGHER CONFIDENCE (owner, 2026-07-12)
+
+**The most important demo moment in the product was hollow.** The Extended Analysis payoff claimed a deeper read
+and **moved not one number**. Now it moves **both** — because a real Deep Pass **finds what the Fast Pass had no
+budget to find** *and* **firms the assessment**.
+
+## The payoff, as it renders (**39 words** · budget 45) — *amended by D178*
+
+> **What changed**
+> **Extended Analysis landed.**
+> **Feasibility: Very Low → Low.**
+> `Issues 6 → 8`  `Critical 1 → 2`  `Open questions 2 → 3`
+> *I looked deeper and found two more. **I have one more question.** The read is firmer because I know more.*
+> **Feasibility is still the limit.**
+
+**The order is the argument:** the event · the band · **the counts that moved** · then the plain line that explains
+them · then the consequence. The counts land **before** the sentence about them, so the sentence is read **against
+numbers already on screen — never instead of them.**
+
+**Three counts, three acts.** *It firmed the read* (the band) · *it found more* (`Issues` · `Critical`) · **and it
+knows what it still needs to ask** (`Open questions`). **Every one computed from state.**
+
+## ⛔ Why this is the best demonstration of the doctrine in the product
+
+**MORE ISSUES *AND* HIGHER CONFIDENCE. That is not a contradiction — it is the point.** It is the clearest
+illustration anywhere in OSLO that **confidence is UNDERSTANDING MATURITY, not project health**. If confidence
+were health, finding two more issues would have to push it **down**. It goes **up**, because OSLO **knows more**.
+**No other moment in the product makes that case so plainly.**
+
+**Never apologetic. Never alarmed.** No negative colour anywhere on the block (D003/D173c — a rise is not green,
+a fall is not red); the finding of two more issues is stated **plainly**, in the same weight as everything else.
+**Severity colour stays where it belongs — on the issues themselves** (the Attention map, the panel, the spans).
+
+## What the user sees, in order
+
+1. **Two new marks appear in artifacts they have already read** — *Schedule → Sponsor sales close* (critical) and
+   *Scope → recording* (moderate). **The words did not change. The understanding did.**
+2. **The Attention map gains a cell** (Scope × Clarity) and deepens another (Schedule × Feasibility, now 2).
+3. **Every count on the Overview moves together** — 8 open · 2 critical · the badges · the Progress card.
+4. **OSLO says the same true thing in chat:** *"I looked deeper and found 2 more issues (1 critical) — things the
+   first pass had no budget to reach. The read is firmer because I know more."*
+5. **History records it** — the Extended run's *what changed* delta carries **opened: 2**, and a timeline event
+   names both findings and where they live.
+6. **They behave exactly like the six before them** — open the panel, read the evidence, take the recommendation
+   or a path, share for review, resolve through an analysis update. **Nothing about them is special-cased.**
+
+---
+
+# D178 — AND OSLO **ASKS** (owner, 2026-07-12 — closes O-D177-2)
+
+> **Finding an issue and knowing what would close it are different acts — and OSLO can do both.**
+
+A deeper read that spots the **funding-vs-commitment gap** should **ask about the sponsor floor**, not merely flag
+it. So the Extended pass now **raises a question** alongside its findings:
+
+> ❓ **Is there a minimum signed-sponsorship floor — or a cancellation point — that has to be cleared before the AV
+> and catering commitments go firm?**
+
+**OSLO does not know the answer, and says so.** It re-reads the evidence it already cited — *sponsor sales close
+**Aug 15***, *AV and catering **Confirmed***, *a **sponsor-funded** event* — and asks about **what is missing from
+those inputs**. **It invents nothing.**
+
+## What the user sees
+
+7. **The ask arrives with the findings** — a **one-line, collapsed** request in the completion turn (*"There's 1
+   thing I still need from you"*), and a **collapsed Clarification row** on ISS-07 in the Issue panel. **No open
+   textarea shouting *do work now* at someone who came to read** (D162c/D165e).
+8. **A third number moves in the payoff** — **`Open questions 2 → 3`** — and the note says so plainly:
+   *"**I have one more question.**"* **The count is the proof the ask is real.**
+9. **They answer it wherever they are** — in the panel, or right there in the chat. **It is the same event**: the
+   same project-information update, the same lifecycle, the same analysis update, the **same History entry**.
+10. **Answering does not close the issue by hand.** ISS-07 goes **Addressed**, and **only the analysis update**
+    makes it **Resolved** — then the payoff runs again, and *Open questions* falls **3 → 2**. **Advisory-only.**
+
+## Why this completes the demo moment
+
+**The payoff now carries the full shape of a deeper read:** *it firmed the read* · *it found more* · **and it knows
+what it still needs to ask.** A system that only **finds** hands the user a problem. A system that also **asks**
+hands them **the next move**. **Never apologetic, never alarmed** — the question is stated as plainly as the band,
+in the same weight, with **no colour keyed to it** (D003/D173c).
+
+---
+
+# D179 — THE OVERVIEW, REDESIGNED: **STATE OUTRANKS EVENT** (owner, 2026-07-12)
+
+## What the user sees now, in order
+
+1. **CONFIDENCE — the first thing on the page, always.**
+   The five-step maturity ramp, the lit band in a **cool accent**, *"on moderate reliability"*, *"**Feasibility** is holding it back."*, and the demoted 0–100 index. **This is what is true all the time.**
+
+2. **"What changed" — a strip *inside* the confidence card, only when something did.**
+   It sits **under** the read it annotates. It has a **✕**. It is **gone by the next visit**. It never pushes the state down the page.
+
+3. **PROGRESS — the counts, in the only place they appear.**
+   > Issues **8** ↑2 · Critical **2** ↑1 · Open questions **3** ↑1 · Confirmed artifacts **0 / 7**
+
+## The four things that were wrong, and why they mattered
+
+**1. The event outranked the state.** The payoff panel sat **above** Confidence. But *"what changed"* is true for **one moment**; **confidence is true all the time.** A user landing on the Overview a week later would still have met the event first. **Confidence is now the top panel. Always.**
+
+**2. The payoff presented as a standing surface** — *"as if it is always relevant to the audience."* It is not. It is a **delta on the card**: it annotates the state, it is dismissible, and it does not survive a reload.
+
+**3. It was a paragraph doing a picture's job.** Five sentences that restated what the ramp could simply *show*. Now the movement is **drawn**:
+
+```
+Very Low  ·  ⟨Low⟩ ⟶ [ MODERATE ]  ·  High  ·  Very High
+```
+
+**Zero reading.** Previous band **ghosted**, current band **lit**, an **arrow** between them.
+
+⛔ **And when the overall band did NOT move, the hero ramp says so by standing still.** In the demo, the Extended pass moves **Feasibility Very Low → Low** while the overall band **holds at Moderate** — so the movement appears on the **Feasibility row's** ramp, and the hero draws **no ghost**. **A movement that did not happen is never drawn.**
+
+**4. Colourless was an over-correction.** *Neutral ≠ monochrome.*
+
+> **OSLO's brand colour is ORANGE. Orange reads as AMBER. Amber reads as "AT RISK."**
+
+That is a genuine **brand-vs-doctrine collision** on a maturity surface — and the answer was not to strip the card to grey. The answer is a **COOL ACCENT (blue/violet)**, which is **not in the RAG vocabulary** and cannot be read as health. It lights the ramp step, the band word, the limiter marker and the movement arrow. **Brand orange goes back to what brand orange is for: actions and links.** **Severity colour (red/amber/green) stays on issues alone** — the Attention heat map is untouched.
+
+## The sharpest one: **counts had two homes**
+
+*"What changed"* said **Issues 6 → 8**. Progress said **8 open**. **The same fact, twice, in two grammars, on one page** — and the reader has to work out that they are the same fact.
+
+**Now:** the counts live in **Progress**, with the change **annotated** (`8 ↑2`), and *"What changed"* keeps only what Progress **cannot** say: **the band movement** (a picture) and **the one-line reason**.
+
+## The payoff, as it renders — **19 words** (budget 20; it was 39 against a budget of 45)
+
+> **WHAT CHANGED** ✕
+> **Extended Analysis landed.**
+> *I looked deeper: found two more, and one more question. The read is firmer.*
+
+And on the ramp beside it: **Feasibility ⟨Very Low⟩ ⟶ [Low]**. And in Progress below: **Issues 8 ↑2 · Critical 2 ↑1 · Open questions 3 ↑1**.
+
+**MORE ISSUES *AND* A HIGHER BAND.** Still the point. Still not a contradiction — and now it is **visible in one glance** instead of being argued for in five sentences.
+
+## When the read FALLS
+
+**Identical.** Same strip, same classes, same weight, same colour. The ramp ghosts the **higher** band and the arrow points **back** (`⟵`). The line reads *"Your read fell — you learned something."* — **plainly, without alarm and without apology.**
+
+**A rise is not green. A fall is not red.** In Progress, `↑` and `↓` wear the same class, the same weight and the same colour: **a count going up is not bad news, and a count going down is not a prize.** If a rise were a celebration, a fall would be a punishment — and the product would train users away from the actions that teach them the most.
+
+
+---
+
+# D180 — Progress: what the user actually reads
+
+**Before:** four chips of *stuff OSLO is tracking* — one of them (`Artifacts read 7/7`) a number **that could never
+move**, and none of them answering the question a PM actually has.
+
+**Now, three lines, and the first one is the whole product:**
+
+> **GROUNDED — 1 of 7 artifacts rest on your evidence.** ↑1
+
+**That is the only number in OSLO that says how much of this read is REAL versus INFERRED.** Everything else on the
+Overview is a judgment; **this is the count of how much of the judgment is standing on the user's own evidence
+rather than OSLO's inference.** It rises when they confirm an artifact, apply a fix, or answer a question. **It is
+the progress narrative** — and it is why *progress* here means **grounding**, never **clearing**.
+
+**OPEN** says what is outstanding. **CLOSED** says what their work landed — *"Issues resolved 1 · Questions answered
+1"* — because **that is the one number that tells a PM their work worked** (O-D179-3, restored). **It is never a
+target.** There is no "6 remaining", no completion bar, no percentage, no burndown.
+
+## The moment that teaches the doctrine
+
+The user answers a hard question. **GROUNDED goes 0 → 1.** The deeper read that follows finds two more issues.
+**Issues goes 6 → 8.** Both arrows are the **same colour, the same weight, the same class.**
+
+> **Progress went UP while the issue count went UP.** **That is not a bug — it is the point.**
+> **You cannot game grounding. You can only game a burndown.**
+
+Nothing in the panel calls the new issues a setback, because they are not one: **more issues + a firmer read means
+OSLO looked harder and now knows more** (the same lesson as the Extended pass, D177, showing up in a second place).

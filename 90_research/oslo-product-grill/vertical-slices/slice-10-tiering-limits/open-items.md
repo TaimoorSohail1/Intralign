@@ -367,7 +367,7 @@ MON-04's global guards **require** "a global per-day cap". The value is Calibrat
 
 | # | Open item | Status | Why it is not invented here |
 |---|---|---|---|
-| **M4-O1** *(a.k.a. **R-O1**)* | **The NAME of the artifact.** | 🟨 **PARTIALLY CLOSED — D168 §4 (2026-07-12)** | **CLOSED by D168:** the **living document inside OSLO is a REPORT**; the **dated snapshot that has left OSLO is a MEMO**. Both names are now **binding in code, in labels, in History and in toasts**, and guarded (`_assertReportAndMemoAreNotConfused()`). **Never call the live document a memo; never call the sent artifact a report.** <br>**STILL OPEN:** whether the **workspace** is called *"Reports"* / *"Readout"* — an owner/glossary decision (**DL-053**). The toolbar still labels descriptively. **"Status report" remains banned by design** (`REPORT_BANNED_NAMES`), as does any name implying health or readiness (DL-104 §5). |
+| **M4-O1** *(a.k.a. **R-O1**)* | **The NAME of the artifact.** | 🟨 **PARTIALLY CLOSED — D168 §4 + D172d (2026-07-12)** | **CLOSED by D168:** the **living document inside OSLO is a REPORT**; the **dated snapshot that has left OSLO is a MEMO**. <br>**CLOSED by D172d:** the **WORKSPACE is "Reports"**; the **DOCUMENT inside it is the "Readout."** Binding in nav, crumb, tooltip, toolbar, History and toasts, and guarded (`_assertReportsHostsOneReportType()` + `_assertReportAndMemoAreNotConfused()`). **Never call the workspace a Readout; never call the document Reports; never call the live document a memo; never call the sent artifact a report.** <br>**STILL OPEN (the remainder):** the **glossary-tier ratification of these names** in canon (**DL-053**) — the build now uses them consistently but does not *ratify* them. **"Status report" remains banned by design** (`REPORT_BANNED_NAMES`), as does any name implying health or readiness (DL-104 §5). |
 | **M4-O2** | **Scheduling — R1 or a fast-follow?** | ⬜ **OWNER-OPEN** | Built and **flagged**: `SCHEDULING_R1 = null`. A weekly readout is the PM's recurring obligation and automating it is the labour half of the lever — but whether it lands in R1 is a scope call, not a design one. |
 | **M4-O3** | **Branding — Basic, or a higher tier?** | ⬜ **OWNER-OPEN** | Built at Basic and **flagged**: `REPORT_BRANDING_TIER = 'basic'`, marked unsettled on the surface. |
 | **M4-O4** | ⚠️ **REPORT LENGTH — what gets CUT when it runs long, and WHO DECIDES.** (**D157**) | ⬜ **M4 SPEC ITEM — NOT INVENTED** | The build renders **5 risks, highest impact first** (`MEMO_RISK_CAP = 5`, **explicitly labelled illustrative, NOT a ratified product value**) plus a **full, explicitly skippable appendix** that walks **every** workstream — so **nothing is hidden**, it is simply not in the sponsor's five. **But the truncation RULE — OSLO's ranking? the PM's pick? a hard cap? a "show more"? — is a specification decision, and inventing one is exactly how "Basic = 10 projects" happened.** *Selection is the value; the cut is spec'd, not invented.* |
@@ -482,3 +482,385 @@ its own guard, each with a negative control. **Measured:** openings **27–45** 
 **What is now built:** in both tier answers `pn(...)` now emits **before** `_hand(...)`. **The handoff is the last
 thing in a turn** — it is what carries the conversation forward, and a governance rail wedged between the answer and
 its next moves buries them. Verified with notes **ON**: `chat-acts → pn → chat-follow`.
+
+---
+
+# D170 / D171 — OPEN ITEMS RAISED BY THIS BUILD
+
+## O-D170-1 — ⛔ **Does the ratified MON-04 per-day prompt cap apply to LIMIT-HIT DISCLOSURES, or only to unsolicited nudges?**
+**This is the seam the P1 fell through, and the build has taken a position. It needs the owner's.**
+
+MON-04 ratifies a **global per-day prompt cap** (its *value* is unset — Calibration §4d — and renders unset). The build
+enforced it, and the per-trigger cooldowns (`UP-EXPORT` = once/day · `UP-REPORT` = once/day · `UP-6` = once/month),
+**against every prompt**. But **the friction prompts are not nudges** — they are the product's **answer to a click the
+user made and the product refused**. Suppressing one leaves a **live button that does nothing at all** (D170).
+
+**What is now built, and the reasoning:**
+> **A cadence cap governs what the PRODUCT INITIATES. It may never silence the product's ANSWER to a click the user
+> made and the product refused.** So the caps apply to `cls:'value'` (UP-7, UP-8 — the product starts it) and **not**
+> to `cls:'friction'` (the user hit a limit). The distinction is **derived from the ratified table**, never hand-flagged
+> at the call site — a call site that forgets a flag is exactly how this comes back.
+
+D170 directs *"every `fireUP(...)` path must render its prompt"* and *"a gated attempt that produces no visible outcome
+is a P1 defect"*, which settles the behaviour. **What is NOT settled is the taxonomy**: does canon regard a limit-hit
+disclosure as a "prompt" for the purposes of the MON-04 cap at all? **The build says no, and says so out loud here.**
+⛔ **If the owner rules that the cap DOES cover limit disclosures, the only canon-compatible design is the deferral
+path** (below) — never silence.
+
+## O-D170-2 — GUARD 1 (never before first value) and GUARD 2 (never mid-pass) vs. D170. **Resolved by DEFERRAL — confirm.**
+Both are **ratified and explicitly non-overridable**, and both are *right*: do not sell before you have delivered; do not
+interrupt the one thing the user is waiting for. **But neither reason survives contact with *silence*.**
+
+**What is now built:** a gated attempt caught by either guard is **DEFERRED, never dropped** — queued and fired at the
+first legal moment — and the user is told **immediately** which limit they hit (a toast, ≤12 words, **no upgrade CTA**).
+Canon is honoured (no prompt mid-pass, none before first value) **and** the attempt has a consequence.
+**Confirm the deferral is the intended reconciliation.**
+
+## O-D171-1 — ⬜ **A SEND has no UP-number, and should not need one.**
+Canon assigns no UP-* to sharing. **It does not need one: there is no limit to hit** — sharing is free on every tier
+(CHG-061). Recorded so it is not mistaken for an omission. **Nothing was invented.**
+
+## O-D171-2 — ✅ **CLOSED by D172a/D172b (owner, 2026-07-12).**
+*Is a SCHEDULED readout an automated SHARE or an automated EXPORT?*
+**It is an automated SHARE.** *Nobody schedules a PDF onto their own disk* — a schedule means *"send my sponsor the
+readout every Friday,"* and that goes **to people**. Built as `sent_via:'shared'`, with a **scoped read-only grant** for
+the recipient (D172c), a **sent** History event that **opens the frozen memo** (D169), and the **D147 currency re-check**
+still binding at send time.
+**The apparent collision is resolved by D172b:** **the SHARE is free; the AUTOMATION is Basic.** Sharing is guaranteed on
+Free as a **viral primitive** (CHG-061); **cron is not a viral primitive.** What Basic sells is **not having to
+remember** — the same shape as D154 (*editing free; persistence gated*). **Meter the labour, never the understanding.**
+
+## O-D171-3 — ⬜ **The in-app notification a share raises is out of this slice's scope.**
+D171 §1 describes *"an in-app notification + a link that routes into OSLO."* The **memo, the freeze, the History event,
+the read-only recipient view and the "previous analysis" relabel** are built. The **notification surface itself** belongs
+to Slice 8's awareness/notifications work and is **not invented here**.
+
+## O-D170-3 — ⬜ **`PROMPT_GLOBAL_CAP_PER_DAY` is still UNSET (Calibration §4d).**
+Unchanged, and still owed. It now governs **only** the value prompts (UP-7 / UP-8), which narrows what the number has to
+do — but it is still an owner value and still renders unset. The prototype's local `_PROTOTYPE_PROMPT_GUARD = 3` is a
+demonstrable mechanism, **not a product value**, and is labelled as such.
+
+---
+
+# D172 — OPEN ITEMS RAISED BY THIS BUILD
+
+## O-D172-1 — ⬜ **The scheduling CADENCE is a build placement, not a ratified value.**
+The build ships **one** cadence — **weekly** (`RPT_SCHED.cadence = 'weekly'`) — because *"every Friday"* is the shape the
+decision itself uses. **Whether the product offers other cadences (daily / fortnightly / monthly / on-change), and whether
+the choice is itself tiered, is not settled and is NOT invented here.** `SCHEDULING_R1 = null` still stands (M4-O2).
+
+## O-D172-2 — ⬜ **The scheduled share cannot be "paused" — and a stale plan does not stop it.**
+D147 says a scheduled share **labels** a stale read; it does not say the schedule should **stop**. The build therefore
+**keeps sending, honestly labelled**, on the reasoning that a sponsor's Friday note going silent is itself a signal the PM
+did not choose to send. ⛔ **But "the schedule keeps firing while the analysis is stale" is an owner call, not a build
+call.** Recorded, not assumed.
+
+## O-D172-3 — ⬜ **The memo-grant LIFETIME is inherited, not ratified.**
+CR-6 ratifies **two** lifetimes: a **snapshot link = 30 days**, a **review grant = until the issue resolves, or 14 days**.
+A **shared memo** is neither — it is scoped to *one dated memo*, which has no "resolution" event. The build gives it the
+**30-day snapshot lifetime** (revocable, D117) as the nearest ratified neighbour, and **flags it**. ⛔ **The number is the
+owner's.** *(A memo arguably never goes stale — it is a dated fact — which is an argument for no expiry at all. Not
+assumed.)*
+
+## O-D172-4 — ⬜ **The recipient's NOTIFICATION is still out of scope (unchanged from O-D171-3).**
+The memo, the freeze, the grant, the link, the History event and the read-only recipient view are built. **The in-app
+notification the share raises** belongs to Slice 8's awareness work and is **not invented here.**
+
+---
+
+## WI-R1 — ✅ **Strategic Readout composer folded into the Reports/export surface (2026-07-12).**
+
+Realizes **DL-107** (five-section spine) + **DL-108** (tailor the ask, never the read) + **DL-104** (P1 guards),
+folded into the existing export/snapshot modal (`#exportScrim`). Seven-section editable Readout document
+(`#rptDoc`, D148–D172) **untouched**. Two boot guards added: `readIdenticalAcrossAudience` · `readoutRunsNoAnalysis`.
+Boot self-check **58 → 60, all green; 0 page errors** (Playwright/Chromium headless). Slice-10's own data model,
+theme and boot-guard pattern were used; v4 was **not** imported.
+
+**Confirmed OUT of scope / not built (guardrails honored):** cognitive-event / Understanding-Debt feed (R2-F/AE-06);
+assumption validated/invalidated lifecycle (RB-017 — the "Unvalidated assumptions" optional section is
+presentation-only); cross-project pattern call-outs (R2-E); Uncertainty/Trade-off first-class objects (foreclosed);
+audience-reframed *reads* (forbidden by DL-108).
+
+### Open items carried forward (owner decisions, not settled by this build)
+- **O-WIR1-1 — ⬜ Report NAME is owner/glossary (DL-053).** The surface is labelled descriptively ("Strategic
+  readout — the five-section read · naming pending"). The final name is not set by this build.
+- **O-WIR1-2 — ✅ RESOLVED by WI-R2 (2026-07-13) — §4 audience taxonomy UNIFIED.** The composer no longer carries a
+  separate axis: it now keys §4 on the workspace Readout's own **`REPORT_RECIPIENTS`** (Sponsor / Programme lead /
+  Operations / Executive-board). **"Practitioner" was dropped** — it is the PM's own view, not a memo recipient.
+  ONE audience model is now shared across the composer (`#sroDoc`) and the memo (`#rptDoc`); the two SURFACES stay
+  distinct (the composer keeps OSLO's register and renders §4 itself — never via `_memoDecisions()`). DL-108
+  invariance re-proven across all four recipients. See `worker-reports/WI-R2-audience-convergence.md`.
+- **O-WIR1-3 — ⬜ §4 asks are curated demo strings.** They are grounded in the live open issues but are not
+  generated from a decision model; the real "who owns which decision" mapping is an M4 spec item.
+- **O-WIR1-4 — ⬜ Reopen re-signoff.** WI-R1 reopened the signed-off Reports surface; the Reports portion of
+  Slice 10 needs owner re-signoff (per the WI-R1 record).
+
+---
+
+## D173 — THE PAYOFF: open items (owner decisions, not settled by this build)
+
+- **⬜ O-D173-1 — THE 0–100 INDEX: CALIBRATE OR DEMOTE. OWNER-OPEN.**
+  **DL-062 F1 (numeric calibration) is Open-TBD — the index is NOT CALIBRATED.** OSLO cannot defend **62** against
+  **63**. This build ships the owner's **recommendation** (D173d): **DEMOTED** to a secondary aggregate, **no delta,
+  ever**, and the **band transition carries the change**. It is **demoted, not deleted** — the day the owner
+  calibrates it, `.bandhero` and `.idx` swap sizes and the number gets its hero slot back, with its delta. The flag
+  lives in the **prototype-notes layer** (D161, `PN_SLOTS.pnPayoff`), **never in product copy**. **The decision is
+  the owner's and remains open.**
+
+- **⬜ O-D173-2 — "DEPENDENCIES CONFIRMED" IS NOT BUILT, BECAUSE IT CANNOT BE COUNTED.**
+  D173b names the row *"Dependencies confirmed 5 of 8 → 6 of 8"*. **The model holds no dependency register**:
+  `REVIEWS` is a list of *review requests* (awaiting / responded), not a set of dependencies with a
+  confirmed/unconfirmed state. Counting it would mean **inventing** it. **The row is OMITTED and escalated**
+  (Anti-Assumption Build Protocol). If the owner wants it, the ask is a **dependency register** — an object with
+  identity and a confirmed state — and the row is then **one entry** in `PAYOFF_COUNTS`.
+
+- **⬜ O-D173-3 — "Unvalidated assumptions" is rendered as *Open questions*.**
+  D173b's example row is *"Unvalidated assumptions: 5 → 4"*. What the model actually holds is **open clarifications**
+  (`_openClarIds()` — issues carrying an unanswered question). An **assumption** with a validated/invalidated
+  lifecycle is **RB-017**, and it is **not built** (confirmed out of scope in the WI-R1 fold-in). The payoff shows
+  what it can count, under the name of what it is.
+
+- **⬜ O-D173-4 — The reliability transition rides in the band row.**
+  A reviewer's evidence moves **Reliability** (an ordinal level OSLO computes) more often than it moves a CAF band.
+  This build states it as a transition alongside the CAF bands (*"Reliability: Moderate → High"*). Whether
+  reliability is allowed to headline a payoff, or must always sit behind a CAF band, is an owner call.
+
+---
+
+## D174 — THE MATURITY-RAMP HERO: open items (escalated, not invented)
+
+- **✅ O-D174-1 — CLOSED BY D175 (owner, 2026-07-12): NEUTRALISE THE CHIP.**
+  `.ustate.prov` rendered **`--warning` (amber)** and `.ustate.cur` **`--success` (green)** — the Provisional ↔
+  Current chip (**D040**), in the hero card's header, **one line above the five-step maturity ramp**. Each was
+  *technically* honest on its own (it describes the **analysis state**, not the project) — **but amber-and-green
+  above a five-step scale is exactly the adjacency a reader turns into RAG**: the **P1 health-framing class
+  (DL-104 §5)** arriving **through a side door**, not from what either element says but from **what they say
+  together**. **Owner: neutralise it.** *Provisional/Current is a **STATE**, not a **JUDGMENT** — a **dot and a
+  word** carry it.* **The labels are unchanged (D040); only the colour went.** It is still legible at a glance —
+  **by weight and shape, never by hue**: provisional = **hollow dot**, `--muted`, 600 · current = **filled dot**,
+  `--text`, 700 (the D174 precedent: the lit ramp step is separated by **weight**, not hue).
+  **And the real lesson was about the GUARD:** D174's neutrality guard was scoped to the confidence **focus**, and
+  the defect sat **outside the focus, inside the same card**. **The D003 colour allowlist now governs the WHOLE
+  HERO CARD** — `_assertHeroCardCarriesNoSeverityColour()`, read from the **authored cascade**, not the DOM (the
+  green lived on `.cur`, a state that was not on screen — invisible to every DOM guard).
+
+- **⬜ O-D174-2 — Does the ramp show the NEXT RUNG as an ask?**
+  D174 says the ramp is motivating because it shows *"what the next rung is"*. The build shows the next rung
+  **positionally** (it is the next step on the scale) but says **nothing** about what would move you onto it —
+  because **the model cannot compute that**: there is no "what would raise the band" object, only the limiter and
+  the open issues. Naming a next-rung condition would be **inventing** one (Anti-Assumption). **If the owner wants
+  it, the ask is a rule that maps the limiting dimension to a band-raising condition OSLO can defend.**
+
+- **⬜ O-D174-3 — The 0–100 index remains OWNER-OPEN (O-D173-1 stands).**
+  D174 keeps the index **secondary, small, no delta**. The **CALIBRATE-or-DEMOTE** decision (DL-062 F1) is
+  unchanged and still owed. The day it is calibrated, the ramp and the index can share the hero — the guard fails
+  today only because an **uncalibrated** number must not look like a measurement.
+
+---
+
+## D175 — THE ADJACENCY SWEEP: what it found (escalated, not decided)
+
+- **✅ O-D175-1 — CLOSED BY D176a (owner: approved, 2026-07-12). THE CAF LIMITER ROW LOSES BRAND ORANGE.**
+  Owner: *"`--primary` is not a severity token, so D175's rule did not reach it — **but D174's own reasoning does**:
+  it banned `--primary` from the ramp precisely because an amber-adjacent orange invites 'amber = at risk'."*
+  **The limiter is a FACT — *"Feasibility is holding it back"* — not a WARNING.** It needs **emphasis**, and
+  **weight gives emphasis**; orange gives it a temperature it has not earned.
+  **Shipped:** the hero card's colour allowlist now excludes **`--primary`** alongside every severity/health token
+  and every chromatic literal (`HERO_CARD_BANNED_TOKEN_RE`). The limiter row is marked by **weight** (`--text`,
+  600/700) and by the words **"the limit"** — both computed from `_limitingOf()`. The card's links and the
+  how-calc bullet lost their orange with it: **zero hue in the hero card**.
+  **Guard:** `_assertHeroCardCarriesNoSeverityColour()` — the cascade read (chroma-graded, `@media`-aware) now bans
+  the brand token too. **It also took a scope fix that its own negative control forced:** a rule with a **bare
+  subject** (`.cr-limit b{color:rgb(217,122,58)}` — an orange on the limiter's bold text, through a plain `b`) was
+  **invisible** to the old scan, which required the *subject* compound to carry a card class. NC-D176-04 caught it;
+  the guard now grades bare subjects anchored by an ancestor. *(Fix the guard, never the doctrine — D166.)*
+
+- **✅ O-D175-2 — CLOSED BY D176b (owner: approved, 2026-07-12). THE CAF BARS WERE PERCENTAGE FILLS. THEY ARE GONE.**
+  Owner: *"A bar filled to 55% asserts a **CARDINAL MAGNITUDE OSLO cannot defend**, on the same uncalibrated scale
+  (**DL-062 F1**). It is **worse than the 0–100 index**, because **a filled bar reads as a measurement without even
+  showing its number** — and a **partial fill is the visual grammar of a PROGRESS / HEALTH bar** (**DL-104 §5 —
+  P1**)."*
+  **Shipped:** every CAF dimension — Clarity · Alignment · Feasibility — now renders as a **BAND on the hero's own
+  five-step ordinal ramp** (Very Low · Low · Moderate · High · Very High; DL-086/098), on **both** surfaces (the
+  Overview hero card and the confidence popover), with the **limiter marked**. **One builder, one mental model:**
+  `_rampHTML(lvl,{compact:true})` — the very function that draws the hero. The reliability-basis rows lost their
+  fills too and carry their **level word** alone. `_RELPCT` / `_RELCOLOR` are deleted.
+  **The widths (`feasW`/`alignW`) stay in the MODEL** — they compute the band through `_cafLevelFor()`. They are
+  simply never drawn again. **The Attention heat map is untouched: those cells are ISSUES (D003).**
+  **Guards:** `_assertNoPercentageFillOnMaturitySurfaces()` (the cascade **+** the DOM **+** the **render path** —
+  the fill was written by JavaScript, so a cascade-only guard would have been theatre) ·
+  `_assertCafDimensionsRenderAsBands()` (the row's ramp is graded **byte-for-byte** against `_rampHTML`, the band is
+  computed from state, the limiter is `_limitingOf()`). **`_d176NegativeControls()`: 15 injected regressions all
+  bite; 2 must-not-fire controls stay green.**
+
+---
+
+## D176 — WHAT IT LEFT OPEN (escalated, not decided)
+
+- **⬜ O-D176-1 — RELIABILITY HAS NO DRAWN SCALE, ON PURPOSE.** The reliability-basis rows (Coverage · Evidence
+  availability · How assessable) lost their percentage fills and now show **only their level word**. They were
+  **not** redrawn on the five-step maturity ramp: **reliability is a DIFFERENT scale** — D051 states its levels as
+  **High / Moderate / Low**, while the prototype's `_RELORD` also carries a **Very Low**. Drawing a ramp would mean
+  **choosing a step count canon has not fixed** — the assumption the Anti-Assumption Build Protocol forbids.
+  **Owner call: (a) leave reliability as words, (b) ratify a reliability scale and give it its own ramp, or (c)
+  fold it into the five bands.** *Escalated, not invented.*
+
+- **⬜ O-D176-2 — THE PROGRESS CARD'S TRUE-COUNT BARS (kept, and flagged).** `Dependencies confirmed 2 / 3` and
+  `Plan artifacts read 7 / 7` are drawn as **partial fills** (`.prog-trk i`). They were **kept**: each encodes a
+  ratio OSLO can defend **exactly**, the **denominator is printed beside it**, and **D173b explicitly blesses true
+  counts** (*"Evidence coverage 3 of 7 artifacts"*). They are **not** on a confidence/CAF/reliability surface and
+  assert **no uncalibrated magnitude** — and a negative control (`mustNotFire_trueCountBarSurvives`) proves the new
+  fill guard does **not** reach them, so *"no fills"* never quietly becomes *"no counts"*.
+  **But a partial fill is still progress-bar grammar wherever it appears** (DL-104 §5). **Owner call: keep the
+  count bars, or reduce them to the numbers alone.** *Escalated, not changed.*
+
+---
+
+# D177 — open items
+
+- **O-D177-1 — the Deep Pass finds exactly two things, forever.** `DEEP_FINDINGS` is **demo data**: a fixed pair
+  of findings a deeper read of the DevNorth brief genuinely supports. **The real product's Deep Pass finds what it
+  finds** — the count is an output, not a constant. Nothing in the payoff, the guard or the copy assumes *two*
+  (every number is computed; `_numWord(foundN)` scales), but the **demo** will always find these two.
+  **Not a defect — a prototype boundary. Flagged so nobody reads it as a product rule.**
+- ~~**O-D177-2 — no clarification request rides with the new findings.**~~ **✅ CLOSED by D178 (owner: approved,
+  2026-07-12).** The owner answered the escalation: **a Deep Pass ASKS, it does not only find.** ISS-07 now carries
+  a `clar` — *"Is there a minimum signed-sponsorship floor — or a cancellation point — that has to be cleared before
+  the AV and catering commitments go firm?"* — bound to the issue it would close and to the evidence already on the
+  record (Schedule `Aug 15` · AV/Caterer `Confirmed` · sponsor-funded Intent). **No new facts.** It moves the third
+  true count (**Open questions 2 → 3**, computed by `_openClarIds()`), it renders **collapsed** in the panel and in
+  the chat, it is answerable on **either** surface through `_submitClarification()` (byte-identical History), and
+  answering it closes the gap through an **analysis update — never by hand**. Guarded (`_assertDeepPassMovesBandAndCounts()`
+  now grades the ask) with three new negative controls, incl. **the Deep Pass raises nothing → red**.
+- **O-D177-3 — the critical count rose, and the limiter did not change.** Feasibility rose **and** took a second
+  critical issue in the same run, and it is **still the limit**. That is coherent (the band is understanding
+  maturity; the issue is a finding about the plan) — but it is the first place in the product where a **rise** and
+  a **new critical** land on the **same dimension** in the same breath. **Watch it in usability testing.** If a
+  reader hears *"Feasibility went up"* as *"feasibility got better"*, the defect is in the **word**, not the model.
+
+---
+
+# D178 — open items
+
+- **O-D178-1 — the Deep Pass asks exactly one question, forever.** Like `DEEP_FINDINGS` itself (O-D177-1), the ask
+  is **demo data**: one `clar` on ISS-07 that a deeper read of the DevNorth brief genuinely supports. **Nothing
+  assumes *one***: `asked` is the rise in the `questions` row, `_numWord(asked)` scales, and the chat line
+  pluralises. The real product's Deep Pass asks what it needs to ask. **A prototype boundary, not a defect.**
+- **O-D178-2 — the ask is bound to an issue, so it cannot outlive it.** `_openClarIds()` filters on
+  `_istatus[id] !== 'resolved'`, so a clarification is a **property of an open issue**, never a free-standing
+  question. If a Deep Pass ever needed to ask something **not tied to a finding** (*"who signs off the run-of-show?"*),
+  the model has **no home for it** — there is no clarification register independent of `ISSUES`. **Not invented.**
+  **Owner call if it is ever needed** (it would also change what *Open questions* counts).
+- **O-D178-3 — ISS-07 now carries BOTH a recommendation and a question, and the panel shows only one primary
+  action.** `openIssue()` prefers **Apply this fix** when `rec` exists, so the **Answer** button is not the primary
+  on ISS-07 — the ask still renders as a collapsed row (and rides the chat turn), exactly as on ISS-01, which has
+  the same shape. **Consistent, and pre-existing** (D162b: one contextual primary). Flagged because ISS-07 is the
+  first **critical** where *the question is arguably the better first move than the fix*. **Watch in usability
+  testing; the fix, if any, is a D162b amendment — not a special case for one issue.**
+
+---
+
+# D179 — open items
+
+- **O-D179-1 — CLOSED by D180b. "Artifacts read 7 / 7" IS KILLED, and nothing replaced it.** **OSLO always reads all
+  seven: it is a CONSTANT, not progress** — and it was hard-coded *because* it was meaningless. **A number that can
+  never move is not information; it is decoration.** *"Read"* was never the interesting question. ***"Grounded in
+  evidence"* is** — so the star row of Progress is now **`GROUNDED — 2 of 7 artifacts rest on your evidence`**,
+  computed from the artifact **basis** (`attested`), which **moves when the user acts**. **Guarded by a MECHANISM,
+  not a phrase:** `_assertNoConstantDressedAsProgress()` perturbs real state (ground an artifact · a deeper read
+  finds and asks more · an update resolves one · the user answers one) and **requires every row on screen to move**.
+  A constant cannot survive it, whatever it is called. *(The partial-analysis caveat that made a hard-coded `7/7`
+  dishonest — D139/UP-4's size envelope — is moot: nothing counts "artifacts read" any more.)*
+
+- **O-D179-2 — there is still NO DEPENDENCY REGISTER, so "Dependencies confirmed" is still absent.** The Progress
+  card used to show `Dependencies confirmed 0 / 3` **with a percentage fill**. It was counting **clarification-bearing
+  ISSUES** and calling them dependencies. `REVIEWS` is a list of review *requests*; `ISSUES[].clar` is a *question*.
+  **Neither is a dependency with a confirmed/unconfirmed state.** The row is **omitted, not invented** — the day a
+  dependency register exists, it is **ONE row** in `PAYOFF_COUNTS` and it appears in Progress automatically.
+  *(Carried forward from the D173 escalation; the fill is now gone too, per D179e.)*
+
+- **O-D179-3 — CLOSED by D180a·3. *Resolved* is BACK — under CLOSED, and never as a target.** The owner's ruling:
+  **it is the one number that tells a PM their work worked.** It is now one row of `PAYOFF_COUNTS`
+  (`resolved`, computed as `_istatus[id] === 'resolved'`), it renders in the **CLOSED** row beside
+  **`Questions answered`**, and it is **FENCED so it can never become a burndown**: **no denominator, no
+  percentage, no "remaining", and it may not leave the CLOSED row.** → `_assertClosedIsNeverATarget()` grades the
+  registry (a `of()` on a closed count is a violation), the DOM (`.pg-row[data-row="closed"]` must hold it) and the
+  copy. **Negative controls:** `theSubtleBurndown_aDenominatorOnResolved` · `c_resolvedLeavesTheClosedRow` — both
+  bite.
+
+- **O-D179-4 — RELIABILITY has no ramp, so a reliability move is the ONE transition that still travels in words.**
+  Canon states **five bands** for confidence and the CAF dimensions (DL-086/098). It states **no scale** for
+  reliability — so OSLO does not draw one (Anti-Assumption; the same reasoning that removed the popover's
+  reliability bars in D176b). A reliability transition therefore renders as *"Reliability: Moderate → High."* in the
+  payoff line. **It does not occur in the demo data** (both reads are *Moderate*), so it is **unexercised on screen**.
+  **OWNER: if reliability is to be drawn, its scale is an owner decision.**
+
+- **O-D179-5 — the cool accent is a NEW TOKEN in the palette, and it is not in the ratified visual spec.**
+  `--maturity` (`#7FA0C9` dark / `#3F6193` light) reuses the hex values of the existing `--cool` token — which is
+  already in the palette and already carries the *Attested by <name>* / *awaiting* semantics — but under a **new
+  name with a new meaning: emphasis on a maturity surface.** Two tokens now share a hue. **AA verified in both
+  themes** (6.13:1 · 6.28:1). **OWNER: confirm the token name and whether `--cool` and `--maturity` should remain
+  distinct** (they mean different things, and collapsing them would let a maturity rule inherit an epistemic one).
+
+- **O-D179-6 — the count-uniqueness guard is scoped to `#pane-overview`, and that scope is a JUDGMENT.**
+  The left **nav rail** badges (`#vsAttnBadge`, `#vsIssuesBadge`) render the open-issue count, and the **Attention
+  map** counts issues per cell. Neither is on the Overview, and both are **wayfinding**, not a second home for a
+  number the reader is asked to reconcile. **D179e's finding is about the Overview arguing with itself**, and that
+  is what the guard grades. **Stated, not assumed.** **OWNER: if "one home" is meant globally, the guard's scope is
+  a one-line change** — but a nav badge with no number is a worse product.
+
+- **O-D179-7 — two guard defects were found by the D179 behavioural harness, and both were ORDER-DEPENDENT.**
+  Neither was a product defect; both were guards that were green at boot and would have gone red the moment a user
+  acted. **Fix the guard, never the doctrine** (D166 §3):
+  1. **`_assertDeepPassMovesBandAndCounts()` could not survive a user fix.** `applyFix()` **mutates
+     `READ.provisional`** (it raises `feasW` — correctly: the read moves when the user acts). After one fix, **the
+     Fast-Pass read no longer exists in the model**, and the guard — which must run the Extended pass *from* the
+     Fast-Pass read — had nothing honest to run from. **`_READ0` now freezes the read at load**, and the guard stages **only the
+     pass's INPUT** (`READ.provisional`), leaving `READ.current` — the pass's **output** — untouched, so a negative
+     control that breaks the output (**NC-D177-02**) stays visible. *(The first draft staged the whole `READ` and
+     silently killed that control: **a guard that resets what a control injects into is a guard that can no longer
+     fail.**)*
+  2. **`_assertChatOpeningIsShort()` never graded the Extended pass's own issues.** It walked `ISSUES` — and
+     **ISS-07 / ISS-08 do not exist until the pass runs.** **The newest copy in the product was the one copy no word
+     budget could see**, and **ISS-07's opening turn was 57 words against a budget of 50** (D167/D163). The sentence
+     is split (nothing is lost — the run-of-show detail moves into the second sentence, which the panel still shows
+     in full), and **the guard now stages `DEEP_FINDINGS` into `ISSUES` for the length of the check** and **refuses
+     to run** if a deep finding is not being graded.
+
+
+---
+
+# D180 — open items
+
+- **⛔ O-D180-1 (FOUND, ESCALATED — NOT FIXED). The chat's "What's it resting on?" pull turn is 41 words against a
+  budget of 40 — but ONLY in a state the guard cannot see, and the overflow is CITED EVIDENCE.**
+  **Repro (jsdom, deterministic):** boot → Extended pass → `applyFix('ISS-01')` → `_assertChatPullTurnsAreShort()`
+  goes **red**. The top open issue is then **ISS-07** (a D177 deep finding), whose evidence answer carries **three
+  cited lines** from the plan artifacts — and `_probeWords()` counts the citation chips as prose.
+  **This is NOT a D180 regression:** it reproduces byte-for-byte with the pre-D180 `_openClarIds()` restored at
+  runtime, and the D180 work touches neither the chat nor the evidence copy.
+  **It is the D166 vacuity again, one surface over:** `_assertChatPullTurnsAreShort()` grades **only the boot
+  state's top issue**, so **the newest copy in the product is again the one copy no budget guard can see** — the
+  exact lesson of E-D179-12, which fixed the *opening* guard and left the *pull* guard un-staged.
+  **The tension is real and it is an OWNER call, so it is not resolved here (Anti-Assumption):** the overflow is
+  **evidence citations (D177/D178), not padding.** Trimming it means deleting a cited line. **Three honest options:**
+  (a) **raise the pull budget** for evidence turns; (b) **exclude citation chips from the word count** (they are
+  affordances/evidence, on the same reasoning that already excludes `.chat-acts`/`.chat-follow`); (c) **cap the
+  citations shown** and put the rest one click away. **DO NOT ASSUME — D163 (budgets) vs D178 (cite the evidence)
+  is a doctrine-level trade, and it is the owner's.**
+
+- **O-D180-2 — GROUNDED counts ARTIFACTS, not evidence, and the denominator is the seven plan artifacts.**
+  The star row says *"N of 7 artifacts rest on your evidence"*: an artifact counts as grounded when its **basis**
+  is `attested` (*Confirmed by you* — D011), which happens when the user **applies a fix**, **answers a
+  clarification** or **edits the artifact**. It is **a true, defensible count of a real population.** What it is
+  **not** is a measure of *how much evidence* sits behind each artifact — the model holds **no evidence register**,
+  so **OSLO does not count what it does not hold** (the same discipline that keeps "Dependencies confirmed" absent,
+  O-D179-2). **OWNER: if "grounded" should mean *weight of evidence* rather than *user-attested*, that needs a
+  model — it is not assumed.**
+
+- **O-D180-3 — "Questions answered" is a NEW piece of state (`_clarAnswered`), written by the ONE clarification
+  door.** A question leaves **OPEN** the moment the user answers it and appears under **CLOSED** — so the same
+  question is never counted twice (D179e). It is written only by `_submitClarification()` (panel **and** chat —
+  D108/D096), so the count can never outrun what the user actually did. **This is a modelling choice, not canon:
+  it is flagged, not decided.** *(Before D180, an answered-but-not-yet-resolved question kept counting as OPEN,
+  which would have shown it in both rows at once.)*

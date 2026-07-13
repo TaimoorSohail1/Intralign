@@ -478,3 +478,71 @@ only** — they disappear once a conversation is underway. **Never both.**
 **Preserved, compressed, never removed:** the epistemic line · the reliability basis (on request) · traceable
 citations (on request) · the honest capability-scoped fallback · the byte-identical clarification path · and
 **advisory-only**, absolutely: the chat never mutates, never selects a path, never resolves an issue.
+
+---
+
+# D172 — THE SCHEDULED SHARE · THE TIER RULE · THE GRANT · THE NAMES
+
+| Clause | Decision | Implementation |
+|---|---|---|
+| **D172a** | **A scheduled readout is an automated SHARE, not an automated export.** *Nobody schedules a PDF onto their own disk.* | `runScheduledReport()` now cuts `_mkMemo(SHARE_CHANNEL, true, seq, **'shared'**)`, calls `_shareMemoGrant()` (a scoped read-only grant for the recipient) and pushes a **`share`** History event carrying the memo id — **D169 opens it.** **D147 still binds:** the currency re-check runs **at send time**, a stale read goes out **labelled "previous analysis"**, and **no analysis is ever run to freshen it.** Guard: `_assertScheduledSendIsAShare()` (structural + full state proof) · `_assertScheduledReportRechecksCurrency()`. |
+| **D172b** | ⛔ **THE TIER RULE: the SHARE is free; the AUTOMATION is Basic.** | The tier check lives **at the toggle and nowhere else**: `toggleReportSchedule()` gates on `TIER` and fires `UP-REPORT {sched:true}` → title **"Basic sends it for you every Friday"**, body *"Sending is free on every plan… Basic is what remembers to."* (**27 words**, D163), resolutions **free-first: _Send it now_**. `sendMemo()` has **no tier branch and may never have one** (CHG-061). **Cron is not a viral primitive.** Same shape as **D154**. Guard: `_assertSchedulingIsTheGateNotTheShare()` — structural (the branch is in the toggle, not the send) **and** a Free state proof (*the automation refused; the share delivered — same account, same minute*) **and** the prompt's free resolution IS a send. |
+| **D172c** | **A shared memo is a SCOPED, TOKEN-GRANTED, READ-ONLY view** — the **CRR reviewer grant's mechanism** (DL-102 A). | **ONE admission path:** `_grantScopedAccess(kind, …)` — `_grantReviewerAccess` (`kind:'issue'`) and `_grantMemoAccess` (`kind:'memo'`) are thin wrappers over it. **ONE link factory:** `_mkLink('memo', memo.id)` — scoped, revocable (D117/CR-6). **The link IS the invite, and the invite IS the authentication** — no signup wall, no password, no account; **nobody is anonymous** (DL-021). The recipient's view renders on the **same `#reviewerView` surface**, `contenteditable="false"`, from the memo's **own frozen bytes** (`_memoPaperHTML`) — the open path **cannot reach** `_mkMemo` / `_memoBodyHTML`. **No seat (N-2), no invite (CR-2), no meter, no tier check.** Guard: `_assertSharedMemoUsesTheGrantMechanism()` (5 clauses) · `_assertSharedMemoIsReadOnly()` (now grades the recipient's surface too). |
+| **D172d** | **The workspace is "Reports"; the document is the "Readout."** | `REPORT_TYPES` — a registry keyed by type, with **exactly one entry** (`readout`). Nav / crumb / tooltip = **Reports**; the readout's toolbar = **Readout** (from `_readoutDocName()`, one rename site). ⛔ **NO SPECULATIVE UI for report types that do not exist** — *that is exactly how the six-card scaffold happened the first time.* **D143 stands: the six "report types" it killed were sections of one memo, and they stay dead.** Guard: `_assertReportsHostsOneReportType()` (registry **and** DOM **and** the names) · NCs `aSecondReportTypeMayNotBeRegistered` · `theSixCardScaffoldMayNotReturn` · `theWorkspaceMayNotBeCalledAReadout`. |
+
+**Tier census delta (D172b):** *Sharing/sending the readout* — **FREE on every tier, manual, unlimited** (CHG-061; no
+UP-number, because there is no limit to hit). *Scheduling the readout* — **Basic** (`UP-REPORT`, `{sched:true}`);
+the R1-vs-fast-follow question is still owner-open (`SCHEDULING_R1 = null`, M4-O2).
+
+---
+
+## Reports surface — Strategic Readout (WI-R1)
+
+**Realizes:** DL-107 (five-section readout spine) · DL-108 (tailor the ASK, never the READ) · DL-104 (P1
+health-framing / overclaim defect classes). Folded into the **existing** Reports surface — the export/snapshot
+modal (`#exportScrim`, opened by `openExport()`) — as a **Strategic Readout composer**. Non-regressive: the
+signed-off seven-section editable Readout **document** (`#rptDoc`, D148–D172) is untouched; this is additive over
+"packages-never-produces / no-health."
+
+**Why the export modal, not `#rptDoc`.** The composer deliberately **speaks OSLO's epistemic vocabulary**
+(understanding maturity · *From OSLO* / *Confirmed by you* · the explicit "not health/RAG/readiness/probability"
+line). That framing is required by DL-104 P1 but is **banned inside the reader-facing memo** by D149. The two are
+different surfaces: `#rptDoc` is what a sponsor reads (D149 keeps doctrine out of it); the export composer is
+**OSLO-facing packaging metadata**. The composer renders into `#sroDoc` and is **intentionally kept out of
+`REPORT_SURFACES`**, so the §7j / D149 document scanners never grade it — and, symmetrically, its own DL-108
+invariant is proven by a dedicated guard rather than by the memo's guards.
+
+**The spine (assembled LIVE, from existing understanding — no analysis on generate).**
+
+| § | Section | Source (slice-10 data model) | Audience-dependent? |
+|---|---------|------------------------------|---------------------|
+| §1 | The read | `_readCurrency()` band + reliability; carries the DL-104 P1 line + `From OSLO` derived marker | **No** |
+| §2 | What's limiting it | `_chatState().limiting.dim` + sharpest open `ISSUES` in that dimension (`.caf`) | **No** |
+| §3 | What we don't know yet | `ISSUES[*].clar` inferred items + `_openClarIds()` (deduped) | **No** |
+| §4 | What I need from you | keyed on the shared `REPORT_RECIPIENTS` taxonomy (Sponsor / Programme lead / Operations / Executive-board — WI-R2), grounded in the live open issues; **the only section that reads `SRO.aud`** | **YES** |
+| §5 | How to read this | reliability + currency marker (stale = "previous analysis") + derived-vs-attested rule | **No** |
+
+**Optional sections (Basic):** Alignment · Unvalidated assumptions · How understanding matured · Artifact detail —
+all presentation-only. "Unvalidated assumptions" **lists** items; it is **not** an assumption
+validated/invalidated lifecycle (that is RB-017, deferred, not ratified).
+
+**Tiering.** Free = the five-section read snapshot (§1–§5), PDF. Basic = optional sections + branding + scheduling.
+**The seed — the read itself — is never gated.** Report **names** stay owner/glossary (DL-053): the surface is
+labelled descriptively ("Strategic readout — the five-section read · naming pending"); "status report" and any
+health/readiness name are banned by design.
+
+**New boot guards (alongside `reportsNoHealth`):** `readIdenticalAcrossAudience` (DL-108 — §1–§3+§5 byte-identical
+for every audience; only §4 varies; also asserts the three asks are distinct) and `readoutRunsNoAnalysis`
+(packages-never-produces — assembling the whole spine for every audience with every optional section on leaves
+`HISTORY` and `TREND` byte-for-byte unchanged). Boot self-check moves **58 → 60**, all green.
+
+---
+
+## D176 — the limiter row loses the orange; the CAF bars were false precision (owner: approved, 2026-07-12)
+
+| Decision | What it binds | How it is implemented |
+|---|---|---|
+| **D176a** | **The hero card's colour allowlist now excludes `--primary`.** `--primary` is not a severity token, so D175's rule did not reach the CAF **limiter row** — **but D174's own reasoning does**: it banned `--primary` from the ramp *precisely because an amber-adjacent orange invites "amber = at risk"*, and the row sits **three lines under the ramp, in the same card**. **The limiter is a FACT, not a WARNING: emphasis by weight, never by hue.** | `HERO_CARD_BANNED_TOKEN_RE` = `--(success\|warning\|danger\|error\|crit\|conf-\|primary)`, applied by `_assertHeroCardCarriesNoSeverityColour()` to the **authored cascade** (chroma-graded literals, `@media`-aware, inline styles included, **bare-subject rules now in scope**). Restyled: `.cafrow.lim .cn` / `.cafband` (weight, `--text`) · a `.cafmark` **"the limit"** written from `_limitingOf()` · `.conf-foot .lnk2` (dotted underline) · `.howcalc-pop li .d` · `.cpp-stage b`. |
+| **D176b** | **The CAF dimensions are BANDS, not percentages.** A bar filled to 55% asserts a **cardinal magnitude** OSLO cannot defend on an **uncalibrated** scale (**DL-062 F1**) — **worse than the 0–100 index**, because a filled bar reads as a **measurement without even showing its number**, in **progress/health-bar grammar** (**DL-104 §5 — P1**). | **One builder:** `_rampHTML(lvl,{compact:true})` — the hero's own ramp — drawn by `_cafRampInto()` into every CAF row on **both** surfaces (`renderCafRows()` for the hero card, `renderConfPop()` for the popover). `.caftrk` / `.caffil` / `.cpp-bar` and `_RELPCT` / `_RELCOLOR` are **deleted**. The reliability basis carries its **level word** alone. **`feasW`/`alignW` stay in the model** (they compute the band via `_cafLevelFor()`); they are never rendered. Guards: `_assertNoPercentageFillOnMaturitySurfaces()` (cascade **+** DOM **+** **render path**) · `_assertCafDimensionsRenderAsBands()` (byte-for-byte against `_rampHTML`; band computed from state; limiter derived). NCs: `_d176NegativeControls()` — **15 bite, 2 must-not-fire stay green**. **The Attention heat map is untouched — those cells are ISSUES (D003).** |
+
+Boot self-check moves **72 → 74**, all green (Free × Basic × notes-OFF × notes-ON, **0 console errors**).

@@ -134,3 +134,75 @@ The whole memo. `_memoSummary()` / `_memoChanges()` / `_memoRisks()` / `_memoAss
 
 ## What is NOT modelled
 Real PDF generation · a real mail send · a real schedule · a rich-text editor (the section editor is prose with `**bold**` and `- bullets`, converted on save) · any second copy of the plan. **The report packages; it never produces.**
+
+---
+
+# D177 — THE DEEP PASS FINDS THINGS. `DEEP_FINDINGS` (owner, 2026-07-12)
+
+**The payoff machinery was correct. The DEMO DATA was the defect.** The Extended pass fired the payoff, said
+*"deeper analysis firmed the read"* — and **changed nothing countable**. The narrative claimed something happened;
+the counts said nothing did.
+
+**A real Deep Pass re-reads the SAME evidence more thoroughly.** So it does **both**, in one run: it **finds issues
+the Fast Pass had no budget to find** (counts go **up**) **and** it **firms the read** (the band goes **up**).
+
+## The registry
+
+`DEEP_FINDINGS` — two issues, in the **same shape** as `ISSUES` (`rectype · title · sev · dim · sec · why · ev ·
+caf · rec · paths`). **They are NOT in `ISSUES` and NOT in `_istatus` at boot** — so every count, list, heat cell
+and artifact annotation treats them as *not yet found*. `_deepPassSurfaceFindings()` is **the one door**; it is
+idempotent and returns the ids it actually surfaced, so **every downstream number is computed from what happened**.
+
+| id | sev | CAF | artifact | what a deeper read of the EXISTING evidence surfaces |
+|---|---|---|---|---|
+| **ISS-07** | **critical** | Feasibility | **Schedule** | **Sponsor funding closes after the costs are committed.** *Schedule* says sponsor sales close **Aug 15**; *Resources* already carries **AV vendor — Confirmed** and **Caterer — Confirmed**; *Intent* says the event is **sponsor-funded**. The Fast Pass read each artifact. The Deep Pass reads them **against each other**: the plan commits the spend before the revenue is signed, and names no minimum floor. |
+| **ISS-08** | moderate | Clarity | **Scope** | **Recording is resourced but never scoped.** *Scope* lists recording in the logistics and puts the event **in-person only**; *Resources* has the **AV vendor doing recording**; *Requirements* sets **no recording deliverable, capture standard or consent**. The plan is paying for something it never defines. |
+
+**⛔ No new facts.** Every citation is an existing plan artifact; both bind to a real CAF dimension; both are
+anchored to a **real span** in the artifact they came from (`data-fid="ISS-07"` in Schedule, `ISS-08` in Scope).
+**The weak text was always there** — `_artBodyLive()` leaves the span **inert (plain text)** until `_istatus`
+says the issue is open, so the Fast-Pass draft reads exactly as it did before, and the *mark* is what is new.
+
+---
+
+# D178 — AND THE DEEP PASS **ASKS**. `DEEP_FINDINGS['ISS-07'].clar` (owner, 2026-07-12 — closes O-D177-2)
+
+> **Finding an issue and knowing what would close it are different acts — and OSLO can do both.**
+
+A deeper read that spots the **funding-vs-commitment gap** should **ask about the sponsor floor**, not merely flag
+it. So **ISS-07 now carries a `clar`** — the same field ISS-01 and ISS-02 carry, with the same shape (`q` · `hint`):
+
+| field | value |
+|---|---|
+| `clar.q` | *"Is there a minimum signed-sponsorship floor — or a cancellation point — that has to be cleared before the AV and catering commitments go firm?"* |
+| `clar.hint` | *"Your inputs state the sponsor close date and the confirmed vendors, but no floor and no cancellation terms."* |
+
+**⛔ No new facts.** The question **re-reads the evidence ISS-07 already cites** — *Schedule* (`sponsor sales close
+Aug 15`), *Resources · Vendors* (`AV vendor — Confirmed` · `Caterer — Confirmed`), *Intent* (sponsor-funded). It
+asks about **what is absent from those inputs** (a floor, a cancellation point). **OSLO does not know the answer,
+and says so.**
+
+## The third true count
+
+`_openClarIds()` = *every issue with a `clar` that is not resolved*. It is already the `get()` behind the
+**`questions`** row of `PAYOFF_COUNTS`. So surfacing ISS-07 **moves the count by itself**:
+
+> **Open questions 2 → 3** — **computed, never typed in.** A question that is not in state cannot move it; a
+> question that **is** in state cannot be hidden.
+
+Verified in jsdom: `_openClarIds()` → `[ISS-01, ISS-02]` before the pass → `[ISS-01, ISS-02, ISS-07]` after.
+
+## Nothing is special-cased
+
+The ask is an **ordinary `clar` on an ordinary issue**, so everything downstream is the code that already existed:
+the **collapsed** panel row (D162c) · the **collapsed** chat block (`_chatClarBlock`, D165e) · the clarification
+pointer on the Overview · §3 of the Strategic Readout (*"what we don't know yet"*) · and `_submitClarification()`,
+which is **the only path** either surface can answer through — so panel and chat write a **byte-identical History
+entry** (D096, verified). **Answering closes the gap through an analysis update — never by hand** (D088):
+`open → Addressed → (analysis update) → Resolved`.
+
+**`_deepPassSurfaceFindings()` remains the one door.** `deepComplete()` derives the asked ids from what it actually
+surfaced (`_found.filter(id => ISSUES[id].clar)`) — **so the ask cannot be claimed by a pass that found nothing.**
+
+**Confirmed artifacts stays at `0 of 7` through the pass and is correctly absent** — a count that did not move is
+not news (D173). **A Deep Pass re-reads; it attests nothing.**
