@@ -1090,6 +1090,13 @@ Each changelog entry contains:
 - **Change Summary:** Surface the provenance OSLO already tracks — grounded vs inferred, load-bearing inferences, the assumption register, the Inference Map; REJECT the 'Understanding Debt' frame (AE-06 not adopted); escalate inference lineage as a schema decision. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-144 — DL-110: Outcome-positioning standard — understand & steer toward outcomes, never forecast
+
+- **Date:** 2026-07-13 · **Authorizing Decision:** DL-110.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-110-outcome-positioning-standard.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Outcome-positioning standard — understand & steer toward outcomes, never forecast. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
