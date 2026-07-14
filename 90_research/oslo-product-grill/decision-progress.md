@@ -51,3 +51,8 @@
 
 ## Signed off
 - Slice 1, Slice 2, Slice 3, Slice 4 (2026-07-09).
+
+---
+**2026-07-14 · WI-R5 (DL-111 fold-in):** +1 decision (Decision 250, foundation-bar). Slice-10 Overview/Progress **reopened → docs reconciled (6 files) → pending re-signoff**. Prototype 135/135, 0 pageerrors. Active: Slice 10 (Overview). Next blocking: owner re-signoff of Overview/Progress.
+
+**2026-07-14 · WI-R5 erratum (Decision 251):** +1 decision. Progress bar P1 corrected (grounded=attested-only; two provenance states; load-bearing superset). Prototype R6 136/136. Canon erratum drafted.

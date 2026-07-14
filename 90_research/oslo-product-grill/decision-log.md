@@ -1079,3 +1079,659 @@ Every dated snapshot **is** a memo (D168 §3), and a sent memo is **the most aud
 - A **"memo sent"** History event **opens the memo** — the exact bytes that travelled, with its cover, disclaimer and currency marker.
 - **Read-only, always** (Slice 7's contract holds; D168 §3 immutability holds). Opening a memo **changes nothing** and **runs no analysis**.
 - The memo is shown **as it was sent** — never re-rendered from current understanding. *(Re-rendering it would silently rewrite history.)*
+
+---
+
+# D170 — DEFECT: a gated attempt that surfaces NOTHING. And the guard that didn't catch it. (owner-reported, 2026-07-12)
+
+**Reproduced.** On **Free** with the format set to **"Export link"** (a Basic-only format): the Export action **does nothing**. No export, **and no upgrade prompt**. `genReport()` correctly gates the attempt and calls `fireUP('UP-EXPORT')` — **but no prompt renders.** The button is live, the click lands, and the product **stops silently.**
+
+**An enabled control that silently does nothing is WORSE than a disabled one.** A disabled control at least tells you something.
+
+**D170a — The guard passed, and that is the finding.**
+`_assertNoDisabledLimitAffordances()` proves the Export button **is not disabled**. It is not. **What it never proved is that the ATTEMPT DOES ANYTHING.**
+**D138 has THREE clauses** — *the affordance stays enabled* · *the attempt is gated* · **_the prompt appears, with resolutions_** — **and the guards only ever verified the first.**
+
+> **This is the ninth guard failure of the same shape. Extend D166:**
+> **Do not merely prove the control is LIVE. Prove the ATTEMPT HAS A CONSEQUENCE.**
+> For **every** limit-bearing affordance: **fire the gated attempt and assert a prompt renders, naming the limit and the tier that relieves it, with its resolutions.** A gated attempt that produces **no visible outcome** is a **P1 defect**.
+
+**D170b — Fix the defect.** Every `fireUP(...)` path must render its prompt. Sweep **all** UP-* prompts, not only UP-EXPORT: any that fires into the void is the same bug.
+
+**D170c — Readout toolbar: drawers → POPOVERS (owner).** The toolbar menus (Recipient · Sections · Format · Schedule · Export) become **popovers anchored to their buttons**, not a drawer that displaces the document. Cleaner, and it keeps the reading surface still while you act on it (D160).
+
+# D171 — The Readout has no SEND. (owner, 2026-07-12)
+
+**A readout is a thing you SEND — and there is no send action.** The toolbar has a **Recipient** picker (which only *addresses* the document) and **Export** (which produces a file). **You can compose a readout addressed to the Sponsor and then be unable to send it to the Sponsor.** D169's own History event is called **"memo sent"** — *sent by what?*
+
+**Canon already separates the two:** `INVITE_AND_SHARE_MODAL_EXPERIENCE_SPECIFICATION_V1` — *"an optional private invite link that **routes into OSLO** … **distinct from Export's outside-review link**"*. The export spec is literally **"Export *and Share-Out*."**
+
+| | **SHARE / SEND** | **EXPORT** |
+|---|---|---|
+| **What** | the memo **goes to named people** — in-app notification + a link that routes **into OSLO** | the memo becomes a **file or a hosted copy** the PM handles themselves — it leaves OSLO |
+| **Recipient** | the people | the PM |
+| **Both** | **produce a MEMO** — frozen, dated, cover, disclaimer (D168) · **run NO analysis** (D146) · **append a History event** (D169) |
+
+**Binding:**
+1. **Add SHARE/SEND to the readout toolbar**, alongside Export.
+2. **Both freeze a MEMO.** One code path (`_mkMemo`) — a memo is a memo however it travelled; **`sent_via` records which.**
+3. ⛔ **SHARE IS FREE ON EVERY TIER.** **CHG-061 — sharing is a viral primitive; the seed is never gated.** *(Export **formats** are tier-bound: Free = PDF. **Sharing is not.**)*
+4. **A shared memo is read-only to its recipients**, carries its cover, disclaimer and currency marker, and is **relabelled "previous analysis"** when the read moves on — **never silently refreshed.**
+5. **History records how it travelled** — sent, or exported.
+
+---
+
+# D172 — A scheduled readout is an automated SHARE. And the workspace is "Reports". (owner: approved, 2026-07-12)
+
+**D172a — Scheduling is an automated SHARE, not an automated export.** Closes O-D171-2.
+**Nobody schedules a PDF onto their own disk.** What a PM wants is *"send my sponsor the readout every Friday"* — it goes **to people**. That is a **share**, by definition.
+- `sent_via = 'shared'` for scheduled sends · History records **sent** · **D169 opens the frozen memo** · the **D147 currency re-check still binds** — *a scheduled share must NEVER quietly ship a stale read as current.*
+
+**D172b — THE TIER RULE: the share is free; the AUTOMATION is Basic.**
+> **You can always send the readout — manually, to anyone, on any tier, as often as you like. What Basic sells is NOT HAVING TO REMEMBER.**
+**Same shape as D154** (*editing is free; **persistence** is the gate*). It is the legitimate lever category: **meter the labour, never the understanding.**
+**It does NOT breach CHG-061.** Sharing is guaranteed on Free as a **viral primitive** — **cron is not a viral primitive.** The **seed of the loop** — a human choosing to put a memo in front of an executive — stays **completely ungated**. Automating it is a convenience.
+*Say-it-out-loud test: "Basic sends it for you every Friday." Passes.*
+
+**D172c — A shared memo is a SCOPED, TOKEN-GRANTED, READ-ONLY view — the same mechanism as the CRR reviewer grant** (DL-102 constituent A). **The link IS the invite, and the invite IS the authentication.** No signup wall; no anonymity problem (DL-021 holds).
+**Consequence:** the shared memo is **the best viral surface in the product, arriving on a schedule, in front of budget holders** — the passive loop, aimed **upward**, automated. *That is a better argument for Basic than anything on the Plans page.*
+
+**D172d — Naming (closes half of R-O1).** The **workspace is "Reports"**; the document inside it is the **"Readout"**.
+**Reports will host multiple report types over time; the Readout is the first.** Structure the code so **a second report type is an ADDITION, not a rebuild.**
+⛔ **Do NOT build speculative UI for reports that do not exist.** *That is exactly how the six-card scaffold happened the first time.* **D143 stands:** the six "report types" it killed were **sections of one memo**, not reports — and they stay dead.
+
+---
+
+# D173 — THE PAYOFF: numbers that are TRUE. (owner-directed, 2026-07-12)
+
+**The owner's point stands: humans need quantifiable values to comprehend efficiently.** The discipline was never *"no numbers"* — it is **"the number must be TRUE."** OSLO is not short of numbers. It is short of **honest** ones.
+
+**D173a — THE INCOHERENCE (found, not invented).**
+**D056 (ratified): "direction-only — never a fabricated magnitude."**
+**The product renders `62/100` in a 52-pixel hero.** It was `58`. **The user does the subtraction.** The magnitude is already communicated — the product is merely **coy about arithmetic the user can do in a second.**
+**And DL-062 says numeric calibration is Open-TBD (F1). The index is NOT CALIBRATED.**
+> **OSLO is displaying a 52px uncalibrated number as though it were a measurement — on the one signal the entire product rests on.** That is **false precision**, and it invites exactly the score-gaming the doctrine exists to prevent. OSLO cannot defend **62** against **63**.
+
+**D173b — THE PAYOFF: band transition + true counts + consequence.** Build all three.
+1. **The BAND TRANSITION is the headline event.** *"Feasibility: **Very Low → Low**."* **Discrete. Earned. Visible.** An **ordinal scale is still a scale**, and crossing a band is a real event in a way 58→62 is not. (5-band scale, DL-086/098.)
+2. **TRUE COUNTS alongside it** — numbers OSLO knows **exactly**: *Issues 12 → 11 (critical 4 → 3)* · *Unvalidated assumptions 5 → 4* · *Evidence coverage 3 of 7 artifacts → 4 of 7* · *Dependencies confirmed 5 of 8 → 6 of 8*. **Hard. Countable. True. And they move when the user acts.**
+3. **THE CONSEQUENCE** — what changed **about the plan**, and **what is now the limit**: *"That was the one thing holding Feasibility back. **Resourcing is now the weak point.**"*
+
+**Model payoff:**
+> **You confirmed the Wi-Fi capacity.**
+> **Feasibility: Very Low → Low.** That was the one thing holding it back.
+> **Unvalidated assumptions: 5 → 4. Critical issues: 4 → 3.**
+> **Resourcing is now the weak point.**
+**Numeric. Vivid. Every number in it TRUE.**
+
+**D173c — A FALL MUST BE AS LEGIBLE AS A RISE. (Binding — this is the one that protects the product.)**
+**The read can legitimately FALL when the user improves the plan** — better understanding reveals weakness that was always there. **If score movement is made celebratory, a FALL becomes a PUNISHMENT** — and the product would be **training users to avoid the actions that teach them the most** (answering a hard clarification, surfacing an ugly dependency). **That is the one behaviour OSLO cannot afford to create.**
+**A fall is stated plainly and without alarm:** *"Your read fell — because you learned something. That is the system working."*
+
+**D173d — The 0–100 index: OWNER DECISION (packet).** Two honest options, and only two:
+- **CALIBRATE it** (DL-062 **F1** is open — this is the work). If **62** means something defensible, show it **and its delta** proudly.
+- **DEMOTE it** — lead with the **band** and the **counts**; keep the index as a **secondary aggregate**, not the hero.
+**Recommendation: DEMOTE now, CALIBRATE later.** The honest version ships today, and **the number gets its hero slot back the day it earns it.**
+
+# D174 — THE OVERVIEW HERO IS THE MATURITY RAMP. (owner, 2026-07-12)
+
+**D173d demoted the 0–100 index and left a single word in 40px. That is not a hero — it is a label.** The hero's substance was removed and nothing replaced it. **Owner: *"the image is inadequate for an overview hero."*** Correct.
+
+**The replacement was already in canon, undrawn.** **D003 mandates a NEUTRAL MATURITY RAMP** (*"neutral maturity ramp vs severity-only red/amber/green"*). **We never drew the ramp.**
+
+**Confidence IS understanding maturity — five ordinal steps.** So **draw the position on the ramp:**
+> **Very Low · Low · [ MODERATE ] · High · Very High**
+
+**Why this is the right hero:**
+- **It has visual mass** and is legible at a glance.
+- **It shows how far along you are, and what the next rung is** — motivating **without being a score**.
+- **It is ORDINAL, therefore defensible.** No fabricated precision. (Contrast: the 0–100 index is uncalibrated — DL-062 F1.)
+- **It is what the doctrine already asked for** (D003) and was never built.
+
+**The hero carries the things that give the position MEANING:**
+1. **The ramp** — position among the five bands (DL-086/098). The band word is the lit step.
+2. **The reliability qualifier** — *"on moderate reliability."*
+3. **The limiter** — *"Feasibility is holding it back."*
+4. **The direction** — with its **named cause** (D056: direction + cause, never a magnitude).
+5. **The 0–100 index** — **secondary, small.** No delta. Calibration flag stays in the notes layer (D161), never in product copy.
+
+**Binding:** **NEUTRAL — a rise is not green, a fall is not red** (D003). **The ramp is a maturity scale, not a health bar.** Every element computed from state (D173).
+
+**D175 — Neutralise the Provisional/Current chip (owner: approved, 2026-07-12).** Closes O-D174-1. Amends D040.
+`.ustate.prov` = `--warning` (amber) and `.ustate.cur` = `--success` (green), **sitting inside the confidence hero card**.
+Each is *technically* honest — it describes the **analysis state**, not the project. **But amber-and-green one line above a five-step maturity ramp is exactly the adjacency a reader turns into RAG.** That is the **P1 health-framing class (DL-104 §5)** arriving through a side door: **not from what either element says, but from what they say TOGETHER.**
+**Fix: neutralise it.** Provisional/Current is a **STATE**, not a **JUDGMENT** — a dot and a word carry it. **The only thing amber and green buy is the one misreading the whole doctrine exists to prevent.**
+**Binding:** the D003 colour allowlist that governs the ramp now governs **the whole hero card** — **no severity/health tokens anywhere in it.** Guard by cascade read, and **extend the guard's scope to the card, not just the confidence focus.**
+
+**D176 — Neutralise the CAF limiter row; and the CAF bars are false precision (owner: approved, 2026-07-12).** Closes O-D175-1 and O-D175-2.
+
+**D176a — The limiter row loses brand orange.** `--primary` is not a severity token, so D175's rule did not reach it — **but D174's own reasoning does**: it banned `--primary` from the ramp *precisely because an amber-adjacent orange invites "amber = at risk."* The row sits **three lines under the ramp, inside the same card.**
+> **The limiter is a FACT — *"Feasibility is holding it back"* — not a WARNING.** It needs **emphasis**, and **weight gives emphasis**. **Orange gives it a temperature it has not earned**, directly beneath a scale two decisions were spent making neutral.
+**Binding:** the hero card's colour allowlist now excludes **`--primary`** as well. **Emphasis by weight, never by hue.**
+
+**D176b — The popover's CAF bars are PERCENTAGE FILLS — the same false precision as the 0–100 index, in a different costume.**
+A bar filled to 55% asserts a **cardinal magnitude** OSLO cannot defend, on the same uncalibrated scale (**DL-062 F1**). It is worse than the index, because **a filled bar reads as a measurement without even showing its number** — and a partial fill is the visual grammar of a **progress/health bar** (**DL-104 §5**).
+**Fix: the CAF dimensions are BANDS, not percentages.** Show each dimension on **the same five-step ordinal ramp** as the hero (Very Low · Low · Moderate · High · Very High), with the limiter marked. **No percentage fill anywhere on a maturity surface.**
+**Severity colour remains on ISSUES only (D003)** — the Attention heat map is **correct as-is**, because those cells *are* issues.
+
+---
+
+# D177 — The Extended Analysis payoff is HOLLOW, and the fix is the best demo in the product (owner, 2026-07-12)
+
+**Owner: the "What changed" panel is incomplete.** Correct. It shows the band transition and the limiter — **and no counts.**
+
+**The payoff machinery is CORRECT.** `_readSnapshot()` captures the counts; `renderPayoff()` emits band + counts + consequence; a count that did not move is **omitted** (right — *"Issues 6 → 6"* is noise, and D173 forbids fabricating a delta).
+
+**The DEMO DATA is the defect.** The Extended pass says *"deeper analysis firmed the read"* — **and not one number moves.** **The narrative claims something happened; the counts say nothing did.** That is the hollowness. It is a **data** problem, not a code problem.
+
+**A real Deep Pass MOVES COUNTS.** It re-reads the same evidence more thoroughly: it **finds issues the Fast Pass had no budget to find**, and it **firms the assessment**.
+
+**D177a — Build it, and it becomes the best demonstration of the doctrine in the product:**
+> **Extended Analysis landed.**
+> **Feasibility: Very Low → Low.**
+> **Issues: 6 → 8. Critical: 1 → 2.**
+> *I looked deeper and found two more. The read is firmer because I know more.*
+> **Feasibility is still the limit.**
+
+> ## **MORE ISSUES *AND* HIGHER CONFIDENCE.**
+> **That is not a contradiction — it is the point.** It is the clearest possible illustration that **confidence is understanding maturity, NOT project health**, and **no other moment in the product makes that case so plainly.**
+
+**Binding:**
+- The Extended pass must **surface issues it did not have the budget to find** (counts move **up**) **and** firm the read (band moves **up**). **Both, in the same payoff.**
+- **The payoff must say so in plain language** — *"I looked deeper and found two more. The read is firmer because I know more."* **Never apologetic, never alarmed** (D003/D173c: a rise is not green, a fall is not red).
+- It invents **no new evidence** — a Deep Pass re-reads the **same** inputs more thoroughly. **No fabricated facts.**
+- **Every count still computed from state** (D173). **Word budget ≤45** (D163).
+
+**D178 — A Deep Pass ASKS, it does not only FIND (owner: approved, 2026-07-12).** Closes O-D177-2.
+A deeper read that spots a **funding-vs-commitment gap** should **ask about the sponsor floor** — not merely flag it. **Finding an issue and knowing what would close it are different acts, and OSLO can do both.**
+- **The Extended pass raises at least one CLARIFICATION REQUEST** alongside its findings — bound to the issue it would close, and to real evidence.
+- **It moves a third true count:** *Open questions 2 → 3* — computed from state (D173), never fabricated.
+- **The clarification is the honest form of the ask:** OSLO does not know the answer, and says so. Answering it closes the gap through an **analysis update** — never by hand (advisory-only).
+**The payoff then carries the full shape of a deeper read:** *it firmed the read · it found more · **and it knows what it still needs to ask**.*
+
+---
+
+# D179 — Overview layout: STATE outranks EVENT. Counts have ONE home. Colour without RAG. (owner, 2026-07-12)
+
+**Four owner findings, all correct. Three are my drift.**
+
+**D179a — THE STATE ALWAYS OUTRANKS THE EVENT.** The payoff panel was placed **above** the Confidence hero, pushing it down the page. **"What changed" is EPISODIC** — true for one moment after an analysis lands. **Confidence is PERMANENT.** **An event must never outrank state in the layout.**
+**Fix: Confidence is the top panel. Always.**
+
+**D179b — The payoff is NOT a panel. It is a DELTA ON THE CONFIDENCE CARD.** It presented as a standing surface, *"as if it is always relevant to the audience."* It is not.
+**Fix:** it renders **on/under the hero**, **dismissible**, and **gone by the next visit**. It never displaces the state.
+
+**D179c — Make it VISUAL, not textual.** It is a paragraph doing a picture's job.
+**Fix — show the movement ON THE RAMP itself:** the **previous position ghosted**, the **current lit**, an arrow between them.
+> Very Low · ~~Low~~ ⟶ **[ Moderate ]** · High · Very High
+**Zero reading.** Then the **count deltas as chips** (they already work). Then **ONE** short line — not five.
+
+**D179d — COLOURLESS WAS AN OVER-CORRECTION. Neutral ≠ monochrome.**
+The intent was **remove SEVERITY colour, not ALL colour** (D003/D175/D176). Then `--primary` was banned from the hero card too — stripping everything, leaving it grey and dead.
+> **The awkward truth: OSLO's brand colour is ORANGE. Orange reads as AMBER. Amber reads as "AT RISK."** That is a real **brand-vs-doctrine collision** on any maturity surface.
+**Fix:** introduce a **COOL ACCENT (blue/violet)** for emphasis on maturity surfaces — **blue is not in the RAG vocabulary and cannot be misread as health.** **Reserve brand orange for ACTIONS and LINKS only — never for STATE.** Life without the misread.
+
+**D179e — COUNTS HAVE ONE HOME. (The sharpest finding.)**
+**"What changed" and "Progress" show the same numbers twice** — one as a delta, one as an absolute. **That is the overlap.**
+**Fix: counts live in PROGRESS, with the delta annotated:**
+> Issues **8** ↑2 · Critical **2** ↑1 · Open questions **3** ↑1 · Artifacts read **7/7**
+**"What changed" then keeps ONLY what Progress cannot say: the BAND MOVEMENT and the ONE-LINE REASON.**
+*(Progress was also tracking the wrong things — it carried a hard-coded "5 of 7 artifacts well-evidenced" that nothing computed. Already removed. **Every Progress count must be computed from state (D173); one that cannot be computed is not shown.**)*
+
+**Resulting layout: HERO (state) → PAYOFF STRIP (the event — dismissible, movement shown on the ramp) → PROGRESS (the counts, one home, deltas annotated).**
+
+---
+
+# D180 — PROGRESS IS GROUNDING, NOT CLEARING. (owner: approved, 2026-07-12)
+
+**Progress toward WHAT?** Not project completion — that is forbidden. **Progress in UNDERSTANDING.**
+
+> ## ⛔ **PROGRESS IS NOT A BURNDOWN.**
+> **If it looks like *issues → 0*, you have rebuilt a project-health tracker under a different name** — and the doctrine leaks out through the one panel nobody was watching.
+> **Progress is GROUNDING, not CLEARING.**
+
+**D180a — Three rows. All computed from state (D173). A count that cannot be computed is not shown.**
+
+**1. GROUNDED — *"2 of 7 artifacts rest on your evidence."*  ← THE STAR.**
+The **only** number that says **how much of this read is REAL versus INFERRED.** It is **the product's entire epistemic claim, made countable** — *derived vs attested*, in one line. It **rises as the user confirms artifacts, edits them, and answers clarifications.** **It IS the progress narrative.**
+
+**2. OPEN — *8 issues · 2 critical · 3 questions.*** What is outstanding.
+
+**3. CLOSED — *0 issues resolved · 1 question answered.*** What the user's work actually landed. *(Closes O-D179-3: **resolved is the one number that tells a PM their work worked** — but it sits under **Closed**, never as a target to drive to zero.)*
+
+**D180b — KILL "Artifacts read 7/7" (closes O-D179-1).**
+**OSLO always reads all seven. It is a CONSTANT, not progress.** It was hard-coded *because* it was meaningless — **a number that can never move is not information, it is decoration.** *"Read"* is not the interesting question. ***"Grounded in evidence"* is.**
+
+**D180c — The property this preserves (and it is the point).**
+As the user works: **they ground more artifacts → reliability rises → confidence rises. And issues may rise too, because grounding reveals things.**
+> **Progress goes UP while the issue count goes UP. That is not a bug — it is the same lesson as the Extended-pass payoff (D177), showing up in a second place.**
+> **You cannot game GROUNDING. You can only game a BURNDOWN.**
+
+---
+
+# D181 — "Load-bearing" = THE READ POINTS AT IT. And age the clock, not the past. (owner, 2026-07-13)
+
+**D181a — LOAD-BEARING: reject both candidate definitions. (Closes O-DL109-3.)**
+- **Loose** (`item.dim === limiting`) → **11.** **Over-counts** — it includes inferences that **nothing actually rests on**. A shrug, not a finding.
+- **Strict** (*supports an open issue on the limiting dimension*) → **4.** **Under-counts, and has a fatal blind spot:** it would say **SCOPE's inferences are NOT load-bearing** — because Scope has **no critical issues open**. **But Scope is the artifact the Inference Map flagged as the most dangerous thing in the plan.** **The strict definition misses FALSE CONFIDENCE entirely — the exact case the feature exists to catch.**
+
+> ## **An inference is LOAD-BEARING if the read would CHANGE were it false.**
+> Operationally: **the read POINTS AT IT** —
+> **(a)** a **critical issue** cites it · **(b)** the **limiting dimension's** assessment rests on it · **(c)** ⭐ **a STRONG-READING artifact's confidence rests on it.**
+
+**Clause (c) is the one that matters and is non-negotiable.** **An inference is load-bearing in two ways: it supports a WARNING, or it supports a REASSURANCE.** **The reassurance case is MORE dangerous, because nobody is looking at it.** *Scope reads fine **because of** four things OSLO made up.*
+**Items nothing points at are inferences — but they are not holding anything up.** The number is then **honest, actionable, and it INCLUDES Scope.**
+
+**D181b — AGE THE CLOCK, NOT THE PAST. (Closes O-DL109-1.)**
+**Ageing the demo project buys a static screenshot and costs a true thing.** The project **genuinely is new** — everything is minutes old — and **Slice 7's D100 first-run state assumes exactly that.** A three-week history on a first-run project is **a small lie told to make a surface look better**, which is precisely what the build refused to do (*"OSLO does not invent a longer past to make a surface look better."*).
+
+**Use the mechanism that already exists: `simNextWeek()`.** **Advancing a week AGES the assumptions** — the viewer *watches* *"raised today"* become *"unvalidated for 3 weeks · 3 issues now depend on it."*
+> **Demonstrate ageing; do not assert it.** **A number you watch climb argues better than a label that asserts.**
+*(If a still frame is ever needed for a deck, ageing the project is acceptable — but knowingly, and with the D100 cost on the record.)*
+
+---
+
+# D182 — P1 DEFECT: the GUARDS are firing real prompts at the user. (owner-reported, 2026-07-13)
+
+**Owner: an upgrade prompt appears "without any specified user-derived event/trigger having occurred."** **Reproduced. It is the test scaffolding leaking into the product.**
+
+**Root cause.** The negative controls **monkeypatch `window.sendMemo` and `window._rptCommit`** to call `fireUP('UP-REPORT')` — in order to prove the guard bites. **`_rptCommit` is the readout's AUTOSAVE path.** `simNextWeek()` (D181b's ageing clock) **also** fires `UP-REPORT`. **So a probe reaches into the live product and SELLS TO THE USER with no user intent.**
+
+> ## ⛔ **A PROBE MUST NEVER BE ABLE TO TOUCH THE USER.**
+> **This is the THIRD leak of the same class:** a probe **retired a live chat answer box** the user was typing into · a probe **corrupted the append-only History** · and now a probe **fires an upgrade prompt at a user who did nothing.**
+> **A guard that damages the product it protects is worse than no guard** — and this one *sells* to the user.
+
+**Binding:**
+1. **Sandbox every user-facing effect while a guard or probe runs** — prompts, chat, History, notifications, toasts. Use the established `_CHAT_PROBE` pattern; generalize it to **one probe fence** (`_PROBE`).
+2. **A prompt may fire ONLY from a real user attempt** (D138/D170 — the affordance stays enabled; the *attempt* is gated; the prompt names the limit).
+3. **Guard it:** a mechanism proof that **no prompt can be raised while a probe is active**, and that **every guard restores every byte it touched**.
+
+---
+
+# D183 — Copy and positioning (owner, 2026-07-13)
+
+**D183a — OSLO says "I" ONLY in chat.** Everywhere else it is **"OSLO"**.
+> *"I looked deeper: found two more…"* → **"OSLO looked deeper: found two more, and one more question. The read is firmer."**
+Chat is a conversation; a panel is not. **First person is a voice, not a default.**
+
+**D183b — ⭐ It is OUTCOME CONFIDENCE. (Positioning — and canon already says so.)**
+The data model's entity is **`ConfidenceState` — "Per-run **Outcome Confidence** snapshot."** **Canon already calls it Outcome Confidence; the product just says "Confidence."** That is **both a positioning loss and canon drift** — and association with **Outcomes** is central to the category (Outcome Orchestration).
+> ⛔ **BUT THE LABEL MAKES THE NUMBER DANGEROUS.** *"Outcome Confidence **62/100**"* reads as ***"62% likely to hit your outcome"*** — **the forecast the doctrine forbids, arriving through the label.**
+> **The ramp does not have this problem:** *"Outcome Confidence: **Moderate**"* on a five-step ordinal scale **cannot** be read as a probability.
+**Therefore: adopt "Outcome Confidence" — and DELETE the 0–100 index.** The label wins the category; the number would hand back the misread. *(This closes the D173d/DL-062-F1 "calibrate or demote" question: **delete**. It may return the day it is calibrated AND the forecast misread is closed.)*
+
+**D183c — Confidence and Reliability must not share a vocabulary.**
+*"Confidence 62 MODERATE | Moderate reliability"* — **two different things wearing the same word.** The pill reads like a stutter and the user cannot tell them apart.
+**Reliability speaks in GROUNDING language, not band language** — because that is what it **is** (Coverage · Evidence · Assessability), and the provenance work now lets it say so plainly:
+> **Outcome Confidence: Moderate** · *thinly grounded*
+> **Outcome Confidence: High** · *well grounded*
+**Confidence says how MATURE the read is. Grounding says how much of it is REAL.** Ties directly to the Inference Map.
+
+**D183d — "things" → "inferences".** *"20 inferences are holding up your plan."* **Precise, short, and it teaches the word the whole feature rests on.** *"Things" is vague at exactly the moment precision is the point.*
+
+**D183e — Plan artifacts are called DOCUMENTS in the application.** *(User-facing copy only.)* Supersedes **D049**'s user-facing term. **Canonical/internal entity remains `Artifact`** — the same split DL-095 made for *Finding* (canonical) vs *Issue* (user-facing). **Sweep every user-facing surface.**
+
+**D183f — The trend line's cause text is deleted.** *"— deeper analysis firmed the read (Feasibility rose Very Low → Low)"* is **badly formatted and duplicates "What changed."** **The trend line shows the sparkline + the direction word. The CAUSE belongs in "What changed", and nowhere else.** *(Counts have one home — D179e — and so do causes.)*
+
+**D183g — Overview order is USER-STATE dependent.** **"Start here" is GUIDANCE; Progress is STATE.**
+- **First run** → **Start here first** (there is no progress to read).
+- **After activation** → **Progress first** (the user knows what to do; they want to know where they stand).
+Same principle as D179 (state outranks event), applied to the user's own maturity.
+
+---
+
+# D184 — P1: "Apply this fix" does not show the fix. (owner, 2026-07-13)
+
+**Owner: *"Issues panel lists an 'Apply this fix' button, but it doesn't display the fix/recommendation it applies to. How would the user know what fix is to be applied?"***
+
+**They wouldn't. And it is worse than it looks: there are THREE recommendations, collapsed, BELOW the button.** So the button does not even identify **which** one it applies.
+
+> ## ⛔ **A FIX THE USER CANNOT READ IS A FIX THEY CANNOT CONSENT TO.**
+> **OSLO is ADVISORY-ONLY (D001).** Advice the user cannot see is not advice — **it is an instruction.** The moment the product asks *"apply?"* about a change it has not shown, **it has stopped advising and started acting.** This is the doctrine's line, drawn in a button.
+
+**Binding:**
+1. **The primary recommendation is VISIBLE, in the button's own block, before the button.** *What OSLO would change, in the user's words.* **The button never floats above a closed drawer.**
+2. **The button NAMES its subject** — not *"Apply this fix"* (which fix?) but a label bound to the change shown directly above it.
+3. **If there is more than one recommendation, the button applies the one on screen and the others are one tap away.** *(Rank: the recommendation that moves the limiting dimension.)*
+4. **A recommendation that cannot be rendered ⇒ NO BUTTON.** *(D173's rule, applied to actions: an action whose subject is absent is not degraded — it is removed.)*
+5. **Guard:** *no apply-affordance may render without its recommendation text visible in the same block.* **Negative control:** hide the recommendation → the guard goes RED.
+
+---
+
+# D185 — The Confidence popover: obey the doctrine, don't narrate it. (owner, 2026-07-13)
+
+**Owner: *"revisit this design… optimize for scanability and readability… should not be cognitively heavy."*** **Correct — and it is DL-107 all over again, in the most-opened panel in the product.**
+
+**What is actually on that surface: THREE separate paragraphs, each justifying the row above it.**
+- *"Understanding maturity — not health, readiness, or probability."*
+- *"It is a fact about the read, not a warning about the project."*
+- *"Determined independently of Clarity · Alignment · Feasibility — it reflects the evidence behind the read, not the plan's integrity, and can rise as evidence improves."*
+
+> ## **The doctrine is a CONSTRAINT ON WHAT THE PRODUCT MAY CLAIM. It is not a SCRIPT the product must recite.**
+> **The user opened this to read a state. They got a lecture.** The panel is ~90 words of prose defending itself and **~10 words of information.** *If the design is honest, it does not need to say so.*
+
+**Binding — the popover is a READOUT, not an essay:**
+1. **≤ 25 words of prose in the entire popover.** *(D163 budgets, applied here.)* The three self-justifying paragraphs are **deleted**, not shortened.
+2. **Every explanation moves BEHIND the ⓘ affordance — on demand, never resident** (DL-107 / D159). **The info icon already exists.** *Use it.*
+3. **The panel's job, in order:** (a) **the state** — Outcome Confidence + grounding · (b) **the three dimensions**, scannable · (c) **the limiter, named in ≤ 8 words** · (d) **one way out.** Nothing else.
+4. **The limiter needs a VERB, not an apology.** *"Feasibility is holding it back — the lowest of the three. It is a fact about the read, not a warning about the project."* → **"Feasibility — the lowest. Ground it to lift the read."** *(A limiter the user cannot act on is trivia.)*
+5. **Reliability basis:** three rows all reading *"Moderate"* is a **table with no information in it.** Show **what is thin**, not that everything is average. *(Rank; surface the weakest; the rest on demand.)*
+6. **One vocabulary per concept** (D183c — already landed): Confidence uses the band; grounding uses grounding words. **Never both wearing "Moderate".**
+7. **Scanability is a MECHANISM, not a taste:** the eye must land on **the state** first. **Guard: the popover's prose word-count, and the count of resident explanatory sentences (target: ZERO).**
+
+**This is the same lesson as DL-107, and it has now cost us twice.** **Add it to the standing sweep: any surface that explains why it is trustworthy is not.**
+
+---
+
+# D186 — "Holding it up" dies. It means the OPPOSITE of what the owner read. (2026-07-13)
+
+**Owner: *"Replace 'Holding It Up' label/copy with 'Blocker'."*** **The directive rests on a misreading — and the misreading IS the defect.**
+
+**The phrase is used in two places with OPPOSITE meanings:**
+- *"Feasibility is holding it **back**"* — the CAF limiter. **Obstructing.**
+- *"20 inferences are holding it **up**"* — the load-bearing count (D181). ***SUPPORTING.*** **These are what the read RESTS ON.**
+
+> ## ⛔ **Renaming the load-bearing row "Blocker" would tell the user to REMOVE THE THING CARRYING THEIR PLAN.**
+> **The owner — who wrote the doctrine — read "holding it up" as "delaying it."** If *he* misreads it, **every user will.** **"Hold up" is ambiguous in English (support / delay) and it is sitting on the single most valuable number in the product.**
+
+**D186a — the load-bearing label becomes "YOUR READ RESTS ON."** Unambiguous, plain, and it names the actual relationship. *(Not "Blocker" — inverted. Not "Load-bearing" — internal vocabulary.)*
+**D186b — the copy: "20 inferences your read rests on."** *(Carries D183d: "inferences," never "things.")*
+**D186c — the CAF limiter stays a LIMITER, not a "Blocker" — pending owner override.**
+> **"Feasibility is a Blocker" reads as "the PROJECT is blocked."** But low Feasibility means **OSLO's READ of feasibility is immature** — **a fact about the read, not a warning about the plan (D003).** *"Blocker" imports the health/readiness framing the doctrine forbids, in the panel most likely to be screenshotted into a status deck.*
+> **Recommended: "Feasibility — the lowest. Ground it to lift the read."** **ESCALATED: the owner may override; it will not be done silently.**
+
+---
+
+# D187 — Trend colour: GREEN where the user earned it. NEVER red. (owner, 2026-07-13)
+
+**Owner: *"some of the trend arrows can legitimately be viewed as positive or negative. In those instances, can't we use Red or Green to reflect that truth?"*** **Half right — and the other half is the trap.**
+
+> ## ⛔ **"Issues 8 ↑2" AFTER AN EXTENDED ANALYSIS DOES NOT MEAN THE PLAN GOT WORSE. IT MEANS OSLO LOOKED HARDER.**
+> **Red would tell the user their plan degraded at the exact moment it was finally SEEN — punishing them for OSLO's own improvement.** Same for *inferences ↑* (**D177**: a rising inference count is NOT a regression) and *critical ↑* (a critical issue found is a critical issue **avoided**).
+> **In this panel, a rising count is EVIDENCE OF BETTER SEEING as often as it is bad news — and the product cannot tell which from the number alone. A colour that cannot know is a colour that lies.**
+
+**BINDING:**
+1. **GREEN — and only green — on counts that CANNOT MOVE EXCEPT BY THE USER'S OWN WORK:** **you grounded · issues resolved · questions answered.** These have a **fixed valence**; nothing but the user's action moves them. **That green is honest, and it is earned.**
+2. **NO RED. ANYWHERE. In this panel.** **Nothing here rising is unambiguously bad.**
+3. **Everything else stays NEUTRAL** (D003 ramp) — **and the CAUSE lives in "What changed" and nowhere else** (D179e / D183f).
+4. **Test, not taste:** *"Could this count rise for a reason that is GOOD?"* **If yes → no colour.** Severity colour remains **ISSUES-ONLY** (D003) — a count of issues is not an issue.
+5. **Guard:** the valence table is **declared and computed**; a count with a "green" flag must be **provably user-driven**. **NC:** flag a count OSLO can move by itself → **RED**.
+
+---
+
+# D188 — The Structure panel: labels, not sentences. (owner, 2026-07-13)
+
+**Owner: *"improve labeling, make more concise and scannable."*** **The panel has no labels — it has three captions.**
+> *"**6** dependencies OSLO assumed, and nobody confirmed" · "**5** named parties with nobody accountable for them" · "**3** numbers in the plan that trace to nothing"*
+
+**Each is a sentence doing a label's job.** The user must **read prose to find out what they are looking at.** *(And they are ~8 words each, three times, in a strip meant to be scanned in one pass.)*
+
+**BINDING — a stat cell is `NUMBER · LABEL`, and the sentence goes behind the ⓘ:**
+- **6** — **Unconfirmed dependencies**
+- **5** — **Unowned parties**
+- **3** — **Untraceable numbers**
+
+**≤ 3 words per label. The vivid consequence is ONE TAP AWAY, not resident** (DL-107/D185). **The number carries the weight; the label names it; the ⓘ explains it.** *The consequence was the right instinct — it is in the wrong place.*
+
+---
+
+# D189 — Kill "A direction, not a target." (owner, 2026-07-13)
+
+**Owner: *"'A direction, not a target' is not required here. You are attempting to communicate guidelines/philosophy."*** **Correct. DELETE.**
+
+**This is DL-107 for the THIRD time.** The product keeps **narrating its own epistemics as a caption**. **Nobody reads a subheading and forms a belief about targets — they read the number.** *If it were a target, the panel would say "goal." It doesn't. That is the whole protection.*
+
+**Also on this panel (already binding, not yet applied here):**
+- *"I inferred"* → **"OSLO inferred"** — **D183a: first person ONLY in chat.** *(This is the Progress panel, not chat.)*
+- *"20 things I inferred"* → **"20 inferences"** — **D183d.**
+
+**Standing sweep, now mandatory:** **any caption whose job is to pre-empt a misreading is DELETED and moved behind the ⓘ.** *A surface that explains why it is trustworthy is not.*
+
+---
+
+# D190 — Issue panel: the recommendation block. (owner, 2026-07-13)
+
+**D190a — the button says "Apply this fix." Nothing more.**
+**This CORRECTS my own D184 clause 2.** I required the button to **name its subject** — written when the recommendation was *invisible*. **Once the recommendation is resident directly above it (D184 clause 1), the button repeating it is redundant** — and it produced *"Apply: Confirm the venue's 500-person Wi-Fi capacity…"*: **too long to scan, truncated before it can be read.** *The worst of both.*
+> **The rule was always: THE USER MUST BE ABLE TO READ THE FIX BEFORE CONSENTING.** Clause 1 satisfies it completely. **Clause 2 was belt-and-braces that ate the belt.**
+**Binding: the affordance is short and constant; the fix above it is the subject.** **D184's guard stands unchanged** (no apply-affordance without its recommendation visible in the same block) — **it never required the label to carry the text.**
+
+**D190b — "Other paths" → "Other options."** *Owner's term. "Path" is jargon dressed as plain English.*
+
+**D190c — the options belong UNDER the recommendation, not under Evidence.**
+Currently **"Other options (2)" exists TWICE** — a button in the recommendation block **and** a disclosure row below Evidence. **The user is offered the same door in two places, in two different registers.**
+**Binding: ONE home** (D179e, applied to actions). **The options expand IN PLACE, directly beneath the recommendation they are alternatives to.** **The disclosure row under Evidence is deleted.**
+*The alternatives to a recommendation are part of the decision, not part of the record. Evidence is the record.* **Guard: no affordance opens the same set from two places.**
+
+---
+
+# D191 — P1: a fix, once applied, CANNOT BE UNDONE — and it attests the document in your name. (owner, 2026-07-13)
+
+**Owner: *"can decisions such as fix selection be undone?"*** **No. And the code shows why that is worse than a missing button.**
+
+```js
+function applyFix(id){ …
+  ps.basis = 'attested';                       // ← "CONFIRMED BY YOU"
+  if(ps.rel==='Low') ps.rel='Moderate';        // ← Reliability RISES
+  _istatus[id]='addressed';                    // ← one-way
+```
+`selectPath()` moves **Open → Addressed** with no way back. `applyFix()` **marks the document "Confirmed by you" and raises Reliability** — **and there is no path out of either.**
+
+> ## ⛔ **"CONFIRMED BY YOU" IS THE USER'S WORD. AN ATTESTATION THAT CANNOT BE WITHDRAWN IS A CLAIM OSLO HOLDS THE USER TO AFTER THEY HAVE DISAVOWED IT.**
+> **Reliability is computed FROM attestation.** So an un-withdrawable attestation means **the read rests on a confirmation the user no longer stands behind.** **This is not a UX gap. It is a TRUTH DEFECT.**
+>
+> ## ⛔ **AND IT CUTS AT D001.** **Advisory-only means the human can always change their mind.** **A product that gives advice but makes ACCEPTING it irreversible has converted advice into COMMITMENT.**
+
+**BINDING — four things, and they are NOT the same thing:**
+
+| Object | Undoable? | Why |
+|---|---|---|
+| **The SELECTION** (which option you are pursuing) | **YES — freely, including back to NO selection.** | It is an **intention**, not an act. Nothing in the plan changed. **Open ⇄ Addressed is not a ratchet.** |
+| **The APPLIED EDIT + the ATTESTATION** | **YES — and ALWAYS TOGETHER.** | It is **your document and your word.** ⛔ **They may NEVER be undone separately** — an edit withdrawn while the attestation stands would leave OSLO asserting *"confirmed by you"* about **text that is no longer there.** |
+| **The READ** | **NO.** | **Only an analysis update moves the read.** Doctrine. **Withdrawing a fix does not restore the old assessment — it triggers a NEW one.** *(Last-good honesty holds in the interval; D098g.)* |
+| **HISTORY** | **NO. ⛔ APPEND-ONLY.** | **An undo is a NEW EVENT, never an erasure.** *(D128: the epistemic record is never metered — and never rewritten.)* |
+
+> ## **YOU CAN UNDO THE DECISION. YOU CANNOT UNDO THE FACT THAT YOU MADE IT.**
+> History records *applied → withdrawn*, **because that is what happened.** **A record you can edit is not a record.**
+
+**Implementation:**
+1. **Withdraw is available wherever the decision is visible** — the issue panel, and the History row. **Named for what it does** (*"Withdraw this fix"* / *"Clear selection"*), **never "Undo"** — *"undo" implies the world returns to how it was, and the read does not.*
+2. **Withdrawing an applied fix restores the document to its pre-fix version** (the version snapshot already exists — `_artVersion` / `_pushUndo`), **drops the attestation, restores the prior Reliability**, and **triggers an analysis update** — it does not roll the read back.
+3. **It says so, in one line, before it acts:** *"This removes the change from \<document\> and withdraws your confirmation. OSLO will re-read the plan."* **Consent, not a surprise** — the same rule as D184.
+4. **The issue returns to OPEN** (not "resolved," not "addressed") — *because it is.*
+5. ⛔ **A RESOLVED issue is NOT withdrawable by hand.** Resolution came from **an analysis update**, not from the user — **and the user may not hand-move the read** (standing doctrine). **Withdraw the FIX; the read follows.**
+6. **The assisted-apply meter is REFUNDED on withdrawal** — *(you cannot bill a user for labour you then took back)* — **and the refund is recorded.**
+7. **Guards:** (a) no state transition into `addressed`/`attested` exists without an inverse; (b) **edit and attestation move as ONE unit** — NC: withdraw one without the other → **RED**; (c) **History NEVER shrinks** — NC: make a withdrawal delete its origin event → **RED**; (d) **no hand-path moves the read** — NC: let withdraw write a CAF band directly → **RED**.
+
+---
+
+# D192 — ERRATUM to D191 §5. My own clause reinstated the P1 it was written to kill. (2026-07-13)
+
+**D191 §5 said: *"A RESOLVED issue is NOT withdrawable by hand."*** **It is WRONG, and the worker measured exactly how wrong:**
+> **The analysis update resolves the issue ~1.9 SECONDS after the fix is applied.** So the withdraw affordance **lives for about two seconds** — and then the attestation (*"Confirmed by you"*, on the user's own document, **with Reliability raised**) **becomes permanent again.** **In the ordinary happy path, D191 does not hold.**
+
+**The error: I conflated two objects.**
+> ## **WITHDRAWING A FIX IS NOT HAND-MOVING THE READ.**
+> It is **the user editing their own document and retracting their own word.** **The READ then moves BY ANALYSIS** — which **re-opens the issue, because the gap is genuinely back.** **D191's own sentence already said it: *"Withdraw the FIX; the read follows."*** §5 then contradicted it.
+
+**D192a — BINDING: withdraw is available on a RESOLVED issue.** Drop the resolved clause. **What the user may never do is move the READ by hand — and they still cannot: withdrawal restores the document, drops the attestation, and TRIGGERS AN ANALYSIS UPDATE. The read is re-derived, never rolled back.** The status guard binds the **read**, not the **document**.
+
+**D192b — O-D191-5: the lifecycle chevron still draws a ratchet that no longer exists.** `Open → Addressed → Resolved` with one-way arrows. **The states are now reversible. The diagram must stop lying.**
+
+**D192c — O-D191-1: answering a clarification attests on the same two lines → it gets the same inverse.** Consistent. Approved.
+
+---
+
+# D193 — Two questions D191 exposed. Both answered from doctrine.
+
+**D193a — O-D191-2: the user edits the document AFTER applying the fix, then withdraws.**
+> ## ⛔ **OSLO MAY NEVER DELETE THE USER'S OWN WRITING.**
+> Restoring the pre-fix version would **destroy every word the user wrote afterwards** — to undo a change *OSLO* made. **That is the tool overruling the human, with their own prose as the casualty.** *(The same line D152/D155 draw: the product does not police, and does not touch, the user's words.)*
+
+**BINDING — the restore is CONDITIONAL on the document being untouched since the fix:**
+- **Untouched since the fix** ⇒ **restore the pre-fix version** (clean; nothing of the user's is lost).
+- **Edited since the fix** ⇒ ⛔ **DO NOT RESTORE.** **Withdraw the ATTESTATION only**, and **say so plainly**: *"Your edits since are kept. OSLO's change is still in \<document\> — remove it yourself if you want it gone."*
+- **The attestation drops in BOTH cases** — *because the user's word is the user's to retract, regardless of what happened to the text.*
+- **An analysis update runs in both cases.**
+- **Guard:** **a withdrawal may NEVER reduce the user's authored content.** **NC: withdraw after a user edit and assert the edit SURVIVES → RED if it doesn't.**
+
+**D193b — O-D191-3: two decisions attest ONE document.**
+**The attestation is held by the DOCUMENT, but EARNED by decisions.** Withdrawing one decision while another still stands must **not** drop the document's attested basis — that would retract a confirmation the user **has not** retracted.
+**BINDING: the attestation stands while ANY standing decision attests it; it drops only when the LAST one is withdrawn.** *(Refcount by decision, computed — never a boolean flipped by whoever moved last.)* **Guard + NC: withdraw one of two → the document stays attested; withdraw both → it drops.**
+
+---
+
+# D194 — The Progress rows: say it once, and say it in the ratified vocabulary. (owner, 2026-07-13)
+
+**Owner proposed: *"AI Interpretation | Your Understanding = 13 Inferences ↓7"*.** **The instinct is right; two of the three words are already taken.**
+
+**D194a — the LOAD-BEARING row says it TWICE.** Label *"YOUR READ RESTS ON"* + copy *"13 inferences **your read rests on**"*. **Straight D179e violation — one home.**
+> **LABEL:** `YOUR READ RESTS ON` · **VALUE:** **13 inferences** ↓7 · *See them →*
+**~60% less text. Nothing said twice.**
+
+**D194b — ⛔ "Interpretation" and "Understanding" are BOTH already canonical, at different sizes. Rejected — with the owner's idea preserved.**
+1. **`interpretation` is ONE of the six `ContextItem.item_type`s** (`claim · assumption · relationship · entity · metric · interpretation`). **Using it as the heading for ALL inferences makes the word mean two different-sized things** — precisely what the **DL-053 Disambiguation Register** exists to prevent.
+2. ⛔ **"Understanding" is the most load-bearing word in the product.** **Confidence *IS* understanding maturity.** If *"Your Understanding"* comes to mean *"the claims you grounded,"* then **understanding** names **OSLO's assessment** AND **the user's evidence** on the same screen. **Drift, on day one, in the highest-value term we own.**
+3. **The product never calls itself "AI." It calls itself OSLO.**
+
+**D194c — the owner's ledger ALREADY EXISTS, one row up — and the ratified epistemic classes ARE the distinction he is reaching for.**
+The GROUNDED row becomes:
+> **From OSLO** 12 · **Confirmed by you** 17
+
+**That is *"AI Interpretation / Your Understanding"* said in words canon already owns (D011/D069)** — **and it teaches the two class names the user meets everywhere else** (issues, documents, reports, the Inference Map).
+
+**D194d — the two rows are NOT one ledger. Do not merge them.**
+**GROUNDED** answers *"how much of this is inferred?"* — **a comparison.**
+**LOAD-BEARING** answers *"how much of the READ is LEANING on it?"* — **a subset.**
+**Merging them collapses a subset into a comparison and invites the user to read 13-vs-7 as a RATIO. It is not one.** *(The same error as putting a count and its cause in one home — D179e.)*
+
+---
+
+# D196 — "Stabilize" REJECTED. The VERB becomes "Confirm"; the STATE stays "grounded." (owner, 2026-07-13)
+
+**Owner: *"instead of Ground or Grounding, what about replacing all copy with Stabilize or Stabilizing?"*** **Rejected — the underlying objection is right, the replacement is not.**
+
+## ⛔ Why "stabilize" is the wrong word
+
+**Grounding = attaching a claim to EVIDENCE. Stabilizing = reducing MOVEMENT. They come apart immediately:**
+1. **A WELL-GROUNDED read can still move** — new evidence arrives, the plan changes, and it **should** move. **That is the product working.**
+2. **An UNGROUNDED read is not unstable — it is UNSUPPORTED.** It may sit perfectly still for months while **resting on nothing.** ⛔ ***"Scope reads strong — but 8 of 11 items are inference"* is a PERFECTLY STABLE READ. Its STABILITY is what makes it DANGEROUS.** **"Stabilize" would name the wrong failure — and would call the false-confidence case a success.**
+3. ⛔ **It makes STILLNESS the goal.** OSLO's line is ***"honest, revisable confidence."*** **Telling the user to *stabilize* the read reframes it as a SCORE TO LOCK IN** — the same gravitational pull as the forecast/health misread the doctrine spends its whole budget resisting.
+4. **It breaks the metaphor family that is now load-bearing.** *"Your read **RESTS ON** 13 inferences"* (D186) → rests on → foundation → **ground.** One coherent picture. **"Stabilize" belongs to balance/wobble/equilibrium — and it has NO OPPOSITE.** **Grounded ↔ Inferred is the clean pair the entire provenance model teaches (DL-109). "Stabilized ↔ Inferred" is not an opposition at all.**
+
+## ✅ But the objection underneath is CORRECT — "ground" reads as jargon to a PM. **Split the verb from the state.**
+
+**D196a — the ACTION the user takes → "CONFIRM."**
+> *"Ground it to lift the read"* → **"Confirm it to lift the read."**
+> *"Ground Feasibility →"* → **"Confirm Feasibility →"**
+**It is ALREADY RATIFIED: *"Confirmed by you"* is one of the three epistemic classes (D011/D069) and now sits in the Progress ledger (D194c).** **Plainer English, and it teaches a word the user meets on every other surface.** *(One vocabulary, everywhere.)*
+
+**D196b — the STATE of the read → "GROUNDED" stays.** *thinly grounded · partly grounded · largely grounded · well grounded* (D183c).
+**Nothing else means *"resting on evidence"* without colliding with something canon already owns:**
+- ⛔ **"evidenced" collides with EVIDENCE**, which is **one of the three Reliability components** (Coverage · **Evidence availability** · Assessability) — **the same "two sizes of one word" error as *interpretation* (D194b).**
+- **"Confirmed" cannot carry the state**: a read is grounded by **evidence** as well as by **confirmation** — *Attested by \<name\>* grounds it too, and **that is not the user confirming.**
+
+> ## **THE USER CONFIRMS. THE READ IS GROUNDED.** **Verb and state, cleanly separated, both in words canon already owns.**
+
+**D196c — the split must be MECHANICAL, not remembered.** **Guard: "ground/grounding" never appears as an IMPERATIVE addressed to the user; "confirm/confirmed" never appears as the RELIABILITY STATE band.** **NC both directions.**
+
+---
+
+# D197 — "LOAD-BEARING." I was wrong to reject it. (owner, 2026-07-13)
+
+**Owner: *"'your read rests on this' is long, not concise, not intuitive. Establish a different name."*** **Agreed — and the right name is one I ruled out myself.**
+
+**In D186 I rejected "load-bearing" as *"internal vocabulary."* That was wrong.**
+> ## **A LOAD-BEARING WALL is the most intuitive metaphor in the language for *"remove this and the thing falls down."*** **Two words. Zero ambiguity — unlike *"holding it up"*, which the owner himself read backwards (D186). And it pairs exactly with *"rests on"*: the read RESTS ON its LOAD-BEARING inferences.**
+
+**D197a — the term is LOAD-BEARING.**
+- Progress row label: `YOUR READ RESTS ON` → **`LOAD-BEARING`**
+- Value: *"13 inferences your read rests on"* → **"13 load-bearing inferences"**
+- Assumption row marker: `YOUR READ RESTS ON THIS` → **`LOAD-BEARING`**
+- **Register it in the glossary.** One name, everywhere.
+
+---
+
+# D198 — A MARKER, not a LABEL. The badge is wrecking its own row. (owner, 2026-07-13)
+
+**Owner: *"certain notifications force the text on the row to be justified left or right… I'd prefer a more minimal indication that this row deserves attention."***
+
+**Two offenders, one disease:**
+1. **`YOUR READ RESTS ON THIS`** — a chip, repeated on **six consecutive rows**, ⛔ **and REDUNDANT WITH ITS OWN HEADER**: the section already says *"The ones your read rests on come first."* **THE SORT ORDER IS THE SIGNAL.** The chip re-states it six times and **shoves every row's content sideways.**
+2. **`VERIFY`** on the By-document row — a button in a **stat row**, forcing the counts to justify around it.
+
+> ## **A ROW THAT NEEDS ATTENTION SHOULD BE *MARKED*, NOT *CAPTIONED*.**
+> **A label competes with the content for the row. A marker sits beside it and lets the content keep its alignment.** *The user is scanning a list; every chip is a stop sign in the middle of a sentence.*
+
+**BINDING:**
+1. **Replace the chip with a minimal row marker** — a **quiet accent** (a rule, a bar, a small mark) that **does not enter the text flow and does not move a single character of the row's content.** **Alignment across all rows must be IDENTICAL, marked or not.**
+2. **The MEANING moves to the ⓘ / hover / the section header** — *not resident, on demand* (DL-107/D185).
+3. **`VERIFY` stops being a resident button in the stat row.** The row is a **readout**; the action belongs on **hover / row-click / the ⓘ**, or as a **single affordance for the panel**, never one wedged into one row's number column.
+4. **⛔ Guard: a marked row and an unmarked row have IDENTICAL text geometry** (same start x, same end x for the content). **Mechanism, measured — not eyeballed.** **NC: put the chip back in the flow → RED.**
+5. **The marker must survive being colour-blind** — it may not rely on colour alone (a11y), and **it is NOT severity colour** (D003 — this is not an issue).
+
+---
+
+# D199 — MISS: the trend surface still says "CONFIDENCE." (owner, 2026-07-13)
+
+**Owner: *"Did you forget to update this to Outcome Confidence?"*** **Yes. And the reason is a GUARD GAP, which is worse than the typo.**
+
+**D183b bound TWO things:** *(a)* **delete the 0–100 index**, and *(b)* **adopt the "Outcome Confidence" label.** **A guard was built for (a) and NOT for (b)** — so the index is provably gone everywhere, while **the LABEL was left to be remembered**, and on the trend surface it wasn't.
+
+> ## **THIRTY-FOUR GUARD DEFECTS IN, THE LESSON REPEATS: WHAT IS NOT GUARDED IS NOT TRUE.**
+
+**BINDING:** **every user-facing surface naming the concept says "Outcome Confidence"** — hero, pill, popover, **trend**, History, chat, reports, tour, prototype notes. **Guard: the bare word "Confidence" NEVER appears as a LABEL for the concept.** *(It may appear inside prose; grade the ROLE, not the substring.)* **NC: revert one label → RED.** **Sweep every surface, not just the one in the screenshot.**
+
+## Decision 250: Overview Progress panel — foundation-bar (DL-111 fold-in)
+
+Status: Locked from docs (ratified canon DL-111)
+Type: Product Design | Screen/Interaction
+Area: Overview / Progress panel
+Slice: 10 (Tiering & Limits — Overview surface)
+Feature: Progress panel
+Question ID: WI-R5
+Source: 00_owner/decisions/records/DL-111-progress-panel-foundation-bar.md
+Source classification: Product evidence (ratified)
+
+Decision:
+The Overview Progress panel is a FOUNDATION BAR: a hero count of grounded facts (attested + derived, computed), a proportional Confirmed-by-you + From-OSLO solid bar with a set-apart provisional inferences tail, and OPEN/CLOSED work stats with severity red on Critical only. Reconciled with the Outcome Confidence panel (cool accent echoing the ramp, orange off-state, neutral deltas, de-exiled tail).
+
+Rationale:
+Owner directed the original locked design; harmony pass against the Confidence panel narrowed the reversal; ratified as DL-111. Supersedes the class-ledger presentation (D194c) FOR THIS PANEL only. Every number computed; guards re-based and live (135/135).
+
+Impacts:
+- vertical-slices/slice-10-tiering-limits/frontend-ui.md
+- vertical-slices/slice-10-tiering-limits/user-experience.md
+- vertical-slices/slice-10-tiering-limits/success-criteria.md
+- vertical-slices/slice-10-tiering-limits/edge-cases.md
+- vertical-slices/slice-10-tiering-limits/open-items.md
+- vertical-slices/slice-10-tiering-limits/product-detail.md
+- vertical-slices/slice-10-tiering-limits/e2e-test-scenarios.md
+- vertical-slices/slice-10-tiering-limits/prototype.html
+
+## Decision 251: Progress panel — grounded-facts arithmetic & two-state provenance (ERRATUM to Decision 250 / DL-111)
+
+Status: Locked (owner-directed correction, 2026-07-14)
+Type: Product Design | Screen/Interaction | Product Constraint
+Area: Overview / Progress panel
+Slice: 10 (Overview)
+Feature: Progress panel
+Question ID: WI-R5 (erratum)
+Source: owner defect report, 2026-07-14; prototype slice10 R6 build
+Supersedes: the arithmetic + vocabulary of Decision 250 (design unchanged)
+
+Decision:
+Three defects in the ratified foundation bar are corrected — the DESIGN is kept, the ARITHMETIC and VOCABULARY change:
+1. **Grounded facts = ATTESTED ONLY.** The hero is the grounded count alone (evidence_id present), NEVER grounded+inferred. Inferred claims (evidence_id null) are not grounded facts. The grounded number lives in the hero; the "Confirmed by you" segment carries only its label.
+2. **Two provenance states, not three.** The model has grounded (evidence) and inferred (none). "From OSLO" IS the inferred state, rendered hatched; the "Derived — supported" third class is deleted. Legend: "Grounded — your evidence" · "Inferred — OSLO's read".
+3. **Load-bearing is a superset, not a disjoint addition.** Inferred claims ⊂ load-bearing inferred items of every type; the bar no longer `+`-joins them. Load-bearing is its own line: "Your read leans on N inferences — the inferred claims above plus inferred assumptions, relationships and metrics · See them →".
+
+Guards now grade the POPULATION, not the string: grounded == attested-only (hero ≠ a+d); exactly two provenance classes in the legend; the bar never combines the inferred-claims count with the load-bearing count. The old guards passed the lie because they only proved "computed" and "registry-sourced" — neither was the thing that was wrong.
+
+Rationale:
+Owner defect report: the "blend / 29-hero" lock (DL-111) changed the design and smuggled in bad arithmetic; it superseded exactly D194c (ledger) and D176 (no-proportion), the decisions that had been holding this line. Correction keeps the hero and the bar. Prototype R6: 136/136 self-check, 0 pageerrors.
+
+Impacts:
+- vertical-slices/slice-10-tiering-limits/prototype.html
+- vertical-slices/slice-10-tiering-limits/{frontend-ui,user-experience,success-criteria,e2e-test-scenarios,edge-cases,open-items}.md
+- 00_owner/decisions/records/DL-111 (canon erratum owed — drafted, awaiting owner land)

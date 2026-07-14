@@ -96,12 +96,15 @@ The user opens an issue to learn **"what's wrong, and what do I do about it?"** 
 
 ```
 ▸ Evidence · 2
-▸ Recommendations · 3
 ▸ Clarification · Has the venue confirmed Wi-Fi for 500+ concurrent…
 ▸ Comments · 0
 ▸ Reviews · 1 · 1 awaiting        (only when reviews exist)
   [⤴ Share for review] ⓘ   [✦ Discuss with OSLO]
 ```
+> ⛔ **D184 / D190c — THE RECOMMENDATIONS ROW IS GONE.** The recommendation is **resident above its button**
+> (D184.1), and its **alternatives expand in place, directly beneath it** (`Other options (2)` → `#ipAlts`).
+> **The disclosure row under Evidence was DELETED** — *the alternatives to a recommendation are part of the
+> DECISION; Evidence is the RECORD.* Nothing about the fix is behind a chevron any more.
 
 Row state persists **while the panel is open** (a re-render from `selectPath` / `addComment` must not collapse what the user opened) and **resets on close** — a fresh open is a fresh, minimal read.
 
@@ -115,7 +118,7 @@ Row state persists **while the panel is open** (a re-render from `selectPath` / 
 
 ## D162d — cascaded
 
-- **Recommendation panel** (the `.ip-rec` block): the *"Applying drafts the change into your plan. Discussing changes nothing."* note and the *"Recommendations live only inside the issue"* rationale → **ⓘ / button tooltips**. *"Possible resolution paths"* → **"Other paths"**. *"— recorded as your chosen approach"* → dropped (the **Confirmed by you** tag already says it).
+- **Recommendation panel** (the `.ip-rec` block): the *"Applying drafts the change into your plan. Discussing changes nothing."* note and the *"Recommendations live only inside the issue"* rationale → **ⓘ / button tooltips**. *"Possible resolution paths"* → **"Other options"** (D190b — *"path" is jargon dressed as plain English*). *"— recorded as your chosen approach"* → dropped (the **Confirmed by you** tag already says it).
 - **Reviews block:** the responses stay **in full, forever** (that is the record) — the lecture around them does not. *"This is evidence, not a verdict … it went into an analysis run … OSLO did not accept it on your behalf"* + the D133 alignment essay collapse to **one line + an ⓘ**: *"**Evidence, not a verdict.** ISS-03 is still **Open**. · Attested by \<name\> · Folded into **Alignment**."*
 - **Artifact flyout** (`.anno-pop`): the read (severity · dimension · what's wrong, truncated to 150 chars) + **Open issue →** and the span-specific **Ask about this →**. **"Share for review →" is gone from the flyout** — it fired a full modal out of a hover, and it lives one click away in the panel where its contract can sit on an ⓘ. **CR-2 is untouched: nothing disabled, nothing metered.**
 - **Share dialog:** prime-candidate hint and CR-2 counter deleted there too.
@@ -546,3 +549,48 @@ for every audience; only §4 varies; also asserts the three asks are distinct) a
 | **D176b** | **The CAF dimensions are BANDS, not percentages.** A bar filled to 55% asserts a **cardinal magnitude** OSLO cannot defend on an **uncalibrated** scale (**DL-062 F1**) — **worse than the 0–100 index**, because a filled bar reads as a **measurement without even showing its number**, in **progress/health-bar grammar** (**DL-104 §5 — P1**). | **One builder:** `_rampHTML(lvl,{compact:true})` — the hero's own ramp — drawn by `_cafRampInto()` into every CAF row on **both** surfaces (`renderCafRows()` for the hero card, `renderConfPop()` for the popover). `.caftrk` / `.caffil` / `.cpp-bar` and `_RELPCT` / `_RELCOLOR` are **deleted**. The reliability basis carries its **level word** alone. **`feasW`/`alignW` stay in the model** (they compute the band via `_cafLevelFor()`); they are never rendered. Guards: `_assertNoPercentageFillOnMaturitySurfaces()` (cascade **+** DOM **+** **render path**) · `_assertCafDimensionsRenderAsBands()` (byte-for-byte against `_rampHTML`; band computed from state; limiter derived). NCs: `_d176NegativeControls()` — **15 bite, 2 must-not-fire stay green**. **The Attention heat map is untouched — those cells are ISSUES (D003).** |
 
 Boot self-check moves **72 → 74**, all green (Free × Basic × notes-OFF × notes-ON, **0 console errors**).
+
+---
+
+## D191 — a decision, once made, could not be unmade (owner P1, 2026-07-13)
+
+| Object | Undoable? | How it is implemented |
+|---|---|---|
+| **The SELECTION** | **YES — freely, including back to NO selection.** | `clearSelection(id)` — `delete _selpath[id]` · `_istatus[id]='open'` · the decision record is dropped · a **new** History event. **No consent step, no meter, no analysis run** — an intention is not an act, and nothing in the plan changed. **Open ⇄ Addressed is not a ratchet.** |
+| **The APPLIED EDIT + the ATTESTATION** | **YES — and ALWAYS TOGETHER.** | **`_withdrawUnit(id)` is the ONLY function in the product that may drop an attestation, and it cannot return without having restored the document too.** The document goes back via the machinery that already existed (`_artVersion` / `_artKey` body / `_pushUndo`, D084) — **no new snapshot mechanism was invented.** Reliability goes back to `_decision[id].relBefore`, **captured before the fix moved it**. `_attestBy[art]` records **whose word** attests each document, so withdrawing drops **only that decision's** attestation. |
+| **The READ** | **NO.** | `_withdrawCore()` (the hand-path) contains **no read write, and cannot**: `_decision` carries **no band, no CAF width, no Confidence**. `_rereadAfterWithdrawal()` runs **inside the analysis update** and **re-derives** Feasibility from the state it finds (the gap is open again; the document is no longer confirmed) — **it never consults the withdrawal record.** A **new run event** and a **new trend point**; **last-good honesty (D098g)** in the interval. |
+| **HISTORY** | **NO. APPEND-ONLY.** | The withdrawal is a **new event** (`type:'withdrawn'`, category *Your decision*, icon `↩`). The origin event is **never touched, never relabelled, never removed** — `pushHistory` gained `opts.iss` (a **pointer** to the issue) so the row can carry the affordance without the record ever being rewritten. |
+
+**The transition table (`_ISSUE_TRANSITIONS`) — enumerated, not remembered:**
+
+| Forward | Moves into | Attests? | Inverse |
+|---|---|---|---|
+| `selectPath` | `addressed` | no | **`clearSelection`** |
+| `applyFix` | `addressed` + `attested` | **yes** | **`withdrawDecision`** |
+| `_submitClarification` | `addressed` + `attested` | **yes** *(D192c — approved)* | **`withdrawDecision`** |
+
+**The sweep:** every function in the product is scanned for writers of `_istatus[…]='addressed'` and
+`.basis='attested'`. **Any writer not in the table, with a declared and existing inverse, FAILS THE BUILD.**
+Probe helpers that stage-and-restore are **named** (`_ATTEST_PROBE_HELPERS`), never inferred.
+
+**The meter (D191 §6):** `_meterRefund('fixes')` decrements the count **and** records it (`usage.refunds.fixes`),
+surfaced on the Usage & Limits row — *"0 applied · no limit / **1 refunded (withdrawn)**"*. **The analysis run is
+not refunded: it really happened.**
+
+**Guards: 114 → 123, all green.** `_assertEveryDecisionTransitionHasAnInverse()` ·
+`_assertWithdrawMovesEditAndAttestationTogether()` · `_assertWithdrawalNeverShrinksHistory()` ·
+`_assertNoHandPathMovesTheRead()` · `_assertWithdrawalRefundsTheAssistedApply()` · **and the D192/D193 four:**
+`_assertWithdrawSurvivesResolution()` *(replaces `_assertWithdrawIsAbsentOnAResolvedIssue()`, which encoded the
+doctrinal error)* · `_assertWithdrawalNeverDeletesTheUsersWriting()` · `_assertAttestationIsRefcountedByDecision()` ·
+`_assertLifecycleIsNotDrawnAsARatchet()`. **NC suites: 13; controls 272 → 281, every one bites.**
+
+---
+
+## D192 / D193 — the amendments (owner, 2026-07-13)
+
+| Object | Amended rule | How it is implemented |
+|---|---|---|
+| **A RESOLVED ISSUE** | **D192a — withdraw is AVAILABLE.** *The analysis update resolves the issue ~1.9s after the apply; barring the withdraw there made the attestation permanent again.* | `_wdAvailable(id)` = `!!_decision[id]` — the resolved clause is **gone**. ⛔ `_withdrawCore()` **does not touch a `resolved` status** (an analysis update put it there). `_analysisUpdateAfterWithdrawal()` re-derives it: **document restored ⇒ the gap is back ⇒ OPEN**, with a lifecycle event. |
+| **THE DOCUMENT** | **D193a — the restore is CONDITIONAL. OSLO may never delete the user's own writing.** | `_docTouchedSince(r)` — **content + version identity** against `bodyAfter`/`verAfter` (captured in `applyFix` at the moment OSLO's change landed). Touched ⇒ `docKept`, **nothing is written to the document**. `confirmWithdraw()` commits a pending keystroke first, so an uncommitted burst is never lost. |
+| **THE ATTESTATION** | **D193b — refcounted by decision; Reliability restores to its pre-*first* value.** | `_attestBy[art]` (the list of decision keys) + `_ATTEST_BASE[art]` (captured by `_attestWith()` at the **0 → 1 edge**, before the document is marked). `_withdrawUnit()` restores from the base **only when the last decision goes**. |
+| **THE LIFECYCLE DIAGRAM** | **D192b — it stops drawing a ratchet.** | `⇄` separators · `data-life` on each chip · only the current state carries `on`/`done` · the ⓘ states reversibility. |

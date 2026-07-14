@@ -206,3 +206,139 @@ surfaced (`_found.filter(id => ISSUES[id].clar)`) — **so the ask cannot be cla
 
 **Confirmed artifacts stays at `0 of 7` through the pass and is correctly absent** — a count that did not move is
 not news (D173). **A Deep Pass re-reads; it attests nothing.**
+
+---
+
+# DL-109 — THE CONTEXT PLANE. The provenance OSLO already tracked, and never said out loud.
+
+**`RELEASE_1_DATA_MODEL_SPECIFICATION` §9.** `ContextItem.item_type` is an enum of **six extracted units** —
+**`claim` · `assumption` · `relationship` · `entity` · `metric` · `interpretation`** — each carrying an
+`extraction_horizon` (`fast` / `deep`), the run that produced it, and:
+
+> **`evidence_id` — NULLABLE.**
+> **`evidence_id IS NULL` ⇒ OSLO produced this item from nothing but inference.**
+> **That nullable foreign key IS the derived-vs-attested distinction, at the data layer.**
+
+**Every number DL-109 §2 asks for is a `WHERE` clause over this array. No new object. No new extraction.**
+
+## The model in the prototype
+
+```js
+EVIDENCE      = [ {id:'EV-01', source_type:'free_text',        label:'Your planning brief'},   // SAMPLE_BRIEF
+                  {id:'EV-02', source_type:'imported_content', label:'The sponsor brief'} ]     // the Context link
+
+CONTEXT_ITEMS = [ {id, type, art, ev, hz, run, sup[], dim, kind?, to?, ent?, txt}, … ]   // 69 items
+```
+
+| Field | Meaning |
+|---|---|
+| `type` | the six `item_type`s, verbatim |
+| `art` | which of the **seven plan artifacts** it was read out of |
+| **`ev`** | **the nullable `evidence_id`.** `'EV-01'` / `'EV-02'` = the words are **in something the user gave OSLO**. **`null` = OSLO wrote it into the artifact and there is nothing behind it but inference.** |
+| `hz` / `run` | `fast` (Initial) or **`deep` (Extended)** — the extraction horizon |
+| `sup[]` | the **open issues** this item holds up — what makes *load-bearing* computable |
+| `dim` | the **CAF dimension** it bears on |
+| `kind` / `to` / `ent` | relationship semantics (`depends` / `owns` → an `entity`) — what makes *assumed dependencies* and *unowned parties* computable |
+
+**⛔ EVERY ITEM TRACES TO SOMETHING ALREADY ON THE RECORD.** `ev:'EV-01'` items are sentences in the pasted brief.
+`ev:null` items can each be found **in `ARTBODY`, in the artifact named by `art`**. **Nothing here is a fabricated
+fact.** *(Example: the whole **out-of-scope** section of Scope — "a virtual or hybrid stream is out of scope · no
+remote attendance is planned · this year" — is OSLO's. The brief says one word: **in-person**.)*
+
+## The one door, twice
+
+- **`_deepPassRan()`** — a `hz:'deep'` item is live **iff the deeper read's findings are in `ISSUES`**. Deriving it
+  from state (not a flag) means **every existing probe, guard and restore path that puts `ISSUES` back puts the
+  context plane back with it, for free.**
+- **`_ciEvidenceId(it)`** — the item's own `ev`, **or** the artifact attestation (`EV-ATT-<art>`) when the user has
+  **confirmed** the artifact it was read from. *That confirmation IS evidence.* Otherwise **`null`**.
+  **This is the one function every provenance count on every surface goes through.**
+
+## The counts (all `WHERE` clauses; all computed; boot values)
+
+| Count | Query | Boot | After the Extended pass |
+|---|---|---|---|
+| **Grounded claims** | `type='claim' AND evidence_id IS NOT NULL` | **17** | 17 |
+| **Inferred claims** | `type='claim' AND evidence_id IS NULL` | **11** | **12** |
+| **⭐ Load-bearing inferences** | **D181a — `evidence_id IS NULL` AND *the read points at it*: (a) a **critical issue** cites it · (b) the **limiting dimension's** assessment rests on it *(and something open actually rests on it)* · (c) ⭐ **a strong-reading artifact's confidence rests on it** — the **false-confidence** case | **12** | **20** |
+| Assumption register | `type='assumption'` (unbacked ones rendered, **load-bearing first**) | 7 | 10 |
+| Assumed dependencies | `type='relationship' AND kind='depends' AND evidence_id IS NULL` | 4 | 5 |
+| Unowned parties | `type='entity'` with **no incoming `owns` relationship** | 5 | 5 |
+| Sourceless metrics | `type='metric' AND evidence_id IS NULL` | 3 | 3 |
+
+**A RISING INFERENCE COUNT IS NOT A REGRESSION** (D177 · DL-109 §3): a deeper read of the same evidence **works out
+more about the plan** — so it infers more, **and** it holds the read more firmly. **More inferences AND a higher
+band is the point.**
+
+## ⭐ D181a — "LOAD-BEARING" = THE READ WOULD CHANGE WERE IT FALSE
+
+> **Operationally: THE READ POINTS AT IT.** Three clauses, **all computed, none typed** (`_ciLB_a` · `_ciLB_b` · `_ciLB_c`).
+
+| Clause | Query | Boot | After the Extended pass |
+|---|---|---|---|
+| **(a)** a **CRITICAL ISSUE** cites it | `evidence_id IS NULL AND supports an open critical issue` | **3** *(CI-58 · CI-60 · CI-62)* | 7 |
+| **(b)** the **LIMITING DIMENSION's** assessment rests on it | `… AND item.dim = limiting AND it supports ≥1 open issue` | **8** | 12 |
+| **(c)** ⭐ a **STRONG-READING ARTIFACT's** confidence rests on it | `… AND its artifact is in _ciFalseConfidentArtifacts()` | **4** *(CI-20 · CI-21 · CI-22 · CI-23 — **Scope**)* | 8 |
+| **THE NUMBER (union)** | | **12** | **20** |
+
+**BOTH EARLIER CANDIDATES WERE WRONG, and the owner rejected both:**
+- **LOOSE** (`item.dim === limiting`) → **11.** **OVER-COUNTS** — it swept in **CI-45 · CI-56 · CI-57**, inferences
+  that **nothing points at**. They are inferences; they are **not holding anything up**.
+- **STRICT** (*supports an open issue*) → **UNDER-COUNTS with a fatal blind spot:** it says **Scope's inferences are
+  NOT load-bearing** (Scope has no critical issue open) — **and Scope is the artifact the Inference map flags as the
+  most dangerous thing in the plan. It misses FALSE CONFIDENCE entirely — the exact case the feature exists to catch.**
+
+> ⛔ **CLAUSE (c) IS NON-NEGOTIABLE. An inference is load-bearing in two ways: it supports a WARNING, or it supports a
+> REASSURANCE — and the reassurance is the more dangerous, because nobody is looking at it.**
+> ***Scope reads fine BECAUSE OF four things OSLO made up.***
+
+**ONE DOOR:** clause (c) reads `_ciFalseConfidentArtifacts()` — **the same function the map's flag reads** — so the
+number and the flag can never disagree, and **grounding the flagged artifact retires both, together.**
+**That fall is the USER'S SUCCESS, not a regression** (guarded: `mustNotFire_groundingTheFlaggedArtifactRetiresClauseC`).
+*Live sequence: deep pass → **20** · user grounds Scope → **12**, clause (c) → **0**, the flag goes, **every guard stays green**.*
+
+## Ageing and velocity (§4) — ⭐ D181b: **AGE THE CLOCK, NOT THE PAST**
+
+> **The demo project is NOT back-dated.** It **genuinely is new** — everything on it is minutes old — and **Slice 7's
+> D100 first-run state assumes exactly that.** A three-week history on a first-run project is **a small lie told to
+> make a surface look better**, and this build refuses it. **OSLO does not invent a longer past.**
+>
+> **Instead the CLOCK MOVES.** `simNextWeek()` advances the demo week; **the assumptions AGE.** The viewer *watches*
+> *"unvalidated for 2 minutes"* become ***"unvalidated for 3 weeks · 1 issue depends on it."***
+> **DEMONSTRATE AGEING; DO NOT ASSERT IT. A number you watch climb argues better than a label that asserts.**
+
+| Piece | How | Rule |
+|---|---|---|
+| **The clock** | `_WEEK_MS` · `_demoWeeks()` (reads `RPT.week` — **the week `simNextWeek()` already advances; one clock, not two**) · **`_ciNow()`** | ⛔ **Every provenance surface's "now" is `_ciNow()`.** At **week 0 the offset is ZERO**, so the first-run state is byte-for-byte what it was. **D100 holds.** |
+| **Ageing** (§4a) | `_ciAgeMs(it) = _ciNow() − _runStamp(it.run)` → `_ciAgeWord()` | The age of the **run that produced the item**. **Computed, never typed.** *"N issues depend on it"* comes from `_ciActiveSup(it)`. |
+| **Velocity** (§4b) | `_ciVelocity()` — the window is **the last seven days ON THE CLOCK** | **A direction, never a target.** Advance a week with nothing done → **0 · 0**, honestly (*understanding is stalling*). Ground an artifact, or run a deeper read, and it moves. **Not a burndown: no total, no denominator, no zero to reach.** |
+| **The timeline** | `HISTORY.H0` carries a real `at` and a **computed `ts`** | So no surface can call the same run *two minutes old* while the register calls it *three weeks stale*. At week 0 it still reads **`now − 2m`**. |
+
+**Guards:** `_assertSimNextWeekAgesTheAssumptions()` (advance three weeks → the age must GROW, in weeks, on screen)
+· `_assertD100FirstRunStateHoldsAtWeek0()` (at week 0 nothing may read in days or weeks).
+**NCs:** `ageingIsTyped_bites` (the age becomes a constant) · `thePastIsBackDated_bites` (the demo project is aged
+instead of the clock — **D100 dies quietly**) — **both bite.**
+
+## ⛔ NO `derived_from`. NO CHAINS.
+
+`ContextItem` carries `evidence_id` and `source_attribution`. **There is no `derived_from_context_item_id`.
+Item-to-item lineage is NOT MODELLED**, it is an **owner-open schema decision** (DL-109 §5), and
+`_assertNoInferenceChains()` exists so that nobody quietly approximates one and calls it depth.
+
+---
+
+## D183b/c — `ConfidenceState` and the grounding word
+
+**Canon:** `ConfidenceState` — *"Per-run **Outcome Confidence** snapshot."* The product now uses the canonical
+name. **The `idx` field stays in the MODEL** (it drives the History sparkline's geometry and the chat state hash)
+and is **never rendered to a user** (D183b) — the guard proves its absence from the DOM, the render paths, the
+payoff snapshot and the cascade.
+
+**Grounding is derived, not stored.** `_groundingWord()` reads the share of live **claims** whose
+`_ciEvidenceId()` is non-null — the **one function** every provenance count on every surface goes through
+(`it.ev`, or the artifact attestation when the user has confirmed the document it was read from). There is **no
+grounding field** in the model, and there may not be one: a stored word is a word that can drift from the items
+it claims to summarise.
+
+`_readSnapshot()` carries `grd` so the **transition** is computable like every other — *"Grounding: thinly →
+largely grounded."* — without borrowing a band word.

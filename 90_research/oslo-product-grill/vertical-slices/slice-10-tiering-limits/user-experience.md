@@ -173,12 +173,15 @@ The user opens an issue to learn **"what's wrong, and what do I do about it?"** 
 
 ```
 ▸ Evidence · 2
-▸ Recommendations · 3
 ▸ Clarification · Has the venue confirmed Wi-Fi for 500+ concurrent…
 ▸ Comments · 0
 ▸ Reviews · 1 · 1 awaiting        (only when reviews exist)
   [⤴ Share for review] ⓘ   [✦ Discuss with OSLO]
 ```
+> ⛔ **D184 / D190c — THE RECOMMENDATIONS ROW IS GONE.** The recommendation is **resident above its button**
+> (D184.1), and its **alternatives expand in place, directly beneath it** (`Other options (2)` → `#ipAlts`).
+> **The disclosure row under Evidence was DELETED** — *the alternatives to a recommendation are part of the
+> DECISION; Evidence is the RECORD.* Nothing about the fix is behind a chevron any more.
 
 Row state persists **while the panel is open** (a re-render from `selectPath` / `addComment` must not collapse what the user opened) and **resets on close** — a fresh open is a fresh, minimal read.
 
@@ -192,7 +195,7 @@ Row state persists **while the panel is open** (a re-render from `selectPath` / 
 
 ## D162d — cascaded
 
-- **Recommendation panel** (the `.ip-rec` block): the *"Applying drafts the change into your plan. Discussing changes nothing."* note and the *"Recommendations live only inside the issue"* rationale → **ⓘ / button tooltips**. *"Possible resolution paths"* → **"Other paths"**. *"— recorded as your chosen approach"* → dropped (the **Confirmed by you** tag already says it).
+- **Recommendation panel** (the `.ip-rec` block): the *"Applying drafts the change into your plan. Discussing changes nothing."* note and the *"Recommendations live only inside the issue"* rationale → **ⓘ / button tooltips**. *"Possible resolution paths"* → **"Other options"** (D190b). *"— recorded as your chosen approach"* → dropped (the **Confirmed by you** tag already says it).
 - **Reviews block:** the responses stay **in full, forever** (that is the record) — the lecture around them does not. *"This is evidence, not a verdict … it went into an analysis run … OSLO did not accept it on your behalf"* + the D133 alignment essay collapse to **one line + an ⓘ**: *"**Evidence, not a verdict.** ISS-03 is still **Open**. · Attested by \<name\> · Folded into **Alignment**."*
 - **Artifact flyout** (`.anno-pop`): the read (severity · dimension · what's wrong, truncated to 150 chars) + **Open issue →** and the span-specific **Ask about this →**. **"Share for review →" is gone from the flyout** — it fired a full modal out of a hover, and it lives one click away in the panel where its contract can sit on an ⓘ. **CR-2 is untouched: nothing disabled, nothing metered.**
 - **Share dialog:** prime-candidate hint and CR-2 counter deleted there too.
@@ -830,3 +833,509 @@ The user answers a hard question. **GROUNDED goes 0 → 1.** The deeper read tha
 
 Nothing in the panel calls the new issues a setback, because they are not one: **more issues + a firmer read means
 OSLO looked harder and now knows more** (the same lesson as the Extended pass, D177, showing up in a second place).
+
+---
+
+# DL-109 — "How much of this did you actually know, and how much did you infer?"
+
+**The question a PM has before acting on OSLO's read was never *"how many issues?"*** It is this one. **OSLO could
+answer it exactly, from data it already extracts — and it never did.** The Reliability qualifier, the product's
+central epistemic promise, was **three band words with nothing underneath them.**
+
+## What the user now sees
+
+**On the Overview, in Progress:**
+
+> **Your evidence: 17 claims · I inferred: 11**
+> **12 things I inferred are holding up your plan.**  *See them →*
+
+**That second line is the sentence no competitor is in a position to say.** It is not a warning and it is not a
+score. It is a **fact about the read**, and it is the fact a PM would change a decision over.
+
+**⭐ D181a — what "holding up" MEANS: the read would change were it false. Operationally, THE READ POINTS AT IT** —
+a **critical issue** cites it, **or** the **limiting dimension's** assessment rests on it, **or** ⭐ **a
+STRONG-READING artifact's confidence rests on it.**
+
+> **An inference is load-bearing in two ways: it supports a WARNING, or it supports a REASSURANCE.**
+> **The reassurance case is the more dangerous, because nobody is looking at it.**
+> ***Scope reads fine BECAUSE OF four things OSLO made up.*** **Those four are in the number.**
+
+**An inference nothing points at is still an inference — but it is not holding anything up, and it is not counted.**
+
+**On the Inference map:**
+
+> **Scope reads strong, and most of it is mine — 4 of its 7 items are inference. Worth verifying first.**
+
+> ## ⛔ **A strong-looking artifact that is mostly inferred is the most dangerous thing in the plan.**
+> **It looks fine BECAUSE OSLO invented a coherent story. COHERENCE IS NOT EVIDENCE.**
+
+**And it names the document to go and verify** — which is what makes it more actionable than the whole-read
+false-confidence flag. **Confirm it, and the flag goes — and the four inferences it was holding up leave the
+load-bearing number with it (20 → 12 after a deep pass). That fall is the user's success, not a score going down.**
+
+## ⭐ D181b — the clock moves, and the assumptions age
+
+**The demo project is NOT back-dated. It genuinely is new** — and Slice 7's first-run state depends on that.
+**Advance a week (`Next week`) and the viewer WATCHES the ageing happen:**
+
+> *"Promotion delivers 450 registrations from a Jul 1 open."*
+> **Unvalidated for 2 minutes · 1 issue depends on it**   →   **Unvalidated for 3 weeks · 1 issue depends on it**
+
+**Demonstrate ageing; do not assert it. A number you watch climb argues better than a label that asserts.**
+**Grounding velocity moves with the weeks too:** a week in which nothing was grounded reads **0 · 0** —
+*understanding is stalling*, said honestly. **It is a direction, never a target.** *(In this demo it is **Scope**: the brief says the word **in-person**, and OSLO wrote an
+entire out-of-scope boundary from it — a virtual stream excluded, no remote attendance planned, "this year". None
+of that is in anything the user gave OSLO.)*
+
+**In the Readout, to put in front of a sponsor:**
+
+> **§5 What I'd need to be sure**
+> • Confirm: **The venue can carry 500 concurrent devices.** · *If it is wrong: Venue Wi-Fi capacity is unconfirmed.*
+> • Confirm: **Sponsor revenue covers the commitments made before Aug 15.** · *If it is wrong: Sponsor funding closes after the costs are committed.*
+
+**"Here is exactly what I need confirmed, and here is what breaks if it isn't."**
+
+## ⛔ What the user never sees: a debt
+
+**AE-06 — "Understanding Debt" — is NOT adopted, and the metaphor is rejected on doctrine, not merely on scope.**
+
+- **"Debt" is a burndown in a hoodie.** Something **owed**, something **bad**, something to **pay down to zero** —
+  exactly the grammar D180 banned from Progress. Re-admitting it under a new name re-opens the door the doctrine
+  just closed.
+- **It would make OSLO's core function a liability.** PS-01: *"construct a usable planning model from incomplete
+  evidence."* **Inference is what OSLO is FOR.** If inference is debt, **the product generates liability by doing
+  its job.**
+- **It is not even true.** **Some assumptions never need validating.** A plan that assumes the sun rises needs no
+  clarification. Treating every unbacked item as debt manufactures anxiety and **buries the few that matter under
+  the many that do not** — which is precisely why the register is sorted **load-bearing first**, and why the
+  headline number counts **only** what is actually holding the plan up.
+
+**No surface says *owed*, *debt*, *liability*, *pay down*, or *drive to zero*.** `_assertNoDebtVocabulary()` grades
+the **cascade**, the **copy**, the **render path** and the **registry** — four doors, because copy is only one of
+them.
+
+## ⛔ And a rising inference count reads neutrally
+
+Run the Extended pass and the inference counts **go up** (11 → 12 inferred claims · 11 → 13 load-bearing) **while
+the band goes up too.**
+
+> ## **MORE INFERENCES *AND* A HIGHER BAND.**
+> **That is not a contradiction — it is the point.** A deeper read of the same evidence **works out more about the
+> plan**, and holds it **more firmly**. Nothing in the panel calls that a decline: **same class, same weight, same
+> colour, on every arrow.**
+
+**And when the user does the work, the number falls — because the plan is grounded, not because a debt was paid.**
+Apply the fix on the venue Wi-Fi issue and Resources becomes *Confirmed by you*: **your evidence 17 → 19 claims ·
+OSLO inferred 11 → 9 · holding it up 11 → 4.**
+
+
+---
+
+# D183 — WHAT THE USER NOW READS (owner, 2026-07-13)
+
+## a. OSLO says "I" **only in chat**
+
+> **"OSLO looked deeper: found two more, and one more question. The read is firmer."**
+
+Chat is a **conversation**; a panel is not. **First person is a voice, not a default.** The chat keeps saying "I";
+so does the **readout**, because there the first person is the **PM's** and **D152 requires it**.
+
+## b. ⭐ It is **Outcome Confidence** — and the 0–100 index is **gone**
+
+Canon's entity is `ConfidenceState` — *"Per-run **Outcome Confidence** snapshot."* The product said only
+"Confidence": **canon drift and a positioning loss**, because association with **Outcomes** is the category.
+
+> ⛔ **But the label makes the number dangerous.** *"Outcome Confidence **62/100**"* reads as
+> ***"62% likely to hit your outcome"*** — **the forecast the doctrine forbids, arriving through the label.**
+> The **ramp** cannot be misread: *"Outcome Confidence: **Moderate**"* on a five-step ordinal scale **is not a
+> probability.**
+
+**The label is adopted. The number is deleted** — hero, pill, popover, chat, reports. *(Closes the D173d /
+DL-062-F1 "calibrate or demote" question: **DELETE**. It may return the day it is calibrated **and** the forecast
+misread is closed — a note that lives in the **prototype-notes layer only**, D161.)*
+
+## c. Confidence and Grounding do not share a word
+
+Before: *"Confidence 62 MODERATE | Moderate reliability"* — **two different things wearing the same word.**
+
+> **Outcome Confidence: Moderate** · *thinly grounded*
+> **Outcome Confidence: High** · *well grounded*
+
+**Confidence says how MATURE the read is. Grounding says how much of it is REAL.** The grounding word is
+**computed from the provenance model** (`CONTEXT_ITEMS` — grounded vs inferred), never typed, and it **shares no
+token with the band vocabulary.**
+
+## d. **inferences**, not "things"
+
+> *"**12** inferences are holding up your plan."*
+
+## e. Plan artifacts are **documents**
+
+Everywhere the user reads: the sidebar, the Attention map's rows, the Issues filter, the workspace, Plans, the
+export dialog, every tooltip. **The canonical entity stays `Artifact`** — the same split DL-095 made for *Finding*
+(canonical) / *Issue* (user-facing).
+
+## f. The trend line is a sparkline and a direction word
+
+> **↗ Strengthened**
+
+The **cause** lives in **"What changed"**, and nowhere else. **Causes have one home, exactly as counts do (D179e).**
+
+## g. The Overview reorders itself around the user
+
+**First run** → *Start here* leads (there is no progress to read). **After first value** → *Progress* leads
+(the user knows what to do; they want to know where they stand). **Computed, never a static order.**
+
+---
+
+# D184 — You read the change, then you consent to it (P1)
+
+**Before:** *"Apply this fix"* — and the fix was three taps down, collapsed, below the button.
+
+**Now:** the Issue panel leads with **what OSLO would change, in your language**, and the button sits underneath
+it. **The button is short and constant — *Apply this fix*** (D190a): **the fix above it is the subject**, so the
+label does not repeat it and truncate. The **other options** are one tap away — and they open **right there, under
+the recommendation they are alternatives to** (D190c) — ranked so the one that moves the **limiting dimension**
+leads. If OSLO has **no** recommendation it can render, **there is no button** — an action whose subject is absent
+is removed, not degraded.
+
+> **OSLO is advisory-only. Advice you cannot see is not advice — it is an instruction.**
+
+**And what you get instead of a fix you cannot read:** *"◆ OSLO recommends — Confirm the venue's 500-person Wi-Fi
+capacity before locking the in-person-only format."* → **[ Apply this fix ] [ Discuss ] [ Other options (2) ] ⓘ** →
+and under it, when you ask for them: the two alternatives (**Select** · **Discuss**), your **Selected option**, and
+the door that is always free — ***"✎ Write my own fix in Resources →"***.
+
+# D185 — The Confidence popover reads like a readout
+
+You open it to learn **where the read stands**. So it says that, and stops:
+
+> **Outcome Confidence · Moderate** · *thinly grounded*
+> Clarity **High** · Alignment **Moderate** · **Feasibility Low** *(the limit)*
+> **Feasibility — the lowest. Confirm it to lift the read.**
+> **[ Confirm Feasibility → ]**
+> **Reliability basis** · *Thinnest: Evidence — Low.*  · **All three ▾**
+
+**Twelve words of prose. Zero paragraphs.** Everything OSLO used to say about itself — *"not health, readiness or
+probability" · "a fact about the read, not a warning about the project" · "determined independently of Clarity ·
+Alignment · Feasibility"* — is **behind the ⓘ**, one tap away, where a curious user finds it and an ordinary user
+is not taxed by it.
+
+**And the reliability basis says what is THIN,** not that everything is average. Three rows all reading "Moderate"
+is a table with no information in it. If the three really are level, it says that — once.
+
+---
+
+## D186–D189 — the Overview/Progress surfaces (owner, 2026-07-13)
+
+### D186 — "Holding it up" dies. It meant the opposite of what it looked like.
+
+**The owner — who wrote the doctrine — read *"20 inferences are holding it up"* as *"delaying it."*** It means
+**SUPPORTING**: these are the inferences the read **points at**, the ones that would **change the read if they were
+false** (D181). ***"Hold up" is ambiguous in English — support or delay — and it was sitting on the single most
+valuable number in the product.* If he misreads it, every user will.**
+
+> **YOUR READ RESTS ON**
+> **9 inferences** ↓3 · *See them →*
+
+*(**D194a** later took the repetition out of the copy: the row was rendering the label **and** saying it back —
+*"9 inferences **your read rests on**"* — a straight **D179e** violation, in the row carrying the single most
+valuable number in the product. **The label IS the sentence.**)*
+
+**"Blocker" was not the answer.** It would have told the user to **remove the thing carrying their plan**. And on
+the CAF limiter it reads as *"the PROJECT is blocked"* — the health framing **D003 forbids**. The limiter stays a
+limiter, in D185.4's form:
+
+> **Feasibility — the lowest. Confirm it to lift the read.**
+
+**Swept everywhere**, including the two places no DOM guard can see: the **TOUR registry** (a tour step is copy one
+click from the DOM) and the **prototype-notes registry**.
+
+### D187 — trend colour: GREEN where the user earned it. NEVER red.
+
+> ## **"Issues 8 ↑2" after an Extended analysis does not mean the plan got worse. It means OSLO looked harder.**
+
+Red would tell the user their plan degraded **at the exact moment it was finally seen.** So:
+
+| | |
+|---|---|
+| **GREEN** (`--earned`) | **`issues resolved` · `questions answered` · `you grounded`** — nothing but the user's own work can move them. **Honest, and earned.** |
+| **NEUTRAL** | **everything else**, in **both** directions — `issues` · `critical` · `open questions` · `inferences` · `your read rests on` · **`From OSLO`** · **`Confirmed by you`** · **`Attested by <name>`**. **OSLO can move every one of them by itself** — and the third class is moved by a **reviewer**, not by the user (**D194c**/D187: green is for what nothing but the *user's own work* can move). |
+| **RED** | **does not exist.** There is no token, no CSS rule, and no field in the valence table to set. |
+
+**The test is mechanical, not aesthetic:** *"Could this count rise for a reason that is GOOD?"* **Yes ⇒ no colour.**
+It is a **declared valence table**, computed — never a colour typed into markup — and every row **states why**.
+**The cause still lives in "What changed", and nowhere else** (D179e / D183f). **Colour is not a cause.**
+
+### D188 — the Structure panel: labels, not sentences.
+
+**Before:** *"**6** dependencies OSLO assumed, and nobody confirmed" · "**5** named parties with nobody accountable
+for them" · "**3** numbers in the plan that trace to nothing"* — three sentences doing a label's job, in a strip
+meant to be scanned in one pass.
+
+**Now:** **4 · Unconfirmed dependencies ⓘ** · **5 · Unowned parties ⓘ** · **3 · Untraceable numbers ⓘ**
+
+**The number carries the weight; the label names it; the ⓘ explains it.** The vivid consequence was the right
+instinct in the wrong place — **it is one tap away, not deleted.**
+
+### D189 — kill "A direction, not a target."
+
+**DL-107, for the third time.** The product kept narrating its own epistemics as a subheading. **Nobody reads a
+caption and forms a belief about targets — they read the number.** *If it were a target, the panel would say
+"goal". It doesn't. That is the whole protection.* **Deleted.** The rule is enforced **in the code** and explained
+**behind the ⓘ**.
+
+**And the first-person sweep now has eyes.** The guard's surface list carried **`#issuePanel`** — the real id is
+**`issuepanel`** — so **the most-opened surface in the product had never been graded.** It is graded now, with an
+issue actually open in it. **The user's own controls still say "my"** (*"✎ Write **my** own fix"*) — declared, not
+guessed. **A copy rule that cannot tell who is speaking is not a copy rule.**
+
+---
+
+## D191 — you can undo the decision. you cannot undo the fact that you made it. (owner P1, 2026-07-13)
+
+**Owner: *"can decisions such as fix selection be undone?"*** **No — and the code showed why that was worse than a
+missing button.** `applyFix()` marked the user's document **"Confirmed by you"** and **raised Reliability**, and
+`selectPath()` moved **Open → Addressed**. **There was no path out of either.**
+
+> ⛔ **"Confirmed by you" is the USER'S WORD.** An attestation that cannot be withdrawn is a claim OSLO holds the
+> user to **after they have disavowed it** — and **Reliability is computed from attestation**, so the read would rest
+> on a confirmation the user no longer stands behind. **A truth defect, not a UX gap.**
+> ⛔ **And it cuts at D001.** A product that gives **advice** but makes **accepting** it irreversible has converted
+> advice into **commitment**.
+
+### What the user sees
+
+**Wherever the decision is visible, the way out of it is visible.** Two places, and only two: **the issue panel**
+(in the banner that records what they did) and **the History row** (on the record of the decision itself).
+
+**It is named for what it does — and it never says "Undo."**
+
+| What they did | What the button says |
+|---|---|
+| Selected an option | **Clear selection** |
+| Applied OSLO's fix | **Withdraw this fix** |
+| Answered OSLO's question | **Withdraw this answer** |
+
+> ***"Undo" implies the world returns to how it was. The read does not.***
+
+### One line, before it acts
+
+> **"This removes the change from Resources and withdraws your confirmation. OSLO will re-read the plan."**
+
+**Consent, not a surprise** — the same rule as D184: **no irreversible-feeling act without its subject on screen.**
+A withdraw raised from the **History** row **opens the issue first**, so the subject is always there. *("Keep it"
+is the way out of the way out.)* **A selection carries no consent step: nothing in the plan changed, and it clears
+freely.**
+
+### What comes back, and what does not
+
+- **The document** goes back to its **pre-fix version**, using the version snapshot that already existed.
+- **The attestation** is dropped **in the same breath** — never separately. *An edit withdrawn while the
+  attestation stands would leave OSLO asserting "confirmed by you" about text that is no longer there.*
+- **Reliability** goes back to the value **captured before the fix** — not re-derived by guessing.
+- **The issue returns to Open**, with **no option selected**. *"No option chosen" is a real state.*
+- **The assisted apply is refunded** — *you cannot bill a user for labour you then took back* — **and the refund is
+  recorded** on the Usage row: *"1 refunded (withdrawn)"*.
+- **The read does NOT come back.** **An analysis update runs.** In the interval the read is the **last good** one
+  (**D098g**) — *it has not been rolled back, and it will not be: only an analysis update moves it.* The update
+  produces a **new run** and a **new trend point**, because it is **a new read, not the old one restored**.
+- **History does not come back either — it GROWS.** The withdrawal is a **new event**, sitting above the decision it
+  withdraws. **The decision stays on the record, because it happened.**
+
+### The document comes back — unless the user has written in it since
+
+- **Untouched since the fix** ⇒ **the document goes back to its pre-fix version.** Nothing of the user's exists to lose.
+- **Edited since the fix** ⇒ ⛔ **OSLO DOES NOT TOUCH IT.** Restoring would **destroy every word they wrote afterwards — to undo a change OSLO made.** So the **attestation is withdrawn alone**, and OSLO says so, in the consent line and on the record:
+
+> **"This withdraws your confirmation. Your edits since are kept — OSLO's change is still in Resources, and you can remove it yourself if you want it gone. OSLO will re-read the plan."**
+
+**The confirmation drops in both cases** — *the user's word is theirs to retract, whatever happened to the text* — and **an analysis update runs in both cases.**
+
+### What comes back, and what does not
+
+- **The attestation** is dropped **in the same breath as the document** — never separately.
+- **Reliability** goes back to the value **captured before the first confirmation** — not re-derived by guessing.
+- **The selection** goes back to **none**. *"No option chosen" is a real state.*
+- **The assisted apply is refunded** — *you cannot bill a user for labour you then took back* — **and the refund is recorded**.
+- **The read does NOT come back.** **An analysis update runs.** In the interval the read is the **last good** one (**D098g**). The update produces a **new run** and a **new trend point**, because it is **a new read, not the old one restored**.
+- **History does not come back either — it GROWS.** The withdrawal is a **new event**. **The decision stays on the record, because it happened.**
+
+### A resolved issue is still withdrawable — and it re-opens BY ANALYSIS
+
+**The analysis update resolves the issue about two seconds after the fix is applied.** If the way out died there, *"Confirmed by you"* — on the user's own document, with Reliability raised — **would be permanent again on every fix that worked.**
+
+> ## **Withdrawing a fix is not hand-moving the read. It is the user editing their own document and retracting their own word.**
+
+So the withdraw **survives resolution**, and the panel says the word still stands: *"Your confirmation still stands on Resources — and it is still yours to withdraw. OSLO will re-read the plan, and re-open this issue if the gap is back."*
+
+**And the user still never moves the read by hand.** The moment they withdraw, the issue is **still Resolved** and the read is **unchanged**. Then the **analysis update** lands, finds the change gone from the document, and **re-opens the issue — because the gap is genuinely back.** *The user withdraws the fix. The read follows.*
+
+### Two decisions, one document
+
+If a fix **and** an answer (or two fixes) both confirmed the same document, **withdrawing one does not retract the other.** The document stays **Confirmed by you** while **any** of the user's decisions still stands, and the History event says why. **It drops only when the last one is withdrawn** — and Reliability then goes back to where it was **before the first**.
+
+### The lifecycle is not a ratchet, and the diagram stops saying it is
+
+`Open ⇄ Addressed ⇄ Resolved`. **The states move both ways.** Only the state the issue is *actually in* is lit — a filled-in trail would claim the progression is settled, and it is not. **What moves it is still never the user's hand.**
+
+---
+## D194 — the Progress rows: say it once, and say it in the ratified vocabulary (owner, 2026-07-13)
+
+### D194a — the load-bearing row was saying it twice
+
+It rendered the **label** `YOUR READ RESTS ON` **and then said it again in the value** — *"13 inferences **your read
+rests on**."* **One home** (D179e). **The label is the sentence.**
+
+> *(DL-111 + erratum — the load-bearing *leans* line, below the bar)*
+> **Your read leans on 20 inferences** ↓7 — *the inferred claims above plus inferred assumptions, relationships and
+> metrics* · *See them →*
+
+**~60% less text than the phrase D194a replaced.** The neutral ↓ delta rides along, and the *See them →* link to the
+Inference map stays on this line. Under the erratum the load-bearing count is its **own line below the bar** — a
+**superset** of the inferred *claims* shown in the bar (assumptions, relationships and metrics included), so it is
+**never `+`-joined** to them, its surface untouched.
+
+### D194c — the GROUNDED row now speaks the ratified epistemic classes
+
+It said *"Your evidence: 17 claims · OSLO inferred: 12"* — **true, and in words the product used nowhere else.**
+
+> **17 grounded facts** — *your read is built on*   *(the hero = ATTESTED claims only, computed)*
+> **Confirmed by you** *(grounded — the solid, cool-accent segment; label only, its count is the hero)* · **From OSLO 12** *(inferred — hatched)*
+> *Grounded — your evidence · Inferred — OSLO's read*
+
+**The owner proposed *"AI Interpretation | Your Understanding."* The instinct is exactly right — the epistemic
+classes ARE that distinction. Both words are already canonical at a different size:**
+
+- **`interpretation` is ONE of the six `ContextItem.item_type`s** (*claim · assumption · relationship · entity ·
+  metric · interpretation*). Using it as the heading for **all** inferences makes the word mean **two sizes** —
+  exactly what the **DL-053 Disambiguation Register** exists to prevent.
+- ⛔ **"Understanding" is the most load-bearing word in the product. Confidence *IS* understanding maturity.** If
+  *"Your Understanding"* came to mean *"the claims you grounded,"* then **understanding** would name **OSLO's
+  assessment** and **the user's evidence** on the same screen. **Drift, on day one, in the highest-value term we
+  own.**
+- **The product never calls itself "AI." It calls itself OSLO.**
+
+**Saying it in the class names TEACHES them.** The user meets *From OSLO* and *Confirmed by you* on issues, on
+documents, in reports and on the Inference Map. **One vocabulary, everywhere.**
+
+**The third class is representable, not decorative.** The row is **computed over the classes** — not two slots with
+a third bolted on. *Attested by \<name\>* (D115) is **absent today**, because reviewer evidence attaches to an
+**issue**, not to a claim — and **a count OSLO cannot compute is not shown** (D173). **It is never drawn as a zero.**
+The day a claim carries a third-party attestation, a third cell appears with no change to the render path.
+
+### D194d — the two rows are not one ledger, and they may never be merged
+
+> **The solid bar** answers *"how much of this is grounded vs inferred?"* — **a COMPARISON** (two provenance states).
+> **The load-bearing *leans* line** answers *"how much of the READ is LEANING on inference?"* — **a SUPERSET.**
+
+**Folding the leans line into the bar invites the user to read the inferred-claims count against the load-bearing
+count as a RATIO. It is not one — so the erratum keeps load-bearing as its OWN line below the bar, never `+`-joined.**
+
+**And they do not even share a population.** **The bar's inferred segment counts inferred CLAIMS** (e.g. 12);
+**the leans line counts inferred items of *every* type** (e.g. 20) — assumptions, relationships and metrics
+included, because **the read leans on those too** (D181). So the load-bearing count (20) *legitimately exceeds* the
+inferred-claims count (12), and **both numbers are right — the old panel `+`-joined them as if disjoint, which was a
+lie about what they meant.** *(The adjacency is escalated to the owner as **O-D194-1**; the build does not choose.)*
+
+
+---
+
+## ⭐⭐ D196 — "Confirm it to lift the read." (owner, 2026-07-13)
+
+**The owner asked whether *ground / grounding* should become *stabilize / stabilizing*. It should not — but he was
+right that *"ground"* reads as jargon to a PM.**
+
+> ⛔ ***"Stabilize"* would call the FALSE-CONFIDENCE CASE A SUCCESS.** *"Scope reads strong — but 8 of 11 items are
+> inference"* is **a perfectly stable read. Its stability is what makes it dangerous.** And *"stabilize the read"*
+> makes **stillness** the goal — when the whole product exists to give **honest, revisable confidence.**
+
+**So the verb and the state separate — and both words are ones canon already owns:**
+
+> # **THE USER CONFIRMS. THE READ IS GROUNDED.**
+
+**What the user now reads on the hero:**
+
+> **Outcome Confidence · Moderate** · *largely grounded*   ← **the STATE (unchanged)**
+> Clarity **High** · Alignment **Moderate** · **Feasibility Low** *(the limit)*
+> **Feasibility — the lowest. Confirm it to lift the read.**   ← **the ACTION (new word)**
+> **[ Confirm Feasibility → ]**
+
+**And in the Progress panel, one panel down, the same word is already waiting for them:**
+
+> **Confirmed by you** — the grounded (cool-accent) segment of the foundation bar, its **17 grounded facts** in the hero · **From OSLO 12** (inferred, hatched) *(DL-111 + erratum)*
+
+**That is the point.** *"Confirm"* is not a new word the user has to learn — **it is the word on the class name they
+meet on every issue, every document, every report and the Inference Map** (D011/D069/D194c). **The verb the product
+asks for and the class it writes back are now the same word.**
+
+### What did NOT change, and why
+
+| Surface | Still says | Why |
+|---|---|---|
+| The Reliability qualifier | *barely · thinly · partly · **largely** · well **grounded*** | **D196b.** *"Evidenced"* would collide with **Evidence**, one of the three Reliability components. *"Confirmed"* cannot carry it: a read is grounded by **evidence** *and* by ***Attested by \<name\>*** — **and that is not the user confirming.** |
+| The Inference-map lead | *"Your evidence is **solid ground**."* | **A noun, not an order.** It is the foundation metaphor D186 built (*"your read **rests on**…"*). |
+| The velocity card (§4b) | *"**you grounded** 3"* | **Past tense — a measured fact about the user's own work, not an imperative** (D187's one green count). Its tooltip already says *"…because **you confirmed** the document they came from."* **The user confirms; the claims become grounded.** ⚠️ **Escalated as O-D196-1** — see `open-items.md`. |
+
+---
+
+# D197 · D198 · D199 — what the user actually sees now (owner, 2026-07-13)
+
+## The Progress panel
+
+> **17 grounded facts** — *your read is built on*   *(the hero = ATTESTED claims only, computed)*
+> **[ Confirmed by you · grounded ]  [ From OSLO 12 · inferred, hatched ]**
+> *Grounded — your evidence · Inferred — OSLO's read*
+> **Your read leans on 20 inferences** — *the inferred claims above plus inferred assumptions, relationships and metrics* · *See them →*
+> **OPEN** Issues 6 · **Critical** 1 · Open questions 2   ·   **CLOSED** Issues resolved 0 · Questions answered 0
+
+**A foundation bar, not a ledger (DL-111 + erratum).** The hero is the computed **grounded-facts count — attested
+claims only** (`17`, never grounded + inferred). The solid bar shows the read's claims in **two provenance states**:
+the *Confirmed by you* (grounded) segment carries the cool-blue accent that **echoes the Outcome Confidence ramp's
+lit band** and holds **only its label — its count is the hero**; the *From OSLO* segment **is the inferred state**,
+rendered **hatched**. *A load-bearing wall is the thing you do not knock out:* the inferences the read **leans on**
+are a **line below the bar — a superset** (inferred items of every type), never `+`-joined to the claims above.
+
+⛔ **The bar and the leans line are still NOT one ledger** (D194d). The solid bar is a *comparison* (*grounded vs
+inferred?*); the leans line is a *superset* (*how much of the READ leans on inference?*). Fused, the user reads the
+inferred-claims count against the load-bearing count as a **ratio** — it is not one; **20 legitimately exceeds 12
+because they count different populations.** **Severity red shows only on Critical, the deltas are neutral, and brand
+orange stays on actions/links (`See them →`, `Timeline →`), never on state** — a harmony pass so the panel reads as
+one page with the Outcome Confidence panel.
+
+## The Inference map — the rows got their left edge back
+
+**Before:** six consecutive assumption rows each wore a `YOUR READ RESTS ON THIS` chip, and each marked row's text
+started at a different x from the unmarked ones. The section header **already said it** (*"The ones your read rests
+on come first"*). **The chip restated it six times and broke the alignment of the list it was annotating.**
+
+**Now:** a **quiet bar in the left margin**. Every row — marked or not — **reserves the same gutter and starts at
+the same x.** Nothing on the row moved.
+
+- **The sort order is the signal**, and the header says so.
+- **What the bar MEANS lives on the ⓘ** (new, on both section headers) and on the row's own hover — **on demand,
+  never resident** (DL-107/D185).
+- **`VERIFY` is gone from the number column.** It was a button wedged into a stat row, and the counts justified
+  around it. **The row is a readout.** The action is where it belongs: **click the row, or press Enter on it** — and
+  the flag above the map still names it in full: *"**Resources** reads strong — but 8 of 11 items read as inference,
+  most from OSLO. Worth verifying first. **Open Resources →**"*
+- **A colour-blind user sees the bar.** A screen-reader user hears *"Load-bearing."* / *"Worth verifying first."*
+  from an **out-of-flow** node that moves no character on the row.
+
+## Everywhere the concept is named, it is **Outcome Confidence**
+
+| Surface | Was | Is |
+|---|---|---|
+| **The hero — the FIRST panel of the Overview** | `Confidence` | **`Outcome Confidence`** |
+| **The trend ⓘ and the trend chart's accessible name** | *"Confidence trend across analysis runs"* | **"Outcome Confidence trend…"** ⛔ **the miss the owner caught** |
+| **The ramp's accessible name** | *"Confidence: Moderate. Step 3 of 5…"* | **"Outcome Confidence: Moderate…"** |
+| **The Overview's "why" line** | *"Confidence sits at **Moderate**…"* | **"Outcome Confidence sits at Moderate…"** |
+| **Chat — the read, the summary, what changed** | *"Confidence **strengthened**"* | **"Outcome Confidence strengthened"** |
+| **The export package + the copied text** | *"Confidence Moderate · moderate reliability"* | **"Outcome Confidence Moderate…"** |
+| **The reviewer footer** | *"Confidence is understanding maturity…"* | **"Outcome Confidence is understanding maturity…"** |
+| **The prototype notes** | *"the 0–100 index is **DEMOTED, NOT DELETED**"* | ⛔ **a note still teaching a decision D183b superseded** — rewritten |
+
+**What did NOT change, and must not:** *"**how sure are you?**"* · *"why is **my confidence** where it is?"* · *"the
+**false confidence** case"* · *"**Confidence is understanding maturity** — not project health."* **These are prose.
+The guard grades the ROLE, not the substring — a guard that reddened on the doctrine would get the doctrine deleted
+to make it green.**

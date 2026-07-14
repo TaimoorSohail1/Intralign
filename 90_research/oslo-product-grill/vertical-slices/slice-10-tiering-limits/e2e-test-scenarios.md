@@ -323,3 +323,43 @@ not a limit*, and the guard must not fire.
 | **T-D180-3** | **Then ground an artifact on top of the deeper read.** | After the Extended pass, **Apply this fix** on the critical Resources issue. | **GROUNDED 0 → 1 ↑1** while the issue count is still **elevated** from the deeper read. **That is the doctrine, on screen, in one panel.** |
 | **T-D180-4** | **The counts have one home.** | Read the whole Overview. | Every count appears **exactly once** — in Progress. The confidence card **points**; it does not tally. |
 | **T-D180-5** | **No constant.** | Search the Overview for a number that cannot move. | None. *"Artifacts read 7/7"* does not exist. |
+
+## DL-109 — the provenance surfaces
+
+| # | Scenario | Steps | Expected |
+|---|---|---|---|
+| **T-DL109-1** | **The claim-level grounded facts (DL-111 foundation bar, erratum).** | Overview → Progress. | The **hero** = **17 grounded facts** — **attested claims only** (*Confirmed by you*), computed, **never** grounded + inferred. The solid bar shows **two provenance states**: the grounded segment (cool accent, **label only**) and the inferred, **hatched** *From OSLO* **12** segment. **No denominator, no percentage fill, no burndown.** |
+| **T-DL109-2** | ⭐ **The number.** | Overview → Progress, the load-bearing line below the bar. | ***"Your read leans on 20 inferences — the inferred claims above plus inferred assumptions, relationships and metrics · See them →"*** — a **superset** of the 12 inferred *claims* in the bar, **never `+`-joined**. *See them →* opens the Inference map. **(D181a: (a) a critical issue cites it · (b) the limiting dimension rests on it · (c) ⭐ a strong-reading artifact's confidence rests on it — Scope.)** |
+| **T-DL109-3** | **The user grounds an artifact.** | Open the critical Resources issue → **Apply this fix** → let the analysis update land. | **grounded facts 17 → 19 ↑2 · From OSLO (inferred claims) 12 → 10 ↓2 · leans on 20 → 15 ↓5** — the hero grows, the inferred segment shrinks, the load-bearing superset falls. The plan is **grounded**, not paid down. *(Scope's four remain — Resources is not Scope.)* |
+| **T-DL109-4** | ⛔ **A deeper read infers MORE, and that is not a regression.** | Run the **Extended Analysis** pass. | **I inferred 11 → 12 ↑1 · holding it up 12 → 20 ↑8**, *and* the band rises (Feasibility Very Low → Low). **Every arrow is drawn identically. Nothing says "worse".** |
+| **T-DL109-5** | ⭐ **The Inference map names the artifact to verify.** | Nav → **Inference map**. | ***"Scope reads strong, and most of it is mine — 4 of its 7 items are inference. Worth verifying first."*** → **Open Scope →**. Neutral chrome; no severity colour anywhere on the pane. |
+| **T-DL109-6** | **The map counts; it does not fill.** | Inspect any row. | **One pip per extracted item**, grounded first. **No bar, no track, no percentage.** *Resources: 5 grounded · 10 inferred.* |
+| **T-DL109-7** | **The flag is computed.** | Open **Scope** → edit any block (it becomes *Confirmed by you*) → return to the Inference map. | **The flag is gone.** So is the **Verify** tag on the Scope row. |
+| **T-DL109-8** | **The assumption register.** | Inference map → **Assumptions**. | **Load-bearing first**, each row carrying its **age** and *"N issues depend on it"*, linked to the issue. |
+| **T-DL109-9** | **The Readout reads the register.** | Reports → Readout → optional **Unvalidated assumptions** ON. | The **assumptions** appear (load-bearing tagged) — **not** the open clarifications. |
+| **T-DL109-10** | **"What I'd need to be sure."** | Reports → Readout → §5. | The unbacked **load-bearing** items **as asks**: *"Confirm: … · If it is wrong: …"*. Identical for all four recipients. |
+| **T-DL109-11** | ⛔ **No debt vocabulary.** | Read every surface. | Nothing is *owed*, *outstanding as debt*, a *liability*, or something to *pay down*. |
+
+## D181 — the read points at it · the clock ages, the past does not
+
+| # | Scenario | Steps | Expected |
+|---|---|---|---|
+| **T-D181-1** | ⭐⭐ **SCOPE IS IN THE NUMBER.** | Inference map → the flag names **Scope** → Overview → Progress. | **The 12 includes Scope's four inferences** (CI-20 · CI-21 · CI-22 · CI-23). **Scope has no critical issue open and is not the limiting dimension — clause (c) catches it.** *A strong-looking artifact that is mostly inferred is the most dangerous thing in the plan.* |
+| **T-D181-2** | **An inference nothing points at is not counted.** | Compare the count (**12**) with the number of inferences bearing on Feasibility (**11**). | They are **not** the same set. **CI-45 · CI-56 · CI-57 bear on the limiter and nothing points at them — excluded.** |
+| **T-D181-3** | ⛔⛔ **The user grounds the flagged artifact.** | Run the Extended pass (**holding it up → 20**) → open **Scope** → **Apply this fix** / confirm it. | **Holding it up → 12. The flag goes. The Verify tag goes.** **Nothing turns red, and no guard fails: the fall is the user's success.** |
+| **T-D181-4** | ⭐ **Advance the clock.** | Reports → **Next week (demo)** ×3 → Inference map → **Assumptions**. | *"Unvalidated for **3 weeks** · 1 issue depends on it."* The timeline's Initial run reads **"3 weeks ago"**. **Nothing was back-dated — the clock moved.** |
+| **T-D181-5** | **Velocity is a direction, not a target.** | After advancing a week with nothing done, read **This week**. | **you grounded 0 · I inferred 0.** *Understanding is stalling* — said honestly. **No total, no denominator, no zero to reach.** |
+| **T-D181-6** | **First run is still first run.** | Fresh session (week 0) → History. | **Minimal first-run state, and the Initial run reads `now − 2m`** (D100). **The project genuinely is minutes old, and the register says so** (*"Unvalidated for 2 minutes"*). |
+
+
+---
+
+## D190 — the recommendation block, corrected (owner, 2026-07-13)
+
+| ID | Step | Do | Expect |
+|---|---|---|---|
+| **T-D190-1** | **The affordance is short and constant.** | Open **any** issue with a recommendation. Then open the other five. | The fix is **resident above the button**, and the button reads **"Apply this fix"** — **the same six times, over six different fixes.** *(Ask OSLO "what would you do?" in chat: the reply's action reads **"Apply this fix →"** — the same string, one reader.)* |
+| **T-D190-2** | ⛔ **And the consent rule still bites.** | *(Console, probe-fenced)* `_d184NegativeControls()`. | `aButtonWithNoSubjectSurvives_bites: true` — **blank the recommendation and the guard goes RED.** The fix is still readable **before** it is appliable (D184/D001). |
+| **T-D190-3** | **The options open in ONE place — under the recommendation.** | Open an issue → click **"Other options (2)"**. | The options expand **in place, directly beneath the recommendation** (`#ipAlts`): the two alternatives (**Select** · **Discuss**), the **Selected option** chip once you choose, and **"✎ Write my own fix in Resources →"**. **Scroll down: there is NO "Other options" row under Evidence.** The rows are **Evidence · Clarification · Comments**. |
+| **T-D190-4** | ⛔⛔ **The assisted-apply cap still cannot hide the fix — and the free door is still open.** | Click *Sim assisted-apply cap (demo threshold)* → open any issue → click **Apply this fix**. | The **recommendation stays fully visible** (it is not in a drawer at all) · **the options are FORCED open** and **cannot be collapsed** · **"✎ Write my own fix in \<document\>"** is on screen · **UP-APPLY** fires, and its **first** resolution is the free manual edit. **The analysis still runs on the manual edit.** *(Metering understanding is PROHIBITED — D126/D128.)* |
+| **T-D190-5** | **"Path" is gone.** | Select an option → open **History**. | The entry reads **"Resolution option selected — …"** / *Option "…"*. Nothing in the product says *path* in this sense — panel, chat, review kinds, tour, tooltips. |

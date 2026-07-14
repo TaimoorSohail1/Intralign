@@ -19,3 +19,30 @@
 
 ## Files produced (Phase 1–3)
 source-summary.md · canonical-truth.md · decision-tree.md · decision-log.md · decision-progress.md · contradictions.md · theme-system.md · slice-map.md · session-state.md
+
+---
+
+## UPDATE 2026-07-14 — WI-R5 (Progress-panel foundation-bar / DL-111)
+
+- **Current phase:** Phase 5 — **Slice 10 Overview/Progress REOPENED (WI-R5)** for the DL-111 foundation-bar fold-in.
+- **Active slice:** Slice 10 (Overview / Progress panel).
+- **Prototype under review:** `vertical-slices/slice-10-tiering-limits/prototype.html` (foundation-bar build; live self-check 135/135, 0 pageerrors; ratified DL-111; also mirrored to repo `90_research/oslo-product-grill/` via PR #158).
+- **Last completed:** DL-111 ratified (canon PR #157 merged); prototype guards re-based (suspension removed).
+- **In progress:** reconcile slice-10 docs (Progress/Overview sections) to the foundation bar via worker; then re-signoff the Overview/Progress portion.
+- **Next recommended action:** worker doc reconciliation → owner re-signoff of Slice-10 Overview/Progress.
+
+---
+
+## UPDATE 2026-07-14 (2) — WI-R5 P1 ERRATUM (Decision 251)
+
+- Owner defect report → progress bar corrected: hero = grounded/attested only; two provenance states (no "Derived — supported"); load-bearing = superset line, no `+`. Prototype **R6: 136/136, 0 pageerrors**.
+- Docs re-reconciled (6 files). Canon erratum to DL-111 **drafted, awaiting owner land** (`DL-PENDING-progress-panel-erratum-BODY.md`).
+- **Next:** owner re-signoff of Slice-10 Overview/Progress (corrected); land the DL-111 erratum when ready.
+
+---
+
+## UPDATE 2026-07-14 (3) — WI-R5 SIGNED OFF
+
+- **Slice 10 · Overview/Progress: SIGNED OFF** (corrected foundation bar, Decision 251). Slice 10 fully signed off.
+- **WI-R5: CLOSED.**
+- **Next recommended action:** (owner, when ready) land the DL-111 canon erratum via dl-land; commit the corrected grill mirror files into PR #158.

@@ -210,7 +210,7 @@ askOslo({type:'issue', id})
 
 user clicks a chip → sendChat() → _oslloReply(q) → the PULL routes (matched FIRST):
   "What's it resting on?"  → _ansEvidence(ref,S)        → the sources        → handoff
-  "What are my options?"   → _ansOptions(id,S)          → the paths          → handoff
+  "What are my options?"   → _ansOptions(id,S)          → the options        → handoff
   "What would you do?"     → _ansRecommendation(id,S)   → the recommendation → ONE action: Apply this fix → → handoff
   "How sure are you?"      → _ansReliability(S)         → Coverage · Evidence · Assessability → handoff
   "Answer your question"   → _ansClarifications(S)      → COLLAPSED one-line prompt (D165e)
@@ -275,3 +275,118 @@ THE TIER RULE (D172b):   sendMemo()            → NO tier check, and there may 
                          toggleReportSchedule() → TIER check + fireUP('UP-REPORT', {sched}).  THE AUTOMATION IS BASIC.
 ```
 **Meter the labour, never the understanding.** The same shape as D154: *editing is free; persistence is the gate.*
+
+---
+
+## DL-109 — the provenance data flow (one door, twice)
+
+```
+EVIDENCE ────────► CONTEXT_ITEMS ────────► every provenance count on every surface
+(EV-01 brief)      69 items                     (there is no other door)
+(EV-02 sponsor)    {type, art, ev, hz, run, sup[], dim, kind, to, ent}
+
+    _deepPassRan()          ← a hz:'deep' item is live IFF the deeper read's findings are in ISSUES.
+                              Derived from state, NOT a flag → every restore that puts ISSUES back
+                              puts the context plane back with it, for free.
+
+    _ciEvidenceId(it)       ← it.ev  OR  'EV-ATT-<art>' when the user CONFIRMED the artifact
+                              (that confirmation IS evidence)  OR  null  ⇒ OSLO inferred it.
+
+           ├── _ciGroundedClaims() / _ciInferredClaims()  → PAYOFF_COUNTS → Progress (the ONE home)
+           ├── _ciLoadBearingItems()  ← _ciLB_a · _ciLB_b · _ciLB_c (D181a)
+           │                                              → PAYOFF_COUNTS → Progress  ⭐ + Readout §5
+           ├── _ciAssumptions() → _ciUnbackedAssumptions()→ Inference map · Readout §B
+           ├── _ciAssumedDeps / _ciUnownedEntities / _ciSourcelessMetrics → Inference map · Structure
+           ├── _ciArtStats() → _ciFalseConfidentArtifacts()→ Inference map · THE FLAG (names the artifact)
+           └── _ciAgeMs / _ciVelocity  (via _runStamp AND _ciNow)  → Inference map · ageing + velocity
+                                                          ↑
+                                    simNextWeek() → RPT.week → _demoWeeks() → _ciNow()   (D181b — THE CLOCK)
+```
+
+**D181a — LOAD-BEARING = THE READ POINTS AT IT.** `_ciLB_c` reads **`_ciFalseConfidentArtifacts()` — the same
+function the map's flag reads.** **One door:** the number and the flag can never disagree, and **grounding the
+flagged artifact retires both together.** *(That fall is the user's success — no guard may call it a regression.)*
+
+**D181b — AGE THE CLOCK, NOT THE PAST.** `simNextWeek()` advances **`RPT.week` — the one clock** — and every
+provenance surface's "now" is `_ciNow()`. **The demo project is never back-dated** (D100 holds at week 0);
+**the assumptions age because time passed.**
+
+**The user grounds an artifact** (apply a fix · answer a clarification · edit it) → `basis='attested'` →
+**every item read out of that artifact gains evidence** → grounded ↑ · inferred ↓ · load-bearing ↓ · the
+false-confidence flag on that artifact **goes**. **One state change; six surfaces agree, because they all read the
+same function.**
+
+**The deeper read runs** → more issues **and** more inference **and** a higher band. **All three at once. None of it
+is a regression.**
+
+---
+
+## D183g — THE OVERVIEW ORDER IS A FUNCTION OF THE USER'S STATE
+
+**"Start here" is GUIDANCE. Progress is STATE.**
+
+- **First run** → **Start here** first. There is **no progress to read yet** — telling a user where they stand
+  before they have stood anywhere is an empty panel with a heading on it.
+- **After first value** → **Progress** first. The user already knows what to do; what they came back for is
+  **where they stand.**
+
+Computed by `_orderOverview()` from `_firstValue()`, re-evaluated on every render. **Never a static order.**
+Same principle as **D179a** (state outranks event), applied to the user's own maturity.
+
+## D182 — THE PROBE FENCE, IN THE FLOW
+
+Every `_assert*` guard and every `_d*NegativeControls()` suite runs inside `_probeFence()`. While it is up:
+**prompts are computed but blinded and never persisted · the deferral queue is never armed · the chat, History,
+Trend, memo register and localStorage are restored byte-for-byte.** **A prompt reaches the user only from a real
+user attempt.**
+
+## D191 — THE INVERSE OF EVERY DECISION, IN THE FLOW
+
+**Forward** (`selectPath` · `applyFix` · `_submitClarification`) — each writes a **decision record** (`_decision[id]`)
+**before** it changes anything: the document version, the stored body, the epistemic basis, and the Reliability that
+is **computed from the attestation**. ⛔ **The record deliberately holds no band, no CAF width and no Confidence** —
+that is the mechanism behind *"no hand-path moves the read"*: **you cannot roll a read back from a snapshot that does
+not contain one.**
+
+**Back** — **the hand-path** (`_withdrawCore`) and **the analysis update** (`_withdrawRun`) are **separate functions**,
+and the boundary between them is the doctrine:
+
+| `_withdrawCore()` — **the hand-path** | `_withdrawRun()` — **the analysis update** |
+|---|---|
+| the document → its pre-fix version | **the read** — and **nothing else in the product may touch it** |
+| the attestation → **dropped, as one unit with the edit** (`_withdrawUnit`) | it **re-reads the plan as it now stands** |
+| Reliability → **the captured prior value** | it **does not restore the old assessment** — it produces a **new** one |
+| the issue → **Open** *(only if the user's own hand put it in `addressed`)*; ⛔ **a `resolved` status is NOT touched** · the selection → **none** | a **new run event**, a **new trend point** |
+| the assisted apply → **refunded, and recorded** | **last-good honesty (D098g)** holds in the interval |
+| **HISTORY GROWS** — a new `withdrawn` event; the origin is never touched | if the **monthly budget** is reached, **the withdrawal still stands** and only the **run** defers (D128 P1) |
+
+**`_ISSUE_TRANSITIONS`** enumerates every transition into `addressed`/`attested` **with its inverse**. The whole
+product is swept for unregistered writers: **a new one-way transition fails the build.**
+
+
+---
+
+## D192 / D193 — the erratum, and the two questions D191 exposed (owner, 2026-07-13)
+
+**D191 §5 barred withdraw on a resolved issue — and the analysis update resolves the issue ~1.9s after the apply.**
+So the way out of the attestation lived for two seconds. **§5 reinstated the P1 it was written to kill.**
+
+> ## **WITHDRAWING A FIX IS NOT HAND-MOVING THE READ.** It is the user **editing their own document and retracting their own word.** The read then moves **BY ANALYSIS**.
+
+**The boundary moved — but it did not soften.** The hand-path still may not move the read, and a **`resolved` status
+is part of the read**: it was put there by an analysis update (D088).
+
+| step | what moves | who moves it |
+|---|---|---|
+| the user withdraws | the **document** (conditionally — see below) · the **attestation** · the **selection** · the **meter refund** · **History (+1 event)** | **the user's hand** — and nothing else |
+| *(the instant after)* | **nothing.** The issue is **still Resolved**; the read is **byte-identical** (last-good, D098g). | **nobody** |
+| ~1.9s later | the **issue re-opens** · the **read re-runs** · a **new run event** · a **new trend point** | **the ANALYSIS UPDATE** (`_analysisUpdateAfterWithdrawal`) — *because the gap is genuinely back* |
+
+**THE DOCUMENT — CONDITIONALLY (D193a).** `_docTouchedSince()` measures **content and version identity** against the
+document exactly as OSLO left it. **Untouched ⇒ restore. Touched ⇒ ⛔ DO NOT RESTORE** — the attestation is withdrawn
+alone, and OSLO says so plainly. **⛔ A withdrawal may never reduce the user's authored content.**
+
+**THE ATTESTATION — REFCOUNTED (D193b).** `_attestBy[art]` holds **whose word** attests each document. It stands while
+**any** standing decision attests it; it drops only when the **last** one is withdrawn — and Reliability then returns
+to the value captured at the **0 → 1 edge** (`_ATTEST_BASE`), **before the first** attestation. **Computed, never a
+boolean flipped by whoever moved last.**

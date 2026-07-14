@@ -132,3 +132,23 @@ User-facing "Plan sections" → "Plan artifacts" applied across both prototypes 
 **⚠ Concurrency note (2026-07-13):** during WI-R1→WI-R2 a **concurrent process edited the same slice-10 files** (prototype 1.60→1.90MB, boot 60→87). WI-R2 was applied as a **surgical atomic in-place patch** (assert-once-or-abort, backed up) to avoid clobbering ~300KB of that concurrent work — which is preserved. Recommend only one session edit the grill package at a time. Residual: 4 zero-byte scratch files in slice-10 (mount forbids unlink; delete from desktop) + open O-WIR1-1 (report name) / O-WIR1-3 (§4 asks curated).
 
 **WI-R3 — reference `v4` Reports catch-up (opened 2026-07-13):** bring the baseline-of-record `v4` up to the slice-10 converged Reports surface (readout composer, 4-recipient `REPORT_RECIPIENTS` model). Executed as a non-canonical marked draft (`oslo_r1_experience_mockup_v5_readout_DRAFT.html`) → to land in repo `product-design/` via owner-gated PR; reference `v4` not overwritten in place.
+
+---
+
+## REOPEN — 2026-07-14 · WI-R5 (Slice 10 Overview / Progress panel)
+
+**Slice 10 Overview/Progress portion → REOPENED** for the **DL-111 foundation-bar** fold-in. Status: **In review** (docs reconciling to the current prototype). The rest of Slice 10 (Tiering, Reports, Plans) remains **Signed off**. Re-signoff required for the Overview/Progress portion once docs reconcile. Record: `vertical-slices/slice-10-tiering-limits/work-item-WI-R5-progress-panel-foundation-bar.md`.
+
+---
+
+## SIGNOFF — 2026-07-14 · WI-R5 (Slice 10 Overview / Progress panel — corrected)
+
+**Slice 10 · Overview/Progress → SIGNED OFF.** Owner re-signoff of the foundation-bar Progress panel **as corrected** (Decision 251 erratum): hero = grounded/attested only · two provenance states (grounded/inferred) · load-bearing as a superset line, never `+`-joined · population guards.
+
+- **Status:** Signed off · **Slice 10 overall:** fully Signed off again (Tiering/Reports/Plans were never reopened).
+- **Signed-off decisions:** DL-111 (foundation bar) as amended by Decision 251 (erratum); Decision 250.
+- **Prototype:** `vertical-slices/slice-10-tiering-limits/prototype.html` (R6 build · md5 b5466e98 · 136/136 self-check · 0 pageerrors, both themes).
+- **Docs:** frontend-ui · user-experience · success-criteria · e2e-test-scenarios · edge-cases · open-items (all reconciled to the corrected panel) + WI-R5 records.
+- **Open P1/P2:** none for the panel. Owner-open (unchanged): the load-bearing/inferred adjacency copy (escalated in open-items) — cosmetic, not blocking.
+- **Signoff date:** 2026-07-14.
+- **Governance owed (not blocking signoff):** land the canon erratum to DL-111 (`DL-PENDING-progress-panel-erratum-BODY.md`); commit the corrected grill mirror files to the repo.
