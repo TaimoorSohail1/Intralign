@@ -1104,6 +1104,13 @@ Each changelog entry contains:
 - **Change Summary:** Progress panel adopts the owner LOCK foundation-bar (amends D176/D194c/D187/D179d/DL-109 for the Overview panel). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-146 — DL-112: Erratum to DL-111 — grounded facts are attested-only; two provenance states; load-bearing is a superset
+
+- **Date:** 2026-07-14 · **Authorizing Decision:** DL-112.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-112-progress-panel-erratum-grounded-attested-only.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Erratum to DL-111 — grounded facts are attested-only; two provenance states; load-bearing is a superset. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
