@@ -879,5 +879,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-108 — Reconcile design-guidance 'Executive Translation' with the reporting doctrine — tailor the ask, never the read → `00_owner/decisions/records/DL-108-executive-translation-reconciliation.md`
 - DL-109 — Surface the provenance OSLO already tracks — grounded vs inferred, load-bearing inferences, the assumption register, the Inference Map; REJECT the 'Understanding Debt' frame (AE-06 not adopted); escalate inference lineage as a schema decision → `00_owner/decisions/records/DL-109-surface-provenance-reject-the-debt-frame.md`
 - DL-110 — Outcome-positioning standard — understand & steer toward outcomes, never forecast → `00_owner/decisions/records/DL-110-outcome-positioning-standard.md`
+- DL-111 — Progress panel adopts the owner LOCK foundation-bar (amends D176/D194c/D187/D179d/DL-109 for the Overview panel) → `00_owner/decisions/records/DL-111-progress-panel-foundation-bar.md`
 
 <!-- RECORDS-INDEX:END -->

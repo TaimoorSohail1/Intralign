@@ -1097,6 +1097,13 @@ Each changelog entry contains:
 - **Change Summary:** Outcome-positioning standard — understand & steer toward outcomes, never forecast. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-145 — DL-111: Progress panel adopts the owner LOCK foundation-bar (amends D176/D194c/D187/D179d/DL-109 for the Overview panel)
+
+- **Date:** 2026-07-14 · **Authorizing Decision:** DL-111.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-111-progress-panel-foundation-bar.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Progress panel adopts the owner LOCK foundation-bar (amends D176/D194c/D187/D179d/DL-109 for the Overview panel). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
