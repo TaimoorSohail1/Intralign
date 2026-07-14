@@ -1735,3 +1735,21 @@ Impacts:
 - vertical-slices/slice-10-tiering-limits/prototype.html
 - vertical-slices/slice-10-tiering-limits/{frontend-ui,user-experience,success-criteria,e2e-test-scenarios,edge-cases,open-items}.md
 - 00_owner/decisions/records/DL-111 (canon erratum owed — drafted, awaiting owner land)
+
+## Decision 252: Progress hero — fraction + evidence-forward caption (WI-R6; consistent with DL-112)
+
+Status: Locked (owner-selected, 2026-07-14)
+Type: Product Design | Screen/Interaction
+Area: Overview / Progress panel
+Slice: 10 (Overview) · Feature: Progress panel · Question ID: WI-R6
+Source: owner feedback + 3-up mockup (variant B selected)
+
+Decision:
+The Progress hero is a FRACTION — "17 of 28" (grounded/attested of total claims) — captioned "grounded in your evidence / the rest of your read is OSLO's inference." Gives the missing denominator context and puts "your evidence" in the hero prose. "Confirmed by you" is RETAINED on the segment (canon-required by D196/D194c). The percentage variant (C) was rejected: it would reintroduce the deleted 0–100 index (D183b) and falls when OSLO infers more.
+
+Rationale:
+"17 grounded facts" alone lacked context and left "Confirmed by you" to carry the meaning. The fraction answers "17 of what" and is honest (doesn't drop when OSLO infers). Consistent with DL-112 (hero primary number is still grounded-only). Guard added: the denominator is verified == grounded+inferred. 136/136.
+
+Impacts:
+- vertical-slices/slice-10-tiering-limits/prototype.html
+- vertical-slices/slice-10-tiering-limits/{frontend-ui,user-experience,success-criteria}.md

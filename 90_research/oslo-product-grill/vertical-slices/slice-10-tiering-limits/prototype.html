@@ -1220,6 +1220,7 @@ a{color:inherit}
 .pgx-ws .n{font-size:26px}
 .pgx-ws .pgx-d{color:var(--subtle);font-weight:600}
 .pgx-big-host{display:inline-flex;align-items:baseline;gap:8px}
+.pgx-of{font-size:26px;font-weight:700;color:var(--subtle);letter-spacing:-.01em}
 .pgx-big-host .pgx-d{color:var(--subtle);font-weight:700;font-size:14px}
 .pgx-seg.att .pgx-sl{font-size:12px}
 .pgx-leans{margin-top:13px;font-size:12.5px;color:var(--muted);line-height:1.55}
@@ -11068,8 +11069,8 @@ function _progressHTML(rows){
         +' <span class="pgx-leans-x">\u2014 the inferred claims above plus inferred assumptions, relationships and metrics</span>'
         +' <a class="pgx-go" role="button" tabindex="0" onclick="showView(\'inference\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();showView(\'inference\')}">See them \u2192</a></div>'
       : '';
-    ground='<div class="pgx-hero"><div class="pgx-big-host" data-count-key="grounded"><span class="pgx-big n num">'+a+'</span>'+dlt('grounded')+'</div>'
-      +'<div class="pgx-cap"><div class="l1">grounded facts</div><div class="l2">your read is built on</div></div></div>'
+    ground='<div class="pgx-hero"><div class="pgx-big-host" data-count-key="grounded"><span class="pgx-big n num">'+a+'</span><span class="pgx-of num"> of '+(a+d)+'</span>'+dlt('grounded')+'</div>'
+      +'<div class="pgx-cap"><div class="l1">grounded in your evidence</div><div class="l2">the rest of your read is OSLO\u2019s inference</div></div></div>'
       +'<div class="pgx-barwrap"><div class="pgx-solid" style="flex:'+Math.max(a+d,1)+'">'+segs+'</div></div>'
       +'<div class="pgx-legend">'
       +'<span class="pgx-lg"><span class="pgx-sw att"></span>Grounded \u2014 your evidence</span>'
@@ -17603,6 +17604,7 @@ function _assertEveryPayoffCountIsComputed(){
   Object.keys(now.counts).forEach(function(k){ allowed[now.counts[k]] = 1; });
   Object.keys(now.of).forEach(function(k){ allowed[now.of[k]] = 1; });
   rows.forEach(function(r){ if(r.delta !== null) allowed[Math.abs(r.delta)] = 1; });          // the computed delta
+  allowed[(now.counts.grounded||0)+(now.counts.inferred||0)] = 1;   // PGX (B): the hero denominator "of N" is total claims = grounded+inferred
   const fabricated = printed.filter(function(n){ return !allowed[n]; });
   if(fabricated.length){
     console.error('D173b VIOLATION: Progress printed ' + fabricated.join(', ') + ' — number(s) in NEITHER the live '
@@ -28095,6 +28097,9 @@ function _assertPgxBarIsComputedFromRealCounts(){
       console.error('PGX VIOLATION (P1): hero ('+(hero?hero.textContent:'null')+') != GROUNDED FACTS ('+a+'). Grounded facts are ATTESTED ONLY (evidence_id present) — the hero is `grounded`, never grounded+inferred.'); ok=false; }
     if(d>0 && hero && parseInt(hero.textContent,10)===(a+d)){
       console.error('PGX VIOLATION (P1): the hero counts '+d+' inferred claims (evidence_id null) as grounded facts.'); ok=false; }
+    var of=counts.querySelector('.pgx-of');
+    if(of){ var den=parseInt((of.textContent||'').replace(/[^0-9]/g,''),10);
+      if(den!==(a+d)){ console.error('PGX VIOLATION: the hero denominator ('+den+') != total claims grounded+inferred ('+(a+d)+'). "17 of 29" = grounded of (grounded+inferred), computed.'); ok=false; } }
   }
   ['grounded','inferred','loadbearing','issues','critical','questions','resolved','answered'].forEach(function(k){
     if(!rows[k]) return;

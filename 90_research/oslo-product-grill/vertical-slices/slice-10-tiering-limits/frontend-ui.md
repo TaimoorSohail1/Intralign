@@ -1165,19 +1165,23 @@ count rises** (D180c — *the property, not a bug*).
 ## 1. Progress — the GROUNDED read is CLAIM-LEVEL, and the panel is a FOUNDATION BAR (DL-111)
 
 ```
-   17  grounded facts
-       your read is built on
-  [ Confirmed by you │ From OSLO 12 ]      ← solid bar: grounded segment (cool accent) + inferred/From OSLO (hatched)
+   17 of 28  grounded in your evidence
+             the rest of your read is OSLO’s inference
+  [ Confirmed by you │ From OSLO 11 ]      ← solid bar: grounded segment (cool accent, label only) + inferred/From OSLO (hatched)
   Grounded — your evidence · Inferred — OSLO's read
-  Your read leans on 20 inferences — the inferred claims above plus
+  Your read leans on 12 inferences — the inferred claims above plus
   inferred assumptions, relationships and metrics                See them →
 OPEN           Issues 6 · Critical 1 · Open questions 2
 CLOSED         Issues resolved 0 · Questions answered 0
 ```
 
-- **The hero IS the grounded-facts count — ATTESTED ONLY** (claims with `evidence_id` present), captioned
-  *"grounded facts / your read is built on"*. **Erratum to DL-111:** grounded facts are **not** attested + derived —
-  `17` is the grounded count alone, **never** `grounded + inferred`. It is **computed from state, never typed**.
+- **The hero's PRIMARY number IS the grounded-facts count — ATTESTED ONLY** (claims with `evidence_id` present),
+  now shown as a **fraction** — *"17 of 28"* (grounded of **total claims** = grounded + inferred) — captioned
+  *"grounded in your evidence / the rest of your read is OSLO's inference"* (**WI-R6, variant B**). **Erratum to
+  DL-111:** grounded facts are **not** attested + derived — the big **`17`** is the grounded count **alone**,
+  **never** `grounded + inferred`; the **`28`** denominator is the **total-claims composition** (what rests on you
+  vs on OSLO) — **not a burndown target**, since inference is not driven to zero. Both are **computed from state,
+  never typed**. *"Confirmed by you"* is **retained** on the grounded segment (**D196 / D194c**).
 - **`grounded` / `inferred` / `loadbearing` are three `PAYOFF_COUNTS` rows.** Every one reads live state
   through `_ciEvidenceId()`. **There is nowhere to type a number in.**
 - **The solid bar shows the read's claims in TWO provenance states, proportional to the real counts:** the
@@ -1188,9 +1192,9 @@ CLOSED         Issues resolved 0 · Questions answered 0
   Inferred — OSLO's read*.
 - **Each count declares its own home** (`data-count-key`) — two counts in one host would leave one of them
   homeless, and the one-home guard would grade it as never rendered (D179e).
-- **Load-bearing is its OWN line BELOW the bar, and it is a SUPERSET — never `+`-joined.** *"Your read leans on 20
+- **Load-bearing is its OWN line BELOW the bar, and it is a SUPERSET — never `+`-joined.** *"Your read leans on 12
   inferences — the inferred claims above plus inferred assumptions, relationships and metrics · See them →"*. The
-  **20** counts inferred items of **every** type, so it legitimately **exceeds** the 12 inferred *claims* in the bar
+  **12** counts inferred items of **every** type, so it legitimately **exceeds** the 11 inferred *claims* in the bar
   (§2a). The old panel `+`-joined the two as if disjoint — a lie; both numbers are right, they count different
   populations.
 - **⭐ D181a — the number is 12, and it INCLUDES SCOPE.** *"The read would change were it false"* → **the read points
@@ -1447,7 +1451,7 @@ grades the **VALUE** — *a guard that graded the token NAME would sail straight
 
 | Surface | Was | Is |
 |---|---|---|
-| Progress · load-bearing | `Holding it up` · *"12 inferences are holding up your plan"* | **the *leans* line below the bar** · *"Your read leans on 20 inferences — the inferred claims above plus inferred assumptions, relationships and metrics · See them →"* (DL-111 + erratum; a superset population, never `+`-joined to the bar) |
+| Progress · load-bearing | `Holding it up` · *"12 inferences are holding up your plan"* | **the *leans* line below the bar** · *"Your read leans on 12 inferences — the inferred claims above plus inferred assumptions, relationships and metrics · See them →"* (DL-111 + erratum; a superset population, never `+`-joined to the bar) |
 | Hero limiter (`#ov-limit`) | *"**Feasibility** is holding it back."* | *"**Feasibility** — the lowest. **Confirm** it to lift the read."* (D196a) |
 | CAF tip (`cg-feas-tipb`) | *"…the dimension holding your confidence back."* | *"…the lowest dimension — **confirm** it to lift the read."* (D196a) |
 | How-calculated list | *"…the weakest of the three holds it back."* | *"…the weakest of the three sets the level."* |
@@ -1529,11 +1533,11 @@ Resolved → withdrawn → re-opened by the analysis update, and the rendered tr
 
 ```
 PROGRESS ⓘ
-   17  grounded facts
-       your read is built on
-  [ Confirmed by you │ From OSLO 12 ]      grounded segment (cool accent) + inferred/From OSLO (hatched)
+   17 of 28  grounded in your evidence
+             the rest of your read is OSLO’s inference
+  [ Confirmed by you │ From OSLO 11 ]      grounded segment (cool accent, label only) + inferred/From OSLO (hatched)
   Grounded — your evidence · Inferred — OSLO's read
-  Your read leans on 20 inferences — the inferred claims above plus
+  Your read leans on 12 inferences — the inferred claims above plus
   inferred assumptions, relationships and metrics                See them →
 OPEN     Issues 6 · Critical 1 · Open questions 2
 CLOSED   Issues resolved 0 · Questions answered 0
@@ -1541,15 +1545,18 @@ CLOSED   Issues resolved 0 · Questions answered 0
                                      update.  Timeline →
 ```
 
-The **hero** is the computed **GROUNDED FACTS** count — **attested claims only** (`evidence_id` present); it is
-`17`, **never** `grounded + inferred` (erratum to DL-111). The **solid bar** shows the read's claims in **two
+The **hero**'s primary number is the computed **GROUNDED FACTS** count — **attested claims only** (`evidence_id`
+present); it is `17`, **never** `grounded + inferred` (erratum to DL-111). It is presented as a **fraction — `17 of
+28`** (grounded of total claims), captioned *"grounded in your evidence / the rest of your read is OSLO's inference"*
+(**WI-R6, variant B**); the `28` is the total-claims composition denominator — **context, not a target** (inference
+is not driven to zero). The **solid bar** shows the read's claims in **two
 provenance states**: the *Confirmed by you* segment (grounded; **label only — the number is in the hero**; cool-blue
 accent that echoes the Outcome Confidence ramp's lit band) and the *From OSLO* segment (inferred; carries its count,
 rendered **hatched**). *From OSLO* **is** the inferred state — there is no third "derived — supported" class; the
 **two-swatch legend** reads *Grounded — your evidence · Inferred — OSLO's read*. **Load-bearing is a separate line
-below the bar, a SUPERSET** — *"Your read leans on 20 inferences — the inferred claims above plus inferred
-assumptions, relationships and metrics · See them →"*; the **20** counts inferred items of every type and so exceeds
-the 12 inferred *claims*, and it is **never `+`-joined** into the bar. **OPEN** and **CLOSED** are big-numeral stat
+below the bar, a SUPERSET** — *"Your read leans on 12 inferences — the inferred claims above plus inferred
+assumptions, relationships and metrics · See them →"*; the **12** counts inferred items of every type and so exceeds
+the 11 inferred *claims*, and it is **never `+`-joined** into the bar. **OPEN** and **CLOSED** are big-numeral stat
 rows; **red appears only on Critical**; deltas are neutral ↑/↓ over the *"change since the last analysis update"*
 footer and the `Timeline →` link.
 
@@ -1580,20 +1587,21 @@ D191–D193 withdraw/attestation machinery, which was explicitly not to be touch
 ### Markup
 
 ```html
-<!-- DL-111 + erratum (`_progressHTML`). The class names come from the ONE painter (`_epiLabelHTML`).
-     GROUNDED FACTS = ATTESTED ONLY: the grounded number is the HERO; the grounded segment carries only its label. -->
+<!-- DL-111 + erratum + WI-R6 (`_progressHTML`). The class names come from the ONE painter (`_epiLabelHTML`).
+     GROUNDED FACTS = ATTESTED ONLY: the grounded number is the HERO (big number), shown as "N of TOTAL"
+     where TOTAL = grounded + inferred; the grounded segment carries only its label. -->
 <div class="pgx">
   <div class="pgx-hero">
-    <div class="pgx-big-host" data-count-key="grounded"><span class="pgx-big n num">17</span></div>
-    <div class="pgx-cap"><div class="l1">grounded facts</div><div class="l2">your read is built on</div></div></div>
+    <div class="pgx-big-host" data-count-key="grounded"><span class="pgx-big n num">17</span><span class="pgx-of num"> of 28</span></div>
+    <div class="pgx-cap"><div class="l1">grounded in your evidence</div><div class="l2">the rest of your read is OSLO’s inference</div></div></div>
   <div class="pgx-barwrap">
-    <div class="pgx-solid" style="flex:29">
-      <!-- grounded — cool-accent segment, LABEL ONLY (its count is the hero), sized to the grounded share -->
+    <div class="pgx-solid" style="flex:28">
+      <!-- grounded — cool-accent segment, LABEL ONLY (its count is the hero numerator), sized to the grounded share -->
       <div class="pgx-seg att" style="flex:17">
         <span class="pgx-sl" data-epi-class="you">Confirmed by you</span></div>
       <!-- inferred — From OSLO, hatched, carries its own count. No third "derived — supported" class. -->
-      <div class="pgx-seg der" data-count-key="inferred" style="flex:12">
-        <span class="sn num">12</span><span class="pgx-sl" data-epi-class="oslo">From OSLO</span></div>
+      <div class="pgx-seg der" data-count-key="inferred" style="flex:11">
+        <span class="sn num">11</span><span class="pgx-sl" data-epi-class="oslo">From OSLO</span></div>
     </div>
   </div>
   <!-- TWO provenance states only: grounded / inferred -->
@@ -1602,7 +1610,7 @@ D191–D193 withdraw/attestation machinery, which was explicitly not to be touch
     <span class="pgx-lg"><span class="pgx-sw inf"></span>Inferred — OSLO's read</span>
   </div>
   <!-- load-bearing: its OWN line below the bar, a SUPERSET (inferred items of every type), never +-joined -->
-  <div class="pgx-leans" data-count-key="loadbearing">Your read leans on <b class="n num">20</b> inferences
+  <div class="pgx-leans" data-count-key="loadbearing">Your read leans on <b class="n num">12</b> inferences
     <span class="pgx-leans-x">— the inferred claims above plus inferred assumptions, relationships and metrics</span>
     <a class="pgx-go" onclick="showView('inference')">See them →</a></div>
 </div>
@@ -1784,7 +1792,7 @@ const TERMS = {
 | Surface | Was | Is |
 |---|---|---|
 | **Progress · load-bearing** (`.pgx-leans`) | `YOUR READ RESTS ON` | **DL-111+erratum: no labelled row** — a *leans* line **below the bar** (a superset), not a `TERMS` label |
-| **Progress load-bearing value** | *"13 inferences ↓7 · See them →"* | **DL-111+erratum: *"Your read leans on 20 inferences — the inferred claims above plus inferred assumptions, relationships and metrics · See them →"*** — the neutral ↓ delta and the `See them →` link stay, on the leans line |
+| **Progress load-bearing value** | *"13 inferences ↓7 · See them →"* | **DL-111+erratum: *"Your read leans on 12 inferences — the inferred claims above plus inferred assumptions, relationships and metrics · See them →"*** — the neutral ↓ delta and the `See them →` link stay, on the leans line |
 | **Count registry name** (`PAYOFF_COUNTS.loadbearing.label`) | *"Inferences your read rests on"* | **`TERMS.loadbearing.name` = "Load-bearing inferences"** |
 | **Assumption row** | chip: `YOUR READ RESTS ON THIS` | **a MARKER** (D198) + `title` + `.mk-sr` — all named from `TERMS` |
 | **Section header** | *"The ones your read rests on come first"* | **unchanged — PROSE. The metaphor is the point.** |

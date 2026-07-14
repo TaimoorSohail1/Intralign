@@ -1188,7 +1188,7 @@ It rendered the **label** `YOUR READ RESTS ON` **and then said it again in the v
 rests on**."* **One home** (D179e). **The label is the sentence.**
 
 > *(DL-111 + erratum — the load-bearing *leans* line, below the bar)*
-> **Your read leans on 20 inferences** ↓7 — *the inferred claims above plus inferred assumptions, relationships and
+> **Your read leans on 12 inferences** ↓7 — *the inferred claims above plus inferred assumptions, relationships and
 > metrics* · *See them →*
 
 **~60% less text than the phrase D194a replaced.** The neutral ↓ delta rides along, and the *See them →* link to the
@@ -1200,8 +1200,8 @@ Inference map stays on this line. Under the erratum the load-bearing count is it
 
 It said *"Your evidence: 17 claims · OSLO inferred: 12"* — **true, and in words the product used nowhere else.**
 
-> **17 grounded facts** — *your read is built on*   *(the hero = ATTESTED claims only, computed)*
-> **Confirmed by you** *(grounded — the solid, cool-accent segment; label only, its count is the hero)* · **From OSLO 12** *(inferred — hatched)*
+> **17 of 28** — *grounded in your evidence · the rest of your read is OSLO's inference*   *(hero numerator = ATTESTED claims only, computed; the 28 = grounded + inferred total claims)*
+> **Confirmed by you** *(grounded — the solid, cool-accent segment; label only, its count is the hero numerator)* · **From OSLO 11** *(inferred — hatched)*
 > *Grounded — your evidence · Inferred — OSLO's read*
 
 **The owner proposed *"AI Interpretation | Your Understanding."* The instinct is exactly right — the epistemic
@@ -1232,10 +1232,10 @@ The day a claim carries a third-party attestation, a third cell appears with no 
 **Folding the leans line into the bar invites the user to read the inferred-claims count against the load-bearing
 count as a RATIO. It is not one — so the erratum keeps load-bearing as its OWN line below the bar, never `+`-joined.**
 
-**And they do not even share a population.** **The bar's inferred segment counts inferred CLAIMS** (e.g. 12);
-**the leans line counts inferred items of *every* type** (e.g. 20) — assumptions, relationships and metrics
-included, because **the read leans on those too** (D181). So the load-bearing count (20) *legitimately exceeds* the
-inferred-claims count (12), and **both numbers are right — the old panel `+`-joined them as if disjoint, which was a
+**And they do not even share a population.** **The bar's inferred segment counts inferred CLAIMS** (e.g. 11);
+**the leans line counts inferred items of *every* type** (e.g. 12) — assumptions, relationships and metrics
+included, because **the read leans on those too** (D181). So the load-bearing count (12) *legitimately exceeds* the
+inferred-claims count (11), and **both numbers are right — the old panel `+`-joined them as if disjoint, which was a
 lie about what they meant.** *(The adjacency is escalated to the owner as **O-D194-1**; the build does not choose.)*
 
 
@@ -1263,7 +1263,7 @@ right that *"ground"* reads as jargon to a PM.**
 
 **And in the Progress panel, one panel down, the same word is already waiting for them:**
 
-> **Confirmed by you** — the grounded (cool-accent) segment of the foundation bar, its **17 grounded facts** in the hero · **From OSLO 12** (inferred, hatched) *(DL-111 + erratum)*
+> **Confirmed by you** — the grounded (cool-accent) segment of the foundation bar, its **17** grounded facts are the hero numerator (shown *17 of 28*) · **From OSLO 11** (inferred, hatched) *(DL-111 + erratum + WI-R6)*
 
 **That is the point.** *"Confirm"* is not a new word the user has to learn — **it is the word on the class name they
 meet on every issue, every document, every report and the Inference Map** (D011/D069/D194c). **The verb the product
@@ -1283,14 +1283,16 @@ asks for and the class it writes back are now the same word.**
 
 ## The Progress panel
 
-> **17 grounded facts** — *your read is built on*   *(the hero = ATTESTED claims only, computed)*
-> **[ Confirmed by you · grounded ]  [ From OSLO 12 · inferred, hatched ]**
+> **17 of 28** — *grounded in your evidence · the rest of your read is OSLO's inference*   *(hero numerator = ATTESTED claims only, computed; 28 = grounded + inferred total claims)*
+> **[ Confirmed by you · grounded ]  [ From OSLO 11 · inferred, hatched ]**
 > *Grounded — your evidence · Inferred — OSLO's read*
-> **Your read leans on 20 inferences** — *the inferred claims above plus inferred assumptions, relationships and metrics* · *See them →*
+> **Your read leans on 12 inferences** — *the inferred claims above plus inferred assumptions, relationships and metrics* · *See them →*
 > **OPEN** Issues 6 · **Critical** 1 · Open questions 2   ·   **CLOSED** Issues resolved 0 · Questions answered 0
 
-**A foundation bar, not a ledger (DL-111 + erratum).** The hero is the computed **grounded-facts count — attested
-claims only** (`17`, never grounded + inferred). The solid bar shows the read's claims in **two provenance states**:
+**A foundation bar, not a ledger (DL-111 + erratum + WI-R6).** The hero's primary number is the computed
+**grounded-facts count — attested claims only** (`17`, never grounded + inferred), shown as a **fraction `17 of 28`**
+(grounded of total claims), captioned *"grounded in your evidence / the rest of your read is OSLO's inference"* — the
+`28` is context, not a target. The solid bar shows the read's claims in **two provenance states**:
 the *Confirmed by you* (grounded) segment carries the cool-blue accent that **echoes the Outcome Confidence ramp's
 lit band** and holds **only its label — its count is the hero**; the *From OSLO* segment **is the inferred state**,
 rendered **hatched**. *A load-bearing wall is the thing you do not knock out:* the inferences the read **leans on**
@@ -1298,7 +1300,7 @@ are a **line below the bar — a superset** (inferred items of every type), neve
 
 ⛔ **The bar and the leans line are still NOT one ledger** (D194d). The solid bar is a *comparison* (*grounded vs
 inferred?*); the leans line is a *superset* (*how much of the READ leans on inference?*). Fused, the user reads the
-inferred-claims count against the load-bearing count as a **ratio** — it is not one; **20 legitimately exceeds 12
+inferred-claims count against the load-bearing count as a **ratio** — it is not one; **12 legitimately exceeds 11
 because they count different populations.** **Severity red shows only on Critical, the deltas are neutral, and brand
 orange stays on actions/links (`See them →`, `Timeline →`), never on state** — a harmony pass so the panel reads as
 one page with the Outcome Confidence panel.

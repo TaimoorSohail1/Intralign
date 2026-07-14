@@ -46,3 +46,10 @@ source-summary.md · canonical-truth.md · decision-tree.md · decision-log.md �
 - **Slice 10 · Overview/Progress: SIGNED OFF** (corrected foundation bar, Decision 251). Slice 10 fully signed off.
 - **WI-R5: CLOSED.**
 - **Next recommended action:** (owner, when ready) land the DL-111 canon erratum via dl-land; commit the corrected grill mirror files into PR #158.
+
+---
+
+## UPDATE 2026-07-14 (4) — WI-R6 (fraction hero)
+
+- Owner-selected variant B: hero "17 of 28 grounded in your evidence" (denominator context; evidence-forward caption). "Confirmed by you" retained (canon D196). Prototype **943db40d · 136/136 · 0 pageerrors**.
+- Consistent with DL-112 (no canon reversal). Docs reconciling. Next: re-signoff.

@@ -152,3 +152,9 @@ User-facing "Plan sections" → "Plan artifacts" applied across both prototypes 
 - **Open P1/P2:** none for the panel. Owner-open (unchanged): the load-bearing/inferred adjacency copy (escalated in open-items) — cosmetic, not blocking.
 - **Signoff date:** 2026-07-14.
 - **Governance owed (not blocking signoff):** land the canon erratum to DL-111 (`DL-PENDING-progress-panel-erratum-BODY.md`); commit the corrected grill mirror files to the repo.
+
+---
+
+## REOPEN — 2026-07-14 · WI-R6 (Slice 10 Overview / Progress hero)
+
+**Slice 10 Overview/Progress → REOPENED** for the fraction-hero refinement (Decision 252, variant B). In review; docs reconciling. Rest of Slice 10 unaffected. Re-signoff required once docs reconcile.
