@@ -158,3 +158,11 @@ User-facing "Plan sections" → "Plan artifacts" applied across both prototypes 
 ## REOPEN — 2026-07-14 · WI-R6 (Slice 10 Overview / Progress hero)
 
 **Slice 10 Overview/Progress → REOPENED** for the fraction-hero refinement (Decision 252, variant B). In review; docs reconciling. Rest of Slice 10 unaffected. Re-signoff required once docs reconcile.
+
+---
+
+## SIGNOFF — 2026-07-14 · WI-R6 (Slice 10 Overview / Progress hero — fraction)
+
+**Slice 10 · Overview/Progress → SIGNED OFF.** Owner sign-off of the fraction-hero refinement (Decision 252, variant B): hero **"17 of 28"** — grounded/attested **numerator only**, total-claims **denominator as composition** (not a burndown target) · caption *"grounded in your evidence / the rest of your read is OSLO's inference"* · **"Confirmed by you"** retained on the segment (D196 / D194c). **Consistent with DL-112** — no canon reversal, no new DL (Decision 252). Docs reconciled to the live build (11 inferred claims · 12 load-bearing · 28 denominator); doc-integrity eyeball clean (fences balanced, tables intact, canon refs resolve). Prototype **943db40d · 136/136 · 0 pageerrors**; committed + pushed to `main` (`c20ef5b`).
+
+- **Status:** Signed off · **WI-R6: CLOSED.** · **Slice 10 overall:** fully Signed off again (Tiering / Reports / Plans were never reopened).

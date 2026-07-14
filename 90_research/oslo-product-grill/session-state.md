@@ -53,3 +53,11 @@ source-summary.md · canonical-truth.md · decision-tree.md · decision-log.md �
 
 - Owner-selected variant B: hero "17 of 28 grounded in your evidence" (denominator context; evidence-forward caption). "Confirmed by you" retained (canon D196). Prototype **943db40d · 136/136 · 0 pageerrors**.
 - Consistent with DL-112 (no canon reversal). Docs reconciling. Next: re-signoff.
+
+---
+
+## UPDATE 2026-07-14 (5) — WI-R6 SIGNED OFF
+
+- **Slice 10 · Overview/Progress: SIGNED OFF** (fraction hero "17 of 28", Decision 252, variant B). **WI-R6: CLOSED.** Slice 10 fully signed off.
+- Docs reconciled to live build (11 claims / 12 load-bearing / 28 denominator) + doc-integrity eyeball clean; committed + pushed to `main` (`c20ef5b`).
+- **Next recommended action:** (optional) one-line DL-112 addendum noting the denominator-context presentation — owner left it at Decision 252 for now. No open WI.

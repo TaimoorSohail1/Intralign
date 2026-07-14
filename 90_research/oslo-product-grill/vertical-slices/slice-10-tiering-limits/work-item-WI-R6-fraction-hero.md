@@ -1,6 +1,6 @@
 # WI-R6 — Progress hero: fraction + evidence-forward caption — SLICE-10 REOPEN
 
-**Opened:** 2026-07-14 · **Slice:** 10 (Overview / Progress panel) · **Status:** In review
+**Opened:** 2026-07-14 · **Slice:** 10 (Overview / Progress panel) · **Status:** Signed off (closed 2026-07-14)
 **Trigger:** Owner feedback — "17 grounded facts" (absolute) lacked context ("17 out of what?") and "Confirmed by you" was not intuitive.
 
 ## Change (owner-selected variant B, from a 3-up mockup)
@@ -16,4 +16,4 @@ Consistent with **DL-112**: the hero's primary number is still **grounded/attest
 `_assertPgxBarIsComputedFromRealCounts` extended: the hero denominator "of N" is verified `== grounded + inferred` (computed, not typed). Percentage hero (variant C) was rejected — it would trip `_assertNoZeroToHundredIndexAnywhere` (the deleted 0–100 index) and falls when OSLO infers more. Prototype: **136/136, 0 pageerrors**, both themes.
 
 ## Re-signoff
-Required for Slice-10 Overview/Progress once docs reconcile.
+**SIGNED OFF 2026-07-14 by owner** (Decision 252, variant B). Docs reconciled + pushed to main (c20ef5b). WI-R6 CLOSED.
