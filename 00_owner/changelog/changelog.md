@@ -1160,6 +1160,13 @@ Each changelog entry contains:
 - **Change Summary:** Amendment to D253: statement type-decomposition moves from resident to an on-demand disclosure (density pass). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-154 — DL-120: R1.x intermediate enhancements fold into the R1 build; R1 feature-freezes before dev handoff
+
+- **Date:** 2026-07-16 · **Authorizing Decision:** DL-120.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-120-r1-foldin.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** R1.x intermediate enhancements fold into the R1 build; R1 feature-freezes before dev handoff. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
