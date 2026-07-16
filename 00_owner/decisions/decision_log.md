@@ -887,5 +887,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-116 — CAF drill-down — quantify the drivers, never the dimension (adds a finding-type field) → `00_owner/decisions/records/DL-116-caf-dimension-drilldown.md`
 - DL-117 — Confidence and CAF coupling: episodic trend leaves the state/CAF seam; the required read stays → `00_owner/decisions/records/DL-117-confidence-caf-coupling.md`
 - DL-118 — Overview surface roles (governing boundary model) + Start-here charter extension: guidance ranks confirmations alongside issues → `00_owner/decisions/records/DL-118-overview-surface-roles-and-start-here.md`
+- DL-119 — Amendment to D253: statement type-decomposition moves from resident to an on-demand disclosure (density pass) → `00_owner/decisions/records/DL-119-d253-decomposition-disclosure.md`
 
 <!-- RECORDS-INDEX:END -->

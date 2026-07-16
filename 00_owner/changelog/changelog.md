@@ -1153,6 +1153,13 @@ Each changelog entry contains:
 - **Change Summary:** Overview surface roles (governing boundary model) + Start-here charter extension: guidance ranks confirmations alongside issues. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-153 — DL-119: Amendment to D253: statement type-decomposition moves from resident to an on-demand disclosure (density pass)
+
+- **Date:** 2026-07-16 · **Authorizing Decision:** DL-119.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-119-d253-decomposition-disclosure.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Amendment to D253: statement type-decomposition moves from resident to an on-demand disclosure (density pass). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
