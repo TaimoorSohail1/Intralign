@@ -885,5 +885,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-114 — A finding/statement impacts a set of CAF dimensions — data-model conformance + by-dimension inference → `00_owner/decisions/records/DL-114-caf-multidimension-conformance.md`
 - DL-115 — Erratum to DL-114 — the dimensional Inference Map (Phase 3) is included; scope-boundary bullet corrected → `00_owner/decisions/records/DL-115-dl114-phase3-scope-erratum.md`
 - DL-116 — CAF drill-down — quantify the drivers, never the dimension (adds a finding-type field) → `00_owner/decisions/records/DL-116-caf-dimension-drilldown.md`
+- DL-117 — Confidence and CAF coupling: episodic trend leaves the state/CAF seam; the required read stays → `00_owner/decisions/records/DL-117-confidence-caf-coupling.md`
 
 <!-- RECORDS-INDEX:END -->

@@ -1139,6 +1139,13 @@ Each changelog entry contains:
 - **Change Summary:** CAF drill-down — quantify the drivers, never the dimension (adds a finding-type field). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-151 — DL-117: Confidence and CAF coupling: episodic trend leaves the state/CAF seam; the required read stays
+
+- **Date:** 2026-07-16 · **Authorizing Decision:** DL-117.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-117-confidence-caf-coupling.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Confidence and CAF coupling: episodic trend leaves the state/CAF seam; the required read stays. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
