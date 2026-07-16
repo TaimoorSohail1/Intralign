@@ -883,5 +883,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-112 — Erratum to DL-111 — grounded facts are attested-only; two provenance states; load-bearing is a superset → `00_owner/decisions/records/DL-112-progress-panel-erratum-grounded-attested-only.md`
 - DL-113 — Progress panel unifies on one named unit — the statement (adds a DL-053 entry; amends DL-111) → `00_owner/decisions/records/DL-113-progress-panel-statement-unit.md`
 - DL-114 — A finding/statement impacts a set of CAF dimensions — data-model conformance + by-dimension inference → `00_owner/decisions/records/DL-114-caf-multidimension-conformance.md`
+- DL-115 — Erratum to DL-114 — the dimensional Inference Map (Phase 3) is included; scope-boundary bullet corrected → `00_owner/decisions/records/DL-115-dl114-phase3-scope-erratum.md`
 
 <!-- RECORDS-INDEX:END -->
