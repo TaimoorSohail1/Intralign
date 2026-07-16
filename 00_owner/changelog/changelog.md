@@ -1132,6 +1132,13 @@ Each changelog entry contains:
 - **Change Summary:** Erratum to DL-114 — the dimensional Inference Map (Phase 3) is included; scope-boundary bullet corrected. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-150 — DL-116: CAF drill-down — quantify the drivers, never the dimension (adds a finding-type field)
+
+- **Date:** 2026-07-16 · **Authorizing Decision:** DL-116.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-116-caf-dimension-drilldown.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** CAF drill-down — quantify the drivers, never the dimension (adds a finding-type field). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
