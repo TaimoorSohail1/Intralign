@@ -881,5 +881,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-110 — Outcome-positioning standard — understand & steer toward outcomes, never forecast → `00_owner/decisions/records/DL-110-outcome-positioning-standard.md`
 - DL-111 — Progress panel adopts the owner LOCK foundation-bar (amends D176/D194c/D187/D179d/DL-109 for the Overview panel) → `00_owner/decisions/records/DL-111-progress-panel-foundation-bar.md`
 - DL-112 — Erratum to DL-111 — grounded facts are attested-only; two provenance states; load-bearing is a superset → `00_owner/decisions/records/DL-112-progress-panel-erratum-grounded-attested-only.md`
+- DL-113 — Progress panel unifies on one named unit — the statement (adds a DL-053 entry; amends DL-111) → `00_owner/decisions/records/DL-113-progress-panel-statement-unit.md`
 
 <!-- RECORDS-INDEX:END -->

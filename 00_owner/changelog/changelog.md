@@ -1111,6 +1111,13 @@ Each changelog entry contains:
 - **Change Summary:** Erratum to DL-111 — grounded facts are attested-only; two provenance states; load-bearing is a superset. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-147 — DL-113: Progress panel unifies on one named unit — the statement (adds a DL-053 entry; amends DL-111)
+
+- **Date:** 2026-07-16 · **Authorizing Decision:** DL-113.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-113-progress-panel-statement-unit.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Progress panel unifies on one named unit — the statement (adds a DL-053 entry; amends DL-111). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
