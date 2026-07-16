@@ -47,6 +47,13 @@ jobs:
           fetch-depth: 0
           ref: main
 
+      - name: Mint app token (oslo-canon-bot — so the PR triggers CI)
+        id: apptoken
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.CANON_BOT_APP_ID }}
+          private-key: ${{ secrets.CANON_BOT_PRIVATE_KEY }}
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
@@ -98,7 +105,7 @@ jobs:
 
       - name: Open PR (never merges — owner merges)
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.apptoken.outputs.token }}
           TITLE: ${{ inputs.title }}
         run: |
           gh pr create --base main --head "${{ steps.land.outputs.branch }}" \
