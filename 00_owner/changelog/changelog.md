@@ -1118,6 +1118,13 @@ Each changelog entry contains:
 - **Change Summary:** Progress panel unifies on one named unit — the statement (adds a DL-053 entry; amends DL-111). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-148 — DL-114: A finding/statement impacts a set of CAF dimensions — data-model conformance + by-dimension inference
+
+- **Date:** 2026-07-16 · **Authorizing Decision:** DL-114.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-114-caf-multidimension-conformance.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** A finding/statement impacts a set of CAF dimensions — data-model conformance + by-dimension inference. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
