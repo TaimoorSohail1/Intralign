@@ -4,7 +4,12 @@ Cumulative Slices 1–6. All data is fake/illustrative and lives in memory + `lo
 
 ## Issue (user-facing "Issue"; internal object = "Finding", D017)
 
-Six real issues are wired (`ISS-01`…`ISS-06`) — the same set the Attention map, Overview and artifact badges already use. Slice 6 extends each record with recommendation, impact, and lifecycle fields.
+Nine real issues are wired (`ISS-01`…`ISS-09`) — the same set the Attention map, Overview and artifact badges already use. **Six** surface at the Initial / Fast Pass (`ISS-01`…`ISS-06`); the three **Deep-Pass** findings (`ISS-07`, `ISS-08`, `ISS-09`) become visible once **Extended Analysis** auto-runs, taking the open count to **9 (Extended)**. Slice 6 extends each record with recommendation, impact, and lifecycle fields.
+
+**Deep-Pass / Alignment findings (Enhancement #2 Phase 2).** Canonical **Alignment** (CAF_ASSESSMENT_MODEL_V1 §3) is the integrity of the **coherence** between project elements and intended outcomes — whether the plan's elements cohere with each other and with its intended outcomes (does scope cover the intent; does the schedule fit the scope; do owners and dependencies line up; do stakeholders share the definition of done) — stakeholder-agreement is **one example, not the definition**. Accordingly:
+- **ISS-08** ("Recording is resourced but never scoped") is **Clarity + Alignment** (a Resources↔Scope coherence gap) — was Clarity only; it appears in both `Scope × Clarity` and `Scope × Alignment` cells via `_dimsOf`.
+- **ISS-09** (Alignment, moderate, `sec` = `Scope`) — "Intended outcomes have no scoped activity": the Intent artifact asserts intended outcomes (strengthen the regional developer community; generate sponsor pipeline) but Scope ties no activity to either (a Scope↔Intent-outcome coherence gap). Supporting item **CI-70** (relationship, Scope, Alignment).
+- Unchanged: **ISS-05** (no decision owner — accountability coherence) and **ISS-07** (funding-vs-cost sequencing; Feasibility+Alignment). The Alignment dimension now spans all four coherence findings (element↔element and element↔outcome), guarded at boot by `_assertAlignmentSpansCoherence` (self-check 141/141, 0 pageerrors).
 
 | Field | Type | Meaning |
 |---|---|---|

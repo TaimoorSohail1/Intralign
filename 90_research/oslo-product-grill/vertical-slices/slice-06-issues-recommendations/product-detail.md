@@ -50,6 +50,7 @@ Lifecycle banners: **Addressed** ("awaiting reanalysis") and **Resolved** ("Reso
 
 ### C6.7 — Attention-map routing graduated (D058)
 - `openFindingsFor(art,dim)`: exactly one active issue → `openIssue`; else `scopeIssuesTo(art,dim)` → Issues center pane scoped (both filters lit). `openFindingsForArtifact(art)` scopes by artifact only. One consistent Issues destination (the separate scoped scrim is retired from the routing path).
+- **Extended-state issue set (Enhancement #2 Phase 2):** the wired set is **9 issues at Extended** (6 at Fast Pass; ISS-07/08/09 add once Extended Analysis auto-runs), occupying 8 of 21 Attention cells. Multi-issue cells that route to the scoped list include **Resources × Feasibility** (ISS-01, ISS-03), **Schedule × Feasibility** (ISS-04, ISS-07) and **Scope × Alignment** (ISS-08, ISS-09). ISS-07 (Feasibility+Alignment) and ISS-08 (Clarity+Alignment, a Resources↔Scope coherence gap) each occupy two cells via `_dimsOf`, so a resolve in one cell still drops the shared issue everywhere. The **Alignment** dimension now spans element↔element and element↔outcome coherence — ISS-05 (accountability), ISS-07 (sequencing), ISS-08 (resource↔scope), ISS-09 (scope↔outcome) — not just stakeholder-agreement (canonical Alignment, CAF_ASSESSMENT_MODEL_V1 §3).
 
 ## Constraints
 - Advisory-only (D001); severity color only (D003); dark default + WCAG 2.1 AA (list, filters, group toggle, and panel all keyboard-operable, focus-visible). No backend/API/DB/auth/real-AI (D016).

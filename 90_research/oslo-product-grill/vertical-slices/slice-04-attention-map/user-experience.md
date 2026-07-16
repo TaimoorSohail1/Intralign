@@ -43,7 +43,7 @@ The Attention map is reachable as the **co-primary top-center view** (the Overvi
 
 ## Key user journeys (Slice 4)
 
-1. **Scan attention:** land on Overview → click **Attention** (or the Overview "Attention map →" pointer) → read the heatmap. The brightest cell (Resources × Feasibility) shows where the plan most needs attention.
+1. **Scan attention:** land on Overview → click **Attention** (or the Overview "Attention map →" pointer) → read the heatmap. At Fast Pass the brightest cell (Resources × Feasibility) shows where the plan most needs attention; once **Extended Analysis** auto-runs it adds the Deep-Pass findings (per Enhancement #2 Phase 2), so the Extended map has **9 open issues across 8 of 21 cells** and more than one critical (`l3`) cell — Resources × Feasibility, Schedule × Feasibility, and Schedule × Alignment — plus a two-issue **Scope × Alignment** cell (ISS-08 + the new ISS-09). The Alignment column now reflects coherence between plan elements and intended outcomes, not just stakeholder-agreement.
 2. **Single issue:** click a single-issue cell (e.g. Requirements × Clarity) → the issue opens directly.
 3. **Multiple issues:** click the Resources × Feasibility cell (2 open) → the scoped Issues list opens with both filters lit → pick an issue → it opens; close returns to the scoped list.
 4. **Resolve via clarification:** open the critical Resources issue → answer its clarification → reanalysis resolves it → the cell dims and the count drops (the heatmap updates live).
