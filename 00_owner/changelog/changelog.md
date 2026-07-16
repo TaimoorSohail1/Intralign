@@ -1146,6 +1146,13 @@ Each changelog entry contains:
 - **Change Summary:** Confidence and CAF coupling: episodic trend leaves the state/CAF seam; the required read stays. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-152 — DL-118: Overview surface roles (governing boundary model) + Start-here charter extension: guidance ranks confirmations alongside issues
+
+- **Date:** 2026-07-16 · **Authorizing Decision:** DL-118.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-118-overview-surface-roles-and-start-here.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Overview surface roles (governing boundary model) + Start-here charter extension: guidance ranks confirmations alongside issues. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
