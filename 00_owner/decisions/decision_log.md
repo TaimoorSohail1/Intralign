@@ -889,5 +889,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-118 — Overview surface roles (governing boundary model) + Start-here charter extension: guidance ranks confirmations alongside issues → `00_owner/decisions/records/DL-118-overview-surface-roles-and-start-here.md`
 - DL-119 — Amendment to D253: statement type-decomposition moves from resident to an on-demand disclosure (density pass) → `00_owner/decisions/records/DL-119-d253-decomposition-disclosure.md`
 - DL-120 — R1.x intermediate enhancements fold into the R1 build; R1 feature-freezes before dev handoff → `00_owner/decisions/records/DL-120-r1-foldin.md`
+- DL-121 — Start-here charter extension: the lead issue's Confirm acts on its load-bearing assumption inline; Review opens the issue → `00_owner/decisions/records/DL-121-confirm-acts-inline.md`
 
 <!-- RECORDS-INDEX:END -->

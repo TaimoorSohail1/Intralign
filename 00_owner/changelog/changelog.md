@@ -1167,6 +1167,13 @@ Each changelog entry contains:
 - **Change Summary:** R1.x intermediate enhancements fold into the R1 build; R1 feature-freezes before dev handoff. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-155 — DL-121: Start-here charter extension: the lead issue's Confirm acts on its load-bearing assumption inline; Review opens the issue
+
+- **Date:** 2026-07-17 · **Authorizing Decision:** DL-121.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-121-confirm-acts-inline.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Start-here charter extension: the lead issue's Confirm acts on its load-bearing assumption inline; Review opens the issue. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
