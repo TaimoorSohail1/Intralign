@@ -1188,6 +1188,13 @@ Each changelog entry contains:
 - **Change Summary:** Option C — CAF with reliability per dimension. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-158 — DL-124: Grounding leaves Progress — the read owns grounding
+
+- **Date:** 2026-07-17 · **Authorizing Decision:** DL-124.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-124-grounding-leaves-progress.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Grounding leaves Progress — the read owns grounding. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
