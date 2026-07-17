@@ -1181,6 +1181,13 @@ Each changelog entry contains:
 - **Change Summary:** The notification router: one awareness record, global toast delivery attributed to no panel (realizes NOTIFICATION_MODEL_V1 §17). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-157 — DL-123: Option C — CAF with reliability per dimension
+
+- **Date:** 2026-07-17 · **Authorizing Decision:** DL-123.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-123-option-c-caf-reliability-per-dimension.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Option C — CAF with reliability per dimension. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
