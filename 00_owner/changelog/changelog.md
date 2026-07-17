@@ -1195,6 +1195,13 @@ Each changelog entry contains:
 - **Change Summary:** Grounding leaves Progress — the read owns grounding. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-159 — DL-125: Notification router folds into R1
+
+- **Date:** 2026-07-17 · **Authorizing Decision:** DL-125.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-125-router-r1-fold.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Notification router folds into R1. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
