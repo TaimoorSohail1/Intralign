@@ -895,5 +895,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-124 — Grounding leaves Progress — the read owns grounding → `00_owner/decisions/records/DL-124-grounding-leaves-progress.md`
 - DL-125 — Notification router folds into R1 → `00_owner/decisions/records/DL-125-router-r1-fold.md`
 - DL-126 — Earned-maturation recognition → `00_owner/decisions/records/DL-126-progress-recognition.md`
+- DL-127 — Second-tier upsell motion dormant until billing is live → `00_owner/decisions/records/DL-127-second-tier-dormant.md`
 
 <!-- RECORDS-INDEX:END -->

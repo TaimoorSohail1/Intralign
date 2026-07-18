@@ -1209,6 +1209,13 @@ Each changelog entry contains:
 - **Change Summary:** Earned-maturation recognition. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-161 — DL-127: Second-tier upsell motion dormant until billing is live
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-127.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-127-second-tier-dormant.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Second-tier upsell motion dormant until billing is live. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
