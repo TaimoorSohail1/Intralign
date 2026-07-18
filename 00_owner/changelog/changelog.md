@@ -1223,6 +1223,13 @@ Each changelog entry contains:
 - **Change Summary:** Event is a notification, read-movement is a delta; one moment one toast. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-163 — DL-129: The maturity ladder — stage is earned evidence-maturity
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-129.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-129-maturity-ladder.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The maturity ladder — stage is earned evidence-maturity. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
