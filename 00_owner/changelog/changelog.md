@@ -1293,6 +1293,13 @@ Each changelog entry contains:
 - **Change Summary:** Extended Analysis is renamed to Outcome Analysis. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-173 — DL-139: Initial Analysis is renamed to Preliminary Outcome Analysis
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-139.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-139-preliminary-outcome-analysis-rename.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Initial Analysis is renamed to Preliminary Outcome Analysis. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

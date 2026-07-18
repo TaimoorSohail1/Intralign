@@ -907,5 +907,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-136 — Issues and the Attention map become one destination — a Map ⇄ List view toggle, Map default, last view persisted → `00_owner/decisions/records/DL-136-issues-attention-consolidation.md`
 - DL-137 — The Project summary retires from the Overview — it becomes a hovercard on the project name → `00_owner/decisions/records/DL-137-project-summary-hovercard.md`
 - DL-138 — Extended Analysis is renamed to Outcome Analysis → `00_owner/decisions/records/DL-138-outcome-analysis-rename.md`
+- DL-139 — Initial Analysis is renamed to Preliminary Outcome Analysis → `00_owner/decisions/records/DL-139-preliminary-outcome-analysis-rename.md`
 
 <!-- RECORDS-INDEX:END -->
