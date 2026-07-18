@@ -1230,6 +1230,13 @@ Each changelog entry contains:
 - **Change Summary:** The maturity ladder — stage is earned evidence-maturity. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-164 — DL-130: Read-signal role-clarity — grounding cut + reliability trust-check
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-130.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-130-read-signal-roles.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Read-signal role-clarity — grounding cut + reliability trust-check. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
