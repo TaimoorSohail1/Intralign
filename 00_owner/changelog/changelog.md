@@ -1300,6 +1300,13 @@ Each changelog entry contains:
 - **Change Summary:** Initial Analysis is renamed to Preliminary Outcome Analysis. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-174 — DL-140: The Readout document is renamed to Executive Briefing
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-140.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-140-executive-briefing-rename.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The Readout document is renamed to Executive Briefing. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

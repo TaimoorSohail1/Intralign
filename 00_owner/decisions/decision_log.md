@@ -908,5 +908,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-137 — The Project summary retires from the Overview — it becomes a hovercard on the project name → `00_owner/decisions/records/DL-137-project-summary-hovercard.md`
 - DL-138 — Extended Analysis is renamed to Outcome Analysis → `00_owner/decisions/records/DL-138-outcome-analysis-rename.md`
 - DL-139 — Initial Analysis is renamed to Preliminary Outcome Analysis → `00_owner/decisions/records/DL-139-preliminary-outcome-analysis-rename.md`
+- DL-140 — The Readout document is renamed to Executive Briefing → `00_owner/decisions/records/DL-140-executive-briefing-rename.md`
 
 <!-- RECORDS-INDEX:END -->
