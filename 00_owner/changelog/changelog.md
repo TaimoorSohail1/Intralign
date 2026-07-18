@@ -1251,6 +1251,13 @@ Each changelog entry contains:
 - **Change Summary:** The Overview lead-line — OSLO's read as one plain sentence, retiring after first engagement. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-167 — DL-133: The feature tour is offered after the strategic chain, not left to be hunted for
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-133.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-133-tour-offer.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The feature tour is offered after the strategic chain, not left to be hunted for. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
