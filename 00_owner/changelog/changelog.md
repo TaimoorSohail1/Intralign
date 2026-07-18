@@ -1314,6 +1314,13 @@ Each changelog entry contains:
 - **Change Summary:** The Reports workspace holds multiple reports; the first generated report, Outcome Readiness, ships. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-176 — DL-142: Generated report #2 — Assumptions & Evidence
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-142.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-142-assumptions-evidence-report.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Generated report #2 — Assumptions & Evidence. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
