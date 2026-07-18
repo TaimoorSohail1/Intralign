@@ -894,5 +894,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-123 — Option C — CAF with reliability per dimension → `00_owner/decisions/records/DL-123-option-c-caf-reliability-per-dimension.md`
 - DL-124 — Grounding leaves Progress — the read owns grounding → `00_owner/decisions/records/DL-124-grounding-leaves-progress.md`
 - DL-125 — Notification router folds into R1 → `00_owner/decisions/records/DL-125-router-r1-fold.md`
+- DL-126 — Earned-maturation recognition → `00_owner/decisions/records/DL-126-progress-recognition.md`
 
 <!-- RECORDS-INDEX:END -->

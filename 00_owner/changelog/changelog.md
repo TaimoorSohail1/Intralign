@@ -1202,6 +1202,13 @@ Each changelog entry contains:
 - **Change Summary:** Notification router folds into R1. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-160 — DL-126: Earned-maturation recognition
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-126.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-126-progress-recognition.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Earned-maturation recognition. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
