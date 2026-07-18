@@ -1279,6 +1279,13 @@ Each changelog entry contains:
 - **Change Summary:** Issues and the Attention map become one destination — a Map ⇄ List view toggle, Map default, last view persisted. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-171 — DL-137: The Project summary retires from the Overview — it becomes a hovercard on the project name
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-137.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-137-project-summary-hovercard.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The Project summary retires from the Overview — it becomes a hovercard on the project name. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

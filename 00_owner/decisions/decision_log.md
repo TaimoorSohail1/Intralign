@@ -905,5 +905,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-134 — Confidence-panel footer declutter — one Why, trend-as-Timeline, no Steady → `00_owner/decisions/records/DL-134-confidence-footer-declutter.md`
 - DL-135 — The 'How this is calculated' pill retires — the lead-line leads, the method lives on the concept's ⓘ → `00_owner/decisions/records/DL-135-howcalc-pill-retire.md`
 - DL-136 — Issues and the Attention map become one destination — a Map ⇄ List view toggle, Map default, last view persisted → `00_owner/decisions/records/DL-136-issues-attention-consolidation.md`
+- DL-137 — The Project summary retires from the Overview — it becomes a hovercard on the project name → `00_owner/decisions/records/DL-137-project-summary-hovercard.md`
 
 <!-- RECORDS-INDEX:END -->
