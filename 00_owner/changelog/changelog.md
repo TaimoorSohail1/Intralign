@@ -1237,6 +1237,13 @@ Each changelog entry contains:
 - **Change Summary:** Read-signal role-clarity — grounding cut + reliability trust-check. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-165 — DL-131: Per-dimension evidence cue — keep the word, drop the bar; hide when expanded
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-131.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-131-caf-cue-declutter.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Per-dimension evidence cue — keep the word, drop the bar; hide when expanded. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

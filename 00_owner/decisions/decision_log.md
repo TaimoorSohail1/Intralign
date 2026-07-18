@@ -899,5 +899,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-128 — Event is a notification, read-movement is a delta; one moment one toast → `00_owner/decisions/records/DL-128-notification-display.md`
 - DL-129 — The maturity ladder — stage is earned evidence-maturity → `00_owner/decisions/records/DL-129-maturity-ladder.md`
 - DL-130 — Read-signal role-clarity — grounding cut + reliability trust-check → `00_owner/decisions/records/DL-130-read-signal-roles.md`
+- DL-131 — Per-dimension evidence cue — keep the word, drop the bar; hide when expanded → `00_owner/decisions/records/DL-131-caf-cue-declutter.md`
 
 <!-- RECORDS-INDEX:END -->
