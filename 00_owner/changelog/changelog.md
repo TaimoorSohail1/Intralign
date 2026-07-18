@@ -1286,6 +1286,13 @@ Each changelog entry contains:
 - **Change Summary:** The Project summary retires from the Overview — it becomes a hovercard on the project name. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-172 — DL-138: Extended Analysis is renamed to Outcome Analysis
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-138.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-138-outcome-analysis-rename.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Extended Analysis is renamed to Outcome Analysis. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
