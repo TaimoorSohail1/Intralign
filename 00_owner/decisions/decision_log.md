@@ -903,5 +903,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-132 — The Overview lead-line — OSLO's read as one plain sentence, retiring after first engagement → `00_owner/decisions/records/DL-132-overview-leadline.md`
 - DL-133 — The feature tour is offered after the strategic chain, not left to be hunted for → `00_owner/decisions/records/DL-133-tour-offer.md`
 - DL-134 — Confidence-panel footer declutter — one Why, trend-as-Timeline, no Steady → `00_owner/decisions/records/DL-134-confidence-footer-declutter.md`
+- DL-135 — The 'How this is calculated' pill retires — the lead-line leads, the method lives on the concept's ⓘ → `00_owner/decisions/records/DL-135-howcalc-pill-retire.md`
 
 <!-- RECORDS-INDEX:END -->
