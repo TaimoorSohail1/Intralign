@@ -1244,6 +1244,13 @@ Each changelog entry contains:
 - **Change Summary:** Per-dimension evidence cue — keep the word, drop the bar; hide when expanded. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-166 — DL-132: The Overview lead-line — OSLO's read as one plain sentence, retiring after first engagement
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-132.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-132-overview-leadline.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The Overview lead-line — OSLO's read as one plain sentence, retiring after first engagement. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
