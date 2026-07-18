@@ -1272,6 +1272,13 @@ Each changelog entry contains:
 - **Change Summary:** The 'How this is calculated' pill retires — the lead-line leads, the method lives on the concept's ⓘ. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-170 — DL-136: Issues and the Attention map become one destination — a Map ⇄ List view toggle, Map default, last view persisted
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-136.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-136-issues-attention-consolidation.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Issues and the Attention map become one destination — a Map ⇄ List view toggle, Map default, last view persisted. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
