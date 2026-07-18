@@ -1216,6 +1216,13 @@ Each changelog entry contains:
 - **Change Summary:** Second-tier upsell motion dormant until billing is live. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-162 — DL-128: Event is a notification, read-movement is a delta; one moment one toast
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-128.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-128-notification-display.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Event is a notification, read-movement is a delta; one moment one toast. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
