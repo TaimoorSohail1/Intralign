@@ -1258,6 +1258,13 @@ Each changelog entry contains:
 - **Change Summary:** The feature tour is offered after the strategic chain, not left to be hunted for. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-168 — DL-134: Confidence-panel footer declutter — one Why, trend-as-Timeline, no Steady
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-134.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-134-confidence-footer-declutter.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Confidence-panel footer declutter — one Why, trend-as-Timeline, no Steady. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

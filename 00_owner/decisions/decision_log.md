@@ -902,5 +902,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-131 — Per-dimension evidence cue — keep the word, drop the bar; hide when expanded → `00_owner/decisions/records/DL-131-caf-cue-declutter.md`
 - DL-132 — The Overview lead-line — OSLO's read as one plain sentence, retiring after first engagement → `00_owner/decisions/records/DL-132-overview-leadline.md`
 - DL-133 — The feature tour is offered after the strategic chain, not left to be hunted for → `00_owner/decisions/records/DL-133-tour-offer.md`
+- DL-134 — Confidence-panel footer declutter — one Why, trend-as-Timeline, no Steady → `00_owner/decisions/records/DL-134-confidence-footer-declutter.md`
 
 <!-- RECORDS-INDEX:END -->
