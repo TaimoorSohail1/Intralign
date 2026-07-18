@@ -1307,6 +1307,13 @@ Each changelog entry contains:
 - **Change Summary:** The Readout document is renamed to Executive Briefing. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-175 — DL-141: The Reports workspace holds multiple reports; the first generated report, Outcome Readiness, ships
+
+- **Date:** 2026-07-18 · **Authorizing Decision:** DL-141.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-141-reports-multi-outcome-readiness.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The Reports workspace holds multiple reports; the first generated report, Outcome Readiness, ships. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
