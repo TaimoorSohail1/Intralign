@@ -1391,6 +1391,13 @@ Each changelog entry contains:
 - **Change Summary:** The Overview hero is the plan's journey to a hand-off — Understand, Confirm, Hand off (Direction C-1). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-187 — DL-153: The Overview journey hero, built — the arc, the nested Understand read, and the guards that hold them
+
+- **Date:** 2026-07-19 · **Authorizing Decision:** DL-153.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-153-overview-hero-journey-build.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The Overview journey hero, built — the arc, the nested Understand read, and the guards that hold them. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
