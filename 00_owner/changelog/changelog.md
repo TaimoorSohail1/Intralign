@@ -1363,6 +1363,13 @@ Each changelog entry contains:
 - **Change Summary:** Execution-ready planning, Phase-2 · 2C — sequencing dependencies and the computed critical path. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-183 — DL-149: Execution-ready planning, Phase-2 · 2D — the eighth consolidated view (Full plan)
+
+- **Date:** 2026-07-19 · **Authorizing Decision:** DL-149.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-149-execution-consolidated-view.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Execution-ready planning, Phase-2 · 2D — the eighth consolidated view (Full plan). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
