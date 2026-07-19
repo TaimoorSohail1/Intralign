@@ -1321,6 +1321,13 @@ Each changelog entry contains:
 - **Change Summary:** Generated report #2 — Assumptions & Evidence. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-177 — DL-143: Generated report #3 — Decision Record
+
+- **Date:** 2026-07-19 · **Authorizing Decision:** DL-143.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-143-decision-record-report.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Generated report #3 — Decision Record. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

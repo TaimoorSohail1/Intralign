@@ -911,5 +911,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-140 — The Readout document is renamed to Executive Briefing → `00_owner/decisions/records/DL-140-executive-briefing-rename.md`
 - DL-141 — The Reports workspace holds multiple reports; the first generated report, Outcome Readiness, ships → `00_owner/decisions/records/DL-141-reports-multi-outcome-readiness.md`
 - DL-142 — Generated report #2 — Assumptions & Evidence → `00_owner/decisions/records/DL-142-assumptions-evidence-report.md`
+- DL-143 — Generated report #3 — Decision Record → `00_owner/decisions/records/DL-143-decision-record-report.md`
 
 <!-- RECORDS-INDEX:END -->
