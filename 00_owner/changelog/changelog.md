@@ -1377,6 +1377,13 @@ Each changelog entry contains:
 - **Change Summary:** Execution-ready planning, Phase-2 · 2D completion — the consolidated view displays the plan. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-185 — DL-151: Execution-ready planning, Phase-3 — the structured Asana export
+
+- **Date:** 2026-07-19 · **Authorizing Decision:** DL-151.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-151-execution-asana-export.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Execution-ready planning, Phase-3 — the structured Asana export. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
