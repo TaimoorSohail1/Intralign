@@ -918,5 +918,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-147 — Execution-ready planning, Phase-2 · 2B — assessment scaled to task altitude → `00_owner/decisions/records/DL-147-execution-task-altitude-assessment.md`
 - DL-148 — Execution-ready planning, Phase-2 · 2C — sequencing dependencies and the computed critical path → `00_owner/decisions/records/DL-148-execution-critical-path.md`
 - DL-149 — Execution-ready planning, Phase-2 · 2D — the eighth consolidated view (Full plan) → `00_owner/decisions/records/DL-149-execution-consolidated-view.md`
+- DL-150 — Execution-ready planning, Phase-2 · 2D completion — the consolidated view displays the plan → `00_owner/decisions/records/DL-150-consolidated-plan-display.md`
 
 <!-- RECORDS-INDEX:END -->

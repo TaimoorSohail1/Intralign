@@ -1370,6 +1370,13 @@ Each changelog entry contains:
 - **Change Summary:** Execution-ready planning, Phase-2 · 2D — the eighth consolidated view (Full plan). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-184 — DL-150: Execution-ready planning, Phase-2 · 2D completion — the consolidated view displays the plan
+
+- **Date:** 2026-07-19 · **Authorizing Decision:** DL-150.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-150-consolidated-plan-display.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Execution-ready planning, Phase-2 · 2D completion — the consolidated view displays the plan. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
