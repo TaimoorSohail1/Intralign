@@ -1384,6 +1384,13 @@ Each changelog entry contains:
 - **Change Summary:** Execution-ready planning, Phase-3 — the structured Asana export. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-186 — DL-152: The Overview hero is the plan's journey to a hand-off — Understand, Confirm, Hand off (Direction C-1)
+
+- **Date:** 2026-07-19 · **Authorizing Decision:** DL-152.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-152-overview-hero-journey-identity.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The Overview hero is the plan's journey to a hand-off — Understand, Confirm, Hand off (Direction C-1). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

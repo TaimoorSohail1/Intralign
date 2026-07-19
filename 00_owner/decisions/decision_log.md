@@ -920,5 +920,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-149 — Execution-ready planning, Phase-2 · 2D — the eighth consolidated view (Full plan) → `00_owner/decisions/records/DL-149-execution-consolidated-view.md`
 - DL-150 — Execution-ready planning, Phase-2 · 2D completion — the consolidated view displays the plan → `00_owner/decisions/records/DL-150-consolidated-plan-display.md`
 - DL-151 — Execution-ready planning, Phase-3 — the structured Asana export → `00_owner/decisions/records/DL-151-execution-asana-export.md`
+- DL-152 — The Overview hero is the plan's journey to a hand-off — Understand, Confirm, Hand off (Direction C-1) → `00_owner/decisions/records/DL-152-overview-hero-journey-identity.md`
 
 <!-- RECORDS-INDEX:END -->
