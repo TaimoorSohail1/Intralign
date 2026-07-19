@@ -913,5 +913,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-142 — Generated report #2 — Assumptions & Evidence → `00_owner/decisions/records/DL-142-assumptions-evidence-report.md`
 - DL-143 — Generated report #3 — Decision Record → `00_owner/decisions/records/DL-143-decision-record-report.md`
 - DL-144 — Generated reports — Summary ⇄ Full depth + Export → `00_owner/decisions/records/DL-144-reports-depth-export.md`
+- DL-145 — Execution-ready planning — OSLO produces the detailed, exportable plan (Phase-1 identity) → `00_owner/decisions/records/DL-145-execution-ready-planning-identity.md`
 
 <!-- RECORDS-INDEX:END -->

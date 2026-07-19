@@ -1335,6 +1335,13 @@ Each changelog entry contains:
 - **Change Summary:** Generated reports — Summary ⇄ Full depth + Export. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-179 — DL-145: Execution-ready planning — OSLO produces the detailed, exportable plan (Phase-1 identity)
+
+- **Date:** 2026-07-19 · **Authorizing Decision:** DL-145.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-145-execution-ready-planning-identity.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Execution-ready planning — OSLO produces the detailed, exportable plan (Phase-1 identity). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
