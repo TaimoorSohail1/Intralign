@@ -1342,6 +1342,13 @@ Each changelog entry contains:
 - **Change Summary:** Execution-ready planning — OSLO produces the detailed, exportable plan (Phase-1 identity). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-180 — DL-146: Execution-ready planning, Phase-2 · 2A — the Work breakdown becomes an authored, graded task tree
+
+- **Date:** 2026-07-19 · **Authorizing Decision:** DL-146.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-146-execution-decomposed-task-model.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Execution-ready planning, Phase-2 · 2A — the Work breakdown becomes an authored, graded task tree. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

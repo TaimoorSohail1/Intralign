@@ -914,5 +914,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-143 — Generated report #3 — Decision Record → `00_owner/decisions/records/DL-143-decision-record-report.md`
 - DL-144 — Generated reports — Summary ⇄ Full depth + Export → `00_owner/decisions/records/DL-144-reports-depth-export.md`
 - DL-145 — Execution-ready planning — OSLO produces the detailed, exportable plan (Phase-1 identity) → `00_owner/decisions/records/DL-145-execution-ready-planning-identity.md`
+- DL-146 — Execution-ready planning, Phase-2 · 2A — the Work breakdown becomes an authored, graded task tree → `00_owner/decisions/records/DL-146-execution-decomposed-task-model.md`
 
 <!-- RECORDS-INDEX:END -->
