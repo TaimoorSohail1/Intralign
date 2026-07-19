@@ -1328,6 +1328,13 @@ Each changelog entry contains:
 - **Change Summary:** Generated report #3 — Decision Record. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-178 — DL-144: Generated reports — Summary ⇄ Full depth + Export
+
+- **Date:** 2026-07-19 · **Authorizing Decision:** DL-144.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-144-reports-depth-export.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Generated reports — Summary ⇄ Full depth + Export. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
