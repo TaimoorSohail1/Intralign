@@ -916,5 +916,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-145 — Execution-ready planning — OSLO produces the detailed, exportable plan (Phase-1 identity) → `00_owner/decisions/records/DL-145-execution-ready-planning-identity.md`
 - DL-146 — Execution-ready planning, Phase-2 · 2A — the Work breakdown becomes an authored, graded task tree → `00_owner/decisions/records/DL-146-execution-decomposed-task-model.md`
 - DL-147 — Execution-ready planning, Phase-2 · 2B — assessment scaled to task altitude → `00_owner/decisions/records/DL-147-execution-task-altitude-assessment.md`
+- DL-148 — Execution-ready planning, Phase-2 · 2C — sequencing dependencies and the computed critical path → `00_owner/decisions/records/DL-148-execution-critical-path.md`
 
 <!-- RECORDS-INDEX:END -->
