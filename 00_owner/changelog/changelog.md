@@ -1398,6 +1398,13 @@ Each changelog entry contains:
 - **Change Summary:** The Overview journey hero, built — the arc, the nested Understand read, and the guards that hold them. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-188 — DL-154: The journey hero speaks the north star — stages become Understand, Optimize, Execute (amends DL-152)
+
+- **Date:** 2026-07-20 · **Authorizing Decision:** DL-154.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-154-overview-hero-outcome-journey-amendment.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The journey hero speaks the north star — stages become Understand, Optimize, Execute (amends DL-152). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
