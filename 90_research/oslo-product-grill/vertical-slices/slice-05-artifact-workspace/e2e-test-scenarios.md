@@ -1,37 +1,43 @@
-# Slice 5 — Plan Artifacts / Artifact Workspace · E2E Test Scenarios
+# Slice 5 — Plan Artifacts / Artifact Workspace · E2E Test Scenarios (≤20)
 
-**Cumulative (Slices 1–5).** Manual, single-file prototype. Each scenario is client-side only. ≤20 scenarios; NEW Slice-5 scenarios first, then key regressions.
+Manual click-through (client-side prototype). "Restart" = phase-bar Restart (clears flags). Reach the workspace from the **Plan artifacts** rows in the left sidebar (or an Attention cell / issue that routes to a document).
 
-Setup: open `prototype.html`; activate (invite → activate → welcome) or use a persisted session; land on Overview after Fast Pass. Use the phase bar **Restart** to reset.
+1. **Open the explorer.** Restart → activate → load sample → run Fast Pass → look at the sidebar. **Expect:** **Plan artifacts** split into **Understanding** (Intent · Context · Scope · Requirements) and **Execution** (Work breakdown · Schedule · Resources); artifacts with open issues carry a severity-coloured count badge; artifacts with none carry **no badge**.
 
----
+2. **Open an artifact.** Click **Resources**. **Expect:** the center editor fills with the drafted document; the head shows "✎ Editable" + the layer label ("Execution plan"); the toolbar shows prev/next, the version `vN`, the weakness stepper, and the save/analysis chip "Analysis up to date".
 
-## NEW — Slice 5
+3. **Type-aware rendering.** Open **Intent**, then **Schedule**. **Expect:** Intent renders as **prose** (with a bulleted goals list); Schedule renders as a **table** (Milestone · Date · Status).
 
-| # | Scenario | Steps | Expected |
-|---|---|---|---|
-| T1 | Open the workspace (D066) | Click **Artifacts** in the top-center switch. | The workspace opens: explorer (7 artifacts, Understanding/Execution) + empty-state editor prompt. |
-| T2 | Live issue badges (D066) | Observe the explorer badges. | Resources shows a **red** badge (critical); Requirements/Schedule/Context/WBS show **amber/neutral** badges matching their open issues; Intent/Scope show no badge. |
-| T3 | Open every artifact (D066/D067) | Click each of the 7 rows in turn. | Each opens in the editor: Intent/Context/Scope/Requirements read as prose (mixing bullets/table); Work breakdown/Schedule/Resources read as **tables**. Active row highlights. |
-| T4 | Mixed-format Understanding (D067) | Open **Intent**, then **Context**. | Intent shows prose + a **bulleted goals list**; Context shows prose + a **stakeholder table**. |
-| T5 | Edit → Confirmed by you (D069) | In any artifact, click into a prose block and type. | The block gains a **left-border accent**; its hover chip reads **"Confirmed by you"**. |
-| T6 | Autosave + reanalysis chain (D070) | After T5, watch the status chip. | Chip runs **Saving… → Saved · analysis stale → Reanalyzing… → Up to date**; the stale hint bar appears then clears. |
-| T7 | No manual reanalyze (D070) | Inspect the toolbar and page during/after editing. | There is **no "Reanalyze" button** anywhere; reanalysis is automatic. |
-| T8 | Saving ≠ assessment copy (D069) | While editing, read the hint bar / info tooltip. | Copy states **saving changes no assessment; only reanalysis does.** |
-| T9 | Annotation hover (D068) | Open **Resources**; hover the "Wi-Fi capacity unconfirmed" span. | The span is **red** (critical); the tooltip summarizes the Feasibility issue. |
-| T10 | Annotation click → issue panel (D068) | Click that span. | The **light Issue panel** opens for ISS-01 (Why → Evidence → Clarification → Suggested fixes). Not resolved inline. |
-| T11 | Weakness stepper (D071) | Open **Resources**; use **⌄ / ⌃** in "Jump to weakness". | The counter shows "k of N"; each step outlines a weak span and scrolls to it, cycling. |
-| T12 | Artifact prev/next (D071) | Use the **‹ / ›** buttons. | Moves between artifacts in order; ‹ disabled on Intent, › disabled on Resources. |
-| T13 | Resolve drops annotation + badge (D066/D068) | From T10, answer the clarification and submit. | After reanalysis the issue resolves; its annotation disappears from the artifact and the explorer badge decrements/clears. |
-| T14 | Feature-tour editor step (D071/D044) | Start the tour; advance to the artifact step. | The workspace opens on **Resources** and the editor is spotlighted with edit/attest/reanalysis copy. |
-| T15 | Autosave persistence (D067) | Edit an artifact; switch views and return. | The edited body (and Confirmed-by-you accents) persist within the session. |
+4. **From OSLO by default.** On any freshly opened artifact, read the epistemic notation. **Expect:** prose blocks tagged **From OSLO**; table cells read **From OSLO** (row gutter dot + per-cell reveal on hover). Nothing is presented as a confirmed fact you didn't confirm (D173).
 
-## Regression (Slices 1–4)
+5. **Edit a sentence → Confirmed by you.** In Intent, click a paragraph and type a change. **Expect:** its tag flips to **Confirmed by you** immediately; no "Editing…"/"Saving…" churn appears while typing.
 
-| # | Scenario | Expected |
-|---|---|---|
-| T16 | Overview intact | Confidence → Start here → Progress → More; pill + popover; "how this is calculated"; "Strengthened" trend after Extended Analysis. |
-| T17 | Attention heatmap intact | Heatmap-only (no field view); cell → issue / scoped-list routing; all-clear via the demo trigger. |
-| T18 | Clarification loop intact | Light issue panel answers → reanalysis → issue resolves; Overview/heatmap counts update. |
-| T19 | Funnel + chat intact | Activation, four-method intake, Fast Pass ≈30s, orientation, chat completion notices all work. |
-| T20 | `node --check` clean | Extracted `<script>` passes `node --check` with no error. |
+6. **Edit settles → Reanalyzing → Up to date.** Stop typing (or click out). **Expect:** the version bumps, and the save/analysis chip runs **Reanalyzing…** (pulsing) then **Analysis up to date** — with **no manual reanalyze button** anywhere (D070).
+
+7. **Saving changes no assessment (D088).** Watch the Outcome Confidence read while you edit. **Expect:** the read does **not** jump on the keystroke; the content is firmed (Confirmed by you) but the read catches up only when the analysis update lands.
+
+8. **Edit a table cell → Confirmed by you (D083/D196a).** Open Schedule, edit a Status cell. **Expect:** that cell's reveal chip and its row's gutter dot flip to **Confirmed by you** live; editing the cell **is** confirming it (the verb is Confirm).
+
+9. **Restructure a table.** In Resources, use the row gutter to insert a row and type into it; add a column. **Expect:** the new authored row is **Confirmed by you**; a new empty column stays **From OSLO** until typed; the same quiet Reanalyzing → Up to date runs (no manual reanalyze).
+
+10. **Weakness annotation → light issue panel.** In Resources, hover a red/amber weak span, then click it. **Expect:** a one-line summary on hover; clicking opens the **light issue panel** — the weakness is **never resolved inline**.
+
+11. **Weakness stepper.** Click "Jump to issue ⌃ / ⌄" in the toolbar. **Expect:** it walks between the weak spots in the open artifact ("k of N"), scrolling and highlighting each; when an artifact has none it reads "✓ No issues in view".
+
+12. **Resolved weakness drops its mark.** Resolve an artifact's issue (via the clarification loop / analysis update) and reopen it. **Expect:** the previously coloured span is now plain text (only live annotations render).
+
+13. **Work breakdown task tree.** Open **Work breakdown**. **Expect:** an authored graded **task tree** — workstreams → tasks → subtasks, **outline-numbered** (`1 · 1.1 · 1.3.1`), indented by level, rendered inside a table.
+
+14. **Every WBS row is From OSLO; thin ones graded.** Read the WBS rows. **Expect:** every row **From OSLO** until confirmed; the thinnest inferences carry a **neutral `low confidence`** pill — no red/amber on the grade (it is epistemic, not severity, D003).
+
+15. **Confirm a WBS task via the cell edit.** Edit a WBS task (or owner) cell. **Expect:** it flips **Confirmed by you** exactly like any other cell — the same generic engine, the same verb (Confirm, D196a).
+
+16. **Critical-path panel is read-only and outside the doc.** In the Work-breakdown view, find the **"Sequencing & critical path"** panel. **Expect:** it reads **From OSLO** with **low confidence** durations, sits **below** the editable document, and is **not editable** here (its semantics live in Slice 11).
+
+17. **Undo / redo.** Make an edit, click Undo, then Redo. **Expect:** the change reverts and re-applies; provenance/controls/annotations re-attach correctly after each; the quiet reanalysis re-runs.
+
+18. **Ask OSLO about this document (D108).** Click the toolbar **✦**. **Expect:** the chat reports the artifact's epistemic basis (From OSLO / Confirmed by you) and reliability and links to the live issue; the editor is untouched — it changed nothing.
+
+19. **Explorer badge is live.** Resolve an issue in an artifact, then look at its sidebar badge. **Expect:** the count drops (or the badge disappears); the colour reflects the remaining most-severe open issue.
+
+20. **Theme + a11y.** Toggle light theme; keyboard-tab through the explorer rows, the doc nav, the stepper, and the row/column controls; check reduced-motion. **Expect:** light parity holds; every control is keyboard-operable with visible focus; the "Reanalyzing…" pulse and scroll-into-view respect reduced-motion; colour is never the sole signal (provenance + the `low confidence` grade carry text).

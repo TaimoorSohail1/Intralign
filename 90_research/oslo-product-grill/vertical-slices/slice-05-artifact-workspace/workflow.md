@@ -1,56 +1,59 @@
 # Slice 5 — Plan Artifacts / Artifact Workspace · Workflow
 
-**Cumulative (Slices 1–5).** The full journey from Slice 1 is preserved; this document covers the NEW Slice-5 flows and where they attach.
+Cumulative (Slices 1–5). Actor workflows on the Artifact Workspace surface of the frozen build. Actors: **User** · **System** (client-side prototype render/state) · **AI** (simulated OSLO — timers + fixed illustrative data; no real model, no network).
 
-Decisions: **D066–D071**; inherited D006, D011, D042.
+> Regenerated to match the frozen build. Flows reference the current provenance/reanalysis model and the DL-143→156 Work-breakdown task tree. **Boundary A:** the task-model/critical-path/export flows are Slice 11's and are only pointed to here.
 
----
+## Preserved end-to-end journey (INHERITED)
 
-## Where the workspace attaches
+Invite → Activate → Welcome → Intake (4 methods) → **Fast Pass ≈30s** → land on the read-led Overview (Attention co-primary) → Outcome Analysis auto-runs, non-blocking → clarification loop closes issues via an analysis update. Completion notices in OSLO chat. Optional tour. The seven plan artifacts are drafted at intake (D035).
 
-Prior journey (unchanged): invite → activation → welcome → intake → Fast Pass ≈30s → land on **Overview** (Attention co-primary) → Extended Analysis auto-runs → clarification loop. Slice 5 adds a **third co-primary destination — Artifacts** — reachable at any point after landing.
+## Flow A — Open an artifact
 
-```
-[Overview]  ⇄  [Attention]  ⇄  [Artifacts]      (top-center co-primary switch)
-                                   │
-                                   ├─ explorer (7 artifacts, live issue badges)
-                                   └─ editor (prose / mixed / table)
-```
+1. **User** clicks a **Plan artifacts** row in the sidebar (or an Attention cell / issue that routes to the document).
+2. **System** `openArtifact(name)`: fills the center editor from `_artBodyLive(name)`, lights the active sidebar row, sets the breadcrumb, seeds table provenance (`_seedTableProvenance`), attaches table + block controls, builds the weakness stepper (`updateWnav`), refreshes explorer badges, resets undo history. For **Work breakdown** only, appends the read-only critical-path panel after `#artdoc`.
+3. **User** reads the draft; every block/cell shows its epistemic state (From OSLO by default); weak spans are inline-coloured.
 
-## Flow A — Open and read an artifact (D066/D067)
+## Flow B — Edit a sentence (prose block) → Confirmed by you
 
-1. User selects **Artifacts** (top-center) → workspace opens, explorer shows the 7 artifacts with live open-issue badges.
-2. User clicks an artifact (or Enter/Space) → `openArtifact(name)` renders it in the center editor with its type-aware format.
-3. Understanding artifacts read as prose (mixing bullets/tables where useful); Execution artifacts read as tables.
+1. **User** clicks into a paragraph/list item and types.
+2. **System** `onArtInput`: immediately attests the block (`_attestSelectionBlocks`) → its `.epi-tag` flips to **Confirmed by you** (D069/D011); stays silent (no "Editing…"/"Saving…"); debounces ~1500ms.
+3. **System** `commitArtEdit` (on idle or blur): autosaves + bumps the version + writes a History event → the state chip runs **Reanalyzing… → Up to date**.
+4. **AI** the analysis catches up at the update — the Outcome Confidence read may move **then**, never on the keystroke (D088). Editing changed the content, not the assessment.
 
-## Flow B — Investigate a weakness (D068)
+## Flow C — Edit a table cell → Confirmed by you (D083 / D196a)
 
-1. In the open artifact, a **colored span** marks a weak spot.
-2. **Hover** → one-line summary.
-3. **Click** → the **light Issue panel** opens for that issue (Why → Evidence → Clarification → Suggested fixes).
-4. The user answers the clarification (inherited D042) → reanalysis → the issue resolves → the annotation drops from the artifact and the explorer badge updates.
-   - The weakness is **never** resolved inline — resolution runs through the issue/reanalysis path.
+1. **User** clicks a body cell (e.g. an owner, a status, a WBS task) and types, or accepts it.
+2. **System** flips that cell `data-epi="attested"`, refreshes its reveal chip (`_ensureCellReveal`) and recomputes the row's gutter dot (`_refreshRowDot`) → both read **Confirmed by you** live. Editing a cell **is** confirming it (D196a — the per-item verb is Confirm).
+3. **System** debounces to the same Saved→Reanalyzing→Up to date commit as prose.
 
-## Flow C — Edit a sentence → Confirmed by you → reanalysis (D069/D070)
+## Flow D — Restructure a table (add / insert / delete row or column)
 
-1. User types into a block. That block flips **From OSLO → Confirmed by you** (left-border accent) — it is now a plan fact.
-2. The status chip runs **Saving… → Saved · analysis stale → Reanalyzing… → Up to date** automatically. The hint bar states: *saving changes no assessment; only reanalysis does.*
-3. No manual reanalyze button is offered at any point (D070/D006).
+1. **User** uses the row gutter (+ insert / × delete) or the column controls.
+2. **System** snapshots undo, mutates the table, re-attaches controls + provenance (a **user-authored** row is Confirmed by you; a **new empty column** is From OSLO until typed), and runs the **same** debounced reanalysis via `_commitFromStructuralEdit`. No manual reanalyze.
 
-## Flow D — Step through weaknesses / navigate artifacts (D071)
+## Flow E — Navigate weaknesses (D068 / D071)
 
-1. **Jump to weakness ⌃ k of N ⌄** cycles the weak spans in the open artifact, highlighting and scrolling to each.
-2. **‹ / ›** move between artifacts in order; disabled at the ends.
-3. Both are keyboard-operable.
+1. **User** clicks the stepper "Jump to issue ⌃ *k* of *N* ⌄" (`weaknessNav`).
+2. **System** scrolls the next live annotation into view and highlights it (`.wstep`).
+3. **User** hovers a weak span → **System** shows the summary popover; **User** clicks it → **System** opens the **light issue panel** (`openIssueFromAnno` → `openIssue`) — never resolved inline. Resolving the issue (via the analysis update) drops its inline mark on the next render (`_artBodyLive`).
 
-## Flow E — Feature tour, artifact-edit step (D071/D044)
+## Flow F — Open the Work breakdown task tree (DL-143→156)
 
-1. From the completion notice or the "Take a quick tour" affordance, the tour runs.
-2. Its artifact-edit step opens the workspace on **Resources** and spotlights the editor — explaining edit → Confirmed by you, inline weakness colors, and auto-reanalysis with no manual button.
-3. The tour then completes on the OSLO chat rail and sunsets (localStorage).
+1. **User** opens **Work breakdown** → **System** renders the authored graded task tree (workstreams → tasks → subtasks, outline-numbered), every row **From OSLO**, the thinnest inferences flagged neutral **low confidence** (D003), plus the read-only From-OSLO **Sequencing & critical path** panel below the editable doc.
+2. **User** confirms a task by editing/accepting its cell (Flow C) → it flips Confirmed by you.
+3. For the decomposition / critical-path / Full-plan / export semantics → **Slice 11** (`slice-11-execution-ready-planning-export`).
 
-## Boundaries
+## Flow G — Ask OSLO about this document (D108)
 
-- **Full Issues surface** (grouping/triage/By dimension·severity) → **Slice 6**. Annotations route to the light panel (seam).
-- **History / version timeline** → **Slice 7**. The version chip bumps; the append-only timeline is not built here.
-- **Apply-a-fix drafting into the artifact** → **Slice 6**.
+1. **User** clicks **✦** in the toolbar (or "Ask about this" on a weak span).
+2. **AI** the chat reports the artifact's epistemic basis + reliability honestly and links to the live issue. It mutates nothing and never claims to have edited or resolved anything.
+
+## Flow H — Simulated re-draft (merge guarantee, D084)
+
+1. **User** triggers **Sim OSLO re-draft** (demo).
+2. **System** `redraftArtifact`: keeps every **Confirmed by you** block/cell verbatim, refreshes only **From OSLO** content, re-wires provenance/controls, and runs the quiet reanalysis; a chat line confirms the kept edits.
+
+## Simulated-AI boundary
+
+All analysis is timers + fixed illustrative data. Provenance, the reanalysis chain, and the weakness set are computed from live DOM state (D173) — never authored to look further along. Every path obeys **D088** (the read moves only at an analysis update; editing runs no assessment) and **D003** (severity colour on annotations/issues only; the `low confidence` grade is neutral).

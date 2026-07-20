@@ -1,245 +1,94 @@
 # Slice 5 — Plan Artifacts / Artifact Workspace · Frontend / UI
 
-**Cumulative (Slices 1–5).** Theme, tokens, and all prior components are inherited 1:1 from the v4 baseline and Slices 1–4. This document covers the NEW Slice-5 UI. Client-side only (D016).
+Single openable HTML; dark default + light override on the same tokens (D015); WCAG 2.1 AA (focus-visible rings, keyboard operability, reduced-motion). No framework; plain JS + CSS variables. Colour discipline: severity **red/amber only** on weakness annotations + explorer badges (D003); the epistemic tags and the `low confidence` grade are **neutral chrome**, never severity or health colour.
 
-Decisions: **D066–D071** (+ **D073** patient/debounced reanalysis, **D074** directly-editable annotated text, **D075** structured-table row add/delete, **D076** silent-while-typing commit, **D077** hover-only epistemic tag, **D078** Notion-like rich-text editing, **D080** expanded Notion-style selection (RTF) toolbar, **D081** insert-row-anywhere on structured tables, **D082** row reordering (drag + keyboard) with discoverable top-insert, **D083** epistemic provenance on table cells — per-row gutter dot + per-cell hover reveal; **D084 (Batch A)** editor gap fold-in — undo/redo snapshot history, reanalysis-merge preservation on re-draft, table cell navigation, table column operations, paste sanitization; **D084 (Batch B)** authoring + a11y — "/" slash menu, image/file embedding, keyboard/touch reachability of hover-only info, markdown input shortcuts, whole-block drag-reorder; **D084 (Batch C)** polish — in-artifact find/replace, link edit/remove, opt-in save confirmation, empty/placeholder states, mobile/touch + responsive pass); D003 severity-only color; D015 dark default + WCAG 2.1 AA.
+> Regenerated to the frozen build (md5 `a327d702`). The Artifact Workspace is the **explorer (in the global sidebar) + a type-aware editor** — not the July-9 layout. **Boundary A:** the critical-path panel and the task model are rendered here but modelled in Slice 11.
 
----
+## Layout
 
-## App shell (D093/D094/D095 — cascaded from Slice 6, shell cascade)
+- **Explorer** — in the persistent left sidebar under **Plan artifacts**, subgroups **Understanding** / **Execution** (D093).
+- **Editor pane** (`#pane-artifacts` / `.aw-pane`): a center column `#artCenter` holding the empty state `#artEmpty` and `#artView` (filled by `openArtifact`).
 
-> **Shell cascade (D095, 2026-07-09).** Slice 5's old top-center view switch (`.vswitch`: Overview·Attention·Artifacts) and its in-Artifacts left-rail explorer are **retired**. The approved persistent app shell now matches Slice 6: a 3-column grid `#app` = `[sidebar | main | chat]` (`grid-template-columns:240px 1fr 340px`).
+## The explorer — sidebar `Plan artifacts` rows
 
-- **Persistent left sidebar** (`.sidebar#appSidebar`, `grid-column:1`): a scroll region + a pinned footer.
-  - **PROJECT** (`.sb-group`): `#sbOverview` (◎, LIVE) · `#sbIssues` (⚑, `.sb-badge#vsIssuesBadge` open count → **Slice-6 seam** `showView('issues')`) · `#sbHistory` (◔ → **Slice-7 seam** `showView('history')`) · `#sbAttention` (▦, `.sb-badge#vsAttnBadge`, LIVE).
-  - **PLAN ARTIFACTS** (`.sb-group`) split into `.sb-subgroup` **Understanding** (Intent·Context·Scope·Requirements) / **Execution** (Work breakdown·Schedule·Resources). Rows are `.sb-nav.sb-art[data-art]` with the live `.ex-fb[data-badge]` open-issue badge → `openArtifact(id)`.
-  - **Footer** (`.sb-foot`): bordered `.sb-tour#railTour` ("Take a quick tour") · `.sb-tier` Free-plan chip with **Upgrade** · `.sb-acct#acctBtn` ("Your account · Settings") → opens the account menu.
-  - Active state: `_syncNav()` toggles `.sb-nav.active` + `aria-current="page"` for the current view; an open artifact lights its `.sb-art` row (only while the Artifacts view shows). Nav chrome + badges are **neutral/brand** (never severity color as chrome, D003); issue badges keep severity color.
-- **Top bar** (`.topbar`, spans all cols): `.sb-hamburger` (narrow-width drawer toggle) · Intralign brand · **project switcher** `.tb-proj#tbProj` (holds `#projName`; multi-project = Slice-8 seam) · `sample` tag · breadcrumb `.tb-crumb#tbCrumb` (reflects current view / open artifact via `_setCrumb`/`_viewLabel`) · **confidence pill** `#confpill` (unchanged) · right cluster **search `#tbSearch`** (⌕ → palette) · Share/Export (Slice-9 seams) · Reports · **Free** plan chip.
-- **Command palette** (`#palScrim` / `.palette`, D094): opens from `#tbSearch` and **⌘/Ctrl+K**; "Search or jump to…" input; grouped, live-filtered results **GO TO** (Overview·Issues·History·Attention) · **PLAN ARTIFACTS** (7, live) · **OPEN AN ISSUE** (open issues → the light issue panel). Keyboard-operable (↑↓ / ↵ / esc); neutral highlight.
-- **Seams** are clearly-labeled center panes, never broken links: `#pane-issues` ("Full Issues view arrives in Slice 6", points to the Attention map / Start-here / palette) and `#pane-history` ("History & timeline — arrives in Slice 7"). Top-bar/sidebar seams (Projects/Share/Export/Reports/Settings/Upgrade) surface the `#sbToast` labeled stub.
-- Narrow widths: `@media(max-width:860px)` collapses the sidebar to an overlay drawer (☰ + `.sb-scrim`); `760px` drops the chat rail (reachable via the ✦ OSLO tab).
-
-## Workspace pane (Artifacts view)
-
-- **`#pane-artifacts.aw-pane`**: single-column (`grid-template-columns:1fr`) when active — **just the center editor** (`.aw-center#artCenter`). The in-Artifacts explorer is gone; the persistent sidebar's Plan-artifacts nav replaces it. The `.body` column and the OSLO chat rail are unaffected.
-
-## Explorer → sidebar (D066, cascaded to the sidebar)
-
-- The 7-artifact explorer moved from the in-Artifacts left rail to the **persistent sidebar** (above). Rows are `.sb-nav.sb-art[data-art]`; the live open-issue badge is still `.ex-fb[data-badge]` populated by `renderExplorerBadges()`.
-- Badge `.ex-fb`: severity classes `crit` (danger fill), `mod` (amber fill), `warn` (neutral outline), `clear` (hidden). **Color is severity-only (D003)**; the number is the open count.
-
-## Editor header + toolbar
-
-- `.art-head`: `<h1>` display name + `.art-edit-badge` ("✎ Editable") + info `ⓘ` + `.art-grp` layer label.
-- `.art-bar`: **artifact nav** (`.art-nav` ‹ ›) · **version** (`vN`, mono) · **weakness stepper** (`#wnav`) · **editor-action group** (`.art-actions` — undo · redo · insert · find, **D085**) · **savestate chip** (`#savestate`, right-aligned).
-- **Weakness stepper** (`.wnav`): label "Jump to weakness" + `.wbtn` ⌃ / ⌄ + `.wct` "k of N". Empty artifact → "✓ No weaknesses in view".
-- **Savestate chip** (`.savestate`): `.editing` (neutral, "Editing…" — the calm typing state, **D073**) · `.ok` (green dot, "Up to date") · `.saving` (neutral, legacy) · `.stale` (amber, "Saved · analysis stale") · `.reana` (amber pulsing, "Reanalyzing…"). Note: this reuses the maturity/state palette — the amber here signals **analysis state**, not health, and appears only on the state chip, not on confidence/CAF.
-- **D073 — patient / debounced reanalysis:** `onArtInput()` only sets the calm **"Editing…"** state and (re)arms a debounce timer; it does **not** advance toward reanalysis while the user is typing. The Saved→stale→Reanalyzing…→Up to date chain is committed by `commitArtEdit()`, fired on **~1500ms typing-idle** OR on **`#artdoc` `blur`** (entry complete). Post-commit stage timings are unchanged (~1300ms → ~1500ms). A single keystroke therefore shows only "Editing…", never an immediate "Reanalyzing…". D069 block-attestation still happens immediately on input.
-- **Hint bars** (`.artbar-hint.editing` / `.stale`): shown while editing/stale; state the saving≠assessment rule.
-
-## Editor body (`.doc#artdoc`) — D067
-
-- `contenteditable="true" spellcheck="false"`, max-width 720px.
-- Typography: `p` (14.5px prose), `h3` (uppercase subhead), `ul/li` (custom bullet), `table/th/td` (structured). Blocks hover-tint; focus-visible ring (D015).
-- **`mixed` format** demonstrated: Intent (prose + bullets), Context (prose + table), Requirements (prose + bullets).
-
-## Structured-table row controls (`.doc table`) — D075 · insert-anywhere D081 · reorder D082
-
-- **Scope:** every `<table>` in `#artdoc` — the Execution artifacts (Work breakdown / Schedule / Resources) and mixed Understanding tables (Context stakeholder table). `attachTableControls()` runs on **each** `openArtifact()` (tables are re-rendered from `ARTBODY` per open, so controls are (re)attached post-render) and again after add/insert/delete. It is **idempotent** (stamps are keyed on `.row-gutter` / `.row-del` / `[data-addrow]`), so re-opening or switching artifacts never duplicates controls.
-- **"+ Add row" affordance** (`.addrow`, dashed, subtle): inserted directly **after** each `<table>`. `contenteditable="false"`, `role="button" tabindex="0"`, `aria-label="Add a row to this table"`. Click or Enter/Space → `awAddRow(tbl)`. **Appends** a `<tr>` at the end. This bottom append is preserved unchanged.
-- **Per-row insert (`+`) — D081, insert-anywhere:** every **body** row's leading gutter cell (`td.row-del`) now stacks two controls in a `.rowctlwrap` column — an insert `+` (`.rowins`) above the delete `×` (`.rowdel`). The `+` is `contenteditable="false"`, `role="button" tabindex="0" aria-label="Insert a row after this row"`, revealed on `tr:hover` / `tr:focus-within` / `:focus-visible`. Click or Enter/Space → `_insertRowAfter(tr)`, which inserts a fresh `<tr>` **immediately after that row** in the same `tbody`.
-- **Top insertion — D081, discoverable D082:** the header row's `th.row-gutter` (which carries no delete `×`, since the header is never deletable) carries its own `.rowins` `+` (`aria-label="Insert a row at the top of this table"`, `title="Insert row at top"`). Click or Enter/Space → `_insertRowAtTop(tbl)`, which inserts the new row as the **new first body row**. This is the single, clean top-insert control (chosen over an "insert-above" on the first body row). **D082 discoverability:** the resting opacity was raised from `0` to `.4` (a faint but always-visible `+`) and it brightens to full opacity on `thead tr:hover` / `:focus-within` / its own `:hover`/`:focus-visible`, plus the `title` tooltip — so users find top-insert without having to hover the whole header row first.
-- **Per-row drag handle (`.rowgrip` ⣿) — D082, reorder:** every **body** row's gutter now stacks **three** controls in the `.rowctlwrap` column — a drag handle `⣿` (`.rowgrip`) **above** the insert `+` above the delete `×`. The handle is `draggable="true"`, `contenteditable="false"`, `role="button" tabindex="0"`, `aria-label="Reorder row — drag, or use Up and Down arrow keys to move"`, `title="Drag to reorder (or ↑/↓)"`, revealed on `tr:hover` / `tr:focus-within` / `:focus-visible` (resting opacity `0`, like the other body-row controls; `cursor:grab`/`grabbing`).
-- **Drag-and-drop reorder — D082 (prototype-grade HTML5 DnD):** `_wireRowGrip(grip,tr)` sets each handle's `dragstart` (records the source row in module-level `_dragRow`, adds `.row-dragging` dim) / `dragend` (clears state + cues). `attachTableControls()` stamps **delegated** `dragover`/`dragleave`/`drop` on each `<tbody>` once (`data-dndwired`), so current and future rows are covered. `dragover` computes above/below by pointer `clientY` vs the target row's mid-line and paints a drop indicator (`.drop-before` = `inset 0 2px 0 var(--primary)` / `.drop-after` = `inset 0 -2px`); `drop` moves `_dragRow` to that slot **within the same `tbody` only** (never above the header — the header has no grip and the tbody delegation ignores non-body targets). The full `<tr>` (its data cells + attested/`data-epi` state) moves intact.
-- **Keyboard move (WCAG) — D082:** with a handle focused, **↑/↓ (or Alt+↑/↓)** call `_moveRow(tr, -1|+1)`, which reparents the row one position up/down inside its own `tbody` (no-op at the ends; header never touched), then **keeps focus on the handle** (`grip.focus()` after the move). No mouse required.
-- **After any reorder (`_afterReorder`)** — drag-drop or keyboard — controls are re-attached idempotently (`attachTableControls()`), each row keeps its own attested cells, the issue stepper refreshes (`updateWnav()`, since a moved row may carry an inline `.anno`), and the **same** quiet debounced reanalysis runs (`_commitFromStructuralEdit()` → ~1500ms → Reanalyzing… → Up to date; no "Editing…"/"Saving…" churn, D076).
-- **Shared row-building (D075/D081):** `awAddRow`, `_insertRowAfter`, and `_insertRowAtTop` all build the `<tr>` via **`_makeRow(tbl)`** — data-cell count matches the header (`th:not(.row-gutter)`, falling back to the first body row's data-cell count); each new cell is `.attested` / `data-epi="attested"` (**Confirmed by you**, D069 — the user authored it) and holds a zero-width space so it is caret-placeable. After DOM insertion all three call **`_finishNewRow(tr)`**, which stamps the row's own gutter controls via `_ensureRowDel(tr)` (insert `+` **and** delete `×`), places the caret in the first new data cell, and runs the debounced commit. So column count, attested marking, caret placement, and control re-attachment stay consistent across append / insert-after / insert-top.
-- **Per-row delete** (`.rowdel` ×): still a **leading gutter cell** (`td.row-del`, `contenteditable="false"`) on every **body** row. The `×` is `role="button" tabindex="0" aria-label="Delete this row"`, revealed on `tr:hover` / `tr:focus-within` / control `:focus-visible`. Click or Enter/Space → `awDeleteRow(tr)`. **Header row is never deletable** — the header gutter carries only the insert `+` (no `×`), and `awDeleteRow` early-returns for any `thead` row.
-- **Reanalysis wiring (D073):** add, **insert (after / top)**, and delete all funnel through `_commitFromStructuralEdit()` (via `_finishNewRow` for the row-adding paths), which sets `_pendEdit` and (re)arms the **same ~1500ms debounce** that `commitArtEdit()` uses for text edits — silent while editing (no "Editing…"/"Saving…" churn, D076), then Reanalyzing… → Up to date. Delete also calls `updateWnav()` since a removed row may have carried an inline `.anno`.
-- **Annotated rows:** deleting a row that holds an inline issue annotation is **allowed** (restructuring); the annotation simply goes away with the row and reanalysis reconciles the issue set. Not hard-blocked.
-- **Theming (D003):** all controls are **neutral/muted UI chrome**. The drag handle `⣿` tints to `--text` on hover/focus (`--hover-tint` background); the insert `+` tints to brand (`--primary-light`, `rgba(217,122,58,.12)` background) on hover/focus; the delete `×` tints to `--danger` only on hover/focus (`rgba(199,91,91,.12)` background) — never severity red/amber/green as chrome. The drop indicator uses `--primary` (a brand line), not a severity color. The bottom add affordance tints to primary on hover. All controls (grip, `+`, `×`) are `contenteditable="false"`, so they never enter the text run and are never counted as artifact prose/annotations (`curAnnos()` still selects only `.anno`). The gutter stays compact: three subtle stacked controls, each shown on hover/focus (except the always-hinted header top-insert `+`).
-
-## Inline weakness annotations (`.anno`) — D068/D003
-
-- `.anno.crit` (danger), `.anno.mod` (warning), `.anno.warn` (neutral). Dotted underline + hover tint. **D074 — the `.anno` span is now directly (partially) editable:** it carries **no** `contenteditable="false"` and **no** text-onclick, so clicking places the caret (`cursor:text`) to edit part of the weak text; the flag styling (color + dotted underline) is retained.
-- **Single tooltip (Rev 3):** the `.anno` text span carries **no native `title`** — the weak text spawns exactly one tooltip source, the custom `.anno-pop` popover. The only native `title`/`aria-label` is on the ⚠ marker (accessibility).
-- **Issue reachability without clicking the text (D074):** (a) the summary popover carrying **"Open issue →"** (`.anno-open` → `openIssueFromAnno(id)`), and (b) `.anno-mark` — a tiny ⚠ superscript immediately after the span (`contenteditable="false"`, `onclick="openIssueFromAnno(id)"`).
-- **Popover is a shared, viewport-anchored `#annoPop` (Rev 7 — fixes the bleed-through/transparency bug):** the per-annotation `.anno-pop` span was `position:absolute` **inside** the contenteditable, so under the app-shell it was clipped by the `.aw-center{overflow-y:auto}` scroll container and painted **under** the `.art-bar` toolbar — editor content showed through it (looked transparent), worst near the top of the editor. The inline `.anno-pop` is now `display:none !important` and kept **only as the content source**; a single `#annoPop` `<div>` is appended to `<body>`, `position:fixed`, `z-index:240` (**below** the issue flyout's 260, **above** the phasebar 200 / toast 210 / editor toolbar), fully opaque (`background:var(--surface)` + solid `--border-2` + shadow). On `.anno` hover (or ⚠ focus/tap), JS copies the inline span's `innerHTML` into `#annoPop` and positions it from the annotation's `getBoundingClientRect()`: **prefers ABOVE**, **flips BELOW** when the "above" box would cross the toolbar's bottom edge (`_annoPopTopFloor()` = `.art-bar` bottom + 4), and **clamps horizontally** to the viewport. It escapes every local stacking/overflow context, so it can never be clipped or overlapped. `curAnnos()` is unaffected — `#annoPop` is body-level, not inside `.doc`.
-- **⚠ marker = persistent, primary "investigate" affordance (Rev 3):** `.anno-mark` has an explicit `display:inline` base rule so it is **always visible** next to a flagged span, with a clear hover state (`opacity:1` + tinted background); it is hidden only inside `.anno.editing`. This is the dependable, never-disappearing path to the issue; the popover link is a convenience.
-- **Hover-stable popover (Rev 3 → Rev 7):** the `#annoPop` stays open while the pointer is over the annotation **or** over the popover itself — a **hover-intent** hide delay (`~140ms` via `_scheduleAnnoPopHide`) plus `mouseenter`/`mouseleave` on `#annoPop` bridge the gap, so the cursor can travel to the "Open issue →" link without the popover vanishing. (Replaces the old CSS-only `.anno-pop::before` bridge, which no longer applies to a fixed body-level element.) Editor scroll / window resize hide it (re-shows on next hover/focus); **Esc** and click-away close it.
-- **D074 (optional signal):** `.anno.editing` drops the span's flag styling and hides the ⚠ marker; entering the caret also calls `hideAnnoPop()` so the summary is suppressed while editing (Rev 7 — replaces `.anno.editing:hover>.anno-pop{display:none}`). Reanalysis still owns closure; the edit never resolves the issue inline.
-- `_artBodyLive()` unwrap (resolved issue) uses the weak **text only** — it strips `.anno-pop` and removes the trailing `.anno-mark` sibling.
-- `.anno.wstep`: outline applied by the weakness stepper on the current span (`curAnnos()` still selects `.anno`).
-- Severity color appears **only** on annotations (and the explorer badges / issue panel) — confidence and CAF stay neutral.
-
-## Epistemic accent (D069) + hover-only tag (D077)
-
-- **Accent retained (D069):** `.doc p.attested`, `li.attested`, `h3.attested`, `td.attested` keep the **left-border accent** (`inset 3px 0 var(--primary)`). The epistemic **state** (derived vs attested) and its subtle visual accent still read at a glance; only the text tag was demoted.
-- **D077 — text tag demoted to hover/focus:** the `.epi-tag` text ("From OSLO" / "Confirmed by you") is no longer standing chrome. `.epi-tag{display:none}` by default for **both** states (the attested tag's former permanent `display:inline-block` was removed). It is revealed only on `:hover` **or** `:focus-within` of the block (`p/li/h3` — keyboard-accessible per D015): `.doc p:hover>.epi-tag, …:focus-within>.epi-tag{display:inline-flex}`. `pointer-events:none` on the tag so it never eats a click or blocks annotation hover; `z-index:4` keeps it below the annotation popover.
-- **Saving≠assessment note kept on the hover (D077):** the tag carries a tiny `.epi-why` ⓘ (`pointer-events:auto`) whose tooltip reads "Saving your changes makes no assessment — only reanalysis does." Reuses the `.info`-style `::after` tooltip pattern.
-- **Live flip on edit:** `_attestSelectionBlocks()` (shared by `onArtInput()` and rich-text `rtExec()`) adds `.attested` + `data-epi="attested"` to the touched block(s) and rebuilds the hover tag's `innerHTML` to "Confirmed by you" **preserving the ⓘ note**. The accent updates live the moment a block flips derived→attested; the tag text only shows on hover.
-- `_epiTag(e)` renders the tag markup (text + `.epi-why` ⓘ) for both states in `ARTBODY`.
-
-## Table-cell epistemic provenance (D083)
-
-Tables can't wear the prose `.epi-tag` (reserved for `p`/`li`/`h3`). Instead each **body data cell** carries an epistemic **state** (`data-epi="derived"|"attested"`) surfaced two ways — a per-**row** gutter dot (primary, glanceable) and a per-**cell** hover/focus reveal. **Neutral/brand tints only — never severity color as provenance chrome (D003).**
-
-- **Per-row dot (`.rowprov`) — primary signal:** appended into each body row's `.rowctlwrap` gutter (below the grip `⣿` / insert `+` / delete `×`), `contenteditable="false"`. Rendered as a 7px `::before` dot: `.rowprov.derived` = **muted `--subtle`** @ .55 opacity (**From OSLO** — every data cell derived); `.rowprov.attested` = **brand `--primary-light`** with a faint `rgba(217,122,58,.18)` halo (**Confirmed by you** — the row has ANY attested cell). `title` + `aria-label="Row provenance: <state>"` reflect the state. State from **`_rowProvState(tr)`** (attested if any `td:not(.row-del)` is `data-epi="attested"`/`.attested`); **`_refreshRowDot(tr)`** sets class + title/aria idempotently.
-- **Per-cell reveal (`.cell-epi`) — disambiguates a single edited cell:** appended **last** to each body data cell by **`_ensureCellReveal(td)`**, `contenteditable="false"` + `aria-hidden`, `pointer-events:none`. `display:none` by default; shown on `td:hover` **or** `td:focus-within` (keyboard-accessible per D015) as a small pill reading **"From OSLO"** / **"Confirmed by you"** (`.derived` muted / `.attested` brand tint, mirroring the `.epi-tag` palette). `title` reuses the `_EPI_WHY` "saving ≠ assessment; only reanalysis does" note. Appended-last + `pointer-events:none` so it never joins the text run, isn't caught by `curAnnos()` (`.anno` only), and doesn't fight the inline annotation popover or gutter controls.
-- **Optional standing cue:** `td.attested::after` — a faint 4px corner dot (`--primary-light` @ .5) on attested cells; low-noise, the row dot stays primary.
-- **Seed on open:** `_seedTableProvenance()` (called in `openArtifact` **before** `attachTableControls`) marks every untouched drafted body cell `data-epi="derived"` (From OSLO) and stamps its reveal chip. A cell holding only an inline `.anno` is still OSLO-derived → derived unless edited.
-- **Live flip:** `onArtInput()` (which already attests the `td` via `_attestSelectionBlocks`'s `closest('p,li,td,h3')`) now also calls `_refreshCellForSelection()` + `_refreshRowDotForSelection()` — editing a cell flips that cell's chip + only that row's dot to Confirmed by you; `rtExec()` does the same after a format edit inside a cell.
-- **Add/insert:** `_makeRow` cells are attested (D069); `_finishNewRow` runs `_ensureCellReveal` per new cell + `_refreshRowDot(tr)` → a new row's dot/chips read Confirmed by you.
-- **Reorder:** the dot lives inside the `<tr>`, so it travels with the row on drag/keyboard move; `_afterReorder()` also runs `_refreshAllRowDots()` to keep title/aria + chips in sync.
-- **No new reanalysis path:** cell/row-dot refresh is immediate + cosmetic; the quiet debounced Saved→stale→Reanalyzing…→Up to date chain (D073/D076/D079, ~1500ms, dot-only, no "Editing…/Saving…") is unchanged.
-
-## Rich-text editing (D078 · expanded to D080) — Notion-like selection toolbar
-
-- **Notion-style selection (RTF) popup (D080):** a single rounded pill bar (`.rt-toolbar#rtToolbar`, `position:fixed`, ~36px tall, dark elevated surface `--surface-2` on `--border-2` with layered `box-shadow`) appears above a non-empty selection inside `#artdoc`. Contents are grouped left→right with thin `.rt-sep` vertical dividers between groups:
-  1. **Turn-into / block dropdown** (`.rt-turn` → compact "Text ▾" trigger `#rtTurnBtn` opening `#rtTurnMenu`, `role="menu"`): **Text (Paragraph) · Heading 1 · Heading 2 · Heading 3 · Bulleted list · Numbered list · Quote**. Blocks map to `formatBlock` (`p`/`h1`/`h2`/`h3`/`blockquote`); lists to `insert(Un)orderedList`. The trigger label reflects the current block; the active menu item is highlighted (`.on`).
-  2. **Inline group:** **Bold · Italic · Underline · Strikethrough · Inline code**. Bold/italic/underline/strikeThrough via `execCommand`; **code** (`_code`) toggles a `<code>` wrap around the selection.
-  3. **Link:** a **🔗 Link** button (`_link`) that swaps the pill into an inline URL field (`#rtLinkInput` + Apply); Enter/Apply wraps the selection via `execCommand('createLink')` (prototype-grade — a bare host is prefixed `https://`; no navigation). Escape cancels and restores the selection.
-  4. **Indent group:** **Outdent · Indent**.
-- **Show-on-selection behavior (unchanged from D078):** hides on empty selection, focus loss, `mousedown` outside editor+toolbar, or editor re-render. A `mousedown` `preventDefault` on the toolbar keeps `#artdoc` focused and the selection intact when a control is clicked (the URL field is exempted so it can take focus). `z-index:120` — **below** the annotation `.anno-pop` and issue panels, so the two never fight.
-- **Active-state highlighting:** `_rtSyncActive()` sets `.on` from `queryCommandState` for inline marks, from `_rtInCode()` for the code button, and from `_rtCurrentBlock()` for the Turn-into label + active menu item.
-- **Keyboard/accessibility:** buttons carry `title`/`aria-label`; the dropdown is `aria-haspopup="menu"` + `aria-expanded`, opens via click, focuses its first item, and closes on **Escape**. Shortcuts: **⌘/Ctrl+B / +I / +U**; **Tab / Shift+Tab** indent-outdent only when the caret is inside an `<li>`.
-- **Positioning:** `_rtPosition()` centers the pill above the selection's `getBoundingClientRect()`, clamped to the viewport, flipping below if there's no room above; in link-entry mode it anchors off a saved range (`_rtSavedRange`) so the pill stays put while the URL field is focused. Reacts to `selectionchange`, capture-phase `scroll`, and `resize`.
-- **Implementation is PROTOTYPE-GRADE:** actions map to `document.execCommand` (`formatBlock`/`bold`/`italic`/`underline`/`strikeThrough`/`insert(Un)orderedList`/`indent`/`outdent`/`createLink`) plus a small `<code>` wrap toggle. A real build maps these to a proper rich-text document model, not `execCommand`.
-- **Same debounced commit as typing (D073/D076/D079):** `rtExec(cmd,arg)` runs the command, then `_attestSelectionBlocks()` (block → **Confirmed by you**), `attachTableControls()` + `updateWnav()` (list restructuring can move `.anno` spans), sets `_pendEdit`, and (re)arms the **same ~1500ms debounce** as text edits → silent while editing, then the **dot-only** indicator goes Reanalyzing… → Up to date (no reflow). **No "Editing…"/"Saving…" churn** (D076). Every new format action (turn-into, underline, strike, code, link) therefore attests the block and quietly reanalyzes exactly like typing.
-- **List CSS:** top-level drafted Understanding bullets keep the custom `•`; `execCommand`-emitted `<ol>` uses native `decimal` markers, and nested lists (from indent) render with native `disc`/indentation so hierarchy + numbering read correctly.
-- **Coexistence:** formatting works inside table cells; `.anno` spans, their editability, popover, and ⚠ marker are untouched; `curAnnos()` still finds `.anno`; epistemic accents (D077) are preserved. `initRichText()` is wired once on boot (idempotent).
-
-## Editor gap fold-in — Batch A (D084)
-
-Five prototype-grade additions to the artifact editor. All new controls are `contenteditable="false"`, keyboard-accessible, theme-consistent, and **neutral/brand tints only (never severity color as chrome, D003)**. None disturbs `curAnnos()` (`.anno` only), the stepper, the RTF toolbar, the gutter/row controls, table-cell provenance, or the quiet debounced reanalysis (D073/D076/D079).
-
-### 1 · Undo / redo — snapshot history
-- **Model (PROTOTYPE-GRADE):** per-artifact `#artdoc` **innerHTML snapshot** stacks — `_undoStacks[name]` / `_redoStacks[name]` (not a document/diff model). `_UNDO_CAP = 50` (oldest dropped). `_resetHistory(name)` is called in `openArtifact` (snapshots are per open).
-- **When a snapshot is pushed (BEFORE the mutation, via `_pushUndo()`):** every structural op — `awAddRow` · `_insertRowAfter` · `_insertRowAtTop` · `awDeleteRow` · `_moveRow` (keyboard reorder) · the drag-drop `drop` handler · `awAddColumn` · `awDeleteColumn` · `onArtPaste` · `rtExec` (any format). For **typing**, one **coalesced** snapshot per idle burst: a `_needTextSnapshot` flag captures the pre-burst state on the first content keydown, and is re-armed when the ~1500ms idle commit fires (`commitArtEdit`) — never one snapshot per keystroke.
-- **Restore (`_restoreSnapshot`)** sets `#artdoc.innerHTML`, then re-runs `_seedTableProvenance()` + `attachTableControls()` + `_refreshAllRowDots()` + `updateWnav()` so gutter controls, provenance dots/chips, and the weakness stepper re-attach and stay consistent, then runs `_commitFromStructuralEdit()` (the quiet reanalysis — no "Editing…/Saving…" churn). A `_restoringSnapshot` guard prevents re-entrant pushes/commits during restore.
-- **Keys:** `⌘/Ctrl+Z` = undo · `⌘/Ctrl+Shift+Z` or `Ctrl+Y` = redo (in the `#artdoc` keydown handler). Clamp at stack ends; any new edit clears the redo stack.
-
-### 2 · Reanalysis-merge preservation — `redraftArtifact(name)`
-- Wired to a phase-bar demo trigger **`#redraftBtn` — "Sim OSLO re-draft"** (`redraftArtifact()` on the open artifact). Proves the D069/D083 merge guarantee: **attested ("Confirmed by you") blocks/cells are preserved VERBATIM; only derived ("From OSLO") content may be refreshed.**
-- **Mechanism (PROTOTYPE-GRADE, positional match):** parse a fresh `_artBodyLive(name)` OSLO draft; for each live `p/li/h3` and each table cell, keep it untouched if `.attested`/`data-epi="attested"`, else replace its `innerHTML` from the same-position fresh block/cell (derived cell keeps its `.cell-epi` chip + stays `derived`). **No fabricated numbers** — derived content is simply re-rendered from OSLO's canonical draft. Then `_seedTableProvenance` + `attachTableControls` + `_refreshAllRowDots` + `updateWnav` + quiet reanalysis. A quiet chat line confirms: *"Re-draft complete — your confirmed edits were kept …"*.
-
-### 3 · Table cell navigation
-- Inside a `td:not(.row-del)`: **Tab** → next data cell, **Shift+Tab** → previous, **wrapping to the next/previous row**. At the **last cell of the last body row**, Tab **appends a new row** (via `awAddRow`, caret lands in its first cell). At the very first cell, Shift+Tab stays put. (`_tableCellNav`.)
-- **Arrow Up/Down** move to the cell **above/below in the same column** when the caret is at the cell's top/bottom edge (`_caretAtCellEdge` heuristic via range client-rects → `_tableCellVert`).
-- The table check runs **before** the list-indent branch in the keydown handler, so **Tab still indents/outdents inside `<li>`** and table Tab never indents (they are mutually exclusive — no `<li>` inside a `<td>` here).
-
-### 4 · Table column operations
-- **Per-column header controls** stamped by `_ensureColControls(tbl)` (called from `attachTableControls`): a `.colctl` wrapper (`contenteditable="false"`) on each non-gutter `<th>` holding a brand-tinting **"+" (add column right)** and a danger-tinting **"×" (delete this column)**, revealed on `th:hover`/`:focus-within`, keyboard-accessible (`role="button" tabindex="0"`, Enter/Space). Neutral/brand tints only.
-- `awAddColumn(tbl, afterIdx)` inserts a `<th>` ("New column") and a `<td>` in **every** body row at the matching position; **new cells are `data-epi="derived"` / empty** (a new column is structure/scaffolding, not an authored fact — it stays *From OSLO* until the user types, which then attests that cell via the normal edit path). `awDeleteColumn(tbl, idx)` removes the header + matching `<td>` from every row (never deletes the last remaining column). Both push undo, re-attach controls + provenance, and run the quiet debounced reanalysis. *(Column reorder/resize deferred — row reorder already ships; column DnD is higher-risk polish.)*
-
-### 5 · Paste sanitization
-- `onArtPaste(e)` (delegated `paste` listener on `document`, gated to `#artdoc`) intercepts rich paste and inserts **sanitized** content. `_sanitizePastedHTML` rebuilds the tree keeping only an allowlist (`b/strong/i/em/u/br/p/div/ul/ol/li/h1/h2/h3/code`) and **drops ALL attributes** (foreign inline styles/classes/ids/event handlers) plus `script/style/link/meta`; disallowed tags are unwrapped (children kept). **Paste into a table cell is coerced to plain text** (stays within the cell). Nothing injected can break `.anno` spans, epistemic classes, table controls, or the theme. After paste: push undo, attest the touched block, re-attach controls + provenance, quiet debounced reanalysis. Verified: a styled/scripted `<p style … onclick … class …><script>…` paste yields `<p>Hi <b>bold</b> styled</p><div><ul><li>a</li></ul></div>` — no `style`/`class`/`onclick`/`script`, `<b>`/`<ul>`/`<li>`/text preserved.
-
-## Editor gap fold-in — Batch B (D084)
-
-Five more prototype-grade additions (authoring + accessibility). All new controls/menus are `contenteditable="false"`, keyboard-accessible, theme-consistent, and **neutral/brand tints only (never severity color as chrome, D003)**. Every insertion routes through `_pushUndo()` (Batch A) so it is undoable, and runs the **quiet debounced reanalysis** (`_commitFromStructuralEdit` → ~1500ms → Reanalyzing… → Up to date; no "Editing…/Saving…" churn). None disturbs `curAnnos()`, the stepper, the RTF toolbar, table controls/column ops/cell nav, provenance, or paste sanitization.
-
-### 1 · Block insertion — "/" slash menu
-- **`#slashMenu`** (`role="listbox"`, `contenteditable="false"`) opens near the caret when a **"/"** is typed at the **start of a block** (or after whitespace) — detected in `onArtInput` → `_syncSlashFromInput()` reading the caret text node. It lists insertable blocks: **Text · Heading 1/2/3 · Bulleted list · Numbered list · Quote · Divider (`<hr>`) · Table · Image · File**. Typing after "/" **filters** (`_slashFiltered`); **↑/↓** navigate, **Enter/click** inserts (`_slashChoose`), **Esc** closes. The slash menu owns ↑/↓/Enter/Esc while open (intercepted before editor shortcuts in the `#artdoc` keydown handler). Suppressed inside a table cell.
-- `_slashChoose(key)` pushes undo, strips the literal "/query" text (`_stripSlashText`), inserts the block (`_slashInsert` — turns the current empty block via `formatBlock`/list when possible, else inserts a new top-level block), marks it **attested ("Confirmed by you")** (`_attestNewBlock`), re-seeds provenance + `attachTableControls` + `_attachBlockGrips`, places the caret, and runs the quiet reanalysis.
-- **Table** insertion (`_makeDefaultTable`) creates a default **3×3** table (header row + two body rows, all cells attested) that **immediately gets the full table controls** — gutter grip/insert/delete, per-column controls, provenance dots/chips, cell nav — via `_seedTableProvenance()` + `attachTableControls()` + `_refreshAllRowDots()`.
-
-### 2 · Image / file embedding
-- Slash **"Image"** (`_slashInsertImage`): prompts for an **image URL**, or (blank) opens a hidden `#embedFileInput` and reads a local file via **FileReader → data URL** (`_wireEmbedInput`). Inserts a themed `<img>` (max-width, rounded, bordered) inside a **`<figure class="embed" contenteditable="false" data-epi="attested">`** with an **editable `<figcaption>`** and a **remove control** (`.embed-x`, `role="button"`, keyboard-accessible). A trailing empty `<p>` is guaranteed after the figure so the doc stays editable.
-- Slash **"File"** (`_slashInsertFile`): a generic **file chip** (`.filechip` — icon + name + size) for non-images. **No upload/backend** — data URL / picker only. `_removeEmbed` deletes the block (undoable, quiet reanalysis). Blocks are attested, undoable, and run the quiet reanalysis.
-
-### 3 · Keyboard/touch reachability of hover-only info (a11y, D015)
-- The annotation summary popover (D074), the block/cell epistemic label (D077/D083), and the cell provenance reveal were hover-only. `_wireA11yReveals()` (delegated on `#artdoc`) makes them reachable by **keyboard focus and click/tap** without disturbing hover:
-  - **Annotation (Rev 7 — now drives the shared `#annoPop`):** the **⚠ marker** on **focus/Enter** adds `.anno-peek` **and calls `showAnnoPop(an)`** to reveal the viewport-anchored summary (focus keeps it open if focus moves into the "Open issue →" link; blur calls `hideAnnoPop()`). **Tap** the marker shows the summary on the **first** tap; a **second** tap (or the link) opens the issue.
-  - **Epistemic:** a **tap** on a prose block or a body cell toggles `.epi-peek` (reveals the "From OSLO / Confirmed by you" label); focus-within also reveals it (existing CSS). **Esc** and click-away clear peeks and `hideAnnoPop()`.
-- The annotation summary is no longer CSS-revealed (the old `.anno:focus-within>.anno-pop` / `.anno.anno-peek>.anno-pop` rules were removed with the inline span); it is now driven from JS into `#annoPop`. Epistemic CSS unchanged: `.epi-peek>.epi-tag`, `td.epi-peek>.cell-epi`. Works on touch (tap toggles).
-
-### 4 · Markdown input shortcuts
-- `_tryMarkdown()` (called first in `onArtInput`) auto-formats at the **start of a block** when the trigger space is typed: `# `→H1, `## `→H2, `### `→H3, `- `/`* `→bulleted list, `1. `→numbered list, `> `→quote, `--- `→divider (`_MD_RULES`). It reads the block's typed text **excluding grip/epi chrome + zero-width**, strips the trigger, applies the corresponding `formatBlock`/list command (or direct `<hr>` insertion), attests the block, and runs the quiet reanalysis. Pushes undo (one undoable step). **Never fires inside a table cell or a code span** (`_mdActiveBlock` guards).
-
-### 5 · Whole-block drag-reorder
-- `_attachBlockGrips()` stamps a **⣿ drag handle** (`.blk-grip`, `draggable`, `role="button" tabindex="0"`, `contenteditable="false"`) on every **top-level** block (`p/h1-3/ul/ol/blockquote/table/figure`), mirroring the table row grip; revealed on block hover/focus at the block's left. Valid host per content model: **table → a `<caption>`**, **ul/ol → the first `<li>`**, else the block itself (`hr` is reorder-able via its neighbours, no child grip).
-- **Mouse:** HTML5 drag-drop (`_wireBlockDnD`, delegated on `#artdoc`) with an above/below **drop indicator** (`.blk-drop-before/after`, brand line). **Keyboard:** focus the handle + **↑/↓** moves the block one position (`_moveBlock`). After any reorder (`_afterBlockReorder`): re-seed provenance + `attachTableControls` + `_refreshAllRowDots` + `_attachBlockGrips` + `updateWnav` + push undo + quiet reanalysis. **Table-internal row reorder (D082) is untouched** — this is whole top-level blocks only.
-
-## Editor gap fold-in — Batch C (D084)
-
-Five polish additions. All new UI is `contenteditable="false"`, keyboard-accessible, theme-consistent, and **neutral/brand tints only (never severity color as chrome, D003)**. Edits route through `_pushUndo()` (undoable) + the **quiet debounced reanalysis** (`_commitFromStructuralEdit`; no "Editing…/Saving…" churn). None disturbs `curAnnos()`, the stepper, the RTF toolbar, table controls/column ops/cell nav, provenance, undo/redo, the slash menu, or paste sanitization.
-
-### 1 · In-artifact find / replace
-- **`#findBar`** (`role="search"`, `contenteditable="false"`) docks top-right of the editor pane (`.aw-center` is `position:relative`). **⌘/Ctrl+F** opens it (`openFind`, guarded to an open artifact) — intercepted in the `#artdoc` keydown handler. Fields: **find**, live **match count** (`#findCount`), **prev/next**, and a **replace** field with **Replace** / **Replace-all**.
-- `_runFind()` walks **safe text nodes** of `#artdoc` (skipping all chrome via `_FIND_SKIP` — grips, epi tags, cell reveals, `.anno-pop`/`.anno-mark`, row/col controls, add-row, provenance dots, captions), wrapping each match in a **non-destructive `<span class="find-hit">`** (brand tint; the current one gets `.find-current`). **Esc / ×** closes and `_clearFindHighlights()` **unwraps every `.find-hit` + `normalize()`s** so annotations/epistemic spans/the caret are never corrupted. Highlights are also stripped **before** any typing snapshot (`_isFindOpen()` guard in keydown) and re-run in `onArtInput`.
-- **Replace** (`findReplaceCurrent`) / **Replace-all** (`findReplaceAll`) swap the hit text, push undo, attest the touched block(s) (`_attestBlock`/`_attestBlockOf`), `updateWnav()`, and run the quiet reanalysis; then re-highlight. Enter/Shift+Enter navigate from the find field; Enter in the replace field replaces the current match.
-
-### 2 · Link edit / remove
-- **`#linkPop`** (`role="dialog"`, `contenteditable="false"`) surfaces near an existing content link when the caret enters (or an `<a>` is selected) it — driven from `selectionchange` → `_linkPopSyncFromSelection()` → `_currentLinkAnchor()` (matches `#artdoc a:not(.anno-open)` **with an href** so the annotation popover's "Open issue →" is never mistaken for a content link). Shows the **URL** + **Edit / Remove / Open ↗**.
-- **Edit** (`_linkEditApply`) swaps the field to an input, updates the `href` (normalizes bare domains → `https://`), pushes undo, attests the block, quiet reanalysis. **Remove** (`_linkRemove`) **unwraps** the `<a>` keeping its text (undoable, `updateWnav`, quiet reanalysis). **Open** opens the href in a new tab. `mousedown` is suppressed so clicking a control never collapses the editor selection (except the URL field). Repositions on scroll/resize; dismissed on click-away or Esc. A benign reference link is seeded in the **Context** artifact so the feature is demonstrable out of the box.
-
-### 3 · Explicit save confirmation (opt-in; calm default preserved)
-- Silent autosave (D076/D079) stays the default. `commitArtEdit()` now also calls `_showSaveConfirm()`, which fills a **fixed reserved slot** in the toolbar (`#saveConfirm`, `aria-live="polite"`) with **"Saved · vN · just now"** for ~2s then fades — **only opacity animates, no layout shift/reflow**. No "Editing…/Saving…" is reintroduced.
-
-### 4 · Empty / placeholder states
-- Per-block placeholders are **pure CSS** `:empty::before` (p/h1-3/blockquote/li → "Write here…"/"Heading…"/"Section…"/"Quote…"/"List item…"; empty `td` → "—"; `figcaption:empty` reuses the existing "Add a caption…"). All are `pointer-events:none; user-select:none` and vanish on input.
-- A **fully-empty artifact** gets a gentle centered hint (`#artdoc.doc-empty::after` — "This artifact is empty — type to add, or press '/' to insert a block."). `_refreshEmptyState()` toggles `.doc-empty` (checks text + structural children) on **open**, on **input**, and after **commit**.
-
-### 5 · Mobile / touch + responsive pass (tested ~380px)
-- **Touch (`@media (hover:none),(pointer:coarse)`):** gutter grip/insert/delete, per-column add/delete, block grips, and embed remove become **reveal-on-focus with larger hit targets** (≥24–26px) since touch has no hover; RTF-toolbar buttons and slash-menu rows grow to tap size.
-- **Floating surfaces** (RTF toolbar `_rtPosition`, slash menu `_positionSlash`, link popover `_positionLinkPop`) already **clamp within the viewport**; `@media(max-width:640px)` adds `max-width:calc(100vw - 16px)` + `flex-wrap` so they never overflow the edges.
-- **Two-column workspace collapse:** at `≤640px` the explorer becomes a **togglable drawer** (`.aw-explorer-toggle` "☰ Artifacts" → `toggleExplorer()`, `aria-expanded`); picking an artifact auto-closes it on narrow screens (`_collapseExplorerOnNarrow`). At `≤760px` the persistent chat rail collapses to its own zero column (still reachable via the ✦ OSLO tab). Header/bar/doc/find-bar drop to full width.
-
-## Visible editor-action toolbar (D085)
-
-Keyboard-only editor actions (undo/redo, "/" insert, ⌘F find) were previously invisible. A small **`.art-actions`** group is added to `.art-bar` (between `#wnav` and `#savestate`; `#savestate`'s `margin-left:auto` keeps the group in the left cluster and leaves the state chip right-aligned, so the existing items and layout are undisturbed). All four are real, focusable `<button>`s — `contenteditable="false"`, `title` + `aria-label` (shortcut shown in the title), neutral `--muted` chrome with a **brand `--primary-light`** hover/`:focus-visible` ring — **never severity color as chrome (D003)**.
-
-- **Undo (↶, `#artUndoBtn`)** → `artUndo()`; **Redo (↷, `#artRedoBtn`)** → `artRedo()` — the same functions the ⌘Z/⌘⇧Z/⌘Y handler calls. Each is `disabled` (dimmed, non-clickable) when its stack is empty.
-- **Insert (＋, `#artInsertBtn`, "Insert block (/)")** → `_insertBlockFromButton()`: focuses `#artdoc`, and if the selection isn't inside it, drops the caret at the **end of the doc** (creating an empty `<p>` if the doc is empty) before calling `_openSlash()` — so the "/" block menu opens robustly even when the caret isn't in an empty block.
-- **Find (⌕, `#artFindBtn`, "Find & replace (⌘F)")** → `openFind()`.
-- **Disabled-state sync:** `_syncUndoButtons()` reads `_undoStacks`/`_redoStacks[_curArt]` depth and toggles the two buttons' `disabled`. It is called after **`_pushUndo`**, inside **`_restoreSnapshot`** (covering undo/redo), and at the end of **`openArtifact`** (fresh open → both disabled). The ⌘Z/⌘⇧Z/⌘Y/⌘F/"/" shortcuts are unchanged and continue to work; the group only mirrors them.
-
-## Accessibility (D015)
-
-- Explorer rows: `role="button" tabindex="0"`, Enter/Space handlers.
-- Nav + stepper buttons: real `<button>`, `aria-label`, keyboard-operable; disabled state at ends.
-- Editor blocks keyboard-focusable via contenteditable; focus outline shown.
-- Reduced-motion + no-animation-during-analysis rules inherited; the savestate pulse respects the reduced-motion override.
-
-## Reused / unchanged
-
-- The **light issue panel** (`#issueScrim`/`.issuepanel`), **confidence pill/popover**, **Attention heatmap**, **chat rail**, **feature tour** are inherited unchanged; Slice 5 only adds an `onEnter` hook to one tour step and a re-render call in the resolve path.
-
----
-
-## Chat integration (D108 cascade)
-
-**Cascaded from the Slice-8 D108 build.** The OSLO chat rail is no longer a decorative panel: the composer is **live**, replies are **state-grounded**, and every surface Slice 5 owns can hand context to it. Advisory-only (D001) — the chat renders **links**, it never mutates the plan, never closes an issue, never edits an artifact.
-
-### Rail structure (`#chatp`)
-| Element | Id / class | Behaviour |
+| Element | Selector / class | Notes |
 |---|---|---|
-| Context pill | `.chat-ctx` / `#chatCtx` · `#chatCtxLabel` · `#chatCtxClear` | Hidden until a surface calls `askOslo(ctx)`. Shows the handed-over subject; the **×** (`clearChatContext()`) drops it and says so in the thread. |
-| Thread | `#chatscroll` | `role="log" aria-live="polite" aria-relevant="additions"` — replies are announced as they land. |
-| Empty state | `.chat-empty` / `#chatEmpty` | First-run copy ("I read and explain… I never change your plan"); removed by the first message. |
-| Suggested chips | `.chat-chips` / `#chatChips` | State-derived (`renderChatChips()`); rebuilt on every read change (`updateIssueCounts()`), context change, and send. A chip fills the composer and sends. |
-| Composer | `#chatInput` + `#chatSend` | **Send** (click) · **Enter** sends · **Shift+Enter** newline (`chatKey(event)` → `sendChat()`). |
-| Turns | `.cmsg` / `.cmsg.user` / `.cmsg.done` | `pushChat()` (OSLO, HTML) · `pushUserChat()` (user, always escaped). |
-| Action links | `.chat-acts` / `.chat-act` | Buttons that call the **existing** functions: `openIssue` · `openArtifact` · `openFindingsFor` · `openFindingsForArtifact` · `showView` · `askOslo`. |
+| Subgroup label | `.sb-subgroup` | "Understanding" / "Execution" (D093) |
+| Artifact row | `.sb-nav.sb-art` (`data-art`) | opens `openArtifact(name)`; active row lit via `_syncNav` |
+| Open-issue badge | `.ex-fb` (`data-badge`) | `renderExplorerBadges`; `.crit` / `.mod` / `.warn` by most-severe open issue (D003); `.clear` (hidden) when none |
 
-### Entry points wired in Slice 5
-| Surface | Affordance | Call |
+## The editor shell — `#artView` (`openArtifact`)
+
+| Element | Selector / id | Notes |
 |---|---|---|
-| Overview · confidence | `.howcalc.askwhy` / `#askWhyConf` — "✦ Ask OSLO why" (beside the number) | `askOslo({type:'confidence'})` |
-| Light issue panel | `.ip-ownfix` — "✦ Ask OSLO about this issue →"; plus "Answer in chat →" in the clarification foot | `askOslo({type:'issue',id})` |
-| Attention map | Scoped issues list header — "✦ Ask OSLO about this cell" (artifact × dimension) / "…about this artifact" | `askOslo({type:'cell',art,dim})` |
-| **Artifact editor — toolbar** | `#artAskBtn` (✦) in `.art-actions`, beside undo/redo/insert/find | `askOslo({type:'artifact',id:_curArt})` |
-| **Artifact editor — annotation popover** | Second link in the `.anno-pop` (mirrored into the shared `#annoPop`): "Ask about this →" | `askAboutSpan(id)` → `askOslo({type:'span',id,art})` |
+| Empty state | `#artEmpty` (`.aw-empty`) | "Open a document to read and edit it" |
+| Head | `.art-head` (`h1` + `.art-edit-badge` "✎ Editable" + `.info` + `.art-grp`) | layer label from `_artLayer` |
+| Doc nav | `.art-nav` (`artStep(±1)`) | prev/next document; disabled at the ends |
+| Version | `.art-layer.mono` | `v{_artVersion}`; bumps on commit |
+| Weakness stepper | `#wnav` (`.wnav`) | see below |
+| Editor actions | `.art-actions` (`artUndoBtn`·`artRedoBtn`·`artInsertBtn`·`artFindBtn`·`artAskBtn`) | undo/redo/insert/find + **✦ Ask OSLO** (D108) |
+| Save/analysis chip | `#savestate` (`.savestate`) | dot + hover title only; states below |
+| Save confirm | `#saveConfirm` (`.save-confirm`) | brief "Saved · vN"; fixed slot (opacity only, no reflow) |
+| The document | `#artdoc` (`.doc`, `contenteditable`) | `oninput=onArtInput`, `onblur=commitArtEdit`; body `_artBodyLive` |
+| Critical-path panel | `.cpath` (`_wbsCriticalPathHTML`) | **WBS view only, rendered AFTER `#artdoc`** — outside the editable doc, not editable |
 
-### Grounding (never fabricated)
-`_chatState()` reads the **live** model: `currentRead()` (index · band · reliability basis · analysis state), the CAF rows and the **limiting dimension**, `ISSUES` + `_istatus` (open list, severity-ranked top issue, resolved), `_openClarIds()`, and `_curArt`. `_artLive(name)` additionally reads the **open editor**: the marked weak spans (`#artdoc .anno[data-fid]`) and the provenance split (`[data-epi]` → Confirmed by you vs From OSLO). If the artifact is not open, nothing about its live state is asserted.
+## Autosave / reanalysis state chip — `#savestate` (D070 / D079)
 
-`_ansArtifact()` is the Slice-5 signature answer: *what it says* (PLAN_SECTIONS body, layer, basis, reliability) → *where it's weak* (open issues here, most severe first) → *From OSLO vs Confirmed by you* (live counts when open) → *what would strengthen it* (the issue's suggested fixes), closing with "saving makes no assessment".
+| Class | Dot | Label (hover title) |
+|---|---|---|
+| `.ok` | success | "Analysis up to date" |
+| `.saving` | subtle | (autosaving) |
+| `.editing` | subtle | (calm typing) |
+| `.stale` | warning | "analysis stale" |
+| `.reana` | warning, **pulsing** (`sspulse`) | "Reanalyzing…" |
 
-### Clarifications — one path, one live box
-The Issue panel and the chat both answer through the shared **`_submitClarification(id, val, src)`** (`answerClarification()` → `src:'panel'`; `answerClarificationFromChat()` → `src:'chat'`). Identical state changes (section → *Confirmed by you*, reliability step-up, issue → Resolved by the analysis update, all surfaces re-rendered); only the reporting surface differs. **`_dedupeClarBoxes()`** guarantees exactly **one live `#chatClarBox-<id>`**: re-raising a clarification removes the earlier box (no duplicate DOM ids), and answering marks it `.answered`.
+Conveyed by dot colour + title only — **no reflowing text block**, and **no manual reanalyze button** (D070). Pulse honours reduced-motion.
 
-### Non-goals held
-No Discuss / recommendation paths (Slice 6) and no History links (Slice 7) — the chat never routes to a seam pane. The editor is untouched by every ask: no caret move, no undo entry, no annotation change (only the annotation popover / issue flyout are stood down so they don't cover the rail).
+## Epistemic notation (D011 / D069 / D083)
+
+| Element | Selector / class | Notes |
+|---|---|---|
+| Prose tag | `.epi-tag` (`.attested` when confirmed) | "From OSLO" / "Confirmed by you"; on `p`/`li`/`h3` |
+| Cell reveal chip | `.cell-epi` (`.derived`/`.attested`, `data-epi-class`) | hover/focus per-cell chip; `contenteditable=false` |
+| Row gutter dot | `.rowprov` (`.derived`/`.attested`) | glanceable per-row provenance |
+
+Both classes single-sourced from `EPI_CLASSES` (D194b); **neutral/brand tints only — never severity colour as chrome** (D003).
+
+## Weakness annotations + stepper (D068 / D071)
+
+| Element | Selector / class | Notes |
+|---|---|---|
+| Weak span | `.anno[data-fid]` (`.editing`, `.wstep`) | severity ramp **red/amber only** (D003); wired to a real open issue |
+| Hover summary | `.anno-pop` | one-line summary; suppressed while editing that span |
+| Trailing marker | `.anno-mark` (⚠) | dropped when the issue resolves (`_artBodyLive`) |
+| Stepper | `#wnav` (`.wnav-lab` · `.wbtn` ⌃/⌄ · `.wct`) | "Jump to issue ⌃ k of N ⌄"; "✓ No issues in view" when empty |
+
+Click a span → the light issue panel (`openIssue`); **never resolved inline**.
+
+## The Work breakdown task tree (DL-143→156 · 2A)
+
+| Element | Selector / class | Notes |
+|---|---|---|
+| Outline number | `.wbs-n` | `1 · 1.1 · 1.3.1` |
+| Task label | `.wbs-t` (`.wbs-h` for a workstream heading) | `data-lvl="0\|1\|2"` drives indentation; lvl-2 muted |
+| Low-confidence grade | `.conf-low` | **neutral** dashed pill + `~` glyph; epistemic grade, **never** severity (D003) |
+
+Rendered inside the standard `<table>` editor — all table chrome (`attachTableControls`, row/col controls, provenance) applies unchanged.
+
+## Table editor chrome (shared engine, D075 / D081 / D084)
+
+Row gutter with insert `+` / delete `×` + provenance dot; header top-insert `+`; per-column add/delete controls; whole-block drag grips; the Notion-style selection toolbar; the slash insert menu; find/replace; link popover; paste sanitization. Neutral tints only (a delete `×` may tint danger on hover — chrome, not severity data). The same engine drives the Reports readout (Slice 10) via `_EDIT_HOST` indirection; artifact-only surfaces (provenance, annotations, versioning, reanalysis) are gated off there.
+
+## Color discipline (D003)
+
+Explorer badges and weakness annotations use **severity red/amber**. Everything else — the epistemic tags/dots, the `low confidence` grade, the save/analysis chip, the critical-path panel, table chrome — is **neutral**. No health bars, no RAG on chrome. (The `#savestate` `stale`/`reana` warning tint is a workflow state, not plan severity.)
+
+## Accessibility
+
+- Explorer rows, doc nav, editor action buttons, stepper, row/column controls: `role="button"`/native buttons, `tabindex`, Enter/Space handlers, `aria-label`s.
+- `#artdoc` is a labelled editable region; `#savestate` carries `aria-label`; provenance chips are `aria-hidden` decoration with the state in the row dot's `aria-label`.
+- Focus-visible rings + reduced-motion inherited (the `reana` pulse and scroll-into-view respect reduced-motion). Colour is never the sole signal — provenance and the `low confidence` grade carry text.
+
+## App shell (inherited)
+
+Persistent left sidebar (Overview · Issues · History · Inference map · Reports · **Plan artifacts** [Understanding/Execution] · Full plan), top bar, command palette (⌘/Ctrl+K), chat rail. The Attention map and Issues panel route into the editor for a given artifact.

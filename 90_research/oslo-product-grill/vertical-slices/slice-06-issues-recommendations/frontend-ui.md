@@ -1,113 +1,92 @@
-# Slice 6 — Issues & Recommendations · Frontend UI
+# Slice 6 — Issues & Recommendations (Panel Model) · Frontend / UI
 
-Cumulative Slices 1–6. Single openable `prototype.html` (Tailwind-independent inline CSS/JS + `localStorage`, D016). This documents the Slice-6 UI surfaces, DOM, CSS, and functions. Slices 1–5 UI is unchanged.
+Single openable HTML; dark default + light override on the same tokens (D015); WCAG 2.1 AA (focus-visible rings, keyboard operability, reduced-motion). No framework; plain JS + CSS variables. Colour discipline: **severity red/amber/green appears only on issues** (heat cells + issue badges); the read/CAF/lifecycle stay neutral (D003).
 
-## Navigation (D093 — persistent left sidebar + top-bar shell; reconciled to the owner-APPROVED design, 2026-07-09)
-Primary navigation lives in a **persistent left sidebar** (`aside.sidebar#appSidebar`), present in every project view. `#app` is a **3-column grid** — `grid-template-columns:240px 1fr 340px` = **[sidebar | main `.body` | OSLO chat rail]** — with the topbar spanning all columns (`grid-column:1 / -1`); `#app.chat-collapsed` → `240px 1fr 0`. `.body` is `grid-column:2`, `.chatp` is `grid-column:3`. The former **`.vswitch` top-center switch stays deleted**.
+> Regenerated to the frozen build (md5 `a327d702`). Issues + Attention are **one destination with a Map ⇄ List toggle** (DL-136); the standalone "Attention map" nav row is retired. The lifecycle chip is drawn as `⇄` with no trailing fill (D192b); the recommendation is **resident above its Apply button** (D184). No "Acknowledge" control exists.
 
-**Top bar (approved).** Left cluster: the **Intralign** brand (`.tb-brand`, orange `I` `.logo`) → **project switcher** chip `#tbProj` (`.tb-proj`, holds the project-name span `#projName` + `▾`; opens `openProjectSwitcher()` — a **Slice-8 seam** stub, multi-project not yet built) → a **`sample`** tag (`.tb-tag`) → breadcrumb `.crumb-sep › ` + `#tbCrumb` (the **current view or open artifact**, kept live by `_setCrumb()`/`_viewLabel()`). `.tb-sp` spacer. Right cluster: the **confidence pill `#confpill` (unchanged, D050)** → search `#tbSearch` (⌕, `openSearchStub()`) → **Share** `#tbShare` (⤴, `openShareSeam()` — **Slice-9 seam**) → **Export** `#tbExport` (⤓, `openExportSeam()` — **Slice-9 seam**) → report/donut `#tbReport` (◕, `openReportStub()`) → **Free** plan chip `#tbPlan` (`openUpgrade()`). The `#sbHamburger` (☰) drawer toggle sits far left. The former top-right account circle is **removed** — account moved into the sidebar foot (below).
+## Destination layout — Map ⇄ List (DL-136)
 
-Sidebar structure (`.sb-scroll` scroll area + pinned `.sb-foot`):
-1. **Project** group — `.sb-nav` buttons in approved order: `#sbOverview` (◎ Overview → `showView('overview')`), `#sbIssues` (⚑ **Issues** → `showView('issues')`, neutral count `.sb-badge#vsIssuesBadge`), `#sbHistory` (◔ History → `showView('history')` — routes to the **`#pane-history` Slice-7 seam** pane, not the Attention map), `#sbAttention` (▦ Attention map → `showView('attention')`, neutral count `.sb-badge#vsAttnBadge`). The ratified term is **"Issues"** (the approved image's "Findings" is *not* used); the badge is kept. Badges are **neutral nav chrome** (surface/border, never severity color — D003).
-2. **Plan artifacts** group — split into two labeled `.sb-subgroup` subgroups: **Understanding** (Intent · Context · Scope · Requirements) and **Execution** (Work breakdown/WBS · Schedule · Resources). Seven `.sb-nav.sb-art` buttons (`data-art`), each with a live `.ex-fb[data-badge]` severity issue badge (D066), calling `openArtifact(id)`. This remains the global explorer (`.aw-explorer` stays removed; `.aw-pane` single-column = editor).
-3. **`.sb-foot`** (pinned bottom) — three approved elements: the bordered `.sb-tour#railTour` (✦ Take a quick tour → `startTour()`; hidden by `tourComplete()` once seen); a neutral **tier chip** `.sb-tier` (◆ **Free plan** · 1 active project) with an **Upgrade** button (`.sb-tier-up` → `openUpgrade()`, a visibility-first stub); and a **Your account** row `.sb-acct#acctBtn` (avatar "ID" + "Your account" / "Settings" subtext → `toggleAcctMenu()`). Settings stays reachable as an item inside the account menu (`openSettings()` → `#sbToast` stub). The account menu (`.acctmenu`) is re-anchored bottom-left to open from this row.
+Two peer panes switched by `showView`, each fronted by the same toggle:
+- `#pane-attention` — the **Map** (heatmap). `.iaview-toggle` [Map on · List → `showView('issues')`].
+- `#pane-issues` — the **List**. `.iaview-toggle` [Map → `showView('attention')` · List on].
 
-- **Active-state:** `_syncNav()` is the single sync helper (called from **both** `showView()` and `openArtifact()`). It toggles `.active` + `aria-current="page"` on the matching Project-view item (now including `#sbHistory`), and on the matching `.sb-art` item **only while** the Artifacts view is showing (`CURVIEW==='artifacts'` && `dataset.art===_curArt`). `showView()` toggles `#pane-history.active` alongside the other panes and calls `_setCrumb(_viewLabel(v))`; `openArtifact()` sets the crumb to `dispName(name)`. Live badge counts still flow through `updateIssueCounts()` (`#vsAttnBadge`/`#vsIssuesBadge`) and `renderExplorerBadges()`.
-- **Seam stubs** (labeled, never broken links): History→`#pane-history` "History & timeline — arrives in Slice 7"; project switcher→Slice 8; Share/Export→Slice 9; search/report/upgrade→`_stubToast()` toasts. None pull forward those slices' internals.
-- **Responsive:** at ≤860px the sidebar becomes a fixed overlay **drawer** (`transform:translateX(-100%)`, shown via `#app.sidebar-open`), opened by `#sbHamburger` (☰); a `.sb-scrim` closes it. `toggleSidebar()`/`closeSidebar()` drive it; `_collapseSidebarOnNarrow()` (end of `showView()`) auto-closes after a pick. The chat-rail collapse at ≤760px is unchanged.
+Both toggles are `role="tablist"` with `aria-selected`. The single `#sbIssues` sidebar item is active for both views (`_syncNav`). Crumb `#tbCrumb` reads "Issues · Map" / "Issues · List" (`_viewLabel`).
 
-## All-issues surface — `#pane-issues`
-DOM:
-- `.iss-head` → `h1 "Issues"` + `#iss-count` (live count).
-- `#iss-sub` — advisory sub-line; static minimal text **"What needs your attention"** in every group mode (D092b — verbose mechanism tails removed; the group tabs already name the grouping).
-- `.grp-tabs` → `#grpDim` / `#grpSev` / `#grpArt` ("By dimension" / "By severity" / "By artifact"), `role=tab`, `aria-selected` (D092b — third mode). `setGroup('dim'|'sev'|'art')` toggles `.grp.on`.
-- `.iss-filters` → four `.if-row`s: **Artifact** (`#if-art`, built by `renderArtFilters`), **Dimension** (`#if-dim`), **Severity** (`#if-sev`), **Status** (`#if-status`). Chips = `.ff` buttons with `data-f`/`data-v`; active = `.ff.on`; zero-count = `.ff.ff-empty` (dimmed); per-chip count = `.ffn`.
-- `#iss-list` — rendered by `renderIssues()`.
+## Map view — `#pane-attention`
 
-Cards & groups:
-- `.iss-group` → `.iss-gh` header + `.icard`s.
-- `.icard` = `.isevbar` (severity color only) + `.ic-main` (`.ic-t` title, `.ic-m` meta: `.ic-sev` severity chip, `.ic-loc` "Artifact · Dimension", `.ic-life` lifecycle pill, optional `.ic-clarflag`) + `.ic-go`. `role=button`, `tabindex=0`, Enter/Space → `openIssue`.
-- **Triage** (By severity): `.triage` with `.tg.crit/.tg.mod/.tg.warn`.
-- **By artifact** (D092b): groups keyed on the issue `sec` field, using `_ISSARTORDER` (Intent · Context · Scope · Requirements · WBS · Schedule · Resources); headers show the plain display name via `dispName()` (e.g. WBS → "Work breakdown"); only artifacts with matching issues render. No triage strip. Same `.iss-group`/`.iss-gh`/`.icard` structure; filters + `.iss-hidden` count unaffected.
-- **Hidden count:** `.iss-hidden` → "N issues hidden by filters · clear".
-- **Empty states:** `.iss-empty` variants `.good` / `.wait` / `.err` (`_issEmpty(kind)`).
+| Element | Selector / class | Notes |
+|---|---|---|
+| View toggle | `.iaview-toggle` (`.iav`) | Map (on) / List; `▦` / `☰` glyphs |
+| Heading | `.mri-head h1` "Where your plan needs attention" + `.mri-sub` | Documents × Clarity · Alignment · Feasibility |
+| Legend / lead | `.mri-bar .lead` (`.brighter`) | "Brighter = more attention — not a health score" + ⓘ (D060) |
+| Heatmap | `#heatGrid` (`renderHeat()`) | rows = documents · cols = C·A·F; l0–l3 severity ramp only (D003) |
+| All-clear | `#heatClear` (`.heat-clear`) | shown when nothing is open; "all-clear on **attention** — not a guarantee of success" (D061) |
+| Legend key | `#heatLegend` | Calm → Needs attention; "Rows = documents · columns = C·A·F" |
 
-## Full Issue Panel — `#issueScrim` / `#issuepanel`
-Reuses the existing right-slide scrim; `openIssue(id)` now renders the full panel:
-- `.ip-top` (severity chip `.ip-sev`, `.ip-title`, close `×`), `.ip-meta` (Dimension · **Artifact** link · issue id), `.ip-life` lifecycle track (`.st.on` current, `.st.done` past) followed by a single subtle `.info` ⓘ hover — the **only** place the honesty guarantee is surfaced as standing text (tip: "Issues close as OSLO's understanding updates — you don't close them by hand.").
-- `.ip-h "Why this matters"` + `.ip-p`.
-- **Evidence** collapsible: `.ip-evsec.collapsed` with `.ip-evh` (chevron `.chev`, "N sources") toggling `.ip-evbody` (`.ip-ev` items). Keyboard-operable.
-- **What this weakens:** `.ip-weak` with `.wk-dim` dimension tag.
-- **Clarification:** `.ip-clar` (question `.cl-q`, `textarea#clarInput` placeholder "Type your answer…", `.cl-note` neutral prompt "Add the detail OSLO is missing.", **Submit answer** button) — when `clar` present and not resolved. No mechanism copy (D092).
-- **Recommendations:** `.ip-rec` (`◆ OSLO Recommended` + `From OSLO` `.epi-tag.derived`, `rec` text, **Apply this fix** button `.ip-applyrow`, `.ip-applynote`). `.ip-otherlab "Possible resolution paths"` + `.ip-path` rows (`.selmark`; selected = `.ip-path.sel` "✓ Selected Path"). Selected → `.ip-selpath` banner with `Confirmed by you` `.epi-tag`. `.ip-ownfix` "Write my own fix in {Artifact} →".
-- **Banners:** `.ip-addressed` ("Addressed · updating…") / `.ip-resolved` ("Resolved" — plain outcome copy, no mechanism talk).
-- **History:** `.ip-hist` pointer → `openHistorySeam()` (Slice-7 stub).
-- **Honesty guarantee:** carried on the single `.ip-life` ⓘ hover (above). The standing `.ip-rean` note was **removed** (D092, single-home + hover §6.7); the guarantee stays enforced by behavior.
+## List view — `#pane-issues` (D086)
 
-## Key functions (inline `<script>`)
-- List: `renderIssues`, `renderArtFilters`, `_issueCard`, `_issEmpty`, `_issPreview`, `previewIssState`, `setFilt`, `setGroup`, `clearFilt`, `_statusMatch`.
-- Panel: `openIssue`, `closeIssue`, `openIssueArtifact`, `selectPath`, `applyFix`, `answerClarification`, `_refreshIssueSurfaces`.
-- Routing: `openFindingsFor`, `openFindingsForArtifact`, `scopeIssuesTo` (graduated D058).
-- `updateIssueCounts` now also drives `#vsIssuesBadge`; `showView` re-renders the list on Issues entry.
+| Element | Selector / id | Notes |
+|---|---|---|
+| View toggle | `.iaview-toggle` | Map / List (on) |
+| Heading + count | `.iss-head h1` "Issues" + `#iss-count` | live count ("N open" / "(filtered)") |
+| Sub | `#iss-sub` | "What needs your attention" |
+| Group tabs | `.grp-tabs` (`#grpDim` / `#grpSev` / `#grpArt`) | By dimension (default) · By severity · By document; `role="tab"`, `setGroup` |
+| Filters | `.iss-filters` (`#if-art` / `#if-dim` / `#if-sev` / `#if-status`) | Document (`renderArtFilters`, live counts) · Dimension · Severity · Status (Open/Resolved/All); `setFilt` / `clearFilt` |
+| Triage | `.triage` (`.tg.crit/.mod/.warn`) | shown under By severity — Critical · Moderate · Warning counts |
+| Group heading | `.iss-group` / `.iss-gh` | "`<label>` · N" |
+| Issue card | `.icard` (`_issueCard`) | `.isevbar` severity + `.ic-t` title + `.ic-m` [`.ic-sev` · `.ic-loc` document·dimension · `.ic-life` status · clarification flag · await chip]; opens `openIssue` |
+| Hidden count | `.iss-hidden` | "N hidden by filters · clear" |
+| Scoped-from-map header | `.iss-hidden` (cell scope) | "Scoped from the Attention map · `<doc>` × `<dim>` · Ask OSLO about this cell →" |
+| Empty states | `.iss-empty` (`.good`/`.wait`/`.err`) | four honest states (`_issEmpty`, D091) |
 
-## Inherited editor — annotation hover popover (Rev 7 fix)
-- The weakness annotation summary popover (inherited from S5) was a `.anno-pop` span `position:absolute` **inside** the contenteditable; under the app-shell it was clipped by `.aw-center{overflow-y:auto}` and painted **under** the `.art-bar` toolbar, so editor content bled through it (appeared transparent) near the top of the editor. Fix: the inline `.anno-pop` is `display:none !important` (kept only as content source); a single body-level **`#annoPop`** (`position:fixed`, `z-index:240` — below the issue flyout's 260, above editor chrome, fully opaque) is populated on `.anno` hover / ⚠ focus-tap and positioned from the annotation's `getBoundingClientRect()`: prefers **above**, **flips below** near the toolbar, **clamps** horizontally. Escapes all local stacking/overflow; `curAnnos()` still selects only `.anno`. (Full detail in Slice-5 `frontend-ui.md`.)
+## Issue panel — `#issuepanel` (over `#issueScrim`) · `openIssue` (D087/D162)
 
-## Theme / accessibility
-- Dark default, one semantic token set (inherited). **Severity color only** (D003) on `.ip-sev`, `.ic-sev`, `.isevbar`; confidence/CAF/lifecycle pills use neutral tokens.
-- WCAG 2.1 AA: all list cards, filter/group chips, the evidence toggle, resolution paths and panel controls are keyboard-operable (`role=button`/`tab`, `tabindex`, Enter/Space handlers, `focus-visible` rings). `aria-selected` on tabs; `aria-label`s on cards and the close control.
+| Element | Selector / class | Notes |
+|---|---|---|
+| Header | `.ip-top` (`.ip-sev` · `.ip-title` · `.ip-x`) | severity + title + close (Esc closes) |
+| Meta | `.ip-meta` | Dimension · Artifact (link → `openIssueArtifact`) · Issue id |
+| Lifecycle | `.ip-life` (`.st`, `.a` = `⇄`) + `.info` | `Open ⇄ Addressed ⇄ Resolved`; **no trailing fill**, only current lit; ⓘ "these states move both ways… never a manual step" (D192b) |
+| Await chip | `.crr-chip.await` (`_awaitChip`) | "◷ Awaiting review · `<who>`" — not a severity, doesn't change status |
+| Why | `.ip-h` "Why this matters" + `.ip-p` | the plain-language read (`f.why`) |
+| Impact | `.ip-weak` (`.wk-dim`) | "`<dimension>` impact" (`f.caf`) |
+| Recommendation | `.ip-primary.ip-rec` (`#ipRecBlock`) | `.rtag` "◆ OSLO recommends" + `#ipRecText` (resident) |
+| Apply | `#ipApplyBtn` (`.btn-primary`) | label constant **"Apply this fix"** (`APPLY_LABEL`); `applyFix`; **no rec ⇒ no button** (D184) |
+| Discuss / Other options | `.btn-ghost` · `#ipOtherBtn` (`aria-controls="ipAlts"`) | Discuss → `askOslo`; Other options (N) → `ipToggleAlts` |
+| Alternatives | `.ip-alts` (`#ipAlts`) | options in place: `.ip-path` (Select `selectPath` / `.ip-discuss` / `.selmark`), `.ip-selpath` Selected option, `.ip-ownfix` "✎ Write my own fix in `<document>` →" (`data-voice="user"`) |
+| Answer (clar) | `.ip-primary button` "Answer" | when `f.clar` and no appliable rec; opens the clar row (`ipOpenRow`) |
+| Rows | `.ip-rows` (`_ipRowHTML`) | Evidence (`.ip-ev`) · Clarification (`.ip-clar`, textarea `#clarInput`, "Answer in chat →", Submit) · Reviews (`_reviewsHTML`) · Comments (`_commentsHTML`) — each `.ip-row` w/ `.ip-rowh` button + `.chev` + `aria-expanded` |
+| Actions | `.ip-acts` | ⤴ Share for review (`openCrr`, never disabled/metered — CR-2) + ✦ Discuss with OSLO |
+| Addressed / Resolved | `.ip-addressed` / `.ip-resolved` | "Addressed · updating…" / "✓ Resolved by the analysis update" + withdraw affordance |
+| History pointer | `.ip-hist` | "Detected in your last analysis… Open full timeline →" (`openHistorySeam`, Slice 7) |
 
-## Command palette — search / jump-to (D094)
-A centered modal overlay (`#palScrim`, dim scrim, `z-index:250` — above the app chrome but below the `#issueScrim` flyout at 260; the two are mutually exclusive) holding `.palette`:
-- **Input:** `#palInput` (placeholder **"Search or jump to…"**, autofocused on open, `role=combobox` + `aria-controls=#palResults` + `aria-activedescendant`), preceded by a `⌕` mark.
-- **Results:** `#palResults` (`role=listbox`), grouped `.pal-group` blocks each with a `.pal-glabel` header and `.pal-item` rows (`role=option`, `aria-selected`). Groups render only when non-empty (live filter).
-  - **GO TO** — ◎ Overview · ⚑ Issues · ◔ History · ▦ Attention map → `showView('overview'|'issues'|'history'|'attention')`. (The approved reference image labels this list "Findings"; the ratified term **"Issues"** is used.)
-  - **PLAN ARTIFACTS** — the 7 artifacts (▤ + `dispName(id)`, so WBS shows "Work breakdown") → `openArtifact(id)` with the internal id.
-  - **OPEN AN ISSUE** — each still-open issue (`_istatus[id]!=='resolved'`): `.pal-nm` title (left) + `.pal-meta` "{Severity} · {Artifact}" (right, muted), e.g. "Keynote backups are unconfirmed — Moderate · Resources" → `openIssue(id)`. (The approved image labels this "OPEN A FINDING"; the ratified **"OPEN AN ISSUE"** is used.)
-- **Footer:** `.pal-foot` "↑↓ navigate · ↵ open · esc close".
-- **Highlight** = `.pal-item.active` neutral `--surface-2` tint (never a severity color); issue rows may show their severity *word* in `.pal-meta` text, but the row highlight stays neutral.
+**Guards on the panel:** `_assertLifecycleIsNotDrawnAsARatchet` · `_assertApplyAffordanceShowsItsRecommendation` · `_assertRecommendationRankIsComputed` · `_assertRecommendationNeverHidden` · `_assertOptionsHaveOneHome`.
 
-### Key functions (inline `<script>`)
-- `openSearch()` / `closeSearch()` — open (closes any live issue flyout first, clears + refocuses the input, builds results) / hide. `openSearchStub()` is a legacy alias → `openSearch()`; the top-bar `#tbSearch` now calls `openSearch()`.
-- `_palModel()` builds the grouped model fresh each keystroke (live issue statuses); `_palFilter()` renders it filtered by case-insensitive substring into a flat `_palVisible` array; `_palPaint()` maintains the `.active` highlight + `aria-activedescendant`; `_palKeydown(e)` handles ↑/↓ (wrap), Enter (activate), Esc (close); `_palActivate(i)` closes the palette **first**, then runs the item action; `_palSetActive(i)` handles hover. A global `keydown` listener toggles the palette on **⌘/Ctrl+K** (`preventDefault`).
+## Withdraw affordance — `_ipWithdrawHTML` (D191/D184)
 
-### Theme / accessibility
-- Dark default, one semantic token set (inherited). Neutral chrome only; the highlight uses `--surface-2` (no severity color on the row).
-- WCAG 2.1 AA: labelled input, `role=dialog`/`aria-modal` on `.palette`, `role=listbox`/`role=option` results, `aria-selected` + `aria-activedescendant`; fully keyboard-operable (↑↓/Enter/Esc), scrim-click and item-click close/activate.
+Named for what it does (`_wdLabel` — "Withdraw this fix" / "Withdraw this answer" / "Clear selection"); raises a consent line (`_wdConsentLine`) with the subject on screen **before** it acts (`_wdConfirm`). One home per panel — never repeated. A touched document is never restored, and the line says so honestly (D193a).
 
----
+## CAF drill-down — the Overview CAF rows (Option C · DL-116/DL-123/124)
 
-## Chat integration (D108 cascade)
+| Element | Selector / id | Notes |
+|---|---|---|
+| CAF row | `#cg-clar` / `#cg-align` / `#cg-feas` (`.cafrow`) | caret + name + `.ramp.mini` + `.cafband` level + `.caf-ev` evidence cue + `.cafdbtn` Details ▾; `toggleCafDrill` |
+| Drill host | `#cg-*-drill` (`.cafdrill`) | `.open` / `.l2open` on container (survives refresh) |
+| Level 1 | `.cd-line` (Rests on · Held back by · To lift it) + `.cd-issue` | `_cafDrillHTML`; grounded `.pgx-sw.att` / inferred `.pgx-sw.inf` (neutral tokens); only "critical" tinted (`.cd-crit`) |
+| Level 2 | `.cd-l2` (`.cd-ftype` / `.cd-item`) | finding-type cut → `openIssue`; `toggleCafL2` |
 
-The persistent OSLO rail is now a **working advisor** in this slice — the composer, Send, and Enter-to-send are live, and every reply is simulated but **state-grounded** (derived from `currentRead()`, `ISSUES` / `_istatus` / `_selpath`, the CAF rows, `ANALYSIS_STATE`, `_curArt`). Nothing in the chat mutates the plan (D001): it only ever **offers** actions as links that run the surfaces' own functions.
+**Level ≠ trust:** the `.caf-ev` cue is provenance, never folded into `.cafband`. The band stays a band; only drivers are quantified. Alignment is live (D133 — `_alignWhy`, `_reviewAnalysisRun`).
 
-### DOM
-- `#chatCtx` — the context pill (`Context` label · `#chatCtxLabel` · `#chatCtxClear` ×), hidden until a surface hands context in.
-- `#chatscroll` — `role="log"`, `aria-live="polite"`, `aria-relevant="additions"`; carries `#chatEmpty` (first-run empty state) until the first turn lands.
-- `#chatChips` — state-derived suggested prompts; `#chatInput` (`onkeydown="chatKey(event)"`) + `#chatSend`.
-- Messages: `.cmsg` (OSLO) · `.cmsg.user` (your turn) · `.cmsg.done` (completion notice); in-reply actions are `.chat-acts` / `.chat-act` buttons.
+## Color discipline (D003)
 
-### Functions
-- `sendChat()` / `chatKey(e)` — Send (click) · **Enter** sends · **Shift+Enter** newline. `pushUserChat()` appends the escaped user turn; `pushChat()` appends OSLO's.
-- `askOslo(ctx)` — **the one entry point** every surface hands context through. `ctx.type` ∈ `issue | span | artifact | confidence | cell | recommendation`. It stands down the issue flyout / annotation popover, un-collapses the rail, sets `_chatCtx`, paints the pill, pushes a grounded opening message, and focuses the composer. `clearChatContext()` backs the × .
-- `_oslloReply(q)` — prototype-grade intent routing (next / issue by id or name / "can you fix it" / a CAF dimension / confidence / artifact / clarifications / the active context / fallback summary), answered by `_ansNext`, `_ansIssue`, `_ansDimension`, `_ansConfidence`, `_ansArtifact`, `_ansCell`, `_ansRecommendation`, `_ansHowIssuesClose`, `_ansClarifications`, `_ansSummary`.
-- `renderChatChips()` — rebuilt on every context change and from `_refreshIssueSurfaces()`, so the chips track the live read.
+Heat cells and issue severity badges use the red/amber/green **severity** ramp. The lifecycle chip, CAF bands, the drill, the recommendation block, grounding swatches, and the await chip are **neutral** (weight/shape, never hue). No percentage fill, no health bar. Severity is the only place colour carries meaning.
 
-### Entry points wired in Slice 6
-| Surface | Affordance | Call |
-| --- | --- | --- |
-| Overview (confidence) | `#askWhyConf` — "✦ Ask OSLO why" pill under the number | `askOslo({type:'confidence'})` |
-| Attention map → scoped Issues list | "Ask OSLO about this cell →" header (shown when artifact × dimension are both scoped) | `askOslo({type:'cell',art,dim})` |
-| Issue panel | "✦ Ask OSLO about this issue →" | `askOslo({type:'issue',id})` |
-| Issue panel → clarification | "Answer in chat →" | `askOslo({type:'issue',id})` |
-| **Issue panel → recommendations** | **`Discuss`** on the **OSLO Recommended** block **and on every resolution path** (`.ip-discuss`) | `askOslo({type:'recommendation',id,pathIndex})` (`pathIndex:null` = OSLO Recommended) |
-| Artifact editor | toolbar `#artAskBtn` (✦) | `askOslo({type:'artifact',id:name})` |
-| Artifact editor | annotation popover "Ask about this →" | `askAboutSpan(id)` → `askOslo({type:'span',id})` |
+## Accessibility
 
-### Discuss — the signature action (never selects)
-`.ip-discuss` sits inside the `.ip-path` row, whose own click handler is `selectPath()`. The Discuss handler therefore calls **`event.stopPropagation()`** (on both `onclick` and `onkeydown`) before `askOslo(...)`, so discussing a path **never** selects it — `_selpath` and `_istatus` are untouched. `_ansRecommendation()` explains what the path buys, weighs it against the alternatives and the recommendation, states that "talking a path through with me doesn't select it", and *offers* **Select this path →** / **Apply this fix →** as links the user still has to click.
+- Toggles / group tabs / filters: `role="tab"`/`"tablist"`, `aria-selected`, keyboard operable.
+- Issue cards, CAF rows, drill items, path options, withdraw: `role="button"`, `tabindex="0"`, Enter/Space handlers.
+- Panel rows: `<button>` `.ip-rowh` with `aria-expanded`; Esc closes the panel; the scrim stacks above lower overlays (`#issueScrim`).
+- Focus-visible rings + reduced-motion inherited (no analysis animation under reduced-motion); colour is never the sole signal.
 
-### Clarifications — one shared path, one live box
-`answerClarification()` (panel) and `answerClarificationFromChat()` (chat) both funnel into **`_submitClarification(id, val, src)`** — the same project-info attestation, the same `Open → Addressed → Resolved` lifecycle, the same analysis-update timing; only the reporting surface differs. `_chatClarBlock(id)` calls **`_retireClarBoxes(id)`** before emitting a new box (and `_submitClarification` retires on answer), stripping the `id` attributes off any earlier box and hiding its input. Raising the same clarification repeatedly therefore leaves **exactly one live answer box per issue** and **no duplicate DOM ids**.
+## App shell (inherited)
 
-No History links: the timeline is Slice 7, so no chat reply points at one.
+Persistent left sidebar (Overview · **Issues** [Map+List] · History · Inference map · Reports · Documents subgroups · Full plan), top bar, command palette (⌘/Ctrl+K — carries an "Issues — Map" entry), chat rail. The Issues item routes to the last-seen view; nav chrome and badges stay neutral.

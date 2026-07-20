@@ -1,278 +1,100 @@
 # Slice 9 — Collaboration, Sharing & Export · User Experience
 
-> ## ⚑ AMENDED 2026-07-11 — the ratified register (D123 · D124 · D125 · D126)
-> Passages below that pre-date this amendment are **superseded, not deleted** — read them together with the **AMENDMENT** section at the end of this document, which wins. The one-line governing principle (**D126**):
->
-> > **Meter who gets a seat. Never meter who gets an answer. And always say which limit you just hit.**
->
-> Headlines: **tier gating is LIVE in Alpha** (D123 — Basic is purchasable; this *reverses* the earlier N-1 advice) · **two limits, never conflated** (D124 — PHASE invites vs TIER seats; the product must always name which one blocked you) · **reviewer grants are FREE and UNMETERED on every tier in every phase** (CR-2 — structurally required) · allocation **Basic 5/mo · Free 2/mo** (CR-1/T-2) · **one identity** (N-2 — `Principal` + `Membership` + `ReviewGrant`; "Participant" is a *view*) · **no points economy** (CR-4) · **no pay-to-skip** (CR-7).
+**Release:** OSLO R1 (ALPHA). **Cumulative:** Slices 1–9.
+**Baseline of record:** frozen prototype (md5 `a327d702`, boot 157/157).
+**Boundary:** advisory-only (D001); sharing/commenting/exporting **never change the assessment — only an analysis update does** (D111/D112); an export/report is a **read**, it produces no assessment (D112); **export ≠ share** — a frozen export snapshot is a distinct object from a view-only share link (D107); no forecast/composite anywhere (D183b); maturity-not-health (D003, a P1 defect class per DL-104); computed never invented (D173); dark default + WCAG 2.1 AA (D015); client-side prototype only (D016).
 
-
-**Cumulative:** Slices 1–8 **+ Slice 9**. This slice fills the last two top-bar seams (**Share**, **Export**), un-gates the collaboration notification categories, and lands the centerpiece: **CRR — CAF Review Requests**. Everything from Slices 1–8 is preserved 1:1 (onboarding funnel, Overview, Attention map, full artifact editor, Issues, History + trend, Workspace Home, project switcher, notifications, Settings, theme, command palette, OSLO chat, feature tour).
-
-Decisions encoded: **D110** (sharing dialog), **D111** (comments + @mentions), **D112** (export), **D113** (collaboration notifications un-gated + Settings → Collaboration), **D114** (CRR-01…05), **D115** (reviewer-response semantics — doctrinal), **D116** (reviewer view — **proposal, owner-open**), **D117** (share-link hygiene), **D118** (Free-tier CRR cap) — plus inherited **D001** advisory-only, **D002** confidence = neutral maturity, **D003** severity-only color, **D006/D088** analysis-update-only resolution, **D009** Panel Model, **D011** epistemic notation, **D048** visibility-first tiering, **D092** no user-facing "reanalysis" mechanism, **D096** append-only History.
+> **This is a regeneration to match the frozen build.** The baseline slice-09 docs predate DL-133→156; this rewrite documents the surface as frozen — including the **Reports workspace** (DL-141→144), which is the slice's read-packaging output. What Slice 9 *owns* is **share + the reader-export + the Reports workspace**. The **structured Asana execution-export** (DL-151) is **Slice 11's** (`slice-11-execution-ready-planning-export`) — a distinct object (D107), cross-referenced here, not re-documented.
 
 ---
 
-## The one idea this slice turns on
+## What Slice 9 is
 
-**A stakeholder's answer is evidence, not truth.**
+Slice 9 is OSLO's **collaboration-and-hand-off layer** — everything that lets a PM bring other people to the read and carry the read out of OSLO, without ever letting any of it change the read. It adds no new assessment surface; it wraps the existing one. Four things live here:
 
-That single sentence shapes every surface here. When your sponsor says *"yes, the venue confirmed it"*, a lesser product closes the issue and moves on. OSLO does not. Their answer goes onto the record as **"Attested by Marcus Hale"** — a *third* kind of claim, sitting beside **"From OSLO"** (what OSLO worked out) and **"Confirmed by you"** (what you stood behind). It triggers a fresh analysis run, because more evidence is genuinely more to go on, and your **reliability** rises accordingly. But the issue **stays open**, the **assessment is not overwritten**, and **OSLO never accepts it on your behalf**. An approval is evidence that *a stakeholder approves* — never proof that the plan is sound. The call stays yours.
+1. **The sharing dialog** (`openShare`) — invite people by email as Owner / Collaborator / Viewer, and hand out a **view-only snapshot link** to the live project.
+2. **Threaded comments + @mentions** on findings (issues) — a conversation recorded next to the read, **append-only, and it changes no assessment**.
+3. **Export / share-out** (`openExportSeam` → the one ratified export modal) — package the read as a PDF / copy / export link, carrying the analysis-currency marker and the required understanding-maturity disclaimer, tier-gated, with an append-only export record.
+4. **The Reports workspace** (`Reports` view) — a slim tab strip hosting **more than one report**: the **authored Executive Briefing** plus **three generated, read-only reports computed from live state** (Outcome Readiness · Assumptions & Evidence · Decision Record). Every generated report reuses the one export modal.
 
-That is the whole difference between a review tool and an understanding tool.
-
----
-
-## What's NEW in Slice 9
-
-### 1. Sharing is real (D110) — was: *"Sharing — arrives in Slice 9"* toast
-The top-bar **⤴** opens a **sharing dialog**: invite by email, pick a role, see who's on the project, and hand out a **view-only snapshot link**. Three participant types, each with **one plain line** about what they can do — *Owner* (can change the plan, share it, export it, send review requests), *Collaborator* (can comment and answer a review request, but can't change the plan), *Viewer* (can read the plan and OSLO's read of it — nothing else). The dialog says out loud that **roles are shown, not enforced** — there is no permission engine in R1, and pretending otherwise would be the lie.
-
-The snapshot link is the honest part. It shows OSLO's read **as it stood when you made the link**. The moment analysis moves on, that link is relabelled **"previous analysis"** — and anyone opening it is told so. A stale read is never quietly passed off as current.
-
-### 2. Comments live on the issue — and only on the issue (D111)
-Threaded comments sit **inside the Issue Panel**. There is no comment inbox, no orphan thread surface — that would be a second place where the truth about an issue lives, and OSLO doesn't do that (Panel Model, D009). They are **append-only**: nothing is edited or deleted after the fact. `@` brings up your teammates, or **"Invite someone new…"** which drops you into the sharing dialog. Every comment lands on the **History** timeline.
-
-And under the box, permanently: **"Comments never change the assessment."** Talking about the read is not the same as moving it.
-
-### 3. Export says when the read was produced, and what it isn't (D112)
-The top-bar **⤓** opens **Export a snapshot**. Two things are non-negotiable and always present: an **analysis-currency marker** (*"produced by the Extended run, 2h ago · Current"*) and the **disclaimer** — *this reflects understanding maturity, not project health, readiness, or probability of success*. A document that leaves OSLO and lands in a steering pack must not be able to be misread as a health score.
-
-**Free gets PDF.** Copy and Link are shown, tier-locked, with a *See plans →* path — visible rather than hidden, so you can see what a plan buys you (D048). And: **"Export generates no new assessment and never triggers an analysis."** It writes down the read you already have.
-
-### 4. CRR — send one issue out for review (D114)
-This is the centerpiece. On an issue, **⤴ Share for review** sends **one thing** to **one person**: the finding, its context, OSLO's recommendation, and the artifact it came from. You see the **exact package** before you send it, you pick who gets it, and you can add a note.
-
-**Validation recommendations are prime candidates** (REC-05) — a finding like *"venue Wi-Fi capacity is unconfirmed"* is not something OSLO can think its way out of. Somebody has to phone the venue. On those issues, *Share for review* is the **primary** action, and OSLO says why.
-
-They respond with exactly one of four things: **Comment · Approve · Reject · Suggest Alternative**. Structured, preserved in full, shown on the issue forever.
-
-**And when they *take a position*, OSLO learns something specific — about alignment (D133).** A stakeholder saying *"this doesn't read right to me"* is not just noise on the record; it is **evidence about Alignment**, one of the three CAF dimensions. So a **Reject** moves Alignment down, and — **symmetrically, because neither direction is privileged** — an **Approve** moves it up. The response card says so plainly, and says what it does **not** mean:
-
-> **Attested by Priya Raman · Folded into Alignment — as evidence (D133).** A stakeholder **disagreeing** with a finding is information about **alignment** specifically — whether the people who have to live with this plan actually read it the same way. So it moved **Alignment** in the analysis run above, and reliability with it.
-> **What that does not mean:** OSLO has *not* concluded the plan is wrong, invalid, or that this finding is re-opened. Disagreement is not proof either. It is one attested input, weighed with everything else. An **Approve** and a **Reject** carry the same weight here — OSLO does not privilege the direction it is pointed in.
-
-The read can therefore **fall** after a Reject. That is the honest outcome, and the trend line shows the fall **with its cause**. What never happens: the issue is never auto-resolved, never auto-re-opened, and OSLO never adopts the reviewer's view as its own. *"Priya rejected this"* — never *"this is now wrong."*
-
-### 5. The workspace says where understanding is *blocked on a person* (CRR-05 / MRI-07)
-Once a request is out, the issue wears an **"◷ Awaiting review · Marcus"** chip in the Issues list and the Issue Panel. And a new first-class block — **Understanding dependencies** — lands on **both** the Overview and the Attention map:
-
-> **1 issue awaiting sponsor review.** OSLO can't firm up its read on this one until someone else answers. This isn't a weakness in the plan — it's where understanding is **blocked on a person**.
-
-That is a genuinely different kind of blocker from a weak plan artifact, and it deserved its own block rather than being folded into severity. It is drawn in **neutral chrome**: waiting on somebody is not a severity (D003).
-
-### 6. The reviewer's experience — **now a gated token grant** (D119; supersedes D116's no-account view)
-*Preview reviewer view →* shows exactly what the recipient gets. The link they were sent **carries a token that grants them Reviewer Principal access** (DL-049), scoped to **exactly that package**. They land on a one-click grant — *"Idris invited you to review one finding"* — and go **straight into the package**: **no password, no signup wall, and never anonymous.** The invite *is* the authentication. They read the finding in context, and answer. **Only after they answer** does OSLO offer them anything for themselves: *"Want to see your own plan the way they see theirs?"* Never before value.
-
-This surface carries a permanent **"Proposal — pending owner ratification"** ribbon. The recipient experience is the binding constraint on the growth loop and is explicitly **owner-open** (virality audit P0). It is built so it can be *looked at* — not adopted by default. Anti-Assumption is honored: **proposed, not inferred.**
-
-### 7. Links are revocable and scoped — and expiry is honestly unset (D117)
-Every link is either **one snapshot** or **one issue package**, and every link can be **revoked**. A revoked link opens **nothing** — not even an old copy of the read. **Expiry has no ratified default**, so the control shows **"Not yet set — owner decision"** rather than a made-up 30 days.
-
-### 8. Bound seats, never bound evidence (D120; reframes D118)
-This is the crux rule of the whole controlled-release design, and getting it wrong would do real damage.
-
-An invite is spent on **exactly one thing: admitting a new human to OSLO** — a collaborator seat, or a first-time reviewer. **Asking someone who is already here for their read costs nothing, forever, and is never metered.** A review request is not a marketing share. It is how you *get your answer*. Every request a product blocks is a user whose understanding it deliberately degraded — and a product whose entire claim is *"I will tell you the truth about your plan"* cannot do that to manage its own supply.
-
-So the **Share for review** button is **never disabled**. The reviewer picker says the cost on the person, before you choose: **Marcus — "free — already in"**; **Dana — "new — admits them (cost owner-TBD · CR-2)"**. The allocation only ever bites when you try to bring in someone new, and when it does, the honest fallback is the **waitlist** — not an upsell.
-
-`CRR_CAP` is still `null`. The **{N} per {period}** is an owner decision (**CR-1**) that has not been made, so the balance renders **unset** — never as a fake count and never as urgency.
-
-### 9. Chat knows about all of it — and still won't act (D108/D109 machinery)
-Ask OSLO *"what's blocking my understanding?"* and it names the issue, the person, and what will happen when they answer. Ask it about a response and it tells you what that response **did** (evidence → an analysis run → reliability rose) and, just as plainly, what it **did not do** (it did not close the issue; OSLO did not accept it for you).
-
-Ask it to *send* the request, *accept* the response, or *resolve* the issue and it says: **"That one isn't mine to take."** Then it opens the **review package preview** so you can decide. The chat explains and hands you back to the surface that owns the action. It has never been able to act, and this slice does not change that.
+The organising idea: **OSLO reads and packages; it never produces from a package.** Sharing, commenting, exporting, and generating a report all run **no analysis** and write **no assessment** — they move the existing read to another person or another surface, honestly labelled with when it was produced.
 
 ---
 
-## INHERITED (unchanged from Slices 1–8)
+## INHERITED (unchanged)
 
-- **Onboarding funnel** — invite → activation → intake → Initial Analysis → orientation (Slices 1–2).
-- **Overview** — confidence-led console: focal score, CAF maturity bars, reliability basis, false-confidence flag, Start here, Progress, More (Slice 3).
-- **Attention map** — the co-primary heatmap (artifacts × Clarity/Alignment/Feasibility), neutral intensity ramp, all-clear state (Slice 4).
-- **Artifact workspace** — the full rich-text editor: tables, provenance gutter, inline annotations, find/replace, slash menu, link popover (Slice 5).
-- **Issues** — the all-issues surface, the Issue Panel, lifecycle Open → Addressed → Resolved, recommendations + Apply-this-fix, clarifications (Slice 6).
-- **History & trend** — the append-only, run-grouped timeline + "Understanding over runs" (Slice 7). Slice 9 adds a **Collaboration** filter chip; comments, requests, responses, shares and exports are all events on the same append-only log.
-- **Workspace, awareness, Settings, theme** — Workspace Home, project switcher, notifications, the eleven Settings sections, dark/light (Slice 8).
-- **Shell** — persistent sidebar, top bar, confidence pill, ⌘K palette, OSLO chat rail, feature tour.
-
+- **Slices 1–2:** activation funnel; four-method intake; Fast Pass ≈30s; the read-led Overview; Outcome Analysis auto-runs, non-blocking, supersedes provisional→current; the clarification loop; OSLO chat + completion notices; optional tour.
+- **Slices 3–7:** the Overview (journey arc + persistent Outcome Confidence read + Start here + Progress); Issues; the Inference map; **History & timeline** — the **append-only** record (D096) that comments, shares, exports and revocations all write to.
+- **App shell:** left sidebar (Overview · Issues · History · Inference map · **Reports** · Documents · Full plan); top bar carrying **Share (`⤴`)** and **Export** affordances; command palette; chat rail. Chrome neutral; severity colour on issues only.
 
 ---
 
-## AMENDMENT — Controlled Release & Demand (D119–D122)
+## CURRENT in Slice 9
 
-### The invite is the authentication (D119)
-The old reviewer view had a hole in it: *"no account needed"* is an **anonymous** product interaction, and Alpha forbids those (D021). The resolution isn't a signup wall — it's noticing that **a link sent to a named person by name is already an invitation**. The token in that link **grants them Reviewer Principal access** (DL-049), scoped to exactly the package they were sent. They are *identified and invited*, never anonymous. They click once. They never see a password field.
+### 1. The sharing dialog (`#shareScrim`, `openShare` / `renderShare`) — D110
 
-What they see first: *"Idris invited you to review one finding."* And underneath, plainly: **this link lets you into this one package and nothing else in DevNorth 2026** — not the rest of the plan, not the other issues, not anyone else's comments. Frictionless, and **granted** rather than anonymous.
+Opened from the top-bar **Share (`⤴`)** control. It has four bands, top to bottom:
 
-### The waitlist, and why it exists (D121)
-After they answer — **only** after — OSLO offers them something for themselves. Not an account: a **waitlist**, with the reason said out loud.
+- **Two limits, stated separately and never merged (D124).** A **phase limit** (invites / supply — how many new humans you may bring into the Alpha, retires at GA) and a **tier limit** (collaborator seats / depth — how many seats this project holds). The two are shown side by side; **merging them into one "you've hit your limit — upgrade" sentence is the dark pattern and is prohibited.** (Tier numbers are illustrative and are Slice 10's subject; here they are only the seat/invite context around inviting.)
+- **Invite by email + a role picker.** Enter an email, pick **Collaborator** or **Viewer** (Owner is never an invite option), press Invite. No email leaves the prototype; the invite is recorded so the participant list and roles are visible. **Roles are shown, not enforced** in this release.
+- **What each role can do + whether it takes a seat.** Owner ("Changes the plan, shares it, exports it" · takes a seat), Collaborator ("Comments and answers review requests" · takes a seat), **Viewer** ("Reads the plan and OSLO's read of it" · **no seat**). **Viewers are unlimited on every tier** (X-1) and are never blocked by the seat cap. **Asking for a read is free — no invite, no seat** (CR-2, the load-bearing virality fact).
+- **People on this project.** A live view over the Membership registry — each row shows the person, their role, whether they hold a seat, and any pending-invite state (with its real expiry and the "returns to your balance if unused" refund).
+- **The share link — a view-only snapshot of the project.** "Create a view-only link" mints a snapshot link; it shows OSLO's read **as it stood when the link was made**, never re-runs an analysis, and if the project has moved on, anyone opening it is told they are looking at a **previous analysis** (never a stale read passed off as current). Per link: **Copy link · Preview what they see · Revoke.** Lifetime **30 days, revocable** (CR-6) — **the same on every plan** (D128 P2, safety is never sold).
+- **The distinction, restated in the dialog:** *"A share link is not an export link."* A share link is view-only access to *this project, live in OSLO* — revocable, relabelled when the read moves on. An **export link** is a frozen copy of one snapshot (D107).
+- **Footer:** *"Sharing changes no assessment. Only an analysis update does."*
 
-> *"OSLO is in Alpha, and we are deliberately limiting how many people we let in — not to make you want it, but because we can only do this properly for a small number of people at a time. So there's a waitlist, and it's a real one."*
+### 2. Threaded comments + @mentions on findings — D111 / D114 / D162a
 
-Their position is their **actual position** (#5 of 5), out of a **real total**. What moves it — a converted referral, being **review-requested** by someone with a real plan, role/org fit — is stated. And so is what we don't know: **how much each of those is worth is an owner decision that hasn't been made (CR-4 / CR-5)**, so the list is in arrival order and says so, rather than showing an order we invented. The inviter can also simply **grant them a seat** from their own allocation, from the issue itself.
+Inside the issue (finding) detail, a **Comments** row (`_commentsHTML`) holds a thread:
 
-### The mechanism sunsets — visibly (D121)
-Flip the phase bar to **Beta** and the same gate loosens. Flip it to **GA** and it **disappears**: the allocation reads *"Retired at GA"*, the waitlist reads *"Nobody waits. There is nothing to wait for."*, anonymous access is permitted (D021/D024), and the reviewer's convert-moment becomes an ordinary *Create your own project*. That is the whole point of building it this way: **scarcity here is a supply lever for the period when supply is genuinely constrained, and it is designed to kill itself.** It is not the business model.
+- **A conversation recorded next to the read, append-only.** Comments are added with `addComment()`; a **Reply** posts under the last comment as a thread child. **There is no edit and no delete — by design (D111):** the code has no `editComment()` / `deleteComment()`.
+- **@mentions.** Typing `@` opens a mention menu over teammates + project members; picking one inserts an `@Name` pill (rendered as a highlighted mention). The last item, **"Invite someone new…"**, closes the issue and opens the sharing dialog — mentioning a stranger routes into inviting them.
+- **The honesty label, once and short (D162a):** *"Comments never change the assessment."* The full append-only contract lives in the row's ⓘ on demand ("Append-only — comments can't be edited or deleted once posted"), not as a standing lecture.
+- **Every comment writes an append-only History event** (D096) — the comment, and any names it mentioned — with the line "Comments are append-only and change no assessment — only an analysis update does."
+- **Keyboard:** `@` to mention, `⌘↵ / Ctrl↵` to post.
 
-### Why the honesty isn't decoration
-OSLO's growth engine **is its epistemic credibility**. A product whose entire claim is *"I will tell you the truth about your plan, including what I don't know"* **cannot lie in its growth surfaces** — that would be self-refuting. So: no "3 spots left" unless there are exactly 3. No countdown. No dark pattern. And no charging you for the one thing the product exists to do: **ask someone what they know.**
+### 3. Export / share-out — the one ratified export modal (`#exportScrim`, `openExportSeam` → `openExport` / `renderExport`) — D112
 
-### A share link is not an export link (escalation #2, resolved in the UI)
-They were being confused because they were both called "a link". They are two different objects, and now they are labelled as two different objects, in both surfaces:
-- **Share link** (D110) — view-only access to the **live project**, revocable, relabelled *"previous analysis"* when the read moves on. **Free.**
-- **Export link** (D112) — a hosted copy of **one exported snapshot**, frozen at the moment you exported it. **Paid format.**
+The single export surface, opened from the top bar or from any generated report's Export control. It carries, in order:
 
----
+- **The analysis-currency marker (D112/D153) — a set of facts, not a paragraph.** The **Outcome Confidence** band + reliability, the analysis **run + when + state**, the open-issue count, and the three CAF dimension names — **read off live state, never invented** (D173).
+- **The required disclaimer (D003/DL-104), verbatim canon:** *"This reflects OSLO's understanding maturity — how clear, aligned and feasible the plan reads to it, and how reliable that read is. It is **not** a measure of project health, readiness, or probability of success."*
+- **The formats.** **PDF** (a written snapshot) · **Copy summary** (the read as text) · **Export link** (a hosted copy of *this* snapshot, frozen). **Free = PDF only** (D112/D123 — tier gating is live in Alpha). Locked formats are **shown, never hidden** (D048), and the buttons **stay enabled** (D138) — the *attempt* is gated (→ the value-framed UP-EXPORT prompt naming Basic), never the control.
+- **The append-only export record (D112).** Exporting appends a History record — *"Export generates no new assessment and never triggers an analysis"* — and toasts "Exported … dated to the analysis behind it." **An export is a read** (D112). **An export link is not a share link** (D107): a hosted copy of one frozen snapshot vs revocable view-only access to the live project — restated here too.
+- **The Strategic Readout Composer (WI-R1, DL-107/108).** The export preview assembles a **five-section spine** live from the issues + the current read: **§1 The read · §2 What's limiting it · §3 What we don't know yet · §4 What I need from you · §5 What I'd need to be sure · §6 How to read this.** The audience selector (Sponsor / Programme lead / Operations / Executive-board, the shared `REPORT_RECIPIENTS` taxonomy) **tailors §4 — the ASK — only** (DL-108); §1–§3, §5, §6 are structurally identical for every audience. **Assembling it runs no analysis** (packages, never produces).
 
-# AMENDMENT — D123–D126: what the user now actually experiences
+### 4. The Reports workspace (`Reports` view) — DL-141→144
 
-## The one sentence the whole surface is built around (D126)
+A slim **tab strip** (`renderReportTabs`) that hosts **more than one report**; each tab is labelled **Authored** or **Generated** plus the document name. `switchReport(k)` swaps between the authored composer and the generated-report surface; `enterReports()` is the view entry. The registered `REPORT_TYPES`:
 
-> **Meter who gets a seat. Never meter who gets an answer. And always say which limit you just hit.**
+- **Executive Briefing** (`readout`, kind **authored**) — the editable, PM-authored note that goes out (D143). One composable document; editing is **free on every tier — the gate is REUSE, not edit** (D154). Selecting it shows the composer (recipient · sections · options · export · schedule).
+- **Outcome Readiness** (`readiness`, kind **generated**, DL-141) — a read-only snapshot of *where the plan stands*, single-depth. Shows the Outcome Confidence band + maturity ramp + plain-language lead, the CAF drivers, the reliability basis with a **trust-check** ("✓ Sound basis" / "Read this with care"), the grounding rollup + open-issue/critical counts + the ladder rung, and **"the one next move."** Every value **computed live** — no forecast, no composite, framed as maturity not health.
+- **Assumptions & Evidence** (`assumptions`, kind **generated**, DL-142) — a read-only due-diligence snapshot of *what the plan rests on*: the load-bearing assumptions OSLO still infers (confirm these first), open questions, and where each dimension leans on inference. **Summary ⇄ Full** depth; Full adds the complete inferred register by dimension and names what breaks if each assumption is wrong. Inference is named **honestly, never as a warning**; the "level ≠ trust" note is explicit.
+- **Decision Record** (`decision`, kind **generated**, DL-143) — a read-only record of **the owner's own decisions** from the `_decision` register, each paired with **what it firmed** (a document → Confirmed by you, possibly raising that document's reliability) and **whether the read has taken it up**: **Live in the read** vs **Awaiting the next analysis update**. **D088 is the law of this report** — a decision firms the document it touches but **does NOT move the Outcome Confidence read; the read moves only at the next analysis update.** **Summary ⇄ Full** depth; Full adds the issue provenance and the withdrawn append-only trail.
 
-It is printed, verbatim, at the top of **Access & invites** and at the top of **Plans**.
-
-## The moment that matters: being blocked
-
-The user meets **two** limits in this product, and they feel completely different — deliberately.
-
-**Out of invites (PHASE).** *"You're out of invites for this month. Replenishes 1 August."* Cool/blue box, labelled **"Phase limit — invites"**. It explains that this is about **how many new people you can bring into the Alpha**, not about your plan. It offers **the waitlist**. **It does not offer an upgrade.** It says, in plain words, that the queue is throttled by how many people we can onboard properly — and that **buying does not create onboarding capacity**, so we are not going to sell you a way past it. That refusal *is* the feature.
-
-**Seats are full (TIER).** *"Free projects hold {N} collaborator seats — Basic holds more."* Brand/orange box, labelled **"Plan limit — collaborator seats"**. It says plainly that **your invites are untouched** (and shows how many you have left). It offers the **free remedy first** — *"a Viewer holds no seat; you can add them as a Viewer today"* — and then a genuine upgrade path.
-
-Hit **both** at once and you see **both boxes**, separately. They are never merged into one "you've hit your limit" sentence, because that sentence is the dark pattern.
-
-## The moment that matters most: asking for evidence
-
-**Nothing blocks a review request. Ever.**
-
-A user with **zero invites left**, on **Free**, in **Alpha**, sending to someone who has **never heard of OSLO**, still sends. The Share-for-review dialog says so out loud in that state:
-
-> *"Your invite allocation is spent this month — and it makes no difference here. The allocation meters seats. It does not meter evidence. This request sends, free, right now."*
-
-The reviewer picker prices every person the same way: **free**. A stranger reads *"free — a review grant costs nothing"*, and the panel underneath explains that they get a **scoped grant, no invite, no seat**, expiring when the issue resolves or in 14 days. The cost note is honest about who pays: *"every reviewer response triggers an Extended Analysis, which draws on a token budget (DL-048) — that is a **cost** control on compute, never a monetization gate. You are not charged, throttled or upsold for seeking evidence."*
-
-## The waitlist a reviewer actually sees
-
-Three bands, and they are named: **review-requested** · **referred by an active user** · **cold** — date-ordered inside each. A reviewer who just answered a real question lands in **band 1**, and is told why: *"someone with a real plan needed your read — that's the strongest signal we have."*
-
-No points. No score. No credits. No "invite 3 friends and skip the line." No countdown. The reviewer is told, plainly, that admits are **hand-curated** and that **nobody can pay to get in faster**.
-
-## Free is not a demo
-
-Free gives the **entire core read**: intake → Fast Pass → Overview → Attention → Issues → **CRR review requests**, unlimited. The Plans surface says this in the Free column with ticks, and says the Basic column sells **depth and volume** — more projects, more Extended Analysis, more artifacts, more seats, more export formats, longer retention. It also says, spanning both columns, what OSLO will **never** sell you: **asking someone for their read**.
-
-The **price is blank** — an explicit dashed *"price not set — owner-TBD (T-3)"* chip. The upgrade button is labelled **"(simulated)"**. Nothing pretends there is a billing rail here, because there isn't one (T-4).
-
-## What a Viewer feels like (N-3)
-
-Admitting someone off the waitlist gives them a **Viewer** seat — the least you can give them, and the cheapest: **no tier seat**. Next to their name is a **"Make Collaborator"** button. Pressing it is the moment the seat cap can bite — and if it does, the message says **TIER**, and never mentions invites.
+- **The depth toggle (DL-144).** A per-report **Summary ⇄ Full** control on the two reports that carry it (Assumptions & Evidence · Decision Record); Outcome Readiness is single-depth ("A single depth — this snapshot is short by design"). Depth is **persisted** (`repDepth`), so re-entering restores the last choice. **Depth changes how much is shown, never what is claimed** (DL-144).
+- **One export modal for everything (DL-144).** Every generated report's Export control calls `openExportSeam()` — the same modal above, with the same currency marker, disclaimer, tier gating and append-only record. **No parallel export machinery.** "Send" (a view-only share link, a share of the *live* project) is kept distinct from a frozen export (D107).
 
 ---
 
-# AMENDMENT — D128–D131: what the user now actually experiences
+## Report vs memo — the object distinction (D168 / D171)
 
-## The sentence that governs everything (D128, alongside D126)
+A **report** is the living document inside OSLO — editable, current, it tracks the read (the Executive Briefing; the generated reports re-compute on every view). A **memo** is a dated snapshot that **has left OSLO** — exported, shared, or sent. **Once cut, a memo never changes again** (deep-frozen). What it *does* change is its label: when the read moves past it, it is shown as **"previous analysis"** — the date it carries is a fact about the run behind it. Cutting a memo runs **no analysis** (packages, never produces).
 
-> **Meter only what costs money or defines scope. Never meter the epistemic record. And never sell safety.**
+---
 
-## The thing a user should notice, and *feel*
+## Journey (Slice 9 lens)
 
-Open **Plans** on Free and the first thing above the two columns is not a price and not a limit. It is this:
+1. From any read, the PM opens **Share** → invites a Collaborator, or creates a **view-only snapshot link** and copies it. A recipient opening the link sees the read as it stood, labelled current or "previous analysis."
+2. Inside a finding, the PM (or a Collaborator) leaves a **comment**, `@`-mentions a teammate, and posts. The thread records next to the read; the assessment is untouched; History gains an append-only row.
+3. The PM opens **Export**, reads the currency marker + disclaimer, and exports a **PDF** (Free) — or hits Copy/Export link and sees the honest, value-framed Basic prompt. The export is recorded; nothing is re-analysed.
+4. The PM opens **Reports** → reads **Outcome Readiness**, switches to **Assumptions & Evidence** and flips it to **Full**, then **Decision Record** and confirms each decision's "Live in the read" vs "Awaiting the next analysis update" status. Any report can be **Exported** through the one modal.
+5. For an **execution hand-off to Asana**, the PM crosses into Slice 11's structured export — a distinct object, not this slice's reader-export.
 
-> **Two things are never metered, on any plan: your artifacts, and your History.**
-> Artifacts are uncapped. History never expires and is never truncated.
+All calls stay with the user (D001). OSLO reads, packages, and hands off; nothing here changes the plan or the read.
 
-That is deliberate. On a product whose whole claim is *"I will tell you the truth about your plan, including what
-I don't know"*, the **record of how your understanding changed** is the product. Charging to keep it — or trimming
-it on the free tier — would be selling back the one thing OSLO says is inviolable. So the Plans surface leads with
-what it **won't** take away, and only then tells you what Basic adds.
+---
 
-The same move, twice more:
+## Boundary with Slice 11 (owner-accepted 2026-07-20)
 
-- **Safety is not an upgrade.** Link revocation and purpose-scoped expiry are identical on Free and Basic. The
-  Share dialog says *"same on every plan — safety is never sold"*, where a lesser product would put a lock icon.
-- **Viewers are unlimited.** Letting more people *read* your plan costs OSLO nothing and helps you. So it is free,
-  on every tier, forever.
-
-## The moment that matters: being blocked at the seat cap
-
-You are on Free. The project has **3 collaborator seats — including you** — and all three are filled. You invite a
-fourth as a Collaborator. What you get:
-
-> **Plan limit — collaborator seats.** Free projects hold **3** collaborator seats, including you — and all 3 are
-> filled. Basic holds **10**. This is a **plan** limit — it is **not** a supply limit, and it has nothing to do with
-> your invites (you still have 2 this month, and they are not the problem here).
-> **A Viewer holds no seat, and Viewers are unlimited on every plan** — you can add them as a **Viewer** right now,
-> for free, and they will see everything OSLO understands about this plan.
-> **And you can still ask them for their read** — a review request costs nothing and is never metered.
-> *Or upgrade for more seats.*
-
-Note the order: **the limit is named**, the **other** limit is explicitly cleared of blame, the **free remedy comes
-first**, the **evidence path is reaffirmed**, and only then is there an upgrade link. It never says *"out of
-invites"*, because that would be a lie, and a dark pattern (D124).
-
-## The moment that reveals the honesty: a pending invite expires
-
-You invite someone new. Your balance drops by one — but it says **held**, not spent:
-
-> *2 of 2 left · 1 held by a pending invite (returned to you if it expires unaccepted).*
-
-And next to their name is a **date**, not a countdown:
-
-> *Dana Whitlock · dana@thegridvenue.com · **invite pending** · expires **25 July** · returns to your balance if unused*
-
-That second clause is not decoration — it is the point. **A product that showed you an expiry date and stopped there
-would be manufacturing scarcity.** OSLO shows you the date *and* tells you, in the same breath, that you get the
-invite back. The window is **14 days** (ratified — X-2a/D132): long enough for a busy stakeholder to get to it,
-short enough that supply is not parked indefinitely. There is **no countdown, no urgency colour, and no "expires
-soon" nudge**, because there is nothing to hurry: if it lapses, you are made whole automatically.
-
-They never accept. The invite expires. **You get it back**, and History says why:
-
-> *Invite to Dana expired — returned to your allocation. She never accepted, so **no human was admitted to OSLO and
-> no supply was consumed**. The invite is refunded.*
-
-But if she **had** accepted, and you later removed her from the project — **you would not get it back**. History
-says that too, and says why: *an invite admits a **human to OSLO**, not a membership to a project.* Refunding on
-removal would let anyone recycle one invite forever. The asymmetry is deliberate, and it is explained rather than
-hidden.
-
-## The moment that proves the whole thing: you downgrade, and **nobody disappears**
-
-You were on Basic. Ten people were working in your project. Money got tight, and you dropped back to Free — which
-holds three.
-
-**Nothing happens to them. Nobody is removed.**
-
-All ten are still there. Everything they contributed is still attributed to them in History. The project simply says,
-plainly, what is now true:
-
-> **This project has 10 collaborators; Free adds up to 3.** No one has been removed, and no one will be. The only
-> thing that changed: **you cannot add another Collaborator** until this project is back under 3 — or you upgrade.
-> You can still add **Viewers** (unlimited, no seat), and you can still **ask anyone for their read** (free — CR-2).
-> **Removing someone is always your decision, never a side-effect of a plan change.**
-
-This is the single most important sentence in the tiering model, and it is worth being blunt about why. **Evicting
-humans from a project to enforce a billing change is prohibited on a trust product.** OSLO's entire pitch is that it
-tells you the truth and does not act behind your back. Silently deleting collaborators — real people, with real
-attributions in an append-only record — because a card expired would be the most self-refuting thing this product
-could possibly do. The non-destructive rule costs nothing, and it is now canon (D132).
-
-The **seat cap gates who you can *add*. It is never a licence to take people out of your project.** And OSLO says so
-**on the Plans page, before you downgrade** — so you never have to wonder what will happen to your people.
-
-## Free is not a demo — now with numbers
-
-**Free:** the whole core read · 1 project · **3 collaborator seats** · **unlimited Viewers** · **unlimited
-artifacts** · **full History** · **unlimited review requests** · link revocation + expiry · a *small* monthly
-Extended Analysis budget (the number is the owner's, and OSLO says so rather than inventing one) · PDF export.
-
-**Basic:** 10 projects · 10 seats · a *generous* Extended Analysis budget · all export formats — and **exactly the
-same** artifacts, History, Viewers, review requests and link security. Basic gives you more **room**, never more
-**truth**.
-
-**The price?** OSLO doesn't know. It says so, where the number would go.
+Slice 9 owns **share + the reader-export + the Reports workspace**. The **structured Asana execution-export** (DL-151 — mapping preview → simulated hand-off; only the plan crosses; provenance custom field + OSLO Task ID) is **Slice 11's**. They are **distinct objects** (D107): the reader-export is a *frozen human snapshot*; the Asana export is the *structured executable hand-off*. See `slice-11-execution-ready-planning-export`.

@@ -1,69 +1,73 @@
 # Slice 5 — Plan Artifacts / Artifact Workspace · Product Detail
 
-**Cumulative build (Slices 1–5).** This document specifies the NEW Slice-5 behavior in detail. Inherited behavior from Slices 1–4 is unchanged and specified in those slices' docs.
+**Scope:** the Artifact Workspace of the frozen R1 build (md5 `a327d702`) — the plan-artifact explorer and the type-aware artifact editor (prose + tables), with autosave, event-driven reanalysis, epistemic provenance, and the weakness stepper. Cumulative (Slices 1–5). Product behaviour only; no backend/API/DB.
 
-Decisions: **D066, D067, D068, D069, D070, D071.** Cross-cutting: D001, D003, D006, D011, D015, D017, D049.
+> Regenerated to match the frozen build. This supersedes the July-9 slice-05 doc set. **Boundary A (2026-07-20):** Slice 5 owns the generic editor mechanics; the execution-planning task model (decomposition, `low confidence` semantics, critical path, Full-plan view, Asana export) is **Slice 11** and is cross-referenced, not re-documented, here.
 
 ---
 
-## 1. Navigation & shell (D066)
+## Component: The explorer (`.sb-subgroup` rows) — D066 · D093 · `renderExplorerBadges()`
 
-- The top-center view switch gains a third segment: **Overview · Attention · Artifacts** (`#vsArtifacts`). It is a co-primary view (same tier as Overview and Attention), not nested.
-- Selecting **Artifacts** activates `#pane-artifacts`, a two-column grid: **explorer** (214px) + **center editor** (flex). It sits inside the `.body` grid column, so the OSLO chat rail remains to its right.
-- Overview/chat links that referenced "plan artifacts" (`openPlanSections()`) now route to the workspace and open Intent by default.
-- Context preservation: Overview and Attention remember `.body` scroll; the workspace manages its own `aw-center` scroll. Returning to the workspace keeps the last-open artifact.
+- **Location:** the persistent global left sidebar (moved there under D093), under **Plan artifacts** split into two subgroups: **Understanding** (Intent · Context · Scope · Requirements) and **Execution** (Work breakdown · Schedule · Resources). Order is `_ARTORDER` = `['Intent','Context','Scope','Requirements','WBS','Schedule','Resources']`; `WBS` displays as **Work breakdown** (`dispName`).
+- **Each row** (`.sb-nav.sb-art`) opens the artifact in the center editor (`openArtifact(name)`); the active row is lit (`_syncNav`).
+- **Open-issue badge (`.ex-fb`, `renderExplorerBadges`):** count = `_artOpenIssues(art)` (ISSUES with `sec===art` and status ≠ resolved); colour = the most-severe open issue's severity (`crit` / `mod` / `warn`, D003). No open issue → `.ex-fb.clear` (hidden). Driven **live** from the ISSUES model, so resolving/opening issues re-colours it.
 
-## 2. Explorer (D066)
+## Component: The editor shell (`#artCenter` / `#artView`) — D066 · `openArtifact()`
 
-- Fixed order: **Understanding** → Intent, Context, Scope, Requirements; **Execution** → Work breakdown (`WBS`), Schedule, Resources.
-- Each row: icon + display name + **open-issue badge** (`.ex-fb`). Badge shows the **open-issue count** for that artifact; badge **color = the most-severe open issue** (`crit`/`mod`/`warn`), severity-only per D003. Zero open issues → badge hidden (`.clear`).
-- Badges are recomputed **live** by `renderExplorerBadges()` on: workspace entry, boot/land, and every `updateIssueCounts()` (so resolving an issue updates the badge immediately).
-- Rows are `role="button" tabindex="0"`, operable by Enter/Space (D015).
+- **Empty state** (`#artEmpty`): "Open a document to read and edit it" until an artifact is opened; hidden thereafter.
+- **Head** (`.art-head`): `dispName(name)` as `<h1>`; an **"✎ Editable"** badge; an info tip stating drafted From OSLO / type to edit → Confirmed by you / **saving changes NO assessment; only an analysis update does** / inline colours mark weak spots; the layer label `_artLayer(name)` ("Understanding core" for Intent·Context·Scope·Requirements, "Execution plan" otherwise).
+- **Toolbar** (`.art-bar`): prev/next document (`artStep(±1)`, disabled at the ends); the version marker `v{_artVersion}`; the weakness stepper `#wnav`; editor actions (`artUndoBtn` · `artRedoBtn` · `artInsertBtn` · `artFindBtn` · **`artAskBtn` ✦** `askOslo({type:'artifact'})`, D108); the autosave/reanalysis chip `#savestate`; the brief `#saveConfirm` slot.
+- **Document** (`#artdoc`): one always-live `contenteditable`, `oninput="onArtInput()"`, `onblur="commitArtEdit()"`, body from `_artBodyLive(name)`. **No edit mode, no Save button.**
+- **On open**, `openArtifact` wires everything: `_seedTableProvenance` · `attachTableControls` · block grips + DnD · `updateWnav` · `renderExplorerBadges` · resets the per-artifact undo history. For the Work breakdown artifact **only**, the critical-path panel HTML is appended **after** `#artdoc` (outside it).
 
-## 3. Type-aware editor (D067)
+## Component: Type-aware bodies (`ARTBODY`) — D067
 
-- **Format by artifact** (`_ARTFORMAT`):
-  - `prose` — Scope (flowing prose only).
-  - `mixed` — Intent (prose + bulleted goals list), Context (prose + stakeholder table), Requirements (prose + bulleted acceptance list). Understanding artifacts default to prose but mix bullets/tables where those better represent the items.
-  - `table` — Work breakdown, Schedule, Resources (structured tables).
-- The editor body (`.doc#artdoc`) is `contenteditable="true" spellcheck="false"`. Blocks (`p`, `li`, `td`, `h3`) are the edit units.
-- **Autosave (simulated):** on input, after a debounce, the artifact's HTML + a bumped version are written to `localStorage` (`oslo-s1-art-<name>` / `-ver`). No server.
-- Header shows an **"✎ Editable"** badge and an info tooltip stating the edit/attest/reanalysis rules.
+Understanding = prose (mixed with bullets/tables); Execution = tables. Annotation ids reference real open issues (ISS-01…11) so hover/click routes to the live issue.
 
-## 4. Inline weakness annotations (D068)
+| Artifact | Rendering | Notes |
+|---|---|---|
+| Intent | prose + a bulleted "What success looks like" list | goals as list items |
+| Context | prose + a small **Stakeholders** table | mixed |
+| Scope | flowing prose (In scope / Out of scope) | carries a Deep-Pass finding span |
+| Requirements | prose + an **Acceptance** list | weak spans wired to issues |
+| **Work breakdown (WBS)** | **authored graded task tree, as a `<table>`** | outline-numbered task tree — see below |
+| Schedule | a **Milestone / Date / Status** table | statuses carry issue spans |
+| Resources | two tables (Vendors & dependencies; People & speakers) | carries the critical + moderate feasibility issues |
 
-- Weak spans are `<span class="anno crit|mod|warn" data-fid="ISS-0X" onclick="openIssueFromAnno('ISS-0X')">…</span>`, `contenteditable="false"` (atomic — not editable text).
-- **Color:** severity ramp only (red critical / amber moderate / neutral warning). Dotted underline; hover tints.
-- **Hover:** the `title` gives a one-line summary ("<Dimension> issue · <Severity> — hover reads the summary; click to investigate. (Never resolved inline.)").
-- **Click:** opens the **light issue panel** (`openIssue`) for the wired issue — the existing Slice-2/4 panel with the clarification loop.
-- Annotations map to the six real open issues: ISS-01 (Resources · Feasibility · critical), ISS-02 (Requirements · Clarity · moderate), ISS-03 (Resources · Feasibility · moderate), ISS-04 (Schedule · Feasibility · moderate), ISS-05 (Work breakdown · Alignment · moderate), ISS-06 (Context · Clarity · warning). When an issue resolves, re-rendering the open artifact drops its annotation.
+## Component: Autosave + event-driven reanalysis — D070 · D073 · D076 · D079 · `onArtInput()` / `commitArtEdit()`
 
-## 5. Epistemic notation (D069)
+- **`onArtInput`** (every keystroke): immediately attests the touched block(s) (D069), refreshes the cell reveal + row dot (D083), keeps the empty-hint / link-popover / find in sync — then stays **silent** (no "Editing…"/"Saving…" chip) and **debounces** ~1500ms to `commitArtEdit`. Actively typing cancels the in-flight commit.
+- **`commitArtEdit`** (typing-idle or blur): autosaves `#artdoc` innerHTML + bumps `art-{name}-ver` in local storage; writes a Slice-7 `artifact_version` History event; shows the brief "Saved · vN" confirm; then sets the state chip to **`reana` ("Reanalyzing…")** and after ~1500ms to **`ok` ("Analysis up to date")**.
+- **State chip** (`#savestate`, `.savestate`) states: `ok` (success dot, "Analysis up to date") · `saving` · `editing` · `stale` (warning) · `reana` (warning, pulsing dot). Conveyed by **dot colour + hover title only** — no reflowing text (D079). **No manual "Reanalyze" button exists** (D070).
+- **Structural edits** (row/column add·insert·delete, paste, format, slash-insert, undo/redo restore) all commit through the **same** `_commitFromStructuralEdit` → the same debounced Saved→stale→Reanalyzing→Up to date chain (`_finishNewRow`, etc.).
+- **D088 (the key rule):** the edit firms the content immediately (Confirmed by you), but the **Outcome Confidence read does not move on the edit** — it catches up at the next analysis update. Saving changes no assessment; only reanalysis does.
 
-- Each prose/list block carries `data-epi="derived"` and a hover chip `.epi-tag.derived` reading **"From OSLO"**.
-- On edit, the block the caret is in flips to `data-epi="attested"`, gains the `.attested` class (**left-border accent**), and its chip becomes `.epi-tag.attested` reading **"Confirmed by you"** = a plan fact.
-- The editing/stale hint bars state: *"What you change becomes Confirmed by you — part of your plan. Saving changes no assessment; only reanalysis does."*
+## Component: Epistemic provenance — D011 / D069 / D083 / D194b
 
-## 6. Event-driven reanalysis (D070)
+- **Prose** blocks (`p`/`li`/`h3`) carry a `.epi-tag` (`_epiTag`) reading **From OSLO** (derived) by default; editing flips it to **Confirmed by you** (attested) via `_attestSelectionBlocks` (adds `.attested` + `data-epi="attested"`). Both are **positive** states (D011/D069).
+- **Table cells** carry `data-epi="derived"|"attested"`, surfaced by a **per-cell reveal chip** (`_ensureCellReveal`, `contenteditable=false`, appended last so it never joins the text run) and a **per-row gutter dot** (`_rowProvState` / `_refreshRowDot` — attested if any cell in the row is). `_seedTableProvenance` marks untouched OSLO cells derived on open; editing a cell flips it attested live (`_refreshCellForSelection` / `_refreshRowDotForSelection`).
+- **One reader:** class names come from `EPI_CLASSES` via `epiClassName` (D194b) — no surface types its own label.
+- **D196a — the per-item verb is Confirm.** Editing or accepting a cell/task *is* confirming it; this is the ratified confirm mechanism at **cell + task** altitude. **D173:** From OSLO marks an inference; it is never presented as fact.
+- **Re-draft merge guarantee** (`redraftArtifact`, D084): attested blocks/cells are kept verbatim; only derived content is refreshed from OSLO's canonical draft. Prototype-grade positional matching; no fabricated numbers.
 
-State machine on input (`onArtInput`), all via simulated timers:
+## Component: Weakness annotations + the weakness stepper — D068 / D071 / D074
 
-1. **Saving…** (immediately, neutral dot).
-2. **Saved · analysis stale** (~700ms; version bump written; warning dot; "stale" hint bar shows).
-3. **Reanalyzing…** (~1.3s later; pulsing warning dot).
-4. **Up to date** (~1.5s later; success dot; hint bar clears).
+- **Annotations** (`.anno[data-fid]`, `_a(...)`): the contiguous weak span is inline-coloured on a **severity ramp (red/amber only, D003)** and wired to a real open issue. Hover → a `.anno-pop` summary; click → the **light issue panel** (`openIssueFromAnno` → `openIssue`) — **never resolved inline**. "Ask about this" hands the span's issue to chat (`askAboutSpan`, D108).
+- **Live-only render:** `_artBodyLive(name)` unwraps annotations whose issue is no longer open (dropping the span and its ⚠ marker), so resolving an issue removes its inline mark on the next render.
+- **Stepper** (`#wnav`, `updateWnav` / `weaknessNav`, `curAnnos`): "Jump to issue ⌃ *k* of *N* ⌄" cycles the live annotations in `#artdoc`, scroll-into-view + `.wstep` highlight; "✓ No issues in view" when none. Scoped hard to `#artdoc` (D164) — the readout has no issues and no stepper.
 
-No manual reanalyze control exists. The assessment (confidence/issues) is not fabricated to move here — only genuine reanalysis paths (e.g. answering a clarification in the issue panel) change the model.
+## Component: The Work breakdown task tree — DL-143→156 · 2A (**edited here; modelled in Slice 11**)
 
-## 7. Weakness stepper + artifact nav (D071)
+- **Render:** the Work breakdown artifact is an **authored graded task tree** inside the standard `<table>` editor. Rows are workstreams (`.wbs-h`, `data-lvl="0"`) → tasks (`data-lvl="1"`) → subtasks (`data-lvl="2"`), each with an **outline number** (`.wbs-n`: `1 · 1.1 · 1.3.1`) and indentation by level. Columns: Task · Owner.
+- **Every row is From OSLO** until confirmed (the table-provenance engine seeds all cells derived); the **thinnest inferences carry a neutral `low confidence` grade** (`.conf-low` — a dashed neutral pill with a `~` glyph and a "confirm these first" tip). **D003:** the grade is epistemic, **never** a severity colour.
+- **Reuses the unchanged editor:** `attachTableControls`, `_seedTableProvenance`, row/column ops, autosave, and the reanalysis commit all apply unmodified. Confirming a task = the generic cell edit (D196a).
+- **The critical-path panel** (`_wbsCriticalPathHTML`, rendered **outside** `#artdoc`): a From-OSLO "Sequencing & critical path" read, durations flagged `low confidence`, linked to the live undated-freeze finding. It is **not editable** in this view.
+- **⛔ Boundary A:** the decomposition, the `low confidence` grading semantics, the critical-path computation (`_criticalPath`, `_assertCriticalPathComputed`), the consolidated **Full plan** view, and the **Asana export** are **Slice 11** (`slice-11-execution-ready-planning-export`). Slice 5 documents only that the tree is *carried and edited* here through the generic engine, and that the critical-path panel renders read-only outside the editable doc.
 
-- **Weakness stepper** (`#wnav`): "Jump to weakness ⌃ [k of N] ⌄". `weaknessNav(±1)` cycles the `.anno` spans in `#artdoc`, outlines the current one (`.wstep`), scrolls it into view, and updates the "k of N" counter. If the artifact has no weaknesses, shows "✓ No weaknesses in view".
-- **Artifact nav** (`.art-nav`): ‹ / › call `artStep(±1)` over `_ARTORDER`; disabled at the ends.
-- Both are keyboard-focusable buttons (D015).
-- **Tour step:** the feature tour's fifth step (`#artdoc`, view `artifacts`, `onEnter: openArtifact('Resources')`) spotlights the real editor, replacing the former Slice-5 seam placeholder.
+## Behaviour: one editor, host indirection (D164) — the shared engine
 
-## 8. Accessibility (D015)
+The generic mechanics (rich-text selection toolbar · formatting · undo/redo · slash menu · find/replace · link popover · paste sanitization · block grips + drag-reorder · keyboard) are addressed through `_EDIT_HOST` / `_edDoc()`, so the **same engine** also drives the Reports readout (a Slice 10 surface). What stays **artifact-only** (gated so it never leaks to a readout): epistemic provenance chips, weakness annotations + the stepper, artifact versioning, and the reanalysis commit (`_edIsArtifact()` gates; `_assertReadoutEditorProducesNothing`, `_assertNoArtdocHardcodeInSharedEditorPaths`, `_assertEditorHostFollowsTheView`).
 
-- Explorer rows and editor blocks are keyboard-focusable; stepper and nav are operable by keyboard.
-- Focus-visible rings inherited from the global token set; contenteditable blocks show focus outline.
-- Severity color is never the sole carrier of meaning (annotations also carry a title + open the issue; badges carry a count).
+## Non-goals / seams (do not build here)
+
+The full Issues surface is Slice 6 (annotations route to the light panel — the seam stays). The execution task model, critical path, Full-plan view and Asana export are **Slice 11**. Artifact versioning surfaces on History (Slice 7). The readout editor is Slice 10. Real store / server / AI are out of scope (D016).

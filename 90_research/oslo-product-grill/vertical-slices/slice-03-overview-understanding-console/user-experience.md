@@ -1,107 +1,95 @@
 # Slice 3 — Project Overview & Understanding Console · User Experience
 
 **Release:** OSLO R1 (ALPHA). **Cumulative:** Slice 1 + Slice 2 + Slice 3.
-**Baseline of record:** `oslo_r1_experience_mockup_v4.html` (2026-07-09).
-**Boundary:** advisory-only (D001); confidence = understanding maturity, neutral (D002); severity color only on issues (D003); dark default + WCAG 2.1 AA (D015). Client-side prototype only (D016).
+**Baseline of record:** frozen prototype (md5 `a327d702`, boot 157/157).
+**Boundary:** advisory-only (D001); Outcome Confidence = understanding maturity, neutral, never health/readiness/probability (D002/D003/D183b); severity colour only on issues (D003); dark default + WCAG 2.1 AA (D015). Client-side prototype only (D016).
 
-> This document notes what is **INHERITED** from Slice 1/2 (unchanged) and what is **NEW in Slice 3**. Nothing from Slice 1/2 regresses.
-
----
-
-## INHERITED from Slice 1 (unchanged)
-- Invite → activate → welcome funnel (D021/D022); four start methods (D023, Guided Q&A out); GA-phase anonymous + save-to-keep, labelled not default (D024–D026, D032); one-time strategic-chain orientation + advisory footer (D027); account menu logout + stay-signed-in (D028); hero headline A + descriptor (D029); sample = all-phase, user-initiated (D030); attach types + ingestion depth (D033/D034).
-
-## INHERITED from Slice 2 (unchanged)
-- Intake constructs all 7 plan artifacts, reliability-qualified, thin evidence → clarifications (D035); Fast Pass ≈30s with a **measured** completion time framed "under the 60-second target" (D031/D036); the six Fast Pass outputs at orientation (D037); **land on the confidence-led Overview** with **Attention map co-primary** (D038); first-run orientation + fresh-arrival notice (D039); **Extended Analysis auto-runs, non-blocking, supersedes** provisional→current (D040); Extended-Analysis failure → last-good + retry (D041); the **clarification loop** — light prompt inside *Start here* + the question/answer inside the tied Issue → reanalysis → issue closes (D042); **completion notices delivered via OSLO chat** (D043); optional **feature tour** (D044); confirmations live in the Issue detail, Overview shows counts only (D045); **Overview = Confidence → Start here → Progress → More**, reliability inline not a card (D046); v4 Progress ledger (D047); **"Plan artifacts"** term (D048/D049).
+> This document notes what is **INHERITED** from Slice 1/2 (unchanged) and what is **CURRENT in Slice 3**. Nothing from Slice 1/2 regresses. **This is a regeneration to match the frozen build** — the original slice-03 grill (0–100 index, "How this is calculated" pill, Orientation ▸ Expanded ▸ Validated stages) is retired; those surfaces no longer exist.
 
 ---
 
-## NEW in Slice 3 — the Understanding Console
+## What Slice 3 is
 
-Slice 3 does not add screens. It deepens the *one* confidence surface and gives it a compact console home in the top bar. Everything new is either in the **Confidence pill popover**, the **Confidence card** (subtle markers only), the **Why** disclosure, or the **Project summary** in More — never as a new standing Overview section, and never as a separate reliability card (DL-096/D046).
+Slice 3 is OSLO's **Overview** — the confidence-and-understanding console a PM lands on after intake. It does not add screens. It is one hero card that frames **the plan's journey to the outcome** (a computed arc) above the **always-visible Outcome Confidence read**, followed by **Start here** (what to do next) and **Progress** (where you stand). The top bar carries the read as a compact chip + on-demand popover.
 
-### 1. Confidence pill → compact console (D050)
-The always-visible top-bar pill shows **index + band + reliability qualifier** (e.g. "Confidence 58 · Moderate · Moderate reliability"). In Slice 2 it merely jumped to the Overview; in Slice 3 **clicking it opens a popover** — the compact understanding console:
-- **First level:** the three CAF dimensions (Clarity · Alignment · Feasibility) with band words.
-- **Reliability basis section** (see §2).
-- A conditional **false-confidence flag** (see §3).
-- A **"Open full breakdown → Overview"** button.
-The pill is the **single home** for the live metrics; the Overview is not duplicated inside the popover, and the metrics are not re-stated as new Overview cards.
+The organising idea (DL-152→156): the Overview answers "how ready is my plan?" by **position on a journey**, not by a score. The journey is **Understand → ⟮Optimize: Validate · Improve⟯ → Execute**, "on the way to the outcome." Every position is **computed from state** (D173); there is no forecast and no health anywhere (D003/D183b).
 
-### 2. Reliability basis (D051)
-The popover's Reliability basis section shows three levels, **judged independently of CAF**:
-- **Coverage** — how much of the project reality was observable in your inputs.
-- **Evidence availability** — presence/accessibility of supporting evidence.
-- **How assessable** — plain label for Assessability (D012): how readily the plan can be assessed while key dependencies are unconfirmed.
-Levels use the reliability scale **High / Moderate / Low**. The basis is **also reachable from the Overview "Why"** disclosure (no separate Overview reliability card — reliability stays the inline qualifier + Why per D046).
+---
 
-### 3. False-confidence flag (D052, CONF-06)
-When a **high band sits on low reliability**, a **neutral, advisory, non-alarming** flag appears in both the popover and the Confidence card. It **names the cause** — here a *reliability shortfall*, distinguished from a *CAF weakness* — and says what would firm it up. It is **never health/severity colored** (neutral surface + info glyph only, D003). When the condition doesn't hold, the flag is **absent**. Demoable via the phase-bar "Sim false-confidence" trigger.
+## INHERITED (unchanged)
 
-### 4. Confidence stages (D053, CONF-05)
-The understanding-maturity stage — **Orientation ▸ Expanded ▸ Validated** — is surfaced **subtly**: named in the Confidence info tooltip and shown as a quiet stage marker (stagepips) beside the number and in the popover header. It is **not standing chrome**. At Fast Pass the read is at **Orientation**; after Extended Analysis it advances to **Expanded**.
+- **Slice 1:** invite → activate → welcome funnel; four start methods; anonymous + save-to-keep; one-time strategic-chain orientation + advisory footer; account menu; sample = all-phase, user-initiated.
+- **Slice 2:** intake constructs all 7 plan documents, reliability-qualified, thin evidence → clarifications; Fast Pass ≈30s framed under the 60-second target; land on the **read-led Overview** with the Attention map co-primary; Outcome Analysis auto-runs, non-blocking, supersedes provisional→current; failure → last-good + retry; the **clarification loop** (a light prompt in *Start here* + the question/answer inside the tied issue → analysis update → issue closes); completion notices via OSLO chat; optional feature tour; confirmations live in the issue detail (Overview shows guidance, not a tally).
+- **App shell:** persistent left sidebar (Overview live · Issues · History · Inference map · Reports · Documents · Full plan), top bar, command palette, chat rail. Chrome stays neutral/brand; severity colour on issues only.
 
-### 5. "How this is calculated" (D054)
-A subtle affordance sits by the confidence number. On hover/click it explains the number is **CAF-derived** (lowest dimension sets the ceiling), **reliability-qualified**, and **cause-bound** (every move names a reason), and that **below-band jitter is not dramatized** — only a band change is meaningful.
+---
 
-### 6. Project summary depth (D055)
-The Project summary in **More** is a plain-language narrative covering: **what the project is · understanding level (with stage) · main limiter · reliability basis · the "not health / readiness / probability" caveat.**
+## CURRENT in Slice 3 — the Overview surface, top to bottom
 
-### 7. Confidence movement is direction-only (D056)
-Any confidence move is shown **direction-only** (▲/▼ with a **named cause**), never a fabricated magnitude. The Extended-Analysis chat notice reads "Confidence moved ▲ up — deeper analysis firmed up the read" (not "58 → 62"), and the trend row reads "Up — deeper analysis firmed up the read." Confidence **can fall** and still mean *better understanding, not a worse project*.
+### 1. The journey arc (`#ov-arc`) — DL-152/153/154/155/156
+
+A slim top-line frame over the read. Label: **"Your plan, on the way to the outcome."** Four nodes on one axis:
+
+- **Understand → Validate → Improve → Execute**, with an **"Optimize" bracket** spanning Validate · Improve (the mission word stays on the axis).
+- **Understand** is a **first-time milestone** (behavioural trigger `_planStage`): you leave it the moment you take your first optimization action — your first confirmed detail (coverage > 0). It shows a ✓ *done* mark afterward. Returning users are already past it. This replaces the retired band≥High rule (the old rule was backwards — optimizing is what raises the band).
+- **Validate** carries **execution-readiness coverage** (`_execReadiness`, e.g. "7 of 23") — the WBS · Schedule · Resources statement subset, confirmed vs inferred. It is the beat where you confirm OSLO's load-bearing inferences so the read becomes **trustworthy**.
+- **Improve** carries the **maturity band** (the Outcome Confidence read below). It is the beat where you raise the now-trustworthy read.
+- **The two metrics are NEVER merged** (level ≠ trust — you can be 23 of 23 and still Moderate). Each node owns exactly one metric (D179e).
+- **Execute** is a **destination** — dashed ↗ node, meta "to Asana · anytime." It is always reachable (export is non-blocking, DL-145 §4), **never the active node, never a "ready" verdict.**
+- The **active node is computed** from state (`_planStage`): first-run/no coverage → Understand; coverage below half of load-bearing → Validate; load-bearing confirmed (frac ≥ 0.5) → Improve. The active node drops a spine toward the read below it.
+- A **body line** explains the current beat and always offers "Execute whenever / Review & execute →" with "nothing is gated."
+- **Honesty guard** `_assertHeroArcIsHonest`: exactly 4 nodes, exactly one computed active node equal to `_planStage()`, Execute is a destination never active, and no forecast/health vocabulary ("on track", "likely", "ready to succeed", "at risk"…) anywhere. The arc uses only the cool `--maturity` accent — never brand-orange on state, never RAG.
+
+### 2. The persistent read (`.ch-nest`, tab "The read") — Outcome Confidence (D179a)
+
+Nested directly below the arc, **always visible** — the beats change what you act on, never whether the read is shown (guard `_assertUnderstandDetailIsNested`). Top to bottom:
+
+- **Heading "Outcome Confidence"** + info tip (the method's essence lives here: the weakest of Clarity · Alignment · Feasibility sets the level; a confident read on thin evidence is flagged; it moves only when something real changes) + the **neutral analysis-state chip** (Provisional while Outcome Analysis runs → Current when it completes, D175 — the labels are unchanged from D040, but the colour is gone; a **dot + word** carry it by weight and shape, never hue).
+- **The lead-line** (`#ov-leadline`, DL-132) — OSLO's read as one plain-language sentence: the band paraphrased in plain maturity words, the computed limiter named, and a pointer into Start here. **Never a number or percentage** (that would read as a forecast). It is a **first-time nudge that sunsets** after the user first engages with Start here (follows the pointer, opens an issue, or confirms) — it never cycles to the next issue.
+- **The maturity ramp** (`#ov-ramp`, D174/D003) — the hero. Five ordinal bands **Very Low · Low · Moderate · High · Very High**; the current one is **lit and named**, computed from the read. Neutral: **no percentage fill, no health colour.** A band move is drawn on the ramp (previous ghosted, current lit, arrow between) — only when a move actually happened.
+- **The limiter** (`#ov-limit`, D186c) — the lowest CAF dimension, computed, with a grounding-aware verb: thinly evidenced → "Confirm it to lift the read"; no statements yet → "Bring evidence to firm it"; well-grounded → "A plan gap to fix." It **stays a limiter** — never a "Blocker" (low Feasibility is a fact about the *read*, not a warning about the *plan*). The phrase "holding it back" is gone.
+- **The payoff** (`#payoff`) — a dismissible "What changed" delta strip, ≤20 words, computed from the previous snapshot (D179b). It never displaces the state above it and carries no counts (those live in Progress). `dismissPayoff()` clears it and the ramp ghosts.
+- **The CAF rows** (Clarity · Alignment · Feasibility, Option C DL-123/124) — each row is a mini ramp + level word + a **per-dimension evidence cue** (e.g. "Mostly inferred · 1 of 3") + a "the limit" marker on the lowest. **Level ≠ trust:** the evidence cue is provenance, never folded into the band (no discount). Clicking a row toggles a drill-down (drivers: grounded/inferred split, open issues by severity, the lift, the finding-type cut) — the band stays a band; only drivers are quantified.
+- **The grounding rollup** (`#ov-grounding`, D179e) — the **one home** for global grounding: e.g. "20 of 48 statements **Confirmed by you** · 28 **From OSLO** · ✓ largely grounded." It names both ratified epistemic classes and the statement unit; the ✓ marker appears only while the read is live-largely-grounded (never a "you lost it" negative).
+- **The footer** — the **trend chip** (direction + word only, D056; routes to History; shown **only when the read actually moved** — a held read shows nothing) and **"Why ▾"**, which opens the reliability basis (Coverage · Evidence · How assessable), the neutral **false-confidence flag** when it holds (D052 — a high band on low reliability, disclosed neutrally, never RAG), and **"✦ Ask OSLO a follow-up →"** (hands the read to the chat).
+
+### 3. Start here (`#ovStartHere`, `renderFocus`) — beat-aware guidance
+
+The top open issue(s), **re-ranked by the current beat** (`_beatOrder`), never a static severity queue:
+
+- On **Validate** (and the first-run Understand step): lead with issues whose **load-bearing assumption grounds the read** — confirming them makes the read trustworthy.
+- On **Improve**: lead with issues on the **limiter dimension** — resolving them lifts the level.
+- **Severity breaks ties** in both, so the list is always still severity-sane.
+- A one-line **beat intent** (`.focus-beat`): "Confirm these to make OSLO's read trustworthy" (Validate) / "Resolve these to lift the read — your limit is Feasibility" (Improve) / "Confirm your first detail to make OSLO's read yours" (Understand).
+- The lead issue carries an inline **"✦ Confirm first"** de-risk (`startInlineConfirm` — attest its load-bearing assumption in place) plus **"Review the issue →."** Secondary items list below; standalone confirmations (limiter with no open issue) point to the Inference map.
+- **Computed, advisory, non-blocking, and it carries NO tally** (D179e/D183g). Guard `_assertStartHereFollowsTheBeat`.
+
+### 4. Progress (`#ovProgress`) — pure work-state + the maturity ladder
+
+- **Pure work-state:** Open (issues · critical · open questions) and Closed (resolved · answered). **No burndown grammar** — no completion %, no "N remaining", no target to drive to zero, no RAG. A rising issue count is a **deeper read, never a regression.**
+- **The maturity-ladder rung** ("Grounded · 3 of 5", DL-129) — Oriented → Corroborated → Grounded → Anchored → Validated, **computed from evidence** (grounded share, load-bearing statements, stakeholder corroboration), never from running an analysis. Monotonic-with-work; a milestone is a timestamped event, never a revocable badge.
+- **Which of Start here vs Progress leads is computed** (`_orderOverview`): first-run (no value earned yet) → **Start here first** (there is no progress to read); after first value → **Progress first** (the user knows what to do and wants to know where they stand). Same principle as D179a — state outranks event.
+
+### 5. Top-bar Outcome Confidence chip + popover (`#confpill` / `#confpop`) — D050/D051
+
+- The always-visible **chip** carries the label "Outcome Confidence" + the **band** (`#cp-band`) + the **ladder rung** (`#cp-grd`, e.g. Grounded). **DL-130 cut the standalone grounding word** from the chip — the rung already says it, and two quality scales in the top bar read as a stutter.
+- Clicking opens the **popover** — the on-demand full breakdown: band + grounding word, the three CAF bands (limiter marked), the limiter verb, one computed "way out", the **reliability basis** (Coverage · Evidence · How assessable, on demand), a **trust-check** (calm "✓ Sound basis" when no leg is thin / loud "Read this with care" naming the thin leg when it is — **never celebrated**), and the false-confidence flag when it holds.
+- Reliability is judged **independently of CAF** (D051): it says how firm the read is, not how good the plan is. It is also reachable from the Overview "Why" in prose; **there is no separate reliability card** (D046).
 
 ---
 
 ## Journey (Slice 3 lens)
-1. Activate → intake → Fast Pass ≈30s (INHERITED) → land on the confidence-led Overview.
-2. The **pill** carries the live read; the user clicks it to open the **console** — CAF first, then reliability basis, then (if it holds) the false-confidence flag.
-3. On the card, the user can read the **stage**, open **"how this is calculated,"** or expand **Why** to reach the reliability basis in prose.
-4. Extended Analysis supersedes; the stage advances Orientation ▸ Expanded and the movement shows **direction-only**.
-5. The **Project summary** in More gives the full narrative.
+
+1. Activate → intake → Fast Pass ≈30s (inherited) → land on the read-led Overview. First run: the arc sits at **Understand**, the lead-line pulls you into Start here, and Start here leads over Progress.
+2. **Confirm your first detail** (the lead issue's "✦ Confirm first", or a standalone confirmation) → coverage ticks, the arc crosses **Understand → Validate** immediately, the lead-line retires, and Progress now leads.
+3. Keep confirming load-bearing inferences → coverage rises. When load-bearing is confirmed (frac ≥ 0.5) the arc crosses to **Improve**; Start here re-ranks to the limiter dimension.
+4. **Outcome Analysis** supersedes (auto or after a confirm) → the state chip flips Provisional → Current, the band may move on the ramp, the payoff shows "What changed", the trend chip appears if the read moved. **The read moves only at an analysis update** (D088) — confirming crosses a node and ticks coverage instantly, but the band does not jump on the confirm.
+5. **Execute** is reachable the whole time (dashed destination) — nothing is gated.
 
 All calls stay with the user (D001). OSLO reads and explains; nothing changes the plan without the user.
 
 ---
 
-## App shell (D093/D094/D095 — shell cascade, 2026-07-09)
+## Chat integration (inherited, adapted to Slice 3 surfaces)
 
-Slice 3 now wears the **approved OSLO app shell** (ported from Slice 6) so navigation is identical across every slice. The old top-center Overview·Attention toggle is gone; primary navigation lives in a **persistent left sidebar**.
-
-- **Persistent left sidebar — PROJECT nav.** Overview (**live** confidence-led console) · Issues · History · Attention map (**live**, basic map from Slice 2). The active view highlights with `aria-current="page"`, and the top-bar breadcrumb names where you are.
-- **Slice-3 live vs. seams:**
-  - **Overview** — live (the understanding console; nothing regresses).
-  - **Attention map** — live (basic heatmap + dimensions; from Slice 2).
-  - **Issues** — Slice 3 has only the **light issue panel** (open any issue from the Overview "Start here" list or an Attention cell). The Issues nav item and the palette's "Issues" jump route to a **clearly-labeled seam** — *"Full Issues view arrives in Slice 6."* Never a broken or wrong view.
-  - **History** — a **clearly-labeled seam** — *"History & timeline — arrives in Slice 7."* The Overview's "Timeline →" link routes here.
-- **PLAN ARTIFACTS section is omitted** from the sidebar in Slice 3 — the artifact editor first appears in Slice 5. (The Overview's "7 plan artifacts" narrative and the More list are unchanged; only the *editor* is absent.)
-- **Top bar.** Intralign brand · project switcher (Slice-8 seam) · `sample` tag · breadcrumb; the **Confidence pill stays the one home for the metrics** (D050); right cluster adds search · Share (Slice-9 seam) · Export (Slice-9 seam) · report · **Free** plan chip. A `☰` button opens the sidebar as a drawer on narrow screens; the OSLO chat rail, feature tour (now a sidebar-foot button), confidence popover, and phase-bar offset are all preserved.
-- **Command palette (⌘/Ctrl+K or the ⌕ button).** Keyboard-operable jump-to: **GO TO** the four project views, and **OPEN AN ISSUE** (each still-open issue opens the light panel). No PLAN ARTIFACTS group in Slice 3.
-- **Chrome stays neutral/brand** (D003) — sidebar badges are neutral; severity color remains on issue badges only.
-
----
-
-## Chat integration (D108 cascade)
-
-The OSLO rail was a persistent advisor that **could not be talked to** — the composer and Send were inert. In Slice 3 the chat becomes a **real conversation**, grounded in the read that is on screen. It stays what it always was: **advisory** (D001). OSLO reads and explains; it points you at the action, you take it.
-
-**You can now ask.** Type a question and hit **Enter** (Shift+Enter for a new line) or click **Send**. Suggested prompt chips sit above the composer and are **derived from your live read** — "What should I do next?", "Why is Feasibility Very Low?", "Explain the top issue" — so the chat is never a blank box. Before the first message, an empty state says plainly what OSLO can and cannot do.
-
-**Every answer traces to your actual state.** OSLO answers from the confidence read, the CAF dimensions, the reliability basis, the analysis state, the open issues, and the seven plan artifacts as they stand *right now* — not from a script. Answer a clarification and the next reply reflects the new number.
-
-**"✦ Ask OSLO why" — the confidence read, explained.** Beside the number on the Overview (right under *How this is calculated*), this hands the confidence read to the chat and pins it as **Context**. Slice 3 is where the understanding console lives, so this answer is the rich one:
-
-- **What's holding it back** — the **limiting CAF dimension** (the weakest of Clarity · Alignment · Feasibility caps the number), with all three levels named.
-- **How much OSLO had to go on** — the **reliability basis**: Coverage · Evidence availability · How assessable — and the point that reliability is judged *independently of the plan's integrity*. Reliability says how firm the read is, not how good the plan is. That's why the number is never shown without it.
-- **Where the understanding is** — the **stage** (Orientation ▸ Expanded ▸ Validated) and whether the read is provisional, current, or last-good.
-- **The false-confidence condition**, but only when it actually holds — a High band on Low reliability is flagged, not hidden.
-- **What would move it** — named against the live open issues, with the honest boundary: the number moves only when an **analysis update** changes the read, never because something was dismissed.
-
-**"✦ Ask OSLO about this issue."** In the light issue panel, hand any issue to the chat: why it matters, what it rests on, the suggested fixes, and whether its dimension is the one capping your confidence. The panel steps aside so the conversation is visible.
-
-**Context, and clearing it.** When a surface hands something to the chat, a **Context** pill names it ("Your confidence read", "Venue Wi-Fi capacity is unconfirmed (ISS-01)"). Follow-ups stay inside that context — a bare "why?" means *why this*. The **×** clears it, and OSLO says so.
-
-**Answer a clarification without leaving the conversation.** When OSLO has a question tied to an issue, the answer box appears **in the chat**. Answering there does **exactly** what answering in the issue panel does — same project-information update, same *Confirmed by you* basis change, same reliability lift, same analysis update, same issue closure, same refreshed Overview. The chat is not a shortcut and not a side door; it is the same door. OSLO reports the update as it runs, and tells you when it lands — it never claims to have closed the issue itself.
-
-**What the chat will not do.** It will not change your plan, edit an artifact, resolve an issue, or move the assessment. Ask it to "just fix it" and it says so, then shows you where the real action is. Replies link straight to the surface — the issue, the Attention map, the confidence console — so a conversation always ends somewhere you can act.
-
-**Not in Slice 3.** No recommendation paths / "Discuss" (Slice 6), no artifact-editor ask (Slice 5), no History links (Slice 7). The chat never offers an action this slice cannot run.
+The OSLO rail is a real conversation grounded in the read on screen (advisory, D001). "✦ Ask OSLO a follow-up" on the Why box hands the read to the chat (the deep answer: limiter, all three CAF rows, the reliability basis, the ladder rung, the false-confidence condition when it holds, and what would move the read). The issue panel hands any issue to the chat. Answering a clarification in the chat does exactly what answering in the issue panel does — same analysis update, same closure. The chat mutates nothing; every action is a link to a function that already exists, and it never claims to have closed an issue itself.

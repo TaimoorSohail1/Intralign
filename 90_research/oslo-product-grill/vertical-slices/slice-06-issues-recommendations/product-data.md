@@ -1,57 +1,112 @@
-# Slice 6 — Issues & Recommendations · Product Data
+# Slice 6 — Issues & Recommendations (Panel Model) · Product Data
 
-Cumulative Slices 1–6. All data is fake/illustrative and lives in memory + `localStorage` (D016). No database, API, or server.
+Client-side prototype only (D016): all state is in-memory JS + `localStorage`. **No database, no server, no API, no real AI.** "Persistence" below means browser localStorage; real-store tech is owner-TBD and out of scope. These are the **product entities, visible fields, and prototype-local data concepts** the issue engine reads — not a schema.
 
-## Issue (user-facing "Issue"; internal object = "Finding", D017)
+> Regenerated to the frozen build. The retired **"Acknowledge"** lifecycle value and any hand-`resolved` writer are **gone**. The separate "Attention map" nav row is retired into the Map ⇄ List view state (DL-136).
 
-Nine real issues are wired (`ISS-01`…`ISS-09`) — the same set the Attention map, Overview and artifact badges already use. **Six** surface at the Initial / Fast Pass (`ISS-01`…`ISS-06`); the three **Deep-Pass** findings (`ISS-07`, `ISS-08`, `ISS-09`) become visible once **Extended Analysis** auto-runs, taking the open count to **9 (Extended)**. Slice 6 extends each record with recommendation, impact, and lifecycle fields.
+---
 
-**Deep-Pass / Alignment findings (Enhancement #2 Phase 2).** Canonical **Alignment** (CAF_ASSESSMENT_MODEL_V1 §3) is the integrity of the **coherence** between project elements and intended outcomes — whether the plan's elements cohere with each other and with its intended outcomes (does scope cover the intent; does the schedule fit the scope; do owners and dependencies line up; do stakeholders share the definition of done) — stakeholder-agreement is **one example, not the definition**. Accordingly:
-- **ISS-08** ("Recording is resourced but never scoped") is **Clarity + Alignment** (a Resources↔Scope coherence gap) — was Clarity only; it appears in both `Scope × Clarity` and `Scope × Alignment` cells via `_dimsOf`.
-- **ISS-09** (Alignment, moderate, `sec` = `Scope`) — "Intended outcomes have no scoped activity": the Intent artifact asserts intended outcomes (strengthen the regional developer community; generate sponsor pipeline) but Scope ties no activity to either (a Scope↔Intent-outcome coherence gap). Supporting item **CI-70** (relationship, Scope, Alignment).
-- Unchanged: **ISS-05** (no decision owner — accountability coherence) and **ISS-07** (funding-vs-cost sequencing; Feasibility+Alignment). The Alignment dimension now spans all four coherence findings (element↔element and element↔outcome), guarded at boot by `_assertAlignmentSpansCoherence` (self-check 141/141, 0 pageerrors).
+## Issue (the engine's unit) — `ISSUES` + `_istatus`
 
-| Field | Type | Meaning |
+Internal object = **Finding**; user-facing label = **Issues** (D017). The static model is `ISSUES` (ISS-01…09 base + deep); mutable per-issue status is a separate map `_istatus` (kept apart so the model object stays clean).
+
+| Field | Values | Notes |
 |---|---|---|
-| `id` | string | Stable id, e.g. `ISS-01`. |
-| `title` | string | Short issue title (card + panel header). |
-| `sev` | enum | `critical` \| `moderate` \| `warning`. Drives severity color **only** (D003). |
-| `dim` | enum | CAF dimension: `Clarity` \| `Alignment` \| `Feasibility`. |
-| `sec` | enum | Artifact key: `Intent`\|`Context`\|`Scope`\|`Requirements`\|`WBS`\|`Schedule`\|`Resources`. Displayed via `dispName` (e.g. `WBS` → "Work breakdown"); user-facing filter labeled **"Artifact"** (D049). |
-| `status` | enum | Seed lifecycle: `open` (all seed `open`). |
-| `why` | string | "Why this matters" body. |
-| `ev` | array | Evidence: `[[source, quote], …]` — traceable to inputs; shown collapsible. |
-| `caf` | string | "What this weakens" — the Clarity/Alignment/Feasibility impact narrative. |
-| `rec` | string | **OSLO Recommended** action (From OSLO / Derived). |
-| `paths` | string[] | **Possible resolution paths** (selectable → Selected Path). |
-| `draft` | string? | Optional OSLO-drafted change (present on `ISS-01`, `ISS-02`) enabling "Apply this fix" to draft into the plan. |
-| `clar` | object? | Clarification request `{q, hint}` (present on `ISS-01`, `ISS-02`). |
+| `title` | string | The user-facing issue title. |
+| `sev` | `critical · moderate · warning` | Severity. **Severity colour only on issues** (D003); `_sevrank`/`_SEVORDER` order it. |
+| `dim` | `Clarity · Alignment · Feasibility` | Primary CAF dimension (scalar, back-compat). |
+| `dims` | array of dimensions | Multi-dimensional findings (CAF §8.3); `_dimsOf` reads it — the issue appears under **each** dimension. |
+| `sec` | one of the 7 documents (`Intent · Context · Scope · Requirements · WBS · Schedule · Resources`) | Where the issue lives; the panel's Artifact link. |
+| `status` (→ `_istatus[id]`) | `open · addressed · resolved` (`_LIFE`) | Lifecycle. **No `acknowledged`** (D094). `_active(id)` = not resolved. |
+| `rectype` / `ftype` | e.g. `validation·definition·planning·alignment` / `Assumption·Coverage Gap·Missing Information·Ambiguity·Conflict` | Finding taxonomy; `ftype` drives the CAF drill's Level-2 finding-type cut (`_FTYPE_ORDER`). |
+| `why` | string | "Why this matters" — the plain-language read. |
+| `ev` | `[[document, quote], …]` | Cited evidence (the Evidence row). |
+| `caf` | string | "`<dimension>` impact" — what it weakens. |
+| `rec` | string | OSLO's own recommendation — the one the assisted apply can DRAFT (`apply:true`). |
+| `paths` | array of strings | Alternative **options** the user selects and writes themselves (D089). User-facing term is **option**, never "path" (D190b). |
+| `clar` | `{q, hint}` (optional) | A clarification request tied to the issue (D090). Present ⇒ the panel offers **Answer**; absent ⇒ the panel offers **Apply this fix**. |
 
-### Mutable runtime state (kept separate from the model)
-| Var | Type | Meaning |
+- **Lifecycle is `open → addressed → resolved`** and **reversible** (D192b): a selection clears, a fix/answer is withdrawn, and an analysis update re-opens. **Only an analysis update writes `resolved`** (D088).
+
+## Per-issue decision state (D191/D089)
+
+| Map | Meaning |
+|---|---|
+| `_selpath[id]` | the selected option: `'rec'` (OSLO Recommended = Confirmed by you) or `'p'+index`. Internal key stays `paths[]`; the product speaks "option" (D183e). |
+| `_decision[id]` | `{kind:'selection'\|'fix'\|'answer', key, art, verBefore, verAfter, bodyBefore, bodyAfter, basisBefore, relBefore, attestBefore, metered, evId}` — the record of what the user did and everything it changed, **captured before it changed it**. **Deliberately carries NO band, NO CAF width, NO confidence** — the mechanism behind "no hand-path moves the read." |
+| `_clarAnswered[id]` | a question the user has answered is countable state — written only by the one clarification door. |
+| `_wdConfirm[id]` | the on-screen consent step (D184: no irreversible-feeling act without its subject). |
+
+## Attestation refcount (D193b) — computed, never a boolean
+
+| Map | Meaning |
+|---|---|
+| `_attestBy[art]` | list of decision keys attesting the document — the **refcount** (`_attestedBy(art).length > 0` ⇔ attested). Two decisions can attest one document. |
+| `_ATTEST_BASE[art]` | the document's basis + Reliability **before the first standing decision** attested it — captured at the 0→1 edge, restored at the 1→0 edge (`_assertAttestationIsRefcountedByDecision`). |
+
+`applyFix` and `_submitClarification` mark `PLAN_SECTIONS[].basis='attested'` and raise `.rel` (Low→Moderate→High); withdrawing drops that decision's share and restores Reliability to the pre-first-attestation value when the last share goes.
+
+## Lifecycle transition table (D191 §7a) — enumerated, not remembered
+
+`_ISSUE_TRANSITIONS` declares every writer of `addressed`/`attested` with its inverse:
+
+| by | into | attests | kind | inverse |
+|---|---|---|---|---|
+| `selectPath` | addressed | no | selection | `clearSelection` |
+| `applyFix` | addressed · attested | yes | fix | `withdrawDecision` |
+| `_submitClarification` | addressed · attested | yes | answer | `withdrawDecision` |
+
+`_assertEveryDecisionTransitionHasAnInverse` sweeps the product and fails the build on any un-inverted writer. Named probe helpers (`_ATTEST_PROBE_HELPERS`) are the only exemption.
+
+## List filter + group state (D086)
+
+| Concept | Values | Notes |
 |---|---|---|
-| `_istatus[id]` | enum | Live lifecycle: `open` \| `addressed` \| `resolved` (D088). Seeded from `status`. |
-| `_selpath[id]` | string? | Selected Path: `'rec'` (OSLO Recommended) or `'p<index>'` (a `paths[]` choice) = **Confirmed by you** (D089). |
-| `_LIFE` | array | `['open','addressed','resolved']` — lifecycle order. |
-| `_lifeword` | map | Display words Open / Addressed / Resolved. |
-| `_active(id)` | fn | `_istatus[id] !== 'resolved'` — "active" (open or addressed) governs map/badge/list visibility so counts and routing agree. |
+| `_filt` | `{art, dim, sev, status}` | Document · Dimension · Severity · Status (`active·resolved·all`, `_statusMatch`). `clearFilt` resets art/dim/sev. |
+| `_group` | `dim · sev · art` | By dimension (default) · By severity · By document. |
+| `_issuesState` | `ready · analyzing · unavailable` | drives the not-yet-analyzed / unavailable empty states (D091). |
+| order keys | `_DIMORDER` (Feasibility·Clarity·Alignment) · `_SEVORDER` · `_ISSARTORDER` | fixed display order. |
 
-## Filter / group / view state
-| Var | Type | Meaning |
+## Map ⇄ List view state (DL-136)
+
+| Concept | Values | Notes |
 |---|---|---|
-| `_filt` | object | `{art, dim, sev, status}`. `art`/`dim`/`sev` default `'all'`; `status` default `'active'` (Open). `status` ∈ `active` \| `resolved` \| `all`. |
-| `_group` | enum | `'dim'` (By dimension, default) \| `'sev'` (By severity). |
-| `_issuesState` | enum | `'ready'` \| `'analyzing'` \| `'unavailable'` — drives the not-yet-analyzed / unavailable empty states (D091). |
-| `_DIMORDER` | array | `['Feasibility','Clarity','Alignment']` grouping order. |
-| `_SEVORDER` | array | `['critical','moderate','warning']` grouping order. |
-| `_ISSARTORDER` | array | The seven artifacts in canonical order for the Artifact filter. |
-| `CURVIEW` | enum | Now includes `'issues'` alongside `overview`/`attention`/`artifacts`. |
+| `_iaView` | `map` (default) · `list` | last-seen view of the combined Issues destination; set by `showView` (`attention`→map, `issues`→list). `showIssuesView` re-enters the last view. |
+| crumb | "Issues · Map" / "Issues · List" | `_viewLabel`. |
+| `_scrollMem` | per-pane scroll offsets | restored on return. |
 
-## Derived / rendered values
-- **Hidden count** = `total(status-matched) − shown(after art/dim/sev filters)`, surfaced only when filters are active and hidden > 0.
-- **Header count** = shown + status label (`open`/`resolved`/`total`) + `(filtered)` when filters active.
-- **Attention badge / Issues badge** = active (non-resolved) count.
-- **Confidence move** on resolution is **direction-only** (D056) — no stored magnitude; illustrative CAF/idx nudge only when the critical Resources gap clears.
+## CAF drivers (Option C · DL-116) — computed, never typed
 
-## Persistence
-- The prototype simulates persistence via `localStorage` (activation, account, project, artifact edits/versions from Slice 5). Lifecycle changes are in-memory for the session (reset on reload) — consistent with the prototype boundary (D016). **No DB.**
+`_ciDimDrivers(dim)` returns `{grounded, inferred, total, issues, bySeverity, byFtype, lift}` — every number a WHERE clause over live `_istatus` + `_ciDimInferenceStats`. `_evWord` gives the provenance cue; `_cafLiftText` reuses the top open issue's own `rec`. **The band is a band; only drivers are quantified.**
+
+## Alignment evidence (D133) — live CAF input
+
+| Concept | Values | Notes |
+|---|---|---|
+| `ALIGN_EVIDENCE` | `[{rid, issueId, by, kind:'approve'\|'reject'}]` | attested stakeholder inputs; both kinds are Alignment evidence. |
+| `ALIGN_STEP` | `8` (symmetric) | the **same** step for Approve (+) and Reject (−) — never split. Clamped `ALIGN_MIN…ALIGN_MAX`. |
+| `READ[*].alignW / alignLvl` | width → band (`_cafLevelFor`) | Alignment is a live dimension like Feasibility; moved by `_reviewAnalysisRun`, symmetrically. A review **never** resolves/re-opens/invalidates the tied issue. |
+
+## Deep (task-altitude) findings — `DEEP_FINDINGS` → `_deepPassSurfaceFindings()`
+
+Not in `ISSUES`/`_istatus` at boot; surfaced by the one idempotent door (returns the ids it added), then ordinary issues.
+
+| id | fields | note |
+|---|---|---|
+| ISS-07 | critical · Feasibility+Alignment · Schedule; has `clar`, `draft` | sponsor funding closes after costs committed. |
+| ISS-08 | moderate · Clarity+Alignment · Scope | recording resourced but never scoped. |
+| ISS-09 | moderate · Alignment · Scope | intended outcomes have no scoped activity. |
+| **ISS-10** | moderate · Feasibility · **WBS**; `rec` + 2 `paths` (no `clar`) | **task-altitude** (DL-145 2B): the freeze rests on undated tasks. |
+| **ISS-11** | moderate · Clarity · **WBS**; `rec` + 2 `paths` (no `clar`) | **task-altitude**: part of the breakdown is OSLO's low-confidence inference — honest self-read, never a warning (DL-109). |
+
+ISS-10/11 raise **WBS open count 1 → 3** (ISS-05 was the only prior WBS issue). The **analysis that produces them is Slice 11's**; this engine only carries them. Supporting context items `CI-71/72/73` (`hz:'deep'`) tie to ISS-10/11.
+
+## Plan documents ×7 (INHERITED, D035) — `PLAN_SECTIONS`
+
+Intent · Context · Scope · Requirements · Work breakdown (WBS) · Schedule · Resources. Each carries `basis` (`derived`/`attested`) and `rel` (Reliability). An applied fix / answered clarification flips the tied document to `attested` and raises `rel`; withdrawing restores it (refcounted).
+
+## localStorage keys (browser-local persistence)
+
+- Per-artifact body + version (`_artKey`, `-ver`) — read by `_docTouchedSince` to decide whether a withdraw may restore.
+- CAF drill open/L2 state persisted on container classes (survives refresh).
+- Inherited Slice 1–5 keys (phase, orientation/tour-seen, account, artifact autosave). `_issuesState` preview toggles and `_iaView` are ephemeral/UI state.

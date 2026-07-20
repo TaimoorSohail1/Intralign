@@ -1,150 +1,96 @@
 # Slice 5 — Plan Artifacts / Artifact Workspace · User Experience
 
-**Cumulative:** Slice 1 + Slice 2 + Slice 3 + Slice 4 + **Slice 5**. This slice adds the **Artifact Workspace** — a third co-primary view where the user reads and edits the seven plan artifacts OSLO drafted, with inline weakness annotations, epistemic notation, and event-driven reanalysis. Everything from Slices 1–4 is preserved.
+**Release:** OSLO R1 (ALPHA). **Cumulative:** Slices 1–5.
+**Baseline of record:** frozen prototype (md5 `a327d702`, boot 157/157).
+**Boundary:** advisory-only (D001); editing an artifact runs NO assessment — only an analysis update moves the read (D088); severity colour lives on weakness annotations / issues only, never on chrome or on the `low confidence` grade (D003); the epistemic states **From OSLO** and **Confirmed by you** are both positive (D011/D069); From OSLO marks an inference, never presented as fact (D173); dark default + WCAG 2.1 AA (D015). Client-side prototype only (D016).
 
-Decisions encoded: **D066–D071**, **D073** (patient / debounced reanalysis), **D074** (directly-editable annotated text), **D075** (structured-table row add/delete), **D076** (silent-while-typing commit), **D077** (hover-only epistemic tag — accent retained), **D078** (Notion-like rich-text editing), **D080** (expanded Notion-style selection / RTF toolbar), **D081** (insert-row-anywhere on structured tables), **D082** (row reordering via drag + keyboard, and discoverable top-insert), **D083** (epistemic provenance on table cells — a per-row gutter dot + a per-cell hover reveal), **D084 (Batch A)** (editor gap fold-in — undo/redo snapshot history, reanalysis-merge preservation on re-draft, table cell navigation, table column operations, paste sanitization), **D084 (Batch B)** (authoring + a11y — "/" slash menu, image/file embedding, keyboard/touch reachability of hover-only info, markdown input shortcuts, whole-block drag-reorder), **D084 (Batch C)** (polish — in-artifact find/replace, link edit/remove, opt-in save confirmation, empty/placeholder states, mobile/touch + responsive pass) (+ inherited D001 advisory-only, D003 severity-only color, D011 Derived/Attested, D006 event-driven reanalysis, D015 dark + WCAG 2.1 AA, D017 "Issues", D049 "Plan artifacts", D004 seven artifacts).
-
----
-
-## INHERITED (preserved 1:1 from Slices 1–4)
-
-The following are unchanged and must not regress:
-
-- **Access & onboarding (S1):** invite email ("Intralign Alpha") → activation → welcome → intake (four start methods: Attach · Describe · Templates · Sample), one-time strategic-chain orientation, advisory footer, account menu (logout, stay-signed-in), GA-preview toggle (anonymous run + save-to-keep, labelled, not default).
-- **Intake & Fast-Pass orientation (S2):** Fast Pass "Initial Analysis" ≈30s, lands on the confidence-led Overview, seven plan artifacts constructed, completion notices in OSLO chat, optional feature tour, clarification loop, Fast/Deep analysis-state machine (provisional → current, last-good + retry on failure).
-- **Overview & understanding console (S3):** Overview = Confidence → Start here → Progress → More; confidence pill + click popover (CAF dimensions + Reliability basis); neutral false-confidence flag; confidence stages in the popover only; "how this is calculated"; richer Project summary; direction-only movement; "Strengthened" trend.
-- **Attention map (S4):** heatmap-only (no dimensions/field view); rows = 7 plan artifacts × columns = Clarity · Alignment · Feasibility; severity-only cell color; cell → issue / scoped-list routing; empty + all-clear states; co-primary placement + context preservation.
-- **Light issue panel (S2/S4):** the clarification-loop panel (Header → lifecycle Open→Addressed→Resolved → Why → Evidence → Clarification → Suggested fixes). Reused as-is by Slice 5 annotation routing.
-
-## NEW in Slice 5
-
-### A third co-primary view: Artifacts (D066)
-The top-center view switch now reads **Overview · Attention · Artifacts**. Selecting **Artifacts** opens the workspace: a **left-rail explorer** beside a **center editor**. The persistent OSLO chat rail stays to the right.
-
-### Left-rail explorer with live issue badges (D066)
-The explorer lists the seven plan artifacts grouped **Understanding** (Intent · Context · Scope · Requirements) and **Execution** (Work breakdown · Schedule · Resources). Each artifact carries a **per-artifact open-issue count badge** whose color follows the most-severe open issue in that artifact (red critical / amber moderate / neutral warning) — driven **live** from the same ISSUES data the Attention map and Overview use. Clicking (or Enter/Space on) an artifact opens it in the center editor.
-
-### Type-aware editor: prose, mixed, or tables (D067)
-- **Understanding artifacts** render as **flowing prose by default**, but **may mix in bullets or a table** where those read better — Intent shows prose + a bulleted goals list; Context shows prose + a stakeholder table; Requirements shows prose + a bulleted acceptance list. Prose is the default, not a straitjacket.
-- **Execution artifacts** (Work breakdown · Schedule · Resources) render as **structured tables**.
-- The whole draft is **editable in place** (contenteditable). Edits **autosave** — simulated in `localStorage`, with a version bump.
-
-### Inline weakness annotations → the Issue panel (D068, revised by D074)
-Weak text is **inline-colored** on the contiguous weak span using the severity ramp (**red/amber only** — D003). **D074 — the annotated text is now directly (partially) editable:** clicking places the **caret** so the user can revise part of the weak phrase in place (it is no longer a locked island). **Hovering** shows a small popover with the summary and a clickable **"Open issue →"**; a tiny **non-editable ⚠ marker** just after the span also opens the **light Issue panel** — so the issue stays reachable **without** clicking (and thereby editing) the text. The popover renders **above** the annotation (flipping **below** when the annotation is near the top so it never sits under the toolbar) and is **fully opaque** — a Rev 7 fix that stopped editor content from bleeding through it when it overlapped the header. Weaknesses are **never resolved inline** — editing just runs the (now debounced) reanalysis, and the issue closes only via reanalysis, not the edit itself. When the caret enters an annotation its flag styling quietly drops to signal it's being addressed. Each annotation is wired to a real open issue, so its mark disappears when that issue resolves.
-
-### Epistemic notation: From OSLO → Confirmed by you (D069, demoted to hover by D077)
-Every prose/list block is **"From OSLO" (Derived)** by default and flips to **"Confirmed by you" (Attested)** = a plan fact on edit. **D077 — the epistemic text tag is demoted from permanent chrome to hover.** The owner found a persistent tag on every block distracting, so the tag text now appears **only on hover or keyboard focus** of a block. What still reads **at a glance** is the epistemic **state** and its subtle **accent** — an attested block keeps its **left-border accent**, a derived block has none — so the derived/attested distinction stays visible without standing chrome. The accent **updates live** the moment a block flips derived→attested on edit. The "saving changes no assessment; only reanalysis does" note stays available on that hover (a tiny ⓘ inside the tag). Nothing else about D069 changes — editing still attests immediately.
-
-### Event-driven, patient reanalysis — no manual button (D070, D073)
-Editing runs the state machine **automatically** — but **patiently (D073)**. While the user is actively typing the editor stays calm on a quiet **"Editing…"** state and does **not** advance toward reanalysis; a single keystroke no longer kicks off a reanalysis notification. The chain **Saved → analysis stale → Reanalyzing… → Up to date** commits only once the user has plausibly finished a block — after **~1.5s of typing-idle** or immediately on **blur** (the natural "entry complete" signal). It is shown in a status chip in the toolbar with a matching hint bar. There is **no manual "Reanalyze" button** anywhere. Only reanalysis changes the assessment. (D069 block-attestation — "Confirmed by you" — still happens immediately on input; it's the analysis churn that waits.)
-
-### Editing the structured tables: add, insert-anywhere, reorder & delete rows (D075 · D081 · D082)
-The Execution tables (Work breakdown · Schedule · Resources) and mixed Understanding tables (Context's stakeholder table) can be **restructured**, not just have their existing cells edited. Under every table sits a subtle **"+ Add row"** affordance: clicking it (or Enter/Space) **appends** a new empty row at the end, with the right number of cells, drops the caret in the first new cell, and — because the user authored it — marks the row **"Confirmed by you"** (Attested). This bottom append is unchanged.
-
-**Insert a row anywhere (D081).** You are no longer limited to appending at the end. Each body row's leading gutter now shows a small **"+" insert control** stacked with the **"×" delete control** on hover or keyboard focus. Clicking the **"+"** (or Enter/Space) inserts a new empty row **immediately after that row** — same column count, marked **"Confirmed by you"**, with the caret dropped in its first cell — so you can add a row in the middle of the table, exactly where it belongs, without dragging it up from the bottom. To add a row at the **very top**, the table's header gutter carries its own **"+"** that inserts a new **first** body row. The new row picks up its own gutter controls automatically. The **header row still can't be deleted** (its gutter carries only the top-insert "+", never a "×").
-
-**Top-insert is now easy to find (D082).** Previously the header "+" only appeared when you hovered the header row, so people missed it. It is now **always faintly visible** in the header gutter with an "Insert row at top" tooltip, brightening to full strength on hover or keyboard focus — a persistent affordance rather than a hidden one. The header stays non-deletable (no "×" there).
-
-**Reorder a row to any position (D082).** Each body row's gutter now also carries a small **drag handle (⣿)** above the "+" and "×". You can move a row two ways: **drag** the handle and drop it on another row — a brand-colored line shows exactly where it will land (above or below the row you're pointing at), and dropping moves the whole row, its data intact, to that slot (always within the table body, never above the header); or, for a mouse-free path, **focus the handle and press ↑ / ↓ (or Alt+↑/↓)** to nudge the row up or down one position at a time, with focus staying on the handle so you can keep moving it. The dragged row dims while you move it so the change reads clearly.
-
-Every add/insert/reorder/delete is treated like any edit: the analysis goes **stale** and **reanalyzes after the same ~1.5s debounce** (D073) — quiet, with **no "Editing…"/"Saving…" churn** on each action (D076), just Reanalyzing… → Up to date. Deleting a row that happened to carry an inline weakness annotation is allowed (you may be restructuring); the mark simply goes away with the row and reanalysis reconciles the issue set; reordering a row carries its annotation with it, and the weakness stepper re-counts afterward. The controls are quiet UI chrome — neutral by default; the **drag handle tints to a plain text tone** on hover, the **"+" tints to the brand accent**, and the **"×" tints to a danger tone**; severity color stays reserved for issues, never used as chrome. They are non-editable, so they never get caught up in the text you're writing, and are keyboard-accessible (focusable, Enter/Space, arrow-keys on the handle) per WCAG (D015).
-
-### Table cells show their provenance too: From OSLO vs Confirmed by you (D083)
-Prose blocks already carry the "From OSLO" / "Confirmed by you" epistemic notation (D069/D077), but table cells didn't — so a drafted table read as neutral content with no cue about which cells were OSLO's draft and which you'd confirmed. **D083 brings the same epistemic honesty to tables, without the prose tag's chrome** (that pill is reserved for prose/list/heading blocks). Two signals:
-
-- **A per-row provenance dot** sits in each body row's gutter, alongside the drag/insert/delete controls. It's a small **muted dot** when the row is entirely **From OSLO** (every cell still OSLO's draft) and a **brand-colored dot** once the row holds **anything you've Confirmed** (any edited cell) — with a "From OSLO" / "Confirmed by you" label for screen readers and on hover. It's the **glanceable** signal: scan the gutter to see which rows you've touched. It **flips live** the instant you edit a cell in that row, a newly **added or inserted** row shows Confirmed by you (you authored it), and **reordering** carries the dot with its row.
-- **A per-cell hover reveal** names that exact cell's state — "From OSLO" or "Confirmed by you" — when you hover or keyboard-focus the cell. So even a **single edited cell inside an otherwise-OSLO row** is identifiable: its neighbors still read From OSLO while it reads Confirmed by you. A very faint corner dot also marks a confirmed cell at rest (low-noise; the row dot stays the primary cue).
-
-On open, OSLO's untouched drafted cells are all **From OSLO** (a cell that merely carries a weakness flag is still OSLO's content until you edit it). As with prose, **saving your changes makes no assessment — only reanalysis does** (kept available on the cell's hover note). The provenance dot and reveal are quiet, non-editable chrome using **neutral and brand tints only — never severity red/amber/green** (severity color stays for issues, D003); they don't interfere with the inline annotation popover, the weakness stepper, the rich-text toolbar, or the row gutter controls.
-
-### Weakness stepper + artifact navigation (D071)
-The toolbar carries a **"Jump to weakness ⌃ k of N ⌄"** stepper that cycles through the weak spans in the open artifact (highlighting each and scrolling it into view), plus **‹ / ›** buttons to move between artifacts. Both are keyboard-operable. This also fills the **feature tour's artifact-edit step** (formerly a Slice-5 seam) — the tour now spotlights the real editor on the Resources artifact.
-
-### Notion-like rich-text editing (D078, expanded to D080)
-The editor supports **rich-text formatting** via a Notion-style **selection (RTF) popup**, so the plan draft reads and edits like a real document.
-- **The selection toolbar (D080):** selecting text pops up a single rounded dark pill just above the selection. It is grouped, with thin dividers between groups:
-  - **Turn into ▾** — a compact dropdown that turns the current block into **Text (Paragraph), Heading 1, Heading 2, Heading 3, Bulleted list, Numbered list, or Quote**. The trigger shows the current block type and the matching menu item is highlighted.
-  - **Inline** — **Bold · Italic · Underline · Strikethrough · Inline code**.
-  - **Link** — a 🔗 button that swaps the pill into a small URL field; press Enter or Apply to wrap the selection as a link (Escape cancels). Prototype-grade: no navigation.
-  - **Indent** — **Outdent · Indent**.
-- **Feels like Notion, themed to the dark app:** elevated dark surface, subtle shadow, hover tint on controls, and an **active (highlighted) state** whenever the selection already carries that format (e.g. Bold lights up on bold text; the Turn-into label reads "Heading 2" inside an H2).
-- **Show-on-selection:** the pill appears above a non-empty selection and hides on empty selection, focus loss, or a click outside — it stays clear of the annotation popover, and clicking a control never loses your selection.
-- **Keyboard:** **⌘/Ctrl+B / +I / +U** for bold/italic/underline; **Tab / Shift+Tab** to indent/outdent inside a list; the Turn-into dropdown is keyboard-operable and closes on **Escape**.
-- **Formatting is an edit.** Any format — turn-into, bold/italic/underline/strike/code, link, list, indent — attests the touched block(s) to **"Confirmed by you"** and flows through the **same quiet debounced reanalysis** as typing (D073/D076/D079): the editor stays silent while you work, then after ~1.5s of idle (or on blur) the status dot briefly goes **Reanalyzing…** then back to **Up to date** — no "Editing…"/"Saving…" churn and no layout shift. Only reanalysis changes the assessment.
-- Rich-text **coexists** with everything else in the workspace: inline issue annotations (the ⚠ marker, editable weak text, and popover are untouched, and the weakness stepper still finds every annotation), the epistemic accents (D077), the table-cell provenance dot + hover reveal (D083 — editing a cell flips its cell/row provenance too), and the structured tables (D075/D081/D082 row add/insert-anywhere/reorder/delete; you can format inside a table cell).
-- *(Prototype note: formatting is implemented with `document.execCommand` for the prototype; a production build maps these actions to a proper rich-text document model.)*
-
-### Editor gap fold-in — Batch A (D084)
-Five refinements make the editor feel trustworthy and complete. Everything stays quiet and neutral — new controls never use severity color, and nothing changes the "saving makes no assessment; only reanalysis does" rule.
-
-- **Undo / redo you can rely on.** `⌘/Ctrl+Z` undoes, and `⌘/Ctrl+Shift+Z` (or `Ctrl+Y`) redoes — for **structural** actions (delete/reorder/insert a row, add/delete a column, paste, and any formatting) as well as typing (rapid typing coalesces into one step rather than one-per-keystroke). Crucially, undoing a row delete or a reorder, or a format, **restores the editor cleanly** — the row insert/delete controls, the drag handle, the provenance dots, the cell reveals, and the weakness stepper all re-attach and stay consistent, and the quiet reanalysis re-runs (no "Editing…/Saving…" churn). So you can experiment freely and step back without desyncing the workspace.
-- **A re-draft keeps your confirmed work (the trust proof).** OSLO may re-draft a plan artifact as understanding evolves. When it does, **anything you've Confirmed (Confirmed by you) is kept exactly as you left it**, and only the still-**From OSLO** content is refreshed. (Demo: the phase bar's **"Sim OSLO re-draft"** button re-drafts the open artifact.) A quiet chat line confirms *"Re-draft complete — your confirmed edits were kept."* No numbers are invented — derived content is simply re-drafted from OSLO's own draft. This is the merge guarantee behind the whole epistemic model: your edits are plan facts, and a reanalysis or re-draft never silently overwrites them.
-- **Move through table cells with the keyboard.** Inside a table, **Tab** jumps to the next cell and **Shift+Tab** to the previous one, wrapping to the next/previous row; at the very last cell, Tab **adds a new row** and drops your caret in it, so you can fill a table straight from the keyboard. **Arrow Up/Down** hop to the cell above/below in the same column when your caret is at the edge of a cell. This doesn't disturb the list behavior — **Tab still indents** when your caret is inside a bulleted/numbered list (not a table).
-- **Add and remove table columns.** Hovering (or keyboard-focusing) a column header reveals a subtle **"+"** (add a column to the right) and **"×"** (delete this column) — same quiet, neutral style as the row controls (brand tint on "+", danger tint only on the "×" hover; never severity color as chrome). Adding or deleting a column updates **every row** at once. New columns come in empty and marked **From OSLO** (they're structure, not something you've asserted yet) — they become **Confirmed by you** the moment you type in a cell. It's all keyboard-accessible and, like every structural edit, triggers the same quiet reanalysis.
-- **Clean paste.** Pasting from anywhere — a web page, another doc, an email — **strips the foreign formatting** (colors, fonts, styles, classes, scripts) and keeps only safe structure: plain text plus basic bold/italic/underline, lists, and line breaks. Pasting into a table cell drops in as plain text and stays inside the cell. Your pasted content can't break the weakness annotations, the provenance cues, or the app theme; the pasted block is treated as your edit (Confirmed by you) and reanalyzes quietly.
-
-*(Prototype notes: undo/redo is a snapshot history rather than a full document model; re-draft matches blocks by position; cell-edge detection for Arrow keys is a heuristic. A production build would use a proper editing/document model.)*
-
-### Editor gap fold-in — Batch B (D084)
-Five more refinements make the editor feel like a real authoring surface — and reachable without a mouse. Everything stays quiet and neutral: new menus and controls never use severity color, every insertion is undoable, and nothing changes the "saving makes no assessment; only reanalysis does" rule.
-
-- **Insert anything with "/".** Type **`/`** at the start of a line and a small menu appears listing what you can add: **Text, Heading 1/2/3, a bulleted or numbered list, a quote, a divider, a table, an image, or a file.** Keep typing to filter (e.g. `/head` → the headings), use **↑/↓** and **Enter** (or click) to insert, **Esc** to close. Inserting a **table** drops in a ready-to-use 3×3 with all the usual controls — the drag handle, add/insert/delete row, column controls, provenance dots, and cell navigation — already wired. New blocks are **Confirmed by you**, and the workspace reanalyzes quietly.
-- **Embed an image or a file.** From the "/" menu, **Image** lets you paste an image URL or pick a local file (it's read in the browser — nothing is uploaded) and drops in a neatly framed image with an editable caption and a remove button. **File** adds a simple named file chip for non-images. These blocks are yours (Confirmed by you), undoable, and reanalyze quietly.
-- **Reach every hint by keyboard or touch.** The weakness summary, the "From OSLO / Confirmed by you" label, and the cell provenance used to appear only on hover. Now they're reachable by **keyboard focus** and by **click/tap**: focusing or tapping a flagged ⚠ reveals its summary (a second tap or the link opens the issue); focusing or tapping a paragraph or cell reveals where it came from. Esc or tapping away dismisses them. Nothing is mouse-only anymore.
-- **Markdown shortcuts.** At the start of a line, type `# ` for a big heading (`## `, `### ` for smaller), `- ` or `* ` for a bullet, `1. ` for a numbered list, `> ` for a quote, or `--- ` for a divider — it formats as you type. (It won't trigger inside a table cell or a code snippet.) Each is a single undoable step.
-- **Reorder whole blocks by dragging.** A small **⣿ grip** appears at the left of a paragraph, heading, list, quote, table, or image on hover. **Drag** it to move the whole block, with a line showing where it will land — or focus the grip and use **↑/↓** to move it by keyboard. (Reordering rows *inside* a table still works exactly as before; this is for moving whole blocks around.) After a move, all controls re-attach and the workspace reanalyzes quietly.
-
-*(Prototype notes: the "/" menu and markdown map to the same in-browser formatting commands as the toolbar; images/files are held as in-browser data (no upload/backend); block drag-reorder is a snapshot-backed move, not a full document model. A production build would use a proper editing/document model and real asset storage.)*
-
-### Editor gap fold-in — Batch C (D084)
-Five polish refinements make the editor feel finished — findable, precise, and usable on a phone. Everything stays quiet and neutral: nothing uses severity color as chrome, every edit is undoable, and nothing changes the "saving makes no assessment; only reanalysis does" rule.
-
-- **Find (and replace) inside an artifact.** Press **⌘/Ctrl+F** and a small find bar appears in the top-right of the editor. Type to **highlight every match** in the open artifact, with a **count** and **next/prev** to step through them; add a replacement and use **Replace** or **Replace all**. Highlights are non-destructive — they wrap matches without touching your weakness flags or provenance, and they clear completely when you close the bar (**Esc** or **×**). A replace is a single undoable edit that reanalyzes quietly. Fully keyboard-driven.
-- **Edit or remove a link.** Put your caret in an existing link (or select it) and a small popover shows the **URL** with **Edit**, **Remove**, and **Open ↗**. **Edit** changes where it points; **Remove** unwraps it, keeping the text; **Open** opens it in a new tab. Both edits are undoable and reanalyze quietly. (The Context artifact ships with a reference link so this is there to try.)
-- **A quiet "Saved" confirmation, only if you want it.** Autosave stays **silent by default** (the calm dot is the only standing indicator). Right after a change settles, a subtle **"Saved · vN · just now"** appears for a couple of seconds and fades — enough reassurance for cautious users, with **no layout shift** (it lives in a reserved slot) and **no return** of the old "Editing…/Saving…" churn.
-- **Gentle empty states.** An empty paragraph shows a faint **"Write here…"** (headings, quotes, and list items get their own hints; an empty table cell shows a soft "—"). A brand-new, fully-empty artifact shows a centered nudge to **type or press "/"** to add a block. These hints are non-selectable and disappear the moment you type.
-- **Works on a phone.** On touch, the gutter and column controls (grip, insert, delete, provenance) and the block grips are **always reachable with tap-sized targets** (no hover required). The floating formatting toolbar, the "/" menu, and the link popover **clamp to the screen** so they never run off the edge. On a narrow screen the workspace **stacks**: the artifact list becomes a **"☰ Artifacts" drawer** you open and close, and the OSLO chat collapses to its tab — leaving the editor full-width. (Verified around 380px.)
-
-*(Prototype notes: find matches within a single text run (prototype-grade), highlighting via a removable wrapper rather than a search index; the save confirmation and placeholders are presentation-only; the responsive layout is CSS breakpoints + a drawer toggle, not a separate mobile app. A production build would use a proper search model and a responsive design system.)*
-
-### Visible editor-action buttons (D085)
-The editor's most-used actions used to be **keyboard-only** — you had to already know ⌘Z, ⌘F, and the "/" trick to reach them. A small, subtle button group now sits in the toolbar so they're **discoverable at a glance**, without changing how the calm editor feels:
-
-- **Undo (↶)** and **Redo (↷)** do exactly what ⌘Z / ⌘⇧Z do, and they **dim out when there's nothing to undo or redo** — so you can always tell where you are in your edit history. They enable the moment you make a change and update as you undo/redo.
-- **Insert (＋)** opens the same **"/" block menu** — headings, lists, tables, images, and more — even if your caret isn't sitting on an empty line (it tucks a new block at the end and opens the menu there).
-- **Find (⌕)** opens the **find & replace** bar, same as ⌘F.
-
-Each is a real, focusable button with a tooltip that also shows its keyboard shortcut, so keyboard and mouse users reach the same actions. The buttons use quiet neutral styling with a warm brand tint on hover — **never** the red/amber/green weakness colors, which stay reserved for assessment. The keyboard shortcuts, the weakness stepper, the version chip, and the save-state dot are all unchanged; the quiet debounced reanalysis is untouched.
+> This document notes what is **INHERITED** from Slices 1–4 (unchanged) and what is **CURRENT in Slice 5**. Nothing regresses. **This is a regeneration to match the frozen build** — it supersedes the original July-9 slice-05 doc set (which predates the confidence/Option-C evolution and the DL-143→156 Work-breakdown task tree).
 
 ---
 
-## App shell (D093/D094/D095 — shell cascade, 2026-07-09)
+## What Slice 5 is
 
-The approved persistent shell from Slice 6 is now cascaded back into Slice 5, replacing the old top-center view switch (Overview·Attention·Artifacts) and the in-Artifacts left explorer. Behavior is otherwise unchanged.
+Slice 5 is OSLO's **Artifact Workspace** — the place a PM reads and edits the seven plan artifacts OSLO drafted at intake. It is a co-primary top-center view alongside the Overview and the Attention map. It has two parts: a **left-rail explorer** of the seven artifacts (in the persistent global sidebar), and a **type-aware editor** in the center that opens whichever artifact you pick.
 
-- **Persistent left sidebar.** A **PROJECT** group — Overview (LIVE) · Issues · History · Attention map (LIVE) — plus a **PLAN ARTIFACTS** group split into Understanding / Execution (the 7 artifacts, each with a live open-issue badge; a click opens the editor exactly as before). A pinned footer holds "Take a quick tour", a Free-plan chip with Upgrade, and "Your account · Settings". The active view (and open artifact) is reflected with `aria-current` and a highlight, and in the top-bar breadcrumb.
-- **What's LIVE vs seam in Slice 5:** Overview and the Attention map are **live**; **Issues** routes to a clearly-labeled **Slice-6 seam** ("Full Issues view arrives in Slice 6") — individual issues stay reachable via the Attention map, the Overview "Start here" focus, and the palette; **History** routes to a clearly-labeled **Slice-7 seam**. No broken links, never the wrong view.
-- **Top bar:** Intralign brand · project switcher (Slice-8 multi-project seam) · sample tag · breadcrumb · the unchanged confidence pill · a right cluster (search ⌕ · Share/Export Slice-9 seams · Reports · Free plan).
-- **Command palette (⌘/Ctrl+K or ⌕):** "Search or jump to…" with grouped, live results — **GO TO** (Overview·Issues·History·Attention) · **PLAN ARTIFACTS** (7) · **OPEN AN ISSUE** (open issues → the light issue panel). Keyboard-operable (↑↓ / ↵ / esc). Canonical terms ("Issues", "Plan artifacts") — never "Findings".
+The organising idea: **the plan lives in documents, and you edit the documents directly.** OSLO drafted every artifact **From OSLO** (an inference from your inputs); the moment you revise a sentence or a cell it becomes **Confirmed by you** — a plan fact. You never enter an "edit mode" and you never press "Save" or "Reanalyze": you click and type, changes autosave, and the read catches up on its own at the next analysis update.
 
-## What is deliberately NOT built (seams left)
-- The **full Issues surface** (grouping, By dimension / By severity, triage, resolved tab) remains **Slice 6**. The **Issues** nav + palette entry route to a labeled Slice-6 seam; annotations, Attention cells, and the palette's "Open an issue" still open the **light issue panel**.
-- **History / timeline** (append-only version history) remains **Slice 7**; the **History** nav routes to the labeled Slice-7 seam, and the version chip shows a bumping `vN`.
-- **Apply-a-fix that drafts into the artifact** is Slice 6; here the workspace is read/edit + reanalysis only.
+**Boundary A (owner-accepted 2026-07-20).** Slice 5 owns the **generic artifact-editor mechanics** — the explorer, prose/table editing, autosave, the reanalysis lifecycle, the provenance flip, and the weakness stepper. The **execution-planning task model** it now surfaces in the Work breakdown artifact — the decomposition itself, the `low confidence` grading semantics, the critical-path computation, the consolidated Full-plan view, and the Asana export — belongs to **Slice 11** (`slice-11-execution-ready-planning-export`). This doc describes that the Work breakdown artifact *carries* an authored task tree and that it is edited/confirmed through the **same generic engine**; for the task-model semantics it cross-references Slice 11.
 
 ---
 
-## Chat integration (D108 cascade)
+## INHERITED (unchanged)
 
-**The OSLO rail becomes a conversation.** Until now the composer was inert. In Slice 5 it works — and it is wired into the surfaces this slice actually has: the Overview read, the Attention map, the light issue panel, the clarification loop, and above all **the artifact editor**.
+- **Slices 1–2:** invite → activate → welcome funnel; four start methods; intake constructs all **7 plan artifacts** (Intent · Context · Scope · Requirements · Work breakdown · Schedule · Resources, D035); Fast Pass ≈30s; land on the read-led Overview with the Attention map co-primary; Outcome Analysis auto-runs, non-blocking; the clarification loop; completion notices in OSLO chat; optional tour.
+- **Slice 3:** the Outcome Confidence read (five ordinal bands, Option C CAF rows, grounding rollup, the top-bar chip + popover); movement is direction-only (D056) and moves only at an analysis update (D088).
+- **Slice 4:** the Attention map (7 artifacts × Clarity·Alignment·Feasibility), cells routing to the light issue panel / scoped Issues list.
+- **App shell:** persistent left sidebar (Overview · Issues · History · Inference map · Reports · **Plan artifacts** subgroups · Full plan), top bar, command palette, chat rail. Chrome neutral; severity colour on issues only.
 
-**What the user can do**
-- **Ask, and get a grounded answer.** Type (or press a suggested chip) and press **Enter** — Shift+Enter for a new line. OSLO answers from the *live* state: the confidence read and its reliability qualifier, the **limiting dimension**, the open issues and which one to take first, the artifact open in front of them. No invented numbers, no invented issues.
-- **Hand a surface to the chat.** "**✦ Ask OSLO why**" sits beside the confidence number. "**✦ Ask OSLO about this issue**" sits in the issue panel. An Attention cell can be talked through from the scoped list. Each sets a **context pill** at the top of the rail, so the user always knows what OSLO is talking about — and an **×** clears it ("I'm answering across the whole project again").
-- **Ask about the artifact they're writing.** This is the Slice-5 signature. In the editor toolbar, **✦** hands the open artifact to OSLO, who explains **what it says**, **where it's weak** (the open issues living there, most severe first), **what's From OSLO and what's Confirmed by you** (counted from the document in front of them), and **what would strengthen it**. Nothing in the document moves.
-- **Ask about a single weak span.** Hovering a colored span already offers "Open issue →"; it now also offers "**Ask about this →**". OSLO explains why *that sentence* is marked, restates that the colour means attention (not a verdict on their writing), and names what would strengthen it. The caret, the text, the toolbar and the undo history are untouched.
-- **Answer OSLO's question in the conversation.** When a clarification is open, OSLO raises it inline with an answer box. Submitting it runs **exactly the path the Issue panel runs** — the project information updates, the section becomes *Confirmed by you*, and the analysis update closes the issue. The chat is not a side channel, and asking twice never leaves two answer boxes: the newest supersedes the earlier one.
+---
 
-**What OSLO will not do (and says so).** Ask it to "just fix it" and it answers plainly: *"I can't change your plan — I read and explain, you decide."* It never resolves an issue, never edits an artifact, never moves the number. Its actions are always **links the user clicks** — open the issue, open the artifact, look at the cell — which run the same functions the surfaces run. An issue reaches **Resolved** only when an analysis update confirms the gap no longer holds.
+## CURRENT in Slice 5 — the Artifact Workspace, part by part
 
-**Boundaries in this slice.** The chat never offers Discuss / resolution paths (Slice 6) and never links to History (Slice 7). It only points at surfaces Slice 5 has.
+### 1. The explorer — the seven artifacts (D066 / D093)
+
+The explorer lives in the **persistent global left sidebar** (moved there under D093), under a **Plan artifacts** heading split into two subgroups:
+
+- **Understanding** — Intent · Context · Scope · Requirements.
+- **Execution** — Work breakdown · Schedule · Resources.
+
+Each row is a button that opens the artifact in the center editor. Each carries a **live open-issue badge** (`.ex-fb`) derived straight from the ISSUES data (`renderExplorerBadges` / `_artOpenIssues`): the number is that artifact's open-issue count, the colour is its **most-severe** open issue (critical / moderate / warning, D003). An artifact with no open issue shows **no badge** (the badge is hidden, never a green "all good" claim).
+
+### 2. The editor — type-aware, always live (D067)
+
+Picking an artifact fills the center pane (`openArtifact`). Before you open anything, an empty state invites you to "Open a document to read and edit it." Each open artifact shows:
+
+- **A head** — the artifact name, an **"✎ Editable"** badge, an info tip (drafted From OSLO · type to edit · edits become Confirmed by you · saving changes no assessment), and the layer label ("Understanding core" / "Execution plan", `_artLayer`).
+- **A toolbar** (`.art-bar`) — previous/next-document arrows (`artStep`), the version marker (`v2`, bumps on each committed edit), the **weakness stepper** (§4), editor action buttons (undo · redo · insert block · find/replace · **✦ Ask OSLO about this document**, D108), and the **autosave/reanalysis state chip** (§3).
+- **The document** (`#artdoc`) — one always-live contenteditable. There is no enter/exit, no Save button: **click anywhere, type.**
+
+**Type-aware rendering.** Understanding artifacts render as flowing **prose**, mixing a bulleted list or a small table where that reads better (Intent's goals list, Context's stakeholder table). Execution artifacts render as structured **tables** (Schedule milestones, Resources vendors/people). The Work breakdown artifact renders as a **task tree** built on the same `<table>` editor (§5).
+
+The editor also carries the full generic writing toolkit — a Notion-style selection toolbar (bold/italic/lists/headings/link, D078/D080), a "/" slash insert menu, find & replace, undo/redo (per-artifact snapshots, D084/D085), whole-block drag-reorder grips, and paste sanitization. Every one of these is treated as an edit: it attests the block it touches and flows through the same quiet autosave→reanalysis commit as typing. *(The same underlying engine also drives the Reports readout editor — a Slice 10 surface — via a host indirection; the readout deliberately does not get artifact provenance, weakness annotations, versioning, or the reanalysis commit.)*
+
+### 3. Autosave + event-driven reanalysis — the lifecycle (D070 / D073 / D076 / D079 / D088)
+
+Editing is calm and silent. While you are actively typing, the editor shows **no "Editing…"/"Saving…"** churn and does not advance. On ~1500ms of typing-idle (or immediately on blur), the edit commits: it **autosaves** to local storage, bumps the artifact version, records a History event (Slice 7 seam), and then the state chip runs **Reanalyzing… → Up to date** on its own. There is **no manual "Reanalyze" button anywhere.**
+
+Crucially, **saving changes no assessment.** Editing a sentence firms it into your plan immediately (it becomes Confirmed by you), but the Outcome Confidence read does **not** jump on the edit — it catches up when the analysis update lands (D088). The chip conveys the whole cycle by a dot's colour + a hover title only (Up to date / Reanalyzing…), never by a reflowing block of text.
+
+### 4. Weakness annotations + the weakness stepper (D068 / D071 / D074)
+
+OSLO's draft carries **inline weakness annotations** on the contiguous weak span — coloured on a severity ramp (**red/amber only**, D003), wired to real open issues. Hovering a span shows a one-line summary; clicking opens the **light issue panel** (the same panel as the Attention map) — a weakness is **never resolved inline**. The toolbar's **weakness stepper** ("Jump to issue ⌃ *k* of *N* ⌄", `updateWnav`/`weaknessNav`) walks between the weak spots in the open artifact, scrolling each into view and highlighting it. Only **live** (still-open) annotations render — resolving an issue drops its inline mark on the next re-render — and when none remain the stepper reads "✓ No issues in view."
+
+### 5. The Work breakdown task tree (DL-143→156 · 2A — the delta on this surface)
+
+The **Work breakdown** artifact now renders as an **authored, graded task tree**: workstreams → tasks → subtasks, **outline-numbered** (`1 · 1.1 · 1.3.1`) with indentation by level. Every row is **From OSLO** until you confirm it, and the **thinnest inferences carry a neutral `low confidence` grade** — a dashed, neutral pill, *never* a severity colour (D003: the grade is epistemic, not a health signal). It is built on the **unchanged `<table>` editor**, so all the generic machinery — per-cell/row provenance, add/insert/delete row and column, autosave, the reanalysis commit — applies to it for free. Confirming a task is exactly the generic cell edit: type in (or accept) a cell and it flips **Confirmed by you** (D196a — the per-item verb is Confirm).
+
+A From-OSLO **"Sequencing & critical path"** panel also renders in the Work-breakdown view — but **outside** the editable `#artdoc` (it is analysis, not editable plan content) and it is **not editable** here.
+
+> **Slice 11 owns the task-model semantics.** The decomposition, what `low confidence` grades and how it is computed, the critical-path computation, the consolidated Full-plan view, and the Asana export are documented in `slice-11-execution-ready-planning-export`. Slice 5's story is only that the artifact *carries* the tree and that it is edited/confirmed via the same generic engine, and that the critical-path panel renders read-only outside `#artdoc`.
+
+---
+
+## Epistemic notation — From OSLO vs Confirmed by you (D011 / D069 / D083 / D196a)
+
+Both are **positive** epistemic states. Prose blocks (paragraphs, list items, headings) wear a **`.epi-tag`** reading "From OSLO" or "Confirmed by you"; editing a block flips its tag to Confirmed by you immediately (`_attestSelectionBlocks`). Table cells can't wear the prose tag, so each body **cell** carries an epistemic state (`data-epi="derived"|"attested"`) surfaced two ways — a glanceable **per-row gutter dot** and a **per-cell hover/focus reveal chip** (`_seedTableProvenance` / `_ensureCellReveal`). Editing a cell flips it to Confirmed by you live, and its row dot recomputes. The class names come from one registry (`EPI_CLASSES` / `epiClassName`, D194b) so every surface reads the same words. **This is the ratified confirm mechanism at cell + task altitude** (D196a — the per-item verb is Confirm; editing/accepting an item *is* confirming it).
+
+On a simulated OSLO re-draft, the **merge guarantee** holds: blocks and cells you have Confirmed by you are preserved verbatim; only From OSLO content is refreshed (`redraftArtifact`).
+
+---
+
+## Journey (Slice 5 lens)
+
+1. From the Overview/Attention/Issues, click a **Plan artifacts** row (or an Attention cell that routes to it) → the artifact opens in the center editor.
+2. **Read** the draft — inline weakness spans mark the weak spots; the stepper jumps between them; hover for a summary, click to open the issue.
+3. **Edit** a sentence or a cell → it flips **Confirmed by you** instantly; the change autosaves silently.
+4. Editing settles → the state chip runs **Reanalyzing… → Up to date**. The Outcome Confidence read catches up at the analysis update — not on the keystroke (D088).
+5. Open the **Work breakdown** artifact → the graded task tree renders (outline-numbered, low-confidence rows flagged neutrally), with the read-only Sequencing & critical path panel below the editable doc.
+6. Step to the next document (`›`) or hand the open artifact to the chat (**✦**) for "what's weak here and where it came from."
+
+All calls stay with the user (D001). OSLO drafts and explains; nothing changes the plan without the user.
+
+---
+
+## Chat integration (inherited, adapted to Slice 5)
+
+The **✦ Ask OSLO about this document** button hands the open artifact to the chat (`askOslo({type:'artifact'})`); a weak span's "Ask about this" hands that span's issue over (`askAboutSpan`). The chat reports the artifact's epistemic basis (From OSLO / Confirmed by you) and reliability honestly, and routes to the live issue — it mutates nothing and never claims to have edited or resolved anything itself.
