@@ -923,5 +923,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-152 — The Overview hero is the plan's journey to a hand-off — Understand, Confirm, Hand off (Direction C-1) → `00_owner/decisions/records/DL-152-overview-hero-journey-identity.md`
 - DL-153 — The Overview journey hero, built — the arc, the nested Understand read, and the guards that hold them → `00_owner/decisions/records/DL-153-overview-hero-journey-build.md`
 - DL-154 — The journey hero speaks the north star — stages become Understand, Optimize, Execute (amends DL-152) → `00_owner/decisions/records/DL-154-overview-hero-outcome-journey-amendment.md`
+- DL-155 — The journey gains its two beats — Understand, Optimize (Validate, Improve), Execute (amends DL-152/154) → `00_owner/decisions/records/DL-155-journey-two-beats-identity.md`
 
 <!-- RECORDS-INDEX:END -->

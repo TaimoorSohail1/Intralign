@@ -1405,6 +1405,13 @@ Each changelog entry contains:
 - **Change Summary:** The journey hero speaks the north star — stages become Understand, Optimize, Execute (amends DL-152). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-189 — DL-155: The journey gains its two beats — Understand, Optimize (Validate, Improve), Execute (amends DL-152/154)
+
+- **Date:** 2026-07-20 · **Authorizing Decision:** DL-155.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-155-journey-two-beats-identity.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The journey gains its two beats — Understand, Optimize (Validate, Improve), Execute (amends DL-152/154). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
