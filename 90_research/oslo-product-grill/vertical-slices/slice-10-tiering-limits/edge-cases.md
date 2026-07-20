@@ -1,5 +1,10 @@
 # Slice 10 — Tiering & Limits · Edge Cases
 
+# ⚠️⚠️ RECONCILED 2026-07-20 — DL-143 → DL-156 LANDED AFTER THIS DOC. READ THE DELTA FIRST.
+
+**This doc was last reconciled 2026-07-17 (through DL-124).** DL-143 → DL-156 landed afterward — the **reports trio + Summary/Full depth + export** (DL-143/144), the **execution-ready planning direction** (DL-145 identity; DL-146–150 the authored task tree · task-altitude issues · computed critical path · the eighth "Full plan" consolidated view; DL-151 the structured Asana export), and the **Overview two-beat journey** (DL-152–156: Understand → ⟮Optimize: Validate · Improve⟯ → Execute, persistent read, beat-aware Start here). These are **built into the frozen prototype** (`prototype.html`, md5 **a327d702** · boot 157/157) but **not folded into this doc**. On those surfaces, where this doc disagrees with the **frozen prototype / the DLs**, they win. See `RECONCILIATION-2026-07-20-DL143-156.md` (same folder) for the full delta and `../../RELEASE_1_BUILD_SPEC.md` for the R1 freeze marker (zero open R1 items).
+
+
 ---
 
 # ⚠️⚠️ AMENDED 2026-07-12 — **D162 IS RATIFIED. READ THIS FIRST; EVERYTHING BELOW IT IS SUBORDINATE.**
