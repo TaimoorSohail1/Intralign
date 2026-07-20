@@ -924,5 +924,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-153 — The Overview journey hero, built — the arc, the nested Understand read, and the guards that hold them → `00_owner/decisions/records/DL-153-overview-hero-journey-build.md`
 - DL-154 — The journey hero speaks the north star — stages become Understand, Optimize, Execute (amends DL-152) → `00_owner/decisions/records/DL-154-overview-hero-outcome-journey-amendment.md`
 - DL-155 — The journey gains its two beats — Understand, Optimize (Validate, Improve), Execute (amends DL-152/154) → `00_owner/decisions/records/DL-155-journey-two-beats-identity.md`
+- DL-156 — The two-beat journey, built — the four-stop axis, the beat threshold, and beat-aware Start here (amends DL-153) → `00_owner/decisions/records/DL-156-journey-two-beats-build.md`
 
 <!-- RECORDS-INDEX:END -->

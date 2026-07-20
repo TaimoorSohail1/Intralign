@@ -1412,6 +1412,13 @@ Each changelog entry contains:
 - **Change Summary:** The journey gains its two beats — Understand, Optimize (Validate, Improve), Execute (amends DL-152/154). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-190 — DL-156: The two-beat journey, built — the four-stop axis, the beat threshold, and beat-aware Start here (amends DL-153)
+
+- **Date:** 2026-07-20 · **Authorizing Decision:** DL-156.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-156-journey-two-beats-build.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The two-beat journey, built — the four-stop axis, the beat threshold, and beat-aware Start here (amends DL-153). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
