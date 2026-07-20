@@ -1,5 +1,7 @@
 # Slice Map — OSLO R1 (high-level, APPROVED 2026-07-09)
 
+> **Amended 2026-07-20:** **Slice 11 — Execution-Ready Planning & Export** added (realizes DL-145→151; owner-approved as its own slice, boundaries A/B). See it below Slice 10.
+
 **Baseline:** `oslo_r1_experience_mockup_v4.html`. Fat vertical slices. Each is a complete module with multiple related features and all major use cases. Prototypes are cumulative (Slice N prototype = Slices 1…N). Actors: **U** User (PM) · **S** System · **AI** OSLO analysis/chat · **C** Collaborator/Viewer.
 
 ### Slice 1: Access & Onboarding  ·  *R1 = Alpha, invite-only (D021)*
@@ -72,6 +74,15 @@
 - Settings → Subscription (plan/usage as facts) — U
 - Save-to-keep + anonymous cap (Fast-Pass-only) — U, S
 - *All tier numbers/prices illustrative (owner-TBD); billing/enforcement deferred.*
+
+### Slice 11: Execution-Ready Planning & Export  ·  *NEW 2026-07-20 — realizes DL-145→151*
+- Authored, graded task model — Work breakdown as a task tree (workstreams → tasks → subtasks; From OSLO until confirmed; neutral `low confidence` grade) — AI, U
+- Task-altitude assessment — task-level findings on the deeper read (ISS-10 undated-freeze, ISS-11 inferred-breakdown), via the existing issue engine — AI
+- Sequencing + **computed critical path** (`_criticalPath`; From OSLO; outside editable plan content) — AI
+- The **eighth "Full plan" consolidated view** — execution readiness (named validation-progress state, non-blocking) · critical path · confirm-before-hand-off · the consolidated plan (14 tasks × 5 workstreams) — U, S
+- **Structured Asana export** — mapping preview → simulated hand-off; only the plan crosses, OSLO's analysis stays in OSLO; provenance as an OSLO-owned custom field + OSLO Task ID anchor; tag fallback (free-tier) — U, S
+- **Execution-ready identity** (DL-145): OSLO both authors & certifies; readiness = coverage of the execution-critical set → a named state, never a will-succeed verdict; export non-blocking — doctrine layer
+- *Boundaries (owner-accepted 2026-07-20): task-tree editing mechanics → Slice 5; generic share/reader-export → Slice 9 (D107, distinct object). Execution MONITORING (Execute → In execution → Outcome) is a future phase, out of R1.*
 
 ---
 

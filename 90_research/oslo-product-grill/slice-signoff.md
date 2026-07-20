@@ -4,7 +4,7 @@
 |---|---|---|---|---|---|
 | 1 · Access & Onboarding | **Signed off** (re-applied D049 term) | vertical-slices/slice-01-access-onboarding/prototype.html | 7 slice docs ✓ | none | 2026-07-09 |
 | 2 · Intake & Fast-Pass Orientation | **Signed off** | vertical-slices/slice-02-intake-fastpass-orientation/prototype.html | 8 files ✓ | none | 2026-07-09 |
-| 3 · Project Overview & Understanding Console | **Signed off** | vertical-slices/slice-03-overview-understanding-console/prototype.html | 8 files ✓ | none | 2026-07-09 |
+| 3 · Project Overview & Understanding Console | **Re-signed** (reopened for DL-143→156; re-grilled to the frozen build) | acceptance vs frozen `slice-10/prototype.html` a327d702 (157/157) | **7 docs regenerated** ✓ (20 e2e · 29 SC) | none | **2026-07-20** (orig 2026-07-09) |
 | 4 · Attention Map (MRI) | **Signed off** | vertical-slices/slice-04-attention-map/prototype.html | 8 files ✓ | none | 2026-07-09 |
 | 5 · Plan Artifacts / Artifact Workspace | **Signed off** | vertical-slices/slice-05-artifact-workspace/prototype.html | 8 files + editor gap fold-in | none | 2026-07-09 |
 | 6 · Issues & Recommendations (Panel Model) | **Signed off** | vertical-slices/slice-06-issues-recommendations/prototype.html | 8 files + shell/palette + fixes | none | 2026-07-09 |
@@ -15,6 +15,16 @@
 | 10 · Tiering & Limits **(THE DELIVERABLE)** | **Signed off** (D134–D142) · **DL-103 folded in 2026-07-12** | vertical-slices/slice-10-tiering-limits/prototype.html | 7 files + edge-cases + open-items + **tier-definitions-census.md** | none (owner-open values → §"Final state") | **2026-07-12** |
 
 ---
+
+## RE-GRILL PASS — 2026-07-20 (post-freeze, docs-only; freeze intact)
+
+R1 was frozen 2026-07-20 at `slice-10/prototype.html` **md5 a327d702 · 157/157** after the DL-143→156 enhancements (reports trio + depth/export; the execution-ready planning direction; the Overview two-beat journey). Those landed as canon + into the frozen prototype but the **per-slice test plans** predated them, so impacted slices are being re-grilled to the frozen build (no product change — regenerating specs/test plans only).
+
+- **Slice 3 · Project Overview & Understanding Console — RE-SIGNED 2026-07-20.** 7 docs regenerated to the frozen build (full current Overview: two-beat journey arc · persistent Outcome Confidence read · Option C CAF · maturity ladder · lead-line · beat-aware Start here · chip/popover trust-check). Stale surfaces removed (0–100 index, "How this is calculated" pill, Orientation▸Expanded▸Validated stages, "Extended Analysis"). Test plan = **29 success criteria + 20 e2e** with guards/doctrine baked in. Worker-generated, owner-ratified. *(The slice-03 folder's own `prototype.html` remains the historical cumulative-through-3 snapshot; acceptance is against the frozen slice-10 build.)*
+
+- **Slice 11 · Execution-Ready Planning & Export — SIGNED OFF 2026-07-20 (NEW slice).** Fresh grill from the frozen build (DL-145→151): authored graded task tree · task-altitude ISS-10/11 · computed critical path · the eighth "Full plan" consolidated view · structured Asana export (the plan crosses, OSLO's analysis stays in OSLO) · the DL-145 identity. Boundaries A/B owner-accepted (task-editing mechanics → Slice 5; share/reader-export → Slice 9, distinct object D107). Test plan = **35 success criteria + 20 e2e**. Two DL-body stale-example notes surfaced (DL-146 "4"→ build renders **3**; DL-149 "7 of 29"→ build computes **7 of 23**) — the build is correct, the DL example numbers drifted. Worker-generated, owner-ratified. New folder `vertical-slices/slice-11-execution-ready-planning-export/` (7 docs).
+
+**Impacted slices still to re-grill (owner sequence):** Slices **5, 6, 9 + Reports** (amendments). See `RELEASE_1_BUILD_SPEC.md` freeze marker + `vertical-slices/slice-10-tiering-limits/RECONCILIATION-2026-07-20-DL143-156.md`.
 
 ## FINAL STATE — 2026-07-12 · engagement closed
 

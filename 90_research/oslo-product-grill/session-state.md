@@ -1,6 +1,6 @@
 # Session State — OSLO Product Grill
 
-**Updated:** 2026-07-12
+**Updated:** 2026-07-20
 
 - **Current phase:** Phase 5 — engagement closed 2026-07-12 (Slices 1–10 signed off). **One reopened work item in review: WI-R1.**
 - **Baseline of record:** `product-design/oslo_r1_experience_mockup_v5.html` (merged #152, 2026-07-13 — converged Strategic Readout composer; realizes DL-107+DL-108). Supersedes v4, which is preserved alongside v2/v3. Slice prototypes cumulative in `vertical-slices/`.
@@ -61,3 +61,16 @@ source-summary.md · canonical-truth.md · decision-tree.md · decision-log.md �
 - **Slice 10 · Overview/Progress: SIGNED OFF** (fraction hero "17 of 28", Decision 252, variant B). **WI-R6: CLOSED.** Slice 10 fully signed off.
 - Docs reconciled to live build (11 claims / 12 load-bearing / 28 denominator) + doc-integrity eyeball clean; committed + pushed to `main` (`c20ef5b`).
 - **Next recommended action:** (optional) one-line DL-112 addendum noting the denominator-context presentation — owner left it at Decision 252 for now. No open WI.
+
+---
+
+## UPDATE 2026-07-20 — R1 FROZEN + RE-GRILL PASS (DL-143→156)
+
+- **R1 FROZEN 2026-07-20** at `slice-10-tiering-limits/prototype.html` **md5 a327d702 · boot 157/157 · 0 pageerrors**, after the DL-143→156 enhancements: reports trio + Summary/Full depth + export (DL-143/144); the **execution-ready planning direction** (DL-145 identity; DL-146–151 build — authored task tree · task-altitude issues · computed critical path · the eighth "Full plan" consolidated view · Asana export); and the **Overview two-beat journey** (DL-152–156: Understand → ⟮Optimize: Validate · Improve⟯ → Execute · persistent read · beat-aware Start here). Freeze marker + **zero open R1 items** in `RELEASE_1_BUILD_SPEC.md`.
+- **The repo prototype had been stale** (`943db40d` = WI-R6, 2026-07-14 — DL-143→156 lived only in the working session until now). Frozen `a327d702` pushed to the canonical slice-10 path; house-doc reconciliation banners + delta `vertical-slices/slice-10-tiering-limits/RECONCILIATION-2026-07-20-DL143-156.md` added.
+- **RE-GRILL PASS (post-freeze, docs-only — regenerate per-slice test plans to the frozen build; NO product change):**
+  - **Slice 3 · Project Overview & Understanding Console — RE-SIGNED 2026-07-20.** 7 docs regenerated to the frozen build (full current Overview surface). Stale surfaces removed (0–100 index · "How this is calculated" pill · Orientation▸Expanded▸Validated stages · "Extended Analysis"). Test plan = **29 success criteria + 20 e2e**. Worker-generated, owner-ratified.
+  - **Slice 11 · Execution-Ready Planning & Export — SIGNED OFF 2026-07-20 (NEW slice).** Fresh grill from the frozen build (DL-145→151): authored task tree · task-altitude ISS-10/11 · computed critical path · the eighth "Full plan" view · structured Asana export (plan crosses, analysis stays in OSLO) · the DL-145 identity. Boundaries A/B accepted (editing→Slice 5; share/reader-export→Slice 9). Test plan = **35 success criteria + 20 e2e**. Two DL-body stale-example notes (DL-146 "4"→ build 3; DL-149 "7 of 29"→ build 7 of 23; build correct, DL examples drifted). New folder `vertical-slices/slice-11-execution-ready-planning-export/`; added to `slice-map.md`.
+- **Owner-approved re-grill sequence (remaining):** Slices **5, 6, 9 + Reports** (amendments).
+- **Active slice:** Slice 11 signed off. **Next = Slices 5, 6, 9 + Reports.**
+- **Next recommended action:** commit + push the Slice-11 signoff (7 docs + slice-map + slice-signoff + this state file); then begin the Slice 5 re-grill (or owner's chosen order among 5 / 6 / 9 / Reports).
