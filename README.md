@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OSLO Product Grill
 
-## Getting Started
+Production application for the OSLO Product Grill vertical slices. The knowledge package and golden prototype remain external design inputs; this repository owns executable application code.
 
-First, run the development server:
+## Repository boundaries
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- `apps/web` — Next.js App Router web application.
+- `services/api` — FastAPI application and business capabilities.
+- `packages/contracts` — generated/shared API contracts.
+- `packages/ui` — OSLO design tokens and reusable UI primitives.
+- `supabase` — reproducible local Supabase configuration and seed data.
+- `infra` — deployment and operational configuration.
+- `tests/e2e` — cross-service Playwright journeys.
+- `docs/adr` — decisions that affect multiple capabilities.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Capability code stays together inside each service. Infrastructure adapters depend on application/domain interfaces, not the reverse.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local platform
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Run `pnpm install`.
+2. Run `pnpm supabase start`.
+3. Run `pnpm seed:local`.
+4. In one terminal, run `pnpm dev:api`.
+5. In another terminal, run `pnpm dev:web`.
 
-## Learn More
+The local admin is `admin@oslo.local`; its development-only default password is `OsloLocalAdmin123!`. Override both values with the seed environment variables documented in `.env.example`.
 
-To learn more about Next.js, take a look at the following resources:
+- Supabase API: `http://127.0.0.1:55321`
+- PostgreSQL: `127.0.0.1:55322`
+- Studio: `http://127.0.0.1:55323`
+- Mailpit: `http://127.0.0.1:55324`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Verification
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- API tests: `pnpm test:api`
+- API lint: `pnpm lint:api`
+- Web tests: `pnpm test:web`
+- Web lint: `pnpm lint:web`
+- Production web build: `pnpm build:web`
+- Desktop and mobile tracer: `pnpm test:e2e`
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The tracer covers Owner login, invitation delivery through Mailpit, account activation, one-time Welcome, draft-project creation, intake entry, resend, and revoke.

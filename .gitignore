@@ -1,41 +1,30 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# JavaScript
+node_modules/
+.next/
+coverage/
+playwright-report/
+test-results/
+.artifacts/
+.logs/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
 
-# testing
-/coverage
+# Local configuration
+.env
+.env.local
+!.env.example
 
-# next.js
-/.next/
-/out/
+# Supabase local state
+supabase/.branches/
+supabase/.temp/
 
-# production
-/build
-
-# misc
+# Editors and operating systems
+.idea/
+.vscode/
 .DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+Thumbs.db
