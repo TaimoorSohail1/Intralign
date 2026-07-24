@@ -35,6 +35,7 @@ async function activationMessageFor(
 }
 
 test("Owner invite to activated member intake", async ({ browser, page, request }, testInfo) => {
+  test.setTimeout(90_000);
   const unique = Date.now();
   const email = `slice-one-${testInfo.project.name}-${unique}@example.com`;
   const password = "SliceOneMember123!";
@@ -74,21 +75,30 @@ test("Owner invite to activated member intake", async ({ browser, page, request 
   await recipient.getByRole("button", { name: /sample project/i }).click();
   await expect(recipient.getByLabel("Describe your project")).toHaveValue(/DevNorth/);
   await expect(recipient.getByRole("button", { name: /See where I stand/ })).toBeEnabled();
-  await expect(recipient.getByRole("heading", { name: "Overview" })).toHaveCount(0);
+  await expect(recipient.getByRole("heading", { name: "Understanding is forming" })).toHaveCount(0);
   await recipient.emulateMedia({ reducedMotion: "reduce" });
   await recipient.getByRole("button", { name: /See where I stand/ }).click();
-  await expect(recipient.getByRole("status")).toContainText("Analyzing");
-  await expect(recipient.locator(".analysis-spinner")).toHaveCSS("animation-name", "none");
-  await expect(recipient.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await expect(recipient).toHaveURL(/\/projects\/.+\/(analysis\/.+|overview)/);
+  if (recipient.url().includes("/analysis/")) {
+    await expect(recipient.locator(".analysis-scanner")).toHaveCSS("animation-name", "none");
+  }
+  await expect(recipient).toHaveURL(/\/projects\/.+\/overview/, { timeout: 65_000 });
+  await expect(recipient.getByRole("heading", { name: "Understanding is forming" })).toBeVisible();
   await expect(recipient.getByRole("dialog", { name: "How OSLO works" })).toBeVisible();
   await recipient.getByRole("button", { name: "Get started" }).click();
   await expect(recipient.getByRole("dialog", { name: "How OSLO works" })).toHaveCount(0);
-  await expect(recipient.getByText(/OSLO advises; you decide/)).toBeVisible();
+  await expect(recipient.locator(".project-advisory")).toContainText(
+    "OSLO advises; you decide",
+  );
 
-  await recipient.getByRole("button", { name: /How OSLO works/ }).click();
+  await recipient.locator(".project-account summary").click();
+  await recipient.getByRole("button", { name: "How OSLO works" }).click();
   await expect(recipient.getByRole("dialog", { name: "How OSLO works" })).toBeVisible();
   await recipient.getByRole("button", { name: "Get started" }).click();
-  await recipient.getByRole("button", { name: "Account menu" }).click();
+  const account = recipient.locator(".project-account");
+  if (!(await account.evaluate((element) => (element as HTMLDetailsElement).open))) {
+    await recipient.locator(".project-account summary").click();
+  }
   await recipient.getByRole("button", { name: "Log out" }).click();
   await expect(recipient).toHaveURL(/\/login/);
   await expect(recipient.getByRole("heading", { name: "Sign in to OSLO" })).toBeVisible();

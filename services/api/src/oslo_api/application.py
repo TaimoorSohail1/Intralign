@@ -729,13 +729,20 @@ class DatabaseSliceOneApplication:
         if session.user_id != invitation["accepted_by"]:
             raise InvalidInvitation
         with self._engine.connect() as connection:
-            welcome_seen_at = connection.execute(
-                text(
-                    "select welcome_seen_at from public.memberships "
-                    "where workspace_id = :workspace_id and user_id = :user_id"
-                ),
-                {"workspace_id": invitation["workspace_id"], "user_id": session.user_id},
-            ).scalar_one_or_none()
+            membership = (
+                connection.execute(
+                    text(
+                        "select created_at, welcome_seen_at from public.memberships "
+                        "where workspace_id = :workspace_id and user_id = :user_id"
+                    ),
+                    {"workspace_id": invitation["workspace_id"], "user_id": session.user_id},
+                )
+                .mappings()
+                .one_or_none()
+            )
+        if membership is None:
+            raise InvalidInvitation
+        joined_from_this_invitation = membership["created_at"] >= invitation["created_at"]
         return ActivationResult(
             user_id=session.user_id,
             email=session.email,
@@ -743,7 +750,9 @@ class DatabaseSliceOneApplication:
             access_token=session.access_token,
             refresh_token=session.refresh_token,
             expires_in=session.expires_in,
-            welcome_required=welcome_seen_at is None,
+            welcome_required=(
+                membership["welcome_seen_at"] is None and joined_from_this_invitation
+            ),
         )
 
     def _resolve_pending_invitation(
@@ -759,7 +768,7 @@ class DatabaseSliceOneApplication:
                     text(
                         """
                     select i.id, i.workspace_id, i.email::text, i.role,
-                           i.status, i.expires_at, i.accepted_by,
+                           i.status, i.created_at, i.expires_at, i.accepted_by,
                            w.name as workspace_name
                     from public.invitations i
                     join public.workspaces w on w.id = i.workspace_id

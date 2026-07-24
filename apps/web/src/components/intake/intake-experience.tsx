@@ -3,9 +3,11 @@
 import { useState, useSyncExternalStore } from "react";
 
 import { BrandLockup } from "@/components/brand/brand-lockup";
+import { startProjectAnalysis } from "@/lib/client/start-project-analysis";
 
 interface IntakeExperienceProps {
   displayName: string;
+  projectId?: string;
   logoutAction?: () => Promise<void>;
 }
 
@@ -23,6 +25,19 @@ const phases = [
   "Checking clarity, alignment and feasibility",
   "Preparing your Overview",
 ];
+
+const supportedExtensions = new Set([
+  ".pdf",
+  ".docx",
+  ".pptx",
+  ".xlsx",
+  ".csv",
+  ".txt",
+  ".md",
+]);
+const maxFiles = 10;
+const maxFileBytes = 10 * 1024 * 1024;
+const maxTotalBytes = 50 * 1024 * 1024;
 
 async function noOpLogout() {}
 
@@ -53,17 +68,75 @@ function AccountMenu({ displayName, logoutAction }: { displayName: string; logou
   );
 }
 
-export function IntakeExperience({ displayName, logoutAction = noOpLogout }: IntakeExperienceProps) {
+export function IntakeExperience({
+  displayName,
+  projectId,
+  logoutAction = noOpLogout,
+}: IntakeExperienceProps) {
   const hydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [view, setView] = useState<"intake" | "analyzing" | "overview">("intake");
   const [phase, setPhase] = useState(0);
   const [orientationOpen, setOrientationOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const canStart = description.trim().length > 0 || files.length > 0;
 
-  const startAnalysis = () => {
+  const selectFiles = (selected: File[]) => {
+    const errors: string[] = [];
+    const supported = selected.filter((file) => {
+      const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+      if (!supportedExtensions.has(extension)) {
+        errors.push(`${file.name} is not a supported document.`);
+        return false;
+      }
+      if (file.size === 0) {
+        errors.push(`${file.name} is empty.`);
+        return false;
+      }
+      if (file.size > maxFileBytes) {
+        errors.push(`${file.name} is larger than the 10 MB limit.`);
+        return false;
+      }
+      return true;
+    });
+    const limited = supported.slice(0, maxFiles);
+    if (supported.length > maxFiles) {
+      errors.push(`Choose no more than ${maxFiles} documents.`);
+    }
+    let totalBytes = 0;
+    const withinTotalLimit = limited.filter((file) => {
+      if (totalBytes + file.size > maxTotalBytes) {
+        errors.push(`${file.name} exceeds the 50 MB combined limit.`);
+        return false;
+      }
+      totalBytes += file.size;
+      return true;
+    });
+    setFiles(withinTotalLimit);
+    setError(errors.join(" "));
+  };
+
+  const startAnalysis = async () => {
     if (!canStart || view !== "intake") return;
+    if (projectId) {
+      setSubmitting(true);
+      setError("");
+      try {
+        const result = await startProjectAnalysis({
+          projectId,
+          description,
+          files,
+        });
+        window.location.assign(`/projects/${projectId}/analysis/${result.run_id}`);
+        return;
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Analysis could not start");
+        setSubmitting(false);
+        return;
+      }
+    }
     setView("analyzing");
     const phaseDuration = ["127.0.0.1", "localhost"].includes(window.location.hostname) ? 250 : 7_500;
     phases.slice(1).forEach((_, index) => {
@@ -149,7 +222,22 @@ export function IntakeExperience({ displayName, logoutAction = noOpLogout }: Int
         />
         {files.length > 0 ? (
           <ul className="file-list">
-            {files.map((file) => <li key={`${file.name}-${file.size}`}>{file.name}</li>)}
+            {files.map((file, index) => (
+              <li key={`${file.name}-${file.size}`}>
+                <span>{file.name}</span>
+                <button
+                  aria-label={`Remove ${file.name}`}
+                  onClick={() =>
+                    setFiles((current) =>
+                      current.filter((_, fileIndex) => fileIndex !== index),
+                    )
+                  }
+                  type="button"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
           </ul>
         ) : null}
         <div className="composer-row">
@@ -161,12 +249,15 @@ export function IntakeExperience({ displayName, logoutAction = noOpLogout }: Int
             disabled={!hydrated}
             id="intake-files"
             multiple
-            onChange={(event) => setFiles(Array.from(event.target.files ?? []).slice(0, 10))}
+            onChange={(event) => selectFiles(Array.from(event.target.files ?? []))}
             type="file"
           />
           {!canStart ? <span className="composer-hint">Add a description, a document, or a template to start</span> : null}
-          <button className="button button-primary" disabled={!canStart || !hydrated} onClick={startAnalysis} type="button">See where I stand →</button>
+          <button className="button button-primary" disabled={!canStart || !hydrated || submitting} onClick={startAnalysis} type="button">
+            {submitting ? "Starting analysis…" : "See where I stand →"}
+          </button>
         </div>
+        {error ? <p className="intake-error" role="alert">{error}</p> : null}
       </section>
       <div className="template-list">
         <span>or start from a template:</span>

@@ -28,7 +28,7 @@ export interface InvitationSummary {
   expires_at: string;
 }
 
-async function apiRequest<T>(path: string, init: RequestInit): Promise<T> {
+export async function apiRequest<T>(path: string, init: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, {
     ...init,
     cache: "no-store",
@@ -40,6 +40,173 @@ async function apiRequest<T>(path: string, init: RequestInit): Promise<T> {
   }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
+}
+
+export const osloApiUrl = apiUrl;
+
+export interface AnalysisRunSummary {
+  run_id: string;
+  project_id: string;
+  kind: "initial" | "extended";
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  phase?: string | null;
+  completed_phases?: string[];
+  error_code?: string | null;
+}
+
+export interface UploadedDocumentSummary {
+  document_id: string;
+  file_name: string;
+  status: "parsed";
+  fragment_count: number;
+}
+
+export interface OverviewSnapshot {
+  snapshot_id: string;
+  analysis_run_id: string;
+  project_id: string;
+  state: "provisional" | "current" | "last_good";
+  summary: string;
+  artifacts: Array<{
+    artifact_type: string;
+    title: string;
+    summary: string;
+    reliability: string;
+    evidence_refs: string[];
+    basis: string;
+  }>;
+  assessment: {
+    confidence_index: number;
+    confidence_band: string;
+    reliability: string;
+    clarity: string;
+    alignment: string;
+    feasibility: string;
+    issues: Array<{
+      id: string;
+      artifact_type: string;
+      dimension: string;
+      severity: string;
+      title: string;
+      why: string;
+      recommendation: string;
+      evidence_refs: string[];
+      clarification?: string | null;
+      status: string;
+    }>;
+  };
+  published_at: string;
+  extended_analysis?: AnalysisRunSummary | null;
+}
+
+export interface AdvisorReplySummary {
+  answer: string;
+  follow_up_questions: string[];
+}
+
+export function startAnalysis(input: {
+  accessToken: string;
+  projectId: string;
+  description: string;
+  sourceNames: string[];
+  sourceDocumentIds: string[];
+  idempotencyKey: string;
+}): Promise<AnalysisRunSummary> {
+  return apiRequest(`/v1/projects/${input.projectId}/analysis-runs`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${input.accessToken}`,
+      "Idempotency-Key": input.idempotencyKey,
+    },
+    body: JSON.stringify({
+      kind: "initial",
+      description: input.description,
+      source_names: input.sourceNames,
+      source_document_ids: input.sourceDocumentIds,
+    }),
+  });
+}
+
+export async function uploadDocument(input: {
+  accessToken: string;
+  projectId: string;
+  file: File;
+}): Promise<UploadedDocumentSummary> {
+  const form = new FormData();
+  form.append("file", input.file);
+  const response = await fetch(`${apiUrl}/v1/projects/${input.projectId}/documents`, {
+    method: "POST",
+    cache: "no-store",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+    body: form,
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail ?? "Document could not be processed");
+  }
+  return response.json() as Promise<UploadedDocumentSummary>;
+}
+
+export function getAnalysisRun(
+  accessToken: string,
+  runId: string,
+): Promise<AnalysisRunSummary> {
+  return apiRequest(`/v1/analysis-runs/${runId}`, {
+    method: "GET",
+    headers: { authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function retryAnalysis(
+  accessToken: string,
+  runId: string,
+): Promise<AnalysisRunSummary> {
+  return apiRequest(`/v1/analysis-runs/${runId}/retry`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function getOverview(
+  accessToken: string,
+  projectId: string,
+): Promise<OverviewSnapshot> {
+  return apiRequest(`/v1/projects/${projectId}/overview`, {
+    method: "GET",
+    headers: { authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function askAdvisor(input: {
+  accessToken: string;
+  projectId: string;
+  question: string;
+}): Promise<AdvisorReplySummary> {
+  return apiRequest(`/v1/projects/${input.projectId}/advisor/messages`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+    body: JSON.stringify({ question: input.question }),
+  });
+}
+
+export function answerProjectIssue(input: {
+  accessToken: string;
+  projectId: string;
+  issueId: string;
+  answer: string;
+  idempotencyKey: string;
+}): Promise<AnalysisRunSummary> {
+  return apiRequest(
+    `/v1/projects/${input.projectId}/issues/${encodeURIComponent(input.issueId)}/answers`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${input.accessToken}`,
+        "Idempotency-Key": input.idempotencyKey,
+      },
+      body: JSON.stringify({ answer: input.answer }),
+    },
+  );
 }
 
 export function resolveInvitation(token: string): Promise<InvitationDetails> {

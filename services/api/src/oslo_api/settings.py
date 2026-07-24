@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,3 +19,14 @@ class Settings(BaseSettings):
     smtp_host: str = "127.0.0.1"
     smtp_port: int = 55325
     email_sender: str = "OSLO <no-reply@oslo.local>"
+    analysis_worker_threads: int = Field(default=4, ge=1, le=32)
+    analysis_phase_delay_ms: int = Field(default=120, ge=0, le=10_000)
+    extended_analysis_delay_ms: int = Field(default=750, ge=0, le=60_000)
+    analysis_harness: Literal["auto", "deterministic", "openai"] = "auto"
+    openai_api_key: str | None = None
+    openai_model: str | None = None
+    openai_fast_model: str = "gpt-5.6-luna"
+    openai_extended_model: str = "gpt-5.6-terra"
+    openai_timeout_seconds: float = Field(default=30, ge=5, le=120)
+    openai_max_retries: int = Field(default=1, ge=0, le=3)
+    object_storage_path: Path = Path(__file__).resolve().parents[2] / ".data" / "uploads"
