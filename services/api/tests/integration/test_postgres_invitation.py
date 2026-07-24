@@ -232,37 +232,71 @@ def test_existing_member_acceptance_is_idempotent_and_does_not_downgrade_role() 
         owner_id = connection.execute(
             text("select id from auth.users where email = 'admin@oslo.local'")
         ).scalar_one()
+        previous_welcome_seen_at = connection.execute(
+            text(
+                "select welcome_seen_at from public.memberships "
+                "where workspace_id = :workspace_id and user_id = :user_id"
+            ),
+            {"workspace_id": WORKSPACE_ID, "user_id": owner_id},
+        ).scalar_one()
+        connection.execute(
+            text(
+                "update public.memberships set welcome_seen_at = null "
+                "where workspace_id = :workspace_id and user_id = :user_id"
+            ),
+            {"workspace_id": WORKSPACE_ID, "user_id": owner_id},
+        )
         connection.execute(
             text("delete from public.invitations where email = :email"), {"email": email}
         )
-    application.invite_member(
-        actor_user_id=owner_id,
-        workspace_id=WORKSPACE_ID,
-        email=email,
-        role=MembershipRole.VIEWER,
-    )
-    raw_token = mailer.messages[0][2].rsplit("=", maxsplit=1)[1]
+    try:
+        application.invite_member(
+            actor_user_id=owner_id,
+            workspace_id=WORKSPACE_ID,
+            email=email,
+            role=MembershipRole.VIEWER,
+        )
+        raw_token = mailer.messages[0][2].rsplit("=", maxsplit=1)[1]
 
-    activation = application.accept_invitation_for_existing_user(
-        token=raw_token,
-        email=email,
-        password="OsloLocalAdmin123!",
-    )
+        activation = application.accept_invitation_for_existing_user(
+            token=raw_token,
+            email=email,
+            password="OsloLocalAdmin123!",
+        )
+        repeated_activation = application.accept_invitation_for_existing_user(
+            token=raw_token,
+            email=email,
+            password="OsloLocalAdmin123!",
+        )
 
-    assert activation.welcome_required is False
-    with engine.connect() as connection:
-        memberships = (
+        assert activation.welcome_required is False
+        assert repeated_activation.welcome_required is False
+        with engine.connect() as connection:
+            memberships = (
+                connection.execute(
+                    text(
+                        "select role from public.memberships "
+                        "where workspace_id = :workspace_id and user_id = :user_id"
+                    ),
+                    {"workspace_id": WORKSPACE_ID, "user_id": owner_id},
+                )
+                .scalars()
+                .all()
+            )
+        assert memberships == ["owner"]
+    finally:
+        with engine.begin() as connection:
             connection.execute(
                 text(
-                    "select role from public.memberships "
+                    "update public.memberships set welcome_seen_at = :welcome_seen_at "
                     "where workspace_id = :workspace_id and user_id = :user_id"
                 ),
-                {"workspace_id": WORKSPACE_ID, "user_id": owner_id},
+                {
+                    "welcome_seen_at": previous_welcome_seen_at,
+                    "workspace_id": WORKSPACE_ID,
+                    "user_id": owner_id,
+                },
             )
-            .scalars()
-            .all()
-        )
-    assert memberships == ["owner"]
 
 
 def test_existing_user_can_join_a_different_workspace() -> None:

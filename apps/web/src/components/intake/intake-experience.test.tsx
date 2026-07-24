@@ -46,6 +46,40 @@ describe("IntakeExperience", () => {
     expect(screen.getByRole("button", { name: /See where I stand/ })).toBeEnabled();
   });
 
+  it("accepts PDF, DOCX, PPTX and XLSX together", () => {
+    render(<IntakeExperience displayName="Alex" />);
+
+    fireEvent.change(screen.getByLabelText("Attach documents"), {
+      target: {
+        files: [
+          new File(["pdf"], "plan.pdf", { type: "application/pdf" }),
+          new File(["docx"], "brief.docx"),
+          new File(["pptx"], "review.pptx"),
+          new File(["xlsx"], "budget.xlsx"),
+        ],
+      },
+    });
+
+    expect(screen.getByText("plan.pdf")).toBeInTheDocument();
+    expect(screen.getByText("brief.docx")).toBeInTheDocument();
+    expect(screen.getByText("review.pptx")).toBeInTheDocument();
+    expect(screen.getByText("budget.xlsx")).toBeInTheDocument();
+  });
+
+  it("explains unsupported files and keeps them out of the analysis", () => {
+    render(<IntakeExperience displayName="Alex" />);
+
+    fireEvent.change(screen.getByLabelText("Attach documents"), {
+      target: { files: [new File(["binary"], "installer.exe")] },
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "installer.exe is not a supported document",
+    );
+    expect(screen.queryByText("installer.exe", { selector: "li" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /See where I stand/ })).toBeDisabled();
+  });
+
   it("loads the sample without starting analysis automatically", () => {
     render(<IntakeExperience displayName="Alex" />);
 

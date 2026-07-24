@@ -1,0 +1,88 @@
+from typing import Protocol
+from uuid import UUID
+
+from oslo_api.analysis import (
+    AnalysisEvent,
+    AnalysisRun,
+    AssessmentSnapshot,
+    RunKind,
+)
+
+
+class SliceTwoPermissionDenied(Exception):
+    """Raised when a user cannot access a Slice 2 project or run."""
+
+
+class SliceTwoNotFound(Exception):
+    """Raised when a Slice 2 resource does not exist."""
+
+
+class SliceTwoApplication(Protocol):
+    def upload_document(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        file_name: str,
+        content_type: str | None,
+        content: bytes,
+    ): ...
+
+    def start_analysis(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        description: str,
+        source_names: tuple[str, ...],
+        source_document_ids: tuple[UUID, ...],
+        kind: RunKind,
+        key: str,
+    ) -> AnalysisRun: ...
+
+    def get_run(self, *, actor_user_id: UUID, run_id: UUID) -> AnalysisRun: ...
+
+    def events_after(
+        self,
+        *,
+        actor_user_id: UUID,
+        run_id: UUID,
+        sequence: int,
+    ) -> tuple[AnalysisEvent, ...]: ...
+
+    def wait_for_events(
+        self,
+        *,
+        actor_user_id: UUID,
+        run_id: UUID,
+        sequence: int,
+        timeout: float,
+    ) -> tuple[AnalysisEvent, ...]: ...
+
+    def current_overview(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+    ) -> AssessmentSnapshot: ...
+
+    def latest_extended_run(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+    ) -> AnalysisRun | None: ...
+
+    def retry(self, *, actor_user_id: UUID, run_id: UUID) -> AnalysisRun: ...
+
+    def answer_issue(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        issue_id: str,
+        answer: str,
+        key: str,
+    ) -> AnalysisRun: ...
+
+    def mark_orientation_seen(self, *, actor_user_id: UUID, workspace_id: UUID) -> None: ...

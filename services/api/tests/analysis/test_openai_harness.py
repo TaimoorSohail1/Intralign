@@ -1,0 +1,634 @@
+import json
+from types import SimpleNamespace
+from uuid import UUID
+
+from pydantic import ValidationError
+
+from oslo_api.analysis import (
+    ARTIFACT_TYPES,
+    AnalysisPhase,
+    EvidenceFragment,
+    Perception,
+    RunKind,
+)
+from oslo_api.analysis.harness import AgentHarnessError
+from oslo_api.analysis.models import HarnessInvocation
+from oslo_api.analysis.openai_harness import OpenAIAgentHarness
+
+
+class FakeResponses:
+    def __init__(self, payload: dict) -> None:
+        self.payload = payload
+        self.requests: list[dict] = []
+
+    def parse(self, **kwargs):
+        self.requests.append(kwargs)
+        return SimpleNamespace(
+            id="resp_perceive_001",
+            model=kwargs["model"],
+            output_parsed=kwargs["text_format"].model_validate(self.payload),
+            usage=SimpleNamespace(input_tokens=321, output_tokens=123),
+            status="completed",
+            output=(),
+        )
+
+
+class FakeOpenAI:
+    def __init__(self, payload: dict) -> None:
+        self.responses = FakeResponses(payload)
+
+
+class SequencedResponses(FakeResponses):
+    def __init__(self, payloads: list[dict]) -> None:
+        super().__init__(payloads[-1])
+        self.payloads = payloads
+
+    def parse(self, **kwargs):
+        payload = self.payloads[min(len(self.requests), len(self.payloads) - 1)]
+        self.payload = payload
+        return super().parse(**kwargs)
+
+
+class SequencedOpenAI:
+    def __init__(self, payloads: list[dict]) -> None:
+        self.responses = SequencedResponses(payloads)
+
+
+class RefusingResponses:
+    def parse(self, **kwargs):
+        return SimpleNamespace(
+            id="resp_refusal_001",
+            model=kwargs["model"],
+            output_parsed=None,
+            usage=SimpleNamespace(input_tokens=50, output_tokens=10),
+            status="completed",
+            output=(
+                SimpleNamespace(
+                    type="message",
+                    content=(
+                        SimpleNamespace(
+                            type="refusal",
+                            refusal="Sensitive provider refusal detail.",
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+
+class RefusingOpenAI:
+    def __init__(self) -> None:
+        self.responses = RefusingResponses()
+
+
+class TemporaryRateLimitError(RuntimeError):
+    status_code = 429
+    body = {"error": {"code": "rate_limit_exceeded"}}
+
+
+class LengthFinishReasonError(RuntimeError):
+    pass
+
+
+class OutputLimitedResponses:
+    def parse(self, **kwargs):
+        raise LengthFinishReasonError("provider output must not escape")
+
+
+class OutputLimitedOpenAI:
+    def __init__(self) -> None:
+        self.responses = OutputLimitedResponses()
+
+
+class SchemaValidationError(RuntimeError):
+    pass
+
+
+class SchemaInvalidOnceResponses(FakeResponses):
+    def __init__(self, payload: dict) -> None:
+        super().__init__(payload)
+        self.calls = 0
+
+    def parse(self, **kwargs):
+        self.calls += 1
+        if self.calls == 1:
+            raise SchemaValidationError("raw validation detail")
+        return super().parse(**kwargs)
+
+
+class SchemaInvalidOnceOpenAI:
+    def __init__(self, payload: dict) -> None:
+        self.responses = SchemaInvalidOnceResponses(payload)
+
+
+class RateLimitedOnceResponses(FakeResponses):
+    def __init__(self, payload: dict) -> None:
+        super().__init__(payload)
+        self.calls = 0
+
+    def parse(self, **kwargs):
+        self.calls += 1
+        if self.calls == 1:
+            raise TemporaryRateLimitError("provider detail must not escape")
+        return super().parse(**kwargs)
+
+
+class RateLimitedOnceOpenAI:
+    def __init__(self, payload: dict) -> None:
+        self.responses = RateLimitedOnceResponses(payload)
+
+
+def test_perceive_returns_schema_validated_output_and_safe_call_metadata() -> None:
+    evidence_ref = (
+        "document:018f9f7e-8de2-7000-8000-000000000099:page:1:fragment:0"
+    )
+    client = FakeOpenAI(
+        {
+            "facts": ["The approved budget is $1.8M."],
+            "claims": ["Delivery is expected within nine months."],
+            "gaps": ["The migration volume is unknown."],
+            "evidence_refs": [evidence_ref],
+        }
+    )
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+    invocation = HarnessInvocation(
+        run_id=UUID("018f9f7e-8de2-7000-8000-000000000020"),
+        phase=AnalysisPhase.PERCEIVE,
+    )
+
+    perception = harness.perceive(
+        description="",
+        source_names=("project.pdf",),
+        evidence=(
+            EvidenceFragment(
+                reference=evidence_ref,
+                content="The approved budget is $1.8M.",
+            ),
+        ),
+        kind=RunKind.INITIAL,
+        invocation=invocation,
+    )
+
+    assert perception.facts == ("The approved budget is $1.8M.",)
+    assert perception.evidence_refs == (evidence_ref,)
+    assert invocation.metadata is not None
+    assert invocation.metadata.provider == "openai"
+    assert invocation.metadata.response_id == "resp_perceive_001"
+    assert invocation.metadata.input_tokens == 321
+    assert invocation.metadata.output_tokens == 123
+    assert client.responses.requests[0]["text_format"].__name__ == "_PerceptionOutput"
+
+
+def test_model_refusal_returns_only_a_safe_error_code() -> None:
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=RefusingOpenAI(),
+    )
+
+    try:
+        harness.perceive(
+            description="A project description.",
+            source_names=(),
+            evidence=(),
+            kind=RunKind.INITIAL,
+        )
+    except AgentHarnessError as error:
+        assert error.code == "OPENAI_REFUSAL"
+        assert str(error) == "OPENAI_REFUSAL"
+        assert "Sensitive" not in str(error)
+    else:
+        raise AssertionError("The refusal must fail closed")
+
+
+def test_temporary_rate_limit_is_retried_once_and_records_attempts() -> None:
+    sleeps: list[float] = []
+    client = RateLimitedOnceOpenAI(
+        {
+            "facts": ["The launch date is 1 October."],
+            "claims": [],
+            "gaps": [],
+            "evidence_refs": ["description:1"],
+        }
+    )
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+        sleeper=sleeps.append,
+        max_retries=1,
+    )
+    invocation = HarnessInvocation(
+        run_id=UUID("018f9f7e-8de2-7000-8000-000000000020"),
+        phase=AnalysisPhase.PERCEIVE,
+    )
+
+    perception = harness.perceive(
+        description="The launch date is 1 October.",
+        source_names=(),
+        evidence=(),
+        kind=RunKind.INITIAL,
+        invocation=invocation,
+    )
+
+    assert perception.facts == ("The launch date is 1 October.",)
+    assert client.responses.calls == 2
+    assert sleeps == [0.5]
+    assert invocation.metadata is not None
+    assert invocation.metadata.attempts == 2
+
+
+def test_perceive_rejects_an_evidence_reference_that_was_not_supplied() -> None:
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=FakeOpenAI(
+            {
+                "facts": ["An unsupported fact."],
+                "claims": [],
+                "gaps": [],
+                "evidence_refs": ["document:invented:page:99:fragment:9"],
+            }
+        ),
+    )
+
+    try:
+        harness.perceive(
+            description="The supplied description.",
+            source_names=(),
+            evidence=(),
+            kind=RunKind.INITIAL,
+        )
+    except AgentHarnessError as error:
+        assert error.code == "EVIDENCE_REFERENCE_CONTRACT_FAILED"
+    else:
+        raise AssertionError("Invented citations must fail closed")
+
+
+def test_perceive_retries_once_with_exact_locator_correction() -> None:
+    evidence_ref = "document:plan:page:4:fragment:3"
+    invented_ref = "document:plan:page:4:fragment:4"
+    client = SequencedOpenAI(
+        [
+            {
+                "facts": ["Migration volumes require validation."],
+                "claims": [],
+                "gaps": [],
+                "evidence_refs": [invented_ref],
+            },
+            {
+                "facts": ["Migration volumes require validation."],
+                "claims": [],
+                "gaps": [],
+                "evidence_refs": [evidence_ref],
+            },
+        ]
+    )
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+    invocation = HarnessInvocation(
+        run_id=UUID("018f9f7e-8de2-7000-8000-000000000020"),
+        phase=AnalysisPhase.PERCEIVE,
+    )
+
+    perception = harness.perceive(
+        description="",
+        source_names=("plan.pdf",),
+        evidence=(
+            EvidenceFragment(
+                reference=evidence_ref,
+                content="Migration volumes require validation.",
+            ),
+        ),
+        kind=RunKind.EXTENDED,
+        invocation=invocation,
+    )
+
+    assert perception.evidence_refs == (evidence_ref,)
+    assert len(client.responses.requests) == 2
+    correction_request = client.responses.requests[1]
+    correction_payload = json.loads(correction_request["input"][1]["content"])
+    assert correction_payload["citation_correction"]["invalid_locators"] == [
+        invented_ref
+    ]
+    assert correction_payload["allowed_evidence_locators"] == [evidence_ref]
+    assert "correction attempt" in correction_request["input"][0]["content"].lower()
+    assert invocation.metadata is not None
+    assert invocation.metadata.attempts == 2
+
+
+def test_extended_perceive_uses_the_extended_model_and_output_budget() -> None:
+    client = FakeOpenAI(
+        {
+            "facts": ["A fact."],
+            "claims": [],
+            "gaps": [],
+            "evidence_refs": ["description:1"],
+        }
+    )
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        fast_model="gpt-fast",
+        extended_model="gpt-deep",
+        client=client,
+    )
+
+    harness.perceive(
+        description="A fact.",
+        source_names=(),
+        evidence=(),
+        kind=RunKind.EXTENDED,
+    )
+
+    request = client.responses.requests[0]
+    assert request["model"] == "gpt-deep"
+    assert request["max_output_tokens"] == 3_000
+
+
+def test_initial_perceive_has_room_for_a_complete_bounded_contract() -> None:
+    client = FakeOpenAI(
+        {
+            "facts": ["A fact."],
+            "claims": [],
+            "gaps": [],
+            "evidence_refs": ["description:1"],
+        }
+    )
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-fast",
+        client=client,
+    )
+
+    harness.perceive(
+        description="A fact.",
+        source_names=(),
+        evidence=(),
+        kind=RunKind.INITIAL,
+    )
+
+    assert client.responses.requests[0]["max_output_tokens"] == 2_500
+
+
+def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> None:
+    evidence_ref = "document:plan:page:1:fragment:0"
+    perception = Perception(
+        facts=("The project has a defined objective.",),
+        claims=(),
+        gaps=(),
+        evidence_refs=(evidence_ref,),
+        evidence=(EvidenceFragment(reference=evidence_ref, content="Project objective."),),
+    )
+    construct_client = FakeOpenAI(
+        {
+            "artifacts": [
+                {
+                    "artifact_type": artifact_type.value,
+                    "title": artifact_type.value.replace("_", " ").title(),
+                    "summary": "A concise evidence-qualified summary.",
+                    "reliability": "Moderate",
+                    "evidence_refs": [evidence_ref],
+                    "basis": "supported",
+                }
+                for artifact_type in ARTIFACT_TYPES
+            ]
+        }
+    )
+    construct_harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-fast",
+        client=construct_client,
+    )
+    artifacts = construct_harness.construct(
+        perception=perception,
+        kind=RunKind.INITIAL,
+    )
+
+    evaluate_client = FakeOpenAI(
+        {
+            "confidence_index": 55,
+            "confidence_band": "Moderate",
+            "reliability": "Moderate",
+            "clarity": "Moderate",
+            "alignment": "Moderate",
+            "feasibility": "Moderate",
+            "issues": [],
+        }
+    )
+    evaluate_harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-fast",
+        client=evaluate_client,
+    )
+    evaluate_harness.evaluate(
+        artifacts=artifacts,
+        perception=perception,
+        kind=RunKind.INITIAL,
+    )
+
+    assert construct_client.responses.requests[0]["max_output_tokens"] == 4_000
+    assert evaluate_client.responses.requests[0]["max_output_tokens"] == 3_500
+    evaluate_request = evaluate_client.responses.requests[0]
+    evaluate_payload = json.loads(evaluate_request["input"][1]["content"])
+    assert evaluate_payload["allowed_evidence_locators"] == [evidence_ref]
+    assert "copied exactly" in evaluate_request["input"][0]["content"]
+
+
+def test_fast_pass_bounds_large_evidence_and_keeps_high_signal_fragments() -> None:
+    ordinary = tuple(
+        EvidenceFragment(
+            reference=f"document:plan:page:{index + 1}:fragment:{index}",
+            content=("General project background. " * 60),
+        )
+        for index in range(40)
+    )
+    critical = EvidenceFragment(
+        reference="document:plan:page:80:fragment:80",
+        content="Migration volume is unknown and vendor selection is unresolved.",
+    )
+    client = FakeOpenAI(
+        {
+            "facts": ["Migration volume is unknown."],
+            "claims": [],
+            "gaps": ["Vendor selection is unresolved."],
+            "evidence_refs": [critical.reference],
+        }
+    )
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+
+    perception = harness.perceive(
+        description="",
+        source_names=("large-plan.pdf",),
+        evidence=ordinary + (critical,),
+        kind=RunKind.INITIAL,
+    )
+
+    request_payload = client.responses.requests[0]["input"][1]["content"]
+    assert len(request_payload) <= 24_000
+    assert "Migration volume is unknown" in request_payload
+    assert critical in perception.evidence
+    assert len(perception.evidence) < len(ordinary) + 1
+
+
+def test_construct_may_cite_any_evidence_fragment_supplied_by_perceive() -> None:
+    primary_ref = "document:plan:page:1:fragment:0"
+    supporting_ref = "document:plan:page:2:fragment:1"
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=FakeOpenAI(
+            {
+                "artifacts": [
+                    {
+                        "artifact_type": artifact_type.value,
+                        "title": artifact_type.value.replace("_", " ").title(),
+                        "summary": "Evidence-qualified project understanding.",
+                        "reliability": "Moderate",
+                        "evidence_refs": [supporting_ref],
+                        "basis": "derived",
+                    }
+                    for artifact_type in ARTIFACT_TYPES
+                ]
+            }
+        ),
+    )
+    perception = Perception(
+        facts=("A supported fact.",),
+        claims=(),
+        gaps=(),
+        evidence_refs=(primary_ref,),
+        evidence=(
+            EvidenceFragment(reference=primary_ref, content="Primary evidence."),
+            EvidenceFragment(reference=supporting_ref, content="Supporting evidence."),
+        ),
+    )
+
+    artifacts = harness.construct(perception=perception, kind=RunKind.EXTENDED)
+
+    assert len(artifacts) == 7
+    assert all(item.evidence_refs == (supporting_ref,) for item in artifacts)
+
+
+def test_construct_receives_an_explicit_exact_evidence_locator_allowlist() -> None:
+    evidence_ref = "document:plan:page:16:fragment:15"
+    client = FakeOpenAI(
+        {
+            "artifacts": [
+                {
+                    "artifact_type": artifact_type.value,
+                    "title": artifact_type.value.replace("_", " ").title(),
+                    "summary": "Evidence-qualified project understanding.",
+                    "reliability": "Moderate",
+                    "evidence_refs": [evidence_ref],
+                    "basis": "derived",
+                }
+                for artifact_type in ARTIFACT_TYPES
+            ]
+        }
+    )
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+    perception = Perception(
+        facts=("A dependency is unresolved.",),
+        claims=(),
+        gaps=(),
+        evidence_refs=(evidence_ref,),
+        evidence=(
+            EvidenceFragment(
+                reference=evidence_ref,
+                content="A dependency is unresolved.",
+            ),
+        ),
+    )
+
+    harness.construct(perception=perception, kind=RunKind.EXTENDED)
+
+    request = client.responses.requests[0]
+    payload = json.loads(request["input"][1]["content"])
+    assert payload["allowed_evidence_locators"] == [evidence_ref]
+    assert "copied exactly" in request["input"][0]["content"]
+
+
+def test_output_limit_uses_a_specific_safe_failure_code() -> None:
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=OutputLimitedOpenAI(),
+    )
+
+    try:
+        harness.perceive(
+            description="A project description.",
+            source_names=(),
+            evidence=(),
+            kind=RunKind.EXTENDED,
+        )
+    except AgentHarnessError as error:
+        assert error.code == "OPENAI_OUTPUT_LIMIT"
+        assert error.retryable is False
+    else:
+        raise AssertionError("Output truncation must fail closed")
+
+
+def test_truncated_json_validation_error_is_classified_as_output_limit() -> None:
+    try:
+        from oslo_api.analysis.openai_harness import _PerceptionOutput
+
+        _PerceptionOutput.model_validate_json('{"facts":["incomplete')
+    except ValidationError as provider_error:
+        safe_error = OpenAIAgentHarness._safe_provider_error(provider_error)
+    else:
+        raise AssertionError("The fixture must produce a validation error")
+
+    assert safe_error.code == "OPENAI_OUTPUT_LIMIT"
+    assert safe_error.retryable is False
+
+
+def test_schema_invalid_response_is_retried_once_then_validated() -> None:
+    sleeps: list[float] = []
+    client = SchemaInvalidOnceOpenAI(
+        {
+            "facts": ["A validated fact."],
+            "claims": [],
+            "gaps": [],
+            "evidence_refs": ["description:1"],
+        }
+    )
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+        sleeper=sleeps.append,
+        max_retries=1,
+    )
+    invocation = HarnessInvocation(
+        run_id=UUID("018f9f7e-8de2-7000-8000-000000000020"),
+        phase=AnalysisPhase.PERCEIVE,
+    )
+
+    result = harness.perceive(
+        description="A validated fact.",
+        source_names=(),
+        evidence=(),
+        kind=RunKind.EXTENDED,
+        invocation=invocation,
+    )
+
+    assert result.facts == ("A validated fact.",)
+    assert client.responses.calls == 2
+    assert invocation.metadata is not None
+    assert invocation.metadata.attempts == 2
