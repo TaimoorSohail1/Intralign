@@ -1,28 +1,42 @@
-# Slice 3 Design QA
+# Slice 4 Design QA
 
 ## Reference
 
-- Golden prototype: `slice-03-overview-understanding-console/prototype.html`
-- Implementation: `http://localhost:3000/projects/00c90984-36ac-4b1f-890c-ee0f67d9eede/overview`
-- Comparison state: desktop Overview with a current evidence-qualified read
-- Comparison viewport: approximately 1280 x 720
-- Side-by-side capture: `.artifacts/slice3-side-by-side-final.jpg`
+- Golden prototype: `slice-04-attention-map/prototype.html`
+- Implementation: `http://localhost:3000/projects/1950a68e-0a85-4fb8-a5c3-0ebe76d5c751/attention`
+- Comparison state: desktop Attention Map using the current published analysis snapshot
+- Comparison viewport: identical in-app browser viewport for both captures
+- Reference capture: `.qa-slice4-prototype.png`
+- Implementation capture: `.qa-slice4-implementation.png`
+- Side-by-side capture: `.qa-slice4-side-by-side.png`
 
 ## Verified
 
-- Persistent OSLO workspace shell, project context, navigation rail and advisor layout
-- Confidence hierarchy, stage, direction, reliability basis and Clarity/Alignment/Feasibility dimensions
-- Start-here issue list, progress section and collapsible project summary
-- Issue detail drawer, advisor handoff, focus restoration and deterministic confidence explanation
-- Five-step first-use orientation and replay action
-- Attention map route plus honest Issues and History future-slice placeholders
-- Desktop, tablet, mobile, keyboard and reduced-motion behavior
-- Provisional/current/last-good and refresh recovery states
+- Fixed seven-artifact by three-dimension matrix with Understanding and Execution grouping
+- Calm, Warning, Moderate and Critical visual hierarchy with count and multi-finding markers
+- Single-finding cells open issue detail directly
+- Multi-finding cells open a scoped list before issue detail
+- Artifact rows open scoped finding lists and removable scope chips
+- Contextual OSLO entry points for the map, cells, scopes and issues
+- Current-snapshot-only semantics: resolved findings are excluded while open and addressed remain
+- Natural all-clear state when the current read has no unresolved findings
+- Keyboard activation, focus management, escape behavior and reduced-motion treatment
+- Responsive desktop and mobile layouts
+- Overview navigation preserves the user’s prior scroll position
 
 ## Intentional differences
 
-- Prototype-only simulation controls are omitted from the production application.
-- Scores, findings and project copy come from the live analysis snapshot rather than the prototype fixture.
-- Later-slice reporting and plan-upgrade surfaces remain honest capability seams instead of simulated features.
+- Prototype-only release preview and simulation controls are omitted.
+- Counts, severities and issue copy come from the live current analysis snapshot rather than prototype fixtures.
+- Reports, sharing, export and plan-upgrade surfaces remain later-slice capability seams.
+- The implementation adds a visible map-level OSLO action while preserving the prototype’s contextual cell actions.
+
+## Automated evidence
+
+- Web component suite: 34 tests passed
+- Slice 4 Playwright desktop flow: passed
+- Slice 4 Playwright mobile flow: passed
+- ESLint: passed with zero warnings
+- Production build and TypeScript validation: passed
 
 final result: passed

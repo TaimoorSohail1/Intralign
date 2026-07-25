@@ -1,4 +1,13 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { OverviewSnapshot } from "@/lib/server/oslo-api";
@@ -73,8 +82,40 @@ const snapshot: OverviewSnapshot = {
   published_at: "2026-07-23T12:00:00Z",
 };
 
+const sliceFourSnapshot: OverviewSnapshot = {
+  ...snapshot,
+  assessment: {
+    ...snapshot.assessment,
+    issues: [
+      {
+        ...snapshot.assessment.issues[0],
+        id: "ISS-REQ-CLARITY",
+        artifact_type: "requirements",
+        dimension: "Clarity",
+        severity: "Moderate",
+        title: "Success metric is not measurable",
+        clarification: "Which approved target will measure success?",
+      },
+      {
+        ...snapshot.assessment.issues[0],
+        id: "ISS-RESOURCE-CRITICAL",
+        title: "Migration ownership is unresolved",
+      },
+      {
+        ...snapshot.assessment.issues[0],
+        id: "ISS-RESOURCE-MODERATE",
+        severity: "Moderate",
+        status: "addressed",
+        title: "Fallback capacity is not confirmed",
+        clarification: "Which fallback team can absorb the work?",
+      },
+    ],
+  },
+};
+
 beforeEach(() => {
   localStorage.setItem("oslo_orientation_seen", "true");
+  sessionStorage.clear();
   push.mockReset();
 });
 
@@ -85,6 +126,119 @@ afterEach(() => {
 });
 
 describe("ProjectOverview", () => {
+  it("renders the Slice 4 current-snapshot matrix without the superseded field toggle", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={sliceFourSnapshot}
+        initialView="attention"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Attention map" })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Brighter = more attention — not a health score\. Click a cell to investigate\./,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Dimensions" })).not.toBeInTheDocument();
+    expect(screen.getByRole("grid", { name: "Project attention map" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("gridcell", {
+        name: "Requirements Clarity: 1 issue, Moderate",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("gridcell", {
+        name: "Resources Feasibility: 2 issues, Critical",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("gridcell", { name: "Intent Clarity: 0 issues" }),
+    ).not.toHaveAttribute("tabindex");
+  });
+
+  it("opens a single-cell finding directly and a multi-cell scoped list before issue detail", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={sliceFourSnapshot}
+        initialView="attention"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("gridcell", {
+        name: "Requirements Clarity: 1 issue, Moderate",
+      }),
+    );
+    expect(screen.getByRole("dialog", { name: "Issue details" })).toHaveTextContent(
+      "Success metric is not measurable",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Close issue" }));
+
+    fireEvent.click(
+      screen.getByRole("gridcell", {
+        name: "Resources Feasibility: 2 issues, Critical",
+      }),
+    );
+    const scope = screen.getByRole("dialog", { name: "Scoped attention findings" });
+    expect(scope).toHaveTextContent("Resources");
+    expect(scope).toHaveTextContent("Feasibility");
+    expect(scope).toHaveTextContent("Migration ownership is unresolved");
+    expect(scope).toHaveTextContent("Fallback capacity is not confirmed");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
+    );
+    expect(screen.getByRole("dialog", { name: "Issue details" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close issue" }));
+    expect(
+      screen.getByRole("dialog", { name: "Scoped attention findings" }),
+    ).toBeInTheDocument();
+  });
+
+  it("supports row scoping, clearing one scope chip, and the natural all-clear state", () => {
+    const { unmount } = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={sliceFourSnapshot}
+        initialView="attention"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open Resources findings" }));
+    expect(
+      screen.getByRole("dialog", { name: "Scoped attention findings" }),
+    ).toHaveTextContent("2 findings");
+    fireEvent.click(screen.getByRole("button", { name: "Clear Resources filter" }));
+    expect(screen.queryByRole("dialog", { name: "Scoped attention findings" })).not.toBeInTheDocument();
+
+    unmount();
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={{
+          ...snapshot,
+          assessment: {
+            ...snapshot.assessment,
+            issues: snapshot.assessment.issues.map((issue) => ({
+              ...issue,
+              status: "resolved",
+            })),
+          },
+        }}
+        initialView="attention"
+        logoutAction={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Nothing needs your attention right now.")).toBeInTheDocument();
+    expect(screen.getByText("All seven plan artifacts are clear in the current read.")).toBeInTheDocument();
+  });
+
   it("renders the golden Overview hierarchy and routes prototype entry points", () => {
     render(
       <ProjectOverview
@@ -105,6 +259,60 @@ describe("ProjectOverview", () => {
       "false",
     );
     expect(screen.queryByText("Analysis status")).not.toBeInTheDocument();
+  });
+
+  it("restores the Overview scroll position after returning from Attention Map", () => {
+    vi.useFakeTimers();
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+    const requestAnimationFrame = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        callback(0);
+        return 1;
+      });
+    const cancelAnimationFrame = vi
+      .spyOn(window, "cancelAnimationFrame")
+      .mockImplementation(() => undefined);
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 640,
+    });
+
+    const overview = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+    const workspace = screen.getByRole("navigation", { name: "Workspace" });
+    fireEvent.click(
+      within(workspace).getByRole("link", { name: /Attention map/ }),
+    );
+
+    expect(sessionStorage.getItem("oslo:overview-scroll:project-001")).toBe("640");
+
+    overview.unmount();
+    render(
+      <StrictMode>
+        <ProjectOverview
+          displayName="Alex"
+          initial={snapshot}
+          logoutAction={vi.fn()}
+        />
+      </StrictMode>,
+    );
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(scrollTo).toHaveBeenCalledWith({ behavior: "auto", top: 640 });
+    expect(scrollTo.mock.calls.length).toBeGreaterThanOrEqual(3);
+    expect(sessionStorage.getItem("oslo:overview-scroll:project-001")).toBeNull();
+
+    cancelAnimationFrame.mockRestore();
+    requestAnimationFrame.mockRestore();
+    scrollTo.mockRestore();
   });
 
   it("renders the Slice 3 project shell and evidence-qualified confidence read", () => {
@@ -519,10 +727,10 @@ describe("ProjectOverview", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the real Extended failure and retries the failed run", async () => {
+  it("shows a failed clarification re-analysis on a current snapshot and retries it", async () => {
     const failedSnapshot: OverviewSnapshot = {
       ...snapshot,
-      state: "provisional",
+      state: "current",
       extended_analysis: {
         run_id: "run-extended-001",
         project_id: "project-001",
@@ -530,7 +738,7 @@ describe("ProjectOverview", () => {
         status: "failed",
         phase: "perceive",
         completed_phases: [],
-        error_code: "EVIDENCE_REFERENCE_CONTRACT_FAILED",
+        error_code: "OPENAI_QUOTA",
       },
     };
     const fetcher = vi.fn().mockResolvedValue({
@@ -551,7 +759,7 @@ describe("ProjectOverview", () => {
 
     expect(screen.getByText("Extended Analysis paused safely")).toBeInTheDocument();
     expect(
-      screen.getByText("An evidence reference did not match the source document."),
+      screen.getByText("The deeper read stopped before it could safely publish."),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry Extended Analysis" }));
 
@@ -561,6 +769,65 @@ describe("ProjectOverview", () => {
         { method: "POST" },
       );
       expect(screen.getByText("Extended Analysis is retrying")).toBeInTheDocument();
+    });
+  });
+
+  it("reconnects a retried clarification run and publishes its completed read", async () => {
+    const failedSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      state: "current",
+      extended_analysis: {
+        run_id: "run-extended-retry",
+        project_id: "project-001",
+        kind: "extended",
+        status: "failed",
+        phase: "perceive",
+        completed_phases: [],
+        error_code: "OPENAI_QUOTA",
+      },
+    };
+    const completedSnapshot: OverviewSnapshot = {
+      ...failedSnapshot,
+      extended_analysis: {
+        ...failedSnapshot.extended_analysis!,
+        status: "completed",
+        phase: "extended_transition",
+      },
+    };
+    const fetcher = vi.fn(async (input: string, init?: RequestInit) => {
+      if (input === "/api/analysis-runs/run-extended-retry/retry" && init?.method === "POST") {
+        return { ok: true, json: async () => ({ status: "running" }) };
+      }
+      if (input === "/api/analysis-runs/run-extended-retry") {
+        return { ok: true, json: async () => ({ status: "completed" }) };
+      }
+      if (input === "/api/projects/project-001/overview") {
+        return { ok: true, json: async () => completedSnapshot };
+      }
+      return { ok: false };
+    });
+    vi.stubGlobal("fetch", fetcher);
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={failedSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry Extended Analysis" }));
+
+    await waitFor(
+      () => {
+        expect(fetcher).toHaveBeenCalledWith(
+          "/api/analysis-runs/run-extended-retry",
+          { cache: "no-store" },
+        );
+      },
+      { timeout: 3500 },
+    );
+    await waitFor(() => {
+      expect(screen.getByText("Extended Analysis complete")).toBeInTheDocument();
     });
   });
 
