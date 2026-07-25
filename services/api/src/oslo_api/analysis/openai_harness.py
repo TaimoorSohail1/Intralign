@@ -1,4 +1,5 @@
 import json
+import re
 from collections.abc import Callable, Iterable
 from time import monotonic, sleep
 from typing import Annotated, Any, Literal
@@ -23,7 +24,7 @@ from oslo_api.analysis.models import (
 PROMPT_VERSIONS = {
     "perceive": "oslo-perceive-v2",
     "construct": "oslo-construct-v2",
-    "evaluate": "oslo-evaluate-v2",
+    "evaluate": "oslo-evaluate-v5",
 }
 ShortText = Annotated[str, Field(min_length=1, max_length=1_000)]
 LongText = Annotated[str, Field(min_length=1, max_length=4_000)]
@@ -213,9 +214,11 @@ class OpenAIAgentHarness:
         artifacts: tuple[Artifact, ...],
         perception: Perception,
         kind: RunKind,
+        context: str = "",
         invocation: HarnessInvocation | None = None,
     ) -> Assessment:
         allowed_refs = self._perception_evidence_refs(perception)
+        clarification_context = self._clarification_context(context)
         output = self._call_with_evidence_contract(
             name="oslo_assessment",
             schema=_AssessmentOutput,
@@ -226,7 +229,19 @@ class OpenAIAgentHarness:
                 f"You are OSLO Evaluate ({PROMPT_VERSIONS['evaluate']}). "
                 "Apply the approved clarity, "
                 "alignment and feasibility rubric. Identify actionable, evidence-cited issues. "
-                "Consolidate duplicate issues and keep explanations concise. Do not expose hidden "
+                "When the evidence includes a USER_CLARIFICATION, mark the tied issue addressed "
+                "if the answer improves it but leaves a material gap, and resolved only when the "
+                "answer fully satisfies the clarification. Treat a direct user answer as "
+                "authoritative user-confirmed project evidence; do not require a separate "
+                "document unless the user says the answer is unverified. Never leave a "
+                "confirmation-type issue open only because independent source documents are "
+                "absent: a clear answer that names the decision, owner, date, threshold, or "
+                "fallback requested by the question is sufficient user-confirmed evidence. "
+                "Reuse the exact "
+                "Issue ID supplied inside USER_CLARIFICATION for that tied issue. "
+                "For every open issue, include one concise clarification question whose answer "
+                "would materially reduce the stated uncertainty. Consolidate duplicate issues "
+                "and keep explanations concise. Do not expose hidden "
                 "reasoning. Every evidence_refs value must be copied exactly from "
                 "allowed_evidence_locators; never reconstruct or alter a locator. "
                 "Return only the required JSON contract."
@@ -235,6 +250,7 @@ class OpenAIAgentHarness:
                 "analysis_kind": kind.value,
                 "perception": perception,
                 "artifacts": artifacts,
+                "clarification_context": clarification_context,
                 "allowed_evidence_locators": sorted(allowed_refs),
             },
             invocation=invocation,
@@ -268,6 +284,30 @@ class OpenAIAgentHarness:
                 for item in output.issues
             ),
         )
+
+    @staticmethod
+    def _clarification_context(context: str) -> dict[str, str] | None:
+        matches = list(
+            re.finditer(
+                r"^USER_CLARIFICATION[^\n]*\n(?P<body>.*?)"
+                r"(?:^END_USER_CLARIFICATION\s*$|\Z)",
+                context,
+                re.MULTILINE | re.DOTALL,
+            )
+        )
+        if not matches:
+            return None
+        block = matches[-1].group("body")
+        issue = re.search(r"^Issue ID:\s*(\S+)\s*$", block, re.MULTILINE)
+        question = re.search(r"^Question:\s*(.+?)\s*$", block, re.MULTILINE)
+        answer = re.search(r"^Answer:\s*(.+)\Z", block, re.MULTILINE | re.DOTALL)
+        if not issue or not answer:
+            return None
+        return {
+            "issue_id": issue.group(1).strip(),
+            "question": question.group(1).strip() if question else "Clarification requested",
+            "answer": answer.group(1).strip(),
+        }
 
     def _call_with_evidence_contract(
         self,
@@ -526,6 +566,8 @@ class OpenAIAgentHarness:
                 EvidenceFragment(
                     reference=item.reference,
                     content=item.content[:2_000],
+                    source_name=item.source_name,
+                    location=item.location,
                 ),
             )
             for index, item in enumerate(evidence)

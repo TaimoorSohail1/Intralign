@@ -5,14 +5,20 @@ import {
   CaretDown,
   CaretRight,
   ChatTeardropDots,
+  ClockCounterClockwise,
+  FolderOpen,
+  House,
   Info,
+  ListBullets,
+  MapTrifold,
+  MagnifyingGlass,
   PaperPlaneTilt,
   Sparkle,
   X,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { OverviewSnapshot } from "@/lib/server/oslo-api";
@@ -33,6 +39,28 @@ const initialAdvisorQuestions = [
   "Explain the top issue",
   "What do you need me to confirm?",
 ];
+const orientationSteps = [
+  {
+    title: "Your confidence read",
+    body: "See how mature OSLO's understanding is, what limits it, and how reliable the supporting evidence is.",
+  },
+  {
+    title: "What needs attention",
+    body: "Start with the highest-impact open findings. OSLO explains the issue; you decide what to do.",
+  },
+  {
+    title: "The Attention map",
+    body: "Move from the summary into the seven plan artifacts across Clarity, Alignment, and Feasibility.",
+  },
+  {
+    title: "Progress and evidence",
+    body: "Track resolved findings, confirmed dependencies, and how much of the plan has been evidence-qualified.",
+  },
+  {
+    title: "Your OSLO advisor",
+    body: "Ask grounded questions about this project. The advisor reads the published snapshot and never changes it.",
+  },
+];
 const severityRank: Record<string, number> = {
   Critical: 3,
   Moderate: 2,
@@ -44,9 +72,14 @@ const dimensionStrength: Record<string, number> = {
   Low: 38,
   "Very Low": 28,
 };
+const dimensionDescriptions = {
+  clarity: "How complete, explicit, and unambiguous the plan evidence is.",
+  alignment: "Whether the objectives, scope, dependencies, and decisions agree.",
+  feasibility: "Whether the schedule, resources, and dependencies support delivery.",
+} as const;
 
 type Issue = OverviewSnapshot["assessment"]["issues"][number];
-type ProjectView = "overview" | "attention";
+type ProjectView = "overview" | "attention" | "issues" | "history";
 
 interface ChatMessage {
   id: number;
@@ -78,9 +111,14 @@ export function ProjectOverview({
   const router = useRouter();
   const [snapshot, setSnapshot] = useState(initial);
   const [orientation, setOrientation] = useState(false);
+  const [tourStep, setTourStep] = useState<number | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [advisorOpen, setAdvisorOpen] = useState(true);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [confidenceDetailsOpen, setConfidenceDetailsOpen] = useState(false);
+  const [confidenceBreakdownOpen, setConfidenceBreakdownOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [attentionMode, setAttentionMode] = useState<"heatmap" | "dimensions">("heatmap");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [advisorQuestions, setAdvisorQuestions] = useState(initialAdvisorQuestions);
@@ -94,12 +132,22 @@ export function ProjectOverview({
   const [clarificationAnswer, setClarificationAnswer] = useState("");
   const [clarificationPending, setClarificationPending] = useState(false);
   const [clarificationError, setClarificationError] = useState<string | null>(null);
-  const [analysisUpdateRunId, setAnalysisUpdateRunId] = useState<string | null>(null);
+  const [analysisUpdateRunId, setAnalysisUpdateRunId] = useState<string | null>(() => {
+    const activeExtended = initial.extended_analysis;
+    return initial.state === "current" &&
+      (activeExtended?.status === "queued" || activeExtended?.status === "running")
+      ? activeExtended.run_id
+      : null;
+  });
   const advisorInFlight = useRef(false);
   const projectInFlight = useRef(false);
   const advisorStateBeforeIssue = useRef(true);
   const issueTrigger = useRef<HTMLElement | null>(null);
   const messageId = useRef(0);
+  const clarificationIdempotency = useRef<{
+    signature: string;
+    key: string;
+  } | null>(null);
 
   const isProvisional = snapshot.state === "provisional";
   const extendedRun = snapshot.extended_analysis;
@@ -115,20 +163,24 @@ export function ProjectOverview({
   const clarificationIssue = openIssues.find((issue) => Boolean(issue.clarification));
   const criticalCount = openIssues.filter((issue) => issue.severity === "Critical").length;
   const clarificationCount = openIssues.filter((issue) => Boolean(issue.clarification)).length;
-  const limitingDimension = useMemo(
-    () =>
-      dimensions.reduce((weakest, dimension) =>
-        (dimensionStrength[snapshot.assessment[dimension]] ?? 0) <
-        (dimensionStrength[snapshot.assessment[weakest]] ?? 0)
-          ? dimension
-          : weakest,
-      ),
-    [snapshot.assessment],
-  );
+  const totalConfirmationCount =
+    clarificationCount + snapshot.assessment.confirmed_dependency_count;
+  const limitingDimension = snapshot.assessment.limiting_dimension;
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const compact = window.matchMedia("(max-width: 980px)");
+    const keepMainConsoleAvailable = (event: MediaQueryListEvent | MediaQueryList) => {
+      if (event.matches) setAdvisorOpen(false);
+    };
+    keepMainConsoleAvailable(compact);
+    compact.addEventListener("change", keepMainConsoleAvailable);
+    return () => compact.removeEventListener("change", keepMainConsoleAvailable);
+  }, []);
 
   useEffect(() => {
     const orientationTimer = window.setTimeout(
-      () => setOrientation(localStorage.getItem("oslo_orientation_seen") !== "true"),
+      () => setOrientation(!snapshot.orientation_seen),
       0,
     );
     if (!isProvisional || extendedFailed) {
@@ -154,7 +206,12 @@ export function ProjectOverview({
       window.clearTimeout(orientationTimer);
       window.clearInterval(timer);
     };
-  }, [extendedFailed, isProvisional, snapshot.project_id]);
+  }, [
+    extendedFailed,
+    isProvisional,
+    snapshot.orientation_seen,
+    snapshot.project_id,
+  ]);
 
   useEffect(() => {
     if (!analysisUpdateRunId) return;
@@ -170,9 +227,20 @@ export function ProjectOverview({
             `/api/projects/${snapshot.project_id}/overview`,
             { cache: "no-store" },
           );
-          if (overviewResponse.ok) setSnapshot(await overviewResponse.json());
+          if (overviewResponse.ok) {
+            const next: OverviewSnapshot = await overviewResponse.json();
+            setSnapshot(next);
+            setSelectedIssue((current) => {
+              if (!current) return current;
+              return (
+                next.assessment.issues.find((issue) => issue.id === current.id) ??
+                current
+              );
+            });
+          }
           setAnalysisUpdateRunId(null);
           setClarificationAnswer("");
+          clarificationIdempotency.current = null;
         }
         if (run.status === "failed") {
           setAnalysisUpdateRunId(null);
@@ -188,12 +256,47 @@ export function ProjectOverview({
   }, [analysisUpdateRunId, snapshot.project_id]);
 
   useEffect(() => {
+    const handleProjectShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setConfidenceBreakdownOpen(false);
+        setSearchOpen(true);
+      }
+      if (event.key === "Escape") {
+        setSearchOpen(false);
+        setConfidenceBreakdownOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleProjectShortcut);
+    return () => window.removeEventListener("keydown", handleProjectShortcut);
+  }, []);
+
+  useEffect(() => {
     if (!selectedIssue) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setSelectedIssue(null);
         setAdvisorOpen(advisorStateBeforeIssue.current);
         window.setTimeout(() => issueTrigger.current?.focus(), 0);
+        return;
+      }
+      if (event.key === "Tab") {
+        const panel = document.querySelector<HTMLElement>(
+          '[role="dialog"][aria-label="Issue details"]',
+        );
+        const focusable = panel?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), textarea:not([disabled]), input:not([disabled]), a[href]',
+        );
+        if (!focusable?.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
     window.addEventListener("keydown", closeOnEscape);
@@ -202,8 +305,10 @@ export function ProjectOverview({
 
   const dismissOrientation = async () => {
     localStorage.setItem("oslo_orientation_seen", "true");
+    setSnapshot((current) => ({ ...current, orientation_seen: true }));
     setOrientation(false);
-    await fetch("/api/orientation", { method: "POST" });
+    setTourStep(null);
+    await fetch("/api/orientation", { method: "POST" }).catch(() => undefined);
   };
 
   const openIssue = (issue: Issue, trigger?: HTMLElement | null) => {
@@ -295,6 +400,14 @@ export function ProjectOverview({
     if (!selectedIssue || !clarificationAnswer.trim() || clarificationPending) return;
     setClarificationPending(true);
     setClarificationError(null);
+    const normalizedAnswer = clarificationAnswer.trim();
+    const signature = `${selectedIssue.id}:${normalizedAnswer}`;
+    if (clarificationIdempotency.current?.signature !== signature) {
+      clarificationIdempotency.current = {
+        signature,
+        key: crypto.randomUUID(),
+      };
+    }
     try {
       const response = await fetch(
         `/api/projects/${snapshot.project_id}/issues/${encodeURIComponent(selectedIssue.id)}/answers`,
@@ -302,13 +415,16 @@ export function ProjectOverview({
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            answer: clarificationAnswer.trim(),
-            idempotencyKey: crypto.randomUUID(),
+            answer: normalizedAnswer,
+            idempotencyKey: clarificationIdempotency.current.key,
           }),
         },
       );
       if (!response.ok) throw new Error("answer was not accepted");
       const result = await response.json();
+      setSelectedIssue((current) =>
+        current ? { ...current, status: "addressed" } : current,
+      );
       setAnalysisUpdateRunId(result.run_id);
     } catch {
       setClarificationError("Your answer could not be saved. Please try again.");
@@ -327,27 +443,42 @@ export function ProjectOverview({
   return (
     <main className={`project-shell ${selectedIssue ? "has-issue" : ""}`}>
       <header className="project-header">
-        <Link className="project-logo" href={`/projects/${snapshot.project_id}/overview`}>
-          <span aria-hidden="true">O</span>
-          OSLO
+        <Link className="project-toolbar-brand" href={`/projects/${snapshot.project_id}/overview`}>
+          <span aria-hidden="true">I</span>
+          <strong>Intralign</strong>
         </Link>
-        <nav aria-label="Project">
-          <Link
-            className={initialView === "overview" ? "is-current" : ""}
-            href={`/projects/${snapshot.project_id}/overview`}
-          >
-            Overview
-          </Link>
-          <Link
-            className={initialView === "attention" ? "is-current" : ""}
-            href={`/projects/${snapshot.project_id}/attention`}
-          >
-            Attention
-            {openIssues.length ? <span className="nav-count">{openIssues.length}</span> : null}
-          </Link>
-          <Link href={`/projects/${snapshot.project_id}/overview#project-summary`}>Project</Link>
-        </nav>
+        <div className="project-context">
+          <strong>Project understanding</strong>
+          <span aria-hidden="true">›</span>
+          <em>Overview</em>
+        </div>
+        <button
+          aria-label={`Confidence ${snapshot.assessment.confidence_index}, ${snapshot.assessment.confidence_band}, ${snapshot.assessment.reliability} reliability`}
+          aria-expanded={confidenceBreakdownOpen}
+          className="project-header-confidence"
+          onClick={() => {
+            setSearchOpen(false);
+            setConfidenceBreakdownOpen((current) => !current);
+          }}
+          type="button"
+        >
+          <span>Confidence</span>
+          <strong>{snapshot.assessment.confidence_index}</strong>
+          <span>{snapshot.assessment.confidence_band}</span>
+          <small>{snapshot.assessment.reliability} reliability</small>
+        </button>
         <div className="project-actions">
+          <button
+            aria-label="Search project"
+            className="project-search-button"
+            onClick={() => {
+              setConfidenceBreakdownOpen(false);
+              setSearchOpen(true);
+            }}
+            type="button"
+          >
+            <MagnifyingGlass aria-hidden="true" size={16} />
+          </button>
           {!panelVisible ? (
             <button
               className="advisor-reopen"
@@ -374,6 +505,7 @@ export function ProjectOverview({
               <button
                 onClick={(event) => {
                   event.currentTarget.closest("details")?.removeAttribute("open");
+                  setTourStep(null);
                   setOrientation(true);
                 }}
                 type="button"
@@ -392,6 +524,68 @@ export function ProjectOverview({
           ) : null}
         </div>
       </header>
+
+      {confidenceBreakdownOpen ? (
+        <ConfidenceBreakdown
+          assessment={snapshot.assessment}
+          onClose={() => setConfidenceBreakdownOpen(false)}
+        />
+      ) : null}
+
+      <aside className="workspace-sidebar">
+        <p className="workspace-label">Project</p>
+        <nav aria-label="Workspace">
+          <Link
+            className={initialView === "overview" ? "is-current" : ""}
+            href={`/projects/${snapshot.project_id}/overview`}
+          >
+            <House aria-hidden="true" size={17} />
+            Overview
+          </Link>
+          <Link
+            aria-label={`Issues ${openIssues.length}`}
+            className={initialView === "issues" ? "is-current" : ""}
+            href={`/projects/${snapshot.project_id}/issues`}
+          >
+            <ListBullets aria-hidden="true" size={17} />
+            Issues
+            <span className="nav-count">{openIssues.length}</span>
+          </Link>
+          <Link
+            className={initialView === "history" ? "is-current" : ""}
+            href={`/projects/${snapshot.project_id}/history`}
+          >
+            <ClockCounterClockwise aria-hidden="true" size={17} />
+            History
+          </Link>
+          <Link
+            className={initialView === "attention" ? "is-current" : ""}
+            href={`/projects/${snapshot.project_id}/attention`}
+          >
+            <MapTrifold aria-hidden="true" size={17} />
+            Attention map
+            {openIssues.length ? <span className="nav-count">{openIssues.length}</span> : null}
+          </Link>
+        </nav>
+        <div className="workspace-future" aria-label="Planned capabilities">
+          <p>Coming in later slices</p>
+          <span><FolderOpen aria-hidden="true" size={15} /> Reports</span>
+          <span>Share &amp; export</span>
+        </div>
+        <div className="workspace-sidebar-footer">
+          <button
+            onClick={() => {
+              setTourStep(null);
+              setOrientation(true);
+            }}
+            type="button"
+          >
+            <Sparkle aria-hidden="true" size={15} />
+            Take a quick tour
+          </button>
+          <span>OSLO advises; you decide.</span>
+        </div>
+      </aside>
 
       <div className={`project-grid ${panelVisible ? "" : "is-panel-closed"}`}>
         <section className="project-main">
@@ -420,20 +614,75 @@ export function ProjectOverview({
                     </button>
                   </div>
                   <div className="confidence-copy">
+                    <div className="confidence-stage">
+                      <span>Stage</span>
+                      {(["orientation", "expanded", "validated"] as const).map(
+                        (stage, index) => (
+                          <Fragment key={stage}>
+                            <strong
+                              className={
+                                snapshot.assessment.understanding_stage === stage
+                                  ? "is-active"
+                                  : ""
+                              }
+                            >
+                              {artifactLabel(stage)}
+                            </strong>
+                            {index < 2 ? <i>›</i> : null}
+                          </Fragment>
+                        ),
+                      )}
+                    </div>
                     <h1>Understanding is forming</h1>
                     <p>
                       {snapshot.assessment.confidence_band} · qualified by{" "}
                       <strong>{snapshot.assessment.reliability.toLowerCase()} reliability</strong>
                     </p>
-                    {!isProvisional ? (
-                      <span className="confidence-change">Current evidence-qualified read</span>
-                    ) : null}
+                    <div className="confidence-statusline">
+                      <span>{artifactLabel(snapshot.assessment.confidence_direction)}</span>
+                      {!isProvisional ? <span>Current evidence-qualified read</span> : null}
+                    </div>
                   </div>
                 </div>
+                {snapshot.assessment.false_confidence ? (
+                  <div className="false-confidence-warning" role="alert">
+                    <Info aria-hidden="true" size={15} />
+                    The score is high, but the supporting evidence is not yet reliable enough
+                    for a confident commitment.
+                  </div>
+                ) : null}
                 <div className="confidence-divider" />
-                <p className="dimension-help">
-                  What&apos;s driving it — hover or focus a dimension for detail
-                </p>
+                <div className="dimension-help">
+                  <p>What&apos;s driving it — hover or focus a dimension for detail</p>
+                  <button
+                    aria-expanded={confidenceDetailsOpen}
+                    aria-label="How confidence is calculated"
+                    onClick={() => setConfidenceDetailsOpen((current) => !current)}
+                    type="button"
+                  >
+                    <Info aria-hidden="true" size={13} />
+                    How calculated
+                  </button>
+                </div>
+                {confidenceDetailsOpen ? (
+                  <section className="confidence-method" aria-label="Confidence calculation">
+                    <p>{snapshot.assessment.confidence_explanation}</p>
+                    <dl>
+                      <div>
+                        <dt>Coverage</dt>
+                        <dd>{snapshot.assessment.reliability_basis.coverage}</dd>
+                      </div>
+                      <div>
+                        <dt>Evidence</dt>
+                        <dd>{snapshot.assessment.reliability_basis.evidence}</dd>
+                      </div>
+                      <div>
+                        <dt>Assessability</dt>
+                        <dd>{snapshot.assessment.reliability_basis.assessability}</dd>
+                      </div>
+                    </dl>
+                  </section>
+                ) : null}
                 <div className="dimension-bars">
                   {dimensions.map((name) => {
                     const value = snapshot.assessment[name];
@@ -451,6 +700,10 @@ export function ProjectOverview({
                           tabIndex={0}
                         >
                           <i style={{ width: `${dimensionStrength[value] ?? 50}%` }} />
+                          <span className="dimension-tooltip" role="tooltip">
+                            <strong>{artifactLabel(name)} · {value}</strong>
+                            {dimensionDescriptions[name]}
+                          </span>
                         </div>
                         <strong>{value}</strong>
                       </div>
@@ -459,10 +712,16 @@ export function ProjectOverview({
                 </div>
                 <div className="confidence-footer">
                   <span>
-                    <strong>{openIssues.length}</strong> issues open · <strong>0</strong> resolved
+                    <strong>{openIssues.length}</strong> issues open ·{" "}
+                    <strong>{snapshot.assessment.resolved_issue_count}</strong> resolved
                   </span>
                   <div>
-                    <button type="button">
+                    <button
+                      aria-expanded={confidenceDetailsOpen}
+                      aria-label="Why this confidence read"
+                      onClick={() => setConfidenceDetailsOpen((current) => !current)}
+                      type="button"
+                    >
                       Why <CaretDown aria-hidden="true" size={11} />
                     </button>
                     <Link
@@ -540,7 +799,7 @@ export function ProjectOverview({
                 <div className="progress-layout">
                   <div className="progress-numbers">
                     <div>
-                      <strong>0</strong>
+                      <strong>{snapshot.assessment.resolved_issue_count}</strong>
                       <span>issues resolved · {openIssues.length} open</span>
                     </div>
                     <div>
@@ -551,8 +810,23 @@ export function ProjectOverview({
                   <div className="progress-bars">
                     <div>
                       <span>Dependencies confirmed</span>
-                      <strong>0 / {clarificationCount}</strong>
-                      <i><b style={{ width: "0%" }} /></i>
+                      <strong>
+                        {snapshot.assessment.confirmed_dependency_count} / {totalConfirmationCount}
+                      </strong>
+                      <i>
+                        <b
+                          style={{
+                            width: totalConfirmationCount
+                              ? `${Math.min(
+                                  100,
+                                  (snapshot.assessment.confirmed_dependency_count /
+                                    totalConfirmationCount) *
+                                    100,
+                                )}%`
+                              : "100%",
+                          }}
+                        />
+                      </i>
                     </div>
                     <div>
                       <span>Plan artifacts read</span>
@@ -591,13 +865,15 @@ export function ProjectOverview({
                 {summaryOpen ? <p>{snapshot.summary}</p> : null}
               </section>
             </>
-          ) : (
+          ) : initialView === "attention" ? (
             <AttentionView
               mode={attentionMode}
               onModeChange={setAttentionMode}
               onOpenIssue={openIssue}
               issues={openIssues}
             />
+          ) : (
+            <DeferredWorkspace view={initialView} />
           )}
         </section>
 
@@ -657,45 +933,282 @@ export function ProjectOverview({
           className="orientation-overlay"
           role="dialog"
         >
-          <div className="orientation-pro">
-            <h2>You bring the strategy. OSLO brings the understanding.</h2>
-            <p>
-              This is how you work as an AI-first PM — you stay in control at every step,
-              with OSLO&apos;s understanding beside you.
-            </p>
-            <div className="orientation-cards">
-              <article>
-                <strong>Understanding</strong>
-                <small>OSLO</small>
-                <p>OSLO reads your plan and shows how sound it is — where it&apos;s clear, where it&apos;s weak, and what could derail the outcome.</p>
-              </article>
-              <article>
-                <strong>Judgement</strong>
-                <small>You</small>
-                <p>You weigh what matters. OSLO surfaces the issues and options; the call is always yours.</p>
-              </article>
-              <article>
-                <strong>Decision</strong>
-                <small>You</small>
-                <p>You commit the path. OSLO records it — it never decides for you.</p>
-              </article>
-              <article>
-                <strong>Oversight</strong>
-                <small>You</small>
-                <p>As reality shifts, OSLO re-reads and updates the picture, so you can adjust and stay on course.</p>
-              </article>
+          {tourStep === null ? (
+            <div className="orientation-pro">
+              <h2>You bring the strategy. OSLO brings the understanding.</h2>
+              <p>
+                This is how you work as an AI-first PM — you stay in control at every step,
+                with OSLO&apos;s understanding beside you.
+              </p>
+              <div className="orientation-cards">
+                <article>
+                  <strong>Understanding</strong>
+                  <small>OSLO</small>
+                  <p>OSLO reads your plan and shows how sound it is — where it&apos;s clear, where it&apos;s weak, and what could derail the outcome.</p>
+                </article>
+                <article>
+                  <strong>Judgement</strong>
+                  <small>You</small>
+                  <p>You weigh what matters. OSLO surfaces the issues and options; the call is always yours.</p>
+                </article>
+                <article>
+                  <strong>Decision</strong>
+                  <small>You</small>
+                  <p>You commit the path. OSLO records it — it never decides for you.</p>
+                </article>
+                <article>
+                  <strong>Oversight</strong>
+                  <small>You</small>
+                  <p>As reality shifts, OSLO re-reads and updates the picture, so you can adjust and stay on course.</p>
+                </article>
+              </div>
+              <div className="orientation-footer">
+                <p>OSLO advises. You lead. That&apos;s how an AI-first PM steers to the outcome — augmented, not automated.</p>
+                <button
+                  className="button button-primary"
+                  onClick={() => setTourStep(0)}
+                  type="button"
+                >
+                  Get started
+                  <ArrowRight aria-hidden="true" size={14} />
+                </button>
+              </div>
             </div>
-            <div className="orientation-footer">
-              <p>OSLO advises. You lead. That&apos;s how an AI-first PM steers to the outcome — augmented, not automated.</p>
-              <button className="button button-primary" onClick={dismissOrientation} type="button">
-                Get started
-                <ArrowRight aria-hidden="true" size={14} />
-              </button>
+          ) : (
+            <div className="tour-card">
+              <div className="tour-progress">
+                <span>{tourStep + 1} of {orientationSteps.length}</span>
+                <div>
+                  {orientationSteps.map((step, index) => (
+                    <i className={index <= tourStep ? "is-active" : ""} key={step.title} />
+                  ))}
+                </div>
+              </div>
+              <Sparkle aria-hidden="true" size={24} weight="fill" />
+              <h2>{orientationSteps[tourStep].title}</h2>
+              <p>{orientationSteps[tourStep].body}</p>
+              <div className="tour-actions">
+                <button onClick={() => void dismissOrientation()} type="button">Skip tour</button>
+                <button
+                  className="button button-primary"
+                  onClick={() => {
+                    if (tourStep === orientationSteps.length - 1) {
+                      void dismissOrientation();
+                    } else {
+                      setTourStep((current) => (current ?? 0) + 1);
+                    }
+                  }}
+                  type="button"
+                >
+                  {tourStep === orientationSteps.length - 1 ? "Finish tour" : "Next"}
+                  <ArrowRight aria-hidden="true" size={14} />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </section>
       ) : null}
+
+      {searchOpen ? (
+        <SearchPalette
+          issues={openIssues}
+          onClose={() => {
+            setSearchOpen(false);
+            setSearchQuery("");
+          }}
+          onOpenIssue={(issue) => {
+            setSearchOpen(false);
+            setSearchQuery("");
+            openIssue(issue);
+          }}
+          projectId={snapshot.project_id}
+          query={searchQuery}
+          setQuery={setSearchQuery}
+        />
+      ) : null}
     </main>
+  );
+}
+
+function ConfidenceBreakdown({
+  assessment,
+  onClose,
+}: {
+  assessment: OverviewSnapshot["assessment"];
+  onClose: () => void;
+}) {
+  const closeButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeButton.current?.focus();
+  }, []);
+
+  return (
+    <section
+      aria-label="Confidence breakdown"
+      className="confidence-breakdown"
+      role="dialog"
+    >
+      <div className="confidence-breakdown-heading">
+        <div>
+          <span>Confidence</span>
+          <strong>{assessment.confidence_index}</strong>
+          <em>{assessment.confidence_band}</em>
+        </div>
+        <button aria-label="Close confidence breakdown" onClick={onClose} ref={closeButton} type="button">
+          <X aria-hidden="true" size={16} />
+        </button>
+      </div>
+      <p>
+        Understanding maturity — not project health, readiness, or probability.
+        Qualified by <strong>{assessment.reliability.toLowerCase()} reliability</strong>.
+      </p>
+      <dl className="confidence-breakdown-dimensions">
+        {dimensions.map((name) => (
+          <div key={name}>
+            <dt>{artifactLabel(name)}</dt>
+            <dd>
+              <i><b style={{ width: `${dimensionStrength[assessment[name]] ?? 50}%` }} /></i>
+              <strong>{assessment[name]}</strong>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <h3>Reliability basis</h3>
+      <dl className="confidence-breakdown-reliability">
+        {(["coverage", "evidence", "assessability"] as const).map((name) => (
+          <div key={name}>
+            <dt>{artifactLabel(name)}</dt>
+            <dd>{assessment.reliability_basis[name]}</dd>
+          </div>
+        ))}
+      </dl>
+      <small>{assessment.confidence_explanation}</small>
+    </section>
+  );
+}
+
+function SearchPalette({
+  issues,
+  onClose,
+  onOpenIssue,
+  projectId,
+  query,
+  setQuery,
+}: {
+  issues: Issue[];
+  onClose: () => void;
+  onOpenIssue: (issue: Issue) => void;
+  projectId: string;
+  query: string;
+  setQuery: (value: string) => void;
+}) {
+  const router = useRouter();
+  const input = useRef<HTMLInputElement>(null);
+  const normalizedQuery = query.trim().toLowerCase();
+  const routes = [
+    ["Overview", "overview"],
+    ["Issues", "issues"],
+    ["History", "history"],
+    ["Attention map", "attention"],
+  ] as const;
+  const filteredRoutes = routes.filter(([label]) =>
+    label.toLowerCase().includes(normalizedQuery),
+  );
+  const filteredIssues = issues.filter((issue) =>
+    `${issue.title} ${issue.dimension} ${issue.artifact_type}`
+      .toLowerCase()
+      .includes(normalizedQuery),
+  );
+
+  useEffect(() => {
+    input.current?.focus();
+  }, []);
+
+  return (
+    <section
+      aria-label="Search or jump to"
+      aria-modal="true"
+      className="project-search-overlay"
+      onMouseDown={(event) => {
+        if (event.currentTarget === event.target) onClose();
+      }}
+      role="dialog"
+    >
+      <div className="project-search-palette">
+        <label>
+          <MagnifyingGlass aria-hidden="true" size={16} />
+          <input
+            aria-label="Search project"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search or jump to…"
+            ref={input}
+            value={query}
+          />
+          <kbd>Esc</kbd>
+        </label>
+        <div className="project-search-results" role="listbox">
+          {filteredRoutes.length ? <p>Go to</p> : null}
+          {filteredRoutes.map(([label, route]) => (
+            <button
+              aria-label={label}
+              aria-selected="false"
+              key={route}
+              onClick={() => {
+                onClose();
+                router.push(`/projects/${projectId}/${route}`);
+              }}
+              role="option"
+              type="button"
+            >
+              <span>{label}</span>
+              <small>Project workspace</small>
+            </button>
+          ))}
+          {filteredIssues.length ? <p>Open an issue</p> : null}
+          {filteredIssues.map((issue) => (
+            <button
+              aria-label={issue.title}
+              aria-selected="false"
+              key={issue.id}
+              onClick={() => onOpenIssue(issue)}
+              role="option"
+              type="button"
+            >
+              <span>{issue.title}</span>
+              <small>{issue.severity} · {artifactLabel(issue.artifact_type)}</small>
+            </button>
+          ))}
+          {!filteredRoutes.length && !filteredIssues.length ? (
+            <p className="project-search-empty">No matching project content.</p>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DeferredWorkspace({ view }: { view: "issues" | "history" }) {
+  const isIssues = view === "issues";
+  return (
+    <section className="deferred-workspace">
+      <span className="eyebrow">Project workspace</span>
+      <h1>{isIssues ? "Issues" : "History"}</h1>
+      <p>
+        {isIssues
+          ? "The Overview and Attention map already expose the highest-impact findings. The full issues workspace arrives in Slice 6."
+          : "The current and last-good reads are already preserved safely. The full decision history arrives in Slice 7."}
+      </p>
+      <Link href={isIssues ? "./attention" : "./overview"}>
+        {isIssues ? "Open the Attention map" : "Return to Overview"}
+        <ArrowRight aria-hidden="true" size={13} />
+      </Link>
+      <div className="deferred-preview" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </div>
+    </section>
   );
 }
 
@@ -880,8 +1393,23 @@ function IssuePanel({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   pending: boolean;
 }) {
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const [showAllEvidence, setShowAllEvidence] = useState(false);
+  const evidence = issue.evidence ?? [];
+  const effectiveStatus = analysisRunning ? "addressed" : issue.status;
+
+  useEffect(() => {
+    closeButton.current?.focus();
+  }, []);
+
   return (
-    <aside aria-label="Issue details" className="project-sidepanel issue-panel">
+    <aside
+      aria-describedby={analysisRunning ? "issue-addressed-status" : undefined}
+      aria-label="Issue details"
+      aria-modal="true"
+      className="project-sidepanel issue-panel"
+      role="dialog"
+    >
       <div className="issue-panel-heading">
         <div>
           <span className={`severity severity-${issue.severity.toLowerCase()}`}>
@@ -889,7 +1417,12 @@ function IssuePanel({
           </span>
           <h2>{issue.title}</h2>
         </div>
-        <button aria-label="Close issue" onClick={onClose} type="button">
+        <button
+          aria-label="Close issue"
+          onClick={onClose}
+          ref={closeButton}
+          type="button"
+        >
           <X aria-hidden="true" size={20} />
         </button>
       </div>
@@ -897,13 +1430,18 @@ function IssuePanel({
         Dimension · {issue.dimension} &nbsp; Section · {artifactLabel(issue.artifact_type)}
         &nbsp; Type · Finding
       </p>
-      <div className="issue-lifecycle" aria-label={`Issue status ${issue.status}`}>
+      <div className="issue-lifecycle" aria-label={`Issue status ${effectiveStatus}`}>
         {["open", "addressed", "resolved"].map((status) => (
-          <span className={status === issue.status ? "is-current" : ""} key={status}>
+          <span className={status === effectiveStatus ? "is-current" : ""} key={status}>
             {artifactLabel(status)}
           </span>
         ))}
       </div>
+      {analysisRunning ? (
+        <p className="sr-only" id="issue-addressed-status" aria-live="polite">
+          Your answer is saved. This issue is addressed while OSLO re-analyzes it.
+        </p>
+      ) : null}
       <button className="ask-oslo-issue" onClick={onAsk} type="button">
         <Sparkle aria-hidden="true" size={12} weight="fill" />
         Ask OSLO about this issue
@@ -915,13 +1453,30 @@ function IssuePanel({
       <section>
         <h3>Evidence</h3>
         <div className="evidence-list">
-          {issue.evidence_refs.map((reference) => (
-            <div key={reference}>
-              <small>{artifactLabel(issue.artifact_type)} · source</small>
-              <p>{reference}</p>
+          {evidence.slice(0, showAllEvidence ? evidence.length : 3).map((citation) => (
+            <div key={`${citation.source_name}:${citation.location}:${citation.excerpt}`}>
+              <small>
+                <strong>{citation.source_name}</strong>
+                <span>{citation.location}</span>
+              </small>
+              <p>{citation.excerpt}</p>
             </div>
           ))}
+          {!evidence.length ? (
+            <p className="evidence-unavailable">
+              Readable evidence details are not available for this earlier snapshot.
+            </p>
+          ) : null}
         </div>
+        {evidence.length > 3 ? (
+          <button
+            className="evidence-more"
+            onClick={() => setShowAllEvidence((current) => !current)}
+            type="button"
+          >
+            {showAllEvidence ? "Show less" : `Show ${evidence.length - 3} more`}
+          </button>
+        ) : null}
       </section>
       {issue.clarification ? (
         <form className="clarification-form" onSubmit={onSubmit}>

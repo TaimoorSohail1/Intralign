@@ -20,6 +20,7 @@ from oslo_api.analysis.models import (
     HarnessInvocation,
     Issue,
     Perception,
+    ReliabilityBasis,
     RunKind,
 )
 from oslo_api.analysis.store import AnalysisStore, InMemoryAnalysisStore
@@ -48,5 +49,6 @@ __all__ = [
     "InMemoryAnalysisStore",
     "Issue",
     "Perception",
+    "ReliabilityBasis",
     "RunKind",
 ]

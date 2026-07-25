@@ -149,6 +149,70 @@ def test_postgres_analysis_is_checkpointed_and_published_atomically() -> None:
             )
 
 
+def test_new_snapshot_resolves_issue_rows_that_are_no_longer_present() -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        owner_id = connection.execute(
+            text("select id from auth.users where email = 'admin@oslo.local'")
+        ).scalar_one()
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Slice 3 issue lifecycle', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+        connection.execute(
+            text(
+                """
+                insert into public.issues (
+                  workspace_id, project_id, stable_key, current_status
+                ) values (
+                  :workspace_id, :project_id, 'ISS-STALE', 'open'
+                )
+                """
+            ),
+            {"workspace_id": WORKSPACE_ID, "project_id": project_id},
+        )
+    try:
+        result = AnalysisWorkflow(
+            store=DatabaseAnalysisStore(engine),
+            harness=DeterministicAgentHarness(),
+        ).run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description="A governed delivery plan with a confirmed owner and fallback.",
+                source_names=("brief.md",),
+                idempotency_key=f"integration-issue-lifecycle:{project_id}",
+            )
+        )
+
+        assert result.status is AnalysisRunStatus.COMPLETED
+        with engine.connect() as connection:
+            stale_status = connection.execute(
+                text(
+                    """
+                    select current_status from public.issues
+                    where project_id = :project_id and stable_key = 'ISS-STALE'
+                    """
+                ),
+                {"project_id": project_id},
+            ).scalar_one()
+        assert stale_status == "resolved"
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
 @pytest.mark.parametrize(
     "failed_phase",
     [

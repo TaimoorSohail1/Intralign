@@ -26,6 +26,7 @@ from oslo_api.analysis.documents import MAX_DOCUMENT_BYTES, DocumentRejected
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
 from oslo_api.slice_two import (
     SliceTwoApplication,
+    SliceTwoIssueNotAnswerable,
     SliceTwoNotFound,
     SliceTwoPermissionDenied,
 )
@@ -83,6 +84,12 @@ class ArtifactResponse(BaseModel):
     basis: str
 
 
+class EvidenceResponse(BaseModel):
+    source_name: str
+    location: str
+    excerpt: str
+
+
 class IssueResponse(BaseModel):
     id: str
     artifact_type: str
@@ -92,8 +99,15 @@ class IssueResponse(BaseModel):
     why: str
     recommendation: str
     evidence_refs: list[str]
+    evidence: list[EvidenceResponse]
     clarification: str | None
     status: str
+
+
+class ReliabilityBasisResponse(BaseModel):
+    coverage: str
+    evidence: str
+    assessability: str
 
 
 class AssessmentResponse(BaseModel):
@@ -104,12 +118,21 @@ class AssessmentResponse(BaseModel):
     alignment: str
     feasibility: str
     issues: list[IssueResponse]
+    understanding_stage: str
+    reliability_basis: ReliabilityBasisResponse
+    confidence_direction: str
+    limiting_dimension: str
+    false_confidence: bool
+    confidence_explanation: str
+    resolved_issue_count: int
+    confirmed_dependency_count: int
 
 
 class OverviewResponse(BaseModel):
     snapshot_id: UUID
     analysis_run_id: UUID
     project_id: UUID
+    orientation_seen: bool
     state: Literal["provisional", "current", "last_good"]
     summary: str
     artifacts: list[ArtifactResponse]
@@ -191,11 +214,22 @@ def _run_response(run: AnalysisRun) -> AnalysisRunResponse:
 def _overview_response(
     snapshot: AssessmentSnapshot,
     extended_analysis: AnalysisRun | None = None,
+    *,
+    orientation_seen: bool = False,
 ) -> OverviewResponse:
+    citations = {
+        citation.reference: EvidenceResponse(
+            source_name=citation.source_name,
+            location=citation.location,
+            excerpt=citation.excerpt,
+        )
+        for citation in snapshot.evidence_citations
+    }
     return OverviewResponse(
         snapshot_id=snapshot.id,
         analysis_run_id=snapshot.analysis_run_id,
         project_id=snapshot.project_id,
+        orientation_seen=orientation_seen,
         state=snapshot.state,  # type: ignore[arg-type]
         summary=snapshot.summary,
         artifacts=[
@@ -216,6 +250,18 @@ def _overview_response(
             clarity=snapshot.assessment.clarity,
             alignment=snapshot.assessment.alignment,
             feasibility=snapshot.assessment.feasibility,
+            understanding_stage=snapshot.assessment.understanding_stage,
+            reliability_basis=ReliabilityBasisResponse(
+                coverage=snapshot.assessment.reliability_basis.coverage,
+                evidence=snapshot.assessment.reliability_basis.evidence,
+                assessability=snapshot.assessment.reliability_basis.assessability,
+            ),
+            confidence_direction=snapshot.assessment.confidence_direction,
+            limiting_dimension=snapshot.assessment.limiting_dimension,
+            false_confidence=snapshot.assessment.false_confidence,
+            confidence_explanation=snapshot.assessment.confidence_explanation,
+            resolved_issue_count=snapshot.assessment.resolved_issue_count,
+            confirmed_dependency_count=snapshot.assessment.confirmed_dependency_count,
             issues=[
                 IssueResponse(
                     id=issue.id,
@@ -226,6 +272,11 @@ def _overview_response(
                     why=issue.why,
                     recommendation=issue.recommendation,
                     evidence_refs=list(issue.evidence_refs),
+                    evidence=[
+                        citations[reference]
+                        for reference in issue.evidence_refs
+                        if reference in citations
+                    ],
                     clarification=issue.clarification,
                     status=issue.status,
                 )
@@ -353,9 +404,17 @@ def current_overview(
             actor_user_id=context.user.id,
             project_id=project_id,
         )
+        orientation_seen = application.has_seen_orientation(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+        )
     except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
-    return _overview_response(snapshot, extended_analysis)
+    return _overview_response(
+        snapshot,
+        extended_analysis,
+        orientation_seen=orientation_seen,
+    )
 
 
 @router.post(
@@ -416,6 +475,11 @@ def answer_project_issue(
         )
     except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    except SliceTwoIssueNotAnswerable as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="ISSUE_NOT_ANSWERABLE",
+        ) from error
     return _start_response(run)
 
 

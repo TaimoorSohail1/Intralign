@@ -7,11 +7,13 @@ from oslo_api.analysis import (
     AnalysisRunRequest,
     AnalysisWorkflow,
     DeterministicAgentHarness,
+    EvidenceFragment,
     InMemoryAnalysisStore,
     RunKind,
 )
 from oslo_api.analysis.advisor import AdvisorReply
 from oslo_api.main import create_app
+from oslo_api.slice_two import SliceTwoIssueNotAnswerable
 
 WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
 PROJECT_ID = UUID("018f9f7e-8de2-7000-8000-000000000020")
@@ -25,10 +27,11 @@ class AuthenticatedSliceOne:
 
 
 class RecordingSliceTwo:
-    def __init__(self) -> None:
-        self.store = InMemoryAnalysisStore()
+    def __init__(self, store=None) -> None:
+        self.store = store or InMemoryAnalysisStore()
         self.started: list[AnalysisRunRequest] = []
         self.latest_extended = None
+        self.orientation_seen = False
 
     def start_analysis(
         self,
@@ -89,6 +92,11 @@ class RecordingSliceTwo:
         assert actor_user_id == USER_ID
         assert project_id == PROJECT_ID
         return self.latest_extended
+
+    def has_seen_orientation(self, *, actor_user_id, project_id):
+        assert actor_user_id == USER_ID
+        assert project_id == PROJECT_ID
+        return self.orientation_seen
 
     def upload_document(
         self,
@@ -155,6 +163,23 @@ class RecordingAdvisor:
                 "Who owns the migration baseline?",
             ),
         )
+
+
+class EvidenceRecordingStore(InMemoryAnalysisStore):
+    def evidence_for(self, request):
+        return (
+            EvidenceFragment(
+                reference="document:plan:page:4:fragment:2",
+                content="The approved Phase 1 budget and migration owner are unresolved.",
+                source_name="Programme plan.pdf",
+                location="Page 4",
+            ),
+        )
+
+
+class NonAnswerableSliceTwo(RecordingSliceTwo):
+    def answer_issue(self, **kwargs):
+        raise SliceTwoIssueNotAnswerable
 
 
 def test_authenticated_user_starts_analysis_idempotently() -> None:
@@ -288,6 +313,27 @@ def test_authenticated_user_answers_an_issue_and_starts_reanalysis() -> None:
     assert response.json()["status"] == "queued"
 
 
+def test_issue_without_an_open_clarification_cannot_start_reanalysis() -> None:
+    client = TestClient(
+        create_app(
+            slice_one=AuthenticatedSliceOne(),
+            slice_two=NonAnswerableSliceTwo(),
+        )
+    )
+
+    response = client.post(
+        f"/v1/projects/{PROJECT_ID}/issues/ISS-002/answers",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "answer-issue-002",
+        },
+        json={"answer": "This issue has no clarification request."},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "ISSUE_NOT_ANSWERABLE"
+
+
 def test_overview_reports_a_failed_extended_run_for_safe_retry() -> None:
     slice_two = RecordingSliceTwo()
     initial = slice_two.start_analysis(
@@ -338,6 +384,74 @@ def test_overview_reports_a_failed_extended_run_for_safe_retry() -> None:
         "phase": "perceive",
         "completed_phases": [],
         "error_code": "EVIDENCE_REFERENCE_CONTRACT_FAILED",
+    }
+
+
+def test_overview_exposes_the_evidence_qualified_understanding_console() -> None:
+    slice_two = RecordingSliceTwo()
+    slice_two.start_analysis(
+        actor_user_id=USER_ID,
+        project_id=PROJECT_ID,
+        description="Migration volumes and the accountable owner are not yet validated.",
+        source_names=(),
+        source_document_ids=(),
+        kind=RunKind.INITIAL,
+        key="slice-three-overview-001",
+    )
+    slice_two.complete_latest()
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two)
+    )
+
+    response = client.get(
+        f"/v1/projects/{PROJECT_ID}/overview",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["orientation_seen"] is False
+    assessment = response.json()["assessment"]
+    assert assessment["understanding_stage"] == "orientation"
+    assert assessment["reliability_basis"] == {
+        "coverage": "High",
+        "evidence": "Moderate",
+        "assessability": "Moderate",
+    }
+    assert assessment["confidence_direction"] == "unchanged"
+    assert assessment["limiting_dimension"] == "feasibility"
+    assert assessment["false_confidence"] is False
+    assert assessment["confidence_explanation"]
+    assert assessment["resolved_issue_count"] == 0
+    assert assessment["confirmed_dependency_count"] == 0
+
+
+def test_overview_exposes_readable_issue_evidence_without_requiring_raw_ids() -> None:
+    slice_two = RecordingSliceTwo(store=EvidenceRecordingStore())
+    slice_two.start_analysis(
+        actor_user_id=USER_ID,
+        project_id=PROJECT_ID,
+        description="",
+        source_names=("Programme plan.pdf",),
+        source_document_ids=(),
+        kind=RunKind.INITIAL,
+        key="slice-three-citations-001",
+    )
+    slice_two.complete_latest()
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two)
+    )
+
+    response = client.get(
+        f"/v1/projects/{PROJECT_ID}/overview",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    issue = response.json()["assessment"]["issues"][0]
+    assert issue["evidence"][0] == {
+        "source_name": "Programme plan.pdf",
+        "location": "Page 4",
+        "excerpt": "The approved Phase 1 budget and migration owner are unresolved.",
     }
 
 

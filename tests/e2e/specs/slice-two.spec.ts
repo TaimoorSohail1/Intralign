@@ -24,18 +24,22 @@ test("Slice 2 survives refresh and publishes exactly seven artifacts", async ({ 
     await expect(page.getByText(/Analyzing|Your progress is safe/).first()).toBeVisible();
   }
   await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 90_000 });
-  await expect(page.getByText("Confidence")).toBeVisible();
+  await expect(page.locator(".confidence-read")).toBeVisible();
 
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
   if (await orientation.isVisible()) {
     await page.getByRole("button", { name: "Get started" }).click();
+    for (let step = 0; step < 4; step += 1) {
+      await page.getByRole("button", { name: "Next", exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Finish tour" }).click();
   }
 
   await expect(page.getByText(/provisional|current/).first()).toBeVisible();
   await expect(page.getByText("Plan artifacts read")).toBeVisible();
   await expect(page.getByText("7 / 7")).toBeVisible();
-  await expect(page.getByText("OSLO advises; you decide.")).toBeVisible();
-  await expect(page.getByRole("complementary", { name: "Issue details" })).toHaveCount(0);
+  await expect(page.locator(".project-advisory")).toContainText("OSLO advises; you decide");
+  await expect(page.getByRole("dialog", { name: "Issue details" })).toHaveCount(0);
 
   const hideAdvisor = page.getByRole("button", { name: "Hide the OSLO panel" });
   if (await hideAdvisor.isVisible()) {
@@ -44,7 +48,7 @@ test("Slice 2 survives refresh and publishes exactly seven artifacts", async ({ 
   const issueRows = page.locator(".issue-row");
   await expect(issueRows).not.toHaveCount(0);
   await issueRows.first().click();
-  await expect(page.getByRole("complementary", { name: "Issue details" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Issue details" })).toBeVisible();
   await page.getByRole("button", { name: "Close issue" }).click();
-  await expect(page.getByRole("complementary", { name: "Issue details" })).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Issue details" })).toHaveCount(0);
 });

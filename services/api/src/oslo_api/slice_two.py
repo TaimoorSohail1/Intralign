@@ -17,6 +17,10 @@ class SliceTwoNotFound(Exception):
     """Raised when a Slice 2 resource does not exist."""
 
 
+class SliceTwoIssueNotAnswerable(Exception):
+    """Raised when an issue has no active clarification request."""
+
+
 class SliceTwoApplication(Protocol):
     def upload_document(
         self,
@@ -72,6 +76,13 @@ class SliceTwoApplication(Protocol):
         actor_user_id: UUID,
         project_id: UUID,
     ) -> AnalysisRun | None: ...
+
+    def has_seen_orientation(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+    ) -> bool: ...
 
     def retry(self, *, actor_user_id: UUID, run_id: UUID) -> AnalysisRun: ...
 

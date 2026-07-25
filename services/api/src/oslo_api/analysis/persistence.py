@@ -18,9 +18,11 @@ from oslo_api.analysis.models import (
     ArtifactType,
     Assessment,
     AssessmentSnapshot,
+    EvidenceCitation,
     EvidenceFragment,
     Issue,
     Perception,
+    ReliabilityBasis,
     RunKind,
 )
 
@@ -46,6 +48,20 @@ def evidence_reference(
     else:
         location = f"page:{locator.get('page', 1)}"
     return f"{prefix}:{location}:fragment:{ordinal}"
+
+
+def evidence_location(locator: dict[str, object]) -> str:
+    kind = locator.get("kind")
+    if kind == "docx_section":
+        return f"Section: {locator.get('section', 'Document')}"
+    if kind == "pptx_slide":
+        return f"Slide {locator.get('slide', 1)}"
+    if kind == "xlsx_range":
+        return (
+            f"Sheet: {locator.get('sheet', 'Sheet')} · "
+            f"{locator.get('cell_range', 'A1')}"
+        )
+    return f"Page {locator.get('page', 1)}"
 
 
 def _json_default(value):
@@ -85,6 +101,8 @@ def _restore_state(payload: dict[str, object]) -> dict[str, object]:
                 EvidenceFragment(
                     reference=item["reference"],
                     content=item["content"],
+                    source_name=item.get("source_name"),
+                    location=item.get("location"),
                 )
                 for item in perception_data.get("evidence", [])
             ),
@@ -125,6 +143,7 @@ def _issue_from_dict(data: dict) -> Issue:
 
 
 def _assessment_from_dict(data: dict) -> Assessment:
+    basis = data.get("reliability_basis", {})
     return Assessment(
         confidence_index=data["confidence_index"],
         confidence_band=data["confidence_band"],
@@ -133,6 +152,18 @@ def _assessment_from_dict(data: dict) -> Assessment:
         alignment=data["alignment"],
         feasibility=data["feasibility"],
         issues=tuple(_issue_from_dict(issue) for issue in data["issues"]),
+        understanding_stage=data.get("understanding_stage", "orientation"),
+        reliability_basis=ReliabilityBasis(
+            coverage=basis.get("coverage", "Low"),
+            evidence=basis.get("evidence", "Low"),
+            assessability=basis.get("assessability", "Low"),
+        ),
+        confidence_direction=data.get("confidence_direction", "unchanged"),
+        limiting_dimension=data.get("limiting_dimension", "feasibility"),
+        false_confidence=data.get("false_confidence", False),
+        confidence_explanation=data.get("confidence_explanation", ""),
+        resolved_issue_count=data.get("resolved_issue_count", 0),
+        confirmed_dependency_count=data.get("confirmed_dependency_count", 0),
     )
 
 
@@ -151,6 +182,15 @@ def _snapshot_from_dict(data: dict) -> AssessmentSnapshot:
         artifacts=tuple(_artifact_from_dict(item) for item in data["artifacts"]),
         assessment=_assessment_from_dict(data["assessment"]),
         published_at=datetime.fromisoformat(data["published_at"]),
+        evidence_citations=tuple(
+            EvidenceCitation(
+                reference=item["reference"],
+                source_name=item["source_name"],
+                location=item["location"],
+                excerpt=item["excerpt"],
+            )
+            for item in data.get("evidence_citations", [])
+        ),
     )
 
 
@@ -329,12 +369,17 @@ class DatabaseAnalysisStore:
                 connection.execute(
                     text(
                         """
-                        select source_document_id, ordinal, content, locator
-                        from public.source_fragments
-                        where workspace_id = :workspace_id
-                          and project_id = :project_id
-                          and source_document_id = any(:document_ids)
-                        order by source_document_id, ordinal
+                        select fragment.source_document_id, fragment.ordinal,
+                               fragment.content, fragment.locator,
+                               document.file_name
+                        from public.source_fragments fragment
+                        join public.source_documents document
+                          on document.id = fragment.source_document_id
+                         and document.workspace_id = fragment.workspace_id
+                        where fragment.workspace_id = :workspace_id
+                          and fragment.project_id = :project_id
+                          and fragment.source_document_id = any(:document_ids)
+                        order by fragment.source_document_id, fragment.ordinal
                         """
                     ),
                     {
@@ -354,6 +399,8 @@ class DatabaseAnalysisStore:
                     locator=row["locator"],
                 ),
                 content=row["content"],
+                source_name=row["file_name"],
+                location=evidence_location(row["locator"]),
             )
             for row in rows
         )
@@ -625,6 +672,20 @@ class DatabaseAnalysisStore:
                         "evidence_refs": json.dumps(artifact.evidence_refs),
                     },
                 )
+            # A completed snapshot is the authoritative issue read for the project.
+            # Resolve rows that disappeared from the new read before upserting the
+            # issues that are still present (which restores their exact status).
+            connection.execute(
+                text(
+                    """
+                    update public.issues
+                    set current_status = 'resolved', updated_at = now()
+                    where project_id = :project_id
+                      and current_status <> 'resolved'
+                    """
+                ),
+                {"project_id": snapshot.project_id},
+            )
             for issue in snapshot.assessment.issues:
                 issue_id = connection.execute(
                     text(
