@@ -8,6 +8,16 @@ async function signInAsOwner(page: import("@playwright/test").Page) {
   await expect(page).toHaveURL(/\/admin\/invitations/);
 }
 
+async function completeOrientationTour(page: import("@playwright/test").Page) {
+  await expect(page.getByRole("dialog", { name: "How OSLO works" })).toBeVisible();
+  await page.getByRole("button", { name: "Get started" }).click();
+  for (let step = 0; step < 4; step += 1) {
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Finish tour" }).click();
+  await expect(page.getByRole("dialog", { name: "How OSLO works" })).toHaveCount(0);
+}
+
 async function activationMessageFor(
   request: APIRequestContext,
   email: string,
@@ -84,17 +94,14 @@ test("Owner invite to activated member intake", async ({ browser, page, request 
   }
   await expect(recipient).toHaveURL(/\/projects\/.+\/overview/, { timeout: 65_000 });
   await expect(recipient.getByRole("heading", { name: "Understanding is forming" })).toBeVisible();
-  await expect(recipient.getByRole("dialog", { name: "How OSLO works" })).toBeVisible();
-  await recipient.getByRole("button", { name: "Get started" }).click();
-  await expect(recipient.getByRole("dialog", { name: "How OSLO works" })).toHaveCount(0);
+  await completeOrientationTour(recipient);
   await expect(recipient.locator(".project-advisory")).toContainText(
     "OSLO advises; you decide",
   );
 
   await recipient.locator(".project-account summary").click();
   await recipient.getByRole("button", { name: "How OSLO works" }).click();
-  await expect(recipient.getByRole("dialog", { name: "How OSLO works" })).toBeVisible();
-  await recipient.getByRole("button", { name: "Get started" }).click();
+  await completeOrientationTour(recipient);
   const account = recipient.locator(".project-account");
   if (!(await account.evaluate((element) => (element as HTMLDetailsElement).open))) {
     await recipient.locator(".project-account summary").click();
@@ -134,7 +141,12 @@ test("Existing account signs in from a new invitation", async ({ browser, page, 
   await expect(existingMember.getByLabel("Email")).toHaveAttribute("readonly", "");
   await existingMember.getByLabel("Password").fill(password);
   await existingMember.getByRole("button", { name: "Sign in" }).click();
-  await expect(existingMember).toHaveURL(/\/intake$/);
+  await existingMember.waitForURL(/\/(?:welcome|intake)(?:\?.*)?$/);
+  const welcome = existingMember.getByRole("button", { name: "Start your first project" });
+  if (await welcome.isVisible()) {
+    await welcome.click();
+  }
+  await expect(existingMember).toHaveURL(/\/intake(?:\?project=.+)?$/);
 
   await newMember.close();
   await existingMember.close();

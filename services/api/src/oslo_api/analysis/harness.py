@@ -50,6 +50,7 @@ class AgentHarness(Protocol):
         artifacts: tuple[Artifact, ...],
         perception: Perception,
         kind: RunKind,
+        context: str = "",
         invocation: HarnessInvocation | None = None,
     ) -> Assessment: ...
 
@@ -164,6 +165,7 @@ class DeterministicAgentHarness:
         artifacts: tuple[Artifact, ...],
         perception: Perception,
         kind: RunKind,
+        context: str = "",
         invocation: HarnessInvocation | None = None,
     ) -> Assessment:
         extended = kind is RunKind.EXTENDED
@@ -457,6 +459,7 @@ class FallbackAgentHarness:
         artifacts: tuple[Artifact, ...],
         perception: Perception,
         kind: RunKind,
+        context: str = "",
         invocation: HarnessInvocation | None = None,
     ) -> Assessment:
         return self._invoke(
@@ -465,6 +468,7 @@ class FallbackAgentHarness:
             invocation=invocation,
             artifacts=artifacts,
             perception=perception,
+            context=context,
         )
 
     def _invoke(

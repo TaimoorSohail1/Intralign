@@ -6,6 +6,8 @@ playwright-report/
 test-results/
 .artifacts/
 .logs/
+.qa-*.png
+tmp/
 
 # Python
 .venv/

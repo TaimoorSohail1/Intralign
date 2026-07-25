@@ -65,6 +65,7 @@ export interface OverviewSnapshot {
   snapshot_id: string;
   analysis_run_id: string;
   project_id: string;
+  orientation_seen: boolean;
   state: "provisional" | "current" | "last_good";
   summary: string;
   artifacts: Array<{
@@ -82,6 +83,18 @@ export interface OverviewSnapshot {
     clarity: string;
     alignment: string;
     feasibility: string;
+    understanding_stage: "orientation" | "expanded" | "validated";
+    reliability_basis: {
+      coverage: string;
+      evidence: string;
+      assessability: string;
+    };
+    confidence_direction: "strengthened" | "weakened" | "unchanged";
+    limiting_dimension: "clarity" | "alignment" | "feasibility";
+    false_confidence: boolean;
+    confidence_explanation: string;
+    resolved_issue_count: number;
+    confirmed_dependency_count: number;
     issues: Array<{
       id: string;
       artifact_type: string;
@@ -91,6 +104,11 @@ export interface OverviewSnapshot {
       why: string;
       recommendation: string;
       evidence_refs: string[];
+      evidence?: Array<{
+        source_name: string;
+        location: string;
+        excerpt: string;
+      }>;
       clarification?: string | null;
       status: string;
     }>;

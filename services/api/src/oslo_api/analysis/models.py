@@ -63,6 +63,16 @@ class AnalysisRunRequest:
 class EvidenceFragment:
     reference: str
     content: str
+    source_name: str | None = None
+    location: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceCitation:
+    reference: str
+    source_name: str
+    location: str
+    excerpt: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,6 +131,13 @@ class Issue:
 
 
 @dataclass(frozen=True, slots=True)
+class ReliabilityBasis:
+    coverage: str
+    evidence: str
+    assessability: str
+
+
+@dataclass(frozen=True, slots=True)
 class Assessment:
     confidence_index: int
     confidence_band: str
@@ -129,6 +146,20 @@ class Assessment:
     alignment: str
     feasibility: str
     issues: tuple[Issue, ...]
+    understanding_stage: str = "orientation"
+    reliability_basis: ReliabilityBasis = field(
+        default_factory=lambda: ReliabilityBasis(
+            coverage="Low",
+            evidence="Low",
+            assessability="Low",
+        )
+    )
+    confidence_direction: str = "unchanged"
+    limiting_dimension: str = "feasibility"
+    false_confidence: bool = False
+    confidence_explanation: str = ""
+    resolved_issue_count: int = 0
+    confirmed_dependency_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -142,6 +173,7 @@ class AssessmentSnapshot:
     artifacts: tuple[Artifact, ...]
     assessment: Assessment
     published_at: datetime
+    evidence_citations: tuple[EvidenceCitation, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

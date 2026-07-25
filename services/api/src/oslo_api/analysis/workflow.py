@@ -1,3 +1,4 @@
+import re
 from dataclasses import asdict
 from datetime import UTC, datetime
 from time import sleep
@@ -13,11 +14,16 @@ from oslo_api.analysis.models import (
     AnalysisRunRequest,
     AnalysisRunResult,
     AnalysisRunStatus,
+    Artifact,
+    Assessment,
     AssessmentSnapshot,
+    EvidenceCitation,
     HarnessInvocation,
+    Perception,
     RunKind,
 )
 from oslo_api.analysis.store import AnalysisStore
+from oslo_api.analysis.understanding import enrich_assessment
 
 
 class _GraphState(TypedDict):
@@ -145,6 +151,7 @@ class AnalysisWorkflow:
                 artifacts=state["artifacts"],
                 perception=state["perception"],
                 kind=request.kind,
+                context=request.description,
                 invocation=invocation,
             )
             self._record_harness_call(state, invocation)
@@ -159,16 +166,35 @@ class AnalysisWorkflow:
             self._store.complete_phase(run.id, phase, state)
         elif phase is AnalysisPhase.PUBLISH:
             self._start(run.id, request, phase)
+            previous_snapshot = self._store.current_snapshot(request.project_id)
+            assessment = enrich_assessment(
+                assessment=state["assessment"],
+                artifacts=state["artifacts"],
+                kind=request.kind,
+                previous_snapshot=previous_snapshot,
+                description=request.description,
+            )
+            state["assessment"] = assessment
             snapshot = AssessmentSnapshot(
                 id=uuid4(),
                 analysis_run_id=run.id,
                 workspace_id=request.workspace_id,
                 project_id=request.project_id,
                 state="current" if request.kind is RunKind.EXTENDED else "provisional",
-                summary=self._summary(request.description),
+                summary=self._summary(
+                    description=request.description,
+                    perception=state["perception"],
+                    artifacts=state["artifacts"],
+                    assessment=assessment,
+                ),
                 artifacts=state["artifacts"],
-                assessment=state["assessment"],
+                assessment=assessment,
                 published_at=datetime.now(UTC),
+                evidence_citations=self._evidence_citations(
+                    perception=state["perception"],
+                    artifacts=state["artifacts"],
+                    assessment=assessment,
+                ),
             )
             self._store.publish(run.id, snapshot)
             self._store.complete_phase(run.id, phase, state)
@@ -222,9 +248,101 @@ class AnalysisWorkflow:
             calls[invocation.phase.value] = asdict(invocation.metadata)
 
     @staticmethod
-    def _summary(description: str) -> str:
-        normalized = " ".join(description.split())
-        return normalized[:320] if normalized else "Project information supplied through documents."
+    def _summary(
+        *,
+        description: str,
+        perception: Perception,
+        artifacts: tuple[Artifact, ...],
+        assessment: Assessment,
+    ) -> str:
+        visible_description = description.split(
+            "\n\nUSER_CLARIFICATION",
+            maxsplit=1,
+        )[0]
+        normalized = " ".join(visible_description.split())
+        if normalized:
+            project_read = normalized[:320].rstrip()
+        else:
+            evidence_fact = next(
+                (
+                    " ".join(fact.split())
+                    for fact in perception.facts
+                    if fact and fact != "Document evidence supplied."
+                ),
+                "",
+            )
+            project_read = evidence_fact[:320].rstrip()
+
+        project_read = re.sub(
+            r"\s*\[?document:[^\]\s]*\]?",
+            "",
+            project_read,
+        ).strip()
+        if project_read and project_read[-1] not in ".!?":
+            project_read += "."
+
+        artifact_names = ", ".join(
+            artifact.title.lower() for artifact in artifacts
+        )
+        open_count = sum(issue.status != "resolved" for issue in assessment.issues)
+        understanding_sentence = (
+            f"At the {assessment.understanding_stage} stage, OSLO mapped the supplied "
+            f"evidence into {len(artifacts)} plan artifacts covering {artifact_names}. "
+            f"The read is {assessment.confidence_band.lower()} confidence, limited by "
+            f"{assessment.limiting_dimension}; {open_count} open "
+            f"finding{'s' if open_count != 1 else ''} identify the main uncertainty."
+        )
+        basis = assessment.reliability_basis
+        reliability_sentence = (
+            f"Reliability is {assessment.reliability.lower()}, based on "
+            f"{basis.coverage.lower()} coverage, {basis.evidence.lower()} evidence "
+            f"availability, and {basis.assessability.lower()} assessability."
+        )
+        advisory_boundary = (
+            "This is OSLO's understanding of the plan—not project health, readiness, "
+            "or a probability of success."
+        )
+        return " ".join(
+            sentence
+            for sentence in (
+                project_read,
+                understanding_sentence,
+                reliability_sentence,
+                advisory_boundary,
+            )
+            if sentence
+        )
+
+    @staticmethod
+    def _evidence_citations(
+        *,
+        perception: Perception,
+        artifacts: tuple[Artifact, ...],
+        assessment: Assessment,
+    ) -> tuple[EvidenceCitation, ...]:
+        referenced = {
+            reference
+            for artifact in artifacts
+            for reference in artifact.evidence_refs
+        } | {
+            reference
+            for issue in assessment.issues
+            for reference in issue.evidence_refs
+        }
+        citations = []
+        for fragment in perception.evidence:
+            if fragment.reference not in referenced:
+                continue
+            excerpt = " ".join(fragment.content.split())[:500].rstrip()
+            citations.append(
+                EvidenceCitation(
+                    reference=fragment.reference,
+                    source_name=fragment.source_name or "Project description",
+                    location=fragment.location or "Intake",
+                    excerpt=excerpt,
+                )
+            )
+        return tuple(citations)
 
     @staticmethod
     def _safe_failure(error: Exception) -> tuple[str, bool]:
