@@ -87,6 +87,11 @@ interface ChatMessage {
   text: string;
 }
 
+interface AttentionScope {
+  artifact?: string;
+  dimension?: string;
+}
+
 function issueSort(left: Issue, right: Issue) {
   return (severityRank[right.severity] ?? 0) - (severityRank[left.severity] ?? 0);
 }
@@ -119,7 +124,7 @@ export function ProjectOverview({
   const [confidenceBreakdownOpen, setConfidenceBreakdownOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [attentionMode, setAttentionMode] = useState<"heatmap" | "dimensions">("heatmap");
+  const [attentionScope, setAttentionScope] = useState<AttentionScope | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [advisorQuestions, setAdvisorQuestions] = useState(initialAdvisorQuestions);
   const [question, setQuestion] = useState("");
@@ -152,7 +157,7 @@ export function ProjectOverview({
   const isProvisional = snapshot.state === "provisional";
   const extendedRun = snapshot.extended_analysis;
   const extendedFailed =
-    isProvisional && extendedRun?.status === "failed" && !extendedRetrying;
+    extendedRun?.status === "failed" && !extendedRetrying;
   const openIssues = useMemo(
     () =>
       snapshot.assessment.issues
@@ -166,6 +171,7 @@ export function ProjectOverview({
   const totalConfirmationCount =
     clarificationCount + snapshot.assessment.confirmed_dependency_count;
   const limitingDimension = snapshot.assessment.limiting_dimension;
+  const overviewScrollKey = `oslo:overview-scroll:${snapshot.project_id}`;
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
@@ -238,11 +244,21 @@ export function ProjectOverview({
               );
             });
           }
+          setExtendedRetrying(false);
           setAnalysisUpdateRunId(null);
           setClarificationAnswer("");
           clarificationIdempotency.current = null;
         }
         if (run.status === "failed") {
+          const overviewResponse = await fetch(
+            `/api/projects/${snapshot.project_id}/overview`,
+            { cache: "no-store" },
+          );
+          if (overviewResponse.ok) {
+            const next: OverviewSnapshot = await overviewResponse.json();
+            setSnapshot(next);
+          }
+          setExtendedRetrying(false);
           setAnalysisUpdateRunId(null);
           setClarificationError(
             "Your answer is saved, but the update paused safely. The current read is unchanged.",
@@ -272,17 +288,22 @@ export function ProjectOverview({
   }, []);
 
   useEffect(() => {
-    if (!selectedIssue) return;
+    if (!selectedIssue && !attentionScope) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setSelectedIssue(null);
-        setAdvisorOpen(advisorStateBeforeIssue.current);
-        window.setTimeout(() => issueTrigger.current?.focus(), 0);
+        if (selectedIssue && attentionScope) {
+          setSelectedIssue(null);
+        } else {
+          setSelectedIssue(null);
+          setAttentionScope(null);
+          setAdvisorOpen(advisorStateBeforeIssue.current);
+          window.setTimeout(() => issueTrigger.current?.focus(), 0);
+        }
         return;
       }
       if (event.key === "Tab") {
         const panel = document.querySelector<HTMLElement>(
-          '[role="dialog"][aria-label="Issue details"]',
+          '[role="dialog"][aria-label="Issue details"], [role="dialog"][aria-label="Scoped attention findings"]',
         );
         const focusable = panel?.querySelectorAll<HTMLElement>(
           'button:not([disabled]), textarea:not([disabled]), input:not([disabled]), a[href]',
@@ -301,7 +322,29 @@ export function ProjectOverview({
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  });
+  }, [attentionScope, selectedIssue]);
+
+  useEffect(() => {
+    if (initialView !== "overview") return;
+    const savedPosition = window.sessionStorage.getItem(overviewScrollKey);
+    if (!savedPosition) return;
+    const top = Number(savedPosition);
+    if (!Number.isFinite(top)) return;
+    const restorePosition = () => {
+      window.scrollTo({ behavior: "auto", top });
+    };
+    const restore = window.requestAnimationFrame(restorePosition);
+    const layoutRetry = window.setTimeout(restorePosition, 100);
+    const hydrationRetry = window.setTimeout(() => {
+      restorePosition();
+      window.sessionStorage.removeItem(overviewScrollKey);
+    }, 300);
+    return () => {
+      window.cancelAnimationFrame(restore);
+      window.clearTimeout(layoutRetry);
+      window.clearTimeout(hydrationRetry);
+    };
+  }, [initialView, overviewScrollKey]);
 
   const dismissOrientation = async () => {
     localStorage.setItem("oslo_orientation_seen", "true");
@@ -312,7 +355,9 @@ export function ProjectOverview({
   };
 
   const openIssue = (issue: Issue, trigger?: HTMLElement | null) => {
-    advisorStateBeforeIssue.current = advisorOpen;
+    if (!attentionScope) {
+      advisorStateBeforeIssue.current = advisorOpen;
+    }
     issueTrigger.current = trigger ?? (document.activeElement as HTMLElement | null);
     setAdvisorOpen(false);
     setSelectedIssue(issue);
@@ -322,8 +367,33 @@ export function ProjectOverview({
 
   const closeIssue = () => {
     setSelectedIssue(null);
+    if (!attentionScope) {
+      setAdvisorOpen(advisorStateBeforeIssue.current);
+      window.setTimeout(() => issueTrigger.current?.focus(), 0);
+    }
+  };
+
+  const openAttentionScope = (
+    scope: AttentionScope,
+    trigger?: HTMLElement | null,
+  ) => {
+    advisorStateBeforeIssue.current = advisorOpen;
+    issueTrigger.current = trigger ?? (document.activeElement as HTMLElement | null);
+    setSelectedIssue(null);
+    setAdvisorOpen(false);
+    setAttentionScope(scope);
+  };
+
+  const closeAttentionScope = () => {
+    setSelectedIssue(null);
+    setAttentionScope(null);
     setAdvisorOpen(advisorStateBeforeIssue.current);
     window.setTimeout(() => issueTrigger.current?.focus(), 0);
+  };
+
+  const rememberOverviewPosition = () => {
+    if (initialView !== "overview") return;
+    window.sessionStorage.setItem(overviewScrollKey, String(window.scrollY));
   };
 
   const askQuestion = async (value: string) => {
@@ -389,6 +459,7 @@ export function ProjectOverview({
         method: "POST",
       });
       if (!response.ok) throw new Error("retry failed");
+      setAnalysisUpdateRunId(extendedRun.run_id);
     } catch {
       setExtendedRetrying(false);
       setExtendedRetryError("Extended Analysis could not be restarted. Please try again.");
@@ -438,10 +509,14 @@ export function ProjectOverview({
       ? "An evidence reference did not match the source document."
       : "The deeper read stopped before it could safely publish.";
 
-  const panelVisible = advisorOpen || Boolean(selectedIssue);
+  const panelVisible = advisorOpen || Boolean(selectedIssue) || Boolean(attentionScope);
 
   return (
-    <main className={`project-shell ${selectedIssue ? "has-issue" : ""}`}>
+    <main
+      className={`project-shell ${
+        selectedIssue || attentionScope ? "has-issue" : ""
+      }`}
+    >
       <header className="project-header">
         <Link className="project-toolbar-brand" href={`/projects/${snapshot.project_id}/overview`}>
           <span aria-hidden="true">I</span>
@@ -450,7 +525,7 @@ export function ProjectOverview({
         <div className="project-context">
           <strong>Project understanding</strong>
           <span aria-hidden="true">›</span>
-          <em>Overview</em>
+          <em>{initialView === "attention" ? "Attention map" : artifactLabel(initialView)}</em>
         </div>
         <button
           aria-label={`Confidence ${snapshot.assessment.confidence_index}, ${snapshot.assessment.confidence_band}, ${snapshot.assessment.reliability} reliability`}
@@ -561,6 +636,7 @@ export function ProjectOverview({
           <Link
             className={initialView === "attention" ? "is-current" : ""}
             href={`/projects/${snapshot.project_id}/attention`}
+            onClick={rememberOverviewPosition}
           >
             <MapTrifold aria-hidden="true" size={17} />
             Attention map
@@ -727,6 +803,7 @@ export function ProjectOverview({
                     <Link
                       aria-label="Timeline"
                       href={`/projects/${snapshot.project_id}/attention`}
+                      onClick={rememberOverviewPosition}
                     >
                       Timeline <ArrowRight aria-hidden="true" size={12} />
                     </Link>
@@ -767,6 +844,7 @@ export function ProjectOverview({
                 <Link
                   className="attention-map-link"
                   href={`/projects/${snapshot.project_id}/attention`}
+                  onClick={rememberOverviewPosition}
                 >
                   See all {openIssues.length} open issues in the Attention map
                   <ArrowRight aria-hidden="true" size={12} />
@@ -867,9 +945,21 @@ export function ProjectOverview({
             </>
           ) : initialView === "attention" ? (
             <AttentionView
-              mode={attentionMode}
-              onModeChange={setAttentionMode}
+              onAskOslo={(scope) => {
+                const focus = [scope.artifact, scope.dimension]
+                  .filter((value): value is string => Boolean(value))
+                  .map(artifactLabel)
+                  .join(" × ");
+                setAttentionScope(null);
+                setAdvisorOpen(true);
+                void askQuestion(
+                  focus
+                    ? `Explain why ${focus} needs attention in the current published read.`
+                    : "Explain the Attention map and what I should address first.",
+                );
+              }}
               onOpenIssue={openIssue}
+              onOpenScope={openAttentionScope}
               issues={openIssues}
             />
           ) : (
@@ -892,6 +982,38 @@ export function ProjectOverview({
             onClose={closeIssue}
             onSubmit={submitClarification}
             pending={clarificationPending}
+          />
+        ) : attentionScope ? (
+          <AttentionScopePanel
+            issues={openIssues}
+            onAsk={() => {
+              const focus = [attentionScope.artifact, attentionScope.dimension]
+                .filter((value): value is string => Boolean(value))
+                .map(artifactLabel)
+                .join(" × ");
+              setAttentionScope(null);
+              setAdvisorOpen(true);
+              void askQuestion(
+                `Explain the ${focus} findings and what I should address first.`,
+              );
+            }}
+            onClearArtifact={() => {
+              if (!attentionScope.dimension) {
+                closeAttentionScope();
+                return;
+              }
+              setAttentionScope({ dimension: attentionScope.dimension });
+            }}
+            onClearDimension={() => {
+              if (!attentionScope.artifact) {
+                closeAttentionScope();
+                return;
+              }
+              setAttentionScope({ artifact: attentionScope.artifact });
+            }}
+            onClose={closeAttentionScope}
+            onOpenIssue={openIssue}
+            scope={attentionScope}
           />
         ) : advisorOpen ? (
           <AdvisorPanel
@@ -1214,45 +1336,35 @@ function DeferredWorkspace({ view }: { view: "issues" | "history" }) {
 
 function AttentionView({
   issues,
-  mode,
-  onModeChange,
+  onAskOslo,
   onOpenIssue,
+  onOpenScope,
 }: {
   issues: Issue[];
-  mode: "heatmap" | "dimensions";
-  onModeChange: (mode: "heatmap" | "dimensions") => void;
+  onAskOslo: (scope: AttentionScope) => void;
   onOpenIssue: (issue: Issue, trigger?: HTMLElement | null) => void;
+  onOpenScope: (scope: AttentionScope, trigger?: HTMLElement | null) => void;
 }) {
   return (
     <section className="attention-view">
       <div className="attention-heading">
         <div>
-          <h1>Attention map</h1>
-          <span>Where the plan needs work</span>
+          <div className="attention-title">
+            <h1>Attention map</h1>
+            <span>Where the plan needs work</span>
+          </div>
           <p>
-            Brighter = more attention. Click a cell to investigate.
-            <Info aria-hidden="true" size={13} />
+            Brighter = more attention — not a health score. Click a cell to
+            investigate.
           </p>
         </div>
-        <div className="attention-toggle" role="group" aria-label="Attention view">
-          <button
-            aria-pressed={mode === "heatmap"}
-            onClick={() => onModeChange("heatmap")}
-            type="button"
-          >
-            Heatmap
-          </button>
-          <button
-            aria-pressed={mode === "dimensions"}
-            onClick={() => onModeChange("dimensions")}
-            type="button"
-          >
-            Dimensions
-          </button>
-        </div>
+        <button className="attention-ask" onClick={() => onAskOslo({})} type="button">
+          <Sparkle aria-hidden="true" size={12} weight="fill" />
+          Ask OSLO about this map
+        </button>
       </div>
 
-      {mode === "heatmap" ? (
+      {issues.length ? (
         <div className="attention-matrix" role="grid" aria-label="Project attention map">
           <div className="matrix-corner">
             <span>Dimension →</span>
@@ -1268,7 +1380,9 @@ function AttentionView({
               artifact={artifact}
               issues={issues}
               key={artifact}
+              onAskOslo={onAskOslo}
               onOpenIssue={onOpenIssue}
+              onOpenScope={onOpenScope}
               rowIndex={rowIndex}
             />
           ))}
@@ -1285,35 +1399,14 @@ function AttentionView({
           </p>
         </div>
       ) : (
-        <div className="dimension-view">
-          {dimensions.map((dimension) => {
-            const dimensionIssues = issues.filter(
-              (issue) => issue.dimension.toLowerCase() === dimension,
-            );
-            return (
-              <section key={dimension}>
-                <h2>{artifactLabel(dimension)}</h2>
-                <span>{dimensionIssues.length} open</span>
-                {dimensionIssues.length ? (
-                  dimensionIssues.map((issue) => (
-                    <button
-                      key={issue.id}
-                      onClick={(event) => onOpenIssue(issue, event.currentTarget)}
-                      type="button"
-                    >
-                      <span className={`severity severity-${issue.severity.toLowerCase()}`}>
-                        {issue.severity}
-                      </span>
-                      <strong>{issue.title}</strong>
-                      <CaretRight aria-hidden="true" size={13} />
-                    </button>
-                  ))
-                ) : (
-                  <p>No current issues in this dimension.</p>
-                )}
-              </section>
-            );
-          })}
+        <div className="attention-all-clear" role="status">
+          <span>
+            <Sparkle aria-hidden="true" size={20} weight="fill" />
+          </span>
+          <div>
+            <h2>Nothing needs your attention right now.</h2>
+            <p>All seven plan artifacts are clear in the current read.</p>
+          </div>
         </div>
       )}
     </section>
@@ -1323,19 +1416,32 @@ function AttentionView({
 function MatrixRow({
   artifact,
   issues,
+  onAskOslo,
   onOpenIssue,
+  onOpenScope,
   rowIndex,
 }: {
   artifact: string;
   issues: Issue[];
+  onAskOslo: (scope: AttentionScope) => void;
   onOpenIssue: (issue: Issue, trigger?: HTMLElement | null) => void;
+  onOpenScope: (scope: AttentionScope, trigger?: HTMLElement | null) => void;
   rowIndex: number;
 }) {
   const groupBreak = rowIndex === 0 ? "Understanding" : rowIndex === 4 ? "Execution" : null;
+
   return (
     <>
       {groupBreak ? <strong className="matrix-group">{groupBreak}</strong> : null}
-      <span className="matrix-row-label">{artifactLabel(artifact)}</span>
+      <button
+        aria-label={`Open ${artifactLabel(artifact)} findings`}
+        className="matrix-row-label matrix-row-button"
+        onClick={(event) => onOpenScope({ artifact }, event.currentTarget)}
+        type="button"
+      >
+        {artifactLabel(artifact)}
+        <CaretRight aria-hidden="true" size={12} />
+      </button>
       {dimensions.map((dimension) => {
         const cellIssues = issues
           .filter(
@@ -1345,30 +1451,168 @@ function MatrixRow({
           )
           .sort(issueSort);
         const highest = cellIssues[0]?.severity.toLowerCase() ?? "calm";
-        return (
-          <button
-            aria-label={`${artifactLabel(artifact)} ${artifactLabel(dimension)}: ${
-              cellIssues.length
-            } issue${cellIssues.length === 1 ? "" : "s"}`}
+        const label = `${artifactLabel(artifact)} ${artifactLabel(dimension)}: ${
+          cellIssues.length
+        } issue${cellIssues.length === 1 ? "" : "s"}${
+          cellIssues.length ? `, ${artifactLabel(highest)}` : ""
+        }`;
+
+        const openCell = (target: HTMLElement) => {
+          if (cellIssues.length === 1) {
+            onOpenIssue(cellIssues[0], target);
+          } else {
+            onOpenScope({ artifact, dimension }, target);
+          }
+        };
+
+        return cellIssues.length ? (
+          <div
+            aria-label={label}
             className={`attention-cell attention-cell-${highest}`}
-            disabled={!cellIssues.length}
             key={dimension}
-            onClick={(event) => onOpenIssue(cellIssues[0], event.currentTarget)}
+            onClick={(event) => openCell(event.currentTarget)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openCell(event.currentTarget);
+              }
+            }}
             role="gridcell"
-            type="button"
+            tabIndex={0}
           >
-            {cellIssues.length ? (
-              <>
-                <strong>{cellIssues.length}</strong>
-                <span>{highest}</span>
-              </>
-            ) : (
-              <span>·</span>
-            )}
-          </button>
+            <button
+              aria-label={`Ask OSLO about ${artifactLabel(artifact)} ${artifactLabel(
+                dimension,
+              )}`}
+              className="attention-cell-ask"
+              onClick={(event) => {
+                event.stopPropagation();
+                onAskOslo({ artifact, dimension });
+              }}
+              type="button"
+            >
+              <Sparkle aria-hidden="true" size={10} weight="fill" />
+            </button>
+            <strong>{cellIssues.length}</strong>
+            <span>{highest}</span>
+            {cellIssues.length > 1 ? <small>Multiple</small> : null}
+          </div>
+        ) : (
+          <div
+            aria-label={label}
+            className="attention-cell attention-cell-calm"
+            key={dimension}
+            role="gridcell"
+          >
+            <span>·</span>
+          </div>
         );
       })}
     </>
+  );
+}
+
+function AttentionScopePanel({
+  issues,
+  onAsk,
+  onClearArtifact,
+  onClearDimension,
+  onClose,
+  onOpenIssue,
+  scope,
+}: {
+  issues: Issue[];
+  onAsk: () => void;
+  onClearArtifact: () => void;
+  onClearDimension: () => void;
+  onClose: () => void;
+  onOpenIssue: (issue: Issue, trigger?: HTMLElement | null) => void;
+  scope: AttentionScope;
+}) {
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const scopedIssues = issues.filter(
+    (issue) =>
+      (!scope.artifact || issue.artifact_type === scope.artifact) &&
+      (!scope.dimension || issue.dimension.toLowerCase() === scope.dimension),
+  );
+
+  useEffect(() => {
+    closeButton.current?.focus();
+  }, []);
+
+  return (
+    <aside
+      aria-label="Scoped attention findings"
+      aria-modal="true"
+      className="project-sidepanel attention-scope-panel"
+      role="dialog"
+    >
+      <div className="attention-scope-heading">
+        <div>
+          <span>Attention focus</span>
+          <h2>{scopedIssues.length} findings in this view</h2>
+          <p>Current published read · open and addressed</p>
+        </div>
+        <button
+          aria-label="Close scoped findings"
+          onClick={onClose}
+          ref={closeButton}
+          type="button"
+        >
+          <X aria-hidden="true" size={19} />
+        </button>
+      </div>
+      <div className="attention-scope-chips" aria-label="Active filters">
+        {scope.artifact ? (
+          <button
+            aria-label={`Clear ${artifactLabel(scope.artifact)} filter`}
+            onClick={onClearArtifact}
+            type="button"
+          >
+            {artifactLabel(scope.artifact)}
+            <X aria-hidden="true" size={11} />
+          </button>
+        ) : null}
+        {scope.dimension ? (
+          <button
+            aria-label={`Clear ${artifactLabel(scope.dimension)} filter`}
+            onClick={onClearDimension}
+            type="button"
+          >
+            {artifactLabel(scope.dimension)}
+            <X aria-hidden="true" size={11} />
+          </button>
+        ) : null}
+      </div>
+      <button className="ask-oslo-issue" onClick={onAsk} type="button">
+        <Sparkle aria-hidden="true" size={12} weight="fill" />
+        Ask OSLO about this focus
+      </button>
+      <div className="attention-scope-list">
+        {scopedIssues.map((issue) => (
+          <button
+            aria-label={`Open ${issue.title}`}
+            key={issue.id}
+            onClick={(event) => onOpenIssue(issue, event.currentTarget)}
+            type="button"
+          >
+            <span className={`severity severity-${issue.severity.toLowerCase()}`}>
+              {issue.severity}
+            </span>
+            <strong>{issue.title}</strong>
+            <small>
+              {artifactLabel(issue.artifact_type)} · {issue.dimension} ·{" "}
+              {artifactLabel(issue.status)}
+            </small>
+            <CaretRight aria-hidden="true" size={14} />
+          </button>
+        ))}
+      </div>
+      <p className="attention-scope-note">
+        A finding can appear in more than one focused view when the same evidence affects
+        multiple dimensions. The underlying issue remains one governed record.
+      </p>
+    </aside>
   );
 }
 
