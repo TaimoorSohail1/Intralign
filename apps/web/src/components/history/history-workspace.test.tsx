@@ -127,6 +127,12 @@ describe("HistoryWorkspace", () => {
     expect(screen.getByRole("heading", { name: "History & timeline" })).toBeInTheDocument();
     expect(screen.getByText("Extended Analysis complete")).toBeInTheDocument();
     expect(screen.getAllByText("Initial Analysis complete")).not.toHaveLength(0);
+    expect(
+      screen.getByRole("button", { name: "Collapse Extended Analysis complete" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Expand Initial Analysis complete" }),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Versions" }));
     expect(screen.getByText(/7 plan-artifact versions retained/)).toBeInTheDocument();

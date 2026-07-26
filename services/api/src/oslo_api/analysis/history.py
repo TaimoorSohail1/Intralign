@@ -191,7 +191,7 @@ def list_project_history(
                 text(
                     """
                     select snapshot.analysis_run_id, snapshot.snapshot_json,
-                           snapshot.published_at, run.kind,
+                           snapshot.published_at, run.kind, run.status,
                            project.current_analysis_run_id
                     from public.assessment_snapshots snapshot
                     join public.analysis_runs run on run.id = snapshot.analysis_run_id
@@ -257,6 +257,94 @@ def list_project_history(
                 "occurred_at": row["occurred_at"].isoformat(),
             }
         )
+
+    if not page_rows and cursor is None:
+        synthetic_event_id = -1
+        for row in reversed(snapshots):
+            run_id = row["analysis_run_id"]
+            snapshot = dict(row["snapshot_json"])
+            assessment = snapshot.get("assessment", {})
+            issues = [
+                issue
+                for issue in assessment.get("issues", [])
+                if issue.get("status") != "resolved"
+            ]
+            artifacts = snapshot.get("artifacts", [])
+            run_label = "Initial" if str(row["kind"]) == "initial" else "Extended"
+            published_at = row["published_at"].isoformat()
+            fallback_events = [
+                {
+                    "id": synthetic_event_id,
+                    "category": "analysis",
+                    "event_type": f"analysis.{str(row['kind'])}_completed",
+                    "summary": f"{run_label} Analysis complete",
+                    "detail": "The retained evidence-qualified read is available.",
+                    "actor_type": "oslo",
+                    "artifact_type": None,
+                    "artifact_version": None,
+                    "issue_id": None,
+                    "occurred_at": published_at,
+                },
+                {
+                    "id": synthetic_event_id - 1,
+                    "category": "issues",
+                    "event_type": "issues.reconciled",
+                    "summary": f"{len(issues)} issues detected",
+                    "detail": (
+                        f"{len(issues)} open issues are retained in this project read."
+                    ),
+                    "actor_type": "system",
+                    "artifact_type": None,
+                    "artifact_version": None,
+                    "issue_id": None,
+                    "occurred_at": published_at,
+                },
+                {
+                    "id": synthetic_event_id - 2,
+                    "category": "versions",
+                    "event_type": "artifacts.versions_retained",
+                    "summary": (
+                        f"{len(artifacts)} plan-artifact versions retained"
+                    ),
+                    "detail": " · ".join(
+                        str(artifact.get("title") or artifact.get("artifact_type", ""))
+                        for artifact in artifacts
+                    ),
+                    "actor_type": "system",
+                    "artifact_type": None,
+                    "artifact_version": None,
+                    "issue_id": None,
+                    "occurred_at": published_at,
+                },
+            ]
+            synthetic_event_id -= 3
+            visible_events = (
+                fallback_events
+                if category == "all"
+                else [
+                    event
+                    for event in fallback_events
+                    if event["category"] == category
+                ]
+            )
+            if not visible_events:
+                continue
+            grouped[run_id] = {
+                "run_id": str(run_id),
+                "kind": str(row["kind"]),
+                "status": str(row["status"]),
+                "current": run_id == row["current_analysis_run_id"],
+                "occurred_at": published_at,
+                "confidence_index": assessment.get("confidence_index"),
+                "confidence_band": assessment.get("confidence_band"),
+                "confidence_direction": assessment.get("confidence_direction"),
+                "understanding_stage": assessment.get("understanding_stage"),
+                "changes": _change_labels(
+                    snapshot,
+                    previous_by_run.get(run_id),
+                ),
+                "events": visible_events,
+            }
 
     trend: list[dict] = []
     previous = None

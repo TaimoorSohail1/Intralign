@@ -49,6 +49,52 @@ class Project:
     status: str
 
 
+@dataclass(frozen=True, slots=True)
+class WorkspaceProject:
+    id: UUID
+    name: str
+    status: str
+    archived: bool
+    updated_at: datetime
+    analysis_status: str
+    confidence_index: int | None
+    confidence_band: str | None
+    reliability: str | None
+    open_issues: int
+    artifact_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class WorkspaceNotification:
+    key: str
+    project_id: UUID
+    project_name: str
+    kind: str
+    status: str
+    title: str
+    created_at: datetime
+    read: bool
+
+
+@dataclass(frozen=True, slots=True)
+class WorkspaceSummary:
+    id: UUID
+    name: str
+    role: str
+    plan: str
+    active_project_limit: int
+    projects: list[WorkspaceProject]
+    notifications: list[WorkspaceNotification]
+
+
+@dataclass(frozen=True, slots=True)
+class WorkspacePreferences:
+    theme: str
+    analysis_notifications: bool
+    failure_notifications: bool
+    stale_notifications: bool
+
+
 class SliceOneApplication(Protocol):
     def authenticate(self, access_token: str) -> AuthenticatedUser: ...
 
@@ -108,3 +154,34 @@ class SliceOneApplication(Protocol):
         actor_user_id: UUID,
         workspace_id: UUID,
     ) -> Project: ...
+
+    def get_workspace_summary(
+        self, *, actor_user_id: UUID, workspace_id: UUID
+    ) -> WorkspaceSummary: ...
+
+    def archive_project(
+        self, *, actor_user_id: UUID, workspace_id: UUID, project_id: UUID
+    ) -> None: ...
+
+    def restore_project(
+        self, *, actor_user_id: UUID, workspace_id: UUID, project_id: UUID
+    ) -> None: ...
+
+    def mark_workspace_notifications_read(
+        self, *, actor_user_id: UUID, workspace_id: UUID, keys: list[str]
+    ) -> None: ...
+
+    def get_workspace_preferences(
+        self, *, actor_user_id: UUID, workspace_id: UUID
+    ) -> WorkspacePreferences: ...
+
+    def update_workspace_preferences(
+        self,
+        *,
+        actor_user_id: UUID,
+        workspace_id: UUID,
+        theme: str,
+        analysis_notifications: bool,
+        failure_notifications: bool,
+        stale_notifications: bool,
+    ) -> WorkspacePreferences: ...

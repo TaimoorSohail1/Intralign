@@ -28,6 +28,16 @@ export interface InvitationSummary {
   expires_at: string;
 }
 
+export class OsloApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly detail: unknown,
+  ) {
+    super(message);
+  }
+}
+
 export async function apiRequest<T>(path: string, init: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, {
     ...init,
@@ -36,7 +46,11 @@ export async function apiRequest<T>(path: string, init: RequestInit): Promise<T>
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.detail?.message ?? body?.detail ?? "OSLO API request failed");
+    const message =
+      body?.detail?.message ??
+      (typeof body?.detail === "string" ? body.detail : null) ??
+      "OSLO API request failed";
+    throw new OsloApiError(message, response.status, body?.detail);
   }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
@@ -488,5 +502,108 @@ export function startProject(input: {
   return apiRequest(`/v1/workspaces/${input.workspaceId}/projects`, {
     method: "POST",
     headers: { authorization: `Bearer ${input.accessToken}` },
+  });
+}
+
+export interface WorkspaceProjectSummary {
+  id: string;
+  name: string;
+  status: string;
+  archived: boolean;
+  updated_at: string;
+  analysis_status: string;
+  confidence_index: number | null;
+  confidence_band: string | null;
+  reliability: string | null;
+  open_issues: number;
+  artifact_count: number;
+}
+
+export interface WorkspaceNotificationSummary {
+  key: string;
+  project_id: string;
+  project_name: string;
+  kind: "initial" | "extended";
+  status: "completed" | "failed";
+  title: string;
+  created_at: string;
+  read: boolean;
+}
+
+export interface WorkspaceSummary {
+  id: string;
+  name: string;
+  role: "owner" | "collaborator" | "viewer";
+  plan: "free";
+  active_project_limit: number;
+  projects: WorkspaceProjectSummary[];
+  notifications: WorkspaceNotificationSummary[];
+}
+
+export interface WorkspacePreferences {
+  theme: "dark" | "light" | "system";
+  analysis_notifications: boolean;
+  failure_notifications: boolean;
+  stale_notifications: boolean;
+}
+
+export function getWorkspace(input: {
+  accessToken: string;
+  workspaceId: string;
+}): Promise<WorkspaceSummary> {
+  return apiRequest(`/v1/workspaces/${input.workspaceId}`, {
+    method: "GET",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+  });
+}
+
+export function setProjectArchived(input: {
+  accessToken: string;
+  workspaceId: string;
+  projectId: string;
+  archived: boolean;
+}): Promise<void> {
+  return apiRequest(
+    `/v1/workspaces/${input.workspaceId}/projects/${input.projectId}/${
+      input.archived ? "archive" : "restore"
+    }`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+    },
+  );
+}
+
+export function markWorkspaceNotificationsRead(input: {
+  accessToken: string;
+  workspaceId: string;
+  keys: string[];
+}): Promise<void> {
+  return apiRequest(`/v1/workspaces/${input.workspaceId}/notifications/read`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+    body: JSON.stringify({ keys: input.keys }),
+  });
+}
+
+export function getWorkspacePreferences(input: {
+  accessToken: string;
+  workspaceId: string;
+}): Promise<WorkspacePreferences> {
+  return apiRequest(`/v1/workspaces/${input.workspaceId}/preferences`, {
+    method: "GET",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+  });
+}
+
+export function updateWorkspacePreferences(input: {
+  accessToken: string;
+  workspaceId: string;
+  preferences: WorkspacePreferences;
+}): Promise<WorkspacePreferences> {
+  return apiRequest(`/v1/workspaces/${input.workspaceId}/preferences`, {
+    method: "PUT",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+    body: JSON.stringify(input.preferences),
   });
 }

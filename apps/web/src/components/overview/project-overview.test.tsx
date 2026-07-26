@@ -449,6 +449,30 @@ describe("ProjectOverview", () => {
     ).toBeInTheDocument();
   });
 
+  it("exposes a clear account control and professional account navigation", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex Morgan"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const account = screen.getByRole("button", {
+      name: "Open account menu for Alex Morgan",
+    });
+    expect(account).toHaveAttribute("title", "Account and settings");
+
+    fireEvent.click(account);
+
+    expect(screen.getByText("Account & workspace")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
+      "href",
+      "/settings",
+    );
+    expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
+  });
+
   it("opens the prototype confidence breakdown from the toolbar", () => {
     render(
       <ProjectOverview
@@ -485,7 +509,8 @@ describe("ProjectOverview", () => {
     expect(screen.getByRole("region", { name: "Confidence calculation" })).toBeInTheDocument();
     expect(screen.getByText(snapshot.assessment.confidence_explanation)).toBeInTheDocument();
     expect(screen.getByText("Coverage")).toBeInTheDocument();
-    expect(fetcher).not.toHaveBeenCalled();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledWith("/api/workspace", { cache: "no-store" });
   });
 
   it("warns when a high confidence score rests on low-reliability evidence", () => {
@@ -696,7 +721,11 @@ describe("ProjectOverview", () => {
     fireEvent.click(submit);
     fireEvent.click(submit);
 
-    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(
+      fetcher.mock.calls.filter(([url]) =>
+        url === "/api/projects/project-001/issues/ISS-001/answers"
+      ),
+    ).toHaveLength(1);
     releaseResponse?.({
       ok: true,
       json: async () => ({ run_id: "run-clarification-001" }),
@@ -850,10 +879,29 @@ describe("ProjectOverview", () => {
     expect(screen.getByRole("button", { name: "Who can approve the owner?" })).toBeInTheDocument();
   });
 
-  it("creates one fresh project and navigates to its Intake page", async () => {
+  it("routes new-project creation through the workspace switcher", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ id: "project-002" }),
+      json: async () => ({
+        id: "workspace-001",
+        name: "OSLO Alpha",
+        plan: "free",
+        active_project_limit: 1,
+        active_project_count: 1,
+        can_create_project: false,
+        projects: [{
+          id: "project-001",
+          name: "Migration plan",
+          archived: false,
+          analysis_status: "current",
+          confidence_index: 52,
+          confidence_band: "Moderate",
+          open_issue_count: 1,
+          updated_at: "2026-07-23T12:00:00Z",
+          owner_id: "user-001",
+        }],
+        notifications: [],
+      }),
     });
     vi.stubGlobal("fetch", fetcher);
     render(
@@ -864,14 +912,11 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    const button = screen.getByRole("button", { name: "New project" });
-    fireEvent.click(button);
-    fireEvent.click(button);
+    fireEvent.click(screen.getByRole("button", { name: "Project" }));
 
-    await waitFor(() => {
-      expect(fetcher).toHaveBeenCalledTimes(1);
-      expect(push).toHaveBeenCalledWith("/intake?project=project-002");
-    });
+    const newProject = await screen.findByRole("menuitem", { name: /New project/i });
+    expect(newProject).toHaveAttribute("href", "/workspace?new=1");
+    expect(screen.queryByRole("button", { name: "New project" })).not.toBeInTheDocument();
   });
 
   it("shows a retryable message when the advisor is unavailable", async () => {
