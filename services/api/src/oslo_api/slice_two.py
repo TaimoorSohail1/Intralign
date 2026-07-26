@@ -21,6 +21,10 @@ class SliceTwoIssueNotAnswerable(Exception):
     """Raised when an issue has no active clarification request."""
 
 
+class SliceTwoArtifactConflict(Exception):
+    """Raised when an artifact edit was based on a stale version."""
+
+
 class SliceTwoApplication(Protocol):
     def upload_document(
         self,
@@ -95,5 +99,24 @@ class SliceTwoApplication(Protocol):
         answer: str,
         key: str,
     ) -> AnalysisRun: ...
+
+    def get_artifact(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        artifact_type: str,
+    ) -> dict: ...
+
+    def update_artifact(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        artifact_type: str,
+        content: dict,
+        expected_version: int,
+        key: str,
+    ) -> tuple[dict, AnalysisRun]: ...
 
     def mark_orientation_seen(self, *, actor_user_id: UUID, workspace_id: UUID) -> None: ...

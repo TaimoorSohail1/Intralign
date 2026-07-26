@@ -390,6 +390,8 @@ describe("ProjectOverview", () => {
 
     expect(screen.getByRole("dialog", { name: "Search or jump to" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /Overview/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /^Intent$/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /^Resources$/i })).toBeInTheDocument();
     expect(
       screen.getByRole("option", { name: /Migration ownership is unresolved/i }),
     ).toBeInTheDocument();

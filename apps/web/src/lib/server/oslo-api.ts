@@ -122,6 +122,28 @@ export interface AdvisorReplySummary {
   follow_up_questions: string[];
 }
 
+export interface ArtifactSection {
+  heading: string;
+  body: string;
+  bullets: string[];
+  columns: string[];
+  rows: string[][];
+}
+
+export interface ArtifactWorkspaceSummary {
+  artifact_type: string;
+  title: string;
+  content: { sections: ArtifactSection[] };
+  version: number;
+  provenance: "from_oslo" | "confirmed_by_user";
+  reliability: string;
+  basis: string;
+  evidence_refs: string[];
+  issues: OverviewSnapshot["assessment"]["issues"];
+  updated_at: string;
+  analysis_run?: AnalysisRunSummary | null;
+}
+
 export function startAnalysis(input: {
   accessToken: string;
   projectId: string;
@@ -223,6 +245,44 @@ export function answerProjectIssue(input: {
         "Idempotency-Key": input.idempotencyKey,
       },
       body: JSON.stringify({ answer: input.answer }),
+    },
+  );
+}
+
+export function getProjectArtifact(
+  accessToken: string,
+  projectId: string,
+  artifactType: string,
+): Promise<ArtifactWorkspaceSummary> {
+  return apiRequest(
+    `/v1/projects/${projectId}/artifacts/${encodeURIComponent(artifactType)}`,
+    {
+      method: "GET",
+      headers: { authorization: `Bearer ${accessToken}` },
+    },
+  );
+}
+
+export function updateProjectArtifact(input: {
+  accessToken: string;
+  projectId: string;
+  artifactType: string;
+  content: ArtifactWorkspaceSummary["content"];
+  expectedVersion: number;
+  idempotencyKey: string;
+}): Promise<ArtifactWorkspaceSummary> {
+  return apiRequest(
+    `/v1/projects/${input.projectId}/artifacts/${encodeURIComponent(input.artifactType)}`,
+    {
+      method: "PATCH",
+      headers: {
+        authorization: `Bearer ${input.accessToken}`,
+        "Idempotency-Key": input.idempotencyKey,
+      },
+      body: JSON.stringify({
+        content: input.content,
+        expected_version: input.expectedVersion,
+      }),
     },
   );
 }

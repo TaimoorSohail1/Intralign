@@ -6,6 +6,7 @@ import {
   CaretRight,
   ChatTeardropDots,
   ClockCounterClockwise,
+  FileText,
   FolderOpen,
   House,
   Info,
@@ -22,6 +23,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { OverviewSnapshot } from "@/lib/server/oslo-api";
+import { ArtifactWorkspace } from "@/components/artifacts/artifact-workspace";
 
 const dimensions = ["clarity", "alignment", "feasibility"] as const;
 const artifactOrder = [
@@ -79,7 +81,12 @@ const dimensionDescriptions = {
 } as const;
 
 type Issue = OverviewSnapshot["assessment"]["issues"][number];
-type ProjectView = "overview" | "attention" | "issues" | "history";
+type ArtifactView = (typeof artifactOrder)[number];
+type ProjectView = "overview" | "attention" | "issues" | "history" | ArtifactView;
+
+function isArtifactView(value: ProjectView): value is ArtifactView {
+  return artifactOrder.includes(value as ArtifactView);
+}
 
 interface ChatMessage {
   id: number;
@@ -643,6 +650,43 @@ export function ProjectOverview({
             {openIssues.length ? <span className="nav-count">{openIssues.length}</span> : null}
           </Link>
         </nav>
+        <p className="workspace-label workspace-artifact-label">Plan artifacts</p>
+        <div className="workspace-artifact-group">
+          <span>Understanding</span>
+          {artifactOrder.slice(0, 4).map((artifactType) => {
+            const count = openIssues.filter(
+              (issue) => issue.artifact_type === artifactType,
+            ).length;
+            return (
+              <Link
+                className={initialView === artifactType ? "is-current" : ""}
+                href={`/projects/${snapshot.project_id}/artifacts/${artifactType}`}
+                key={artifactType}
+              >
+                <FileText aria-hidden="true" size={15} />
+                {artifactLabel(artifactType)}
+                {count ? <span className="nav-count">{count}</span> : null}
+              </Link>
+            );
+          })}
+          <span>Execution</span>
+          {artifactOrder.slice(4).map((artifactType) => {
+            const count = openIssues.filter(
+              (issue) => issue.artifact_type === artifactType,
+            ).length;
+            return (
+              <Link
+                className={initialView === artifactType ? "is-current" : ""}
+                href={`/projects/${snapshot.project_id}/artifacts/${artifactType}`}
+                key={artifactType}
+              >
+                <FileText aria-hidden="true" size={15} />
+                {artifactLabel(artifactType)}
+                {count ? <span className="nav-count">{count}</span> : null}
+              </Link>
+            );
+          })}
+        </div>
         <div className="workspace-future" aria-label="Planned capabilities">
           <p>Coming in later slices</p>
           <span><FolderOpen aria-hidden="true" size={15} /> Reports</span>
@@ -962,6 +1006,18 @@ export function ProjectOverview({
               onOpenScope={openAttentionScope}
               issues={openIssues}
             />
+          ) : isArtifactView(initialView) ? (
+            <ArtifactWorkspace
+              analysisRunning={Boolean(analysisUpdateRunId)}
+              artifactType={initialView}
+              onAnalysisStarted={setAnalysisUpdateRunId}
+              onAskOslo={(prompt) => {
+                setAdvisorOpen(true);
+                void askQuestion(prompt);
+              }}
+              onOpenIssue={openIssue}
+              projectId={snapshot.project_id}
+            />
           ) : (
             <DeferredWorkspace view={initialView} />
           )}
@@ -1228,12 +1284,20 @@ function SearchPalette({
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const normalizedQuery = query.trim().toLowerCase();
-  const routes = [
-    ["Overview", "overview"],
-    ["Issues", "issues"],
-    ["History", "history"],
-    ["Attention map", "attention"],
-  ] as const;
+  const routes: ReadonlyArray<readonly [string, string, string]> = [
+    ["Overview", "overview", "Project workspace"],
+    ["Issues", "issues", "Project workspace"],
+    ["History", "history", "Project workspace"],
+    ["Attention map", "attention", "Project workspace"],
+    ...artifactOrder.map(
+      (artifactType) =>
+        [
+          artifactLabel(artifactType),
+          `artifacts/${artifactType}`,
+          "Plan artifact",
+        ] as const,
+    ),
+  ];
   const filteredRoutes = routes.filter(([label]) =>
     label.toLowerCase().includes(normalizedQuery),
   );
@@ -1271,7 +1335,7 @@ function SearchPalette({
         </label>
         <div className="project-search-results" role="listbox">
           {filteredRoutes.length ? <p>Go to</p> : null}
-          {filteredRoutes.map(([label, route]) => (
+          {filteredRoutes.map(([label, route, category]) => (
             <button
               aria-label={label}
               aria-selected="false"
@@ -1284,7 +1348,7 @@ function SearchPalette({
               type="button"
             >
               <span>{label}</span>
-              <small>Project workspace</small>
+              <small>{category}</small>
             </button>
           ))}
           {filteredIssues.length ? <p>Open an issue</p> : null}

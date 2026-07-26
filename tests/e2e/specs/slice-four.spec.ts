@@ -26,6 +26,9 @@ async function createAnalyzedProject(page: import("@playwright/test").Page) {
     }
     await page.getByRole("button", { name: "Finish tour" }).click();
   }
+  await expect(
+    page.getByText("Current evidence-qualified read", { exact: true }),
+  ).toBeVisible({ timeout: 120_000 });
 }
 
 test("Slice 4 renders the current-snapshot Attention Map and drills into findings", async ({
