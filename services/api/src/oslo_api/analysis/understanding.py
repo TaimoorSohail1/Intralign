@@ -138,7 +138,11 @@ def enrich_assessment(
         issues.extend(
             issue
             for issue in previous_snapshot.assessment.issues
-            if issue.status == "resolved" and issue.id not in existing_ids
+            if issue.id not in existing_ids
+            and (
+                issue.status == "resolved"
+                or clarification_issue_id is not None
+            )
         )
     issues_tuple = tuple(issues)
     resolved = sum(issue.status == "resolved" for issue in issues_tuple)

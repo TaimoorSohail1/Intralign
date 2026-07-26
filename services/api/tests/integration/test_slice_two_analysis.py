@@ -11,6 +11,7 @@ from oslo_api.analysis import (
     DeterministicAgentHarness,
     RunKind,
 )
+from oslo_api.analysis.history import list_project_history
 from oslo_api.analysis.persistence import DatabaseAnalysisStore
 from oslo_api.settings import Settings
 
@@ -109,6 +110,17 @@ def test_postgres_analysis_is_checkpointed_and_published_atomically() -> None:
                 ),
                 {"run_id": initial.run_id},
             ).mappings().one()
+            history_events = connection.execute(
+                text(
+                    """
+                    select category, event_type, summary
+                    from public.project_history_events
+                    where analysis_run_id = :run_id
+                    order by id
+                    """
+                ),
+                {"run_id": initial.run_id},
+            ).mappings().all()
 
         assert current_run_id == initial.run_id
         assert artifact_count == 7
@@ -117,6 +129,13 @@ def test_postgres_analysis_is_checkpointed_and_published_atomically() -> None:
         assert perceive_attempt["model_id"] == "oslo-deterministic-v1"
         assert perceive_attempt["prompt_version"] == "oslo-deterministic-v1"
         assert perceive_attempt["execution_mode"] == "primary"
+        assert [event["event_type"] for event in history_events] == [
+            "analysis.initial_completed",
+            "issues.reconciled",
+            "artifacts.versions_retained",
+        ]
+        assert history_events[0]["category"] == "analysis"
+        assert history_events[0]["summary"] == "Initial Analysis complete"
 
         failed_extended = AnalysisWorkflow(
             store=store,
@@ -140,7 +159,33 @@ def test_postgres_analysis_is_checkpointed_and_published_atomically() -> None:
                 text("select current_analysis_run_id from public.projects where id = :id"),
                 {"id": project_id},
             ).scalar_one()
+            failed_history = connection.execute(
+                text(
+                    """
+                    select event_type, detail
+                    from public.project_history_events
+                    where analysis_run_id = :run_id
+                    """
+                ),
+                {"run_id": failed_extended.run_id},
+            ).mappings().one()
         assert unchanged_pointer == initial.run_id
+        assert failed_history["event_type"] == "analysis.failed"
+        assert "last-good project read remains current" in failed_history["detail"]
+        history = list_project_history(
+            engine,
+            workspace_id=WORKSPACE_ID,
+            project_id=project_id,
+            category="all",
+            cursor=None,
+            limit=40,
+        )
+        assert [group["status"] for group in history["groups"]] == [
+            "failed",
+            "completed",
+        ]
+        assert len(history["trend"]) == 1
+        assert history["trend"][0]["current"] is True
     finally:
         with engine.begin() as connection:
             connection.execute(

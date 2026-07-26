@@ -143,8 +143,58 @@ class OverviewResponse(BaseModel):
     extended_analysis: AnalysisRunResponse | None = None
 
 
+class HistoryChangeResponse(BaseModel):
+    label: str
+    tone: Literal["positive", "neutral", "warning"]
+
+
+class HistoryEventResponse(BaseModel):
+    id: int
+    category: Literal["analysis", "issues", "versions", "decisions"]
+    event_type: str
+    summary: str
+    detail: str | None
+    actor_type: Literal["user", "oslo", "system"]
+    artifact_type: str | None
+    artifact_version: int | None
+    issue_id: str | None
+    occurred_at: datetime
+
+
+class HistoryGroupResponse(BaseModel):
+    run_id: UUID
+    kind: RunKind
+    status: str
+    current: bool
+    occurred_at: datetime
+    confidence_index: int | None
+    confidence_band: str | None
+    confidence_direction: str | None
+    understanding_stage: str | None
+    changes: list[HistoryChangeResponse]
+    events: list[HistoryEventResponse]
+
+
+class HistoryTrendResponse(BaseModel):
+    run_id: UUID
+    confidence_index: int
+    confidence_band: str
+    direction: str
+    cause: str
+    occurred_at: datetime
+    current: bool
+
+
+class ProjectHistoryResponse(BaseModel):
+    project_id: UUID
+    groups: list[HistoryGroupResponse]
+    trend: list[HistoryTrendResponse]
+    next_cursor: str | None
+
+
 class AdvisorMessageRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1_000)
+    history_run_id: UUID | None = None
 
     @field_validator("question")
     @classmethod
@@ -564,6 +614,70 @@ def current_overview(
     )
 
 
+@router.get("/projects/{project_id}/history", response_model=ProjectHistoryResponse)
+def project_history(
+    project_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+    category: Literal["all", "analysis", "issues", "versions", "decisions"] = "all",
+    cursor: str | None = None,
+    limit: int = 25,
+) -> ProjectHistoryResponse:
+    if limit < 1 or limit > 100:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="History limit must be between 1 and 100",
+        )
+    try:
+        history = slice_two_application(request).list_history(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            category=category,
+            cursor=cursor,
+            limit=limit,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    except ValueError as error:
+        if str(error) != "INVALID_HISTORY_CURSOR":
+            raise
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="History cursor is invalid",
+        ) from error
+    return ProjectHistoryResponse.model_validate(history)
+
+
+@router.get(
+    "/projects/{project_id}/history/runs/{run_id}",
+    response_model=OverviewResponse,
+)
+def project_history_snapshot(
+    project_id: UUID,
+    run_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+) -> OverviewResponse:
+    try:
+        application = slice_two_application(request)
+        snapshot = application.history_snapshot(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            run_id=run_id,
+        )
+        issue_actions = application.list_issue_actions(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    return _overview_response(
+        snapshot,
+        orientation_seen=True,
+        issue_actions=issue_actions,
+    )
+
+
 @router.post(
     "/projects/{project_id}/advisor/messages",
     response_model=AdvisorMessageResponse,
@@ -575,9 +689,18 @@ def ask_project_advisor(
     request: Request,
 ) -> AdvisorMessageResponse:
     try:
-        snapshot = slice_two_application(request).current_overview(
-            actor_user_id=context.user.id,
-            project_id=project_id,
+        application = slice_two_application(request)
+        snapshot = (
+            application.history_snapshot(
+                actor_user_id=context.user.id,
+                project_id=project_id,
+                run_id=payload.history_run_id,
+            )
+            if payload.history_run_id is not None
+            else application.current_overview(
+                actor_user_id=context.user.id,
+                project_id=project_id,
+            )
         )
         reply = project_advisor(request).answer(
             snapshot=snapshot,

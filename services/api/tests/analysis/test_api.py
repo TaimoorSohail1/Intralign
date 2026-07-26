@@ -33,6 +33,12 @@ class RecordingSliceTwo:
         self.latest_extended = None
         self.orientation_seen = False
         self.issue_actions: list[dict] = []
+        self.history = {
+            "project_id": str(PROJECT_ID),
+            "groups": [],
+            "trend": [],
+            "next_cursor": None,
+        }
 
     def start_analysis(
         self,
@@ -193,6 +199,30 @@ class RecordingSliceTwo:
         assert actor_user_id == USER_ID
         assert project_id == PROJECT_ID
         return self.issue_actions
+
+    def list_history(
+        self,
+        *,
+        actor_user_id,
+        project_id,
+        category,
+        cursor,
+        limit,
+    ):
+        assert actor_user_id == USER_ID
+        assert project_id == PROJECT_ID
+        assert category == "analysis"
+        assert cursor is None
+        assert limit == 25
+        return self.history
+
+    def history_snapshot(self, *, actor_user_id, project_id, run_id):
+        assert actor_user_id == USER_ID
+        assert project_id == PROJECT_ID
+        snapshot = self.store.current_snapshot(project_id)
+        if snapshot is None or snapshot.analysis_run_id != run_id:
+            raise AssertionError("snapshot missing")
+        return snapshot
 
     def get_artifact(self, *, actor_user_id, project_id, artifact_type):
         snapshot = self.current_overview(
@@ -416,6 +446,100 @@ def test_authenticated_user_gets_a_project_grounded_advisor_answer() -> None:
     }
     assert advisor.calls[0][1] == "What should I address first?"
     assert advisor.calls[0][0].project_id == PROJECT_ID
+
+
+def test_authenticated_user_lists_append_only_project_history() -> None:
+    slice_two = RecordingSliceTwo()
+    slice_two.history = {
+        "project_id": str(PROJECT_ID),
+        "groups": [
+            {
+                "run_id": "018f9f7e-8de2-7000-8000-000000000040",
+                "kind": "extended",
+                "status": "completed",
+                "current": True,
+                "occurred_at": "2026-07-26T10:00:00Z",
+                "confidence_index": 62,
+                "confidence_band": "Moderate",
+                "confidence_direction": "up",
+                "understanding_stage": "expanded",
+                "changes": [
+                    {"label": "Feasibility Very Low → Low", "tone": "positive"}
+                ],
+                "events": [
+                    {
+                        "id": 9,
+                        "category": "analysis",
+                        "event_type": "analysis.extended_completed",
+                        "summary": "Extended Analysis complete",
+                        "detail": "The deeper evidence read is now current.",
+                        "actor_type": "oslo",
+                        "artifact_type": None,
+                        "artifact_version": None,
+                        "issue_id": None,
+                        "occurred_at": "2026-07-26T10:00:00Z",
+                    }
+                ],
+            }
+        ],
+        "trend": [
+            {
+                "run_id": "018f9f7e-8de2-7000-8000-000000000040",
+                "confidence_index": 62,
+                "confidence_band": "Moderate",
+                "direction": "up",
+                "cause": "Feasibility rose from Very Low to Low.",
+                "occurred_at": "2026-07-26T10:00:00Z",
+                "current": True,
+            }
+        ],
+        "next_cursor": None,
+    }
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two)
+    )
+
+    response = client.get(
+        f"/v1/projects/{PROJECT_ID}/history?category=analysis",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == slice_two.history
+
+
+def test_project_history_rejects_a_malformed_cursor() -> None:
+    class InvalidCursorSliceTwo(RecordingSliceTwo):
+        def list_history(
+            self,
+            *,
+            actor_user_id,
+            project_id,
+            category,
+            cursor,
+            limit,
+        ):
+            assert actor_user_id == USER_ID
+            assert project_id == PROJECT_ID
+            assert category == "all"
+            assert cursor == "not-a-history-cursor"
+            assert limit == 25
+            raise ValueError("INVALID_HISTORY_CURSOR")
+
+    client = TestClient(
+        create_app(
+            slice_one=AuthenticatedSliceOne(),
+            slice_two=InvalidCursorSliceTwo(),
+        )
+    )
+
+    response = client.get(
+        f"/v1/projects/{PROJECT_ID}/history?cursor=not-a-history-cursor",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": "History cursor is invalid"}
 
 
 def test_authenticated_user_answers_an_issue_and_starts_reanalysis() -> None:
