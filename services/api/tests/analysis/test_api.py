@@ -13,7 +13,7 @@ from oslo_api.analysis import (
 )
 from oslo_api.analysis.advisor import AdvisorReply
 from oslo_api.main import create_app
-from oslo_api.slice_two import SliceTwoIssueNotAnswerable
+from oslo_api.slice_two import SliceTwoArtifactConflict, SliceTwoIssueNotAnswerable
 
 WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
 PROJECT_ID = UUID("018f9f7e-8de2-7000-8000-000000000020")
@@ -149,6 +149,75 @@ class RecordingSliceTwo:
             )
         )
 
+    def get_artifact(self, *, actor_user_id, project_id, artifact_type):
+        snapshot = self.current_overview(
+            actor_user_id=actor_user_id,
+            project_id=project_id,
+        )
+        artifact = next(
+            item for item in snapshot.artifacts if item.artifact_type.value == artifact_type
+        )
+        return {
+            "artifact_type": artifact_type,
+            "title": artifact.title,
+            "content": {
+                "sections": [
+                    {
+                        "heading": "",
+                        "body": artifact.summary,
+                        "bullets": [],
+                        "columns": [],
+                        "rows": [],
+                    }
+                ]
+            },
+            "version": 1,
+            "provenance": "from_oslo",
+            "reliability": artifact.reliability,
+            "basis": artifact.basis,
+            "evidence_refs": list(artifact.evidence_refs),
+            "evidence_citations": list(snapshot.evidence_citations),
+            "issues": [
+                issue
+                for issue in snapshot.assessment.issues
+                if issue.artifact_type.value == artifact_type
+            ],
+            "updated_at": snapshot.published_at,
+        }
+
+    def update_artifact(
+        self,
+        *,
+        actor_user_id,
+        project_id,
+        artifact_type,
+        content,
+        expected_version,
+        key,
+    ):
+        artifact = self.get_artifact(
+            actor_user_id=actor_user_id,
+            project_id=project_id,
+            artifact_type=artifact_type,
+        )
+        artifact.update(
+            content=content,
+            version=expected_version + 1,
+            provenance="confirmed_by_user",
+        )
+        run = self.store.create_run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=actor_user_id,
+                kind=RunKind.EXTENDED,
+                description=str(content),
+                source_names=(),
+                idempotency_key=f"artifact-edit:{key}",
+            )
+        )
+        return artifact, run
+
 
 class RecordingAdvisor:
     def __init__(self) -> None:
@@ -180,6 +249,11 @@ class EvidenceRecordingStore(InMemoryAnalysisStore):
 class NonAnswerableSliceTwo(RecordingSliceTwo):
     def answer_issue(self, **kwargs):
         raise SliceTwoIssueNotAnswerable
+
+
+class ConflictingArtifactSliceTwo(RecordingSliceTwo):
+    def update_artifact(self, **kwargs):
+        raise SliceTwoArtifactConflict
 
 
 def test_authenticated_user_starts_analysis_idempotently() -> None:
@@ -507,3 +581,145 @@ def test_refresh_reads_durable_state_and_sse_replays_only_missed_events() -> Non
     assert "id: 4\n" not in stream.text
     assert "event: assessment.published" in stream.text
     assert "event: analysis.completed" in stream.text
+
+
+def test_artifact_workspace_loads_and_autosave_starts_reanalysis() -> None:
+    slice_two = RecordingSliceTwo()
+    slice_two.start_analysis(
+        actor_user_id=USER_ID,
+        project_id=PROJECT_ID,
+        description="A launch plan with an unresolved owner.",
+        source_names=(),
+        source_document_ids=(),
+        kind=RunKind.INITIAL,
+        key="slice-five-artifact-seed",
+    )
+    slice_two.complete_latest()
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
+
+    loaded = client.get(
+        f"/v1/projects/{PROJECT_ID}/artifacts/intent",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+    saved = client.patch(
+        f"/v1/projects/{PROJECT_ID}/artifacts/intent",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "artifact-save-001",
+        },
+        json={
+            "expected_version": 1,
+            "content": {
+                "sections": [
+                    {
+                        "heading": "",
+                        "body": "Launch the service with a named owner.",
+                        "bullets": ["Owner confirmed before launch."],
+                        "columns": [],
+                        "rows": [],
+                    }
+                ]
+            },
+        },
+    )
+
+    assert loaded.status_code == 200
+    assert loaded.json()["artifact_type"] == "intent"
+    assert loaded.json()["provenance"] == "from_oslo"
+    assert saved.status_code == 202
+    assert saved.json()["version"] == 2
+    assert saved.json()["provenance"] == "confirmed_by_user"
+    assert saved.json()["analysis_run"]["kind"] == "extended"
+
+
+def test_artifact_workspace_returns_readable_issue_evidence() -> None:
+    slice_two = RecordingSliceTwo()
+    slice_two.start_analysis(
+        actor_user_id=USER_ID,
+        project_id=PROJECT_ID,
+        description="A launch plan has an unresolved owner and delivery dependency.",
+        source_names=(),
+        source_document_ids=(),
+        kind=RunKind.INITIAL,
+        key="slice-five-evidence-seed",
+    )
+    slice_two.complete_latest()
+    snapshot = slice_two.current_overview(
+        actor_user_id=USER_ID,
+        project_id=PROJECT_ID,
+    )
+    issue = snapshot.assessment.issues[0]
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
+
+    response = client.get(
+        f"/v1/projects/{PROJECT_ID}/artifacts/{issue.artifact_type.value}",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    returned_issue = next(
+        item for item in response.json()["issues"] if item["id"] == issue.id
+    )
+    assert returned_issue["evidence"]
+    assert returned_issue["evidence"][0]["source_name"] == "Project description"
+
+
+def test_artifact_workspace_rejects_malformed_table_rows() -> None:
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=RecordingSliceTwo())
+    )
+
+    response = client.patch(
+        f"/v1/projects/{PROJECT_ID}/artifacts/schedule",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "artifact-save-invalid",
+        },
+        json={
+            "expected_version": 1,
+            "content": {
+                "sections": [
+                    {
+                        "heading": "Milestones",
+                        "body": "",
+                        "bullets": [],
+                        "columns": ["Milestone", "Date", "Status"],
+                        "rows": [["Launch", "1 July"]],
+                    }
+                ]
+            },
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_artifact_workspace_rejects_a_stale_version() -> None:
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=ConflictingArtifactSliceTwo())
+    )
+
+    response = client.patch(
+        f"/v1/projects/{PROJECT_ID}/artifacts/intent",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "artifact-save-stale",
+        },
+        json={
+            "expected_version": 1,
+            "content": {
+                "sections": [
+                    {
+                        "heading": "",
+                        "body": "A stale edit.",
+                        "bullets": [],
+                        "columns": [],
+                        "rows": [],
+                    }
+                ]
+            },
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "ARTIFACT_VERSION_CONFLICT"

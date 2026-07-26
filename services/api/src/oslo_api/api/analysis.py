@@ -26,6 +26,7 @@ from oslo_api.analysis.documents import MAX_DOCUMENT_BYTES, DocumentRejected
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
 from oslo_api.slice_two import (
     SliceTwoApplication,
+    SliceTwoArtifactConflict,
     SliceTwoIssueNotAnswerable,
     SliceTwoNotFound,
     SliceTwoPermissionDenied,
@@ -170,6 +171,54 @@ class IssueAnswerRequest(BaseModel):
         return normalized
 
 
+class ArtifactSectionPayload(BaseModel):
+    heading: str = Field(default="", max_length=200)
+    body: str = Field(default="", max_length=100_000)
+    bullets: list[str] = Field(default_factory=list, max_length=100)
+    columns: list[str] = Field(default_factory=list, max_length=20)
+    rows: list[list[str]] = Field(default_factory=list, max_length=500)
+
+    @field_validator("bullets")
+    @classmethod
+    def validate_bullets(cls, value: list[str]) -> list[str]:
+        if any(len(item) > 10_000 for item in value):
+            raise ValueError("Artifact bullet is too long")
+        return value
+
+    @model_validator(mode="after")
+    def validate_table_shape(self) -> "ArtifactSectionPayload":
+        if self.rows and not self.columns:
+            raise ValueError("Artifact rows require columns")
+        if any(len(row) != len(self.columns) for row in self.rows):
+            raise ValueError("Artifact rows must match the column count")
+        if any(len(cell) > 10_000 for row in self.rows for cell in row):
+            raise ValueError("Artifact cell is too long")
+        return self
+
+
+class ArtifactContentPayload(BaseModel):
+    sections: list[ArtifactSectionPayload] = Field(min_length=1, max_length=20)
+
+
+class ArtifactUpdateRequest(BaseModel):
+    content: ArtifactContentPayload
+    expected_version: int = Field(ge=1)
+
+
+class ArtifactWorkspaceResponse(BaseModel):
+    artifact_type: str
+    title: str
+    content: ArtifactContentPayload
+    version: int
+    provenance: Literal["from_oslo", "confirmed_by_user"]
+    reliability: str
+    basis: str
+    evidence_refs: list[str]
+    issues: list[IssueResponse]
+    updated_at: datetime
+    analysis_run: AnalysisRunResponse | None = None
+
+
 def slice_two_application(request: Request) -> SliceTwoApplication:
     application: SliceTwoApplication | None = request.app.state.slice_two
     if application is None:
@@ -287,6 +336,52 @@ def _overview_response(
         extended_analysis=(
             _run_response(extended_analysis) if extended_analysis is not None else None
         ),
+    )
+
+
+def _artifact_workspace_response(
+    artifact: dict,
+    run: AnalysisRun | None = None,
+) -> ArtifactWorkspaceResponse:
+    citations = {
+        citation.reference: EvidenceResponse(
+            source_name=citation.source_name,
+            location=citation.location,
+            excerpt=citation.excerpt,
+        )
+        for citation in artifact.get("evidence_citations", [])
+    }
+    return ArtifactWorkspaceResponse(
+        artifact_type=artifact["artifact_type"],
+        title=artifact["title"],
+        content=ArtifactContentPayload.model_validate(artifact["content"]),
+        version=artifact["version"],
+        provenance=artifact["provenance"],
+        reliability=artifact["reliability"],
+        basis=artifact["basis"],
+        evidence_refs=artifact["evidence_refs"],
+        issues=[
+            IssueResponse(
+                id=issue.id,
+                artifact_type=issue.artifact_type.value,
+                dimension=issue.dimension,
+                severity=issue.severity,
+                title=issue.title,
+                why=issue.why,
+                recommendation=issue.recommendation,
+                evidence_refs=list(issue.evidence_refs),
+                evidence=[
+                    citations[reference]
+                    for reference in issue.evidence_refs
+                    if reference in citations
+                ],
+                clarification=issue.clarification,
+                status=issue.status,
+            )
+            for issue in artifact["issues"]
+        ],
+        updated_at=artifact["updated_at"],
+        analysis_run=_run_response(run) if run is not None else None,
     )
 
 
@@ -447,6 +542,62 @@ def ask_project_advisor(
         answer=reply.answer,
         follow_up_questions=list(reply.follow_up_questions),
     )
+
+
+@router.get(
+    "/projects/{project_id}/artifacts/{artifact_type}",
+    response_model=ArtifactWorkspaceResponse,
+)
+def get_project_artifact(
+    project_id: UUID,
+    artifact_type: str,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+) -> ArtifactWorkspaceResponse:
+    try:
+        artifact = slice_two_application(request).get_artifact(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            artifact_type=artifact_type,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    return _artifact_workspace_response(artifact)
+
+
+@router.patch(
+    "/projects/{project_id}/artifacts/{artifact_type}",
+    response_model=ArtifactWorkspaceResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def update_project_artifact(
+    project_id: UUID,
+    artifact_type: str,
+    payload: ArtifactUpdateRequest,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+    idempotency_key: Annotated[
+        str,
+        Header(alias="Idempotency-Key", min_length=8, max_length=200),
+    ],
+) -> ArtifactWorkspaceResponse:
+    try:
+        artifact, run = slice_two_application(request).update_artifact(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            artifact_type=artifact_type,
+            content=payload.content.model_dump(),
+            expected_version=payload.expected_version,
+            key=idempotency_key,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    except SliceTwoArtifactConflict as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="ARTIFACT_VERSION_CONFLICT",
+        ) from error
+    return _artifact_workspace_response(artifact, run)
 
 
 @router.post(
