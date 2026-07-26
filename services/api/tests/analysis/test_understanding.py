@@ -183,6 +183,51 @@ def test_clarification_reanalysis_preserves_resolved_issue_when_model_omits_it()
     assert result.confirmed_dependency_count == 1
 
 
+def test_clarification_reanalysis_preserves_unrelated_open_issues_when_model_omits_them() -> None:
+    answered_issue = Issue(
+        id="ISS-PAYMENT",
+        artifact_type=ARTIFACT_TYPES[-1],
+        dimension="Alignment",
+        severity="Warning",
+        title="Payment gateway conflicts with launch scope",
+        why="The dependency is listed while billing is out of scope.",
+        recommendation="Confirm whether payment processing is required.",
+        evidence_refs=("document:plan:page:2:fragment:0",),
+        clarification="Is payment processing required for launch?",
+    )
+    unrelated_issue = Issue(
+        id="ISS-MILESTONE",
+        artifact_type=ARTIFACT_TYPES[-2],
+        dimension="Clarity",
+        severity="Moderate",
+        title="Milestones have no owners or dates",
+        why="Named milestones are not tied to accountable owners or calendar dates.",
+        recommendation="Assign owners and dated acceptance gates.",
+        evidence_refs=("document:plan:page:1:fragment:0",),
+        clarification="Who owns each milestone and when is it due?",
+    )
+    previous = _snapshot(
+        replace(_assessment(), issues=(answered_issue, unrelated_issue))
+    )
+
+    result = enrich_assessment(
+        assessment=replace(_assessment(score=66), issues=()),
+        artifacts=_artifacts(),
+        kind=RunKind.EXTENDED,
+        previous_snapshot=previous,
+        description=(
+            "USER_CLARIFICATION\nIssue ID: ISS-PAYMENT\n"
+            "Question: Is payment processing required for launch?\n"
+            "Answer: Payment processing is not required for the initial launch. "
+            "Remove the gateway dependency and keep billing out of scope."
+        ),
+    )
+
+    issues_by_id = {issue.id: issue for issue in result.issues}
+    assert issues_by_id["ISS-PAYMENT"].status == "resolved"
+    assert issues_by_id["ISS-MILESTONE"].status == "open"
+
+
 def test_complete_user_confirmation_resolves_repeated_issue() -> None:
     issue = Issue(
         id="ISS-OWNER",

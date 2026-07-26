@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import Connection, Engine, text
 
+from oslo_api.analysis.history import append_history_event
 from oslo_api.analysis.models import (
     AnalysisEvent,
     AnalysisPhase,
@@ -623,6 +624,37 @@ class DatabaseAnalysisStore:
     def publish(self, run_id: UUID, snapshot: AssessmentSnapshot) -> None:
         payload = _snapshot_dict(snapshot)
         with self._engine.begin() as connection:
+            run_row = (
+                connection.execute(
+                    text(
+                        """
+                        select kind
+                        from public.analysis_runs
+                        where id = :run_id
+                        """
+                    ),
+                    {"run_id": run_id},
+                )
+                .mappings()
+                .one()
+            )
+            previous_issue_keys = set(
+                connection.execute(
+                    text(
+                        """
+                        select stable_key
+                        from public.issues
+                        where workspace_id = :workspace_id
+                          and project_id = :project_id
+                          and current_status <> 'resolved'
+                        """
+                    ),
+                    {
+                        "workspace_id": snapshot.workspace_id,
+                        "project_id": snapshot.project_id,
+                    },
+                ).scalars()
+            )
             connection.execute(
                 text(
                     """
@@ -771,6 +803,74 @@ class DatabaseAnalysisStore:
                 AnalysisRunStatus.COMPLETED,
                 payload={"snapshot_id": str(snapshot.id), "state": snapshot.state},
             )
+            run_kind = str(run_row["kind"])
+            current_issue_keys = {
+                issue.id
+                for issue in snapshot.assessment.issues
+                if issue.status != "resolved"
+            }
+            opened = sorted(current_issue_keys - previous_issue_keys)
+            resolved = sorted(previous_issue_keys - current_issue_keys)
+            append_history_event(
+                connection,
+                workspace_id=snapshot.workspace_id,
+                project_id=snapshot.project_id,
+                analysis_run_id=run_id,
+                actor_type="oslo",
+                category="analysis",
+                event_type=f"analysis.{run_kind}_completed",
+                summary=(
+                    "Initial Analysis complete"
+                    if run_kind == "initial"
+                    else "Extended Analysis complete"
+                ),
+                detail=(
+                    "The first evidence-qualified read is available."
+                    if run_kind == "initial"
+                    else "The deeper evidence read is now the current trusted view."
+                ),
+                idempotency_key=f"history:analysis-completed:{run_id}",
+                payload={
+                    "snapshot_id": str(snapshot.id),
+                    "confidence_index": snapshot.assessment.confidence_index,
+                    "confidence_band": snapshot.assessment.confidence_band,
+                    "clarity": snapshot.assessment.clarity,
+                    "alignment": snapshot.assessment.alignment,
+                    "feasibility": snapshot.assessment.feasibility,
+                },
+            )
+            append_history_event(
+                connection,
+                workspace_id=snapshot.workspace_id,
+                project_id=snapshot.project_id,
+                analysis_run_id=run_id,
+                actor_type="system",
+                category="issues",
+                event_type="issues.reconciled",
+                summary=f"{len(current_issue_keys)} issues detected",
+                detail=(
+                    f"{len(opened)} opened and {len(resolved)} resolved in this read."
+                ),
+                idempotency_key=f"history:issues-reconciled:{run_id}",
+                payload={"opened": opened, "resolved": resolved},
+            )
+            append_history_event(
+                connection,
+                workspace_id=snapshot.workspace_id,
+                project_id=snapshot.project_id,
+                analysis_run_id=run_id,
+                actor_type="system",
+                category="versions",
+                event_type="artifacts.versions_retained",
+                summary=f"{len(snapshot.artifacts)} plan-artifact versions retained",
+                detail="A read-only version of every plan artifact was retained.",
+                idempotency_key=f"history:artifact-versions:{run_id}",
+                payload={
+                    "artifact_types": [
+                        artifact.artifact_type.value for artifact in snapshot.artifacts
+                    ]
+                },
+            )
 
     def complete_run(self, run_id: UUID) -> None:
         with self._engine.begin() as connection:
@@ -815,6 +915,20 @@ class DatabaseAnalysisStore:
     ) -> None:
         safe_code = error_code[:120]
         with self._engine.begin() as connection:
+            run_context = (
+                connection.execute(
+                    text(
+                        """
+                        select workspace_id, project_id
+                        from public.analysis_runs
+                        where id = :run_id
+                        """
+                    ),
+                    {"run_id": run_id},
+                )
+                .mappings()
+                .one()
+            )
             connection.execute(
                 text(
                     """
@@ -848,6 +962,23 @@ class DatabaseAnalysisStore:
                 phase,
                 {"code": safe_code, "retryable": retryable},
             )
+            append_history_event(
+                connection,
+                workspace_id=run_context["workspace_id"],
+                project_id=run_context["project_id"],
+                analysis_run_id=run_id,
+                actor_type="system",
+                category="analysis",
+                event_type="analysis.failed",
+                summary="Analysis did not complete",
+                detail="The last-good project read remains current and can be retried.",
+                idempotency_key=f"history:analysis-failed:{run_id}",
+                payload={
+                    "phase": phase.value,
+                    "error_code": safe_code,
+                    "retryable": retryable,
+                },
+            )
 
     def current_snapshot(self, project_id: UUID) -> AssessmentSnapshot | None:
         with self._engine.connect() as connection:
@@ -862,6 +993,20 @@ class DatabaseAnalysisStore:
                     """
                 ),
                 {"project_id": project_id},
+            ).scalar_one_or_none()
+        return _snapshot_from_dict(payload) if payload else None
+
+    def snapshot_for_run(self, run_id: UUID) -> AssessmentSnapshot | None:
+        with self._engine.connect() as connection:
+            payload = connection.execute(
+                text(
+                    """
+                    select snapshot_json
+                    from public.assessment_snapshots
+                    where analysis_run_id = :run_id
+                    """
+                ),
+                {"run_id": run_id},
             ).scalar_one_or_none()
         return _snapshot_from_dict(payload) if payload else None
 

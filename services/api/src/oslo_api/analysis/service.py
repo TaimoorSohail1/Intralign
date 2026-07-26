@@ -18,6 +18,7 @@ from oslo_api.analysis import (
 )
 from oslo_api.analysis.document_store import DatabaseDocumentStore
 from oslo_api.analysis.harness import AgentHarness
+from oslo_api.analysis.history import append_history_event, list_project_history
 from oslo_api.analysis.object_storage import LocalObjectStorage
 from oslo_api.analysis.openai_harness import OpenAIAgentHarness
 from oslo_api.analysis.persistence import DatabaseAnalysisStore
@@ -148,10 +149,59 @@ class DatabaseSliceTwoApplication:
         self._workspace_for_project(actor_user_id, project_id)
         return self._store.latest_run_for_project(project_id, RunKind.EXTENDED)
 
+    def list_history(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        category: str,
+        cursor: str | None,
+        limit: int,
+    ) -> dict:
+        workspace_id = self._workspace_for_project(actor_user_id, project_id)
+        return list_project_history(
+            self._engine,
+            workspace_id=workspace_id,
+            project_id=project_id,
+            category=category,
+            cursor=cursor,
+            limit=limit,
+        )
+
+    def history_snapshot(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        run_id: UUID,
+    ) -> AssessmentSnapshot:
+        self._workspace_for_project(actor_user_id, project_id)
+        run = self._store.get_run(run_id)
+        if run is None or run.request.project_id != project_id:
+            raise SliceTwoNotFound
+        snapshot = self._store.snapshot_for_run(run_id)
+        if snapshot is None:
+            raise SliceTwoNotFound
+        return snapshot
+
     def retry(self, *, actor_user_id: UUID, run_id: UUID) -> AnalysisRun:
         run = self.get_run(actor_user_id=actor_user_id, run_id=run_id)
         if run.status is not AnalysisRunStatus.FAILED:
             return run
+        with self._engine.begin() as connection:
+            append_history_event(
+                connection,
+                workspace_id=run.request.workspace_id,
+                project_id=run.request.project_id,
+                analysis_run_id=run.id,
+                actor_id=actor_user_id,
+                actor_type="user",
+                category="decisions",
+                event_type="analysis.retry_requested",
+                summary="Analysis retry requested",
+                detail="The same governed run resumed from durable state.",
+                idempotency_key=f"history:analysis-retry:{run.id}",
+            )
         self._executor.submit(self._execute, run.id)
         return run
 
@@ -252,6 +302,20 @@ class DatabaseSliceTwoApplication:
                     "workspace_id": workspace_id,
                     "idempotency_key": key,
                 },
+            )
+            append_history_event(
+                connection,
+                workspace_id=workspace_id,
+                project_id=project_id,
+                analysis_run_id=run.id,
+                actor_id=actor_user_id,
+                actor_type="user",
+                category="decisions",
+                event_type="clarification.answered",
+                summary="Clarification answered",
+                detail=f"Answered the clarification for “{issue.title}”.",
+                issue_id=issue_id,
+                idempotency_key=f"history:clarification:{key}",
             )
             connection.execute(
                 text(
@@ -369,6 +433,21 @@ class DatabaseSliceTwoApplication:
                     project_id=project_id,
                     issue_id=issue_id,
                 )
+                append_history_event(
+                    connection,
+                    workspace_id=workspace_id,
+                    project_id=project_id,
+                    analysis_run_id=snapshot.analysis_run_id,
+                    actor_id=actor_user_id,
+                    actor_type="user",
+                    category="decisions",
+                    event_type="issue.resolution_selected",
+                    summary="Resolution selected",
+                    detail=f"Selected a proposed response for “{issue.title}”.",
+                    issue_id=issue_id,
+                    artifact_type=issue.artifact_type.value,
+                    idempotency_key=f"history:issue-action:{key}",
+                )
             return {
                 "issue_id": issue_id,
                 "action": action,
@@ -437,6 +516,22 @@ class DatabaseSliceTwoApplication:
                 workspace_id=workspace_id,
                 project_id=project_id,
                 issue_id=issue_id,
+            )
+            append_history_event(
+                connection,
+                workspace_id=workspace_id,
+                project_id=project_id,
+                analysis_run_id=run.id,
+                actor_id=actor_user_id,
+                actor_type="user",
+                category="decisions",
+                event_type=f"issue.resolution_{action}",
+                summary="Resolution applied",
+                detail=f"Applied a governed change for “{issue.title}”.",
+                issue_id=issue_id,
+                artifact_type=issue.artifact_type.value,
+                artifact_version=updated_artifact["version"],
+                idempotency_key=f"history:issue-action:{key}",
             )
         return {
             "issue_id": issue_id,
@@ -753,6 +848,21 @@ class DatabaseSliceTwoApplication:
                     """
                 ),
                 {"run_id": run.id, "draft_id": draft_id, "version": next_version},
+            )
+            append_history_event(
+                connection,
+                workspace_id=workspace_id,
+                project_id=project_id,
+                analysis_run_id=run.id,
+                actor_id=actor_user_id,
+                actor_type="user",
+                category="versions",
+                event_type="artifact.version_created",
+                summary=f"{artifact.title} updated",
+                detail=f"Version {next_version} was retained and queued for re-analysis.",
+                artifact_type=artifact_type,
+                artifact_version=next_version,
+                idempotency_key=f"history:artifact-edit:{key}",
             )
         if run.status is AnalysisRunStatus.QUEUED:
             self._executor.submit(self._execute, run.id)

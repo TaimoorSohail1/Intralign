@@ -63,5 +63,6 @@ test("Slice 3 exposes an evidence-qualified console and stable workspace routes"
   await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Issue filters" })).toBeVisible();
   await page.getByRole("link", { name: "History" }).click();
-  await expect(page.getByText(/full decision history arrives in Slice 7/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "History & timeline" })).toBeVisible();
+  await expect(page.getByText(/Read-only · viewing history changes nothing/i)).toBeVisible();
 });

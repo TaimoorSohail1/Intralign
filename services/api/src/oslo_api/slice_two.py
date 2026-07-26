@@ -81,6 +81,24 @@ class SliceTwoApplication(Protocol):
         project_id: UUID,
     ) -> AnalysisRun | None: ...
 
+    def list_history(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        category: str,
+        cursor: str | None,
+        limit: int,
+    ) -> dict: ...
+
+    def history_snapshot(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        run_id: UUID,
+    ) -> AssessmentSnapshot: ...
+
     def has_seen_orientation(
         self,
         *,

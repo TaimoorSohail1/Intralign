@@ -22,8 +22,9 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
-import type { OverviewSnapshot } from "@/lib/server/oslo-api";
+import type { OverviewSnapshot, ProjectHistory } from "@/lib/server/oslo-api";
 import { ArtifactWorkspace } from "@/components/artifacts/artifact-workspace";
+import { HistoryWorkspace } from "@/components/history/history-workspace";
 
 const dimensions = ["clarity", "alignment", "feasibility"] as const;
 const artifactOrder = [
@@ -122,11 +123,13 @@ export function ProjectOverview({
   displayName,
   logoutAction,
   initialView = "overview",
+  initialHistory,
 }: {
   initial: OverviewSnapshot;
   displayName: string;
   logoutAction: () => Promise<void>;
   initialView?: ProjectView;
+  initialHistory?: ProjectHistory;
 }) {
   const router = useRouter();
   const [snapshot, setSnapshot] = useState(initial);
@@ -423,7 +426,7 @@ export function ProjectOverview({
     window.sessionStorage.setItem(overviewScrollKey, String(window.scrollY));
   };
 
-  const askQuestion = async (value: string) => {
+  const askQuestion = async (value: string, historyRunId?: string) => {
     const normalized = value.trim();
     if (!normalized || advisorInFlight.current) return;
     advisorInFlight.current = true;
@@ -438,7 +441,7 @@ export function ProjectOverview({
       const response = await fetch(`/api/projects/${snapshot.project_id}/advisor`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question: normalized }),
+        body: JSON.stringify({ question: normalized, historyRunId }),
       });
       if (!response.ok) throw new Error("advisor unavailable");
       const reply = await response.json();
@@ -1104,6 +1107,15 @@ export function ProjectOverview({
             <IssuesWorkspace
               issues={snapshot.assessment.issues}
               onOpenIssue={openIssue}
+            />
+          ) : initialView === "history" && initialHistory ? (
+            <HistoryWorkspace
+              history={initialHistory}
+              onAskOslo={(runId, prompt) => {
+                setAdvisorOpen(true);
+                void askQuestion(prompt, runId);
+              }}
+              projectId={snapshot.project_id}
             />
           ) : (
             <DeferredWorkspace />

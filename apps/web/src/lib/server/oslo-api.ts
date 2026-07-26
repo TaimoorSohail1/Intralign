@@ -123,6 +123,57 @@ export interface AdvisorReplySummary {
   follow_up_questions: string[];
 }
 
+export type HistoryCategory = "analysis" | "issues" | "versions" | "decisions";
+
+export interface HistoryChange {
+  label: string;
+  tone: "positive" | "neutral" | "warning";
+}
+
+export interface HistoryEvent {
+  id: number;
+  category: HistoryCategory;
+  event_type: string;
+  summary: string;
+  detail: string | null;
+  actor_type: "user" | "oslo" | "system";
+  artifact_type: string | null;
+  artifact_version: number | null;
+  issue_id: string | null;
+  occurred_at: string;
+}
+
+export interface HistoryGroup {
+  run_id: string;
+  kind: "initial" | "extended";
+  status: string;
+  current: boolean;
+  occurred_at: string;
+  confidence_index: number | null;
+  confidence_band: string | null;
+  confidence_direction: string | null;
+  understanding_stage: string | null;
+  changes: HistoryChange[];
+  events: HistoryEvent[];
+}
+
+export interface HistoryTrendPoint {
+  run_id: string;
+  confidence_index: number;
+  confidence_band: string;
+  direction: string;
+  cause: string;
+  occurred_at: string;
+  current: boolean;
+}
+
+export interface ProjectHistory {
+  project_id: string;
+  groups: HistoryGroup[];
+  trend: HistoryTrendPoint[];
+  next_cursor: string | null;
+}
+
 export interface IssueActionSummary {
   issue_id: string;
   action: "select" | "apply" | "custom";
@@ -230,12 +281,48 @@ export function askAdvisor(input: {
   accessToken: string;
   projectId: string;
   question: string;
+  historyRunId?: string | null;
 }): Promise<AdvisorReplySummary> {
   return apiRequest(`/v1/projects/${input.projectId}/advisor/messages`, {
     method: "POST",
     headers: { authorization: `Bearer ${input.accessToken}` },
-    body: JSON.stringify({ question: input.question }),
+    body: JSON.stringify({
+      question: input.question,
+      history_run_id: input.historyRunId ?? null,
+    }),
   });
+}
+
+export function getProjectHistory(input: {
+  accessToken: string;
+  projectId: string;
+  category?: "all" | HistoryCategory;
+  cursor?: string | null;
+  limit?: number;
+}): Promise<ProjectHistory> {
+  const query = new URLSearchParams({
+    category: input.category ?? "all",
+    limit: String(input.limit ?? 40),
+  });
+  if (input.cursor) query.set("cursor", input.cursor);
+  return apiRequest(`/v1/projects/${input.projectId}/history?${query}`, {
+    method: "GET",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+  });
+}
+
+export function getProjectHistorySnapshot(input: {
+  accessToken: string;
+  projectId: string;
+  runId: string;
+}): Promise<OverviewSnapshot> {
+  return apiRequest(
+    `/v1/projects/${input.projectId}/history/runs/${input.runId}`,
+    {
+      method: "GET",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+    },
+  );
 }
 
 export function answerProjectIssue(input: {
