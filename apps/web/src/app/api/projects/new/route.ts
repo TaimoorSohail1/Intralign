@@ -1,4 +1,4 @@
-import { startProject } from "@/lib/server/oslo-api";
+import { OsloApiError, startProject } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
 
 export async function POST() {
@@ -14,7 +14,13 @@ export async function POST() {
       }),
       { status: 201 },
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof OsloApiError && error.status === 409) {
+      return Response.json(
+        { code: "PROJECT_LIMIT_REACHED", activeProjectLimit: 1 },
+        { status: 409 },
+      );
+    }
     return Response.json({ message: "Could not create a new project" }, { status: 400 });
   }
 }

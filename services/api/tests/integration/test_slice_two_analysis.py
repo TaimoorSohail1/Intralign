@@ -258,6 +258,74 @@ def test_new_snapshot_resolves_issue_rows_that_are_no_longer_present() -> None:
             )
 
 
+def test_history_falls_back_to_retained_snapshots_when_legacy_events_are_absent() -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        owner_id = connection.execute(
+            text("select id from auth.users where email = 'admin@oslo.local'")
+        ).scalar_one()
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Slice 7 retained history', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        result = AnalysisWorkflow(
+            store=DatabaseAnalysisStore(engine),
+            harness=DeterministicAgentHarness(),
+        ).run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description="A retained plan read with a documented owner and schedule.",
+                source_names=("brief.md",),
+                idempotency_key=f"integration-history-fallback:{project_id}",
+            )
+        )
+        assert result.status is AnalysisRunStatus.COMPLETED
+
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    delete from public.project_history_events
+                    where project_id = :project_id
+                    """
+                ),
+                {"project_id": project_id},
+            )
+
+        history = list_project_history(
+            engine,
+            workspace_id=WORKSPACE_ID,
+            project_id=project_id,
+            category="all",
+            cursor=None,
+            limit=40,
+        )
+
+        assert len(history["trend"]) == 1
+        assert len(history["groups"]) == 1
+        assert history["groups"][0]["run_id"] == str(result.run_id)
+        assert history["groups"][0]["current"] is True
+        assert history["groups"][0]["events"][0]["summary"] == (
+            "Initial Analysis complete"
+        )
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
 @pytest.mark.parametrize(
     "failed_phase",
     [

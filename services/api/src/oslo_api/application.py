@@ -22,6 +22,10 @@ from oslo_api.slice_one import (
     AuthSession,
     InvitationDetails,
     Project,
+    WorkspaceNotification,
+    WorkspacePreferences,
+    WorkspaceProject,
+    WorkspaceSummary,
 )
 
 
@@ -67,6 +71,14 @@ class InvitationDeliveryFailed(Exception):
     def __init__(self, invitation_id: UUID) -> None:
         self.invitation_id = invitation_id
         super().__init__("Invitation delivery failed")
+
+
+class ProjectLimitReached(Exception):
+    """Raised when the workspace plan cannot create another active project."""
+
+
+class ProjectArchiveDenied(Exception):
+    """Raised when a member cannot archive or restore the requested project."""
 
 
 class SqlMembershipReader:
@@ -416,6 +428,19 @@ class DatabaseSliceOneApplication:
             if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
                 raise InvitePermissionDenied
             connection.execute(
+                text("select pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
+                {"scope": f"project-limit:{workspace_id}"},
+            )
+            active_count = connection.execute(
+                text(
+                    "select count(*) from public.projects "
+                    "where workspace_id = :workspace_id and archived_at is null"
+                ),
+                {"workspace_id": workspace_id},
+            ).scalar_one()
+            if active_count >= 1:
+                raise ProjectLimitReached
+            connection.execute(
                 text(
                     """
                     insert into public.projects (id, workspace_id, name, status, created_by)
@@ -456,6 +481,320 @@ class DatabaseSliceOneApplication:
             name="Untitled project",
             status="draft",
         )
+
+    def get_workspace_summary(
+        self, *, actor_user_id: UUID, workspace_id: UUID
+    ) -> WorkspaceSummary:
+        with self._engine.connect() as connection:
+            role = SqlMembershipReader(connection).role_for(workspace_id, actor_user_id)
+            if role is None:
+                raise InvitePermissionDenied
+            workspace_name = connection.execute(
+                text("select name from public.workspaces where id = :workspace_id"),
+                {"workspace_id": workspace_id},
+            ).scalar_one()
+            rows = (
+                connection.execute(
+                    text(
+                        """
+                        select p.id, p.name, p.status, p.archived_at, p.updated_at,
+                               latest.snapshot_state,
+                               (latest.snapshot_json -> 'assessment' ->> 'confidence_index')::int
+                                 as confidence_index,
+                               latest.snapshot_json -> 'assessment' ->> 'confidence_band'
+                                 as confidence_band,
+                               latest.snapshot_json -> 'assessment' ->> 'reliability'
+                                 as reliability,
+                               coalesce(issue_counts.open_issues, 0) as open_issues,
+                               coalesce(jsonb_array_length(latest.snapshot_json -> 'artifacts'), 0)
+                                 as artifact_count
+                        from public.projects p
+                        left join lateral (
+                          select s.snapshot_state, s.snapshot_json
+                          from public.assessment_snapshots s
+                          where s.project_id = p.id
+                          order by s.published_at desc
+                          limit 1
+                        ) latest on true
+                        left join lateral (
+                          select count(*)::int as open_issues
+                          from public.issues i
+                          where i.project_id = p.id and i.current_status <> 'resolved'
+                        ) issue_counts on true
+                        where p.workspace_id = :workspace_id
+                        order by p.archived_at nulls first, p.updated_at desc
+                        """
+                    ),
+                    {"workspace_id": workspace_id},
+                )
+                .mappings()
+                .all()
+            )
+            notification_rows = (
+                connection.execute(
+                    text(
+                        """
+                        select
+                          'analysis:' || run.id::text || ':' || run.status::text as key,
+                          run.project_id,
+                          project.name as project_name,
+                          run.kind::text as kind,
+                          run.status::text as status,
+                          case
+                            when run.status = 'failed' then
+                              case when run.kind = 'extended'
+                                then 'Extended Analysis needs attention'
+                                else 'Initial Analysis needs attention'
+                              end
+                            when run.kind = 'extended' then 'Extended Analysis completed'
+                            else 'Initial Analysis completed'
+                          end as title,
+                          coalesce(run.completed_at, run.updated_at) as created_at,
+                          reads.notification_key is not null as read
+                        from public.analysis_runs run
+                        join public.projects project on project.id = run.project_id
+                        left join public.workspace_notification_reads reads
+                          on reads.workspace_id = run.workspace_id
+                         and reads.user_id = :actor_user_id
+                         and reads.notification_key =
+                           'analysis:' || run.id::text || ':' || run.status::text
+                        where run.workspace_id = :workspace_id
+                          and run.status in ('completed', 'failed')
+                        order by coalesce(run.completed_at, run.updated_at) desc
+                        limit 12
+                        """
+                    ),
+                    {"workspace_id": workspace_id, "actor_user_id": actor_user_id},
+                )
+                .mappings()
+                .all()
+            )
+        return WorkspaceSummary(
+            id=workspace_id,
+            name=workspace_name,
+            role=role.value,
+            plan="free",
+            active_project_limit=1,
+            projects=[
+                WorkspaceProject(
+                    id=row["id"],
+                    name=row["name"],
+                    status=row["status"],
+                    archived=row["archived_at"] is not None,
+                    updated_at=row["updated_at"],
+                    analysis_status=row["snapshot_state"] or "not_analyzed",
+                    confidence_index=row["confidence_index"],
+                    confidence_band=row["confidence_band"],
+                    reliability=row["reliability"],
+                    open_issues=row["open_issues"],
+                    artifact_count=row["artifact_count"],
+                )
+                for row in rows
+            ],
+            notifications=[
+                WorkspaceNotification(
+                    key=row["key"],
+                    project_id=row["project_id"],
+                    project_name=row["project_name"],
+                    kind=row["kind"],
+                    status=row["status"],
+                    title=row["title"],
+                    created_at=row["created_at"],
+                    read=row["read"],
+                )
+                for row in notification_rows
+            ],
+        )
+
+    def _set_project_archived(
+        self,
+        *,
+        actor_user_id: UUID,
+        workspace_id: UUID,
+        project_id: UUID,
+        archived: bool,
+    ) -> None:
+        with self._engine.begin() as connection:
+            if (
+                SqlMembershipReader(connection).role_for(workspace_id, actor_user_id)
+                is not MembershipRole.OWNER
+            ):
+                raise ProjectArchiveDenied
+            connection.execute(
+                text("select pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
+                {"scope": f"project-limit:{workspace_id}"},
+            )
+            if not archived:
+                active_count = connection.execute(
+                    text(
+                        "select count(*) from public.projects "
+                        "where workspace_id = :workspace_id and archived_at is null"
+                    ),
+                    {"workspace_id": workspace_id},
+                ).scalar_one()
+                if active_count >= 1:
+                    raise ProjectLimitReached
+            updated = connection.execute(
+                text(
+                    """
+                    update public.projects
+                    set archived_at = case when :archived then now() else null end,
+                        archived_by = case when :archived then :actor_user_id else null end,
+                        updated_at = now()
+                    where id = :project_id and workspace_id = :workspace_id
+                      and ((:archived and archived_at is null)
+                           or (not :archived and archived_at is not null))
+                    """
+                ),
+                {
+                    "archived": archived,
+                    "actor_user_id": actor_user_id,
+                    "project_id": project_id,
+                    "workspace_id": workspace_id,
+                },
+            )
+            if updated.rowcount != 1:
+                raise ProjectArchiveDenied
+            connection.execute(
+                text(
+                    """
+                    insert into public.audit_events (
+                      workspace_id, actor_user_id, action, subject_type, subject_id
+                    ) values (
+                      :workspace_id, :actor_user_id, :action, 'project', :subject_id
+                    )
+                    """
+                ),
+                {
+                    "workspace_id": workspace_id,
+                    "actor_user_id": actor_user_id,
+                    "action": "project.archived" if archived else "project.restored",
+                    "subject_id": str(project_id),
+                },
+            )
+
+    def archive_project(
+        self, *, actor_user_id: UUID, workspace_id: UUID, project_id: UUID
+    ) -> None:
+        self._set_project_archived(
+            actor_user_id=actor_user_id,
+            workspace_id=workspace_id,
+            project_id=project_id,
+            archived=True,
+        )
+
+    def restore_project(
+        self, *, actor_user_id: UUID, workspace_id: UUID, project_id: UUID
+    ) -> None:
+        self._set_project_archived(
+            actor_user_id=actor_user_id,
+            workspace_id=workspace_id,
+            project_id=project_id,
+            archived=False,
+        )
+
+    def mark_workspace_notifications_read(
+        self, *, actor_user_id: UUID, workspace_id: UUID, keys: list[str]
+    ) -> None:
+        if not keys:
+            return
+        with self._engine.begin() as connection:
+            if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
+                raise InvitePermissionDenied
+            for notification_key in set(keys):
+                if not notification_key.startswith("analysis:"):
+                    continue
+                connection.execute(
+                    text(
+                        """
+                        insert into public.workspace_notification_reads (
+                          workspace_id, user_id, notification_key
+                        ) values (:workspace_id, :user_id, :notification_key)
+                        on conflict (workspace_id, user_id, notification_key)
+                          do update set read_at = now()
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "user_id": actor_user_id,
+                        "notification_key": notification_key,
+                    },
+                )
+
+    def get_workspace_preferences(
+        self, *, actor_user_id: UUID, workspace_id: UUID
+    ) -> WorkspacePreferences:
+        with self._engine.begin() as connection:
+            if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
+                raise InvitePermissionDenied
+            row = (
+                connection.execute(
+                    text(
+                        """
+                        insert into public.workspace_member_preferences (workspace_id, user_id)
+                        values (:workspace_id, :user_id)
+                        on conflict (workspace_id, user_id) do update
+                          set updated_at = public.workspace_member_preferences.updated_at
+                        returning theme, analysis_notifications, failure_notifications,
+                                  stale_notifications
+                        """
+                    ),
+                    {"workspace_id": workspace_id, "user_id": actor_user_id},
+                )
+                .mappings()
+                .one()
+            )
+        return WorkspacePreferences(**row)
+
+    def update_workspace_preferences(
+        self,
+        *,
+        actor_user_id: UUID,
+        workspace_id: UUID,
+        theme: str,
+        analysis_notifications: bool,
+        failure_notifications: bool,
+        stale_notifications: bool,
+    ) -> WorkspacePreferences:
+        if theme not in {"dark", "light", "system"}:
+            raise ValueError("Unsupported theme")
+        with self._engine.begin() as connection:
+            if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
+                raise InvitePermissionDenied
+            row = (
+                connection.execute(
+                    text(
+                        """
+                        insert into public.workspace_member_preferences (
+                          workspace_id, user_id, theme, analysis_notifications,
+                          failure_notifications, stale_notifications
+                        ) values (
+                          :workspace_id, :user_id, :theme, :analysis_notifications,
+                          :failure_notifications, :stale_notifications
+                        )
+                        on conflict (workspace_id, user_id) do update set
+                          theme = excluded.theme,
+                          analysis_notifications = excluded.analysis_notifications,
+                          failure_notifications = excluded.failure_notifications,
+                          stale_notifications = excluded.stale_notifications,
+                          updated_at = now()
+                        returning theme, analysis_notifications, failure_notifications,
+                                  stale_notifications
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "user_id": actor_user_id,
+                        "theme": theme,
+                        "analysis_notifications": analysis_notifications,
+                        "failure_notifications": failure_notifications,
+                        "stale_notifications": stale_notifications,
+                    },
+                )
+                .mappings()
+                .one()
+            )
+        return WorkspacePreferences(**row)
 
     def activate_invitation(
         self,

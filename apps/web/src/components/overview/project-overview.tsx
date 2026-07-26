@@ -8,12 +8,15 @@ import {
   ClockCounterClockwise,
   FileText,
   FolderOpen,
+  Gear,
   House,
   Info,
   ListBullets,
   MapTrifold,
   MagnifyingGlass,
   PaperPlaneTilt,
+  Question,
+  SignOut,
   Sparkle,
   X,
 } from "@phosphor-icons/react";
@@ -25,6 +28,7 @@ import type { FormEvent } from "react";
 import type { OverviewSnapshot, ProjectHistory } from "@/lib/server/oslo-api";
 import { ArtifactWorkspace } from "@/components/artifacts/artifact-workspace";
 import { HistoryWorkspace } from "@/components/history/history-workspace";
+import { ProjectWorkspaceControls } from "@/components/workspace/project-workspace-controls";
 
 const dimensions = ["clarity", "alignment", "feasibility"] as const;
 const artifactOrder = [
@@ -131,7 +135,6 @@ export function ProjectOverview({
   initialView?: ProjectView;
   initialHistory?: ProjectHistory;
 }) {
-  const router = useRouter();
   const [snapshot, setSnapshot] = useState(initial);
   const [orientation, setOrientation] = useState(false);
   const [tourStep, setTourStep] = useState<number | null>(null);
@@ -148,8 +151,6 @@ export function ProjectOverview({
   const [question, setQuestion] = useState("");
   const [advisorPending, setAdvisorPending] = useState(false);
   const [advisorError, setAdvisorError] = useState<string | null>(null);
-  const [newProjectPending, setNewProjectPending] = useState(false);
-  const [newProjectError, setNewProjectError] = useState<string | null>(null);
   const [extendedRetrying, setExtendedRetrying] = useState(false);
   const [extendedRetryError, setExtendedRetryError] = useState<string | null>(null);
   const [clarificationAnswer, setClarificationAnswer] = useState("");
@@ -168,7 +169,6 @@ export function ProjectOverview({
       : null;
   });
   const advisorInFlight = useRef(false);
-  const projectInFlight = useRef(false);
   const advisorStateBeforeIssue = useRef(true);
   const issueTrigger = useRef<HTMLElement | null>(null);
   const messageId = useRef(0);
@@ -463,23 +463,6 @@ export function ProjectOverview({
     void askQuestion(question);
   };
 
-  const createNewProject = async () => {
-    if (projectInFlight.current) return;
-    projectInFlight.current = true;
-    setNewProjectPending(true);
-    setNewProjectError(null);
-    try {
-      const response = await fetch("/api/projects/new", { method: "POST" });
-      if (!response.ok) throw new Error("project creation failed");
-      const project = await response.json();
-      router.push(`/intake?project=${project.id}`);
-    } catch {
-      projectInFlight.current = false;
-      setNewProjectPending(false);
-      setNewProjectError("A new project could not be created. Please try again.");
-    }
-  };
-
   const retryExtendedAnalysis = async () => {
     if (!extendedRun || extendedRetrying) return;
     setExtendedRetryError(null);
@@ -610,10 +593,11 @@ export function ProjectOverview({
       }`}
     >
       <header className="project-header">
-        <Link className="project-toolbar-brand" href={`/projects/${snapshot.project_id}/overview`}>
+        <Link className="project-toolbar-brand" href="/workspace">
           <span aria-hidden="true">I</span>
           <strong>Intralign</strong>
         </Link>
+        <ProjectWorkspaceControls projectId={snapshot.project_id} />
         <div className="project-context">
           <strong>Project understanding</strong>
           <span aria-hidden="true">›</span>
@@ -642,6 +626,7 @@ export function ProjectOverview({
               setConfidenceBreakdownOpen(false);
               setSearchOpen(true);
             }}
+            title="Search project"
             type="button"
           >
             <MagnifyingGlass aria-hidden="true" size={16} />
@@ -656,19 +641,22 @@ export function ProjectOverview({
               OSLO
             </button>
           ) : null}
-          <button
-            aria-label="New project"
-            className="new-project-button"
-            disabled={newProjectPending}
-            onClick={createNewProject}
-            type="button"
-          >
-            {newProjectPending ? "Creating…" : "+ New project"}
-          </button>
           <details className="project-account">
-            <summary>{displayName.slice(0, 1).toUpperCase()}</summary>
-            <div>
-              <strong>{displayName}</strong>
+            <summary
+              aria-label={`Open account menu for ${displayName}`}
+              role="button"
+              title="Account and settings"
+            >
+              <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
+            </summary>
+            <div className="project-account-menu">
+              <header>
+                <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
+                <div>
+                  <strong>{displayName}</strong>
+                  <small>Account &amp; workspace</small>
+                </div>
+              </header>
               <button
                 onClick={(event) => {
                   event.currentTarget.closest("details")?.removeAttribute("open");
@@ -677,18 +665,21 @@ export function ProjectOverview({
                 }}
                 type="button"
               >
+                <Question aria-hidden="true" size={16} />
                 How OSLO works
               </button>
+              <Link href="/settings">
+                <Gear aria-hidden="true" size={16} />
+                Settings
+              </Link>
               <form action={logoutAction}>
-                <button type="submit">Log out</button>
+                <button type="submit">
+                  <SignOut aria-hidden="true" size={16} />
+                  Log out
+                </button>
               </form>
             </div>
           </details>
-          {newProjectError ? (
-            <span className="project-action-error" role="alert">
-              {newProjectError}
-            </span>
-          ) : null}
         </div>
       </header>
 

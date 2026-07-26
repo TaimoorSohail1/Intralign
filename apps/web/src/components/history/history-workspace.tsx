@@ -67,7 +67,12 @@ export function HistoryWorkspace({
   const [groups, setGroups] = useState(history.groups);
   const [nextCursor, setNextCursor] = useState(history.next_cursor);
   const [expandedRuns, setExpandedRuns] = useState<Set<string>>(
-    () => new Set(history.groups.map((group) => group.run_id)),
+    () =>
+      new Set(
+        history.groups
+          .filter((group) => group.current)
+          .map((group) => group.run_id),
+      ),
   );
   const [snapshot, setSnapshot] = useState<OverviewSnapshot | null>(null);
   const [snapshotPending, setSnapshotPending] = useState(false);
@@ -117,11 +122,6 @@ export function HistoryWorkspace({
       const page = (await response.json()) as ProjectHistory;
       setGroups((current) => [...current, ...page.groups]);
       setNextCursor(page.next_cursor);
-      setExpandedRuns((current) => {
-        const next = new Set(current);
-        page.groups.forEach((group) => next.add(group.run_id));
-        return next;
-      });
     } finally {
       setLoadPending(false);
     }
@@ -379,6 +379,7 @@ function HistoricalSnapshot({
           </div>
           <button
             aria-label="Close historical snapshot"
+            autoFocus
             onClick={onClose}
             ref={closeButtonRef}
             type="button"
