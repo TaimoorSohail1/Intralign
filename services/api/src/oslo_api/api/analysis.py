@@ -103,6 +103,7 @@ class IssueResponse(BaseModel):
     evidence: list[EvidenceResponse]
     clarification: str | None
     status: str
+    selected_resolution: str | None = None
 
 
 class ReliabilityBasisResponse(BaseModel):
@@ -169,6 +170,27 @@ class IssueAnswerRequest(BaseModel):
         if not normalized:
             raise ValueError("An answer is required")
         return normalized
+
+
+class IssueActionRequest(BaseModel):
+    action: Literal["select", "apply", "custom"]
+    resolution: str = Field(min_length=1, max_length=5_000)
+
+    @field_validator("resolution")
+    @classmethod
+    def meaningful_resolution(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("A resolution is required")
+        return normalized
+
+
+class IssueActionResponse(BaseModel):
+    issue_id: str
+    action: Literal["select", "apply", "custom"]
+    status: Literal["addressed"]
+    selected_resolution: str
+    analysis_run: AnalysisRunResponse | None = None
 
 
 class ArtifactSectionPayload(BaseModel):
@@ -265,7 +287,12 @@ def _overview_response(
     extended_analysis: AnalysisRun | None = None,
     *,
     orientation_seen: bool = False,
+    issue_actions: list[dict] | None = None,
 ) -> OverviewResponse:
+    latest_actions = {
+        action["issue_id"]: action
+        for action in (issue_actions or [])
+    }
     citations = {
         citation.reference: EvidenceResponse(
             source_name=citation.source_name,
@@ -327,7 +354,14 @@ def _overview_response(
                         if reference in citations
                     ],
                     clarification=issue.clarification,
-                    status=issue.status,
+                    status=(
+                        issue.status
+                        if issue.status == "resolved"
+                        else latest_actions.get(issue.id, {}).get("status", issue.status)
+                    ),
+                    selected_resolution=latest_actions.get(issue.id, {}).get(
+                        "selected_resolution"
+                    ),
                 )
                 for issue in snapshot.assessment.issues
             ],
@@ -342,7 +376,13 @@ def _overview_response(
 def _artifact_workspace_response(
     artifact: dict,
     run: AnalysisRun | None = None,
+    *,
+    issue_actions: list[dict] | None = None,
 ) -> ArtifactWorkspaceResponse:
+    latest_actions = {
+        action["issue_id"]: action
+        for action in (issue_actions or [])
+    }
     citations = {
         citation.reference: EvidenceResponse(
             source_name=citation.source_name,
@@ -376,7 +416,14 @@ def _artifact_workspace_response(
                     if reference in citations
                 ],
                 clarification=issue.clarification,
-                status=issue.status,
+                status=(
+                    issue.status
+                    if issue.status == "resolved"
+                    else latest_actions.get(issue.id, {}).get("status", issue.status)
+                ),
+                selected_resolution=latest_actions.get(issue.id, {}).get(
+                    "selected_resolution"
+                ),
             )
             for issue in artifact["issues"]
         ],
@@ -503,12 +550,17 @@ def current_overview(
             actor_user_id=context.user.id,
             project_id=project_id,
         )
+        issue_actions = application.list_issue_actions(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+        )
     except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
     return _overview_response(
         snapshot,
         extended_analysis,
         orientation_seen=orientation_seen,
+        issue_actions=issue_actions,
     )
 
 
@@ -555,14 +607,19 @@ def get_project_artifact(
     request: Request,
 ) -> ArtifactWorkspaceResponse:
     try:
-        artifact = slice_two_application(request).get_artifact(
+        application = slice_two_application(request)
+        artifact = application.get_artifact(
             actor_user_id=context.user.id,
             project_id=project_id,
             artifact_type=artifact_type,
         )
+        issue_actions = application.list_issue_actions(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+        )
     except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
-    return _artifact_workspace_response(artifact)
+    return _artifact_workspace_response(artifact, issue_actions=issue_actions)
 
 
 @router.patch(
@@ -582,13 +639,18 @@ def update_project_artifact(
     ],
 ) -> ArtifactWorkspaceResponse:
     try:
-        artifact, run = slice_two_application(request).update_artifact(
+        application = slice_two_application(request)
+        artifact, run = application.update_artifact(
             actor_user_id=context.user.id,
             project_id=project_id,
             artifact_type=artifact_type,
             content=payload.content.model_dump(),
             expected_version=payload.expected_version,
             key=idempotency_key,
+        )
+        issue_actions = application.list_issue_actions(
+            actor_user_id=context.user.id,
+            project_id=project_id,
         )
     except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
@@ -597,7 +659,11 @@ def update_project_artifact(
             status_code=status.HTTP_409_CONFLICT,
             detail="ARTIFACT_VERSION_CONFLICT",
         ) from error
-    return _artifact_workspace_response(artifact, run)
+    return _artifact_workspace_response(
+        artifact,
+        run,
+        issue_actions=issue_actions,
+    )
 
 
 @router.post(
@@ -632,6 +698,85 @@ def answer_project_issue(
             detail="ISSUE_NOT_ANSWERABLE",
         ) from error
     return _start_response(run)
+
+
+@router.post(
+    "/projects/{project_id}/issues/{issue_id}/actions",
+    response_model=IssueActionResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def act_on_project_issue(
+    project_id: UUID,
+    issue_id: str,
+    payload: IssueActionRequest,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+    idempotency_key: Annotated[
+        str,
+        Header(alias="Idempotency-Key", min_length=8, max_length=200),
+    ],
+) -> IssueActionResponse:
+    try:
+        result = slice_two_application(request).act_on_issue(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            issue_id=issue_id,
+            action=payload.action,
+            resolution=payload.resolution,
+            key=idempotency_key,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    except SliceTwoIssueNotAnswerable as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="ISSUE_NOT_ACTIONABLE",
+        ) from error
+    except SliceTwoArtifactConflict as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="ARTIFACT_VERSION_CONFLICT",
+        ) from error
+    run = result.get("analysis_run")
+    return IssueActionResponse(
+        issue_id=result["issue_id"],
+        action=result["action"],
+        status="addressed",
+        selected_resolution=result["selected_resolution"],
+        analysis_run=_run_response(run) if run is not None else None,
+    )
+
+
+@router.get(
+    "/projects/{project_id}/issue-actions",
+    response_model=list[IssueActionResponse],
+)
+def list_project_issue_actions(
+    project_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+) -> list[IssueActionResponse]:
+    try:
+        actions = slice_two_application(request).list_issue_actions(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    return [
+        IssueActionResponse(
+            issue_id=action["issue_id"],
+            action=action["action"],
+            status="addressed",
+            selected_resolution=action["selected_resolution"],
+            analysis_run=(
+                _run_response(action["analysis_run"])
+                if action.get("analysis_run") is not None
+                else None
+            ),
+        )
+        for action in actions
+    ]
 
 
 @router.post("/workspaces/{workspace_id}/orientation-seen", status_code=status.HTTP_204_NO_CONTENT)

@@ -59,7 +59,9 @@ test("Slice 3 exposes an evidence-qualified console and stable workspace routes"
   await expect(page.getByRole("heading", { name: "Attention map" })).toBeVisible();
 
   await workspace.getByRole("link", { name: /Issues/ }).click();
-  await expect(page.getByText(/full issues workspace arrives in Slice 6/i)).toBeVisible();
+  await expect(page).toHaveURL(/\/issues$/);
+  await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Issue filters" })).toBeVisible();
   await page.getByRole("link", { name: "History" }).click();
   await expect(page.getByText(/full decision history arrives in Slice 7/i)).toBeVisible();
 });

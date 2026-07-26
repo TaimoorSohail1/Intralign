@@ -273,6 +273,255 @@ class DatabaseSliceTwoApplication:
             self._executor.submit(self._execute, run.id)
         return run
 
+    def act_on_issue(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        issue_id: str,
+        action: str,
+        resolution: str,
+        key: str,
+    ) -> dict:
+        workspace_id = self._workspace_for_project(actor_user_id, project_id)
+        snapshot = self._store.current_snapshot(project_id)
+        if snapshot is None:
+            raise SliceTwoNotFound
+        issue = next(
+            (candidate for candidate in snapshot.assessment.issues if candidate.id == issue_id),
+            None,
+        )
+        if issue is None:
+            raise SliceTwoNotFound
+        if issue.status == "resolved":
+            raise SliceTwoIssueNotAnswerable
+
+        with self._engine.begin() as connection:
+            existing = (
+                connection.execute(
+                    text(
+                        """
+                        select issue_stable_key, action_type, resolution_text,
+                               artifact_type, artifact_version, analysis_run_id
+                        from public.issue_actions
+                        where workspace_id = :workspace_id
+                          and idempotency_key = :idempotency_key
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "idempotency_key": key,
+                    },
+                )
+                .mappings()
+                .one_or_none()
+            )
+        if existing is not None:
+            run = (
+                self._store.get_run(existing["analysis_run_id"])
+                if existing["analysis_run_id"] is not None
+                else None
+            )
+            return {
+                "issue_id": str(existing["issue_stable_key"]),
+                "action": str(existing["action_type"]),
+                "selected_resolution": str(existing["resolution_text"]),
+                "artifact_type": (
+                    str(existing["artifact_type"])
+                    if existing["artifact_type"] is not None
+                    else None
+                ),
+                "artifact_version": existing["artifact_version"],
+                "analysis_run": run,
+            }
+
+        if action == "select":
+            with self._engine.begin() as connection:
+                connection.execute(
+                    text(
+                        """
+                        insert into public.issue_actions (
+                          workspace_id, project_id, issue_stable_key, acted_by,
+                          action_type, resolution_text, artifact_type,
+                          idempotency_key
+                        ) values (
+                          :workspace_id, :project_id, :issue_id, :acted_by,
+                          :action_type, :resolution_text,
+                          cast(:artifact_type as public.plan_artifact_type),
+                          :idempotency_key
+                        )
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                        "issue_id": issue_id,
+                        "acted_by": actor_user_id,
+                        "action_type": action,
+                        "resolution_text": resolution,
+                        "artifact_type": issue.artifact_type.value,
+                        "idempotency_key": key,
+                    },
+                )
+                self._mark_issue_addressed(
+                    connection,
+                    workspace_id=workspace_id,
+                    project_id=project_id,
+                    issue_id=issue_id,
+                )
+            return {
+                "issue_id": issue_id,
+                "action": action,
+                "selected_resolution": resolution,
+                "artifact_type": issue.artifact_type.value,
+                "artifact_version": None,
+                "analysis_run": None,
+            }
+
+        artifact = self.get_artifact(
+            actor_user_id=actor_user_id,
+            project_id=project_id,
+            artifact_type=issue.artifact_type.value,
+        )
+        content = dict(artifact["content"])
+        sections = list(content.get("sections", []))
+        sections.append(
+            {
+                "heading": "Confirmed resolution",
+                "body": resolution,
+                "bullets": [],
+                "columns": [],
+                "rows": [],
+            }
+        )
+        content["sections"] = sections
+        updated_artifact, run = self.update_artifact(
+            actor_user_id=actor_user_id,
+            project_id=project_id,
+            artifact_type=issue.artifact_type.value,
+            content=content,
+            expected_version=int(artifact["version"]),
+            key=f"issue-action:{key}",
+        )
+        with self._engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    insert into public.issue_actions (
+                      workspace_id, project_id, issue_stable_key, acted_by,
+                      action_type, resolution_text, artifact_type,
+                      artifact_version, analysis_run_id, idempotency_key
+                    ) values (
+                      :workspace_id, :project_id, :issue_id, :acted_by,
+                      :action_type, :resolution_text,
+                      cast(:artifact_type as public.plan_artifact_type),
+                      :artifact_version, :analysis_run_id, :idempotency_key
+                    )
+                    """
+                ),
+                {
+                    "workspace_id": workspace_id,
+                    "project_id": project_id,
+                    "issue_id": issue_id,
+                    "acted_by": actor_user_id,
+                    "action_type": action,
+                    "resolution_text": resolution,
+                    "artifact_type": issue.artifact_type.value,
+                    "artifact_version": updated_artifact["version"],
+                    "analysis_run_id": run.id,
+                    "idempotency_key": key,
+                },
+            )
+            self._mark_issue_addressed(
+                connection,
+                workspace_id=workspace_id,
+                project_id=project_id,
+                issue_id=issue_id,
+            )
+        return {
+            "issue_id": issue_id,
+            "action": action,
+            "selected_resolution": resolution,
+            "artifact_type": issue.artifact_type.value,
+            "artifact_version": updated_artifact["version"],
+            "analysis_run": run,
+        }
+
+    def list_issue_actions(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+    ) -> list[dict]:
+        workspace_id = self._workspace_for_project(actor_user_id, project_id)
+        with self._engine.begin() as connection:
+            actions = (
+                connection.execute(
+                    text(
+                        """
+                        select distinct on (issue_stable_key)
+                               issue_stable_key, action_type, resolution_text,
+                               artifact_type, artifact_version, analysis_run_id
+                        from public.issue_actions
+                        where workspace_id = :workspace_id
+                          and project_id = :project_id
+                        order by issue_stable_key, created_at desc
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                    },
+                )
+                .mappings()
+                .all()
+            )
+        return [
+            {
+                "issue_id": str(action["issue_stable_key"]),
+                "action": str(action["action_type"]),
+                "status": "addressed",
+                "selected_resolution": str(action["resolution_text"]),
+                "artifact_type": (
+                    str(action["artifact_type"])
+                    if action["artifact_type"] is not None
+                    else None
+                ),
+                "artifact_version": action["artifact_version"],
+                "analysis_run": (
+                    self._store.get_run(action["analysis_run_id"])
+                    if action["analysis_run_id"] is not None
+                    else None
+                ),
+            }
+            for action in actions
+        ]
+
+    @staticmethod
+    def _mark_issue_addressed(
+        connection,
+        *,
+        workspace_id: UUID,
+        project_id: UUID,
+        issue_id: str,
+    ) -> None:
+        connection.execute(
+            text(
+                """
+                update public.issues
+                set current_status = 'addressed', updated_at = now()
+                where workspace_id = :workspace_id
+                  and project_id = :project_id
+                  and stable_key = :issue_id
+                """
+            ),
+            {
+                "workspace_id": workspace_id,
+                "project_id": project_id,
+                "issue_id": issue_id,
+            },
+        )
+
     def get_artifact(
         self,
         *,

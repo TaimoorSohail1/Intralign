@@ -126,6 +126,58 @@ afterEach(() => {
 });
 
 describe("ProjectOverview", () => {
+  it("renders the Slice 6 Issues workspace with live grouping and filters", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={sliceFourSnapshot}
+        initialView="issues"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Issues" })).toBeInTheDocument();
+    expect(screen.getByText("3 active findings")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "By dimension" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("heading", { name: "Feasibility · 2" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Clarity · 1" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "By severity" }));
+    expect(screen.getByRole("heading", { name: "Critical · 1" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Moderate · 2" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Resources 2" }));
+    expect(screen.getByText("1 finding hidden by the current filters.")).toBeInTheDocument();
+    expect(screen.queryByText("Success metric is not measurable")).not.toBeInTheDocument();
+    expect(screen.getByText("Migration ownership is unresolved")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(screen.getByText("Success metric is not measurable")).toBeInTheDocument();
+  });
+
+  it("opens the governed issue panel from an Issues workspace card", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={sliceFourSnapshot}
+        initialView="issues"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Success metric is not measurable/i }),
+    );
+
+    const panel = screen.getByRole("dialog", { name: "Issue details" });
+    expect(panel).toHaveTextContent("Success metric is not measurable");
+    expect(panel).toHaveTextContent("Why this matters");
+    expect(panel).toHaveTextContent("Clarification request");
+  });
+
   it("renders the Slice 4 current-snapshot matrix without the superseded field toggle", () => {
     render(
       <ProjectOverview
@@ -482,7 +534,7 @@ describe("ProjectOverview", () => {
     });
   });
 
-  it("shows readable evidence in issue review and hides internal locator ids", () => {
+  it("reveals readable evidence through a keyboard-operable disclosure and hides locator ids", () => {
     render(
       <ProjectOverview
         displayName="Alex"
@@ -495,6 +547,17 @@ describe("ProjectOverview", () => {
       screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
     );
 
+    const evidenceDisclosure = screen.getByRole("button", {
+      name: "Evidence · 1 source, traceable to inputs",
+    });
+    expect(evidenceDisclosure).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("Migration plan.pdf")).not.toBeInTheDocument();
+
+    evidenceDisclosure.focus();
+    fireEvent.keyDown(evidenceDisclosure, { key: "Enter" });
+    fireEvent.click(evidenceDisclosure);
+
+    expect(evidenceDisclosure).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText("Migration plan.pdf")).toBeInTheDocument();
     expect(screen.getByText("Page 1")).toBeInTheDocument();
     expect(
@@ -503,6 +566,108 @@ describe("ProjectOverview", () => {
     expect(
       screen.queryByText("document:plan:page:1:fragment:0"),
     ).not.toBeInTheDocument();
+  });
+
+  it("selects a governed resolution path and shows it as confirmed by the user", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        issue_id: "ISS-001",
+        action: "select",
+        status: "addressed",
+        selected_resolution: "Confirm an accountable owner.",
+        analysis_run: null,
+      }),
+    });
+    vi.stubGlobal("fetch", fetcher);
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Select this path" }));
+
+    const confirmation = (await screen.findByText("Confirmed by you")).closest("section");
+    expect(confirmation).not.toBeNull();
+    expect(within(confirmation!).getByText("Confirm an accountable owner.")).toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledWith(
+      "/api/projects/project-001/issues/ISS-001/actions",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("restores the persisted selected resolution after a browser refresh", () => {
+    const refreshedSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      assessment: {
+        ...snapshot.assessment,
+        issues: snapshot.assessment.issues.map((issue) => ({
+          ...issue,
+          status: "addressed",
+          selected_resolution: "Assign Priya as the accountable migration owner.",
+        })),
+      },
+    };
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={refreshedSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
+    );
+
+    expect(screen.getByText("Confirmed by you")).toBeInTheDocument();
+    expect(
+      screen.getByText("Assign Priya as the accountable migration owner."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Issue status addressed")).toBeInTheDocument();
+  });
+
+  it("applies a recommended fix through versioned re-analysis", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        issue_id: "ISS-001",
+        action: "apply",
+        status: "addressed",
+        selected_resolution: "Confirm an accountable owner.",
+        analysis_run: {
+          run_id: "run-apply-001",
+          project_id: "project-001",
+          kind: "extended",
+          status: "queued",
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetcher);
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Apply this fix" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: "Issue details" })).toHaveAttribute(
+        "aria-describedby",
+        "issue-addressed-status",
+      );
+      expect(screen.getByText("Confirmed by you")).toBeInTheDocument();
+    });
   });
 
   it("saves a clarification once and immediately shows the addressed reanalysis state", async () => {
@@ -604,7 +769,7 @@ describe("ProjectOverview", () => {
     vi.useRealTimers();
   });
 
-  it("keeps later-slice Issues and History destinations honest", () => {
+  it("renders the delivered Issues workspace while keeping History honest", () => {
     const { rerender } = render(
       <ProjectOverview
         displayName="Alex"
@@ -615,7 +780,7 @@ describe("ProjectOverview", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Issues" })).toBeInTheDocument();
-    expect(screen.getByText(/full issues workspace arrives in Slice 6/i)).toBeInTheDocument();
+    expect(screen.getByText("1 active finding")).toBeInTheDocument();
 
     rerender(
       <ProjectOverview

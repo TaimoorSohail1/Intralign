@@ -109,6 +109,14 @@ function artifactLabel(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function issueResolutionMap(issues: Issue[]) {
+  return Object.fromEntries(
+    issues
+      .filter((issue) => Boolean(issue.selected_resolution))
+      .map((issue) => [issue.id, issue.selected_resolution as string]),
+  );
+}
+
 export function ProjectOverview({
   initial,
   displayName,
@@ -144,6 +152,11 @@ export function ProjectOverview({
   const [clarificationAnswer, setClarificationAnswer] = useState("");
   const [clarificationPending, setClarificationPending] = useState(false);
   const [clarificationError, setClarificationError] = useState<string | null>(null);
+  const [issueActionPending, setIssueActionPending] = useState(false);
+  const [issueActionError, setIssueActionError] = useState<string | null>(null);
+  const [selectedResolutions, setSelectedResolutions] = useState<Record<string, string>>(
+    () => issueResolutionMap(initial.assessment.issues),
+  );
   const [analysisUpdateRunId, setAnalysisUpdateRunId] = useState<string | null>(() => {
     const activeExtended = initial.extended_analysis;
     return initial.state === "current" &&
@@ -157,6 +170,10 @@ export function ProjectOverview({
   const issueTrigger = useRef<HTMLElement | null>(null);
   const messageId = useRef(0);
   const clarificationIdempotency = useRef<{
+    signature: string;
+    key: string;
+  } | null>(null);
+  const issueActionIdempotency = useRef<{
     signature: string;
     key: string;
   } | null>(null);
@@ -207,6 +224,7 @@ export function ProjectOverview({
         if (!response.ok) return;
         const next: OverviewSnapshot = await response.json();
         setSnapshot(next);
+        setSelectedResolutions(issueResolutionMap(next.assessment.issues));
         setExtendedRetrying(false);
         if (next.state === "current" || next.extended_analysis?.status === "failed") {
           window.clearInterval(timer);
@@ -243,6 +261,7 @@ export function ProjectOverview({
           if (overviewResponse.ok) {
             const next: OverviewSnapshot = await overviewResponse.json();
             setSnapshot(next);
+            setSelectedResolutions(issueResolutionMap(next.assessment.issues));
             setSelectedIssue((current) => {
               if (!current) return current;
               return (
@@ -264,6 +283,7 @@ export function ProjectOverview({
           if (overviewResponse.ok) {
             const next: OverviewSnapshot = await overviewResponse.json();
             setSnapshot(next);
+            setSelectedResolutions(issueResolutionMap(next.assessment.issues));
           }
           setExtendedRetrying(false);
           setAnalysisUpdateRunId(null);
@@ -508,6 +528,68 @@ export function ProjectOverview({
       setClarificationError("Your answer could not be saved. Please try again.");
     } finally {
       setClarificationPending(false);
+    }
+  };
+
+  const actOnIssue = async (
+    action: "select" | "apply" | "custom",
+    resolution: string,
+  ) => {
+    if (!selectedIssue || !resolution.trim() || issueActionPending) return;
+    const normalizedResolution = resolution.trim();
+    const signature = `${selectedIssue.id}:${action}:${normalizedResolution}`;
+    if (issueActionIdempotency.current?.signature !== signature) {
+      issueActionIdempotency.current = {
+        signature,
+        key: crypto.randomUUID(),
+      };
+    }
+    setIssueActionPending(true);
+    setIssueActionError(null);
+    try {
+      const response = await fetch(
+        `/api/projects/${snapshot.project_id}/issues/${encodeURIComponent(selectedIssue.id)}/actions`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            action,
+            resolution: normalizedResolution,
+            idempotencyKey: issueActionIdempotency.current.key,
+          }),
+        },
+      );
+      if (!response.ok) throw new Error("issue action was not accepted");
+      const result = await response.json();
+      setSelectedResolutions((current) => ({
+        ...current,
+        [selectedIssue.id]: result.selected_resolution,
+      }));
+      setSelectedIssue((current) =>
+        current ? { ...current, status: "addressed" } : current,
+      );
+      setSnapshot((current) => ({
+        ...current,
+        assessment: {
+          ...current.assessment,
+          issues: current.assessment.issues.map((issue) =>
+            issue.id === selectedIssue.id
+              ? {
+                  ...issue,
+                  status: "addressed",
+                  selected_resolution: result.selected_resolution,
+                }
+              : issue,
+          ),
+        },
+      }));
+      if (result.analysis_run?.run_id) {
+        setAnalysisUpdateRunId(result.analysis_run.run_id);
+      }
+    } catch {
+      setIssueActionError("The resolution could not be saved. Please try again.");
+    } finally {
+      setIssueActionPending(false);
     }
   };
 
@@ -1018,8 +1100,13 @@ export function ProjectOverview({
               onOpenIssue={openIssue}
               projectId={snapshot.project_id}
             />
+          ) : initialView === "issues" ? (
+            <IssuesWorkspace
+              issues={snapshot.assessment.issues}
+              onOpenIssue={openIssue}
+            />
           ) : (
-            <DeferredWorkspace view={initialView} />
+            <DeferredWorkspace />
           )}
         </section>
 
@@ -1027,7 +1114,7 @@ export function ProjectOverview({
           <IssuePanel
             analysisRunning={Boolean(analysisUpdateRunId)}
             answer={clarificationAnswer}
-            error={clarificationError}
+            error={clarificationError ?? issueActionError}
             issue={selectedIssue}
             onAnswerChange={setClarificationAnswer}
             onAsk={() => {
@@ -1036,8 +1123,10 @@ export function ProjectOverview({
               void askQuestion(`Explain this issue: ${selectedIssue.title}`);
             }}
             onClose={closeIssue}
+            onIssueAction={actOnIssue}
             onSubmit={submitClarification}
-            pending={clarificationPending}
+            pending={clarificationPending || issueActionPending}
+            selectedResolution={selectedResolutions[selectedIssue.id] ?? null}
           />
         ) : attentionScope ? (
           <AttentionScopePanel
@@ -1374,19 +1463,17 @@ function SearchPalette({
   );
 }
 
-function DeferredWorkspace({ view }: { view: "issues" | "history" }) {
-  const isIssues = view === "issues";
+function DeferredWorkspace() {
   return (
     <section className="deferred-workspace">
       <span className="eyebrow">Project workspace</span>
-      <h1>{isIssues ? "Issues" : "History"}</h1>
+      <h1>History</h1>
       <p>
-        {isIssues
-          ? "The Overview and Attention map already expose the highest-impact findings. The full issues workspace arrives in Slice 6."
-          : "The current and last-good reads are already preserved safely. The full decision history arrives in Slice 7."}
+        The current and last-good reads are already preserved safely. The full decision
+        history arrives in Slice 7.
       </p>
-      <Link href={isIssues ? "./attention" : "./overview"}>
-        {isIssues ? "Open the Attention map" : "Return to Overview"}
+      <Link href="./overview">
+        Return to Overview
         <ArrowRight aria-hidden="true" size={13} />
       </Link>
       <div className="deferred-preview" aria-hidden="true">
@@ -1395,6 +1482,261 @@ function DeferredWorkspace({ view }: { view: "issues" | "history" }) {
         <i />
       </div>
     </section>
+  );
+}
+
+type IssueGroupMode = "dimension" | "severity" | "artifact";
+
+function IssuesWorkspace({
+  issues,
+  onOpenIssue,
+}: {
+  issues: Issue[];
+  onOpenIssue: (issue: Issue, trigger?: HTMLElement | null) => void;
+}) {
+  const [groupMode, setGroupMode] = useState<IssueGroupMode>("dimension");
+  const [artifactFilter, setArtifactFilter] = useState<string | null>(null);
+  const [dimensionFilter, setDimensionFilter] = useState<string | null>(null);
+  const [severityFilter, setSeverityFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("active");
+
+  const filteredIssues = useMemo(
+    () =>
+      issues
+        .filter((issue) => {
+          if (artifactFilter && issue.artifact_type !== artifactFilter) return false;
+          if (
+            dimensionFilter &&
+            issue.dimension.toLowerCase() !== dimensionFilter.toLowerCase()
+          ) {
+            return false;
+          }
+          if (severityFilter && issue.severity !== severityFilter) return false;
+          if (statusFilter === "active") return issue.status !== "resolved";
+          if (statusFilter !== "all" && issue.status !== statusFilter) return false;
+          return true;
+        })
+        .sort(issueSort),
+    [artifactFilter, dimensionFilter, issues, severityFilter, statusFilter],
+  );
+
+  const groups = useMemo(() => {
+    const grouped = new Map<string, Issue[]>();
+    for (const issue of filteredIssues) {
+      const key =
+        groupMode === "artifact"
+          ? artifactLabel(issue.artifact_type)
+          : groupMode === "severity"
+            ? issue.severity
+            : issue.dimension;
+      grouped.set(key, [...(grouped.get(key) ?? []), issue]);
+    }
+    const order =
+      groupMode === "dimension"
+        ? ["Feasibility", "Clarity", "Alignment"]
+        : groupMode === "severity"
+          ? ["Critical", "Moderate", "Warning"]
+          : artifactOrder.map(artifactLabel);
+    return [...grouped.entries()].sort(
+      ([left], [right]) => order.indexOf(left) - order.indexOf(right),
+    );
+  }, [filteredIssues, groupMode]);
+
+  const activeCount = issues.filter((issue) => issue.status !== "resolved").length;
+  const hiddenCount = Math.max(0, issues.length - filteredIssues.length);
+  const hasExplicitFilters = Boolean(
+    artifactFilter ||
+      dimensionFilter ||
+      severityFilter ||
+      statusFilter !== "active",
+  );
+
+  function clearFilters() {
+    setArtifactFilter(null);
+    setDimensionFilter(null);
+    setSeverityFilter(null);
+    setStatusFilter("active");
+  }
+
+  return (
+    <section className="issues-workspace">
+      <header className="issues-heading">
+        <div>
+          <h1>Issues</h1>
+          <p>What needs your attention</p>
+        </div>
+        <strong>
+          {activeCount} active {activeCount === 1 ? "finding" : "findings"}
+        </strong>
+      </header>
+
+      <div aria-label="Issue grouping" className="issue-group-tabs">
+        {(["dimension", "severity", "artifact"] as const).map((mode) => (
+          <button
+            aria-pressed={groupMode === mode}
+            key={mode}
+            onClick={() => setGroupMode(mode)}
+            type="button"
+          >
+            By {mode}
+          </button>
+        ))}
+      </div>
+
+      <section aria-label="Issue filters" className="issue-filter-panel">
+        <IssueFilterRow
+          active={artifactFilter}
+          label="Artifact"
+          onChange={setArtifactFilter}
+          options={artifactOrder
+            .map((artifact) => ({
+              label: artifactLabel(artifact),
+              value: artifact,
+              count: issues.filter((issue) => issue.artifact_type === artifact).length,
+            }))
+            .filter((option) => option.count)}
+        />
+        <IssueFilterRow
+          active={dimensionFilter}
+          label="Dimension"
+          onChange={setDimensionFilter}
+          options={dimensions.map((dimension) => ({
+            label: artifactLabel(dimension),
+            value: dimension,
+            count: issues.filter(
+              (issue) => issue.dimension.toLowerCase() === dimension,
+            ).length,
+          }))}
+        />
+        <IssueFilterRow
+          active={severityFilter}
+          label="Severity"
+          onChange={setSeverityFilter}
+          options={["Critical", "Moderate", "Warning"].map((severity) => ({
+            label: severity,
+            value: severity,
+            count: issues.filter((issue) => issue.severity === severity).length,
+          }))}
+        />
+        <div className="issue-filter-row">
+          <span>Status</span>
+          {[
+            ["Active", "active"],
+            ["Open", "open"],
+            ["Addressed", "addressed"],
+            ["Resolved", "resolved"],
+            ["All", "all"],
+          ].map(([label, value]) => (
+            <button
+              aria-pressed={statusFilter === value}
+              key={value}
+              onClick={() => setStatusFilter(value)}
+              type="button"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {hiddenCount ? (
+        <div className="issue-filter-summary" role="status">
+          <span>
+            {hiddenCount} {hiddenCount === 1 ? "finding" : "findings"} hidden by the
+            current filters.
+          </span>
+          <button onClick={clearFilters} type="button">Clear filters</button>
+        </div>
+      ) : null}
+
+      {groups.length ? (
+        <div className="issue-groups">
+          {groups.map(([group, groupIssues]) => (
+            <section className="issue-group" key={group}>
+              <h2>{group} · {groupIssues.length}</h2>
+              <div>
+                {groupIssues.map((issue) => (
+                  <button
+                    aria-label={`${issue.title}, ${issue.severity}, ${artifactLabel(issue.artifact_type)}, ${issue.dimension}, ${artifactLabel(issue.status)}`}
+                    className={`issue-workspace-card issue-card-${issue.severity.toLowerCase()}`}
+                    key={issue.id}
+                    onClick={(event) => onOpenIssue(issue, event.currentTarget)}
+                    type="button"
+                  >
+                    <i aria-hidden="true" />
+                    <span>
+                      <strong>{issue.title}</strong>
+                      <small>
+                        <b className={`severity severity-${issue.severity.toLowerCase()}`}>
+                          {issue.severity}
+                        </b>
+                        {artifactLabel(issue.artifact_type)} · {issue.dimension}
+                        <em>{artifactLabel(issue.status)}</em>
+                        {issue.clarification ? <mark>Clarification</mark> : null}
+                      </small>
+                    </span>
+                    <CaretRight aria-hidden="true" size={15} />
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className="issues-empty" role="status">
+          <Sparkle aria-hidden="true" size={22} weight="fill" />
+          <h2>
+            {issues.length && hasExplicitFilters
+              ? "No issues match this lens."
+              : "Nothing needs your attention right now."}
+          </h2>
+          <p>
+            {issues.length && hasExplicitFilters
+              ? "Try another filter or return to all active findings."
+              : "All seven plan artifacts are clear in the current read."}
+          </p>
+          {hasExplicitFilters ? (
+            <button onClick={clearFilters} type="button">Clear filters</button>
+          ) : null}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function IssueFilterRow({
+  active,
+  label,
+  onChange,
+  options,
+}: {
+  active: string | null;
+  label: string;
+  onChange: (value: string | null) => void;
+  options: Array<{ label: string; value: string; count: number }>;
+}) {
+  return (
+    <div className="issue-filter-row">
+      <span>{label}</span>
+      <button
+        aria-pressed={!active}
+        onClick={() => onChange(null)}
+        type="button"
+      >
+        All
+      </button>
+      {options.map((option) => (
+        <button
+          aria-label={`${option.label} ${option.count}`}
+          aria-pressed={active === option.value}
+          key={option.value}
+          onClick={() => onChange(active === option.value ? null : option.value)}
+          type="button"
+        >
+          {option.label} <small>{option.count}</small>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -1688,8 +2030,10 @@ function IssuePanel({
   onAnswerChange,
   onAsk,
   onClose,
+  onIssueAction,
   onSubmit,
   pending,
+  selectedResolution,
 }: {
   analysisRunning: boolean;
   answer: string;
@@ -1698,11 +2042,17 @@ function IssuePanel({
   onAnswerChange: (value: string) => void;
   onAsk: () => void;
   onClose: () => void;
+  onIssueAction: (
+    action: "select" | "apply" | "custom",
+    resolution: string,
+  ) => Promise<void>;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   pending: boolean;
+  selectedResolution: string | null;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
-  const [showAllEvidence, setShowAllEvidence] = useState(false);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [customResolution, setCustomResolution] = useState("");
   const evidence = issue.evidence ?? [];
   const effectiveStatus = analysisRunning ? "addressed" : issue.status;
 
@@ -1758,33 +2108,48 @@ function IssuePanel({
         <h3>Why this matters</h3>
         <p>{issue.why}</p>
       </section>
-      <section>
-        <h3>Evidence</h3>
-        <div className="evidence-list">
-          {evidence.slice(0, showAllEvidence ? evidence.length : 3).map((citation) => (
-            <div key={`${citation.source_name}:${citation.location}:${citation.excerpt}`}>
-              <small>
-                <strong>{citation.source_name}</strong>
-                <span>{citation.location}</span>
-              </small>
-              <p>{citation.excerpt}</p>
-            </div>
-          ))}
-          {!evidence.length ? (
-            <p className="evidence-unavailable">
-              Readable evidence details are not available for this earlier snapshot.
-            </p>
-          ) : null}
-        </div>
-        {evidence.length > 3 ? (
-          <button
-            className="evidence-more"
-            onClick={() => setShowAllEvidence((current) => !current)}
-            type="button"
-          >
-            {showAllEvidence ? "Show less" : `Show ${evidence.length - 3} more`}
-          </button>
+      <section className="issue-evidence">
+        <button
+          aria-controls="issue-evidence-content"
+          aria-expanded={evidenceOpen}
+          aria-label={`Evidence · ${evidence.length} ${
+            evidence.length === 1 ? "source" : "sources"
+          }, traceable to inputs`}
+          className="issue-evidence-disclosure"
+          onClick={() => setEvidenceOpen((current) => !current)}
+          type="button"
+        >
+          <span>Evidence</span>
+          <small>
+            {evidence.length} {evidence.length === 1 ? "source" : "sources"}, traceable to inputs
+          </small>
+          <CaretDown aria-hidden="true" size={14} />
+        </button>
+        {evidenceOpen ? (
+          <div className="evidence-list" id="issue-evidence-content">
+            {evidence.map((citation) => (
+              <div key={`${citation.source_name}:${citation.location}:${citation.excerpt}`}>
+                <small>
+                  <strong>{citation.source_name}</strong>
+                  <span>{citation.location}</span>
+                </small>
+                <p>{citation.excerpt}</p>
+              </div>
+            ))}
+            {!evidence.length ? (
+              <p className="evidence-unavailable">
+                Readable evidence details are not available for this earlier snapshot.
+              </p>
+            ) : null}
+          </div>
         ) : null}
+      </section>
+      <section>
+        <h3>What this weakens</h3>
+        <p>
+          This finding lowers the {issue.dimension.toLowerCase()} read for{" "}
+          {artifactLabel(issue.artifact_type)} until the plan contains verified evidence.
+        </p>
       </section>
       {issue.clarification ? (
         <form className="clarification-form" onSubmit={onSubmit}>
@@ -1810,13 +2175,72 @@ function IssuePanel({
           {error ? <p className="clarification-error" role="alert">{error}</p> : null}
         </form>
       ) : null}
-      <section>
-        <h3>Suggested fixes</h3>
-        <div className="suggested-fixes">
-          <span><ArrowRight aria-hidden="true" size={12} />{issue.recommendation}</span>
-          <span><ArrowRight aria-hidden="true" size={12} />Confirm an accountable owner and fallback.</span>
+      <section className="issue-recommendation">
+        <h3>OSLO recommended</h3>
+        <strong>{issue.recommendation}</strong>
+        <p>
+          Applying this fix creates a new user-confirmed artifact version and re-runs the
+          governed analysis. OSLO never marks the issue resolved without that new read.
+        </p>
+        <div className="issue-action-row">
+          <button
+            disabled={pending || analysisRunning}
+            onClick={() => void onIssueAction("apply", issue.recommendation)}
+            type="button"
+          >
+            Apply this fix
+          </button>
+          <button onClick={onAsk} type="button">Discuss</button>
         </div>
       </section>
+      <section>
+        <h3>Possible resolution paths</h3>
+        <div className="resolution-path">
+          <span><ArrowRight aria-hidden="true" size={12} />{issue.recommendation}</span>
+          <button
+            disabled={pending || analysisRunning}
+            onClick={() => void onIssueAction("select", issue.recommendation)}
+            type="button"
+          >
+            Select this path
+          </button>
+        </div>
+        <div className="resolution-path">
+          <span>
+            <ArrowRight aria-hidden="true" size={12} />
+            Confirm an accountable owner, decision date, and fallback.
+          </span>
+          <button onClick={onAsk} type="button">Discuss</button>
+        </div>
+      </section>
+      {selectedResolution ? (
+        <section className="confirmed-resolution" aria-live="polite">
+          <h3>Confirmed by you</h3>
+          <p>{selectedResolution}</p>
+        </section>
+      ) : null}
+      <section className="custom-resolution">
+        <h3>Write my own fix in {artifactLabel(issue.artifact_type)}</h3>
+        <textarea
+          aria-label="Custom resolution"
+          disabled={pending || analysisRunning}
+          maxLength={5_000}
+          onChange={(event) => setCustomResolution(event.target.value)}
+          placeholder="Describe the confirmed change to add to this artifact."
+          value={customResolution}
+        />
+        <button
+          disabled={!customResolution.trim() || pending || analysisRunning}
+          onClick={() => void onIssueAction("custom", customResolution)}
+          type="button"
+        >
+          Apply custom fix
+        </button>
+      </section>
+      <p className="issue-history-pointer">
+        Status changes are recorded in project history. Full history arrives in Slice 7.
+      </p>
+      {error ? <p className="clarification-error" role="alert">{error}</p> : null}
     </aside>
   );
 }

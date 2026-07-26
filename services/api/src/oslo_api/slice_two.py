@@ -100,6 +100,24 @@ class SliceTwoApplication(Protocol):
         key: str,
     ) -> AnalysisRun: ...
 
+    def act_on_issue(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        issue_id: str,
+        action: str,
+        resolution: str,
+        key: str,
+    ) -> dict: ...
+
+    def list_issue_actions(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+    ) -> list[dict]: ...
+
     def get_artifact(
         self,
         *,
