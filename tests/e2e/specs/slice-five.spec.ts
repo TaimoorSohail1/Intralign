@@ -111,7 +111,11 @@ test("Slice 5 issue annotations expose an honest evidence state and artifact con
   await inlineIssue.click();
   const dialog = page.getByRole("dialog", { name: "Issue details" });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("heading", { name: "Evidence" })).toBeVisible();
+  const evidence = dialog.getByRole("button", { name: /^Evidence/ });
+  await expect(evidence).toBeVisible();
+  await expect(evidence).toHaveAttribute("aria-expanded", "false");
+  await evidence.click();
+  await expect(evidence).toHaveAttribute("aria-expanded", "true");
   await expect(
     dialog.getByText(/Readable evidence details are not available/),
   ).toBeVisible();

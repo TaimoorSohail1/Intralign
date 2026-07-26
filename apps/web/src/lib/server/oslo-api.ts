@@ -111,6 +111,7 @@ export interface OverviewSnapshot {
       }>;
       clarification?: string | null;
       status: string;
+      selected_resolution?: string | null;
     }>;
   };
   published_at: string;
@@ -120,6 +121,14 @@ export interface OverviewSnapshot {
 export interface AdvisorReplySummary {
   answer: string;
   follow_up_questions: string[];
+}
+
+export interface IssueActionSummary {
+  issue_id: string;
+  action: "select" | "apply" | "custom";
+  status: "addressed";
+  selected_resolution: string;
+  analysis_run?: AnalysisRunSummary | null;
 }
 
 export interface ArtifactSection {
@@ -245,6 +254,30 @@ export function answerProjectIssue(input: {
         "Idempotency-Key": input.idempotencyKey,
       },
       body: JSON.stringify({ answer: input.answer }),
+    },
+  );
+}
+
+export function actOnProjectIssue(input: {
+  accessToken: string;
+  projectId: string;
+  issueId: string;
+  action: "select" | "apply" | "custom";
+  resolution: string;
+  idempotencyKey: string;
+}): Promise<IssueActionSummary> {
+  return apiRequest(
+    `/v1/projects/${input.projectId}/issues/${encodeURIComponent(input.issueId)}/actions`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${input.accessToken}`,
+        "Idempotency-Key": input.idempotencyKey,
+      },
+      body: JSON.stringify({
+        action: input.action,
+        resolution: input.resolution,
+      }),
     },
   );
 }

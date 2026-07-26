@@ -32,6 +32,7 @@ class RecordingSliceTwo:
         self.started: list[AnalysisRunRequest] = []
         self.latest_extended = None
         self.orientation_seen = False
+        self.issue_actions: list[dict] = []
 
     def start_analysis(
         self,
@@ -149,6 +150,50 @@ class RecordingSliceTwo:
             )
         )
 
+    def act_on_issue(
+        self,
+        *,
+        actor_user_id,
+        project_id,
+        issue_id,
+        action,
+        resolution,
+        key,
+    ):
+        assert actor_user_id == USER_ID
+        assert project_id == PROJECT_ID
+        assert issue_id == "ISS-001"
+        assert action in {"select", "apply", "custom"}
+        assert resolution == "Assign Priya as the accountable migration owner."
+        assert key in {"issue-resolution-001", "issue-resolution-apply-001"}
+        run = None
+        if action in {"apply", "custom"}:
+            run = self.store.create_run(
+                AnalysisRunRequest(
+                    workspace_id=WORKSPACE_ID,
+                    project_id=project_id,
+                    requested_by=actor_user_id,
+                    kind=RunKind.EXTENDED,
+                    description=resolution,
+                    source_names=(),
+                    idempotency_key=f"issue-action:{key}",
+                )
+            )
+        result = {
+            "issue_id": issue_id,
+            "action": action,
+            "status": "addressed",
+            "selected_resolution": resolution,
+            "analysis_run": run,
+        }
+        self.issue_actions = [result]
+        return result
+
+    def list_issue_actions(self, *, actor_user_id, project_id):
+        assert actor_user_id == USER_ID
+        assert project_id == PROJECT_ID
+        return self.issue_actions
+
     def get_artifact(self, *, actor_user_id, project_id, artifact_type):
         snapshot = self.current_overview(
             actor_user_id=actor_user_id,
@@ -253,6 +298,11 @@ class NonAnswerableSliceTwo(RecordingSliceTwo):
 
 class ConflictingArtifactSliceTwo(RecordingSliceTwo):
     def update_artifact(self, **kwargs):
+        raise SliceTwoArtifactConflict
+
+
+class ConflictingIssueActionSliceTwo(RecordingSliceTwo):
+    def act_on_issue(self, **kwargs):
         raise SliceTwoArtifactConflict
 
 
@@ -385,6 +435,117 @@ def test_authenticated_user_answers_an_issue_and_starts_reanalysis() -> None:
     assert response.json()["project_id"] == str(PROJECT_ID)
     assert response.json()["kind"] == "extended"
     assert response.json()["status"] == "queued"
+
+
+def test_authenticated_user_selects_and_applies_an_issue_resolution() -> None:
+    slice_two = RecordingSliceTwo()
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
+
+    selected = client.post(
+        f"/v1/projects/{PROJECT_ID}/issues/ISS-001/actions",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "issue-resolution-001",
+        },
+        json={
+            "action": "select",
+            "resolution": "Assign Priya as the accountable migration owner.",
+        },
+    )
+    applied = client.post(
+        f"/v1/projects/{PROJECT_ID}/issues/ISS-001/actions",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "issue-resolution-apply-001",
+        },
+        json={
+            "action": "apply",
+            "resolution": "Assign Priya as the accountable migration owner.",
+        },
+    )
+    persisted = client.get(
+        f"/v1/projects/{PROJECT_ID}/issue-actions",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert selected.status_code == 202
+    assert selected.json() == {
+        "issue_id": "ISS-001",
+        "action": "select",
+        "status": "addressed",
+        "selected_resolution": "Assign Priya as the accountable migration owner.",
+        "analysis_run": None,
+    }
+    assert applied.status_code == 202
+    assert applied.json()["analysis_run"]["kind"] == "extended"
+    assert persisted.status_code == 200
+    assert persisted.json()[0]["issue_id"] == "ISS-001"
+    assert persisted.json()[0]["selected_resolution"] == (
+        "Assign Priya as the accountable migration owner."
+    )
+
+
+def test_issue_resolution_rejects_a_stale_artifact_version_safely() -> None:
+    client = TestClient(
+        create_app(
+            slice_one=AuthenticatedSliceOne(),
+            slice_two=ConflictingIssueActionSliceTwo(),
+        )
+    )
+
+    response = client.post(
+        f"/v1/projects/{PROJECT_ID}/issues/ISS-001/actions",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "issue-resolution-conflict-001",
+        },
+        json={
+            "action": "apply",
+            "resolution": "Assign Priya as the accountable migration owner.",
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "ARTIFACT_VERSION_CONFLICT"
+
+
+def test_overview_overlays_the_latest_persisted_issue_action() -> None:
+    slice_two = RecordingSliceTwo()
+    slice_two.start_analysis(
+        actor_user_id=USER_ID,
+        project_id=PROJECT_ID,
+        description="Migration ownership is unresolved.",
+        source_names=(),
+        source_document_ids=(),
+        kind=RunKind.INITIAL,
+        key="issue-action-overview-001",
+    )
+    slice_two.complete_latest()
+    snapshot = slice_two.store.current_snapshot(PROJECT_ID)
+    assert snapshot is not None
+    issue_id = snapshot.assessment.issues[0].id
+    slice_two.issue_actions = [
+        {
+            "issue_id": issue_id,
+            "action": "select",
+            "status": "addressed",
+            "selected_resolution": "Assign Priya as the accountable migration owner.",
+            "analysis_run": None,
+        }
+    ]
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
+
+    response = client.get(
+        f"/v1/projects/{PROJECT_ID}/overview",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    issue = response.json()["assessment"]["issues"][0]
+    assert issue["status"] == "addressed"
+    assert issue["selected_resolution"] == (
+        "Assign Priya as the accountable migration owner."
+    )
 
 
 def test_issue_without_an_open_clarification_cannot_start_reanalysis() -> None:
@@ -649,6 +810,15 @@ def test_artifact_workspace_returns_readable_issue_evidence() -> None:
         project_id=PROJECT_ID,
     )
     issue = snapshot.assessment.issues[0]
+    slice_two.issue_actions = [
+        {
+            "issue_id": issue.id,
+            "action": "select",
+            "status": "addressed",
+            "selected_resolution": "Confirm the accountable delivery owner.",
+            "analysis_run": None,
+        }
+    ]
     client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
 
     response = client.get(
@@ -662,6 +832,11 @@ def test_artifact_workspace_returns_readable_issue_evidence() -> None:
     )
     assert returned_issue["evidence"]
     assert returned_issue["evidence"][0]["source_name"] == "Project description"
+    assert returned_issue["status"] == "addressed"
+    assert (
+        returned_issue["selected_resolution"]
+        == "Confirm the accountable delivery owner."
+    )
 
 
 def test_artifact_workspace_rejects_malformed_table_rows() -> None:
