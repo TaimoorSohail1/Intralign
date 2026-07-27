@@ -4,6 +4,7 @@ import { Bell, CaretDown, Check, FolderOpen, Gear, House, MagnifyingGlass, Plus,
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { ProjectCollaborationControls } from "@/components/collaboration/project-collaboration-controls";
 import type { WorkspaceSummary } from "@/lib/server/oslo-api";
 
 export function ProjectWorkspaceControls({ projectId }: { projectId: string }) {
@@ -148,6 +149,7 @@ export function ProjectWorkspaceControls({ projectId }: { projectId: string }) {
           </div>
         ) : null}
       </div>
+      <ProjectCollaborationControls projectId={projectId} />
       <div className="workspace-notifications">
         <button
           aria-expanded={notificationsOpen}

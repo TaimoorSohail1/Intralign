@@ -9,9 +9,11 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from oslo_api.api.authentication import require_access_token
 from oslo_api.application import (
     AccountAlreadyExists,
+    CollaboratorSeatLimitReached,
     InvalidInvitation,
     InvitationDeliveryFailed,
     InvitationEmailMismatch,
+    InvitationLimitReached,
 )
 from oslo_api.identity import InvalidCredentials, InvalidSession
 from oslo_api.invitations import InvitationStatus, InvitePermissionDenied, MembershipRole
@@ -130,6 +132,28 @@ def invite_member(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only workspace Owners can manage invitations",
+        ) from error
+    except InvitationLimitReached as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "INVITATION_LIMIT_REACHED",
+                "message": (
+                    "The Free plan includes two invitations per calendar month. "
+                    "Archive access or upgrade to invite another person."
+                ),
+            },
+        ) from error
+    except CollaboratorSeatLimitReached as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "COLLABORATOR_SEAT_LIMIT_REACHED",
+                "message": (
+                    "The Free plan includes three collaborator seats, including the owner. "
+                    "Invite this person as a Viewer or upgrade the workspace."
+                ),
+            },
         ) from error
     except InvitationDeliveryFailed as error:
         raise HTTPException(

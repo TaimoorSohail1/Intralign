@@ -118,6 +118,18 @@ class SliceTwoApplication(Protocol):
         key: str,
     ) -> AnalysisRun: ...
 
+    def apply_reviewer_attestation(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        issue_id: str | None,
+        reviewer_name: str,
+        response_kind: str,
+        body: str,
+        key: str,
+    ) -> AnalysisRun: ...
+
     def act_on_issue(
         self,
         *,

@@ -73,6 +73,14 @@ class InvitationDeliveryFailed(Exception):
         super().__init__("Invitation delivery failed")
 
 
+class InvitationLimitReached(Exception):
+    """Raised when the workspace has used its monthly invitation allocation."""
+
+
+class CollaboratorSeatLimitReached(Exception):
+    """Raised when another collaborator would exceed the workspace seat cap."""
+
+
 class ProjectLimitReached(Exception):
     """Raised when the workspace plan cannot create another active project."""
 
@@ -191,6 +199,49 @@ class DatabaseSliceOneApplication:
                     created_at=existing["created_at"],
                     expires_at=existing["expires_at"],
                 )
+            monthly_invites_used = connection.execute(
+                text(
+                    """
+                    select count(*)
+                    from public.invitations
+                    where workspace_id = :workspace_id
+                      and created_at >= date_trunc('month', now())
+                      and (
+                        status = 'accepted'
+                        or (status = 'pending' and expires_at > now())
+                      )
+                    """
+                ),
+                {"workspace_id": workspace_id},
+            ).scalar_one()
+            if monthly_invites_used >= 2:
+                raise InvitationLimitReached
+            if role is MembershipRole.COLLABORATOR:
+                reserved_collaborator_seats = connection.execute(
+                    text(
+                        """
+                        select
+                          (
+                            select count(*)
+                            from public.memberships
+                            where workspace_id = :workspace_id
+                              and role in ('owner', 'collaborator')
+                          )
+                          +
+                          (
+                            select count(*)
+                            from public.invitations
+                            where workspace_id = :workspace_id
+                              and role = 'collaborator'
+                              and status = 'pending'
+                              and expires_at > now()
+                          )
+                        """
+                    ),
+                    {"workspace_id": workspace_id},
+                ).scalar_one()
+                if reserved_collaborator_seats >= 3:
+                    raise CollaboratorSeatLimitReached
             issued = InviteMember(
                 invitations=SqlInvitationStore(connection),
                 memberships=memberships,
@@ -534,33 +585,61 @@ class DatabaseSliceOneApplication:
                 connection.execute(
                     text(
                         """
+                        with activity as (
+                          select
+                            'analysis:' || run.id::text || ':' || run.status::text as key,
+                            run.project_id,
+                            run.kind::text as kind,
+                            run.status::text as status,
+                            case
+                              when run.status = 'failed' then
+                                case when run.kind = 'extended'
+                                  then 'Extended Analysis needs attention'
+                                  else 'Initial Analysis needs attention'
+                                end
+                              when run.kind = 'extended' then 'Extended Analysis completed'
+                              else 'Initial Analysis completed'
+                            end as title,
+                            coalesce(run.completed_at, run.updated_at) as created_at
+                          from public.analysis_runs run
+                          where run.workspace_id = :workspace_id
+                            and run.status in ('completed', 'failed')
+
+                          union all
+
+                          select
+                            'review:' || event.aggregate_id::text as key,
+                            (event.payload ->> 'project_id')::uuid as project_id,
+                            'review' as kind,
+                            'completed' as status,
+                            coalesce(event.payload ->> 'reviewer_name', 'A reviewer')
+                              || ' submitted '
+                              || replace(
+                                coalesce(event.payload ->> 'response_kind', 'feedback'),
+                                '_',
+                                ' '
+                              ) as title,
+                            event.occurred_at as created_at
+                          from public.outbox_events event
+                          where event.workspace_id = :workspace_id
+                            and event.event_type = 'review.responded'
+                        )
                         select
-                          'analysis:' || run.id::text || ':' || run.status::text as key,
-                          run.project_id,
+                          activity.key,
+                          activity.project_id,
                           project.name as project_name,
-                          run.kind::text as kind,
-                          run.status::text as status,
-                          case
-                            when run.status = 'failed' then
-                              case when run.kind = 'extended'
-                                then 'Extended Analysis needs attention'
-                                else 'Initial Analysis needs attention'
-                              end
-                            when run.kind = 'extended' then 'Extended Analysis completed'
-                            else 'Initial Analysis completed'
-                          end as title,
-                          coalesce(run.completed_at, run.updated_at) as created_at,
+                          activity.kind,
+                          activity.status,
+                          activity.title,
+                          activity.created_at,
                           reads.notification_key is not null as read
-                        from public.analysis_runs run
-                        join public.projects project on project.id = run.project_id
+                        from activity
+                        join public.projects project on project.id = activity.project_id
                         left join public.workspace_notification_reads reads
-                          on reads.workspace_id = run.workspace_id
+                          on reads.workspace_id = :workspace_id
                          and reads.user_id = :actor_user_id
-                         and reads.notification_key =
-                           'analysis:' || run.id::text || ':' || run.status::text
-                        where run.workspace_id = :workspace_id
-                          and run.status in ('completed', 'failed')
-                        order by coalesce(run.completed_at, run.updated_at) desc
+                         and reads.notification_key = activity.key
+                        order by activity.created_at desc
                         limit 12
                         """
                     ),
@@ -702,7 +781,7 @@ class DatabaseSliceOneApplication:
             if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
                 raise InvitePermissionDenied
             for notification_key in set(keys):
-                if not notification_key.startswith("analysis:"):
+                if not notification_key.startswith(("analysis:", "review:")):
                     continue
                 connection.execute(
                     text(

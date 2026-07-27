@@ -5,9 +5,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from oslo_api.application import (
+    CollaboratorSeatLimitReached,
     InvalidInvitation,
     InvitationDeliveryFailed,
     InvitationEmailMismatch,
+    InvitationLimitReached,
 )
 from oslo_api.identity import InvalidSession
 from oslo_api.invitations import (
@@ -144,6 +146,16 @@ class DeliveryFailureApplication(RecordingSliceOneApplication):
         raise InvitationDeliveryFailed(INVITATION_ID)
 
 
+class MonthlyLimitApplication(RecordingSliceOneApplication):
+    def invite_member(self, **_kwargs):
+        raise InvitationLimitReached
+
+
+class SeatLimitApplication(RecordingSliceOneApplication):
+    def invite_member(self, **_kwargs):
+        raise CollaboratorSeatLimitReached
+
+
 def test_inviting_requires_an_authenticated_session() -> None:
     response = TestClient(create_app()).post(
         f"/v1/workspaces/{WORKSPACE_ID}/invitations",
@@ -228,6 +240,27 @@ def test_email_delivery_failure_is_reported_as_retryable() -> None:
         "message": "Invitation was saved but email delivery failed. Retry from Invitations.",
         "invitation_id": str(INVITATION_ID),
     }
+
+
+@pytest.mark.parametrize(
+    ("application", "code"),
+    [
+        (MonthlyLimitApplication(), "INVITATION_LIMIT_REACHED"),
+        (SeatLimitApplication(), "COLLABORATOR_SEAT_LIMIT_REACHED"),
+    ],
+)
+def test_free_plan_invitation_limits_are_reported_as_conflicts(
+    application: RecordingSliceOneApplication,
+    code: str,
+) -> None:
+    response = TestClient(create_app(slice_one=application)).post(
+        f"/v1/workspaces/{WORKSPACE_ID}/invitations",
+        headers={"Authorization": "Bearer valid-access-token"},
+        json={"email": "new.member@example.com", "role": "collaborator"},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == code
 
 
 @pytest.mark.parametrize("email", ["not-an-email", "missing-at.example.com", "@example.com"])

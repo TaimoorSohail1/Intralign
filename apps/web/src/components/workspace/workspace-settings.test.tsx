@@ -67,7 +67,10 @@ describe("WorkspaceSettings", () => {
       />,
     );
 
-    expect(screen.getAllByText("Arrives with Collaboration")).toHaveLength(3);
+    const mentions = screen.getByRole("switch", { name: "Mentions" });
+    expect(mentions).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(mentions);
+    expect(localStorage.getItem("oslo-collaboration-notifications")).toContain('"Mentions":false');
     fireEvent.click(screen.getByRole("switch", { name: /Analysis complete/ }));
 
     await waitFor(() => {

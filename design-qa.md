@@ -55,6 +55,117 @@ No actionable P0, P1, or P2 differences remain.
 
 final result: passed
 
+# Slice 9 Collaboration History and Issue Review Design QA
+
+## Evidence
+
+- Source visual truth: user-provided History and issue-sidebar screenshots.
+- Rendered implementation: project History filters and the issue `Share for review` card.
+- State: authenticated desktop project with retained analysis runs, reviewer activity, and an open issue.
+
+## Findings
+
+No actionable P0, P1, or P2 visual differences remain.
+
+- History now exposes a dedicated `Collaboration & invites` filter instead of hiding reviewer activity inside the general timeline.
+- A concise collaboration legend explains which comments, invitations, shared snapshots, exports, and reviewer decisions are retained.
+- Existing review invitations are backfilled into append-only project history, while new collaboration actions are recorded at creation time.
+- The issue sidebar review form is a separate bordered card with a clear heading, labeled inputs, consistent spacing, a full-width primary action, and safe bottom clearance.
+
+## Verification
+
+- History and Overview component tests: 31 passed.
+- Collaboration API tests: 5 passed.
+- Production web build: passed.
+- Local database migration and reviewer-invitation backfill: passed.
+- Workspace recent activity exposes the retained reviewer response and links to project History.
+
+final result: passed
+
+# Slice 9 Project Header Actions Design QA
+
+## Evidence
+
+- Source visual truth: the supplied project-header screenshot at `2550 × 310`.
+- Rendered implementation: `http://localhost:3000/projects/65ba2e0a-e818-4719-9c05-7dcfb95a0012/overview`.
+- Comparison method: live authenticated browser inspection, screenshot review, and DOM geometry checks.
+
+## Findings
+
+No actionable P0, P1, or P2 visual differences remain.
+
+- Share and Export now occupy a dedicated header grid area beside the confidence control.
+- The controls use a compact 32px height, consistent spacing, icon alignment, OSLO borders, and a restrained orange primary treatment.
+- Notification, search, advisor, and account controls remain on the same header row.
+- The header has no horizontal or vertical overflow; every control is fully inside the 48px header.
+- At narrow breakpoints, Share and Export retain accessible icon buttons while their labels collapse to preserve space.
+
+## Verification
+
+- Live header geometry: 48px header; all action controls at `top: 7.5px`, `bottom: 39.5px`.
+- Header overflow: `scrollWidth === clientWidth` and `scrollHeight === clientHeight`.
+- Collaboration and workspace-control tests: 11 passed.
+- Web lint: passed.
+- Production web build and TypeScript validation: passed.
+
+final result: passed
+
+# Slice 9 Collaboration, Sharing, and Export Design QA
+
+## Evidence
+
+- Source visual truth: Slice 9 prototype at `http://127.0.0.1:4180/prototype.html`.
+- Authenticated implementation: `http://localhost:3000/projects/65ba2e0a-e818-4719-9c05-7dcfb95a0012/overview`.
+- Public snapshot: `http://localhost:3000/share/euA3XnlycO8nzdJs4Aum0wkNoiEPGgSlUooseBMmPYY`.
+- Public review: `http://localhost:3000/review/ZAnjOuXGA2Tzabm9sRaf6tDWkU4GXmbItgwI6x78io0`.
+- Comparison method: live prototype and implementation DOM, layout, responsive states, keyboard interactions, and complete share/review flows inspected at the same desktop viewport.
+- Focused screenshots were not added because the in-app browser security policy blocks local-URL screenshot capture; live side-by-side inspection and interaction testing covered the same states.
+
+## Findings
+
+No actionable P0, P1, or P2 visual differences remain.
+
+- Collaboration actions use the established OSLO dark surfaces, orange emphasis, compact controls, spacing, and responsive dialog treatment.
+- Snapshot sharing and reviewer access are visually distinct and explain their different permissions before a link is created.
+- Public snapshot and review pages remain readable without the authenticated project shell.
+- Reviewer actions are clear, keyboard accessible, and preserve the read-only source evidence.
+- The export control communicates scope and produces a governed PDF containing all seven artifacts, findings, evidence references, currency marker, and disclaimer.
+
+## Comparison History
+
+### Pass 0 — review completion linkage
+
+- Finding: a reviewer response could be stored before its Extended Analysis run was linked.
+- Fix: make submission idempotent, retry unlinked responses safely, and resolve the grant only after the analysis run is linked.
+
+### Pass 1 — notification timestamp
+
+- Finding: reviewer-response notifications queried a non-existent generic timestamp.
+- Fix: project `occurred_at` consistently as the notification creation timestamp.
+
+### Pass 2 — export completeness
+
+- Finding: the first export summary did not include the promised seven artifacts and evidence references.
+- Fix: generate a multipage PDF with artifact content, open findings, evidence references, currency context, and governance disclaimer.
+
+### Pass 3 — final
+
+- Rechecked member and reviewer permissions, seat and invitation limits, invitation revocation, snapshot creation, reviewer submission, Extended Analysis, owner notification, public links, and export.
+- No actionable P0/P1/P2 findings remain.
+
+## Verification
+
+- Focused collaboration, invitation, and export API tests: 29 passed.
+- Full web suite: 70 tests passed.
+- Web lint: passed.
+- TypeScript check: passed.
+- Python Ruff checks: passed.
+- Production web build: passed.
+- Live snapshot, reviewer response, Extended Analysis, owner notification, and no-analysis export checks: passed.
+- Full API suite is not claimed in this pass because it exceeded the local execution window; no failure was reported before timeout, and Slice 9 focused coverage passed.
+
+final result: passed
+
 # Slice 8 Project Header Polish Design QA
 
 ## Evidence

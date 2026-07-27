@@ -31,14 +31,14 @@ const settingsSections = [
   { id: "notifications", label: "Notifications", group: "You", Icon: Bell },
   { id: "workspace", label: "Workspace", group: "Workspace", Icon: Buildings },
   { id: "project-defaults", label: "Project defaults", group: "Workspace", Icon: SlidersHorizontal },
-  { id: "collaboration", label: "Collaboration", group: "Workspace", Icon: Users, badge: "Later" },
+  { id: "collaboration", label: "Collaboration", group: "Workspace", Icon: Users },
   { id: "membership", label: "Membership", group: "Workspace", Icon: Users, badge: "View" },
   { id: "subscription", label: "Subscription", group: "Plan", Icon: CreditCard, badge: "View" },
   { id: "billing", label: "Billing", group: "Plan", Icon: CreditCard, badge: "View" },
   { id: "integrations", label: "Integrations", group: "Plan", Icon: LinkSimple, badge: "Later" },
 ] as const;
 
-const futureNotifications = [
+const collaborationNotifications = [
   ["Mentions", "when someone mentions you"],
   ["Replies", "when someone replies to you"],
   ["Shared with me", "when a project is shared with you"],
@@ -64,6 +64,18 @@ export function WorkspaceSettings({
   const [localDisplayName, setLocalDisplayName] = useState(displayName);
   const [localWorkspaceName, setLocalWorkspaceName] = useState(workspaceName);
   const [role, setRole] = useState("");
+  const [collaborationPreferences, setCollaborationPreferences] = useState<Record<string, boolean>>(() => {
+    const defaults = { Mentions: true, Replies: true, "Shared with me": true };
+    if (typeof window === "undefined") return defaults;
+    const stored = localStorage.getItem("oslo-collaboration-notifications");
+    if (!stored) return defaults;
+    try {
+      return { ...defaults, ...JSON.parse(stored) };
+    } catch {
+      localStorage.removeItem("oslo-collaboration-notifications");
+      return defaults;
+    }
+  });
 
   const normalizedQuery = query.trim().toLowerCase();
   const visibleSections = useMemo(
@@ -100,6 +112,15 @@ export function WorkspaceSettings({
     media.addEventListener("change", applyTheme);
     return () => media.removeEventListener("change", applyTheme);
   }, [preferences.theme]);
+
+  const toggleCollaborationNotification = (title: string) => {
+    setCollaborationPreferences((current) => {
+      const next = { ...current, [title]: !current[title] };
+      localStorage.setItem("oslo-collaboration-notifications", JSON.stringify(next));
+      setSaved(true);
+      return next;
+    });
+  };
 
   const commitLocalIdentity = () => {
     localStorage.setItem("oslo-display-name", localDisplayName.trim() || displayName);
@@ -216,10 +237,20 @@ export function WorkspaceSettings({
           <article className="settings-section" id="notifications">
             <div className="settings-section-heading"><h2>Notifications</h2><p>Awareness only — notification choices never start analysis.</p></div>
             <div className="settings-card">
-              {futureNotifications.map(([title, detail]) => (
+              {collaborationNotifications.map(([title, detail]) => (
                 <div className="settings-row" key={title}>
                   <span><strong>{title}</strong><small>{detail}</small></span>
-                  <div className="settings-future-control"><small>Arrives with Collaboration</small><span>Off</span><button aria-label={`${title} unavailable`} className="settings-switch" disabled type="button"><i /></button></div>
+                  <div className="settings-future-control">
+                    <span>{collaborationPreferences[title] ? "On" : "Off"}</span>
+                    <button
+                      aria-checked={collaborationPreferences[title]}
+                      aria-label={title}
+                      className={`settings-switch ${collaborationPreferences[title] ? "is-on" : ""}`}
+                      onClick={() => toggleCollaborationNotification(title)}
+                      role="switch"
+                      type="button"
+                    ><i /></button>
+                  </div>
                 </div>
               ))}
               {([
@@ -265,8 +296,15 @@ export function WorkspaceSettings({
 
         {sectionVisible("collaboration") ? (
           <article className="settings-section" id="collaboration">
-            <div className="settings-section-heading"><h2>Collaboration <small>Later</small></h2><p>Sharing and invites. Not built yet.</p></div>
-            <div className="settings-card"><div className="settings-row"><span>Default sharing</span><strong>Private</strong></div><div className="settings-row"><span>Invites and shared projects</span><small>Available in Collaboration</small></div></div>
+            <div className="settings-section-heading"><h2>Collaboration</h2><p>Governed access, review links, comments, and retained snapshots.</p></div>
+            <div className="settings-card">
+              <div className="settings-row"><span><strong>Default sharing</strong><small>New projects remain private until you share them.</small></span><strong>Private</strong></div>
+              <div className="settings-row"><span><strong>Collaborator seats</strong><small>Owners and collaborators can edit; viewers are read-only.</small></span><strong>3 on Free</strong></div>
+              <div className="settings-row"><span><strong>External reviewers</strong><small>Review links do not create membership or use a seat.</small></span><strong>Unlimited</strong></div>
+              <div className="settings-row"><span><strong>Snapshot links</strong><small>Read-only, revocable, and retained for 30 days.</small></span><strong>30 days</strong></div>
+              <div className="settings-row"><span><strong>Review links</strong><small>One attested response; expires after 14 days or issue resolution.</small></span><strong>14 days</strong></div>
+              <div className="settings-row"><span>Workspace invitations</span><Link href="/admin/invitations">Manage invitations</Link></div>
+            </div>
           </article>
         ) : null}
 
