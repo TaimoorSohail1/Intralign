@@ -24,6 +24,18 @@ const history: ProjectHistory = {
       ],
       events: [
         {
+          id: 3,
+          category: "collaboration",
+          event_type: "collaboration.review_invited",
+          summary: "Reviewer invited",
+          detail: "Alex Morgan was invited to review a project issue.",
+          actor_type: "user",
+          artifact_type: null,
+          artifact_version: null,
+          issue_id: "issue-001",
+          occurred_at: "2026-07-26T12:01:00Z",
+        },
+        {
           id: 2,
           category: "issues",
           event_type: "issues.reconciled",
@@ -138,6 +150,13 @@ describe("HistoryWorkspace", () => {
     expect(screen.getByText(/7 plan-artifact versions retained/)).toBeInTheDocument();
     expect(screen.queryByText("6 issues detected")).not.toBeInTheDocument();
 
+    fireEvent.click(
+      screen.getByRole("button", { name: "Collaboration & invites" }),
+    );
+    expect(screen.getByText("Reviewer invited")).toBeInTheDocument();
+    expect(screen.queryByText(/7 plan-artifact versions retained/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Versions" }));
     fireEvent.click(screen.getByRole("button", { name: /view snapshot/i }));
     await waitFor(() =>
       expect(screen.getByRole("dialog", { name: /historical snapshot/i })).toBeInTheDocument(),

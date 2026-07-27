@@ -61,7 +61,7 @@ export const osloApiUrl = apiUrl;
 export interface AnalysisRunSummary {
   run_id: string;
   project_id: string;
-  kind: "initial" | "extended";
+  kind: "initial" | "extended" | "review";
   status: "queued" | "running" | "completed" | "failed" | "cancelled";
   phase?: string | null;
   completed_phases?: string[];
@@ -137,7 +137,12 @@ export interface AdvisorReplySummary {
   follow_up_questions: string[];
 }
 
-export type HistoryCategory = "analysis" | "issues" | "versions" | "decisions";
+export type HistoryCategory =
+  | "analysis"
+  | "issues"
+  | "versions"
+  | "decisions"
+  | "collaboration";
 
 export interface HistoryChange {
   label: string;
@@ -545,6 +550,120 @@ export interface WorkspacePreferences {
   analysis_notifications: boolean;
   failure_notifications: boolean;
   stale_notifications: boolean;
+}
+
+export interface CollaborationState {
+  actor_role: "owner" | "collaborator" | "viewer";
+  plan: {
+    name: string;
+    collaborator_seats: number;
+    collaborator_seats_used: number;
+    monthly_invites: number;
+    monthly_invites_used?: number;
+    viewers_unlimited: boolean;
+    reviewers_unmetered: boolean;
+    export_formats: string[];
+  };
+  participants: Array<{ id: string; display_name: string; role: string }>;
+  invitations?: InvitationSummary[];
+  comments: Array<{
+    id: string;
+    issue_id: string;
+    body: string;
+    mentions: string[];
+    author_name: string;
+    created_at: string;
+  }>;
+  reviews: Array<{
+    id: string;
+    issue_id?: string | null;
+    reviewer_name: string;
+    reviewer_email?: string | null;
+    expires_at: string;
+    resolved_at?: string | null;
+    revoked_at?: string | null;
+    response_kind?: string | null;
+  }>;
+  share_links: Array<{
+    id: string;
+    expires_at: string;
+    revoked_at?: string | null;
+    created_at: string;
+  }>;
+}
+
+export function getCollaboration(accessToken: string, projectId: string) {
+  return apiRequest<CollaborationState>(`/v1/projects/${projectId}/collaboration`, {
+    method: "GET",
+    headers: { authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function createShareLink(accessToken: string, projectId: string) {
+  return apiRequest<{ id: string; url: string; expires_at: string }>(
+    `/v1/projects/${projectId}/share-links`,
+    { method: "POST", headers: { authorization: `Bearer ${accessToken}` } },
+  );
+}
+
+export function createReviewGrant(input: {
+  accessToken: string;
+  projectId: string;
+  issueId?: string | null;
+  reviewerName: string;
+  reviewerEmail?: string | null;
+}) {
+  return apiRequest<{ id: string; url: string; expires_at: string }>(
+    `/v1/projects/${input.projectId}/review-grants`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+      body: JSON.stringify({
+        issue_id: input.issueId ?? null,
+        reviewer_name: input.reviewerName,
+        reviewer_email: input.reviewerEmail || null,
+      }),
+    },
+  );
+}
+
+export function revokeShareLink(input: {
+  accessToken: string;
+  projectId: string;
+  linkId: string;
+}): Promise<void> {
+  return apiRequest(
+    `/v1/projects/${input.projectId}/share-links/${input.linkId}`,
+    { method: "DELETE", headers: { authorization: `Bearer ${input.accessToken}` } },
+  );
+}
+
+export function revokeReviewGrant(input: {
+  accessToken: string;
+  projectId: string;
+  grantId: string;
+}): Promise<void> {
+  return apiRequest(
+    `/v1/projects/${input.projectId}/review-grants/${input.grantId}`,
+    { method: "DELETE", headers: { authorization: `Bearer ${input.accessToken}` } },
+  );
+}
+
+export function addProjectComment(input: {
+  accessToken: string;
+  projectId: string;
+  issueId: string;
+  body: string;
+  mentions: string[];
+}) {
+  return apiRequest(
+    `/v1/projects/${input.projectId}/issues/${encodeURIComponent(input.issueId)}/comments`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+      body: JSON.stringify({ body: input.body, mentions: input.mentions }),
+    },
+  );
 }
 
 export function getWorkspace(input: {

@@ -8,6 +8,7 @@ import {
   FileText,
   Info,
   Sparkle,
+  UsersThree,
   X,
 } from "@phosphor-icons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -28,6 +29,7 @@ const filters: Array<{ label: string; value: HistoryFilter }> = [
   { label: "Issues", value: "issues" },
   { label: "Versions", value: "versions" },
   { label: "Your decisions", value: "decisions" },
+  { label: "Collaboration & invites", value: "collaboration" },
 ];
 
 function runTitle(group: HistoryGroup) {
@@ -51,6 +53,9 @@ function relativeDate(value: string) {
 function eventIcon(event: HistoryEvent) {
   if (event.category === "versions") return <FileText aria-hidden="true" size={15} />;
   if (event.category === "decisions") return <Sparkle aria-hidden="true" size={15} />;
+  if (event.category === "collaboration") {
+    return <UsersThree aria-hidden="true" size={15} />;
+  }
   return <ClockCounterClockwise aria-hidden="true" size={15} />;
 }
 
@@ -178,6 +183,14 @@ export function HistoryWorkspace({
             {item.label}
           </button>
         ))}
+      </div>
+      <div className="history-collaboration-note">
+        <UsersThree aria-hidden="true" size={17} />
+        <p>
+          <strong>Collaboration is retained here.</strong>
+          Comments, review invitations, shared snapshots, exports, and reviewer
+          decisions appear in this read-only timeline.
+        </p>
       </div>
 
       <div className="history-runs">

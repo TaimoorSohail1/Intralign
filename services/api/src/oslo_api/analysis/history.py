@@ -7,7 +7,13 @@ from uuid import UUID
 
 from sqlalchemy import Connection, Engine, text
 
-HistoryCategory = Literal["analysis", "issues", "versions", "decisions"]
+HistoryCategory = Literal[
+    "analysis",
+    "issues",
+    "versions",
+    "decisions",
+    "collaboration",
+]
 
 
 def append_history_event(

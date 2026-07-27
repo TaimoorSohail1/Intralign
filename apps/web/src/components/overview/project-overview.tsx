@@ -766,7 +766,6 @@ export function ProjectOverview({
         <div className="workspace-future" aria-label="Planned capabilities">
           <p>Coming in later slices</p>
           <span><FolderOpen aria-hidden="true" size={15} /> Reports</span>
-          <span>Share &amp; export</span>
         </div>
         <div className="workspace-sidebar-footer">
           <button
@@ -1119,6 +1118,7 @@ export function ProjectOverview({
             answer={clarificationAnswer}
             error={clarificationError ?? issueActionError}
             issue={selectedIssue}
+            projectId={snapshot.project_id}
             onAnswerChange={setClarificationAnswer}
             onAsk={() => {
               closeIssue();
@@ -2030,6 +2030,7 @@ function IssuePanel({
   answer,
   error,
   issue,
+  projectId,
   onAnswerChange,
   onAsk,
   onClose,
@@ -2042,6 +2043,7 @@ function IssuePanel({
   answer: string;
   error: string | null;
   issue: Issue;
+  projectId: string;
   onAnswerChange: (value: string) => void;
   onAsk: () => void;
   onClose: () => void;
@@ -2056,12 +2058,110 @@ function IssuePanel({
   const closeButton = useRef<HTMLButtonElement>(null);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [customResolution, setCustomResolution] = useState("");
+  const [comments, setComments] = useState<Array<{
+    id: string;
+    body: string;
+    author_name: string;
+    created_at: string;
+  }>>([]);
+  const [commentBody, setCommentBody] = useState("");
+  const [commentPending, setCommentPending] = useState(false);
+  const [collaborationError, setCollaborationError] = useState("");
+  const [reviewerName, setReviewerName] = useState("");
+  const [reviewerEmail, setReviewerEmail] = useState("");
+  const [reviewPending, setReviewPending] = useState(false);
+  const [reviewLink, setReviewLink] = useState("");
+  const [reviewCopied, setReviewCopied] = useState(false);
   const evidence = issue.evidence ?? [];
   const effectiveStatus = analysisRunning ? "addressed" : issue.status;
 
   useEffect(() => {
     closeButton.current?.focus();
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/projects/${projectId}/collaboration`, { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Collaboration details are unavailable.");
+        return response.json();
+      })
+      .then((state: { comments?: Array<{
+        id: string;
+        issue_id: string;
+        body: string;
+        author_name: string;
+        created_at: string;
+      }> }) => {
+        if (active) {
+          setComments((state.comments ?? []).filter((comment) => comment.issue_id === issue.id));
+        }
+      })
+      .catch(() => {
+        if (active) setCollaborationError("Comments could not be loaded.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [issue.id, projectId]);
+
+  const submitComment = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!commentBody.trim()) return;
+    setCommentPending(true);
+    setCollaborationError("");
+    try {
+      const mentions = Array.from(
+        new Set(Array.from(commentBody.matchAll(/@([\w.-]+)/g), (match) => match[1])),
+      );
+      const response = await fetch(`/api/projects/${projectId}/collaboration`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ issueId: issue.id, body: commentBody.trim(), mentions }),
+      });
+      const created = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(created.message ?? "Comment could not be added.");
+      setComments((current) => [...current, created]);
+      setCommentBody("");
+    } catch (caught) {
+      setCollaborationError(
+        caught instanceof Error ? caught.message : "Comment could not be added.",
+      );
+    } finally {
+      setCommentPending(false);
+    }
+  };
+
+  const createReview = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!reviewerName.trim()) return;
+    setReviewPending(true);
+    setCollaborationError("");
+    setReviewLink("");
+    try {
+      const response = await fetch(`/api/projects/${projectId}/collaboration`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "review",
+          issueId: issue.id,
+          reviewerName: reviewerName.trim(),
+          reviewerEmail: reviewerEmail.trim() || null,
+        }),
+      });
+      const created = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(created.message ?? "Review link could not be created.");
+      setReviewLink(created.url);
+      setReviewerName("");
+      setReviewerEmail("");
+    } catch (caught) {
+      setCollaborationError(
+        caught instanceof Error ? caught.message : "Review link could not be created.",
+      );
+    } finally {
+      setReviewPending(false);
+    }
+  };
 
   return (
     <aside
@@ -2240,8 +2340,102 @@ function IssuePanel({
           Apply custom fix
         </button>
       </section>
+      <section className="issue-collaboration">
+        <div className="issue-collaboration-heading">
+          <div>
+            <h3>Discussion</h3>
+            <p>Append-only project comments. Mention teammates with @name.</p>
+          </div>
+          <span>{comments.length}</span>
+        </div>
+        <div className="issue-comment-thread">
+          {comments.map((comment) => (
+            <article key={comment.id}>
+              <header>
+                <strong>{comment.author_name}</strong>
+                <time dateTime={comment.created_at}>
+                  {new Date(comment.created_at).toLocaleString()}
+                </time>
+              </header>
+              <p>{comment.body}</p>
+            </article>
+          ))}
+          {!comments.length ? <p className="issue-comment-empty">No comments yet.</p> : null}
+        </div>
+        <form className="issue-comment-form" onSubmit={submitComment}>
+          <textarea
+            aria-label="Add a comment"
+            disabled={commentPending}
+            maxLength={5_000}
+            onChange={(event) => setCommentBody(event.target.value)}
+            placeholder="Add a comment or mention @teammate…"
+            value={commentBody}
+          />
+          <button disabled={commentPending || !commentBody.trim()} type="submit">
+            {commentPending ? "Adding…" : "Add comment"}
+          </button>
+        </form>
+      </section>
+      <section className="issue-review-share">
+        <div className="issue-review-share-heading">
+          <span className="issue-review-share-icon">
+            <Sparkle aria-hidden="true" size={15} weight="fill" />
+          </span>
+          <div>
+            <h3>Share for review</h3>
+            <p>Invite a reviewer without using a workspace seat or invitation.</p>
+          </div>
+        </div>
+        <form className="issue-review-share-form" onSubmit={createReview}>
+          <div className="issue-review-fields">
+            <label>
+              Reviewer name
+              <input
+                disabled={reviewPending}
+                onChange={(event) => setReviewerName(event.target.value)}
+                placeholder="e.g. Alex Morgan"
+                required
+                value={reviewerName}
+              />
+            </label>
+            <label>
+              <span>
+                Email <em>Optional</em>
+              </span>
+              <input
+                disabled={reviewPending}
+                onChange={(event) => setReviewerEmail(event.target.value)}
+                placeholder="alex@example.com"
+                type="email"
+                value={reviewerEmail}
+              />
+            </label>
+          </div>
+          <button disabled={reviewPending || !reviewerName.trim()} type="submit">
+            <Sparkle aria-hidden="true" size={13} weight="fill" />
+            {reviewPending ? "Creating…" : "Create secure review link"}
+          </button>
+        </form>
+        {reviewLink ? (
+          <div className="issue-review-link" role="status">
+            <code>{reviewLink}</code>
+            <button
+              onClick={() => {
+                void navigator.clipboard.writeText(reviewLink);
+                setReviewCopied(true);
+              }}
+              type="button"
+            >
+              {reviewCopied ? "Copied" : "Copy link"}
+            </button>
+          </div>
+        ) : null}
+        {collaborationError ? (
+          <p className="clarification-error" role="alert">{collaborationError}</p>
+        ) : null}
+      </section>
       <p className="issue-history-pointer">
-        Status changes are recorded in project history. Full history arrives in Slice 7.
+        Status changes and reviewer attestations are retained in project history.
       </p>
       {error ? <p className="clarification-error" role="alert">{error}</p> : null}
     </aside>
