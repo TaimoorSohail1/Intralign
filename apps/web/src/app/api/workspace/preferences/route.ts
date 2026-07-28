@@ -10,12 +10,19 @@ export async function GET() {
   if (!session.accessToken || !session.workspaceId) {
     return Response.json({ message: "Unauthorized" }, { status: 401 });
   }
-  return Response.json(
-    await getWorkspacePreferences({
-      accessToken: session.accessToken,
-      workspaceId: session.workspaceId,
-    }),
-  );
+  try {
+    return Response.json(
+      await getWorkspacePreferences({
+        accessToken: session.accessToken,
+        workspaceId: session.workspaceId,
+      }),
+    );
+  } catch (error) {
+    return Response.json(
+      { message: error instanceof Error ? error.message : "Settings are unavailable." },
+      { status: 400 },
+    );
+  }
 }
 
 export async function PUT(request: Request) {
@@ -24,11 +31,18 @@ export async function PUT(request: Request) {
     return Response.json({ message: "Unauthorized" }, { status: 401 });
   }
   const preferences = (await request.json()) as WorkspacePreferences;
-  return Response.json(
-    await updateWorkspacePreferences({
-      accessToken: session.accessToken,
-      workspaceId: session.workspaceId,
-      preferences,
-    }),
-  );
+  try {
+    return Response.json(
+      await updateWorkspacePreferences({
+        accessToken: session.accessToken,
+        workspaceId: session.workspaceId,
+        preferences,
+      }),
+    );
+  } catch (error) {
+    return Response.json(
+      { message: error instanceof Error ? error.message : "Settings could not be saved." },
+      { status: 400 },
+    );
+  }
 }

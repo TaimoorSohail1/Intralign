@@ -144,8 +144,49 @@ class OpenAIProjectAdvisor:
                     "summary": artifact.summary,
                     "reliability": artifact.reliability,
                     "evidence_refs": artifact.evidence_refs,
+                    "sections": [
+                        {
+                            "heading": section.heading,
+                            "body": section.body,
+                            "bullets": section.bullets,
+                            "columns": section.columns,
+                            "rows": section.rows,
+                            "evidence_refs": section.evidence_refs,
+                            "row_evidence_refs": section.row_evidence_refs,
+                            "row_states": section.row_states,
+                        }
+                        for section in artifact.sections
+                    ],
+                    "assumptions": [
+                        {
+                            "id": assumption.id,
+                            "statement": assumption.statement,
+                            "state": assumption.state,
+                            "load_bearing": assumption.load_bearing,
+                            "evidence_refs": assumption.evidence_refs,
+                        }
+                        for assumption in artifact.assumptions
+                    ],
+                    "conflicts": [
+                        {
+                            "id": conflict.id,
+                            "field": conflict.field,
+                            "values": conflict.values,
+                            "evidence_refs": conflict.evidence_refs,
+                        }
+                        for conflict in artifact.conflicts
+                    ],
                 }
                 for artifact in snapshot.artifacts
+            ],
+            "evidence_citations": [
+                {
+                    "reference": citation.reference,
+                    "source_name": citation.source_name,
+                    "location": citation.location,
+                    "excerpt": citation.excerpt,
+                }
+                for citation in snapshot.evidence_citations
             ],
         }
 

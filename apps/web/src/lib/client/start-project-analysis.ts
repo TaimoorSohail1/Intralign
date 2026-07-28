@@ -12,6 +12,16 @@ interface AnalysisRun {
   status: "queued" | "running" | "completed" | "failed" | "cancelled";
 }
 
+interface StartProjectAnalysisResult {
+  projectId: string;
+  run: AnalysisRun;
+}
+
+interface ProjectResponse {
+  id?: string;
+  project_id?: string;
+}
+
 async function responseJson(response: Response) {
   return response.json().catch(() => ({}));
 }
@@ -36,6 +46,17 @@ function documentError(message: unknown) {
   return documentErrors[code] ?? (code || "Document could not be processed");
 }
 
+export class ProjectUnavailableError extends Error {
+  constructor(message = "This project is no longer available.") {
+    super(message);
+    this.name = "ProjectUnavailableError";
+  }
+}
+
+function isProjectUnavailable(response: Response, payload: Record<string, unknown>) {
+  return response.status === 404 || payload.code === "PROJECT_NOT_FOUND";
+}
+
 export async function startProjectAnalysis({
   projectId,
   description,
@@ -50,11 +71,14 @@ export async function startProjectAnalysis({
         method: "POST",
         body: form,
       });
-      const payload = await responseJson(response);
+      const payload = (await responseJson(response)) as Record<string, unknown>;
       if (!response.ok) {
-        throw new Error(
-          `${file.name}: ${documentError(payload.message)}`,
-        );
+        if (isProjectUnavailable(response, payload)) {
+          throw new ProjectUnavailableError(
+            typeof payload.message === "string" ? payload.message : undefined,
+          );
+        }
+        throw new Error(`${file.name}: ${documentError(payload.message)}`);
       }
       return payload as {
         document_id: string;
@@ -65,6 +89,12 @@ export async function startProjectAnalysis({
   const uploadFailures = uploadResults.filter(
     (result): result is PromiseRejectedResult => result.status === "rejected",
   );
+  const unavailableFailure = uploadFailures.find(
+    (failure) => failure.reason instanceof ProjectUnavailableError,
+  );
+  if (unavailableFailure) {
+    throw unavailableFailure.reason;
+  }
   if (uploadFailures.length > 0) {
     throw new Error(
       uploadFailures
@@ -77,10 +107,13 @@ export async function startProjectAnalysis({
     );
   }
   const uploaded = uploadResults.map(
-    (result) => (result as PromiseFulfilledResult<{
-      document_id: string;
-      file_name: string;
-    }>).value,
+    (result) =>
+      (
+        result as PromiseFulfilledResult<{
+          document_id: string;
+          file_name: string;
+        }>
+      ).value,
   );
 
   const response = await fetcher(`/api/projects/${projectId}/analysis-runs`, {
@@ -93,9 +126,66 @@ export async function startProjectAnalysis({
       idempotencyKey: crypto.randomUUID(),
     }),
   });
-  const payload = await responseJson(response);
+  const payload = (await responseJson(response)) as Record<string, unknown>;
   if (!response.ok) {
-    throw new Error(payload.message ?? "Analysis could not start");
+    if (isProjectUnavailable(response, payload)) {
+      throw new ProjectUnavailableError(
+        typeof payload.message === "string" ? payload.message : undefined,
+      );
+    }
+    throw new Error(
+      typeof payload.message === "string"
+        ? payload.message
+        : "Analysis could not start",
+    );
   }
-  return payload as AnalysisRun;
+  return payload as unknown as AnalysisRun;
+}
+
+export async function startProjectAnalysisWithRecovery(
+  input: StartProjectAnalysisInput,
+): Promise<StartProjectAnalysisResult> {
+  const fetcher = input.fetcher ?? fetch;
+  try {
+    const run = await startProjectAnalysis({ ...input, fetcher });
+    return { projectId: input.projectId, run };
+  } catch (error) {
+    if (!(error instanceof ProjectUnavailableError)) {
+      throw error;
+    }
+  }
+
+  const projectResponse = await fetcher("/api/projects/new", { method: "POST" });
+  const projectPayload = (await responseJson(projectResponse)) as Record<
+    string,
+    unknown
+  >;
+  if (!projectResponse.ok) {
+    if (
+      projectResponse.status === 409 ||
+      projectPayload.code === "PROJECT_LIMIT_REACHED"
+    ) {
+      throw new Error(
+        "This project is no longer available, and your active-project limit has been reached. Open Workspace to archive a project, then try again.",
+      );
+    }
+    throw new Error(
+      typeof projectPayload.message === "string"
+        ? projectPayload.message
+        : "A replacement project could not be created.",
+    );
+  }
+
+  const project = projectPayload as ProjectResponse;
+  const replacementProjectId = project.id ?? project.project_id;
+  if (!replacementProjectId) {
+    throw new Error("A replacement project could not be created.");
+  }
+
+  const run = await startProjectAnalysis({
+    ...input,
+    projectId: replacementProjectId,
+    fetcher,
+  });
+  return { projectId: replacementProjectId, run };
 }

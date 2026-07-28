@@ -1,5 +1,5 @@
 import re
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from time import sleep
 from typing import TypedDict
@@ -8,6 +8,7 @@ from uuid import uuid4
 from langgraph.graph import END, START, StateGraph
 
 from oslo_api.analysis.harness import AgentHarness, AgentHarnessError
+from oslo_api.analysis.issue_identity import stabilize_issue_ids
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     AnalysisPhase,
@@ -21,6 +22,12 @@ from oslo_api.analysis.models import (
     HarnessInvocation,
     Perception,
     RunKind,
+)
+from oslo_api.analysis.semantic_validation import (
+    apply_evidence_rubric,
+    audit_project_evidence,
+    merge_semantic_issues,
+    normalize_artifact_provenance,
 )
 from oslo_api.analysis.store import AnalysisStore
 from oslo_api.analysis.understanding import enrich_assessment
@@ -128,7 +135,7 @@ class AnalysisWorkflow:
             state["perception"] = self._harness.perceive(
                 description=request.description,
                 source_names=request.source_names,
-                evidence=self._store.evidence_for(request),
+                evidence=self._store.evidence_for(request) + request.user_evidence,
                 kind=request.kind,
                 invocation=invocation,
             )
@@ -137,22 +144,38 @@ class AnalysisWorkflow:
         elif phase is AnalysisPhase.CONSTRUCT_ARTIFACTS:
             self._start(run.id, request, phase)
             invocation = self._harness_invocation(run.id, phase, state)
-            state["artifacts"] = self._harness.construct(
-                perception=state["perception"],
-                kind=request.kind,
-                invocation=invocation,
+            constructed = normalize_artifact_provenance(
+                self._harness.construct(
+                    perception=state["perception"],
+                    kind=request.kind,
+                    invocation=invocation,
+                )
+            )
+            state["artifacts"] = self._scope_artifact_edit(
+                request=request,
+                constructed=constructed,
             )
             self._record_harness_call(state, invocation)
             self._store.complete_phase(run.id, phase, state)
         elif phase is AnalysisPhase.EVALUATE_ADVISE:
             self._start(run.id, request, phase)
             invocation = self._harness_invocation(run.id, phase, state)
-            state["assessment"] = self._harness.evaluate(
+            model_assessment = self._harness.evaluate(
                 artifacts=state["artifacts"],
                 perception=state["perception"],
                 kind=request.kind,
                 context=request.description,
                 invocation=invocation,
+            )
+            state["assessment"] = apply_evidence_rubric(
+                replace(
+                    model_assessment,
+                    issues=merge_semantic_issues(
+                        model_assessment.issues,
+                        audit_project_evidence(state["perception"].evidence),
+                    ),
+                ),
+                state["perception"].evidence,
             )
             self._record_harness_call(state, invocation)
             self._store.complete_phase(run.id, phase, state)
@@ -167,14 +190,39 @@ class AnalysisWorkflow:
         elif phase is AnalysisPhase.PUBLISH:
             self._start(run.id, request, phase)
             previous_snapshot = self._store.current_snapshot(request.project_id)
+            raw_assessment = state["assessment"]
+            state["assessment"] = replace(
+                raw_assessment,
+                issues=stabilize_issue_ids(
+                    raw_assessment.issues,
+                    previous_snapshot.assessment.issues if previous_snapshot else (),
+                ),
+            )
             assessment = enrich_assessment(
                 assessment=state["assessment"],
                 artifacts=state["artifacts"],
                 kind=request.kind,
                 previous_snapshot=previous_snapshot,
                 description=request.description,
+                user_evidence=request.user_evidence,
             )
             state["assessment"] = assessment
+            project_title = next(
+                (
+                    artifact.project_title
+                    for artifact in state["artifacts"]
+                    if artifact.project_title
+                ),
+                None,
+            )
+            project_title = project_title or self._supported_project_title(state["perception"])
+            if project_title:
+                state["artifacts"] = tuple(
+                    artifact
+                    if artifact.project_title
+                    else replace(artifact, project_title=project_title)
+                    for artifact in state["artifacts"]
+                )
             snapshot = AssessmentSnapshot(
                 id=uuid4(),
                 analysis_run_id=run.id,
@@ -195,12 +243,79 @@ class AnalysisWorkflow:
                     artifacts=state["artifacts"],
                     assessment=assessment,
                 ),
+                project_title=project_title,
+                source_document_count=len(set(request.source_document_ids))
+                or len(set(request.source_names)),
             )
             self._store.publish(run.id, snapshot)
             self._store.complete_phase(run.id, phase, state)
         if phase is AnalysisPhase.EXTENDED_TRANSITION:
             self._store.complete_run(run.id)
         return graph_state
+
+    def _scope_artifact_edit(
+        self,
+        *,
+        request: AnalysisRunRequest,
+        constructed: tuple[Artifact, ...],
+    ) -> tuple[Artifact, ...]:
+        """Keep unrelated artifacts stable during a single-artifact edit run."""
+
+        edited_types = {
+            item.reference.split(":", 3)[2]
+            for item in request.user_evidence
+            if item.reference.startswith("user:artifact:")
+            and len(item.reference.split(":", 3)) == 4
+        }
+        if len(edited_types) != 1 or request.parent_run_id is None:
+            return constructed
+        parent = self._store.get_run(request.parent_run_id)
+        if parent is None or parent.snapshot is None:
+            return constructed
+        edited_type = next(iter(edited_types))
+        parent_by_type = {
+            artifact.artifact_type.value: artifact for artifact in parent.snapshot.artifacts
+        }
+        return tuple(
+            artifact
+            if artifact.artifact_type.value == edited_type
+            else parent_by_type.get(artifact.artifact_type.value, artifact)
+            for artifact in constructed
+        )
+
+    @staticmethod
+    def _supported_project_title(perception: Perception) -> str | None:
+        """Extract a repeated governed-document title without guessing.
+
+        Many project packs repeat ``<project title> <document id> |`` in the
+        header of every artifact. Requiring the same candidate in two distinct
+        source documents keeps automatic naming evidence-backed.
+        """
+        title_sources: dict[str, set[str]] = {}
+        display_titles: dict[str, str] = {}
+        header_pattern = re.compile(
+            r"^\s*(?P<title>[A-Za-z0-9][A-Za-z0-9 &'(),./+-]{2,159}?)"
+            r"\s+[A-Z][A-Z0-9]*-[A-Z0-9-]{2,}\s*\|"
+        )
+        for fragment in perception.evidence:
+            match = header_pattern.search(fragment.content[:300])
+            if match is None:
+                continue
+            title = " ".join(match.group("title").split()).strip(" -|")
+            if not 3 <= len(title) <= 160 or not 2 <= len(title.split()) <= 16:
+                continue
+            key = title.casefold()
+            display_titles.setdefault(key, title)
+            title_sources.setdefault(key, set()).add(fragment.source_name or fragment.reference)
+        supported = [
+            (len(sources), display_titles[key])
+            for key, sources in title_sources.items()
+            if len(sources) >= 2
+        ]
+        if not supported:
+            return None
+        supported.sort(key=lambda item: (-item[0], item[1].casefold()))
+        return supported[0][1]
 
     def _phase(
         self,
@@ -281,9 +396,7 @@ class AnalysisWorkflow:
         if project_read and project_read[-1] not in ".!?":
             project_read += "."
 
-        artifact_names = ", ".join(
-            artifact.title.lower() for artifact in artifacts
-        )
+        artifact_names = ", ".join(artifact.title.lower() for artifact in artifacts)
         open_count = sum(issue.status != "resolved" for issue in assessment.issues)
         understanding_sentence = (
             f"At the {assessment.understanding_stage} stage, OSLO mapped the supplied "
@@ -320,15 +433,35 @@ class AnalysisWorkflow:
         artifacts: tuple[Artifact, ...],
         assessment: Assessment,
     ) -> tuple[EvidenceCitation, ...]:
-        referenced = {
-            reference
-            for artifact in artifacts
-            for reference in artifact.evidence_refs
-        } | {
-            reference
-            for issue in assessment.issues
-            for reference in issue.evidence_refs
-        }
+        referenced = (
+            {reference for artifact in artifacts for reference in artifact.evidence_refs}
+            | {
+                reference
+                for artifact in artifacts
+                for section in artifact.sections
+                for reference in section.evidence_refs
+            }
+            | {
+                reference
+                for artifact in artifacts
+                for section in artifact.sections
+                for row_references in section.row_evidence_refs
+                for reference in row_references
+            }
+            | {
+                reference
+                for artifact in artifacts
+                for assumption in artifact.assumptions
+                for reference in assumption.evidence_refs
+            }
+            | {
+                reference
+                for artifact in artifacts
+                for conflict in artifact.conflicts
+                for reference in conflict.evidence_refs
+            }
+            | {reference for issue in assessment.issues for reference in issue.evidence_refs}
+        )
         citations = []
         for fragment in perception.evidence:
             if fragment.reference not in referenced:
@@ -349,9 +482,13 @@ class AnalysisWorkflow:
         if isinstance(error, AgentHarnessError):
             return error.code, error.retryable
         message = str(error)
-        if message and len(message) <= 120 and all(
-            character.isupper() or character.isdigit() or character == "_"
-            for character in message
+        if (
+            message
+            and len(message) <= 120
+            and all(
+                character.isupper() or character.isdigit() or character == "_"
+                for character in message
+            )
         ):
             return message, True
         return "ANALYSIS_FAILED", True

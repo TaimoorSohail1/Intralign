@@ -300,10 +300,10 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    expect(screen.getAllByText("Confidence")).not.toHaveLength(0);
+    expect(screen.getAllByText(/Outcome confidence/i)).not.toHaveLength(0);
     expect(screen.getByRole("link", { name: "Timeline" })).toHaveAttribute(
       "href",
-      "/projects/project-001/attention",
+      "/projects/project-001/history",
     );
     expect(screen.getByRole("button", { name: "Answer the first" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Project summary" })).toHaveAttribute(
@@ -385,12 +385,12 @@ describe("ProjectOverview", () => {
       "href",
       "/projects/project-001/history",
     );
-    expect(screen.getByText("Expanded")).toBeInTheDocument();
+    expect(screen.getAllByText("Moderate").length).toBeGreaterThan(0);
     expect(screen.getByText("Strengthened")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "How confidence is calculated" })).toBeInTheDocument();
   });
 
-  it("renders each understanding stage once when the current stage is orientation", () => {
+  it("renders the five-step confidence ramp without exposing the numeric score", () => {
     render(
       <ProjectOverview
         displayName="Alex"
@@ -405,9 +405,12 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    expect(screen.getAllByText("Orientation")).toHaveLength(1);
-    expect(screen.getAllByText("Expanded")).toHaveLength(1);
-    expect(screen.getAllByText("Validated")).toHaveLength(1);
+    expect(screen.getByText("Very Low")).toBeInTheDocument();
+    expect(screen.getAllByText("Low").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Moderate").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("High").length).toBeGreaterThan(0);
+    expect(screen.getByText("Very High")).toBeInTheDocument();
+    expect(screen.queryByText("/100")).not.toBeInTheDocument();
   });
 
   it("uses the membership orientation state instead of a stale browser-wide flag", async () => {
@@ -484,7 +487,7 @@ describe("ProjectOverview", () => {
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Confidence 52, Moderate, Moderate reliability",
+        name: "Outcome Confidence Moderate, well grounded",
       }),
     );
 
@@ -533,7 +536,7 @@ describe("ProjectOverview", () => {
     );
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      /supporting evidence is not yet reliable enough/i,
+      /sits high on thin evidence/i,
     );
   });
 
@@ -1043,7 +1046,7 @@ describe("ProjectOverview", () => {
     });
   });
 
-  it("keeps the confirmed-dependency denominator stable after resolution", () => {
+  it("moves answered questions into the closed Progress readout", () => {
     const resolvedSnapshot: OverviewSnapshot = {
       ...snapshot,
       assessment: {
@@ -1065,7 +1068,7 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    expect(screen.getByText("Dependencies confirmed")).toBeInTheDocument();
-    expect(screen.getByText("1 / 1")).toBeInTheDocument();
+    expect(screen.getByText("Questions answered")).toBeInTheDocument();
+    expect(screen.getByText("Issues resolved")).toBeInTheDocument();
   });
 });

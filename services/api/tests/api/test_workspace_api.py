@@ -29,6 +29,10 @@ class RecordingWorkspaceApplication:
             analysis_notifications=True,
             failure_notifications=True,
             stale_notifications=True,
+            display_name="Workspace member",
+            role_title="",
+            workspace_name="OSLO Alpha",
+            actor_role="owner",
         )
         self.restore_at_limit = False
 
@@ -112,6 +116,12 @@ class RecordingWorkspaceApplication:
         analysis_notifications: bool,
         failure_notifications: bool,
         stale_notifications: bool,
+        display_name: str,
+        role_title: str,
+        workspace_name: str,
+        mentions_notifications: bool,
+        reply_notifications: bool,
+        shared_notifications: bool,
     ) -> WorkspacePreferences:
         assert actor_user_id == USER_ID
         assert workspace_id == WORKSPACE_ID
@@ -120,6 +130,13 @@ class RecordingWorkspaceApplication:
             analysis_notifications=analysis_notifications,
             failure_notifications=failure_notifications,
             stale_notifications=stale_notifications,
+            display_name=display_name,
+            role_title=role_title,
+            workspace_name=workspace_name,
+            actor_role=self.preferences.actor_role,
+            mentions_notifications=mentions_notifications,
+            reply_notifications=reply_notifications,
+            shared_notifications=shared_notifications,
         )
         return self.preferences
 
@@ -134,6 +151,7 @@ def test_workspace_summary_serializes_projects_and_activity() -> None:
     payload = response.json()
     assert payload["name"] == "OSLO Alpha"
     assert payload["active_project_limit"] == 1
+    assert payload["member_count"] == 1
     assert payload["projects"][0]["confidence_index"] == 62
     assert payload["notifications"][0]["key"] == "analysis:run-1"
 
@@ -189,6 +207,12 @@ def test_preferences_round_trip_without_starting_analysis() -> None:
             "analysis_notifications": False,
             "failure_notifications": True,
             "stale_notifications": False,
+            "display_name": "Workspace member",
+            "role_title": "Programme lead",
+            "workspace_name": "OSLO Alpha",
+            "mentions_notifications": False,
+            "reply_notifications": True,
+            "shared_notifications": True,
         },
     )
 
@@ -200,4 +224,11 @@ def test_preferences_round_trip_without_starting_analysis() -> None:
         "analysis_notifications": False,
         "failure_notifications": True,
         "stale_notifications": False,
+        "display_name": "Workspace member",
+        "role_title": "Programme lead",
+        "workspace_name": "OSLO Alpha",
+        "actor_role": "owner",
+        "mentions_notifications": False,
+        "reply_notifications": True,
+        "shared_notifications": True,
     }

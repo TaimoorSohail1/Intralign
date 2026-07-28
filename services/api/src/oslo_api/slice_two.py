@@ -25,6 +25,10 @@ class SliceTwoArtifactConflict(Exception):
     """Raised when an artifact edit was based on a stale version."""
 
 
+class SliceTwoAnalysisInProgress(Exception):
+    """Raised when a second material edit would overlap an active re-analysis."""
+
+
 class SliceTwoApplication(Protocol):
     def upload_document(
         self,
@@ -165,6 +169,6 @@ class SliceTwoApplication(Protocol):
         content: dict,
         expected_version: int,
         key: str,
-    ) -> tuple[dict, AnalysisRun]: ...
+    ) -> tuple[dict, AnalysisRun | None]: ...
 
     def mark_orientation_seen(self, *, actor_user_id: UUID, workspace_id: UUID) -> None: ...

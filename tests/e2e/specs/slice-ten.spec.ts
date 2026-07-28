@@ -1,0 +1,136 @@
+import { expect, test } from "@playwright/test";
+
+test.setTimeout(240_000);
+
+async function dismissOrientation(page: import("@playwright/test").Page) {
+  const orientation = page.getByRole("dialog", { name: "How OSLO works" });
+  await orientation.waitFor({ state: "visible", timeout: 3_000 }).catch(() => undefined);
+  if (!(await orientation.isVisible())) return;
+  await orientation.getByRole("button", { name: "Get started" }).click();
+  await orientation.getByRole("button", { name: "Skip tour" }).click();
+  await expect(orientation).toBeHidden();
+}
+
+test.afterEach(async ({ page }) => {
+  if (page.isClosed()) return;
+  await page.request.put("/api/workspace/plan", {
+    data: { plan: "free" },
+    failOnStatusCode: false,
+  });
+});
+
+async function signIn(page: import("@playwright/test").Page) {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("admin@oslo.local");
+  await page.getByLabel("Password").fill("OsloLocalAdmin123!");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.waitForURL(/\/admin\/invitations/, { timeout: 20_000 });
+}
+
+test("Slice 10 explains equal judgment and governs workspace capacity without deleting data", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/workspace");
+
+  await expect(page.getByRole("heading", { name: "OSLO Product Grill" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Active projects" })).toBeVisible();
+
+  if (await page.getByRole("link", { name: /Open project/ }).count() === 0) {
+    await page.getByRole("button", { name: "New project" }).click();
+    await expect(page).toHaveURL(/\/intake\?project=/);
+    await page.getByRole("button", { name: /sample project/i }).click();
+    await page.getByRole("button", { name: /See where I stand/ }).click();
+    await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 90_000 });
+    await expect(page.getByText("Understanding is forming")).toBeVisible({ timeout: 120_000 });
+    await dismissOrientation(page);
+    await page.goto("/workspace");
+    await expect(page.getByRole("link", { name: /Open project/ }).first()).toBeVisible();
+  }
+
+  await page.getByRole("button", { name: /Compare plans/ }).click();
+  let plans = page.getByRole("dialog", { name: "Your plan" });
+  await expect(plans).toBeVisible();
+  await expect(plans.getByText("Every plan gets the same read.")).toBeVisible();
+  await expect(
+    plans.getByText(/not model quality/),
+  ).toBeVisible();
+
+  const switchToFree = plans.getByRole("button", { name: "Switch to Free" });
+  if (await switchToFree.isVisible()) {
+    await switchToFree.click();
+    await expect(plans.getByRole("status")).toContainText("Free is now active");
+  }
+  await plans.getByRole("button", { name: "Done" }).click();
+
+  await page.getByRole("button", { name: "New project" }).click();
+  const projectLimit = page.getByRole("dialog", {
+    name: "Your active project space is full",
+  });
+  await expect(projectLimit).toBeVisible();
+  await expect(projectLimit.getByText("Nothing is deleted")).toBeVisible();
+  await expect(projectLimit.getByRole("button", { name: "Explore upgrade" })).toBeVisible();
+  await expect(projectLimit.getByRole("button", { name: "Archive" }).first()).toBeVisible();
+  await projectLimit.getByRole("button", { name: "Explore upgrade" }).click();
+
+  plans = page.getByRole("dialog", { name: "Your plan" });
+  await expect(plans).toBeVisible();
+  await plans.getByRole("button", { name: "Simulate upgrade" }).click();
+  await expect(plans.getByRole("status")).toContainText("Basic is now active");
+  await expect(plans.getByText("No card was charged")).toBeVisible();
+  await plans.getByRole("button", { name: "Done" }).click();
+
+  await page.goto("/settings#subscription");
+  await expect(page.getByRole("heading", { name: "Subscription" })).toBeVisible();
+  await expect(page.getByText("Basic", { exact: true })).toBeVisible();
+  await expect(page.getByText("40 documents", { exact: false })).toBeVisible();
+  await expect(page.getByText("100,000 words", { exact: false })).toBeVisible();
+  await expect(page.getByText("Unmetered in Alpha")).toBeVisible();
+
+  await page.goto("/workspace");
+  const firstProject = page.getByRole("link", { name: /Open project/ }).first();
+  await expect(firstProject).toBeVisible();
+  const projectHref = await firstProject.getAttribute("href");
+  expect(projectHref).toMatch(/^\/projects\/.+\/overview$/);
+  await page.goto(projectHref!);
+  await dismissOrientation(page);
+
+  const projectPlanBadge = page.getByRole("button", { name: "Basic", exact: true });
+  await expect(projectPlanBadge).toBeVisible();
+  await projectPlanBadge.click();
+  plans = page.getByRole("dialog", { name: "Your plan" });
+  await expect(plans).toBeVisible();
+  await plans.getByRole("button", { name: "Switch to Free" }).click();
+  await expect(plans.getByRole("status")).toContainText("Free is now active");
+  await plans.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("button", { name: "Free", exact: true })).toBeVisible();
+
+  await page.goto(projectHref!.replace(/\/overview$/, "/reports"));
+  await expect(page.getByRole("textbox", { name: "Edit readout" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Free", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Reports" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  const readout = page.getByRole("textbox", { name: "Edit readout" });
+  await expect(readout).toBeVisible();
+  await expect(readout.getByRole("heading", { name: "Summary" })).toBeVisible();
+  await expect(readout.getByRole("heading", { name: "What changed" })).toBeVisible();
+  await expect(readout.getByRole("heading", { name: "Key risks" })).toBeVisible();
+  await expect(readout.getByRole("heading", { name: "Assumptions" })).toBeVisible();
+  await expect(readout.getByRole("heading", { name: "Plan of action" })).toBeVisible();
+  await expect(readout.getByRole("heading", { name: "Decisions needed" })).toBeVisible();
+  await expect(readout.getByRole("heading", { name: "Appendix" })).toBeVisible();
+  await expect(page.getByText("Saved automatically to this workspace")).toBeVisible();
+
+  await page.goto(projectHref!.replace(/\/overview$/, "/inference"));
+  await expect(page.getByRole("heading", { name: "Inference map" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Inference map" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(page.getByRole("heading", { name: "By artifact" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Assumptions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Structure" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "This week" })).toBeVisible();
+});

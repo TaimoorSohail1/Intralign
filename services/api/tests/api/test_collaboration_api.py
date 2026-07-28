@@ -23,6 +23,8 @@ class RecordingCollaboration:
         self.comment = None
         self.response = None
         self.linked_run = None
+        self.saved_report = None
+        self.report_delivery = None
 
     def state(self, *, actor_user_id, project_id):
         assert (actor_user_id, project_id) == (USER_ID, PROJECT_ID)
@@ -67,6 +69,53 @@ class RecordingCollaboration:
 
     def link_review_run(self, *, response_id, run_id):
         self.linked_run = (response_id, run_id)
+
+    def review_response_for_evidence(self, *, actor_user_id, project_id, response_id):
+        assert (actor_user_id, project_id) == (USER_ID, PROJECT_ID)
+        assert response_id == UUID("018f9f7e-8de2-7000-8000-000000000014")
+        return {
+            "id": str(response_id),
+            "created_by": str(USER_ID),
+            "project_id": str(PROJECT_ID),
+            "issue_id": "issue-1",
+            "reviewer_name": "Amina",
+            "response_kind": "approve",
+            "body": "The steering committee approved the pilot.",
+            "analysis_run_id": None,
+        }
+
+    def report_state(self, *, actor_user_id, project_id):
+        assert (actor_user_id, project_id) == (USER_ID, PROJECT_ID)
+        return {
+            "project_id": str(PROJECT_ID),
+            "project_name": "Transformation",
+            "snapshot_id": str(RUN_ID),
+            "content": self.saved_report["content"] if self.saved_report else None,
+            "updated_at": None,
+            "deliveries": [],
+        }
+
+    def save_report(self, **payload):
+        self.saved_report = payload
+        return {
+            "project_id": str(PROJECT_ID),
+            "snapshot_id": str(payload["snapshot_id"]),
+            "content": payload["content"],
+            "updated_at": datetime(2026, 7, 27, tzinfo=UTC),
+        }
+
+    def deliver_report(self, **payload):
+        self.report_delivery = payload
+        return {
+            "id": "delivery-1",
+            "recipient_email": payload["recipient_email"],
+            "recipient_label": payload["recipient_label"],
+            "status": "sent",
+            "scheduled_for": datetime(2026, 7, 27, tzinfo=UTC),
+            "sent_at": datetime(2026, 7, 27, tzinfo=UTC),
+            "error_code": None,
+            "created_at": datetime(2026, 7, 27, tzinfo=UTC),
+        }
 
 
 class RecordingAnalysis:
@@ -145,7 +194,41 @@ def test_issue_comment_is_append_only_and_keeps_mentions() -> None:
     }
 
 
-def test_reviewer_response_becomes_attested_evidence_and_queues_analysis() -> None:
+def test_report_draft_and_delivery_are_server_backed() -> None:
+    collaboration = RecordingCollaboration()
+    client = client_for(collaboration)
+    content = {
+        "sections": [
+            {"id": f"section-{index}", "title": f"Section {index}", "body": ["Detail"]}
+            for index in range(7)
+        ]
+    }
+
+    saved = client.put(
+        f"/v1/projects/{PROJECT_ID}/report",
+        headers={"Authorization": "Bearer valid-access-token"},
+        json={"snapshot_id": str(RUN_ID), "content": content},
+    )
+    delivered = client.post(
+        f"/v1/projects/{PROJECT_ID}/report/deliveries",
+        headers={"Authorization": "Bearer valid-access-token"},
+        json={
+            "snapshot_id": str(RUN_ID),
+            "recipient_email": "sponsor@example.com",
+            "recipient_label": "Sponsor",
+            "subject": "Transformation readout",
+            "content": content,
+        },
+    )
+
+    assert saved.status_code == 200
+    assert saved.json()["content"] == content
+    assert delivered.status_code == 201
+    assert delivered.json()["status"] == "sent"
+    assert collaboration.report_delivery["recipient_email"] == "sponsor@example.com"
+
+
+def test_reviewer_response_is_recorded_without_starting_analysis() -> None:
     collaboration = RecordingCollaboration()
     analysis = RecordingAnalysis()
     response = client_for(collaboration, analysis).post(
@@ -159,13 +242,46 @@ def test_reviewer_response_becomes_attested_evidence_and_queues_analysis() -> No
     assert response.status_code == 201
     assert response.json() == {
         "response_id": "018f9f7e-8de2-7000-8000-000000000014",
+        "analysis_run_id": None,
+        "status": "recorded",
+    }
+    assert analysis.attestation is None
+    assert collaboration.linked_run == (
+        UUID("018f9f7e-8de2-7000-8000-000000000014"),
+        None,
+    )
+
+
+def test_project_team_explicitly_promotes_review_response_to_project_evidence() -> None:
+    collaboration = RecordingCollaboration()
+    analysis = RecordingAnalysis()
+    response = client_for(collaboration, analysis).post(
+        (
+            f"/v1/projects/{PROJECT_ID}/review-responses/"
+            "018f9f7e-8de2-7000-8000-000000000014/evidence"
+        ),
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 202
+    assert response.json() == {
+        "response_id": "018f9f7e-8de2-7000-8000-000000000014",
         "analysis_run_id": str(RUN_ID),
         "status": "queued",
     }
-    assert analysis.attestation["response_kind"] == "approve"
-    assert analysis.attestation["reviewer_name"] == "Amina"
-    assert analysis.attestation["key"] == "018f9f7e-8de2-7000-8000-000000000014"
-    assert collaboration.linked_run is not None
+    assert analysis.attestation == {
+        "actor_user_id": USER_ID,
+        "project_id": PROJECT_ID,
+        "issue_id": "issue-1",
+        "reviewer_name": "Amina",
+        "response_kind": "approve",
+        "body": "The steering committee approved the pilot.",
+        "key": "review:018f9f7e-8de2-7000-8000-000000000014",
+    }
+    assert collaboration.linked_run == (
+        UUID("018f9f7e-8de2-7000-8000-000000000014"),
+        RUN_ID,
+    )
 
 
 def test_expired_public_review_fails_closed() -> None:

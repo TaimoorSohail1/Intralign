@@ -4,6 +4,8 @@ import json
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from secrets import token_urlsafe
+from threading import Event, Thread
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Connection, Engine, text
@@ -26,9 +28,19 @@ class DatabaseCollaborationService:
     bearer grants, review attestations and export audit records.
     """
 
-    def __init__(self, engine: Engine, web_url: str) -> None:
+    def __init__(self, engine: Engine, web_url: str, report_mailer: Any | None = None) -> None:
         self._engine = engine
         self._web_url = web_url.rstrip("/")
+        self._report_mailer = report_mailer
+        self._report_worker_stop = Event()
+        self._report_worker: Thread | None = None
+        if report_mailer is not None:
+            self._report_worker = Thread(
+                target=self._report_delivery_loop,
+                name="intralign-report-delivery",
+                daemon=True,
+            )
+            self._report_worker.start()
 
     def state(self, *, actor_user_id: UUID, project_id: UUID) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
@@ -74,7 +86,8 @@ class DatabaseCollaborationService:
                         """
                         select g.id::text, g.issue_stable_key as issue_id, g.reviewer_name,
                                g.reviewer_email::text, g.expires_at, g.resolved_at, g.revoked_at,
-                               r.response_kind::text, r.body as response_body,
+                               r.id::text as response_id, r.response_kind::text,
+                               r.body as response_body, r.analysis_run_id::text,
                                r.created_at as responded_at
                         from public.project_review_grants g
                         left join public.project_review_responses r on r.review_grant_id = g.id
@@ -467,7 +480,7 @@ class DatabaseCollaborationService:
             "reviewer_name": grant["reviewer_name"],
         }
 
-    def link_review_run(self, *, response_id: UUID, run_id: UUID) -> None:
+    def link_review_run(self, *, response_id: UUID, run_id: UUID | None) -> None:
         with self._engine.begin() as connection:
             response = (
                 connection.execute(
@@ -475,7 +488,7 @@ class DatabaseCollaborationService:
                         """
                         select r.workspace_id, r.project_id, r.review_grant_id,
                                r.issue_stable_key, r.response_kind::text as response_kind,
-                               g.reviewer_name
+                               g.reviewer_name, g.created_by
                         from public.project_review_responses r
                         join public.project_review_grants g on g.id = r.review_grant_id
                         where r.id = :response_id
@@ -513,31 +526,101 @@ class DatabaseCollaborationService:
                 ),
                 {"grant_id": response["review_grant_id"]},
             )
-            connection.execute(
-                text(
-                    """
-                    insert into public.outbox_events (
-                      workspace_id, aggregate_type, aggregate_id, event_type, payload
-                    ) values (
-                      :workspace_id, 'review_response', :response_id,
-                      'review.responded', cast(:payload as jsonb)
-                    )
-                    """
-                ),
-                {
-                    "workspace_id": response["workspace_id"],
-                    "response_id": response_id,
-                    "payload": json.dumps(
-                        {
-                            "project_id": str(response["project_id"]),
-                            "issue_id": response["issue_stable_key"],
-                            "reviewer_name": response["reviewer_name"],
-                            "response_kind": response["response_kind"],
-                            "analysis_run_id": str(run_id),
-                        }
+            if run_id is None:
+                connection.execute(
+                    text(
+                        """
+                        insert into public.outbox_events (
+                          workspace_id, aggregate_type, aggregate_id, event_type, payload
+                        ) values (
+                          :workspace_id, 'review_response', :response_id,
+                          'review.responded', cast(:payload as jsonb)
+                        )
+                        """
                     ),
-                },
+                    {
+                        "workspace_id": response["workspace_id"],
+                        "response_id": response_id,
+                        "payload": json.dumps(
+                            {
+                                "project_id": str(response["project_id"]),
+                                "issue_id": response["issue_stable_key"],
+                                "reviewer_name": response["reviewer_name"],
+                                "response_kind": response["response_kind"],
+                                "analysis_run_id": None,
+                            }
+                        ),
+                    },
+                )
+                response_label = response["response_kind"].replace("_", " ")
+                self._append_collaboration_history(
+                    connection,
+                    workspace_id=response["workspace_id"],
+                    project_id=response["project_id"],
+                    actor_user_id=response["created_by"],
+                    event_type=f"collaboration.reviewer_{response['response_kind']}",
+                    summary=f"Reviewer {response_label}",
+                    detail=(
+                        f"{response['reviewer_name']} submitted a "
+                        f"{response_label} review response."
+                    ),
+                    issue_id=response["issue_stable_key"],
+                    payload={
+                        "response_id": str(response_id),
+                        "reviewer_name": response["reviewer_name"],
+                        "response_kind": response["response_kind"],
+                        "analysis_run_id": None,
+                    },
+                    idempotency_key=f"collaboration:review-response:{response_id}",
+                )
+
+    def review_response_for_evidence(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        response_id: UUID,
+    ) -> dict:
+        workspace_id, role = self._project_access(actor_user_id, project_id)
+        self._require_editor(role)
+        with self._engine.connect() as connection:
+            response = (
+                connection.execute(
+                    text(
+                        """
+                        select r.id::text, r.project_id::text, r.issue_stable_key as issue_id,
+                               r.response_kind::text, r.body,
+                               r.analysis_run_id::text,
+                               g.reviewer_name, g.created_by::text
+                        from public.project_review_responses r
+                        join public.project_review_grants g on g.id = r.review_grant_id
+                        where r.id = :response_id
+                          and r.project_id = :project_id
+                          and r.workspace_id = :workspace_id
+                        """
+                    ),
+                    {
+                        "response_id": response_id,
+                        "project_id": project_id,
+                        "workspace_id": workspace_id,
+                    },
+                )
+                .mappings()
+                .one_or_none()
             )
+        if response is None:
+            raise CollaborationError(
+                "REVIEW_RESPONSE_NOT_FOUND",
+                "The reviewer response could not be found",
+                404,
+            )
+        if response["analysis_run_id"] is not None:
+            raise CollaborationError(
+                "REVIEW_RESPONSE_ALREADY_PROMOTED",
+                "This reviewer response is already project evidence",
+                409,
+            )
+        return dict(response)
 
     def revoke_share_link(
         self, *, actor_user_id: UUID, project_id: UUID, link_id: UUID
@@ -663,6 +746,367 @@ class DatabaseCollaborationService:
                 idempotency_key=f"collaboration:export:{export_id}",
             )
         return dict(row)
+
+    def report_state(self, *, actor_user_id: UUID, project_id: UUID) -> dict:
+        workspace_id, _role = self._project_access(actor_user_id, project_id)
+        with self._engine.connect() as connection:
+            current = (
+                connection.execute(
+                    text(
+                        """
+                        select p.name as project_name, s.id as snapshot_id
+                        from public.projects p
+                        join public.assessment_snapshots s
+                          on s.analysis_run_id = p.current_analysis_run_id
+                        where p.id = :project_id and p.workspace_id = :workspace_id
+                        """
+                    ),
+                    {"project_id": project_id, "workspace_id": workspace_id},
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if current is None:
+                raise CollaborationError(
+                    "NO_SNAPSHOT", "Analyze the project before creating a report", 409
+                )
+            draft = (
+                connection.execute(
+                    text(
+                        """
+                        select content_json, updated_at
+                        from public.project_report_drafts
+                        where project_id = :project_id and snapshot_id = :snapshot_id
+                        """
+                    ),
+                    {
+                        "project_id": project_id,
+                        "snapshot_id": current["snapshot_id"],
+                    },
+                )
+                .mappings()
+                .one_or_none()
+            )
+            deliveries = [
+                dict(item)
+                for item in connection.execute(
+                    text(
+                        """
+                        select id::text, recipient_email::text, recipient_label,
+                               status, scheduled_for, sent_at, error_code, created_at
+                        from public.project_report_deliveries
+                        where project_id = :project_id
+                        order by created_at desc
+                        limit 20
+                        """
+                    ),
+                    {"project_id": project_id},
+                ).mappings()
+            ]
+        return {
+            "project_id": str(project_id),
+            "project_name": current["project_name"],
+            "snapshot_id": str(current["snapshot_id"]),
+            "content": dict(draft["content_json"]) if draft else None,
+            "updated_at": draft["updated_at"] if draft else None,
+            "deliveries": deliveries,
+        }
+
+    def save_report(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        snapshot_id: UUID,
+        content: dict,
+    ) -> dict:
+        workspace_id, role = self._project_access(actor_user_id, project_id)
+        self._require_editor(role)
+        with self._engine.begin() as connection:
+            current_snapshot_id = connection.execute(
+                text(
+                    """
+                    select s.id
+                    from public.projects p
+                    join public.assessment_snapshots s
+                      on s.analysis_run_id = p.current_analysis_run_id
+                    where p.id = :project_id and p.workspace_id = :workspace_id
+                    """
+                ),
+                {"project_id": project_id, "workspace_id": workspace_id},
+            ).scalar_one_or_none()
+            if current_snapshot_id != snapshot_id:
+                raise CollaborationError(
+                    "REPORT_SNAPSHOT_STALE",
+                    "The project changed. Refresh the report before saving.",
+                    409,
+                )
+            updated_at = connection.execute(
+                text(
+                    """
+                    insert into public.project_report_drafts (
+                      project_id, workspace_id, snapshot_id, content_json, updated_by
+                    ) values (
+                      :project_id, :workspace_id, :snapshot_id,
+                      cast(:content as jsonb), :updated_by
+                    )
+                    on conflict (project_id) do update set
+                      workspace_id = excluded.workspace_id,
+                      snapshot_id = excluded.snapshot_id,
+                      content_json = excluded.content_json,
+                      updated_by = excluded.updated_by,
+                      updated_at = now()
+                    returning updated_at
+                    """
+                ),
+                {
+                    "project_id": project_id,
+                    "workspace_id": workspace_id,
+                    "snapshot_id": snapshot_id,
+                    "content": json.dumps(content),
+                    "updated_by": actor_user_id,
+                },
+            ).scalar_one()
+        return {
+            "project_id": str(project_id),
+            "snapshot_id": str(snapshot_id),
+            "content": content,
+            "updated_at": updated_at,
+        }
+
+    def deliver_report(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        snapshot_id: UUID,
+        recipient_email: str,
+        recipient_label: str,
+        subject: str,
+        content: dict,
+        scheduled_for: datetime | None,
+    ) -> dict:
+        workspace_id, role = self._project_access(actor_user_id, project_id)
+        self._require_editor(role)
+        deliver_at = scheduled_for or datetime.now(UTC)
+        if deliver_at.tzinfo is None:
+            deliver_at = deliver_at.replace(tzinfo=UTC)
+        if deliver_at > datetime.now(UTC) + timedelta(days=90):
+            raise CollaborationError(
+                "REPORT_SCHEDULE_TOO_FAR",
+                "Reports can be scheduled up to 90 days ahead.",
+                422,
+            )
+        with self._engine.begin() as connection:
+            current_snapshot_id = connection.execute(
+                text(
+                    """
+                    select s.id from public.projects p
+                    join public.assessment_snapshots s
+                      on s.analysis_run_id = p.current_analysis_run_id
+                    where p.id = :project_id and p.workspace_id = :workspace_id
+                    """
+                ),
+                {"project_id": project_id, "workspace_id": workspace_id},
+            ).scalar_one_or_none()
+            if current_snapshot_id != snapshot_id:
+                raise CollaborationError(
+                    "REPORT_SNAPSHOT_STALE",
+                    "The project changed. Refresh the report before sending.",
+                    409,
+                )
+            delivery_id = connection.execute(
+                text(
+                    """
+                    insert into public.project_report_deliveries (
+                      workspace_id, project_id, snapshot_id, requested_by,
+                      recipient_email, recipient_label, subject, content_json,
+                      status, scheduled_for
+                    ) values (
+                      :workspace_id, :project_id, :snapshot_id, :requested_by,
+                      :recipient_email, :recipient_label, :subject,
+                      cast(:content as jsonb), 'scheduled', :scheduled_for
+                    )
+                    returning id
+                    """
+                ),
+                {
+                    "workspace_id": workspace_id,
+                    "project_id": project_id,
+                    "snapshot_id": snapshot_id,
+                    "requested_by": actor_user_id,
+                    "recipient_email": recipient_email,
+                    "recipient_label": recipient_label,
+                    "subject": subject,
+                    "content": json.dumps(content),
+                    "scheduled_for": deliver_at,
+                },
+            ).scalar_one()
+            scheduled = scheduled_for is not None and deliver_at > datetime.now(UTC)
+            self._append_collaboration_history(
+                connection,
+                workspace_id=workspace_id,
+                project_id=project_id,
+                actor_user_id=actor_user_id,
+                event_type="report.scheduled" if scheduled else "report.delivery_requested",
+                summary="Report scheduled" if scheduled else "Report delivery requested",
+                detail=(
+                    f"Delivery to {recipient_label} ({recipient_email}) at "
+                    f"{deliver_at.isoformat()}."
+                    if scheduled
+                    else f"Delivery to {recipient_label} ({recipient_email}) was requested."
+                ),
+                payload={
+                    "delivery_id": str(delivery_id),
+                    "recipient_email": recipient_email,
+                    "scheduled_for": deliver_at.isoformat(),
+                },
+                idempotency_key=f"history:report-request:{delivery_id}",
+            )
+        delay = max(0.0, (deliver_at - datetime.now(UTC)).total_seconds())
+        if delay <= 1:
+            self._send_report_delivery(delivery_id)
+        return self._report_delivery(delivery_id)
+
+    def _report_delivery_loop(self) -> None:
+        while not self._report_worker_stop.wait(5):
+            try:
+                with self._engine.begin() as connection:
+                    connection.execute(
+                        text(
+                            """
+                            update public.project_report_deliveries
+                            set status = 'scheduled'
+                            where status = 'sending'
+                              and scheduled_for < now() - interval '10 minutes'
+                            """
+                        )
+                    )
+                    delivery_ids = list(
+                        connection.execute(
+                            text(
+                                """
+                                select id
+                                from public.project_report_deliveries
+                                where status = 'scheduled' and scheduled_for <= now()
+                                order by scheduled_for
+                                limit 20
+                                """
+                            )
+                        ).scalars()
+                    )
+                for delivery_id in delivery_ids:
+                    self._send_report_delivery(delivery_id)
+            except Exception:
+                # A later poll retries durable scheduled rows after transient DB failures.
+                continue
+
+    def _report_delivery(self, delivery_id: UUID) -> dict:
+        with self._engine.connect() as connection:
+            row = (
+                connection.execute(
+                    text(
+                        """
+                        select id::text, recipient_email::text, recipient_label,
+                               status, scheduled_for, sent_at, error_code, created_at
+                        from public.project_report_deliveries where id = :delivery_id
+                        """
+                    ),
+                    {"delivery_id": delivery_id},
+                )
+                .mappings()
+                .one()
+            )
+        return dict(row)
+
+    def _send_report_delivery(self, delivery_id: UUID) -> None:
+        with self._engine.begin() as connection:
+            row = (
+                connection.execute(
+                    text(
+                        """
+                        update public.project_report_deliveries delivery
+                        set status = 'sending', error_code = null
+                        from public.projects project
+                        where delivery.id = :delivery_id
+                          and delivery.status = 'scheduled'
+                          and delivery.project_id = project.id
+                        returning delivery.recipient_email::text,
+                                  delivery.recipient_label, delivery.subject,
+                                  delivery.content_json, delivery.workspace_id,
+                                  delivery.project_id, delivery.requested_by,
+                                  project.name as project_name
+                        """
+                    ),
+                    {"delivery_id": delivery_id},
+                )
+                .mappings()
+                .one_or_none()
+            )
+        if row is None:
+            return
+        try:
+            if self._report_mailer is None:
+                raise RuntimeError("REPORT_MAILER_UNAVAILABLE")
+            self._report_mailer.send_report(
+                email=row["recipient_email"],
+                subject=row["subject"],
+                project_name=row["project_name"],
+                recipient_label=row["recipient_label"],
+                sections=list(dict(row["content_json"]).get("sections", [])),
+            )
+        except Exception:
+            with self._engine.begin() as connection:
+                connection.execute(
+                    text(
+                        """
+                        update public.project_report_deliveries
+                        set status = 'failed', error_code = 'REPORT_DELIVERY_FAILED'
+                        where id = :delivery_id
+                        """
+                    ),
+                    {"delivery_id": delivery_id},
+                )
+                self._append_collaboration_history(
+                    connection,
+                    workspace_id=row["workspace_id"],
+                    project_id=row["project_id"],
+                    actor_user_id=row["requested_by"],
+                    event_type="report.delivery_failed",
+                    summary="Report delivery failed",
+                    detail=(
+                        f"Delivery to {row['recipient_label']} "
+                        f"({row['recipient_email']}) failed and can be retried."
+                    ),
+                    payload={"delivery_id": str(delivery_id)},
+                    idempotency_key=f"history:report-failed:{delivery_id}",
+                )
+        else:
+            with self._engine.begin() as connection:
+                connection.execute(
+                    text(
+                        """
+                        update public.project_report_deliveries
+                        set status = 'sent', sent_at = now()
+                        where id = :delivery_id
+                        """
+                    ),
+                    {"delivery_id": delivery_id},
+                )
+                self._append_collaboration_history(
+                    connection,
+                    workspace_id=row["workspace_id"],
+                    project_id=row["project_id"],
+                    actor_user_id=row["requested_by"],
+                    event_type="report.sent",
+                    summary="Report sent",
+                    detail=(
+                        f"Report delivered to {row['recipient_label']} "
+                        f"({row['recipient_email']})."
+                    ),
+                    payload={"delivery_id": str(delivery_id)},
+                    idempotency_key=f"history:report-sent:{delivery_id}",
+                )
 
     def _project_access(self, actor_user_id: UUID, project_id: UUID) -> tuple[UUID, str]:
         with self._engine.connect() as connection:

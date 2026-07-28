@@ -13,7 +13,11 @@ from oslo_api.analysis import (
 )
 from oslo_api.analysis.advisor import AdvisorReply
 from oslo_api.main import create_app
-from oslo_api.slice_two import SliceTwoArtifactConflict, SliceTwoIssueNotAnswerable
+from oslo_api.slice_two import (
+    SliceTwoAnalysisInProgress,
+    SliceTwoArtifactConflict,
+    SliceTwoIssueNotAnswerable,
+)
 
 WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
 PROJECT_ID = UUID("018f9f7e-8de2-7000-8000-000000000020")
@@ -331,6 +335,11 @@ class ConflictingArtifactSliceTwo(RecordingSliceTwo):
         raise SliceTwoArtifactConflict
 
 
+class BusyArtifactSliceTwo(RecordingSliceTwo):
+    def update_artifact(self, **kwargs):
+        raise SliceTwoAnalysisInProgress
+
+
 class ConflictingIssueActionSliceTwo(RecordingSliceTwo):
     def act_on_issue(self, **kwargs):
         raise SliceTwoArtifactConflict
@@ -508,6 +517,71 @@ def test_authenticated_user_lists_append_only_project_history() -> None:
     assert response.json() == slice_two.history
 
 
+def test_project_history_accepts_collaboration_events() -> None:
+    class CollaborationHistorySliceTwo(RecordingSliceTwo):
+        def list_history(
+            self,
+            *,
+            actor_user_id,
+            project_id,
+            category,
+            cursor,
+            limit,
+        ):
+            assert actor_user_id == USER_ID
+            assert project_id == PROJECT_ID
+            assert category == "collaboration"
+            assert cursor is None
+            assert limit == 25
+            return self.history
+
+    slice_two = CollaborationHistorySliceTwo()
+    slice_two.history = {
+        "project_id": str(PROJECT_ID),
+        "groups": [
+            {
+                "run_id": "018f9f7e-8de2-7000-8000-000000000040",
+                "kind": "extended",
+                "status": "completed",
+                "current": True,
+                "occurred_at": "2026-07-26T10:00:00Z",
+                "confidence_index": 62,
+                "confidence_band": "Moderate",
+                "confidence_direction": "up",
+                "understanding_stage": "expanded",
+                "changes": [],
+                "events": [
+                    {
+                        "id": 10,
+                        "category": "collaboration",
+                        "event_type": "reviewer.approved",
+                        "summary": "Reviewer approved",
+                        "detail": "The project review was approved.",
+                        "actor_type": "user",
+                        "artifact_type": None,
+                        "artifact_version": None,
+                        "issue_id": None,
+                        "occurred_at": "2026-07-26T10:05:00Z",
+                    }
+                ],
+            }
+        ],
+        "trend": [],
+        "next_cursor": None,
+    }
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two)
+    )
+
+    response = client.get(
+        f"/v1/projects/{PROJECT_ID}/history?category=collaboration",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == slice_two.history
+
+
 def test_project_history_rejects_a_malformed_cursor() -> None:
     class InvalidCursorSliceTwo(RecordingSliceTwo):
         def list_history(
@@ -672,6 +746,43 @@ def test_overview_overlays_the_latest_persisted_issue_action() -> None:
     )
 
 
+def test_history_snapshot_does_not_overlay_current_issue_actions() -> None:
+    slice_two = RecordingSliceTwo()
+    run = slice_two.start_analysis(
+        actor_user_id=USER_ID,
+        project_id=PROJECT_ID,
+        description="Migration ownership is unresolved.",
+        source_names=(),
+        source_document_ids=(),
+        kind=RunKind.INITIAL,
+        key="historical-issue-state-001",
+    )
+    slice_two.complete_latest()
+    snapshot = slice_two.store.current_snapshot(PROJECT_ID)
+    assert snapshot is not None
+    issue_id = snapshot.assessment.issues[0].id
+    slice_two.issue_actions = [
+        {
+            "issue_id": issue_id,
+            "action": "select",
+            "status": "addressed",
+            "selected_resolution": "Assign Priya as the migration owner.",
+            "analysis_run": None,
+        }
+    ]
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
+
+    response = client.get(
+        f"/v1/projects/{PROJECT_ID}/history/runs/{run.id}",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    issue = response.json()["assessment"]["issues"][0]
+    assert issue["status"] == "open"
+    assert issue["selected_resolution"] is None
+
+
 def test_issue_without_an_open_clarification_cannot_start_reanalysis() -> None:
     client = TestClient(
         create_app(
@@ -782,6 +893,12 @@ def test_overview_exposes_the_evidence_qualified_understanding_console() -> None
     assert assessment["confidence_explanation"]
     assert assessment["resolved_issue_count"] == 0
     assert assessment["confirmed_dependency_count"] == 0
+    provenance = response.json()["provenance"]
+    assert provenance["schema_version"] == 1
+    assert len(provenance["artifacts"]) == 7
+    assert provenance["total_claims"] == (
+        provenance["grounded_claims"] + provenance["inferred_claims"]
+    )
 
 
 def test_overview_exposes_readable_issue_evidence_without_requiring_raw_ids() -> None:
@@ -993,6 +1110,37 @@ def test_artifact_workspace_rejects_malformed_table_rows() -> None:
     assert response.status_code == 422
 
 
+def test_artifact_workspace_rejects_a_heading_only_section() -> None:
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=RecordingSliceTwo())
+    )
+
+    response = client.patch(
+        f"/v1/projects/{PROJECT_ID}/artifacts/intent",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "artifact-save-empty-section",
+        },
+        json={
+            "expected_version": 1,
+            "content": {
+                "sections": [
+                    {
+                        "heading": "New section",
+                        "body": "   ",
+                        "bullets": [],
+                        "columns": [],
+                        "rows": [],
+                    }
+                ]
+            },
+        },
+    )
+
+    assert response.status_code == 422
+    assert "needs body text" in response.text
+
+
 def test_artifact_workspace_rejects_a_stale_version() -> None:
     client = TestClient(
         create_app(slice_one=AuthenticatedSliceOne(), slice_two=ConflictingArtifactSliceTwo())
@@ -1022,3 +1170,34 @@ def test_artifact_workspace_rejects_a_stale_version() -> None:
 
     assert response.status_code == 409
     assert response.json()["detail"] == "ARTIFACT_VERSION_CONFLICT"
+
+
+def test_artifact_workspace_rejects_overlapping_reanalysis() -> None:
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=BusyArtifactSliceTwo())
+    )
+
+    response = client.patch(
+        f"/v1/projects/{PROJECT_ID}/artifacts/intent",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "artifact-save-busy",
+        },
+        json={
+            "expected_version": 1,
+            "content": {
+                "sections": [
+                    {
+                        "heading": "",
+                        "body": "A material edit while another analysis is active.",
+                        "bullets": [],
+                        "columns": [],
+                        "rows": [],
+                    }
+                ]
+            },
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "ARTIFACT_ANALYSIS_IN_PROGRESS"

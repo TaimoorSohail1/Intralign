@@ -12,7 +12,14 @@ export async function GET(
   const { projectId } = await context.params;
   const url = new URL(request.url);
   const category = url.searchParams.get("category") ?? "all";
-  const allowed = ["all", "analysis", "issues", "versions", "decisions"] as const;
+  const allowed = [
+    "all",
+    "analysis",
+    "issues",
+    "versions",
+    "decisions",
+    "collaboration",
+  ] as const;
   if (!allowed.includes(category as (typeof allowed)[number])) {
     return Response.json({ message: "Invalid history category" }, { status: 422 });
   }

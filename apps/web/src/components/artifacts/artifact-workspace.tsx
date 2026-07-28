@@ -45,6 +45,28 @@ function cloneContent(content: ArtifactWorkspaceSummary["content"]) {
   return structuredClone(content);
 }
 
+function sameContent(
+  left: ArtifactWorkspaceSummary["content"],
+  right: ArtifactWorkspaceSummary["content"],
+) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function hasEmptySection(content: ArtifactWorkspaceSummary["content"]) {
+  return content.sections.some(
+    (section) =>
+      !section.body.trim() &&
+      !section.bullets.some((item) => item.trim()) &&
+      !section.rows.some((row) => row.some((cell) => cell.trim())),
+  );
+}
+
+function provenanceLabel(provenance: ArtifactWorkspaceSummary["provenance"]) {
+  if (provenance === "confirmed_by_user") return "Confirmed by you";
+  if (provenance === "mixed") return "Contains your edits";
+  return "From OSLO";
+}
+
 export function ArtifactWorkspace({
   artifactType,
   projectId,
@@ -73,7 +95,6 @@ export function ArtifactWorkspace({
   const [futureDepth, setFutureDepth] = useState(0);
   const historyRef = useRef<ArtifactWorkspaceSummary["content"][]>([]);
   const futureRef = useRef<ArtifactWorkspaceSummary["content"][]>([]);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reanalysisStartedRef = useRef(false);
 
   useEffect(() => {
@@ -103,7 +124,6 @@ export function ArtifactWorkspace({
       });
     return () => {
       cancelled = true;
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, [artifactType, projectId]);
 
@@ -144,44 +164,64 @@ export function ArtifactWorkspace({
     return JSON.stringify(content).toLowerCase().split(needle).length - 1;
   }, [content, searchQuery]);
 
-  function queueSave(nextContent: ArtifactWorkspaceSummary["content"]) {
+  function stageContent(nextContent: ArtifactWorkspaceSummary["content"]) {
     if (!artifact) return;
-    setStatus("editing");
     setError(null);
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(async () => {
-      setStatus("saving");
-      try {
-        const response = await fetch(
-          `/api/projects/${projectId}/artifacts/${artifactType}`,
-          {
-            method: "PATCH",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              content: nextContent,
-              expectedVersion: artifact.version,
-              idempotencyKey: `artifact-${artifactType}-${crypto.randomUUID()}`,
-            }),
-          },
-        );
-        const payload = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(payload?.message ?? "Artifact save failed");
-        }
-        const saved = payload as ArtifactWorkspaceSummary;
-        setArtifact(saved);
-        setContent(cloneContent(saved.content));
-        if (saved.analysis_run?.run_id) {
-          setStatus("stale");
-          onAnalysisStarted(saved.analysis_run.run_id);
-        } else {
-          setStatus("saved");
-        }
-      } catch (saveError) {
-        setError(saveError instanceof Error ? saveError.message : "Artifact save failed");
-        setStatus("error");
+    if (sameContent(nextContent, artifact.content)) {
+      setStatus("saved");
+      return;
+    }
+    setStatus("editing");
+  }
+
+  async function applyChanges() {
+    if (!artifact || !content) return;
+    if (sameContent(content, artifact.content)) {
+      setStatus("saved");
+      return;
+    }
+    if (hasEmptySection(content)) {
+      setError("Complete or remove empty sections before applying changes");
+      setStatus("editing");
+      return;
+    }
+
+    setStatus("saving");
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/artifacts/${artifactType}`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            content,
+            expectedVersion: artifact.version,
+            idempotencyKey: `artifact-${artifactType}-${crypto.randomUUID()}`,
+          }),
+        },
+      );
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.message ?? "Artifact save failed");
       }
-    }, 1500);
+      const saved = payload as ArtifactWorkspaceSummary;
+      setArtifact(saved);
+      setContent(cloneContent(saved.content));
+      historyRef.current = [];
+      futureRef.current = [];
+      setHistoryDepth(0);
+      setFutureDepth(0);
+      if (saved.analysis_run?.run_id) {
+        setStatus("stale");
+        onAnalysisStarted(saved.analysis_run.run_id);
+      } else {
+        setStatus("saved");
+      }
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Artifact save failed");
+      setStatus("error");
+    }
   }
 
   function updateContent(mutator: (draft: ArtifactWorkspaceSummary["content"]) => void) {
@@ -193,7 +233,7 @@ export function ArtifactWorkspace({
     const nextContent = cloneContent(content);
     mutator(nextContent);
     setContent(nextContent);
-    queueSave(nextContent);
+    stageContent(nextContent);
   }
 
   function undo() {
@@ -204,7 +244,7 @@ export function ArtifactWorkspace({
     setHistoryDepth(historyRef.current.length);
     setFutureDepth(futureRef.current.length);
     setContent(previousContent);
-    queueSave(previousContent);
+    stageContent(previousContent);
   }
 
   function redo() {
@@ -215,7 +255,7 @@ export function ArtifactWorkspace({
     setHistoryDepth(historyRef.current.length);
     setFutureDepth(futureRef.current.length);
     setContent(nextContent);
-    queueSave(nextContent);
+    stageContent(nextContent);
   }
 
   if (status === "loading" || !artifact || !content) {
@@ -234,7 +274,7 @@ export function ArtifactWorkspace({
           <h1>{artifact.title}</h1>
           <span className="editable-chip">Editable</span>
           <span className="artifact-provenance">
-            {artifact.provenance === "confirmed_by_user" ? "Confirmed by you" : "From OSLO"}
+            {provenanceLabel(artifact.provenance)}
           </span>
         </div>
         <div className="artifact-editor-toolbar">
@@ -343,7 +383,7 @@ export function ArtifactWorkspace({
           </div>
           <span className={`artifact-save-state is-${displayStatus}`}>
             {displayStatus === "editing"
-              ? "Editing…"
+              ? "Changes not applied"
               : displayStatus === "saving"
                 ? "Saving…"
                 : displayStatus === "stale"
@@ -354,13 +394,26 @@ export function ArtifactWorkspace({
                   ? "Save failed"
                   : "Up to date"}
           </span>
+          {displayStatus === "editing" || displayStatus === "error" ? (
+            <button
+              className="artifact-apply-button"
+              disabled={hasEmptySection(content)}
+              onClick={() => void applyChanges()}
+              type="button"
+            >
+              Apply changes
+            </button>
+          ) : null}
         </div>
         {displayStatus === "editing" ||
         displayStatus === "saving" ||
         displayStatus === "stale" ? (
           <p className={`artifact-state-hint is-${displayStatus}`}>
-            Your edit is saved as project evidence. Saving does not change the assessment;
-            only the automatic reanalysis can update it.
+            {displayStatus === "editing"
+              ? "Changes stay local until you apply them. Undoing back to the current version starts no analysis."
+              : displayStatus === "saving"
+                ? "Saving one governed artifact revision and preparing one re-analysis."
+                : "Your change is saved as project evidence. The current read remains available while OSLO re-analyzes it."}
           </p>
         ) : null}
         {searchOpen ? (
@@ -378,7 +431,7 @@ export function ArtifactWorkspace({
         {error ? (
           <button
             className="artifact-save-error"
-            onClick={() => queueSave(content)}
+            onClick={() => void applyChanges()}
             type="button"
           >
             {error}. Retry save
@@ -388,14 +441,14 @@ export function ArtifactWorkspace({
 
       <div
         className={`artifact-editor-body ${
-          artifact.provenance === "confirmed_by_user" ? "is-confirmed" : ""
+          artifact.provenance !== "from_oslo" ? "is-confirmed" : ""
         }`}
       >
         {content.sections.map((section, sectionIndex) => (
           <ArtifactSectionEditor
             activeIssue={issues[issueIndex] ?? null}
             artifactType={artifactType}
-            confirmed={artifact.provenance === "confirmed_by_user"}
+            confirmed={artifact.provenance !== "from_oslo"}
             key={`${artifactType}-${sectionIndex}`}
             onChange={(nextSection) =>
               updateContent((draft) => {
@@ -488,6 +541,8 @@ function ArtifactSectionEditor({
                       onChange({
                         ...section,
                         rows: [section.columns.map(() => ""), ...section.rows],
+                        row_evidence_refs: [[], ...(section.row_evidence_refs ?? [])],
+                        row_states: ["confirmed", ...(section.row_states ?? [])],
                       })
                     }
                     title="Insert row at top"
@@ -541,7 +596,16 @@ function ArtifactSectionEditor({
               {section.rows.map((row, rowIndex) => (
                 <tr key={`${rowIndex}-${row.join("-")}`}>
                   <td className="artifact-row-gutter">
-                    <span className="artifact-row-provenance" title="From OSLO" />
+                    <span
+                      className={`artifact-row-provenance is-${
+                        section.row_states?.[rowIndex] ?? "unknown"
+                      }`}
+                      title={`${
+                        section.row_states?.[rowIndex] ?? "unknown"
+                      } · ${
+                        section.row_evidence_refs?.[rowIndex]?.length ?? 0
+                      } evidence reference(s)`}
+                    />
                     <button
                       aria-label="Reorder row — use Up and Down arrow keys to move"
                       className="artifact-row-grip"
@@ -554,7 +618,18 @@ function ArtifactSectionEditor({
                         const rows = section.rows.map((item) => [...item]);
                         const [movedRow] = rows.splice(rowIndex, 1);
                         rows.splice(targetIndex, 0, movedRow);
-                        onChange({ ...section, rows });
+                        const rowEvidence = [...(section.row_evidence_refs ?? [])];
+                        const [movedEvidence] = rowEvidence.splice(rowIndex, 1);
+                        rowEvidence.splice(targetIndex, 0, movedEvidence ?? []);
+                        const rowStates = [...(section.row_states ?? [])];
+                        const [movedState] = rowStates.splice(rowIndex, 1);
+                        rowStates.splice(targetIndex, 0, movedState ?? "unknown");
+                        onChange({
+                          ...section,
+                          rows,
+                          row_evidence_refs: rowEvidence,
+                          row_states: rowStates,
+                        });
                       }}
                       title="Use Up and Down arrow keys to reorder"
                       type="button"
@@ -566,7 +641,16 @@ function ArtifactSectionEditor({
                       onClick={() => {
                         const rows = section.rows.map((item) => [...item]);
                         rows.splice(rowIndex + 1, 0, section.columns.map(() => ""));
-                        onChange({ ...section, rows });
+                        const rowEvidence = [...(section.row_evidence_refs ?? [])];
+                        rowEvidence.splice(rowIndex + 1, 0, []);
+                        const rowStates = [...(section.row_states ?? [])];
+                        rowStates.splice(rowIndex + 1, 0, "confirmed");
+                        onChange({
+                          ...section,
+                          rows,
+                          row_evidence_refs: rowEvidence,
+                          row_states: rowStates,
+                        });
                       }}
                       type="button"
                     >
@@ -578,6 +662,12 @@ function ArtifactSectionEditor({
                         onChange({
                           ...section,
                           rows: section.rows.filter((_, index) => index !== rowIndex),
+                          row_evidence_refs: (section.row_evidence_refs ?? []).filter(
+                            (_, index) => index !== rowIndex,
+                          ),
+                          row_states: (section.row_states ?? []).filter(
+                            (_, index) => index !== rowIndex,
+                          ),
                         })
                       }
                       type="button"
@@ -619,6 +709,8 @@ function ArtifactSectionEditor({
               onChange({
                 ...section,
                 rows: [...section.rows, section.columns.map(() => "")],
+                row_evidence_refs: [...(section.row_evidence_refs ?? []), []],
+                row_states: [...(section.row_states ?? []), "confirmed"],
               })
             }
             type="button"

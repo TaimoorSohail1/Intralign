@@ -53,9 +53,17 @@ export async function PATCH(
   } catch (error) {
     const conflict =
       error instanceof Error && error.message.includes("ARTIFACT_VERSION_CONFLICT");
+    const analysisInProgress =
+      error instanceof Error && error.message.includes("ARTIFACT_ANALYSIS_IN_PROGRESS");
     return Response.json(
-      { message: conflict ? "This artifact changed elsewhere. Reload it." : "Artifact save failed" },
-      { status: conflict ? 409 : 400 },
+      {
+        message: conflict
+          ? "This artifact changed elsewhere. Reload it."
+          : analysisInProgress
+            ? "OSLO is already re-analyzing this project. Apply this change when it finishes."
+            : "Artifact save failed",
+      },
+      { status: conflict || analysisInProgress ? 409 : 400 },
     );
   }
 }

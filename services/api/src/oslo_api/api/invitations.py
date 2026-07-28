@@ -139,9 +139,13 @@ def invite_member(
             detail={
                 "code": "INVITATION_LIMIT_REACHED",
                 "message": (
-                    "The Free plan includes two invitations per calendar month. "
-                    "Archive access or upgrade to invite another person."
+                    f"The {error.plan_label} plan includes "
+                    f"{error.monthly_invitation_limit} invitations per calendar month. "
+                    "Wait for the next allocation or compare plans."
                 ),
+                "plan": error.plan,
+                "monthly_invitation_limit": error.monthly_invitation_limit,
+                "remedies": list(error.remedies),
             },
         ) from error
     except CollaboratorSeatLimitReached as error:
@@ -150,9 +154,13 @@ def invite_member(
             detail={
                 "code": "COLLABORATOR_SEAT_LIMIT_REACHED",
                 "message": (
-                    "The Free plan includes three collaborator seats, including the owner. "
+                    f"The {error.plan.title()} plan includes "
+                    f"{error.collaborator_seat_limit} collaborator seats, including the owner. "
                     "Invite this person as a Viewer or upgrade the workspace."
                 ),
+                "plan": error.plan,
+                "collaborator_seat_limit": error.collaborator_seat_limit,
+                "remedies": list(error.remedies),
             },
         ) from error
     except InvitationDeliveryFailed as error:

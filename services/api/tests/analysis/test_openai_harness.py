@@ -138,6 +138,93 @@ class RateLimitedOnceOpenAI:
         self.responses = RateLimitedOnceResponses(payload)
 
 
+class ShardedResponses:
+    def __init__(self) -> None:
+        self.requests: list[dict] = []
+
+    def parse(self, **kwargs):
+        self.requests.append(kwargs)
+        payload = json.loads(kwargs["input"][1]["content"])
+        artifact_type = payload["artifact_type"]
+        evidence_ref = payload["allowed_evidence_locators"][0]
+        response_payload = {
+            "project_title": (
+                "Northstar CRM Modernization"
+                if artifact_type == "intent"
+                else None
+            ),
+            "project_title_confidence": (
+                "high" if artifact_type == "intent" else "low"
+            ),
+            "artifact": {
+                "artifact_type": artifact_type,
+                "title": artifact_type.replace("_", " ").title(),
+                "summary": f"Structured {artifact_type} summary.",
+                "reliability": "Moderate",
+                "evidence_refs": [evidence_ref],
+                "basis": "supported",
+                "sections": [
+                    {
+                        "heading": artifact_type.replace("_", " ").title(),
+                        "body": f"Structured {artifact_type} detail.",
+                        "bullets": [],
+                        "columns": [],
+                        "rows": [],
+                        "evidence_refs": [evidence_ref],
+                        "row_evidence_refs": [],
+                        "row_states": [],
+                    }
+                ],
+                "assumptions": [],
+                "conflicts": [],
+            },
+        }
+        return SimpleNamespace(
+            id=f"resp_{artifact_type}",
+            model=kwargs["model"],
+            output_parsed=kwargs["text_format"].model_validate(response_payload),
+            usage=SimpleNamespace(input_tokens=500, output_tokens=200),
+            status="completed",
+            output=(),
+        )
+
+
+class ShardedOpenAI:
+    def __init__(self) -> None:
+        self.responses = ShardedResponses()
+
+
+def structured_artifact_payload(
+    artifact_type,
+    evidence_ref: str,
+    *,
+    summary: str = "A concise evidence-qualified summary.",
+    basis: str = "supported",
+) -> dict:
+    return {
+        "artifact_type": artifact_type.value,
+        "title": artifact_type.value.replace("_", " ").title(),
+        "summary": summary,
+        "reliability": "Moderate",
+        "evidence_refs": [evidence_ref],
+        "basis": basis,
+        "sections": [
+            {
+                "heading": artifact_type.value.replace("_", " ").title(),
+                "body": summary,
+                "bullets": [],
+                "columns": [],
+                "rows": [],
+                "evidence_refs": [evidence_ref],
+                "row_evidence_refs": [],
+                "row_states": [],
+            }
+        ],
+        "assumptions": [],
+        "conflicts": [],
+    }
+
+
 def test_perceive_returns_schema_validated_output_and_safe_call_metadata() -> None:
     evidence_ref = (
         "document:018f9f7e-8de2-7000-8000-000000000099:page:1:fragment:0"
@@ -353,7 +440,7 @@ def test_extended_perceive_uses_the_extended_model_and_output_budget() -> None:
 
     request = client.responses.requests[0]
     assert request["model"] == "gpt-deep"
-    assert request["max_output_tokens"] == 3_000
+    assert request["max_output_tokens"] == 8_000
 
 
 def test_initial_perceive_has_room_for_a_complete_bounded_contract() -> None:
@@ -378,7 +465,7 @@ def test_initial_perceive_has_room_for_a_complete_bounded_contract() -> None:
         kind=RunKind.INITIAL,
     )
 
-    assert client.responses.requests[0]["max_output_tokens"] == 2_500
+    assert client.responses.requests[0]["max_output_tokens"] == 6_000
 
 
 def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> None:
@@ -393,14 +480,7 @@ def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> Non
     construct_client = FakeOpenAI(
         {
             "artifacts": [
-                {
-                    "artifact_type": artifact_type.value,
-                    "title": artifact_type.value.replace("_", " ").title(),
-                    "summary": "A concise evidence-qualified summary.",
-                    "reliability": "Moderate",
-                    "evidence_refs": [evidence_ref],
-                    "basis": "supported",
-                }
+                structured_artifact_payload(artifact_type, evidence_ref)
                 for artifact_type in ARTIFACT_TYPES
             ]
         }
@@ -423,6 +503,15 @@ def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> Non
             "clarity": "Moderate",
             "alignment": "Moderate",
             "feasibility": "Moderate",
+            "coverage_audit": [
+                {
+                    "artifact_type": artifact_type.value,
+                    "completeness": "complete",
+                    "checked_controls": ["content coverage", "cross-artifact consistency"],
+                    "missing_controls": [],
+                }
+                for artifact_type in ARTIFACT_TYPES
+            ],
             "issues": [],
         }
     )
@@ -443,7 +532,7 @@ def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> Non
         ),
     )
 
-    assert construct_client.responses.requests[0]["max_output_tokens"] == 4_000
+    assert construct_client.responses.requests[0]["max_output_tokens"] == 24_000
     assert evaluate_client.responses.requests[0]["max_output_tokens"] == 3_500
     evaluate_request = evaluate_client.responses.requests[0]
     evaluate_payload = json.loads(evaluate_request["input"][1]["content"])
@@ -457,6 +546,8 @@ def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> Non
     assert "authoritative user-confirmed project evidence" in (
         evaluate_request["input"][0]["content"]
     )
+    assert "absence checks" in evaluate_request["input"][0]["content"]
+    assert "documented exception" in evaluate_request["input"][0]["content"]
 
 
 def test_evaluate_uses_the_latest_clarification_context() -> None:
@@ -512,10 +603,10 @@ def test_fast_pass_bounds_large_evidence_and_keeps_high_signal_fragments() -> No
     )
 
     request_payload = client.responses.requests[0]["input"][1]["content"]
-    assert len(request_payload) <= 24_000
+    assert len(request_payload) <= 110_000
     assert "Migration volume is unknown" in request_payload
     assert critical in perception.evidence
-    assert len(perception.evidence) < len(ordinary) + 1
+    assert len(perception.evidence) == len(ordinary) + 1
 
 
 def test_construct_may_cite_any_evidence_fragment_supplied_by_perceive() -> None:
@@ -527,14 +618,12 @@ def test_construct_may_cite_any_evidence_fragment_supplied_by_perceive() -> None
         client=FakeOpenAI(
             {
                 "artifacts": [
-                    {
-                        "artifact_type": artifact_type.value,
-                        "title": artifact_type.value.replace("_", " ").title(),
-                        "summary": "Evidence-qualified project understanding.",
-                        "reliability": "Moderate",
-                        "evidence_refs": [supporting_ref],
-                        "basis": "derived",
-                    }
+                    structured_artifact_payload(
+                        artifact_type,
+                        supporting_ref,
+                        summary="Evidence-qualified project understanding.",
+                        basis="derived",
+                    )
                     for artifact_type in ARTIFACT_TYPES
                 ]
             }
@@ -557,19 +646,149 @@ def test_construct_may_cite_any_evidence_fragment_supplied_by_perceive() -> None
     assert all(item.evidence_refs == (supporting_ref,) for item in artifacts)
 
 
+def test_construct_preserves_structured_rows_assumptions_and_project_title() -> None:
+    evidence_ref = "document:plan:page:5:fragment:4"
+    perception = Perception(
+        facts=("The schedule contains two milestones.",),
+        claims=(),
+        gaps=(),
+        evidence_refs=(evidence_ref,),
+        evidence=(
+            EvidenceFragment(
+                reference=evidence_ref,
+                content=(
+                    "Project Northstar CRM Modernization. Design complete: 1 August. "
+                    "Go-live: 15 September. ERP availability remains an assumption."
+                ),
+            ),
+        ),
+    )
+    artifacts = []
+    for artifact_type in ARTIFACT_TYPES:
+        sections = [
+            {
+                "heading": artifact_type.value.replace("_", " ").title(),
+                "body": "",
+                "bullets": ["Evidence-qualified project information."],
+                "columns": [],
+                "rows": [],
+                "evidence_refs": [evidence_ref],
+                "row_evidence_refs": [],
+                "row_states": [],
+            }
+        ]
+        assumptions = []
+        if artifact_type.value == "schedule":
+            sections = [
+                {
+                    "heading": "Milestones",
+                    "body": "",
+                    "bullets": [],
+                    "columns": ["Milestone", "Date", "Status"],
+                    "rows": [
+                        ["Design complete", "1 August", "Confirmed"],
+                        ["Go-live", "15 September", "Confirmed"],
+                    ],
+                    "evidence_refs": [evidence_ref],
+                    "row_evidence_refs": [[evidence_ref], [evidence_ref]],
+                    "row_states": ["confirmed", "confirmed"],
+                }
+            ]
+            assumptions = [
+                {
+                    "id": "ASM-ERP-AVAILABILITY",
+                    "statement": "ERP availability is sufficient for the planned cutover.",
+                    "state": "inferred",
+                    "load_bearing": True,
+                    "evidence_refs": [evidence_ref],
+                }
+            ]
+        artifacts.append(
+            {
+                "artifact_type": artifact_type.value,
+                "title": artifact_type.value.replace("_", " ").title(),
+                "summary": "A concise evidence-qualified summary.",
+                "reliability": "Moderate",
+                "evidence_refs": [evidence_ref],
+                "basis": "supported",
+                "sections": sections,
+                "assumptions": assumptions,
+                "conflicts": [],
+            }
+        )
+
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=FakeOpenAI(
+            {
+                "project_title": "Northstar CRM Modernization",
+                "project_title_confidence": "high",
+                "artifacts": artifacts,
+            }
+        ),
+    )
+
+    result = harness.construct(perception=perception, kind=RunKind.EXTENDED)
+    schedule = next(item for item in result if item.artifact_type.value == "schedule")
+
+    assert schedule.project_title == "Northstar CRM Modernization"
+    assert schedule.sections[0].rows == (
+        ("Design complete", "1 August", "Confirmed"),
+        ("Go-live", "15 September", "Confirmed"),
+    )
+    assert schedule.sections[0].row_states == ("confirmed", "confirmed")
+    assert schedule.assumptions[0].id == "ASM-ERP-AVAILABILITY"
+    assert schedule.assumptions[0].load_bearing is True
+
+
+def test_dense_projects_construct_artifacts_in_bounded_shards() -> None:
+    evidence = tuple(
+        EvidenceFragment(
+            reference=f"document:plan-{index}:page:1:fragment:0",
+            content=(f"Project evidence {index}. " * 300),
+            source_name=f"plan-{index}.pdf",
+        )
+        for index in range(10)
+    )
+    client = ShardedOpenAI()
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+
+    artifacts = harness.construct(
+        perception=Perception(
+            facts=("A dense ten-document project was supplied.",),
+            claims=(),
+            gaps=(),
+            evidence_refs=tuple(item.reference for item in evidence),
+            evidence=evidence,
+        ),
+        kind=RunKind.EXTENDED,
+    )
+
+    assert len(client.responses.requests) == 7
+    assert {request["max_output_tokens"] for request in client.responses.requests} == {
+        6_000
+    }
+    assert tuple(item.artifact_type for item in artifacts) == ARTIFACT_TYPES
+    assert all(item.sections for item in artifacts)
+    assert all(item.project_title == "Northstar CRM Modernization" for item in artifacts)
+
+
 def test_construct_receives_an_explicit_exact_evidence_locator_allowlist() -> None:
     evidence_ref = "document:plan:page:16:fragment:15"
     client = FakeOpenAI(
         {
             "artifacts": [
-                {
-                    "artifact_type": artifact_type.value,
-                    "title": artifact_type.value.replace("_", " ").title(),
-                    "summary": "Evidence-qualified project understanding.",
-                    "reliability": "Moderate",
-                    "evidence_refs": [evidence_ref],
-                    "basis": "derived",
-                }
+                structured_artifact_payload(
+                    artifact_type,
+                    evidence_ref,
+                    summary="Evidence-qualified project understanding.",
+                    basis="derived",
+                )
                 for artifact_type in ARTIFACT_TYPES
             ]
         }

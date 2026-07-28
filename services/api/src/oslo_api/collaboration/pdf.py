@@ -4,26 +4,103 @@ from io import BytesIO
 from textwrap import wrap
 
 
+def render_report_pdf(project_name: str, content: dict) -> bytes:
+    """Render the exact structured report draft shown in the readout editor."""
+
+    lines = [f"{project_name} - Intralign Project Readout", ""]
+    for section in content.get("sections", []):
+        lines.append(str(section.get("title") or "Section"))
+        lines.extend(
+            str(paragraph)
+            for paragraph in section.get("body", [])
+            if str(paragraph).strip()
+        )
+        lines.append("")
+    lines.extend(
+        [
+            "This export matches the retained report draft and does not run analysis.",
+            "Intralign advises; you decide.",
+        ]
+    )
+    return _simple_pdf(lines)
+
+
 def render_snapshot_pdf(project_name: str, snapshot: dict) -> bytes:
     """Render a dependency-free, immutable snapshot PDF for Alpha."""
 
     assessment = snapshot.get("assessment") or {}
     artifacts = snapshot.get("artifacts") or []
+    issues = [
+        issue
+        for issue in assessment.get("issues") or []
+        if issue.get("status", "open") != "resolved"
+    ]
+    assumptions = [
+        (artifact.get("title") or artifact.get("artifact_type", "Artifact").title(), item)
+        for artifact in artifacts
+        for item in artifact.get("assumptions") or []
+    ]
+    citation_labels = {
+        str(citation.get("reference")): " - ".join(
+            value
+            for value in (
+                str(citation.get("source_name") or "").strip(),
+                str(citation.get("location") or "").strip(),
+            )
+            if value
+        )
+        for citation in snapshot.get("evidence_citations") or []
+        if citation.get("reference")
+    }
     lines = [
-        f"{project_name} - OSLO Project Snapshot",
+        f"{project_name} - OSLO Project Readout",
         "",
         f"State: {snapshot.get('state', 'current')}",
         f"Confidence: {assessment.get('confidence_index', 'Not available')}/100",
         f"Clarity: {assessment.get('clarity', 'Not available')}",
         f"Alignment: {assessment.get('alignment', 'Not available')}",
         f"Feasibility: {assessment.get('feasibility', 'Not available')}",
-        "Currency: not specified",
         "",
         "Summary",
         str(snapshot.get("summary") or "No summary available."),
         "",
-        "Seven plan artifacts",
+        "What changed",
+        "This export reflects the latest retained analysis and artifact revisions.",
+        "",
+        "Key risks",
     ]
+    if issues:
+        for issue in issues[:7]:
+            lines.append(
+                f"- [{issue.get('severity', 'Issue')}] "
+                f"{issue.get('title', 'Untitled issue')}: "
+                f"{issue.get('why', 'No detail available.')}"
+            )
+    else:
+        lines.append("No open material risk is present in the current read.")
+    lines.extend(["", "Assumptions"])
+    if assumptions:
+        for artifact_title, assumption in assumptions[:12]:
+            marker = "load-bearing" if assumption.get("load_bearing") else "supporting"
+            lines.append(
+                f"- {artifact_title}: {assumption.get('statement', 'Unspecified')} ({marker})"
+            )
+    else:
+        lines.append("No material assumption is recorded in the current read.")
+    lines.extend(["", "Plan of action"])
+    if issues:
+        for issue in issues[:7]:
+            lines.append(f"- {issue.get('recommendation', 'Confirm the next action.')}")
+    else:
+        lines.append("Keep the retained evidence current and record material changes.")
+    lines.extend(["", "Decisions needed"])
+    questions = [issue.get("clarification") for issue in issues if issue.get("clarification")]
+    lines.append(
+        str(questions[0])
+        if questions
+        else "No decision is currently required from the report recipient."
+    )
+    lines.extend(["", "Appendix - seven plan artifacts"])
     for artifact in artifacts:
         title = artifact.get("title") or artifact.get("artifact_type", "Artifact").title()
         artifact_type = artifact.get("artifact_type", "artifact").replace("_", " ").title()
@@ -32,25 +109,25 @@ def render_snapshot_pdf(project_name: str, snapshot: dict) -> bytes:
                 f"{artifact_type}: {title}",
                 str(artifact.get("summary") or "No summary available."),
                 "Evidence: "
-                + ", ".join(str(ref) for ref in artifact.get("evidence_refs") or ["None"]),
+                + ", ".join(
+                    dict.fromkeys(
+                        citation_labels.get(
+                            str(reference), "Retained project evidence"
+                        )
+                        for reference in artifact.get("evidence_refs") or ["None"]
+                    )
+                ),
                 "",
             ]
         )
     lines.extend(
         [
-        "Open issues",
+            (
+                f"Source documents: {snapshot.get('source_document_count', 0)}; "
+                f"plan artifacts: {len(artifacts)}."
+            ),
         ]
     )
-    for issue in assessment.get("issues") or []:
-        if issue.get("status", "open") == "resolved":
-            continue
-        lines.append(
-            f"- [{issue.get('severity', 'issue')}] {issue.get('title', 'Untitled issue')}"
-        )
-        lines.append(
-            "  Evidence: "
-            + ", ".join(str(ref) for ref in issue.get("evidence_refs") or ["None"])
-        )
     lines.extend(
         [
             "",
@@ -63,11 +140,47 @@ def render_snapshot_pdf(project_name: str, snapshot: dict) -> bytes:
 
 
 def _simple_pdf(lines: list[str]) -> bytes:
-    safe_lines: list[str] = []
+    heading_lines = {
+        "Summary",
+        "What changed",
+        "Key risks",
+        "Assumptions",
+        "Plan of action",
+        "Decisions needed",
+        "Appendix - seven plan artifacts",
+    }
+    logical_lines: list[tuple[str, list[str]]] = []
     for line in lines:
-        ascii_line = line.encode("latin-1", "replace").decode("latin-1")
-        safe_lines.extend(wrap(ascii_line, width=92) or [""])
-    pages = [safe_lines[index : index + 54] for index in range(0, len(safe_lines), 54)]
+        safe_line = _pdf_safe_text(line)
+        logical_lines.append((safe_line, wrap(safe_line, width=92) or [""]))
+
+    blocks: list[list[str]] = []
+    index = 0
+    while index < len(logical_lines):
+        safe_line, wrapped = logical_lines[index]
+        if safe_line in heading_lines and index + 1 < len(logical_lines):
+            # Keep a section heading with its first content line.
+            blocks.append(wrapped + logical_lines[index + 1][1])
+            index += 2
+            continue
+        blocks.append(wrapped)
+        index += 1
+
+    pages: list[list[str]] = []
+    current_page: list[str] = []
+    for block in blocks:
+        if current_page and len(current_page) + len(block) > 54:
+            pages.append(current_page)
+            current_page = []
+        while len(block) > 54:
+            room = 54 - len(current_page)
+            current_page.extend(block[:room])
+            pages.append(current_page)
+            current_page = []
+            block = block[room:]
+        current_page.extend(block)
+    if current_page:
+        pages.append(current_page)
     pages = pages or [[""]]
     page_object_numbers = [3 + index * 2 for index in range(len(pages))]
     font_object_number = 3 + len(pages) * 2
@@ -121,9 +234,30 @@ def _simple_pdf(lines: list[str]) -> bytes:
     for offset in offsets[1:]:
         output.write(f"{offset:010d} 00000 n \n".encode())
     output.write(
-        (
-            f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
-            f"startxref\n{xref}\n%%EOF"
-        ).encode()
+        (f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF").encode()
     )
     return output.getvalue()
+
+
+def _pdf_safe_text(value: object) -> str:
+    """Normalize common project-document glyphs for the built-in PDF font."""
+    text = str(value)
+    replacements = {
+        "\u00a0": " ",
+        "\u2010": "-",
+        "\u2011": "-",
+        "\u2012": "-",
+        "\u2013": "-",
+        "\u2014": " - ",
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2022": "-",
+        "\u2192": "->",
+        "\u2264": "<=",
+        "\u2265": ">=",
+    }
+    for source, replacement in replacements.items():
+        text = text.replace(source, replacement)
+    return text.encode("latin-1", "replace").decode("latin-1")

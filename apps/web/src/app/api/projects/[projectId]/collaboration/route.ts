@@ -3,6 +3,7 @@ import {
   createShareLink,
   getCollaboration,
   listInvitations,
+  promoteReviewResponse,
   revokeInvitation,
   revokeReviewGrant,
   revokeShareLink,
@@ -96,6 +97,14 @@ export async function POST(
         grantId: body.grantId,
       });
       return new Response(null, { status: 204 });
+    }
+    if (body.action === "use_review_evidence") {
+      const result = await promoteReviewResponse({
+        accessToken: session.accessToken,
+        projectId,
+        responseId: body.responseId,
+      });
+      return Response.json(result, { status: 202 });
     }
     if (body.action === "revoke_invitation") {
       if (!session.workspaceId) {

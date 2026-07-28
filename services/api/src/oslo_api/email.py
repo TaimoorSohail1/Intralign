@@ -140,3 +140,60 @@ This invitation expires on {expiry}.
         )
         with self._smtp_factory(self._host, self._port) as smtp:
             smtp.send_message(message)
+
+
+class SmtpReportMailer:
+    def __init__(
+        self,
+        *,
+        host: str,
+        port: int,
+        sender: str,
+        smtp_factory: Callable[[str, int], Any] = smtplib.SMTP,
+    ) -> None:
+        self._host = host
+        self._port = port
+        self._sender = sender
+        self._smtp_factory = smtp_factory
+
+    def send_report(
+        self,
+        *,
+        email: str,
+        subject: str,
+        project_name: str,
+        recipient_label: str,
+        sections: list[dict],
+    ) -> None:
+        message = EmailMessage()
+        message["From"] = self._sender
+        message["To"] = email
+        message["Subject"] = subject
+        plain_lines = [project_name, f"Prepared for {recipient_label}", ""]
+        html_sections: list[str] = []
+        for section in sections:
+            title = str(section.get("title") or "Section")
+            paragraphs = [
+                str(item).strip()
+                for item in section.get("body", [])
+                if str(item).strip()
+            ]
+            plain_lines.extend([title, *paragraphs, ""])
+            html_sections.append(
+                f"<h2>{escape(title)}</h2>"
+                + "".join(f"<p>{escape(paragraph)}</p>" for paragraph in paragraphs)
+            )
+        message.set_content("\n".join(plain_lines))
+        message.add_alternative(
+            (
+                '<!doctype html><html lang="en"><body style="font-family:Arial,sans-serif;'
+                'max-width:720px;margin:auto;color:#17191c">'
+                f"<h1>{escape(project_name)}</h1>"
+                f"<p>Prepared for {escape(recipient_label)}</p>"
+                + "".join(html_sections)
+                + "<hr><p>Sent from Intralign.</p></body></html>"
+            ),
+            subtype="html",
+        )
+        with self._smtp_factory(self._host, self._port) as smtp:
+            smtp.send_message(message)

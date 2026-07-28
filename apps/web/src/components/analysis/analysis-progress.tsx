@@ -139,7 +139,9 @@ export function AnalysisProgress({
                 <p>starting analysis <span>· ok</span></p>
               )}
             </div>
-            <p className="analysis-timing">Initial Analysis · about 30 seconds</p>
+            <p className="analysis-timing">
+              Initial Analysis runs first · timing varies with evidence volume
+            </p>
           </>
         )}
       </section>

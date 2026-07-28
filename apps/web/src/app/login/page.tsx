@@ -10,10 +10,14 @@ interface LoginPageProps {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { invite } = await searchParams;
   const invitation = invite ? await resolveInvitation(invite).catch(() => null) : null;
-  const localAdminEmail = process.env.NODE_ENV === "development" && !invitation
+  const showDevelopmentCredentials =
+    process.env.NODE_ENV === "development" &&
+    process.env.OSLO_SHOW_DEV_CREDENTIALS === "true" &&
+    !invitation;
+  const localAdminEmail = showDevelopmentCredentials
     ? "admin@oslo.local"
     : undefined;
-  const localAdminPassword = process.env.NODE_ENV === "development" && !invitation
+  const localAdminPassword = showDevelopmentCredentials
     ? "OsloLocalAdmin123!"
     : undefined;
   return (

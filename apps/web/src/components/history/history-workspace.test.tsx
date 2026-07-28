@@ -164,7 +164,11 @@ describe("HistoryWorkspace", () => {
     expect(screen.getByText("A retained historical project read.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /close historical snapshot/i })).toHaveFocus();
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.queryByRole("dialog", { name: /historical snapshot/i })).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: /historical snapshot/i }),
+      ).not.toBeInTheDocument(),
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /ask oslo about extended analysis/i }));
     expect(onAskOslo).toHaveBeenCalledWith(

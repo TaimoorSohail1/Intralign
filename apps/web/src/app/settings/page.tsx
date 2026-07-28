@@ -17,6 +17,7 @@ export default async function SettingsPage() {
       displayName={session.displayName ?? "Member"}
       initial={preferences}
       logoutAction={logout}
+      workspace={workspace}
       workspaceName={workspace.name}
     />
   );

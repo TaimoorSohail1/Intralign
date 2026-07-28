@@ -48,6 +48,10 @@ interface ReviewGrant {
   expires_at: string;
   revoked_at?: string | null;
   responded_at?: string | null;
+  response_id?: string | null;
+  response_kind?: string | null;
+  response_body?: string | null;
+  analysis_run_id?: string | null;
 }
 
 interface CollaborationState {
@@ -161,6 +165,10 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
     () => (state?.reviews ?? []).filter((item) => !item.revoked_at && !item.responded_at),
     [state],
   );
+  const reviewerResponses = useMemo(
+    () => (state?.reviews ?? []).filter((item) => item.responded_at && item.response_id),
+    [state],
+  );
 
   async function runAction(body: Record<string, unknown>) {
     setError("");
@@ -214,6 +222,20 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
     setBusy("");
   }
 
+  async function promoteReviewEvidence(review: ReviewGrant) {
+    if (!review.response_id || review.analysis_run_id) return;
+    setBusy(`response-${review.response_id}`);
+    const payload = await runAction({
+      action: "use_review_evidence",
+      responseId: review.response_id,
+    });
+    if (payload?.analysis_run_id) {
+      setSuccess("Reviewer evidence queued for analysis.");
+      await loadCollaboration();
+    }
+    setBusy("");
+  }
+
   async function sendInvite() {
     if (!inviteEmail.trim()) {
       setError("Add a valid email address first.");
@@ -256,11 +278,21 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
       className="project-collaboration-actions"
       role="group"
     >
-      <button className="topbar-action" type="button" onClick={openShare}>
+      <button
+        aria-label="Share"
+        className="topbar-action"
+        type="button"
+        onClick={openShare}
+      >
         <ShareNetwork size={16} weight="bold" aria-hidden="true" />
         <span>Share</span>
       </button>
-      <button className="topbar-action" type="button" onClick={openExport}>
+      <button
+        aria-label="Export"
+        className="topbar-action"
+        type="button"
+        onClick={openExport}
+      >
         <DownloadSimple size={16} weight="bold" aria-hidden="true" />
         <span>Export</span>
       </button>
@@ -273,6 +305,14 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
             className="collaboration-modal"
             role="dialog"
           >
+            <button
+              aria-label="Close"
+              className="collaboration-modal-dismiss"
+              type="button"
+              onClick={closeModal}
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
             <header className="collaboration-modal-header">
               <div>
                 <span className="eyebrow">
@@ -285,14 +325,6 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
                     : "Download the current evidence-qualified read. Exporting never runs analysis."}
                 </p>
               </div>
-              <button
-                aria-label="Close"
-                className="icon-button"
-                type="button"
-                onClick={closeModal}
-              >
-                <X size={18} aria-hidden="true" />
-              </button>
             </header>
 
             {mode === "export" ? (
@@ -562,6 +594,38 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
                         </div>
                       </section>
                     ) : null}
+                    {reviewerResponses.length ? (
+                      <section className="collaboration-access-records">
+                        <Heading
+                          icon={<Check size={18} weight="duotone" />}
+                          title="Reviewer responses"
+                          detail={`${reviewerResponses.length} received`}
+                        />
+                        <div className="collaboration-record-list">
+                          {reviewerResponses.map((review) => (
+                            <AccessRecord
+                              key={review.response_id}
+                              title={`${review.reviewer_name} · ${(
+                                review.response_kind ?? "comment"
+                              ).replaceAll("_", " ")}`}
+                              detail={review.response_body ?? "Reviewer response received."}
+                              actionLabel={
+                                review.analysis_run_id
+                                  ? "Evidence added"
+                                  : busy === `response-${review.response_id}`
+                                    ? "Queuing…"
+                                    : "Use as project evidence"
+                              }
+                              onAction={
+                                review.analysis_run_id
+                                  ? undefined
+                                  : () => void promoteReviewEvidence(review)
+                              }
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    ) : null}
                   </>
                 ) : null}
               </div>
@@ -602,7 +666,7 @@ function AccessRecord({
   title: string;
   detail: string;
   actionLabel: string;
-  onAction: () => void;
+  onAction?: () => void;
 }) {
   return (
     <div className="collaboration-access-record">
@@ -610,7 +674,7 @@ function AccessRecord({
         <strong>{title}</strong>
         <small>{detail}</small>
       </span>
-      <button type="button" onClick={onAction}>
+      <button type="button" disabled={!onAction} onClick={onAction}>
         {actionLabel}
       </button>
     </div>

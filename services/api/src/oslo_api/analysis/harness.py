@@ -5,6 +5,7 @@ from typing import Protocol
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     Artifact,
+    ArtifactSection,
     ArtifactType,
     Assessment,
     EvidenceFragment,
@@ -153,6 +154,18 @@ class DeterministicAgentHarness:
                 ),
                 reliability="Moderate",
                 evidence_refs=perception.evidence_refs,
+                sections=(
+                    ArtifactSection(
+                        heading=self._titles[artifact_type],
+                        body=summaries.get(artifact_type)
+                        or (
+                            f"{depth} evidence-qualified "
+                            f"{self._titles[artifact_type].lower()}."
+                        ),
+                        bullets=perception.facts[:20],
+                        evidence_refs=perception.evidence_refs,
+                    ),
+                ),
             )
             for artifact_type in ARTIFACT_TYPES
         )

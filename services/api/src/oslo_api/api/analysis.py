@@ -23,8 +23,10 @@ from oslo_api.analysis.advisor import (
     build_project_advisor,
 )
 from oslo_api.analysis.documents import MAX_DOCUMENT_BYTES, DocumentRejected
+from oslo_api.analysis.provenance import build_project_provenance
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
 from oslo_api.slice_two import (
+    SliceTwoAnalysisInProgress,
     SliceTwoApplication,
     SliceTwoArtifactConflict,
     SliceTwoIssueNotAnswerable,
@@ -83,6 +85,9 @@ class ArtifactResponse(BaseModel):
     reliability: str
     evidence_refs: list[str]
     basis: str
+    content: dict
+    assumptions: list[dict]
+    conflicts: list[dict]
 
 
 class EvidenceResponse(BaseModel):
@@ -130,6 +135,47 @@ class AssessmentResponse(BaseModel):
     confirmed_dependency_count: int
 
 
+class ArtifactProvenanceResponse(BaseModel):
+    artifact_type: str
+    grounded: int
+    inferred: int
+    total: int
+    verify_first: bool
+
+
+class InferenceAssumptionResponse(BaseModel):
+    id: str
+    artifact_type: str
+    text: str
+    issue_id: str | None
+    issue_title: str | None
+    load_bearing: bool
+    state: str
+
+
+class ProvenanceStructureResponse(BaseModel):
+    unconfirmed_dependencies: int
+    unowned_parties: int
+    untraceable_numbers: int
+
+
+class ProvenanceMovementResponse(BaseModel):
+    user_grounded: int
+    oslo_inferred: int
+
+
+class ProjectProvenanceResponse(BaseModel):
+    schema_version: int
+    artifacts: list[ArtifactProvenanceResponse]
+    assumptions: list[InferenceAssumptionResponse]
+    grounded_claims: int
+    inferred_claims: int
+    total_claims: int
+    load_bearing_inferences: int
+    structure: ProvenanceStructureResponse
+    this_week: ProvenanceMovementResponse
+
+
 class OverviewResponse(BaseModel):
     snapshot_id: UUID
     analysis_run_id: UUID
@@ -139,7 +185,10 @@ class OverviewResponse(BaseModel):
     summary: str
     artifacts: list[ArtifactResponse]
     assessment: AssessmentResponse
+    provenance: ProjectProvenanceResponse
     published_at: datetime
+    project_title: str | None = None
+    source_document_count: int = 0
     extended_analysis: AnalysisRunResponse | None = None
 
 
@@ -150,7 +199,7 @@ class HistoryChangeResponse(BaseModel):
 
 class HistoryEventResponse(BaseModel):
     id: int
-    category: Literal["analysis", "issues", "versions", "decisions"]
+    category: Literal["analysis", "issues", "versions", "decisions", "collaboration"]
     event_type: str
     summary: str
     detail: str | None
@@ -249,6 +298,11 @@ class ArtifactSectionPayload(BaseModel):
     bullets: list[str] = Field(default_factory=list, max_length=100)
     columns: list[str] = Field(default_factory=list, max_length=20)
     rows: list[list[str]] = Field(default_factory=list, max_length=500)
+    evidence_refs: list[str] = Field(default_factory=list, max_length=100)
+    row_evidence_refs: list[list[str]] = Field(default_factory=list, max_length=500)
+    row_states: list[
+        Literal["confirmed", "inferred", "conflicting", "unknown"]
+    ] = Field(default_factory=list, max_length=500)
 
     @field_validator("bullets")
     @classmethod
@@ -265,11 +319,27 @@ class ArtifactSectionPayload(BaseModel):
             raise ValueError("Artifact rows must match the column count")
         if any(len(cell) > 10_000 for row in self.rows for cell in row):
             raise ValueError("Artifact cell is too long")
+        if self.row_evidence_refs and len(self.row_evidence_refs) != len(self.rows):
+            raise ValueError("Artifact row evidence must match the row count")
+        if self.row_states and len(self.row_states) != len(self.rows):
+            raise ValueError("Artifact row states must match the row count")
         return self
 
 
 class ArtifactContentPayload(BaseModel):
     sections: list[ArtifactSectionPayload] = Field(min_length=1, max_length=20)
+
+    @model_validator(mode="after")
+    def reject_empty_sections(self) -> "ArtifactContentPayload":
+        for section in self.sections:
+            has_body = bool(section.body.strip())
+            has_bullets = any(item.strip() for item in section.bullets)
+            has_rows = any(any(cell.strip() for cell in row) for row in section.rows)
+            if not (has_body or has_bullets or has_rows):
+                raise ValueError(
+                    "Each artifact section needs body text, a bullet, or a table row"
+                )
+        return self
 
 
 class ArtifactUpdateRequest(BaseModel):
@@ -282,10 +352,12 @@ class ArtifactWorkspaceResponse(BaseModel):
     title: str
     content: ArtifactContentPayload
     version: int
-    provenance: Literal["from_oslo", "confirmed_by_user"]
+    provenance: Literal["from_oslo", "confirmed_by_user", "mixed"]
     reliability: str
     basis: str
     evidence_refs: list[str]
+    assumptions: list[dict] = Field(default_factory=list)
+    conflicts: list[dict] = Field(default_factory=list)
     issues: list[IssueResponse]
     updated_at: datetime
     analysis_run: AnalysisRunResponse | None = None
@@ -366,6 +438,43 @@ def _overview_response(
                 reliability=artifact.reliability,
                 evidence_refs=list(artifact.evidence_refs),
                 basis=artifact.basis,
+                content={
+                    "sections": [
+                        {
+                            "heading": section.heading,
+                            "body": section.body,
+                            "bullets": list(section.bullets),
+                            "columns": list(section.columns),
+                            "rows": [list(row) for row in section.rows],
+                            "evidence_refs": list(section.evidence_refs),
+                            "row_evidence_refs": [
+                                list(references)
+                                for references in section.row_evidence_refs
+                            ],
+                            "row_states": list(section.row_states),
+                        }
+                        for section in artifact.sections
+                    ]
+                },
+                assumptions=[
+                    {
+                        "id": assumption.id,
+                        "statement": assumption.statement,
+                        "state": assumption.state,
+                        "load_bearing": assumption.load_bearing,
+                        "evidence_refs": list(assumption.evidence_refs),
+                    }
+                    for assumption in artifact.assumptions
+                ],
+                conflicts=[
+                    {
+                        "id": conflict.id,
+                        "field": conflict.field,
+                        "values": list(conflict.values),
+                        "evidence_refs": list(conflict.evidence_refs),
+                    }
+                    for conflict in artifact.conflicts
+                ],
             )
             for artifact in snapshot.artifacts
         ],
@@ -416,7 +525,15 @@ def _overview_response(
                 for issue in snapshot.assessment.issues
             ],
         ),
+        provenance=ProjectProvenanceResponse.model_validate(
+            build_project_provenance(
+                artifacts=snapshot.artifacts,
+                issues=snapshot.assessment.issues,
+            )
+        ),
         published_at=snapshot.published_at,
+        project_title=snapshot.project_title,
+        source_document_count=snapshot.source_document_count,
         extended_analysis=(
             _run_response(extended_analysis) if extended_analysis is not None else None
         ),
@@ -450,6 +567,8 @@ def _artifact_workspace_response(
         reliability=artifact["reliability"],
         basis=artifact["basis"],
         evidence_refs=artifact["evidence_refs"],
+        assumptions=artifact.get("assumptions", []),
+        conflicts=artifact.get("conflicts", []),
         issues=[
             IssueResponse(
                 id=issue.id,
@@ -619,7 +738,9 @@ def project_history(
     project_id: UUID,
     context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
     request: Request,
-    category: Literal["all", "analysis", "issues", "versions", "decisions"] = "all",
+    category: Literal[
+        "all", "analysis", "issues", "versions", "decisions", "collaboration"
+    ] = "all",
     cursor: str | None = None,
     limit: int = 25,
 ) -> ProjectHistoryResponse:
@@ -659,22 +780,16 @@ def project_history_snapshot(
     request: Request,
 ) -> OverviewResponse:
     try:
-        application = slice_two_application(request)
-        snapshot = application.history_snapshot(
+        snapshot = slice_two_application(request).history_snapshot(
             actor_user_id=context.user.id,
             project_id=project_id,
             run_id=run_id,
-        )
-        issue_actions = application.list_issue_actions(
-            actor_user_id=context.user.id,
-            project_id=project_id,
         )
     except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
     return _overview_response(
         snapshot,
         orientation_seen=True,
-        issue_actions=issue_actions,
     )
 
 
@@ -781,6 +896,11 @@ def update_project_artifact(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="ARTIFACT_VERSION_CONFLICT",
+        ) from error
+    except SliceTwoAnalysisInProgress as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="ARTIFACT_ANALYSIS_IN_PROGRESS",
         ) from error
     return _artifact_workspace_response(
         artifact,

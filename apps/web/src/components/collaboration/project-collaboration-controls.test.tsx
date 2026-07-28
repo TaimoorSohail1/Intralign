@@ -233,4 +233,60 @@ describe("ProjectCollaborationControls", () => {
       }),
     );
   });
+
+  it("lets the project team explicitly promote a reviewer response to evidence", async () => {
+    const responded = {
+      ...collaboration,
+      reviews: [
+        {
+          id: "review-1",
+          reviewer_name: "Amina Khan",
+          expires_at: "2026-08-26T00:00:00Z",
+          responded_at: "2026-07-28T00:00:00Z",
+          response_id: "response-1",
+          response_kind: "approve",
+          response_body: "The steering committee approved the pilot.",
+          analysis_run_id: null,
+        },
+      ],
+    };
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(responded));
+    render(<ProjectCollaborationControls projectId="project-1" />);
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+
+    expect(await screen.findByText("Reviewer responses")).toBeInTheDocument();
+    expect(screen.getByText("The steering committee approved the pilot.")).toBeInTheDocument();
+
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            response_id: "response-1",
+            analysis_run_id: "run-1",
+            status: "queued",
+          },
+          202,
+        ),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          ...responded,
+          reviews: [{ ...responded.reviews[0], analysis_run_id: "run-1" }],
+        }),
+      );
+    fireEvent.click(screen.getByRole("button", { name: "Use as project evidence" }));
+
+    expect(await screen.findByText("Reviewer evidence queued for analysis.")).toBeInTheDocument();
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      "/api/projects/project-1/collaboration",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          action: "use_review_evidence",
+          responseId: "response-1",
+        }),
+      }),
+    );
+  });
 });

@@ -6,6 +6,7 @@ from oslo_api.analysis.models import (
     Artifact,
     Assessment,
     AssessmentSnapshot,
+    EvidenceFragment,
     ReliabilityBasis,
     RunKind,
 )
@@ -38,6 +39,7 @@ def enrich_assessment(
     kind: RunKind,
     previous_snapshot: AssessmentSnapshot | None,
     description: str,
+    user_evidence: tuple[EvidenceFragment, ...] = (),
 ) -> Assessment:
     """Derive the Slice 3 console read from validated, persisted analysis output."""
 
@@ -46,11 +48,12 @@ def enrich_assessment(
         ("clarity", "alignment", "feasibility"),
         key=lambda name: _BAND_ORDER.get(getattr(assessment, name), -1),
     )
+    structured_clarification = _latest_structured_clarification(user_evidence)
     stage = (
         "orientation"
         if kind is RunKind.INITIAL
         else "validated"
-        if "USER_CLARIFICATION" in description
+        if "USER_CLARIFICATION" in description or structured_clarification is not None
         else "expanded"
     )
     direction = _confidence_direction(assessment, previous_snapshot)
@@ -58,14 +61,22 @@ def enrich_assessment(
         assessment.confidence_band in {"High", "Very High"}
         and assessment.reliability == "Low"
     )
-    clarification_block = _latest_clarification(description)
+    clarification_block = (
+        structured_clarification[1]
+        if structured_clarification is not None
+        else _latest_clarification(description)
+    )
     clarification_match = re.search(
         r"^Issue ID:\s*(\S+)\s*$",
         clarification_block or "",
         re.MULTILINE,
     )
     clarification_issue_id = (
-        clarification_match.group(1) if clarification_match else None
+        structured_clarification[0]
+        if structured_clarification is not None
+        else clarification_match.group(1)
+        if clarification_match
+        else None
     )
     complete_confirmation = _complete_user_confirmation(clarification_block)
     issues = [
@@ -139,10 +150,6 @@ def enrich_assessment(
             issue
             for issue in previous_snapshot.assessment.issues
             if issue.id not in existing_ids
-            and (
-                issue.status == "resolved"
-                or clarification_issue_id is not None
-            )
         )
     issues_tuple = tuple(issues)
     resolved = sum(issue.status == "resolved" for issue in issues_tuple)
@@ -169,6 +176,19 @@ def enrich_assessment(
         resolved_issue_count=resolved,
         confirmed_dependency_count=confirmed,
     )
+
+
+def _latest_structured_clarification(
+    evidence: tuple[EvidenceFragment, ...],
+) -> tuple[str, str] | None:
+    for item in reversed(evidence):
+        match = re.fullmatch(
+            r"user:clarification:(?P<issue>[^:]+):answer:[^:]+",
+            item.reference,
+        )
+        if match is not None:
+            return match.group("issue"), item.content
+    return None
 
 
 def _complete_user_confirmation(clarification: str | None) -> bool:

@@ -89,6 +89,9 @@ export interface OverviewSnapshot {
     reliability: string;
     evidence_refs: string[];
     basis: string;
+    content?: { sections: ArtifactSection[] };
+    assumptions?: ArtifactAssumption[];
+    conflicts?: ArtifactConflict[];
   }>;
   assessment: {
     confidence_index: number;
@@ -128,7 +131,41 @@ export interface OverviewSnapshot {
       selected_resolution?: string | null;
     }>;
   };
+  provenance?: {
+    schema_version: number;
+    artifacts: Array<{
+      artifact_type: string;
+      grounded: number;
+      inferred: number;
+      total: number;
+      verify_first: boolean;
+    }>;
+    assumptions: Array<{
+      id: string;
+      artifact_type: string;
+      text: string;
+      issue_id: string | null;
+      issue_title: string | null;
+      load_bearing: boolean;
+      state: "confirmed" | "inferred" | "conflicting";
+    }>;
+    grounded_claims: number;
+    inferred_claims: number;
+    total_claims: number;
+    load_bearing_inferences: number;
+    structure: {
+      unconfirmed_dependencies: number;
+      unowned_parties: number;
+      untraceable_numbers: number;
+    };
+    this_week: {
+      user_grounded: number;
+      oslo_inferred: number;
+    };
+  };
   published_at: string;
+  project_title?: string | null;
+  source_document_count?: number;
   extended_analysis?: AnalysisRunSummary | null;
 }
 
@@ -207,6 +244,24 @@ export interface ArtifactSection {
   bullets: string[];
   columns: string[];
   rows: string[][];
+  evidence_refs?: string[];
+  row_evidence_refs?: string[][];
+  row_states?: Array<"confirmed" | "inferred" | "conflicting" | "unknown">;
+}
+
+export interface ArtifactAssumption {
+  id: string;
+  statement: string;
+  state: "confirmed" | "inferred" | "conflicting";
+  load_bearing: boolean;
+  evidence_refs: string[];
+}
+
+export interface ArtifactConflict {
+  id: string;
+  field: string;
+  values: string[];
+  evidence_refs: string[];
 }
 
 export interface ArtifactWorkspaceSummary {
@@ -214,10 +269,12 @@ export interface ArtifactWorkspaceSummary {
   title: string;
   content: { sections: ArtifactSection[] };
   version: number;
-  provenance: "from_oslo" | "confirmed_by_user";
+  provenance: "from_oslo" | "confirmed_by_user" | "mixed";
   reliability: string;
   basis: string;
   evidence_refs: string[];
+  assumptions?: ArtifactAssumption[];
+  conflicts?: ArtifactConflict[];
   issues: OverviewSnapshot["assessment"]["issues"];
   updated_at: string;
   analysis_run?: AnalysisRunSummary | null;
@@ -539,8 +596,17 @@ export interface WorkspaceSummary {
   id: string;
   name: string;
   role: "owner" | "collaborator" | "viewer";
-  plan: "free";
+  plan: "free" | "basic";
+  plan_label: string;
+  price_usd_monthly: number;
   active_project_limit: number;
+  document_limit: number;
+  word_limit: number;
+  collaborator_seat_limit: number;
+  monthly_analysis_limit: number | null;
+  monthly_analyses_used: number;
+  can_manage_plan: boolean;
+  member_count?: number;
   projects: WorkspaceProjectSummary[];
   notifications: WorkspaceNotificationSummary[];
 }
@@ -550,6 +616,13 @@ export interface WorkspacePreferences {
   analysis_notifications: boolean;
   failure_notifications: boolean;
   stale_notifications: boolean;
+  display_name: string;
+  role_title: string;
+  workspace_name: string;
+  actor_role: "owner" | "collaborator" | "viewer";
+  mentions_notifications: boolean;
+  reply_notifications: boolean;
+  shared_notifications: boolean;
 }
 
 export interface CollaborationState {
@@ -582,7 +655,11 @@ export interface CollaborationState {
     expires_at: string;
     resolved_at?: string | null;
     revoked_at?: string | null;
+    response_id?: string | null;
     response_kind?: string | null;
+    response_body?: string | null;
+    responded_at?: string | null;
+    analysis_run_id?: string | null;
   }>;
   share_links: Array<{
     id: string;
@@ -676,6 +753,108 @@ export function getWorkspace(input: {
   });
 }
 
+export function promoteReviewResponse(input: {
+  accessToken: string;
+  projectId: string;
+  responseId: string;
+}) {
+  return apiRequest<{
+    response_id: string;
+    analysis_run_id: string;
+    status: string;
+  }>(
+    `/v1/projects/${input.projectId}/review-responses/${input.responseId}/evidence`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+    },
+  );
+}
+
+export type ReportContent = {
+  sections: Array<{ id: string; title: string; body: string[] }>;
+};
+
+export function getProjectReport(accessToken: string, projectId: string) {
+  return apiRequest<{
+    project_id: string;
+    project_name: string;
+    snapshot_id: string;
+    content: ReportContent | null;
+    updated_at: string | null;
+    deliveries: Array<{
+      id: string;
+      recipient_email: string;
+      recipient_label: string;
+      status: "scheduled" | "sending" | "sent" | "failed";
+      scheduled_for: string;
+      sent_at: string | null;
+      error_code: string | null;
+    }>;
+  }>(`/v1/projects/${projectId}/report`, {
+    method: "GET",
+    headers: { authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function saveProjectReport(input: {
+  accessToken: string;
+  projectId: string;
+  snapshotId: string;
+  content: ReportContent;
+}) {
+  return apiRequest(`/v1/projects/${input.projectId}/report`, {
+    method: "PUT",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+    body: JSON.stringify({
+      snapshot_id: input.snapshotId,
+      content: input.content,
+    }),
+  });
+}
+
+export function deliverProjectReport(input: {
+  accessToken: string;
+  projectId: string;
+  snapshotId: string;
+  recipientEmail: string;
+  recipientLabel: string;
+  subject: string;
+  content: ReportContent;
+  scheduledFor?: string | null;
+}) {
+  return apiRequest<{
+    id: string;
+    status: "scheduled" | "sending" | "sent" | "failed";
+    scheduled_for: string;
+    sent_at: string | null;
+    error_code: string | null;
+  }>(`/v1/projects/${input.projectId}/report/deliveries`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+    body: JSON.stringify({
+      snapshot_id: input.snapshotId,
+      recipient_email: input.recipientEmail,
+      recipient_label: input.recipientLabel,
+      subject: input.subject,
+      content: input.content,
+      scheduled_for: input.scheduledFor || null,
+    }),
+  });
+}
+
+export function setWorkspacePlan(input: {
+  accessToken: string;
+  workspaceId: string;
+  plan: WorkspaceSummary["plan"];
+}): Promise<WorkspaceSummary> {
+  return apiRequest(`/v1/workspaces/${input.workspaceId}/plan`, {
+    method: "PUT",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+    body: JSON.stringify({ plan: input.plan }),
+  });
+}
+
 export function setProjectArchived(input: {
   accessToken: string;
   workspaceId: string;
@@ -720,9 +899,21 @@ export function updateWorkspacePreferences(input: {
   workspaceId: string;
   preferences: WorkspacePreferences;
 }): Promise<WorkspacePreferences> {
+  const preferences = {
+    theme: input.preferences.theme,
+    analysis_notifications: input.preferences.analysis_notifications,
+    failure_notifications: input.preferences.failure_notifications,
+    stale_notifications: input.preferences.stale_notifications,
+    display_name: input.preferences.display_name,
+    role_title: input.preferences.role_title,
+    workspace_name: input.preferences.workspace_name,
+    mentions_notifications: input.preferences.mentions_notifications,
+    reply_notifications: input.preferences.reply_notifications,
+    shared_notifications: input.preferences.shared_notifications,
+  };
   return apiRequest(`/v1/workspaces/${input.workspaceId}/preferences`, {
     method: "PUT",
     headers: { authorization: `Bearer ${input.accessToken}` },
-    body: JSON.stringify(input.preferences),
+    body: JSON.stringify(preferences),
   });
 }

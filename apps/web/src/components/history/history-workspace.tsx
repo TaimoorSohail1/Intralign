@@ -11,7 +11,7 @@ import {
   UsersThree,
   X,
 } from "@phosphor-icons/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   HistoryCategory,
@@ -83,6 +83,39 @@ export function HistoryWorkspace({
   const [snapshotPending, setSnapshotPending] = useState(false);
   const [snapshotError, setSnapshotError] = useState<string | null>(null);
   const [loadPending, setLoadPending] = useState(false);
+  const closeSnapshot = useCallback(() => setSnapshot(null), []);
+
+  useEffect(() => {
+    let active = true;
+
+    const refreshHistory = async () => {
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/history?category=all`,
+          { cache: "no-store" },
+        );
+        if (!response.ok) return;
+        const latest = (await response.json()) as ProjectHistory;
+        if (!active || !Array.isArray(latest.groups)) return;
+        setGroups(latest.groups);
+        setNextCursor(latest.next_cursor);
+        setExpandedRuns((current) => {
+          const next = new Set(current);
+          latest.groups
+            .filter((group) => group.current)
+            .forEach((group) => next.add(group.run_id));
+          return next;
+        });
+      } catch {
+        // The server-rendered history remains the safe last-good view.
+      }
+    };
+
+    void refreshHistory();
+    return () => {
+      active = false;
+    };
+  }, [projectId]);
 
   const visibleGroups = useMemo(
     () =>
@@ -307,7 +340,7 @@ export function HistoryWorkspace({
 
       {snapshot ? (
         <HistoricalSnapshot
-          onClose={() => setSnapshot(null)}
+          onClose={closeSnapshot}
           snapshot={snapshot}
         />
       ) : null}
@@ -357,6 +390,13 @@ function HistoricalSnapshot({
   snapshot: OverviewSnapshot;
 }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const publishedAt = snapshot.published_at
+    ? new Date(snapshot.published_at)
+    : null;
+  const publishedLabel =
+    publishedAt && !Number.isNaN(publishedAt.getTime())
+      ? publishedAt.toLocaleString()
+      : "Publication time unavailable";
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
@@ -388,7 +428,7 @@ function HistoricalSnapshot({
           <div>
             <span>Read-only retained state</span>
             <h2>Historical snapshot</h2>
-            <p>{new Date(snapshot.published_at).toLocaleString()}</p>
+            <p>{publishedLabel}</p>
           </div>
           <button
             aria-label="Close historical snapshot"
@@ -401,8 +441,8 @@ function HistoricalSnapshot({
           </button>
         </header>
         <div className="history-snapshot-score">
-          <strong>{snapshot.assessment.confidence_index}</strong>
-          <span>/100 · {snapshot.assessment.confidence_band} confidence</span>
+          <strong>{snapshot.assessment.confidence_band}</strong>
+          <span>Outcome Confidence · retained read</span>
         </div>
         <p className="history-snapshot-summary">{snapshot.summary}</p>
         <div className="history-snapshot-artifacts">

@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
 import { EntryShell } from "@/components/layout/entry-shell";
-import { getWorkspace } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
 
 import { startFirstProject } from "./actions";
@@ -9,13 +8,6 @@ import { startFirstProject } from "./actions";
 export default async function WelcomePage() {
   const session = await readSession();
   if (!session.accessToken || !session.workspaceId) redirect("/login");
-  const workspace = await getWorkspace({
-    accessToken: session.accessToken,
-    workspaceId: session.workspaceId,
-  });
-  if (workspace.projects.some((project) => !project.archived)) {
-    redirect("/workspace");
-  }
   return (
     <EntryShell>
       <section className="welcome-card">

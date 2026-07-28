@@ -10,7 +10,15 @@ const workspace: WorkspaceSummary = {
   name: "OSLO Alpha",
   role: "owner",
   plan: "free",
+  plan_label: "Free",
+  price_usd_monthly: 0,
   active_project_limit: 1,
+  document_limit: 20,
+  word_limit: 50_000,
+  collaborator_seat_limit: 3,
+  monthly_analysis_limit: null,
+  monthly_analyses_used: 0,
+  can_manage_plan: true,
   projects: [
     {
       id: "project-1",

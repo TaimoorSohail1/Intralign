@@ -1,3 +1,5 @@
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
@@ -11,8 +13,12 @@ from oslo_api.analysis import (
     DeterministicAgentHarness,
     RunKind,
 )
+from oslo_api.analysis.document_store import DatabaseDocumentStore
 from oslo_api.analysis.history import list_project_history
+from oslo_api.analysis.object_storage import LocalObjectStorage
 from oslo_api.analysis.persistence import DatabaseAnalysisStore
+from oslo_api.analysis.service import DatabaseSliceTwoApplication
+from oslo_api.collaboration.service import DatabaseCollaborationService
 from oslo_api.settings import Settings
 
 SETTINGS = Settings()  # type: ignore[call-arg]
@@ -44,6 +50,281 @@ class FailingStageHarness(DeterministicAgentHarness):
         return super().evaluate(**kwargs)
 
 
+class TitledHarness(DeterministicAgentHarness):
+    def construct(self, **kwargs):
+        return tuple(
+            replace(artifact, project_title="Northstar CRM Modernization")
+            for artifact in super().construct(**kwargs)
+        )
+
+
+class NoopExecutor:
+    def submit(self, *_args, **_kwargs):
+        return None
+
+
+class RecordingReportMailer:
+    def __init__(self) -> None:
+        self.messages: list[dict] = []
+
+    def send_report(self, **payload) -> None:
+        self.messages.append(payload)
+
+
+def test_artifact_noop_is_inert_and_material_edit_uses_structured_evidence(
+    tmp_path,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        owner_id = connection.execute(
+            text("select id from auth.users where email = 'admin@oslo.local'")
+        ).scalar_one()
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Artifact no-op integration', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        baseline = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description="A governed delivery plan.",
+                source_names=("brief.md",),
+                idempotency_key=f"artifact-noop-baseline:{project_id}",
+            )
+        )
+        assert baseline.snapshot is not None
+        application = DatabaseSliceTwoApplication(
+            engine=engine,
+            store=store,
+            workflow=workflow,
+            executor=NoopExecutor(),  # type: ignore[arg-type]
+            document_store=DatabaseDocumentStore(
+                engine=engine,
+                object_store=LocalObjectStorage(tmp_path),
+            ),
+            extended_delay_seconds=0,
+        )
+        current = application.get_artifact(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            artifact_type="intent",
+        )
+
+        unchanged, noop_run = application.update_artifact(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            artifact_type="intent",
+            content=current["content"],
+            expected_version=current["version"],
+            key=f"artifact-noop:{project_id}",
+        )
+
+        assert noop_run is None
+        assert unchanged["version"] == current["version"]
+        material_content = {
+            "sections": [
+                {
+                    **current["content"]["sections"][0],
+                    "body": "The user confirmed the governed delivery outcome.",
+                }
+            ]
+        }
+        edited, edit_run = application.update_artifact(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            artifact_type="intent",
+            content=material_content,
+            expected_version=current["version"],
+            key=f"artifact-material:{project_id}",
+        )
+
+        assert edit_run is not None
+        assert edited["version"] == current["version"] + 1
+        assert edited["provenance"] == "mixed"
+        assert "USER_ARTIFACT_EDIT" not in edit_run.request.description
+        assert len(edit_run.request.user_evidence) == 1
+        assert edit_run.request.user_evidence[0].reference.startswith(
+            "user:artifact:intent:version:"
+        )
+        completed_edit = workflow.resume(edit_run.id)
+        assert completed_edit.status is AnalysisRunStatus.COMPLETED
+        after_reanalysis = application.get_artifact(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            artifact_type="intent",
+        )
+        assert after_reanalysis["version"] == edited["version"]
+
+        repeated, repeated_run = application.update_artifact(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            artifact_type="intent",
+            content=material_content,
+            expected_version=edited["version"],
+            key=f"artifact-repeat:{project_id}",
+        )
+        assert repeated_run is None
+        assert repeated["version"] == edited["version"]
+
+        with engine.connect() as connection:
+            run_count = connection.execute(
+                text(
+                    "select count(*) from public.analysis_runs where project_id = :project_id"
+                ),
+                {"project_id": project_id},
+            ).scalar_one()
+            draft_version_count = connection.execute(
+                text(
+                    """
+                    select count(*) from public.artifact_draft_versions
+                    where project_id = :project_id and artifact_type = 'intent'
+                    """
+                ),
+                {"project_id": project_id},
+            ).scalar_one()
+            unchanged_schedule_revisions = list(
+                connection.execute(
+                    text(
+                        """
+                        select revision
+                        from public.artifact_versions
+                        where project_id = :project_id
+                          and artifact_type = 'schedule'
+                        order by created_at
+                        """
+                    ),
+                    {"project_id": project_id},
+                ).scalars()
+            )
+        assert run_count == 2
+        assert draft_version_count == 1
+        assert unchanged_schedule_revisions == [1, 1]
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
+def test_report_draft_and_immediate_delivery_are_durable() -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        owner_id = connection.execute(
+            text("select id from auth.users where email = 'admin@oslo.local'")
+        ).scalar_one()
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Durable report integration', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        result = AnalysisWorkflow(
+            store=DatabaseAnalysisStore(engine),
+            harness=DeterministicAgentHarness(),
+        ).run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description="A governed project readout.",
+                source_names=("brief.md",),
+                idempotency_key=f"report-baseline:{project_id}",
+            )
+        )
+        assert result.snapshot is not None
+        content = {
+            "sections": [
+                {
+                    "id": f"section-{index}",
+                    "title": f"Section {index}",
+                    "body": [f"Exact retained paragraph {index}"],
+                }
+                for index in range(7)
+            ]
+        }
+        mailer = RecordingReportMailer()
+        service = DatabaseCollaborationService(
+            engine,
+            "http://localhost:3000",
+            mailer,
+        )
+
+        service.save_report(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            snapshot_id=result.snapshot.id,
+            content=content,
+        )
+        delivery = service.deliver_report(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            snapshot_id=result.snapshot.id,
+            recipient_email="sponsor@example.com",
+            recipient_label="Sponsor",
+            subject="Durable project readout",
+            content=content,
+            scheduled_for=datetime.now(UTC) - timedelta(seconds=1),
+        )
+        reloaded = service.report_state(
+            actor_user_id=owner_id,
+            project_id=project_id,
+        )
+
+        assert reloaded["content"] == content
+        assert delivery["status"] == "sent"
+        assert len(mailer.messages) == 1
+        assert mailer.messages[0]["sections"] == content["sections"]
+        with engine.connect() as connection:
+            stored_status = connection.execute(
+                text(
+                    """
+                    select status from public.project_report_deliveries
+                    where id = cast(:delivery_id as uuid)
+                    """
+                ),
+                {"delivery_id": delivery["id"]},
+            ).scalar_one()
+            report_events = set(
+                connection.execute(
+                    text(
+                        """
+                        select event_type
+                        from public.project_history_events
+                        where project_id = :project_id
+                          and event_type like 'report.%'
+                        """
+                    ),
+                    {"project_id": project_id},
+                ).scalars()
+            )
+        assert stored_status == "sent"
+        assert report_events == {"report.delivery_requested", "report.sent"}
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
 def test_postgres_analysis_is_checkpointed_and_published_atomically() -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
@@ -72,6 +353,7 @@ def test_postgres_analysis_is_checkpointed_and_published_atomically() -> None:
                 description="A conference plan with unknown Wi-Fi capacity.",
                 source_names=("brief.md",),
                 idempotency_key=f"integration:{project_id}",
+                consumes_analysis_allowance=True,
             )
         )
 
@@ -121,6 +403,16 @@ def test_postgres_analysis_is_checkpointed_and_published_atomically() -> None:
                 ),
                 {"run_id": initial.run_id},
             ).mappings().all()
+            analysis_usage = connection.execute(
+                text(
+                    """
+                    select usage_kind
+                    from public.workspace_analysis_usage
+                    where analysis_run_id = :run_id
+                    """
+                ),
+                {"run_id": initial.run_id},
+            ).scalar_one()
 
         assert current_run_id == initial.run_id
         assert artifact_count == 7
@@ -129,6 +421,7 @@ def test_postgres_analysis_is_checkpointed_and_published_atomically() -> None:
         assert perceive_attempt["model_id"] == "oslo-deterministic-v1"
         assert perceive_attempt["prompt_version"] == "oslo-deterministic-v1"
         assert perceive_attempt["execution_mode"] == "primary"
+        assert analysis_usage == "user_requested_analysis"
         assert [event["event_type"] for event in history_events] == [
             "analysis.initial_completed",
             "issues.reconciled",
@@ -194,7 +487,7 @@ def test_postgres_analysis_is_checkpointed_and_published_atomically() -> None:
             )
 
 
-def test_new_snapshot_resolves_issue_rows_that_are_no_longer_present() -> None:
+def test_new_snapshot_does_not_resolve_issue_rows_without_resolution_evidence() -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
     with engine.begin() as connection:
@@ -249,7 +542,7 @@ def test_new_snapshot_resolves_issue_rows_that_are_no_longer_present() -> None:
                 ),
                 {"project_id": project_id},
             ).scalar_one()
-        assert stale_status == "resolved"
+        assert stale_status == "open"
     finally:
         with engine.begin() as connection:
             connection.execute(
@@ -318,6 +611,84 @@ def test_history_falls_back_to_retained_snapshots_when_legacy_events_are_absent(
         assert history["groups"][0]["events"][0]["summary"] == (
             "Initial Analysis complete"
         )
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
+def test_analysis_promotes_a_supported_title_and_increments_artifact_revisions() -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        owner_id = connection.execute(
+            text("select id from auth.users where email = 'admin@oslo.local'")
+        ).scalar_one()
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Untitled project', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=TitledHarness())
+        source_names = tuple(f"project-{index}.pdf" for index in range(1, 11))
+        initial = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description="Northstar CRM Modernization project.",
+                source_names=source_names,
+                idempotency_key=f"title-initial:{project_id}",
+            )
+        )
+        extended = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.EXTENDED,
+                description="Northstar CRM Modernization project.",
+                source_names=source_names,
+                parent_run_id=initial.run_id,
+                idempotency_key=f"title-extended:{project_id}",
+            )
+        )
+
+        assert initial.status is AnalysisRunStatus.COMPLETED
+        assert extended.status is AnalysisRunStatus.COMPLETED
+        assert extended.snapshot is not None
+        assert extended.snapshot.project_title == "Northstar CRM Modernization"
+        assert extended.snapshot.source_document_count == 10
+        with engine.connect() as connection:
+            project_name = connection.execute(
+                text("select name from public.projects where id = :id"),
+                {"id": project_id},
+            ).scalar_one()
+            revisions = list(
+                connection.execute(
+                    text(
+                        """
+                        select revision
+                        from public.artifact_versions
+                        where project_id = :project_id
+                          and artifact_type = 'schedule'
+                        order by revision
+                        """
+                    ),
+                    {"project_id": project_id},
+                ).scalars()
+            )
+        assert project_name == "Northstar CRM Modernization"
+        assert revisions == [1, 2]
     finally:
         with engine.begin() as connection:
             connection.execute(

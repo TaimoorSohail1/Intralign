@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ArtifactWorkspaceSummary } from "@/lib/server/oslo-api";
@@ -77,11 +77,12 @@ describe("ArtifactWorkspace", () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
-  it("loads the typed artifact, exposes its issue, and autosaves an edit", async () => {
+  it("keeps edits local until the user explicitly applies them", async () => {
     const onAnalysisStarted = vi.fn();
     render(
       <ArtifactWorkspace
@@ -109,13 +110,22 @@ describe("ArtifactWorkspace", () => {
     const paragraph = screen.getByText("The delivery baseline is not approved.");
     paragraph.textContent = "The schedule is approved by the steering committee.";
     fireEvent.input(paragraph);
-    expect(screen.getByText("Editing…")).toBeInTheDocument();
+    expect(screen.getByText("Changes not applied")).toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1600);
       await Promise.resolve();
       await Promise.resolve();
     });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(onAnalysisStarted).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Apply changes" }));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
     expect(onAnalysisStarted).toHaveBeenCalledWith("run-edit-001");
     expect(fetch).toHaveBeenCalledTimes(2);
   });
@@ -145,5 +155,67 @@ describe("ArtifactWorkspace", () => {
     const rows = screen.getAllByRole("row");
     expect(rows[1]).toHaveTextContent("Steering review");
     expect(rows[2]).toHaveTextContent("Launch");
+  });
+
+  it("does not save or start analysis when a delayed edit is undone back to the loaded content", async () => {
+    const onAnalysisStarted = vi.fn();
+    render(
+      <ArtifactWorkspace
+        analysisRunning={false}
+        artifactType="schedule"
+        onAnalysisStarted={onAnalysisStarted}
+        onAskOslo={vi.fn()}
+        onOpenIssue={vi.fn()}
+        projectId="project-001"
+      />,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add section" }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+      await Promise.resolve();
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(onAnalysisStarted).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    expect(screen.queryByRole("button", { name: "Apply changes" })).not.toBeInTheDocument();
+    expect(screen.getByText("Up to date")).toBeInTheDocument();
+  });
+
+  it("keeps a heading-only section local until the user adds material content", async () => {
+    render(
+      <ArtifactWorkspace
+        analysisRunning={false}
+        artifactType="schedule"
+        onAnalysisStarted={vi.fn()}
+        onAskOslo={vi.fn()}
+        onOpenIssue={vi.fn()}
+        projectId="project-001"
+      />,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add section" }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+      await Promise.resolve();
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Changes not applied")).toBeInTheDocument();
   });
 });

@@ -161,7 +161,7 @@ export function IntakeExperience({
           <span className="analysis-spinner" aria-hidden="true" />
           <p className="eyebrow">Analyzing…</p>
           <h1>{phases[phase]}</h1>
-          <p>Initial Analysis · about 30 seconds</p>
+          <p>Initial Analysis runs first · timing varies with evidence volume</p>
         </div>
         <footer className="entry-footer">ⓘ OSLO advises; you decide — you stay in control at every step.</footer>
       </main>

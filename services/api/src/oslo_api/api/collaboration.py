@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -8,8 +9,9 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import create_engine
 
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
-from oslo_api.collaboration.pdf import render_snapshot_pdf
+from oslo_api.collaboration.pdf import render_report_pdf, render_snapshot_pdf
 from oslo_api.collaboration.service import CollaborationError, DatabaseCollaborationService
+from oslo_api.email import SmtpReportMailer
 from oslo_api.settings import Settings
 from oslo_api.slice_two import SliceTwoApplication
 
@@ -23,6 +25,11 @@ def collaboration_service(request: Request) -> DatabaseCollaborationService:
         service = DatabaseCollaborationService(
             create_engine(settings.database_url, pool_pre_ping=True),
             settings.web_url,
+            SmtpReportMailer(
+                host=settings.smtp_host,
+                port=settings.smtp_port,
+                sender=settings.email_sender,
+            ),
         )
         request.app.state.collaboration = service
     return service
@@ -64,6 +71,28 @@ class ReviewResponseRequest(BaseModel):
     body: str = Field(min_length=1, max_length=5_000)
 
 
+class ReportSectionRequest(BaseModel):
+    id: str = Field(min_length=1, max_length=80, pattern=r"^[a-z0-9_-]+$")
+    title: str = Field(min_length=1, max_length=160)
+    body: list[str] = Field(min_length=1, max_length=100)
+
+
+class ReportContentRequest(BaseModel):
+    sections: list[ReportSectionRequest] = Field(min_length=7, max_length=20)
+
+
+class ReportDraftRequest(BaseModel):
+    snapshot_id: UUID
+    content: ReportContentRequest
+
+
+class ReportDeliveryRequest(ReportDraftRequest):
+    recipient_email: EmailStr
+    recipient_label: str = Field(min_length=1, max_length=120)
+    subject: str = Field(min_length=1, max_length=200)
+    scheduled_for: datetime | None = None
+
+
 @router.get("/projects/{project_id}/collaboration")
 def get_collaboration(
     project_id: UUID,
@@ -71,6 +100,90 @@ def get_collaboration(
     service: Annotated[DatabaseCollaborationService, Depends(collaboration_service)],
 ) -> dict:
     return guarded(lambda: service.state(actor_user_id=context.user.id, project_id=project_id))
+
+
+@router.get("/projects/{project_id}/report")
+def get_report(
+    project_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    service: Annotated[DatabaseCollaborationService, Depends(collaboration_service)],
+) -> dict:
+    return guarded(
+        lambda: service.report_state(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+        )
+    )
+
+
+@router.put("/projects/{project_id}/report")
+def save_report(
+    project_id: UUID,
+    payload: ReportDraftRequest,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    service: Annotated[DatabaseCollaborationService, Depends(collaboration_service)],
+) -> dict:
+    return guarded(
+        lambda: service.save_report(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            snapshot_id=payload.snapshot_id,
+            content=payload.content.model_dump(),
+        )
+    )
+
+
+@router.post("/projects/{project_id}/report/deliveries", status_code=201)
+def deliver_report(
+    project_id: UUID,
+    payload: ReportDeliveryRequest,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    service: Annotated[DatabaseCollaborationService, Depends(collaboration_service)],
+) -> dict:
+    return guarded(
+        lambda: service.deliver_report(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            snapshot_id=payload.snapshot_id,
+            recipient_email=str(payload.recipient_email),
+            recipient_label=payload.recipient_label,
+            subject=payload.subject,
+            content=payload.content.model_dump(),
+            scheduled_for=payload.scheduled_for,
+        )
+    )
+
+
+@router.get("/projects/{project_id}/reports/pdf")
+def export_report(
+    project_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    service: Annotated[DatabaseCollaborationService, Depends(collaboration_service)],
+) -> Response:
+    report = guarded(
+        lambda: service.report_state(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+        )
+    )
+    if not report["content"]:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "REPORT_NOT_SAVED",
+                "message": "Save the report before exporting.",
+            },
+        )
+    pdf = render_report_pdf(report["project_name"], report["content"])
+    return Response(
+        pdf,
+        media_type="application/pdf",
+        headers={
+            "content-disposition": (
+                f'attachment; filename="{report["project_name"]}-readout.pdf"'
+            )
+        },
+    )
 
 
 @router.post("/projects/{project_id}/issues/{issue_id}/comments", status_code=201)
@@ -190,26 +303,52 @@ def public_review(
 def respond_to_review(
     token: str,
     payload: ReviewResponseRequest,
-    request: Request,
     service: Annotated[DatabaseCollaborationService, Depends(collaboration_service)],
 ) -> dict:
     response = guarded(
         lambda: service.respond_to_review(token=token, kind=payload.kind, body=payload.body)
     )
-    application = slice_two_application(request)
+    # A review response is retained collaboration evidence, not automatically
+    # project evidence. The project team must explicitly promote it before a
+    # governed analysis run is created.
+    service.link_review_run(response_id=UUID(response["id"]), run_id=None)
+    return {
+        "response_id": response["id"],
+        "analysis_run_id": None,
+        "status": "recorded",
+    }
+
+
+@router.post(
+    "/projects/{project_id}/review-responses/{response_id}/evidence",
+    status_code=202,
+)
+def promote_review_response(
+    project_id: UUID,
+    response_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    service: Annotated[DatabaseCollaborationService, Depends(collaboration_service)],
+    application: Annotated[SliceTwoApplication, Depends(slice_two_application)],
+) -> dict:
+    response = guarded(
+        lambda: service.review_response_for_evidence(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            response_id=response_id,
+        )
+    )
     run = application.apply_reviewer_attestation(
-        actor_user_id=UUID(response["created_by"]),
-        project_id=UUID(response["project_id"]),
+        actor_user_id=context.user.id,
+        project_id=project_id,
         issue_id=response["issue_id"],
         reviewer_name=response["reviewer_name"],
         response_kind=response["response_kind"],
         body=response["body"],
-        key=response["id"],
+        key=f"review:{response_id}",
     )
-    service.link_review_run(response_id=UUID(response["id"]), run_id=run.id)
-    run_status = run.status.value if hasattr(run.status, "value") else str(run.status)
+    service.link_review_run(response_id=response_id, run_id=run.id)
     return {
-        "response_id": response["id"],
+        "response_id": str(response_id),
         "analysis_run_id": str(run.id),
-        "status": run_status,
+        "status": run.status,
     }
