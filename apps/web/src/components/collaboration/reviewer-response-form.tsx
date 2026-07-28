@@ -30,7 +30,9 @@ export function ReviewerResponseForm({ token }: { token: string }) {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.message ?? "Your response could not be submitted.");
       setResult("success");
-      setMessage("Your response is recorded. OSLO is re-analyzing the project safely.");
+      setMessage(
+        "Your response is recorded. The project team can decide whether to add it as project evidence.",
+      );
     } catch (caught) {
       setResult("error");
       setMessage(caught instanceof Error ? caught.message : "Your response could not be submitted.");

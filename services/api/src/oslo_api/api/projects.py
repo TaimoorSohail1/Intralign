@@ -55,6 +55,15 @@ class WorkspaceResponse(BaseModel):
     role: str
     plan: str
     active_project_limit: int
+    plan_label: str
+    price_usd_monthly: int
+    document_limit: int
+    word_limit: int
+    collaborator_seat_limit: int
+    monthly_analysis_limit: int | None
+    monthly_analyses_used: int
+    can_manage_plan: bool
+    member_count: int
     projects: list[WorkspaceProjectResponse]
     notifications: list[WorkspaceNotificationResponse]
 
@@ -65,10 +74,32 @@ class WorkspacePreferencesResponse(BaseModel):
     analysis_notifications: bool
     failure_notifications: bool
     stale_notifications: bool
+    display_name: str = ""
+    role_title: str = ""
+    workspace_name: str = ""
+    actor_role: str = "viewer"
+    mentions_notifications: bool = True
+    reply_notifications: bool = True
+    shared_notifications: bool = True
 
 
-class WorkspacePreferencesRequest(WorkspacePreferencesResponse):
-    pass
+class WorkspacePreferencesRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    theme: str
+    analysis_notifications: bool
+    failure_notifications: bool
+    stale_notifications: bool
+    display_name: str = ""
+    role_title: str = ""
+    workspace_name: str = ""
+    mentions_notifications: bool = True
+    reply_notifications: bool = True
+    shared_notifications: bool = True
+
+
+class WorkspacePlanRequest(BaseModel):
+    plan: str
 
 
 @router.post(
@@ -90,7 +121,10 @@ def start_first_project(
     except ProjectLimitReached as error:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail={"code": "PROJECT_LIMIT_REACHED", "active_project_limit": 1},
+            detail={
+                "code": "PROJECT_LIMIT_REACHED",
+                "active_project_limit": error.active_project_limit,
+            },
         ) from error
     return ProjectResponse.model_validate(project)
 
@@ -103,6 +137,28 @@ def get_workspace(
     try:
         summary = context.application.get_workspace_summary(
             actor_user_id=context.user.id, workspace_id=workspace_id
+        )
+    except InvitePermissionDenied as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from error
+    return WorkspaceResponse.model_validate(summary)
+
+
+@router.put("/workspaces/{workspace_id}/plan", response_model=WorkspaceResponse)
+def update_workspace_plan(
+    workspace_id: UUID,
+    payload: WorkspacePlanRequest,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+) -> WorkspaceResponse:
+    if payload.plan not in {"free", "basic"}:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"code": "INVALID_PLAN", "supported": ["free", "basic"]},
+        )
+    try:
+        summary = context.application.set_workspace_plan(
+            actor_user_id=context.user.id,
+            workspace_id=workspace_id,
+            plan=payload.plan,
         )
     except InvitePermissionDenied as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from error
@@ -142,7 +198,10 @@ def restore_project(
     except ProjectLimitReached as error:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail={"code": "PROJECT_LIMIT_REACHED", "active_project_limit": 1},
+            detail={
+                "code": "PROJECT_LIMIT_REACHED",
+                "active_project_limit": error.active_project_limit,
+            },
         ) from error
     except ProjectArchiveDenied as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from error
@@ -205,4 +264,9 @@ def update_preferences(
         )
     except InvitePermissionDenied as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from error
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"code": "INVALID_SETTINGS", "message": str(error)},
+        ) from error
     return WorkspacePreferencesResponse.model_validate(result)

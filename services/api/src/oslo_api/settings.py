@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     openai_model: str | None = None
     openai_fast_model: str = "gpt-5.6-luna"
     openai_extended_model: str = "gpt-5.6-terra"
-    openai_timeout_seconds: float = Field(default=30, ge=5, le=120)
+    # Dense structured responses routinely exceed 30 seconds even when the input is
+    # correctly bounded. Keep this below the worker's external timeout while allowing
+    # each artifact shard enough time to finish once instead of being retried mid-call.
+    openai_timeout_seconds: float = Field(default=90, ge=5, le=120)
     openai_max_retries: int = Field(default=1, ge=0, le=3)
     object_storage_path: Path = Path(__file__).resolve().parents[2] / ".data" / "uploads"

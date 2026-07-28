@@ -10,6 +10,7 @@ from oslo_api.application import (
     DatabaseSliceOneApplication,
     InvalidInvitation,
     InvitationDeliveryFailed,
+    InvitationLimitReached,
 )
 from oslo_api.identity import SupabaseIdentityProvider
 from oslo_api.invitations import InvitationStatus, MembershipRole
@@ -19,7 +20,65 @@ SETTINGS = Settings()  # type: ignore[call-arg]
 DATABASE_URL = SETTINGS.database_url
 SUPABASE_URL = SETTINGS.supabase_url
 SUPABASE_SECRET_KEY = SETTINGS.supabase_secret_key
-WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
+WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000099")
+
+
+@pytest.fixture(autouse=True)
+def isolated_invitation_workspace():
+    """Keep invitation integration tests independent from local demo data and each other."""
+    engine = create_engine(DATABASE_URL)
+
+    def reset_workspace() -> None:
+        with engine.begin() as connection:
+            owner_id = connection.execute(
+                text("select id from auth.users where email = 'admin@oslo.local'")
+            ).scalar_one()
+            connection.execute(
+                text(
+                    "insert into public.workspaces (id, name, created_by) "
+                    "values (:workspace_id, :name, :owner_id) "
+                    "on conflict (id) do update set name = excluded.name, "
+                    "created_by = excluded.created_by"
+                ),
+                {
+                    "workspace_id": WORKSPACE_ID,
+                    "name": "Invitation Integration Tests",
+                    "owner_id": owner_id,
+                },
+            )
+            connection.execute(
+                text("delete from public.invitations where workspace_id = :workspace_id"),
+                {"workspace_id": WORKSPACE_ID},
+            )
+            connection.execute(
+                text("delete from public.memberships where workspace_id = :workspace_id"),
+                {"workspace_id": WORKSPACE_ID},
+            )
+            connection.execute(
+                text(
+                    "insert into public.memberships (workspace_id, user_id, role) "
+                    "values (:workspace_id, :owner_id, 'owner')"
+                ),
+                {"workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+            )
+            connection.execute(
+                text(
+                    "delete from public.workspace_subscriptions "
+                    "where workspace_id = :workspace_id"
+                ),
+                {"workspace_id": WORKSPACE_ID},
+            )
+            connection.execute(
+                text(
+                    "delete from public.workspace_limit_events "
+                    "where workspace_id = :workspace_id"
+                ),
+                {"workspace_id": WORKSPACE_ID},
+            )
+
+    reset_workspace()
+    yield
+    reset_workspace()
 
 
 class RecordingInvitationMailer:
@@ -78,6 +137,50 @@ def test_owner_invitation_is_persisted_and_delivered_without_storing_raw_token()
 
     assert raw_token.encode() not in stored_hash
     assert audit_action == "invitation.created"
+
+
+def test_monthly_invitation_limit_is_audited_without_a_database_error() -> None:
+    engine = create_engine(DATABASE_URL)
+    with engine.begin() as connection:
+        owner_id = connection.execute(
+            text("select id from auth.users where email = 'admin@oslo.local'")
+        ).scalar_one()
+    application = DatabaseSliceOneApplication(
+        engine=engine,
+        mailer=RecordingInvitationMailer(),
+        web_url="http://localhost:3000",
+    )
+
+    for index in range(2):
+        application.invite_member(
+            actor_user_id=owner_id,
+            workspace_id=WORKSPACE_ID,
+            email=f"monthly-limit-{index}@example.com",
+            role=MembershipRole.VIEWER,
+        )
+
+    with pytest.raises(InvitationLimitReached):
+        application.invite_member(
+            actor_user_id=owner_id,
+            workspace_id=WORKSPACE_ID,
+            email="monthly-limit-blocked@example.com",
+            role=MembershipRole.VIEWER,
+        )
+
+    with engine.connect() as connection:
+        event = connection.execute(
+            text(
+                """
+                select limit_kind, outcome
+                from public.workspace_limit_events
+                where workspace_id = :workspace_id
+                order by created_at desc
+                limit 1
+                """
+            ),
+            {"workspace_id": WORKSPACE_ID},
+        ).mappings().one()
+    assert event == {"limit_kind": "monthly_invitations", "outcome": "blocked"}
 
 
 def test_duplicate_pending_invitation_is_idempotent_after_email_normalisation() -> None:

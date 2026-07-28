@@ -1,4 +1,5 @@
 import json
+import re
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from hashlib import sha256
@@ -16,6 +17,9 @@ from oslo_api.analysis.models import (
     AnalysisRunRequest,
     AnalysisRunStatus,
     Artifact,
+    ArtifactAssumption,
+    ArtifactConflict,
+    ArtifactSection,
     ArtifactType,
     Assessment,
     AssessmentSnapshot,
@@ -26,6 +30,16 @@ from oslo_api.analysis.models import (
     ReliabilityBasis,
     RunKind,
 )
+
+
+def _stable_payload_hash(payload: object) -> str:
+    canonical = json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def evidence_reference(
@@ -125,6 +139,42 @@ def _artifact_from_dict(data: dict) -> Artifact:
         reliability=data["reliability"],
         evidence_refs=tuple(data["evidence_refs"]),
         basis=data.get("basis", "derived"),
+        sections=tuple(
+            ArtifactSection(
+                heading=section["heading"],
+                body=section.get("body", ""),
+                bullets=tuple(section.get("bullets", [])),
+                columns=tuple(section.get("columns", [])),
+                rows=tuple(tuple(row) for row in section.get("rows", [])),
+                evidence_refs=tuple(section.get("evidence_refs", [])),
+                row_evidence_refs=tuple(
+                    tuple(references)
+                    for references in section.get("row_evidence_refs", [])
+                ),
+                row_states=tuple(section.get("row_states", [])),
+            )
+            for section in data.get("sections", [])
+        ),
+        assumptions=tuple(
+            ArtifactAssumption(
+                id=assumption["id"],
+                statement=assumption["statement"],
+                state=assumption.get("state", "inferred"),
+                load_bearing=bool(assumption.get("load_bearing", False)),
+                evidence_refs=tuple(assumption.get("evidence_refs", [])),
+            )
+            for assumption in data.get("assumptions", [])
+        ),
+        conflicts=tuple(
+            ArtifactConflict(
+                id=conflict["id"],
+                field=conflict["field"],
+                values=tuple(conflict.get("values", [])),
+                evidence_refs=tuple(conflict.get("evidence_refs", [])),
+            )
+            for conflict in data.get("conflicts", [])
+        ),
+        project_title=data.get("project_title"),
     )
 
 
@@ -172,6 +222,21 @@ def _snapshot_dict(snapshot: AssessmentSnapshot) -> dict:
     return json.loads(json.dumps(asdict(snapshot), default=_json_default))
 
 
+def _public_snapshot_summary(value: str) -> str:
+    if not value.startswith("USER_ARTIFACT_EDIT"):
+        return value
+    match = re.search(
+        r"(At the (?:orientation|expanded|validated) stage,.*)$",
+        value,
+        re.DOTALL,
+    )
+    return (
+        match.group(1)
+        if match
+        else "The retained project read was refreshed from governed evidence."
+    )
+
+
 def _snapshot_from_dict(data: dict) -> AssessmentSnapshot:
     return AssessmentSnapshot(
         id=UUID(data["id"]),
@@ -179,7 +244,7 @@ def _snapshot_from_dict(data: dict) -> AssessmentSnapshot:
         workspace_id=UUID(data["workspace_id"]),
         project_id=UUID(data["project_id"]),
         state=data["state"],
-        summary=data["summary"],
+        summary=_public_snapshot_summary(data["summary"]),
         artifacts=tuple(_artifact_from_dict(item) for item in data["artifacts"]),
         assessment=_assessment_from_dict(data["assessment"]),
         published_at=datetime.fromisoformat(data["published_at"]),
@@ -192,6 +257,8 @@ def _snapshot_from_dict(data: dict) -> AssessmentSnapshot:
             )
             for item in data.get("evidence_citations", [])
         ),
+        project_title=data.get("project_title"),
+        source_document_count=int(data.get("source_document_count", 0)),
     )
 
 
@@ -208,12 +275,14 @@ class DatabaseAnalysisStore:
                     """
                     insert into public.analysis_runs (
                       id, workspace_id, project_id, requested_by, kind, status,
-                      description, source_names, source_document_ids,
-                      idempotency_key, parent_run_id
+                      description, source_names, source_document_ids, user_evidence,
+                      idempotency_key, parent_run_id, consumes_analysis_allowance
                     ) values (
                       :id, :workspace_id, :project_id, :requested_by, :kind, 'queued',
                       :description, cast(:source_names as jsonb),
-                      cast(:source_document_ids as jsonb), :key, :parent_run_id
+                      cast(:source_document_ids as jsonb), cast(:user_evidence as jsonb),
+                      :key, :parent_run_id,
+                      :consumes_analysis_allowance
                     )
                     on conflict (workspace_id, idempotency_key) do nothing
                     returning id
@@ -230,8 +299,12 @@ class DatabaseAnalysisStore:
                     "source_document_ids": json.dumps(
                         [str(document_id) for document_id in request.source_document_ids]
                     ),
+                    "user_evidence": json.dumps(
+                        [asdict(item) for item in request.user_evidence]
+                    ),
                     "key": key,
                     "parent_run_id": request.parent_run_id,
+                    "consumes_analysis_allowance": request.consumes_analysis_allowance,
                 },
             ).scalar_one_or_none()
             actual_id = (
@@ -265,8 +338,9 @@ class DatabaseAnalysisStore:
                     text(
                         """
                         select id, workspace_id, project_id, requested_by, kind, status,
-                               description, source_names, source_document_ids,
+                               description, source_names, source_document_ids, user_evidence,
                                idempotency_key, parent_run_id,
+                               consumes_analysis_allowance,
                                current_phase, error_code, created_at, updated_at
                         from public.analysis_runs where id = :run_id
                         """
@@ -326,8 +400,18 @@ class DatabaseAnalysisStore:
             source_document_ids=tuple(
                 UUID(document_id) for document_id in row["source_document_ids"]
             ),
+            user_evidence=tuple(
+                EvidenceFragment(
+                    reference=item["reference"],
+                    content=item["content"],
+                    source_name=item.get("source_name"),
+                    location=item.get("location"),
+                )
+                for item in row["user_evidence"]
+            ),
             idempotency_key=row["idempotency_key"],
             parent_run_id=row["parent_run_id"],
+            consumes_analysis_allowance=bool(row["consumes_analysis_allowance"]),
         )
         return AnalysisRun(
             id=row["id"],
@@ -628,7 +712,7 @@ class DatabaseAnalysisStore:
                 connection.execute(
                     text(
                         """
-                        select kind
+                        select kind, consumes_analysis_allowance, requested_by
                         from public.analysis_runs
                         where id = :run_id
                         """
@@ -637,6 +721,12 @@ class DatabaseAnalysisStore:
                 )
                 .mappings()
                 .one()
+            )
+            connection.execute(
+                text(
+                    "select pg_advisory_xact_lock(hashtext(cast(:project_id as text)))"
+                ),
+                {"project_id": snapshot.project_id},
             )
             previous_issue_keys = set(
                 connection.execute(
@@ -679,17 +769,81 @@ class DatabaseAnalysisStore:
                 },
             )
             for artifact in snapshot.artifacts:
-                connection.execute(
+                artifact_payload = {
+                    "title": artifact.title,
+                    "summary": artifact.summary,
+                    "reliability": artifact.reliability,
+                    "basis": artifact.basis,
+                    "evidence_refs": list(artifact.evidence_refs),
+                    "content": {
+                        "sections": [asdict(section) for section in artifact.sections]
+                    },
+                    "assumptions": [
+                        asdict(assumption) for assumption in artifact.assumptions
+                    ],
+                    "conflicts": [asdict(conflict) for conflict in artifact.conflicts],
+                }
+                previous_artifact = (
+                    connection.execute(
+                        text(
+                            """
+                            select title, summary, reliability, basis, evidence_refs,
+                                   content_json, assumptions_json, conflicts_json,
+                                   revision
+                            from public.artifact_versions
+                            where project_id = :project_id
+                              and artifact_type = cast(
+                                :artifact_type as public.plan_artifact_type
+                              )
+                            order by revision desc, created_at desc
+                            limit 1
+                            """
+                        ),
+                        {
+                            "project_id": snapshot.project_id,
+                            "artifact_type": artifact.artifact_type.value,
+                        },
+                    )
+                    .mappings()
+                    .one_or_none()
+                )
+                previous_payload = (
+                    {
+                        "title": previous_artifact["title"],
+                        "summary": previous_artifact["summary"],
+                        "reliability": previous_artifact["reliability"],
+                        "basis": previous_artifact["basis"],
+                        "evidence_refs": previous_artifact["evidence_refs"],
+                        "content": previous_artifact["content_json"],
+                        "assumptions": previous_artifact["assumptions_json"],
+                        "conflicts": previous_artifact["conflicts_json"],
+                    }
+                    if previous_artifact is not None
+                    else None
+                )
+                if previous_artifact is None:
+                    next_revision = 1
+                elif _stable_payload_hash(previous_payload) == _stable_payload_hash(
+                    artifact_payload
+                ):
+                    next_revision = int(previous_artifact["revision"])
+                else:
+                    next_revision = int(previous_artifact["revision"]) + 1
+                revision = connection.execute(
                     text(
                         """
                         insert into public.artifact_versions (
                           workspace_id, project_id, analysis_run_id, artifact_type,
-                          title, summary, reliability, basis, evidence_refs
+                          title, summary, reliability, basis, evidence_refs,
+                          content_json, assumptions_json, conflicts_json, revision
                         ) values (
                           :workspace_id, :project_id, :run_id, :artifact_type,
-                          :title, :summary, :reliability, :basis, cast(:evidence_refs as jsonb)
+                          :title, :summary, :reliability, :basis,
+                          cast(:evidence_refs as jsonb), cast(:content as jsonb),
+                          cast(:assumptions as jsonb), cast(:conflicts as jsonb), :revision
                         )
                         on conflict (analysis_run_id, artifact_type) do nothing
+                        returning revision
                         """
                     ),
                     {
@@ -697,27 +851,77 @@ class DatabaseAnalysisStore:
                         "project_id": snapshot.project_id,
                         "run_id": run_id,
                         "artifact_type": artifact.artifact_type.value,
-                        "title": artifact.title,
-                        "summary": artifact.summary,
-                        "reliability": artifact.reliability,
-                        "basis": artifact.basis,
-                        "evidence_refs": json.dumps(artifact.evidence_refs),
+                        "title": artifact_payload["title"],
+                        "summary": artifact_payload["summary"],
+                        "reliability": artifact_payload["reliability"],
+                        "basis": artifact_payload["basis"],
+                        "evidence_refs": json.dumps(artifact_payload["evidence_refs"]),
+                        "content": json.dumps(artifact_payload["content"]),
+                        "assumptions": json.dumps(artifact_payload["assumptions"]),
+                        "conflicts": json.dumps(artifact_payload["conflicts"]),
+                        "revision": next_revision,
                     },
+                ).scalar_one_or_none()
+                if revision is None:
+                    continue
+                draft = (
+                    connection.execute(
+                        text(
+                            """
+                            update public.artifact_drafts
+                            set source_snapshot_id = :snapshot_id,
+                                updated_at = now()
+                            where project_id = :project_id
+                              and artifact_type = cast(
+                                :artifact_type as public.plan_artifact_type
+                              )
+                            returning id, workspace_id, content_json, version,
+                                      provenance, updated_by
+                            """
+                        ),
+                        {
+                            "snapshot_id": snapshot.id,
+                            "project_id": snapshot.project_id,
+                            "artifact_type": artifact.artifact_type.value,
+                            "revision": revision,
+                        },
+                    )
+                    .mappings()
+                    .one_or_none()
                 )
-            # A completed snapshot is the authoritative issue read for the project.
-            # Resolve rows that disappeared from the new read before upserting the
-            # issues that are still present (which restores their exact status).
-            connection.execute(
-                text(
-                    """
-                    update public.issues
-                    set current_status = 'resolved', updated_at = now()
-                    where project_id = :project_id
-                      and current_status <> 'resolved'
-                    """
-                ),
-                {"project_id": snapshot.project_id},
-            )
+                if draft is not None:
+                    connection.execute(
+                        text(
+                            """
+                            insert into public.artifact_draft_versions (
+                              workspace_id, project_id, artifact_type,
+                              artifact_draft_id, version, content_json,
+                              provenance, changed_by, analysis_run_id
+                            ) values (
+                              :workspace_id, :project_id,
+                              cast(:artifact_type as public.plan_artifact_type),
+                              :draft_id, :version, cast(:content as jsonb),
+                              :provenance, :changed_by, :run_id
+                            )
+                            on conflict (artifact_draft_id, version) do nothing
+                            """
+                        ),
+                        {
+                            "workspace_id": draft["workspace_id"],
+                            "project_id": snapshot.project_id,
+                            "artifact_type": artifact.artifact_type.value,
+                            "draft_id": draft["id"],
+                            "version": draft["version"],
+                            "content": json.dumps(draft["content_json"]),
+                            "provenance": draft["provenance"],
+                            "changed_by": draft["updated_by"],
+                            "run_id": run_id,
+                        },
+                    )
+            # A model failing to reproduce a finding is not resolution evidence.
+            # Existing issue rows therefore keep their lifecycle state unless the
+            # governed snapshot explicitly carries a new state for the same stable
+            # issue key.
             for issue in snapshot.assessment.issues:
                 issue_id = connection.execute(
                     text(
@@ -790,11 +994,23 @@ class DatabaseAnalysisStore:
                 text(
                     """
                     update public.projects
-                    set current_analysis_run_id = :run_id, status = 'active', updated_at = now()
+                    set current_analysis_run_id = :run_id,
+                        status = 'active',
+                        name = case
+                          when name = 'Untitled project'
+                            and nullif(trim(cast(:project_title as text)), '') is not null
+                          then trim(cast(:project_title as text))
+                          else name
+                        end,
+                        updated_at = now()
                     where id = :project_id
                     """
                 ),
-                {"run_id": run_id, "project_id": snapshot.project_id},
+                {
+                    "run_id": run_id,
+                    "project_id": snapshot.project_id,
+                    "project_title": snapshot.project_title,
+                },
             )
             self._append_event(
                 connection,
@@ -803,12 +1019,45 @@ class DatabaseAnalysisStore:
                 AnalysisRunStatus.COMPLETED,
                 payload={"snapshot_id": str(snapshot.id), "state": snapshot.state},
             )
+            if bool(run_row["consumes_analysis_allowance"]):
+                connection.execute(
+                    text(
+                        """
+                        insert into public.workspace_analysis_usage (
+                          workspace_id, project_id, analysis_run_id,
+                          usage_kind, period_start
+                        ) values (
+                          :workspace_id, :project_id, :run_id,
+                          'user_requested_analysis',
+                          date_trunc('month', now())::date
+                        )
+                        on conflict (analysis_run_id) do nothing
+                        """
+                    ),
+                    {
+                        "workspace_id": snapshot.workspace_id,
+                        "project_id": snapshot.project_id,
+                        "run_id": run_id,
+                    },
+                )
             run_kind = str(run_row["kind"])
-            current_issue_keys = {
-                issue.id
-                for issue in snapshot.assessment.issues
-                if issue.status != "resolved"
-            }
+            current_issue_keys = set(
+                connection.execute(
+                    text(
+                        """
+                        select stable_key
+                        from public.issues
+                        where workspace_id = :workspace_id
+                          and project_id = :project_id
+                          and current_status <> 'resolved'
+                        """
+                    ),
+                    {
+                        "workspace_id": snapshot.workspace_id,
+                        "project_id": snapshot.project_id,
+                    },
+                ).scalars()
+            )
             opened = sorted(current_issue_keys - previous_issue_keys)
             resolved = sorted(previous_issue_keys - current_issue_keys)
             append_history_event(

@@ -12,6 +12,18 @@ async function signIn(page: import("@playwright/test").Page) {
 
 async function createAnalyzedProject(page: import("@playwright/test").Page) {
   await signIn(page);
+  await page.goto("/workspace");
+
+  const existingProject = page.getByRole("link", { name: "Open project" }).first();
+  if (await existingProject.isVisible()) {
+    await existingProject.click();
+    await expect(page).toHaveURL(/\/projects\/.+\/overview/);
+    await expect(
+      page.getByText("Current evidence-qualified read", { exact: true }),
+    ).toBeVisible({ timeout: 120_000 });
+    return;
+  }
+
   await page.goto("/welcome");
   await page.getByRole("button", { name: /Start your first project/ }).click();
   await page.getByRole("button", { name: /sample project/i }).click();

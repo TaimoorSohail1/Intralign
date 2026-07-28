@@ -16,7 +16,15 @@ const workspace: WorkspaceSummary = {
   name: "OSLO Alpha",
   role: "owner",
   plan: "free",
+  plan_label: "Free",
+  price_usd_monthly: 0,
   active_project_limit: 1,
+  document_limit: 20,
+  word_limit: 50_000,
+  collaborator_seat_limit: 3,
+  monthly_analysis_limit: null,
+  monthly_analyses_used: 0,
+  can_manage_plan: true,
   projects: [
     {
       id: "project-1",
@@ -85,7 +93,7 @@ describe("WorkspaceHome", () => {
     const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByText("Your active project space is full")).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Archive" })).toBeInTheDocument();
-    expect(within(dialog).getByRole("link", { name: "Explore upgrade" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Explore upgrade" })).toBeInTheDocument();
   });
 
   it("archives without deleting and exposes the retained project", async () => {
@@ -124,6 +132,21 @@ describe("WorkspaceHome", () => {
     await waitFor(() => {
       expect(push).toHaveBeenCalledWith("/intake?project=project-new");
     });
+  });
+
+  it("does not expose owner-only archive controls to collaborators", () => {
+    render(
+      <WorkspaceHome
+        displayName="Collaborator"
+        initial={{ ...workspace, role: "collaborator", can_manage_plan: false }}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Archive Active transformation" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Archived projects/ }));
+    expect(screen.queryByRole("button", { name: "Restore" })).not.toBeInTheDocument();
   });
 
   it("keeps legacy over-limit workspaces usable without rendering an unbounded dialog", () => {

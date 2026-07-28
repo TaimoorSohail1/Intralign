@@ -8,7 +8,7 @@ describe("ReviewerResponseForm", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ status: "queued" }), {
+        new Response(JSON.stringify({ status: "recorded" }), {
           status: 201,
           headers: { "content-type": "application/json" },
         }),
@@ -21,7 +21,7 @@ describe("ReviewerResponseForm", () => {
     vi.unstubAllGlobals();
   });
 
-  it("records an attested response and starts safe re-analysis", async () => {
+  it("records an attested response without starting analysis", async () => {
     render(<ReviewerResponseForm token="review token" />);
     fireEvent.click(screen.getByLabelText("Suggest alternative"));
     fireEvent.change(screen.getByLabelText("Reviewer note"), {
@@ -42,6 +42,9 @@ describe("ReviewerResponseForm", () => {
       );
     });
     expect(screen.getByRole("heading", { name: "Thank you for the review" })).toBeInTheDocument();
+    expect(
+      screen.getByText(/project team can decide whether to add it as project evidence/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/No account or workspace seat was created/)).toBeInTheDocument();
   });
 

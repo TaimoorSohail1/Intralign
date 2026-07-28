@@ -88,6 +88,20 @@ def ensure_application_records(*, database_url: str, user_id: UUID) -> None:
             """,
             (WORKSPACE_ID, user_id),
         )
+        cursor.execute(
+            """
+            insert into public.workspace_subscriptions (
+              workspace_id, plan_code, status, changed_by
+            )
+            values (%s, 'basic', 'active', %s)
+            on conflict (workspace_id) do update set
+              plan_code = excluded.plan_code,
+              status = excluded.status,
+              changed_by = excluded.changed_by,
+              updated_at = now()
+            """,
+            (WORKSPACE_ID, user_id),
+        )
 
 
 def main() -> None:

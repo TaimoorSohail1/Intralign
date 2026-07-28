@@ -85,6 +85,15 @@ class WorkspaceSummary:
     active_project_limit: int
     projects: list[WorkspaceProject]
     notifications: list[WorkspaceNotification]
+    plan_label: str = "Free"
+    price_usd_monthly: int = 0
+    document_limit: int = 20
+    word_limit: int = 50_000
+    collaborator_seat_limit: int = 3
+    monthly_analysis_limit: int | None = None
+    monthly_analyses_used: int = 0
+    can_manage_plan: bool = False
+    member_count: int = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +102,13 @@ class WorkspacePreferences:
     analysis_notifications: bool
     failure_notifications: bool
     stale_notifications: bool
+    display_name: str = ""
+    role_title: str = ""
+    workspace_name: str = ""
+    actor_role: str = "viewer"
+    mentions_notifications: bool = True
+    reply_notifications: bool = True
+    shared_notifications: bool = True
 
 
 class SliceOneApplication(Protocol):
@@ -159,6 +175,14 @@ class SliceOneApplication(Protocol):
         self, *, actor_user_id: UUID, workspace_id: UUID
     ) -> WorkspaceSummary: ...
 
+    def set_workspace_plan(
+        self,
+        *,
+        actor_user_id: UUID,
+        workspace_id: UUID,
+        plan: str,
+    ) -> WorkspaceSummary: ...
+
     def archive_project(
         self, *, actor_user_id: UUID, workspace_id: UUID, project_id: UUID
     ) -> None: ...
@@ -184,4 +208,10 @@ class SliceOneApplication(Protocol):
         analysis_notifications: bool,
         failure_notifications: bool,
         stale_notifications: bool,
+        display_name: str,
+        role_title: str,
+        workspace_name: str,
+        mentions_notifications: bool,
+        reply_notifications: bool,
+        shared_notifications: bool,
     ) -> WorkspacePreferences: ...

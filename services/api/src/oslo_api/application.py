@@ -27,6 +27,15 @@ from oslo_api.slice_one import (
     WorkspaceProject,
     WorkspaceSummary,
 )
+from oslo_api.tiering.policy import PlanPolicy, get_plan_policy
+from oslo_api.tiering.repository import (
+    count_monthly_analysis_usage,
+    get_workspace_plan,
+    record_limit_event,
+)
+from oslo_api.tiering.repository import (
+    set_workspace_plan as persist_workspace_plan,
+)
 
 
 class InvitationMailer(Protocol):
@@ -76,13 +85,35 @@ class InvitationDeliveryFailed(Exception):
 class InvitationLimitReached(Exception):
     """Raised when the workspace has used its monthly invitation allocation."""
 
+    def __init__(self, policy: PlanPolicy | None = None) -> None:
+        policy = policy or get_plan_policy("free")
+        self.plan = policy.code.value
+        self.plan_label = policy.label
+        self.monthly_invitation_limit = policy.monthly_invitation_limit
+        self.remedies = ("wait_for_next_month", "compare_plans")
+        super().__init__("Workspace monthly invitation allocation reached")
+
 
 class CollaboratorSeatLimitReached(Exception):
     """Raised when another collaborator would exceed the workspace seat cap."""
 
+    def __init__(self, policy: PlanPolicy | None = None) -> None:
+        policy = policy or get_plan_policy("free")
+        self.plan = policy.code.value
+        self.collaborator_seat_limit = policy.collaborator_seat_limit
+        self.remedies = ("invite_as_viewer", "compare_plans")
+        super().__init__("Workspace collaborator seat limit reached")
+
 
 class ProjectLimitReached(Exception):
     """Raised when the workspace plan cannot create another active project."""
+
+    def __init__(self, policy: PlanPolicy | None = None) -> None:
+        policy = policy or get_plan_policy("free")
+        self.plan = policy.code.value
+        self.active_project_limit = policy.active_project_limit
+        self.remedies = ("archive_project", "compare_plans")
+        super().__init__("Workspace active project limit reached")
 
 
 class ProjectArchiveDenied(Exception):
@@ -154,6 +185,30 @@ class DatabaseSliceOneApplication:
             raise RuntimeError("Identity provider is not configured")
         return self._identity.authenticate(access_token)
 
+    def _record_blocked_limit_event(
+        self,
+        *,
+        workspace_id: UUID,
+        actor_user_id: UUID,
+        project_id: UUID | None,
+        limit_kind: str,
+        details: dict[str, object],
+        idempotency_key: str,
+    ) -> None:
+        # A blocked allocation raises from the caller's transaction. Persist its
+        # audit evidence independently so that rollback does not erase it.
+        with self._engine.begin() as audit_connection:
+            record_limit_event(
+                audit_connection,
+                workspace_id=workspace_id,
+                actor_user_id=actor_user_id,
+                project_id=project_id,
+                limit_kind=limit_kind,
+                outcome="blocked",
+                details=details,
+                idempotency_key=idempotency_key,
+            )
+
     def invite_member(
         self,
         *,
@@ -199,6 +254,7 @@ class DatabaseSliceOneApplication:
                     created_at=existing["created_at"],
                     expires_at=existing["expires_at"],
                 )
+            policy = get_workspace_plan(connection, workspace_id)
             monthly_invites_used = connection.execute(
                 text(
                     """
@@ -214,8 +270,21 @@ class DatabaseSliceOneApplication:
                 ),
                 {"workspace_id": workspace_id},
             ).scalar_one()
-            if monthly_invites_used >= 2:
-                raise InvitationLimitReached
+            if monthly_invites_used >= policy.monthly_invitation_limit:
+                self._record_blocked_limit_event(
+                    workspace_id=workspace_id,
+                    actor_user_id=actor_user_id,
+                    project_id=None,
+                    limit_kind="monthly_invitations",
+                    details={
+                        "plan": policy.code.value,
+                        "limit": policy.monthly_invitation_limit,
+                        "used": int(monthly_invites_used),
+                        "remedies": ["wait_for_next_month", "compare_plans"],
+                    },
+                    idempotency_key=f"invite-allocation:{normalised_email}:blocked",
+                )
+                raise InvitationLimitReached(policy)
             if role is MembershipRole.COLLABORATOR:
                 reserved_collaborator_seats = connection.execute(
                     text(
@@ -240,8 +309,24 @@ class DatabaseSliceOneApplication:
                     ),
                     {"workspace_id": workspace_id},
                 ).scalar_one()
-                if reserved_collaborator_seats >= 3:
-                    raise CollaboratorSeatLimitReached
+                decision = policy.decide_collaborator_capacity(
+                    occupied_seats=int(reserved_collaborator_seats)
+                )
+                if not decision.allowed:
+                    self._record_blocked_limit_event(
+                        workspace_id=workspace_id,
+                        actor_user_id=actor_user_id,
+                        project_id=None,
+                        limit_kind="collaborator_seats",
+                        details={
+                            "plan": policy.code.value,
+                            "limit": policy.collaborator_seat_limit,
+                            "occupied": int(reserved_collaborator_seats),
+                            "remedies": list(decision.remedies),
+                        },
+                        idempotency_key=f"invite-seat:{normalised_email}:blocked",
+                    )
+                    raise CollaboratorSeatLimitReached(policy)
             issued = InviteMember(
                 invitations=SqlInvitationStore(connection),
                 memberships=memberships,
@@ -278,6 +363,21 @@ class DatabaseSliceOneApplication:
                     "metadata": json.dumps({"email": issued.invitation.email, "role": role.value}),
                 },
             )
+            if role is MembershipRole.COLLABORATOR:
+                record_limit_event(
+                    connection,
+                    workspace_id=workspace_id,
+                    actor_user_id=actor_user_id,
+                    project_id=None,
+                    limit_kind="collaborator_seats",
+                    outcome="allowed",
+                    details={
+                        "plan": policy.code.value,
+                        "limit": policy.collaborator_seat_limit,
+                        "occupied_before": int(reserved_collaborator_seats),
+                    },
+                    idempotency_key=f"invite-seat:{issued.invitation.id}:allowed",
+                )
 
         query = urlencode({"token": issued.token})
         try:
@@ -489,8 +589,23 @@ class DatabaseSliceOneApplication:
                 ),
                 {"workspace_id": workspace_id},
             ).scalar_one()
-            if active_count >= 1:
-                raise ProjectLimitReached
+            policy = get_workspace_plan(connection, workspace_id)
+            decision = policy.decide_project_capacity(active_projects=int(active_count))
+            if not decision.allowed:
+                self._record_blocked_limit_event(
+                    workspace_id=workspace_id,
+                    actor_user_id=actor_user_id,
+                    project_id=None,
+                    limit_kind="active_projects",
+                    details={
+                        "plan": policy.code.value,
+                        "limit": policy.active_project_limit,
+                        "active": int(active_count),
+                        "remedies": list(decision.remedies),
+                    },
+                    idempotency_key=f"project-create:{project_id}:blocked",
+                )
+                raise ProjectLimitReached(policy)
             connection.execute(
                 text(
                     """
@@ -526,6 +641,20 @@ class DatabaseSliceOneApplication:
                     "subject_id": str(project_id),
                 },
             )
+            record_limit_event(
+                connection,
+                workspace_id=workspace_id,
+                actor_user_id=actor_user_id,
+                project_id=project_id,
+                limit_kind="active_projects",
+                outcome="allowed",
+                details={
+                    "plan": policy.code.value,
+                    "limit": policy.active_project_limit,
+                    "active_before": int(active_count),
+                },
+                idempotency_key=f"project-create:{project_id}:allowed",
+            )
         return Project(
             id=project_id,
             workspace_id=workspace_id,
@@ -544,6 +673,22 @@ class DatabaseSliceOneApplication:
                 text("select name from public.workspaces where id = :workspace_id"),
                 {"workspace_id": workspace_id},
             ).scalar_one()
+            member_count = int(
+                connection.execute(
+                    text(
+                        """
+                        select count(*)
+                        from public.memberships
+                        where workspace_id = :workspace_id
+                        """
+                    ),
+                    {"workspace_id": workspace_id},
+                ).scalar_one()
+            )
+            policy = get_workspace_plan(connection, workspace_id)
+            monthly_analyses_used = count_monthly_analysis_usage(
+                connection, workspace_id=workspace_id
+            )
             rows = (
                 connection.execute(
                     text(
@@ -652,8 +797,8 @@ class DatabaseSliceOneApplication:
             id=workspace_id,
             name=workspace_name,
             role=role.value,
-            plan="free",
-            active_project_limit=1,
+            plan=policy.code.value,
+            active_project_limit=policy.active_project_limit,
             projects=[
                 WorkspaceProject(
                     id=row["id"],
@@ -683,6 +828,67 @@ class DatabaseSliceOneApplication:
                 )
                 for row in notification_rows
             ],
+            plan_label=policy.label,
+            price_usd_monthly=policy.price_usd_monthly,
+            document_limit=policy.document_limit,
+            word_limit=policy.word_limit,
+            collaborator_seat_limit=policy.collaborator_seat_limit,
+            monthly_analysis_limit=policy.monthly_analysis_limit,
+            monthly_analyses_used=monthly_analyses_used,
+            can_manage_plan=role is MembershipRole.OWNER,
+            member_count=member_count,
+        )
+
+    def set_workspace_plan(
+        self,
+        *,
+        actor_user_id: UUID,
+        workspace_id: UUID,
+        plan: str,
+    ) -> WorkspaceSummary:
+        with self._engine.begin() as connection:
+            if (
+                SqlMembershipReader(connection).role_for(workspace_id, actor_user_id)
+                is not MembershipRole.OWNER
+            ):
+                raise InvitePermissionDenied
+            connection.execute(
+                text("select pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
+                {"scope": f"workspace-plan:{workspace_id}"},
+            )
+            previous = get_workspace_plan(connection, workspace_id)
+            selected = persist_workspace_plan(
+                connection,
+                workspace_id=workspace_id,
+                actor_user_id=actor_user_id,
+                plan_code=plan,
+            )
+            connection.execute(
+                text(
+                    """
+                    insert into public.audit_events (
+                      workspace_id, actor_user_id, action, subject_type, subject_id, metadata
+                    ) values (
+                      :workspace_id, :actor_user_id, 'workspace.plan_changed',
+                      'workspace', :subject_id, cast(:metadata as jsonb)
+                    )
+                    """
+                ),
+                {
+                    "workspace_id": workspace_id,
+                    "actor_user_id": actor_user_id,
+                    "subject_id": str(workspace_id),
+                    "metadata": json.dumps(
+                        {
+                            "from": previous.code.value,
+                            "to": selected.code.value,
+                            "simulated": True,
+                        }
+                    ),
+                },
+            )
+        return self.get_workspace_summary(
+            actor_user_id=actor_user_id, workspace_id=workspace_id
         )
 
     def _set_project_archived(
@@ -711,8 +917,25 @@ class DatabaseSliceOneApplication:
                     ),
                     {"workspace_id": workspace_id},
                 ).scalar_one()
-                if active_count >= 1:
-                    raise ProjectLimitReached
+                policy = get_workspace_plan(connection, workspace_id)
+                decision = policy.decide_project_capacity(
+                    active_projects=int(active_count)
+                )
+                if not decision.allowed:
+                    self._record_blocked_limit_event(
+                        workspace_id=workspace_id,
+                        actor_user_id=actor_user_id,
+                        project_id=project_id,
+                        limit_kind="active_projects",
+                        details={
+                            "plan": policy.code.value,
+                            "limit": policy.active_project_limit,
+                            "active": int(active_count),
+                            "remedies": list(decision.remedies),
+                        },
+                        idempotency_key=f"project-restore:{project_id}:blocked",
+                    )
+                    raise ProjectLimitReached(policy)
             updated = connection.execute(
                 text(
                     """
@@ -734,6 +957,21 @@ class DatabaseSliceOneApplication:
             )
             if updated.rowcount != 1:
                 raise ProjectArchiveDenied
+            if not archived:
+                record_limit_event(
+                    connection,
+                    workspace_id=workspace_id,
+                    actor_user_id=actor_user_id,
+                    project_id=project_id,
+                    limit_kind="active_projects",
+                    outcome="allowed",
+                    details={
+                        "plan": policy.code.value,
+                        "limit": policy.active_project_limit,
+                        "active_before": int(active_count),
+                    },
+                    idempotency_key=f"project-restore:{project_id}:allowed",
+                )
             connection.execute(
                 text(
                     """
@@ -804,18 +1042,43 @@ class DatabaseSliceOneApplication:
         self, *, actor_user_id: UUID, workspace_id: UUID
     ) -> WorkspacePreferences:
         with self._engine.begin() as connection:
-            if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
+            actor_role = SqlMembershipReader(connection).role_for(
+                workspace_id, actor_user_id
+            )
+            if actor_role is None:
                 raise InvitePermissionDenied
+            connection.execute(
+                text(
+                    """
+                    insert into public.workspace_member_preferences (workspace_id, user_id)
+                    values (:workspace_id, :user_id)
+                    on conflict (workspace_id, user_id) do nothing
+                    """
+                ),
+                {"workspace_id": workspace_id, "user_id": actor_user_id},
+            )
             row = (
                 connection.execute(
                     text(
                         """
-                        insert into public.workspace_member_preferences (workspace_id, user_id)
-                        values (:workspace_id, :user_id)
-                        on conflict (workspace_id, user_id) do update
-                          set updated_at = public.workspace_member_preferences.updated_at
-                        returning theme, analysis_notifications, failure_notifications,
-                                  stale_notifications
+                        select preference.theme, preference.analysis_notifications,
+                               preference.failure_notifications,
+                               preference.stale_notifications,
+                               coalesce(
+                                 nullif(preference.display_name, ''),
+                                 profile.display_name
+                               ) as display_name,
+                               preference.role_title,
+                               workspace.name as workspace_name,
+                               preference.mentions_notifications,
+                               preference.reply_notifications,
+                               preference.shared_notifications
+                        from public.workspace_member_preferences preference
+                        join public.profiles profile on profile.id = preference.user_id
+                        join public.workspaces workspace
+                          on workspace.id = preference.workspace_id
+                        where preference.workspace_id = :workspace_id
+                          and preference.user_id = :user_id
                         """
                     ),
                     {"workspace_id": workspace_id, "user_id": actor_user_id},
@@ -823,7 +1086,7 @@ class DatabaseSliceOneApplication:
                 .mappings()
                 .one()
             )
-        return WorkspacePreferences(**row)
+        return WorkspacePreferences(**row, actor_role=actor_role.value)
 
     def update_workspace_preferences(
         self,
@@ -834,31 +1097,80 @@ class DatabaseSliceOneApplication:
         analysis_notifications: bool,
         failure_notifications: bool,
         stale_notifications: bool,
+        display_name: str,
+        role_title: str,
+        workspace_name: str,
+        mentions_notifications: bool,
+        reply_notifications: bool,
+        shared_notifications: bool,
     ) -> WorkspacePreferences:
         if theme not in {"dark", "light", "system"}:
             raise ValueError("Unsupported theme")
+        display_name = " ".join(display_name.split())
+        role_title = " ".join(role_title.split())
+        workspace_name = " ".join(workspace_name.split())
+        if not 1 <= len(display_name) <= 120:
+            raise ValueError("Display name must be between 1 and 120 characters")
+        if len(role_title) > 120:
+            raise ValueError("Role title must be 120 characters or fewer")
+        if not 1 <= len(workspace_name) <= 120:
+            raise ValueError("Workspace name must be between 1 and 120 characters")
         with self._engine.begin() as connection:
-            if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
+            actor_role = SqlMembershipReader(connection).role_for(
+                workspace_id, actor_user_id
+            )
+            if actor_role is None:
                 raise InvitePermissionDenied
+            current_workspace_name = connection.execute(
+                text("select name from public.workspaces where id = :workspace_id"),
+                {"workspace_id": workspace_id},
+            ).scalar_one()
+            if workspace_name != current_workspace_name:
+                if actor_role is not MembershipRole.OWNER:
+                    raise InvitePermissionDenied
+                connection.execute(
+                    text(
+                        """
+                        update public.workspaces
+                        set name = :workspace_name, updated_at = now()
+                        where id = :workspace_id
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "workspace_name": workspace_name,
+                    },
+                )
             row = (
                 connection.execute(
                     text(
                         """
                         insert into public.workspace_member_preferences (
                           workspace_id, user_id, theme, analysis_notifications,
-                          failure_notifications, stale_notifications
+                          failure_notifications, stale_notifications, display_name,
+                          role_title, mentions_notifications, reply_notifications,
+                          shared_notifications
                         ) values (
                           :workspace_id, :user_id, :theme, :analysis_notifications,
-                          :failure_notifications, :stale_notifications
+                          :failure_notifications, :stale_notifications, :display_name,
+                          :role_title, :mentions_notifications, :reply_notifications,
+                          :shared_notifications
                         )
                         on conflict (workspace_id, user_id) do update set
                           theme = excluded.theme,
                           analysis_notifications = excluded.analysis_notifications,
                           failure_notifications = excluded.failure_notifications,
                           stale_notifications = excluded.stale_notifications,
+                          display_name = excluded.display_name,
+                          role_title = excluded.role_title,
+                          mentions_notifications = excluded.mentions_notifications,
+                          reply_notifications = excluded.reply_notifications,
+                          shared_notifications = excluded.shared_notifications,
                           updated_at = now()
                         returning theme, analysis_notifications, failure_notifications,
-                                  stale_notifications
+                                  stale_notifications, display_name, role_title,
+                                  mentions_notifications, reply_notifications,
+                                  shared_notifications
                         """
                     ),
                     {
@@ -868,12 +1180,21 @@ class DatabaseSliceOneApplication:
                         "analysis_notifications": analysis_notifications,
                         "failure_notifications": failure_notifications,
                         "stale_notifications": stale_notifications,
+                        "display_name": display_name,
+                        "role_title": role_title,
+                        "mentions_notifications": mentions_notifications,
+                        "reply_notifications": reply_notifications,
+                        "shared_notifications": shared_notifications,
                     },
                 )
                 .mappings()
                 .one()
             )
-        return WorkspacePreferences(**row)
+        return WorkspacePreferences(
+            **row,
+            workspace_name=workspace_name,
+            actor_role=actor_role.value,
+        )
 
     def activate_invitation(
         self,

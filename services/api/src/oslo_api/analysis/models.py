@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -54,9 +56,11 @@ class AnalysisRunRequest:
     description: str
     source_names: tuple[str, ...]
     source_document_ids: tuple[UUID, ...] = ()
+    user_evidence: tuple[EvidenceFragment, ...] = ()
     idempotency_key: str | None = None
     parent_run_id: UUID | None = None
     fail_at: AnalysisPhase | None = None
+    consumes_analysis_allowance: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,6 +111,35 @@ class Perception:
 
 
 @dataclass(frozen=True, slots=True)
+class ArtifactSection:
+    heading: str
+    body: str = ""
+    bullets: tuple[str, ...] = ()
+    columns: tuple[str, ...] = ()
+    rows: tuple[tuple[str, ...], ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+    row_evidence_refs: tuple[tuple[str, ...], ...] = ()
+    row_states: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class ArtifactAssumption:
+    id: str
+    statement: str
+    state: str
+    load_bearing: bool
+    evidence_refs: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class ArtifactConflict:
+    id: str
+    field: str
+    values: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class Artifact:
     artifact_type: ArtifactType
     title: str
@@ -114,6 +147,10 @@ class Artifact:
     reliability: str
     evidence_refs: tuple[str, ...]
     basis: str = "derived"
+    sections: tuple[ArtifactSection, ...] = ()
+    assumptions: tuple[ArtifactAssumption, ...] = ()
+    conflicts: tuple[ArtifactConflict, ...] = ()
+    project_title: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,6 +211,8 @@ class AssessmentSnapshot:
     assessment: Assessment
     published_at: datetime
     evidence_citations: tuple[EvidenceCitation, ...] = ()
+    project_title: str | None = None
+    source_document_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -202,7 +241,7 @@ class AnalysisRun:
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
-    def queued(cls, request: AnalysisRunRequest) -> "AnalysisRun":
+    def queued(cls, request: AnalysisRunRequest) -> AnalysisRun:
         return cls(id=uuid4(), request=request, status=AnalysisRunStatus.QUEUED)
 
 

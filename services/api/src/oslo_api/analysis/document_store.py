@@ -56,6 +56,8 @@ class DatabaseDocumentStore:
         file_name: str,
         declared_content_type: str | None,
         content: bytes,
+        document_limit: int | None = None,
+        word_limit: int | None = None,
     ) -> UploadedDocument:
         if not content:
             raise DocumentRejected("DOCUMENT_EMPTY")
@@ -125,6 +127,8 @@ class DatabaseDocumentStore:
                 declared_content_type=declared_content_type,
                 content=stored_content,
                 object_key=object_key,
+                document_limit=document_limit,
+                word_limit=word_limit,
             )
 
         self._object_store.put(object_key, content)
@@ -181,6 +185,8 @@ class DatabaseDocumentStore:
             declared_content_type=declared_content_type,
             content=content,
             object_key=object_key,
+            document_limit=document_limit,
+            word_limit=word_limit,
         )
 
     def _parse_and_persist(
@@ -193,6 +199,8 @@ class DatabaseDocumentStore:
         declared_content_type: str | None,
         content: bytes,
         object_key: str,
+        document_limit: int | None,
+        word_limit: int | None,
     ) -> UploadedDocument:
         with self._engine.connect() as connection:
             previous_attempts = connection.execute(
@@ -270,6 +278,96 @@ class DatabaseDocumentStore:
                 raise DocumentRejected(code) from error
 
             with self._engine.begin() as connection:
+                connection.execute(
+                    text("select pg_advisory_xact_lock(hashtext(cast(:workspace_id as text)))"),
+                    {"workspace_id": workspace_id},
+                )
+                existing_document_count = int(
+                    connection.execute(
+                        text(
+                            """
+                            select count(*)
+                            from public.source_documents
+                            where workspace_id = :workspace_id
+                              and status = 'parsed'
+                              and id <> :document_id
+                            """
+                        ),
+                        {
+                            "workspace_id": workspace_id,
+                            "document_id": document_id,
+                        },
+                    ).scalar_one()
+                )
+                existing_word_count = int(
+                    connection.execute(
+                        text(
+                            """
+                            select coalesce(sum(
+                              cardinality(regexp_split_to_array(trim(sf.content), E'\\s+'))
+                            ), 0)
+                            from public.source_fragments sf
+                            join public.source_documents sd
+                              on sd.id = sf.source_document_id
+                            where sd.workspace_id = :workspace_id
+                              and sd.status = 'parsed'
+                              and sd.id <> :document_id
+                            """
+                        ),
+                        {
+                            "workspace_id": workspace_id,
+                            "document_id": document_id,
+                        },
+                    ).scalar_one()
+                )
+                parsed_word_count = sum(
+                    len(fragment.content.split()) for fragment in parsed.fragments
+                )
+                exceeds_documents = (
+                    document_limit is not None
+                    and existing_document_count + 1 > document_limit
+                )
+                exceeds_words = (
+                    word_limit is not None
+                    and existing_word_count + parsed_word_count > word_limit
+                )
+                if exceeds_documents or exceeds_words:
+                    rejection_code = (
+                        "PLAN_DOCUMENT_LIMIT_REACHED"
+                        if exceeds_documents
+                        else "PLAN_WORD_LIMIT_REACHED"
+                    )
+                    connection.execute(
+                        text(
+                            """
+                            update public.document_parse_attempts
+                            set status = 'failed', error_code = :error_code,
+                                retryable = false, completed_at = now()
+                            where source_document_id = :document_id
+                              and attempt_no = :attempt_no
+                            """
+                        ),
+                        {
+                            "document_id": document_id,
+                            "attempt_no": attempt_no,
+                            "error_code": rejection_code,
+                        },
+                    )
+                    connection.execute(
+                        text(
+                            """
+                            update public.source_documents
+                            set status = 'rejected', failure_code = :error_code
+                            where id = :document_id
+                            """
+                        ),
+                        {
+                            "document_id": document_id,
+                            "error_code": rejection_code,
+                        },
+                    )
+                    connection.commit()
+                    raise DocumentRejected(rejection_code)
                 connection.execute(
                     text("delete from public.source_fragments where source_document_id = :id"),
                     {"id": document_id},

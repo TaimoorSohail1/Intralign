@@ -1,4 +1,4 @@
-from oslo_api.collaboration.pdf import render_snapshot_pdf
+from oslo_api.collaboration.pdf import render_report_pdf, render_snapshot_pdf
 
 
 def test_snapshot_pdf_contains_all_artifacts_evidence_and_governance_markers() -> None:
@@ -24,6 +24,14 @@ def test_snapshot_pdf_contains_all_artifacts_evidence_and_governance_markers() -
                 ),
                 start=1,
             )
+        ],
+        "evidence_citations": [
+            {
+                "reference": f"document:plan:page:{index}:fragment:0",
+                "source_name": "Northstar plan.pdf",
+                "location": f"Page {index}",
+            }
+            for index in range(1, 8)
         ],
         "assessment": {
             "confidence_index": 62,
@@ -52,8 +60,31 @@ def test_snapshot_pdf_contains_all_artifacts_evidence_and_governance_markers() -
     assert b"/Type /Pages" in pdf
     assert b"Intent: Intent title" in pdf
     assert b"Resources: Resources title" in pdf
-    assert b"document:plan:page:7:fragment:0" in pdf
+    assert b"Northstar plan.pdf - Page 7" in pdf
+    assert b"document:plan:page:7:fragment:0" not in pdf
     assert b"Open dependency" in pdf
     assert b"Resolved dependency" not in pdf
-    assert b"Currency: not specified" in pdf
+    assert b"OSLO Project Readout" in pdf
+    assert b"Source documents: 0; plan artifacts: 7" in pdf
     assert b"It does not update the project or run analysis." in pdf
+
+
+def test_report_pdf_uses_the_exact_shared_draft_sections() -> None:
+    content = {
+        "sections": [
+            {
+                "id": f"section-{index}",
+                "title": f"Section {index}",
+                "body": [f"Exact paragraph {index}"],
+            }
+            for index in range(1, 8)
+        ]
+    }
+
+    pdf = render_report_pdf("Halcyon", content)
+
+    assert pdf.startswith(b"%PDF-1.4")
+    for index in range(1, 8):
+        assert f"Section {index}".encode() in pdf
+        assert f"Exact paragraph {index}".encode() in pdf
+    assert b"/Count 1" in pdf

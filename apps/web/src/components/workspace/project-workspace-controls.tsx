@@ -1,10 +1,11 @@
 "use client";
 
-import { Bell, CaretDown, Check, FolderOpen, Gear, House, MagnifyingGlass, Plus, X } from "@phosphor-icons/react";
+import { Bell, CaretDown, Check, FolderOpen, Gear, House, MagnifyingGlass, Plus, Sparkle, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { ProjectCollaborationControls } from "@/components/collaboration/project-collaboration-controls";
+import { PlanComparisonModal } from "@/components/workspace/plan-comparison-modal";
 import type { WorkspaceSummary } from "@/lib/server/oslo-api";
 
 export function ProjectWorkspaceControls({ projectId }: { projectId: string }) {
@@ -12,6 +13,7 @@ export function ProjectWorkspaceControls({ projectId }: { projectId: string }) {
   const [open, setOpen] = useState(false);
   const [projectQuery, setProjectQuery] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [plansOpen, setPlansOpen] = useState(false);
   const [markingRead, setMarkingRead] = useState(false);
   const controlsRef = useRef<HTMLDivElement>(null);
 
@@ -45,6 +47,7 @@ export function ProjectWorkspaceControls({ projectId }: { projectId: string }) {
       if (!controlsRef.current?.contains(event.target as Node)) {
         setOpen(false);
         setNotificationsOpen(false);
+        setPlansOpen(false);
       }
     };
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -150,6 +153,21 @@ export function ProjectWorkspaceControls({ projectId }: { projectId: string }) {
         ) : null}
       </div>
       <ProjectCollaborationControls projectId={projectId} />
+      <button
+        aria-label={workspace?.plan_label ?? "Free"}
+        aria-busy={!workspace}
+        className="project-plan-badge"
+        onClick={() => {
+          setOpen(false);
+          setNotificationsOpen(false);
+          if (workspace) setPlansOpen(true);
+        }}
+        title={workspace ? "Compare plans" : "Loading plan"}
+        type="button"
+      >
+        <Sparkle size={14} weight="fill" />
+        <span>{workspace?.plan_label ?? "Free"}</span>
+      </button>
       <div className="workspace-notifications">
         <button
           aria-expanded={notificationsOpen}
@@ -203,6 +221,14 @@ export function ProjectWorkspaceControls({ projectId }: { projectId: string }) {
           </>
         ) : null}
       </div>
+      {workspace ? (
+        <PlanComparisonModal
+          onClose={() => setPlansOpen(false)}
+          onWorkspaceChange={setWorkspace}
+          open={plansOpen}
+          workspace={workspace}
+        />
+      ) : null}
     </div>
   );
 }

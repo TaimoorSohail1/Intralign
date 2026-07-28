@@ -89,6 +89,10 @@ def test_live_advisor_uses_a_bounded_structured_project_snapshot() -> None:
     assert request["max_output_tokens"] == 1_200
     assert payload["question"] == "What should I address first?"
     assert payload["project_snapshot"]["assessment"]["issues"]
+    assert payload["project_snapshot"]["artifacts"][0]["sections"]
+    assert "body" in payload["project_snapshot"]["artifacts"][0]["sections"][0]
+    assert "assumptions" in payload["project_snapshot"]["artifacts"][0]
+    assert "evidence_citations" in payload["project_snapshot"]
     assert "API" not in request["input"][0]["content"]
     assert reply.answer == "Confirm the accountable owner and contingency first."
     assert reply.follow_up_questions == ("Who owns the dependency?",)

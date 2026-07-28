@@ -13,6 +13,7 @@ from oslo_api.analysis import (
     RunKind,
 )
 from oslo_api.analysis.harness import AgentHarnessError
+from oslo_api.analysis.models import ARTIFACT_TYPES, ArtifactType
 
 WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
 PROJECT_ID = UUID("018f9f7e-8de2-7000-8000-000000000020")
@@ -63,6 +64,21 @@ class DocumentEvidenceStore(InMemoryAnalysisStore):
                 ),
                 source_name="Project Nova plan.pdf",
                 location="Page 1",
+            ),
+        )
+
+
+class SemanticEvidenceStore(InMemoryAnalysisStore):
+    def evidence_for(self, request):
+        return (
+            EvidenceFragment(
+                reference="document:plan:page:14:fragment:1",
+                content=(
+                    "Migration acceptance requires stock value variance <=0.25%. "
+                    "Rollback is invoked if stock value variance exceeds 1.0%."
+                ),
+                source_name="Project plan.pdf",
+                location="Page 14",
             ),
         )
 
@@ -243,6 +259,87 @@ def test_project_summary_never_exposes_internal_clarification_envelopes() -> Non
     assert "Issue ID" not in result.snapshot.summary
 
 
+def test_structured_user_evidence_is_used_without_leaking_transport_markers() -> None:
+    result = AnalysisWorkflow(
+        store=InMemoryAnalysisStore(),
+        harness=DeterministicAgentHarness(),
+    ).run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.EXTENDED,
+            description="Project Nova will unify customer engagement.",
+            source_names=(),
+            user_evidence=(
+                EvidenceFragment(
+                    reference="user:artifact:intent:version:2",
+                    content="Intent artifact changes confirmed by the user: CTO owns delivery.",
+                    source_name="User-confirmed Intent edit",
+                    location="Artifact version 2",
+                ),
+            ),
+        )
+    )
+
+    assert result.snapshot is not None
+    assert any(
+        "user:artifact:intent:version:2" in artifact.evidence_refs
+        for artifact in result.snapshot.artifacts
+    )
+    assert "USER_ARTIFACT_EDIT" not in result.snapshot.summary
+    assert "END_USER_ARTIFACT_EDIT" not in result.snapshot.summary
+
+
+def test_single_artifact_edit_preserves_unrelated_artifacts() -> None:
+    store = InMemoryAnalysisStore()
+    workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+    baseline = workflow.run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.INITIAL,
+            description="Project Nova will unify customer engagement.",
+            source_names=(),
+        )
+    )
+    assert baseline.snapshot is not None
+
+    updated = workflow.run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.EXTENDED,
+            description="Project Nova will unify customer engagement.",
+            source_names=(),
+            parent_run_id=baseline.run_id,
+            user_evidence=(
+                EvidenceFragment(
+                    reference="user:artifact:intent:version:2",
+                    content="Intent artifact changes confirmed by the user: CTO owns delivery.",
+                    source_name="User-confirmed Intent edit",
+                    location="Artifact version 2",
+                ),
+            ),
+        )
+    )
+
+    assert updated.snapshot is not None
+    previous = {
+        artifact.artifact_type: artifact for artifact in baseline.snapshot.artifacts
+    }
+    current = {
+        artifact.artifact_type: artifact for artifact in updated.snapshot.artifacts
+    }
+    assert current[ArtifactType.INTENT] != previous[ArtifactType.INTENT]
+    for artifact_type in ARTIFACT_TYPES:
+        if artifact_type is ArtifactType.INTENT:
+            continue
+        assert current[artifact_type] == previous[artifact_type]
+
+
 def test_snapshot_preserves_readable_evidence_citations_for_issue_details() -> None:
     result = AnalysisWorkflow(
         store=DocumentEvidenceStore(),
@@ -264,6 +361,31 @@ def test_snapshot_preserves_readable_evidence_citations_for_issue_details() -> N
     assert citation.location == "Page 1"
     assert "Project Nova" in citation.excerpt
     assert citation.reference == "document:plan:page:1:fragment:1"
+
+
+def test_workflow_publishes_deterministic_semantic_findings() -> None:
+    result = AnalysisWorkflow(
+        store=SemanticEvidenceStore(),
+        harness=DeterministicAgentHarness(),
+    ).run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.EXTENDED,
+            description="",
+            source_names=("Project plan.pdf",),
+        )
+    )
+
+    assert result.snapshot is not None
+    issue = next(
+        item
+        for item in result.snapshot.assessment.issues
+        if item.id == "DET-REQUIREMENTS-THRESHOLD-GAP"
+    )
+    assert issue.severity == "Critical"
+    assert issue.evidence_refs == ("document:plan:page:14:fragment:1",)
 
 
 def test_governed_node_failures_preserve_the_last_good_snapshot() -> None:

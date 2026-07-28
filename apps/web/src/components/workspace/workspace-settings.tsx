@@ -20,9 +20,10 @@ import {
   X,
 } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { WorkspacePreferences } from "@/lib/server/oslo-api";
+import { PlanComparisonModal } from "@/components/workspace/plan-comparison-modal";
+import type { WorkspacePreferences, WorkspaceSummary } from "@/lib/server/oslo-api";
 
 const settingsSections = [
   { id: "account", label: "Account", group: "You", Icon: User },
@@ -50,31 +51,37 @@ export function WorkspaceSettings({
   displayName,
   email,
   logoutAction,
+  workspace,
 }: {
   initial: WorkspacePreferences;
   workspaceName: string;
   displayName: string;
   email?: string;
   logoutAction?: () => Promise<void>;
+  workspace?: WorkspaceSummary;
 }) {
   const [preferences, setPreferences] = useState(initial);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const saveRevisionRef = useRef(0);
   const [query, setQuery] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [localDisplayName, setLocalDisplayName] = useState(displayName);
-  const [localWorkspaceName, setLocalWorkspaceName] = useState(workspaceName);
-  const [role, setRole] = useState("");
-  const [collaborationPreferences, setCollaborationPreferences] = useState<Record<string, boolean>>(() => {
-    const defaults = { Mentions: true, Replies: true, "Shared with me": true };
-    if (typeof window === "undefined") return defaults;
-    const stored = localStorage.getItem("oslo-collaboration-notifications");
-    if (!stored) return defaults;
-    try {
-      return { ...defaults, ...JSON.parse(stored) };
-    } catch {
-      localStorage.removeItem("oslo-collaboration-notifications");
-      return defaults;
-    }
+  const [localDisplayName, setLocalDisplayName] = useState(
+    initial.display_name || displayName,
+  );
+  const [localWorkspaceName, setLocalWorkspaceName] = useState(
+    initial.workspace_name || workspaceName,
+  );
+  const [role, setRole] = useState(initial.role_title);
+  const [workspaceState, setWorkspaceState] = useState(workspace);
+  const [plansOpen, setPlansOpen] = useState(false);
+  const [collaborationPreferences, setCollaborationPreferences] = useState<
+    Record<string, boolean>
+  >({
+    Mentions: initial.mentions_notifications,
+    Replies: initial.reply_notifications,
+    "Shared with me": initial.shared_notifications,
   });
 
   const normalizedQuery = query.trim().toLowerCase();
@@ -87,15 +94,35 @@ export function WorkspaceSettings({
     [normalizedQuery],
   );
 
-  const save = async (next: WorkspacePreferences) => {
+  const save = (next: WorkspacePreferences) => {
+    const revision = ++saveRevisionRef.current;
     setPreferences(next);
     setSaved(false);
-    const response = await fetch("/api/workspace/preferences", {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(next),
-    });
-    if (response.ok) setSaved(true);
+    setSaveError(null);
+    saveQueueRef.current = saveQueueRef.current
+      .catch(() => undefined)
+      .then(async () => {
+        const response = await fetch("/api/workspace/preferences", {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(next),
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(payload?.message ?? "Settings could not be saved.");
+        }
+        if (revision !== saveRevisionRef.current) return;
+        const persisted = payload as WorkspacePreferences;
+        setPreferences(persisted);
+        setSaved(true);
+      })
+      .catch((error) => {
+        if (revision !== saveRevisionRef.current) return;
+        setSaveError(
+          error instanceof Error ? error.message : "Settings could not be saved.",
+        );
+      });
+    return saveQueueRef.current;
   };
 
   useEffect(() => {
@@ -116,17 +143,23 @@ export function WorkspaceSettings({
   const toggleCollaborationNotification = (title: string) => {
     setCollaborationPreferences((current) => {
       const next = { ...current, [title]: !current[title] };
-      localStorage.setItem("oslo-collaboration-notifications", JSON.stringify(next));
-      setSaved(true);
+      void save({
+        ...preferences,
+        mentions_notifications: next.Mentions,
+        reply_notifications: next.Replies,
+        shared_notifications: next["Shared with me"],
+      });
       return next;
     });
   };
 
   const commitLocalIdentity = () => {
-    localStorage.setItem("oslo-display-name", localDisplayName.trim() || displayName);
-    localStorage.setItem("oslo-role", role.trim());
-    localStorage.setItem("oslo-workspace-name", localWorkspaceName.trim() || workspaceName);
-    setSaved(true);
+    void save({
+      ...preferences,
+      display_name: localDisplayName.trim() || displayName,
+      role_title: role.trim(),
+      workspace_name: localWorkspaceName.trim() || workspaceName,
+    });
   };
 
   const sectionVisible = (id: typeof settingsSections[number]["id"]) => visibleSections.has(id);
@@ -162,6 +195,7 @@ export function WorkspaceSettings({
           </div>
           {saved ? <em><Check size={14} /> Saved</em> : null}
         </header>
+        {saveError ? <p className="settings-save-error" role="alert">{saveError}</p> : null}
 
         <label className="settings-search">
           <MagnifyingGlass aria-hidden="true" size={17} />
@@ -216,6 +250,7 @@ export function WorkspaceSettings({
                   ] as const).map(([theme, label, Icon]) => (
                     <button
                       aria-label={label}
+                      aria-pressed={preferences.theme === theme}
                       className={preferences.theme === theme ? "is-selected" : ""}
                       onClick={() => save({ ...preferences, theme })}
                       type="button"
@@ -299,11 +334,21 @@ export function WorkspaceSettings({
             <div className="settings-section-heading"><h2>Collaboration</h2><p>Governed access, review links, comments, and retained snapshots.</p></div>
             <div className="settings-card">
               <div className="settings-row"><span><strong>Default sharing</strong><small>New projects remain private until you share them.</small></span><strong>Private</strong></div>
-              <div className="settings-row"><span><strong>Collaborator seats</strong><small>Owners and collaborators can edit; viewers are read-only.</small></span><strong>3 on Free</strong></div>
+              <div className="settings-row">
+                <span><strong>Collaborator seats</strong><small>Owners and collaborators can edit; viewers and reviewers do not consume a seat.</small></span>
+                <strong>{workspaceState ? `${workspaceState.collaborator_seat_limit} on ${workspaceState.plan_label}` : "3 on Free"}</strong>
+              </div>
               <div className="settings-row"><span><strong>External reviewers</strong><small>Review links do not create membership or use a seat.</small></span><strong>Unlimited</strong></div>
               <div className="settings-row"><span><strong>Snapshot links</strong><small>Read-only, revocable, and retained for 30 days.</small></span><strong>30 days</strong></div>
               <div className="settings-row"><span><strong>Review links</strong><small>One attested response; expires after 14 days or issue resolution.</small></span><strong>14 days</strong></div>
-              <div className="settings-row"><span>Workspace invitations</span><Link href="/admin/invitations">Manage invitations</Link></div>
+              <div className="settings-row">
+                <span>Workspace invitations</span>
+                {(workspaceState?.role ?? preferences.actor_role) === "owner" ? (
+                  <Link href="/admin/invitations">Manage invitations</Link>
+                ) : (
+                  <small>Managed by workspace owners</small>
+                )}
+              </div>
             </div>
           </article>
         ) : null}
@@ -311,14 +356,44 @@ export function WorkspaceSettings({
         {sectionVisible("membership") ? (
           <article className="settings-section" id="membership">
             <div className="settings-section-heading"><h2>Membership <small>View</small></h2><p>Who is in this workspace. This view never grants or removes access.</p></div>
-            <div className="settings-card"><div className="settings-row"><span><strong>{displayName}</strong><small>{email ?? "Workspace member"}</small></span><strong>Owner</strong></div><div className="settings-row"><span>1 member</span><Link href="/admin/invitations">Manage invitations</Link></div></div>
+            <div className="settings-card">
+              <div className="settings-row">
+                <span><strong>{localDisplayName}</strong><small>{email ?? "Workspace member"}</small></span>
+                <strong>{(workspaceState?.role ?? preferences.actor_role).replace(/^\w/, (letter) => letter.toUpperCase())}</strong>
+              </div>
+              <div className="settings-row">
+                <span>
+                  {workspaceState
+                    ? `${workspaceState.member_count ?? 1} ${(workspaceState.member_count ?? 1) === 1 ? "member" : "members"}`
+                    : "1 member"}
+                </span>
+                {(workspaceState?.role ?? preferences.actor_role) === "owner" ? (
+                  <Link href="/admin/invitations">Manage invitations</Link>
+                ) : (
+                  <small>Owner-managed</small>
+                )}
+              </div>
+            </div>
           </article>
         ) : null}
 
         {sectionVisible("subscription") ? (
           <article className="settings-section" id="subscription">
             <div className="settings-section-heading"><h2>Subscription <small>View</small></h2><p>Your plan and current usage. Nothing here interrupts an active project.</p></div>
-            <div className="settings-card"><div className="settings-row"><span>Plan</span><strong>Free</strong></div><div className="settings-row"><span>Active projects</span><strong>1 of 1</strong></div><div className="settings-row"><span>Analysis included</span><strong>Initial Analysis</strong></div><div className="settings-row"><span>See what an upgrade adds</span><button className="settings-primary-button" type="button">See plans</button></div></div>
+            <div className="settings-card">
+              <div className="settings-row"><span>Plan</span><strong>{workspaceState?.plan_label ?? "Free"}</strong></div>
+              <div className="settings-row">
+                <span>Active projects</span>
+                <strong>
+                  {workspaceState
+                    ? `${workspaceState.projects.filter((project) => !project.archived).length} of ${workspaceState.active_project_limit}`
+                    : "1 of 1"}
+                </strong>
+              </div>
+              <div className="settings-row"><span>Evidence envelope</span><strong>{workspaceState ? `${workspaceState.document_limit} documents · ${workspaceState.word_limit.toLocaleString()} words` : "20 documents · 50,000 words"}</strong></div>
+              <div className="settings-row"><span>Monthly user-requested analyses</span><strong>{workspaceState?.monthly_analysis_limit == null ? "Unmetered in Alpha" : `${workspaceState.monthly_analyses_used} of ${workspaceState.monthly_analysis_limit}`}</strong></div>
+              <div className="settings-row"><span>Compare capacity</span><button className="settings-primary-button" onClick={() => setPlansOpen(true)} type="button">See plans</button></div>
+            </div>
           </article>
         ) : null}
 
@@ -338,6 +413,15 @@ export function WorkspaceSettings({
 
         {!visibleSections.size ? <div className="settings-empty"><MagnifyingGlass size={23} /><strong>No settings found</strong><button onClick={() => setQuery("")} type="button">Clear search</button></div> : null}
       </section>
+
+      {workspaceState ? (
+        <PlanComparisonModal
+          onClose={() => setPlansOpen(false)}
+          onWorkspaceChange={setWorkspaceState}
+          open={plansOpen}
+          workspace={workspaceState}
+        />
+      ) : null}
 
       {deleteOpen ? (
         <div className="workspace-modal-backdrop">

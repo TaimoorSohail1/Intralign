@@ -7,6 +7,7 @@ from oslo_api.analysis.models import (
     Artifact,
     Assessment,
     AssessmentSnapshot,
+    EvidenceFragment,
     Issue,
     RunKind,
 )
@@ -181,6 +182,72 @@ def test_clarification_reanalysis_preserves_resolved_issue_when_model_omits_it()
     assert result.issues[0].status == "resolved"
     assert result.resolved_issue_count == 1
     assert result.confirmed_dependency_count == 1
+
+
+def test_disappeared_issue_remains_open_without_resolution_evidence() -> None:
+    issue = Issue(
+        id="ISS-OLD",
+        artifact_type=ARTIFACT_TYPES[-1],
+        dimension="Feasibility",
+        severity="Moderate",
+        title="An earlier resource gap",
+        why="The previous read could not find an owner.",
+        recommendation="Name the owner.",
+        evidence_refs=("document:plan:page:1:fragment:0",),
+        clarification="Who owns delivery?",
+    )
+    previous = _snapshot(replace(_assessment(), issues=(issue,)))
+
+    result = enrich_assessment(
+        assessment=replace(_assessment(score=66), issues=()),
+        artifacts=_artifacts(),
+        kind=RunKind.EXTENDED,
+        previous_snapshot=previous,
+        description="The new governed read includes an accountable owner.",
+    )
+
+    assert result.issues[0].id == "ISS-OLD"
+    assert result.issues[0].status == "open"
+    assert result.resolved_issue_count == 0
+
+
+def test_structured_clarification_evidence_updates_only_the_tied_issue() -> None:
+    owner_issue = Issue(
+        id="ISS-OWNER",
+        artifact_type=ARTIFACT_TYPES[-1],
+        dimension="Clarity",
+        severity="Critical",
+        title="Accountable owner is missing",
+        why="No accountable delivery owner is named.",
+        recommendation="Name an owner.",
+        evidence_refs=("document:plan:page:1:fragment:0",),
+        clarification="Who owns delivery?",
+    )
+    previous = _snapshot(replace(_assessment(), issues=(owner_issue,)))
+    result = enrich_assessment(
+        assessment=replace(_assessment(), issues=(owner_issue,)),
+        artifacts=_artifacts(),
+        kind=RunKind.EXTENDED,
+        previous_snapshot=previous,
+        description="Project Nova delivery plan.",
+        user_evidence=(
+            EvidenceFragment(
+                reference="user:clarification:ISS-OWNER:answer:answer-1",
+                content=(
+                    "Issue: Accountable owner is missing\n"
+                    "Question: Who owns delivery?\n"
+                    "Answer: Priya owns delivery, with Liam as fallback, effective "
+                    "1 August 2026 and approved by the sponsor."
+                ),
+                source_name="User-confirmed clarification",
+                location="Issue ISS-OWNER",
+            ),
+        ),
+    )
+
+    issue = next(item for item in result.issues if item.id == "ISS-OWNER")
+    assert issue.status == "resolved"
+    assert result.understanding_stage == "validated"
 
 
 def test_clarification_reanalysis_preserves_unrelated_open_issues_when_model_omits_them() -> None:

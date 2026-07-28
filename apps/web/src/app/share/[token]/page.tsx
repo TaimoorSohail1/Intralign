@@ -1,4 +1,5 @@
 import { osloApiUrl } from "@/lib/server/oslo-api";
+import { openSharedIssues, type SharedIssue } from "@/lib/shared-snapshot";
 
 type SharePayload = {
   project_name: string;
@@ -14,7 +15,7 @@ type SharePayload = {
       clarity?: string;
       alignment?: string;
       feasibility?: string;
-      issues?: Array<{ id: string; title: string; severity: string; dimension: string }>;
+      issues?: SharedIssue[];
     };
   };
 };
@@ -76,7 +77,7 @@ export default async function SharedSnapshotPage({
         </div>
         <section className="public-snapshot-issues">
           <h2>Open attention items</h2>
-          {(assessment?.issues ?? []).map((issue) => (
+          {openSharedIssues(assessment?.issues).map((issue) => (
             <article key={issue.id}>
               <span>{issue.severity}</span>
               <div><strong>{issue.title}</strong><small>{issue.dimension}</small></div>

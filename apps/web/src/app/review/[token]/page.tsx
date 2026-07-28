@@ -23,6 +23,13 @@ type ReviewPayload = {
   };
 };
 
+const reviewDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
 export default async function ReviewPage({
   params,
 }: {
@@ -63,9 +70,18 @@ export default async function ReviewPage({
             {review.reviewer_name}, you have been invited to provide one traceable response
             without joining the workspace.
           </p>
-          <div className="public-confidence-card">
-            <strong>{review.snapshot_json.assessment?.confidence_index ?? "—"}</strong>
+          <div
+            aria-label={`Outcome confidence ${
+              review.snapshot_json.assessment?.confidence_index ?? "not available"
+            } out of 100`}
+            className="public-confidence-card"
+          >
+            <span className="public-confidence-score">
+              <strong>{review.snapshot_json.assessment?.confidence_index ?? "—"}</strong>
+              <small>/100</small>
+            </span>
             <span>
+              <small>Outcome confidence</small>
               <b>{review.snapshot_json.assessment?.confidence_band ?? "Current read"}</b>
               <small>Retained snapshot at the time this review was requested</small>
             </span>
@@ -86,7 +102,7 @@ export default async function ReviewPage({
             </article>
           )}
           <small className="public-expiry">
-            Secure link expires {new Date(review.expires_at).toLocaleDateString()}.
+            Secure link expires {reviewDateFormatter.format(new Date(review.expires_at))}.
           </small>
         </section>
         <aside className="public-review-response">

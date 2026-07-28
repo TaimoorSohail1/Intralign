@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { PlanComparisonModal } from "@/components/workspace/plan-comparison-modal";
 import type { WorkspaceSummary } from "@/lib/server/oslo-api";
 
 const workspaceDateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -45,6 +46,7 @@ export function WorkspaceHome({
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [capacityMessage, setCapacityMessage] = useState<string | null>(null);
+  const [plansOpen, setPlansOpen] = useState(false);
   const [projectQuery, setProjectQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(12);
   const newProjectHandled = useRef(false);
@@ -212,15 +214,19 @@ export function WorkspaceHome({
           <div className="workspace-plan-summary">
             <Sparkle size={18} />
             <div>
-              <strong>Free plan</strong>
+              <strong>{workspace.plan_label} plan</strong>
               <span>
                 {isLegacyOverLimit
-                  ? `${workspace.active_project_limit} active project included · ${active.length} existing projects retained`
-                  : `${workspace.active_project_limit} active project included`}
+                  ? `${workspace.active_project_limit} active ${
+                      workspace.active_project_limit === 1 ? "project" : "projects"
+                    } included · ${active.length} existing projects retained`
+                  : `${workspace.active_project_limit} active ${workspace.active_project_limit === 1 ? "project" : "projects"} included`}
               </span>
             </div>
           </div>
-          <Link href="/settings#subscription">Manage plan <ArrowRight size={14} /></Link>
+          <button onClick={() => setPlansOpen(true)} type="button">
+            Compare plans <ArrowRight size={14} />
+          </button>
         </section>
 
         <aside className="workspace-score-note">
@@ -261,14 +267,16 @@ export function WorkspaceHome({
                 <span className={`workspace-state workspace-state-${project.analysis_status}`}>
                   {project.analysis_status.replace("_", " ")}
                 </span>
-                <button
-                  aria-label={`Archive ${project.name}`}
-                  disabled={pendingId === project.id}
-                  onClick={() => setArchived(project.id, true)}
-                  type="button"
-                >
-                  <Archive size={16} />
-                </button>
+                {workspace.role === "owner" ? (
+                  <button
+                    aria-label={`Archive ${project.name}`}
+                    disabled={pendingId === project.id}
+                    onClick={() => setArchived(project.id, true)}
+                    type="button"
+                  >
+                    <Archive size={16} />
+                  </button>
+                ) : null}
               </div>
               <div className="workspace-project-identity">
                 <span>{activeVisible.length === 1 ? "Your project" : "Project"}</span>
@@ -335,13 +343,15 @@ export function WorkspaceHome({
               {archived.length ? archived.map((project) => (
                 <article key={project.id}>
                   <div><strong>{project.name}</strong><span>Read-only · retained safely</span></div>
-                  <button
-                    disabled={pendingId === project.id || active.length >= workspace.active_project_limit}
-                    onClick={() => setArchived(project.id, false)}
-                    type="button"
-                  >
-                    <ArrowCounterClockwise size={15} /> Restore
-                  </button>
+                  {workspace.role === "owner" ? (
+                    <button
+                      disabled={pendingId === project.id || active.length >= workspace.active_project_limit}
+                      onClick={() => setArchived(project.id, false)}
+                      type="button"
+                    >
+                      <ArrowCounterClockwise size={15} /> Restore
+                    </button>
+                  ) : null}
                 </article>
               )) : <p>No archived projects.</p>}
             </div>
@@ -366,6 +376,13 @@ export function WorkspaceHome({
           {!workspace.notifications.length ? <p>No analysis activity yet.</p> : null}
         </section>
       </section>
+
+      <PlanComparisonModal
+        onClose={() => setPlansOpen(false)}
+        onWorkspaceChange={setWorkspace}
+        open={plansOpen}
+        workspace={workspace}
+      />
 
       {limitOpen ? (
         <div className="workspace-modal-backdrop" role="presentation">
@@ -406,7 +423,15 @@ export function WorkspaceHome({
                   <Sparkle size={20} />
                   <span><strong>Keep every project active</strong><small>Explore a plan with additional active-project capacity.</small></span>
                 </div>
-                <Link href="/settings#subscription">Explore upgrade <ArrowRight size={14} /></Link>
+                <button
+                  onClick={() => {
+                    setLimitOpen(false);
+                    setPlansOpen(true);
+                  }}
+                  type="button"
+                >
+                  Explore upgrade <ArrowRight size={14} />
+                </button>
               </section>
             </div>
             {active.length > limitCandidates.length ? (

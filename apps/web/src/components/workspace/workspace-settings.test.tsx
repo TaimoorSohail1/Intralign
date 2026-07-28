@@ -8,11 +8,31 @@ const initial = {
   analysis_notifications: true,
   failure_notifications: true,
   stale_notifications: true,
+  display_name: "Taimoor",
+  role_title: "",
+  workspace_name: "OSLO Alpha",
+  actor_role: "owner" as const,
+  mentions_notifications: true,
+  reply_notifications: true,
+  shared_notifications: true,
 };
 
 describe("WorkspaceSettings", () => {
   beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((_url: string, init?: RequestInit) =>
+        Promise.resolve(
+          new Response(
+            typeof init?.body === "string" ? init.body : JSON.stringify(initial),
+            {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            },
+          ),
+        ),
+      ),
+    );
     vi.stubGlobal(
       "matchMedia",
       vi.fn().mockReturnValue({
@@ -55,6 +75,10 @@ describe("WorkspaceSettings", () => {
       );
     });
     expect(document.documentElement.dataset.theme).toBe("light");
+    expect(screen.getByRole("button", { name: "Light" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     expect(screen.getByText("Saved")).toBeInTheDocument();
   });
 
@@ -70,7 +94,14 @@ describe("WorkspaceSettings", () => {
     const mentions = screen.getByRole("switch", { name: "Mentions" });
     expect(mentions).toHaveAttribute("aria-checked", "true");
     fireEvent.click(mentions);
-    expect(localStorage.getItem("oslo-collaboration-notifications")).toContain('"Mentions":false');
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/workspace/preferences",
+        expect.objectContaining({
+          body: expect.stringContaining('"mentions_notifications":false'),
+        }),
+      );
+    });
     fireEvent.click(screen.getByRole("switch", { name: /Analysis complete/ }));
 
     await waitFor(() => {
@@ -102,5 +133,30 @@ describe("WorkspaceSettings", () => {
 
     expect(screen.getByRole("heading", { name: "Notifications" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Profile" })).not.toBeInTheDocument();
+  });
+
+  it("persists profile fields and renders the backend membership role", async () => {
+    render(
+      <WorkspaceSettings
+        displayName="Taimoor"
+        initial={{ ...initial, actor_role: "collaborator" }}
+        workspaceName="OSLO Alpha"
+      />,
+    );
+
+    const roleTitle = screen.getByRole("textbox", { name: "Role or title optional" });
+    fireEvent.change(roleTitle, { target: { value: "Programme lead" } });
+    fireEvent.blur(roleTitle);
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/workspace/preferences",
+        expect.objectContaining({
+          body: expect.stringContaining('"role_title":"Programme lead"'),
+        }),
+      );
+    });
+    expect(screen.getByText("Collaborator")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Manage invitations" })).not.toBeInTheDocument();
   });
 });

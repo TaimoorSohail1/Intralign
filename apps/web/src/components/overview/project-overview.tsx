@@ -6,8 +6,8 @@ import {
   CaretRight,
   ChatTeardropDots,
   ClockCounterClockwise,
+  Diamond,
   FileText,
-  FolderOpen,
   Gear,
   House,
   Info,
@@ -22,15 +22,19 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { OverviewSnapshot, ProjectHistory } from "@/lib/server/oslo-api";
 import { ArtifactWorkspace } from "@/components/artifacts/artifact-workspace";
 import { HistoryWorkspace } from "@/components/history/history-workspace";
+import { InferenceMap } from "@/components/inference/inference-map";
+import { ReportWorkspace } from "@/components/reports/report-workspace";
 import { ProjectWorkspaceControls } from "@/components/workspace/project-workspace-controls";
+import { buildProjectProvenance } from "@/lib/project-provenance";
 
 const dimensions = ["clarity", "alignment", "feasibility"] as const;
+const confidenceBands = ["Very Low", "Low", "Moderate", "High", "Very High"] as const;
 const artifactOrder = [
   "intent",
   "context",
@@ -87,7 +91,14 @@ const dimensionDescriptions = {
 
 type Issue = OverviewSnapshot["assessment"]["issues"][number];
 type ArtifactView = (typeof artifactOrder)[number];
-type ProjectView = "overview" | "attention" | "issues" | "history" | ArtifactView;
+type ProjectView =
+  | "overview"
+  | "attention"
+  | "inference"
+  | "issues"
+  | "history"
+  | "reports"
+  | ArtifactView;
 
 function isArtifactView(value: ProjectView): value is ArtifactView {
   return artifactOrder.includes(value as ArtifactView);
@@ -195,9 +206,25 @@ export function ProjectOverview({
   const clarificationIssue = openIssues.find((issue) => Boolean(issue.clarification));
   const criticalCount = openIssues.filter((issue) => issue.severity === "Critical").length;
   const clarificationCount = openIssues.filter((issue) => Boolean(issue.clarification)).length;
-  const totalConfirmationCount =
-    clarificationCount + snapshot.assessment.confirmed_dependency_count;
   const limitingDimension = snapshot.assessment.limiting_dimension;
+  const provenance = useMemo(() => buildProjectProvenance(snapshot), [snapshot]);
+  const confidenceBandIndex = Math.max(
+    0,
+    confidenceBands.indexOf(
+      snapshot.assessment.confidence_band as (typeof confidenceBands)[number],
+    ),
+  );
+  const groundingQualifier =
+    provenance.totalClaims === 0
+      ? "forming"
+      : provenance.groundedClaims / provenance.totalClaims >= 0.75
+        ? "well grounded"
+        : provenance.groundedClaims / provenance.totalClaims >= 0.5
+          ? "largely grounded"
+          : provenance.groundedClaims / provenance.totalClaims >= 0.25
+            ? "partly grounded"
+            : "thinly grounded";
+  const hasFirstValue = snapshot.artifacts.length > 0;
   const overviewScrollKey = `oslo:overview-scroll:${snapshot.project_id}`;
 
   useEffect(() => {
@@ -601,10 +628,18 @@ export function ProjectOverview({
         <div className="project-context">
           <strong>Project understanding</strong>
           <span aria-hidden="true">›</span>
-          <em>{initialView === "attention" ? "Attention map" : artifactLabel(initialView)}</em>
+          <em>
+            {initialView === "attention"
+              ? "Attention map"
+              : initialView === "inference"
+                ? "Inference map"
+              : initialView === "reports"
+                ? "Reports"
+                : artifactLabel(initialView)}
+          </em>
         </div>
         <button
-          aria-label={`Confidence ${snapshot.assessment.confidence_index}, ${snapshot.assessment.confidence_band}, ${snapshot.assessment.reliability} reliability`}
+          aria-label={`Outcome Confidence ${snapshot.assessment.confidence_band}, ${groundingQualifier}`}
           aria-expanded={confidenceBreakdownOpen}
           className="project-header-confidence"
           onClick={() => {
@@ -613,10 +648,10 @@ export function ProjectOverview({
           }}
           type="button"
         >
-          <span>Confidence</span>
-          <strong>{snapshot.assessment.confidence_index}</strong>
-          <span>{snapshot.assessment.confidence_band}</span>
-          <small>{snapshot.assessment.reliability} reliability</small>
+          <span className="project-header-confidence-dot" />
+          <span>Outcome Confidence</span>
+          <strong>{snapshot.assessment.confidence_band}</strong>
+          <small>{groundingQualifier}</small>
         </button>
         <div className="project-actions">
           <button
@@ -686,6 +721,7 @@ export function ProjectOverview({
       {confidenceBreakdownOpen ? (
         <ConfidenceBreakdown
           assessment={snapshot.assessment}
+          groundingQualifier={groundingQualifier}
           onClose={() => setConfidenceBreakdownOpen(false)}
         />
       ) : null}
@@ -694,6 +730,7 @@ export function ProjectOverview({
         <p className="workspace-label">Project</p>
         <nav aria-label="Workspace">
           <Link
+            aria-current={initialView === "overview" ? "page" : undefined}
             className={initialView === "overview" ? "is-current" : ""}
             href={`/projects/${snapshot.project_id}/overview`}
           >
@@ -701,6 +738,7 @@ export function ProjectOverview({
             Overview
           </Link>
           <Link
+            aria-current={initialView === "issues" ? "page" : undefined}
             aria-label={`Issues ${openIssues.length}`}
             className={initialView === "issues" ? "is-current" : ""}
             href={`/projects/${snapshot.project_id}/issues`}
@@ -710,6 +748,7 @@ export function ProjectOverview({
             <span className="nav-count">{openIssues.length}</span>
           </Link>
           <Link
+            aria-current={initialView === "history" ? "page" : undefined}
             className={initialView === "history" ? "is-current" : ""}
             href={`/projects/${snapshot.project_id}/history`}
           >
@@ -717,6 +756,7 @@ export function ProjectOverview({
             History
           </Link>
           <Link
+            aria-current={initialView === "attention" ? "page" : undefined}
             className={initialView === "attention" ? "is-current" : ""}
             href={`/projects/${snapshot.project_id}/attention`}
             onClick={rememberOverviewPosition}
@@ -724,6 +764,22 @@ export function ProjectOverview({
             <MapTrifold aria-hidden="true" size={17} />
             Attention map
             {openIssues.length ? <span className="nav-count">{openIssues.length}</span> : null}
+          </Link>
+          <Link
+            aria-current={initialView === "inference" ? "page" : undefined}
+            className={initialView === "inference" ? "is-current" : ""}
+            href={`/projects/${snapshot.project_id}/inference`}
+          >
+            <Diamond aria-hidden="true" size={17} />
+            Inference map
+          </Link>
+          <Link
+            aria-current={initialView === "reports" ? "page" : undefined}
+            className={initialView === "reports" ? "is-current" : ""}
+            href={`/projects/${snapshot.project_id}/reports`}
+          >
+            <FileText aria-hidden="true" size={17} />
+            Reports
           </Link>
         </nav>
         <p className="workspace-label workspace-artifact-label">Plan artifacts</p>
@@ -763,10 +819,6 @@ export function ProjectOverview({
             );
           })}
         </div>
-        <div className="workspace-future" aria-label="Planned capabilities">
-          <p>Coming in later slices</p>
-          <span><FolderOpen aria-hidden="true" size={15} /> Reports</span>
-        </div>
         <div className="workspace-sidebar-footer">
           <button
             onClick={() => {
@@ -785,22 +837,45 @@ export function ProjectOverview({
       <div className={`project-grid ${panelVisible ? "" : "is-panel-closed"}`}>
         <section className="project-main">
           {initialView === "overview" ? (
-            <>
+            <div className={`overview-stack ${hasFirstValue ? "has-first-value" : ""}`}>
               <section className="confidence-read">
                 <div className="confidence-topline">
-                  <p className="eyebrow">Confidence</p>
+                  <p className="eyebrow">Outcome confidence</p>
                   <span className={`snapshot-badge ${isProvisional ? "" : "is-current"}`}>
                     {snapshot.state.replace("_", "-")}
                   </span>
                 </div>
-                <div className="confidence-summary">
-                  <div className="confidence-number">
-                    <strong>{snapshot.assessment.confidence_index}</strong>
-                    <span>/100</span>
+                <div
+                  aria-label={`Outcome Confidence ${snapshot.assessment.confidence_band}, ${groundingQualifier}`}
+                  className="confidence-ramp"
+                  role="img"
+                >
+                  {confidenceBands.map((band, index) => (
+                    <span
+                      className={index === confidenceBandIndex ? "is-current" : ""}
+                      key={band}
+                    >
+                      <i />
+                      <small>{band}</small>
+                    </span>
+                  ))}
+                </div>
+                <div className="confidence-prototype-hero">
+                  <div>
+                    <strong>{snapshot.assessment.confidence_band}</strong>
+                    <p>
+                      on the read is <b>{groundingQualifier}</b>
+                    </p>
+                  </div>
+                  <div className="confidence-limiter">
+                    <p>
+                      <strong>{artifactLabel(limitingDimension)}</strong> — the lowest.
+                      Confirm it to lift the read.
+                    </p>
                     <button
                       onClick={() => {
                         setAdvisorOpen(true);
-                        void askQuestion("Explain the confidence score");
+                        void askQuestion("Explain the current Outcome Confidence");
                       }}
                       type="button"
                     >
@@ -808,42 +883,12 @@ export function ProjectOverview({
                       Ask OSLO why
                     </button>
                   </div>
-                  <div className="confidence-copy">
-                    <div className="confidence-stage">
-                      <span>Stage</span>
-                      {(["orientation", "expanded", "validated"] as const).map(
-                        (stage, index) => (
-                          <Fragment key={stage}>
-                            <strong
-                              className={
-                                snapshot.assessment.understanding_stage === stage
-                                  ? "is-active"
-                                  : ""
-                              }
-                            >
-                              {artifactLabel(stage)}
-                            </strong>
-                            {index < 2 ? <i>›</i> : null}
-                          </Fragment>
-                        ),
-                      )}
-                    </div>
-                    <h1>Understanding is forming</h1>
-                    <p>
-                      {snapshot.assessment.confidence_band} · qualified by{" "}
-                      <strong>{snapshot.assessment.reliability.toLowerCase()} reliability</strong>
-                    </p>
-                    <div className="confidence-statusline">
-                      <span>{artifactLabel(snapshot.assessment.confidence_direction)}</span>
-                      {!isProvisional ? <span>Current evidence-qualified read</span> : null}
-                    </div>
-                  </div>
                 </div>
                 {snapshot.assessment.false_confidence ? (
                   <div className="false-confidence-warning" role="alert">
                     <Info aria-hidden="true" size={15} />
-                    The score is high, but the supporting evidence is not yet reliable enough
-                    for a confident commitment.
+                    This read sits high on thin evidence. Confirm the supporting
+                    assumptions before relying on it.
                   </div>
                 ) : null}
                 <div className="confidence-divider" />
@@ -882,19 +927,27 @@ export function ProjectOverview({
                   {dimensions.map((name) => {
                     const value = snapshot.assessment[name];
                     const limiting = name === limitingDimension;
+                    const valueIndex = Math.max(
+                      0,
+                      confidenceBands.indexOf(
+                        value as (typeof confidenceBands)[number],
+                      ),
+                    );
                     return (
                       <div className={limiting ? "is-limiting" : ""} key={name}>
                         <span>{artifactLabel(name)}</span>
                         <div
                           aria-label={`${artifactLabel(name)}: ${value}`}
-                          aria-valuemax={100}
-                          aria-valuemin={0}
-                          aria-valuenow={dimensionStrength[value] ?? 50}
-                          className="dimension-track"
-                          role="progressbar"
+                          className="dimension-ramp"
+                          role="img"
                           tabIndex={0}
                         >
-                          <i style={{ width: `${dimensionStrength[value] ?? 50}%` }} />
+                          {confidenceBands.map((band, index) => (
+                            <i
+                              className={index <= valueIndex ? "is-filled" : ""}
+                              key={band}
+                            />
+                          ))}
                           <span className="dimension-tooltip" role="tooltip">
                             <strong>{artifactLabel(name)} · {value}</strong>
                             {dimensionDescriptions[name]}
@@ -906,10 +959,7 @@ export function ProjectOverview({
                   })}
                 </div>
                 <div className="confidence-footer">
-                  <span>
-                    <strong>{openIssues.length}</strong> issues open ·{" "}
-                    <strong>{snapshot.assessment.resolved_issue_count}</strong> resolved
-                  </span>
+                  <span>{artifactLabel(snapshot.assessment.confidence_direction)}</span>
                   <div>
                     <button
                       aria-expanded={confidenceDetailsOpen}
@@ -921,10 +971,13 @@ export function ProjectOverview({
                     </button>
                     <Link
                       aria-label="Timeline"
-                      href={`/projects/${snapshot.project_id}/attention`}
+                      href={`/projects/${snapshot.project_id}/history`}
                       onClick={rememberOverviewPosition}
                     >
                       Timeline <ArrowRight aria-hidden="true" size={12} />
+                    </Link>
+                    <Link href={`/projects/${snapshot.project_id}/attention`}>
+                      Attention map <ArrowRight aria-hidden="true" size={12} />
                     </Link>
                   </div>
                 </div>
@@ -991,51 +1044,92 @@ export function ProjectOverview({
               <section className="progress-read">
                 <div className="overview-label">
                   <p>Progress</p>
-                  <Info aria-hidden="true" size={14} />
+                  <Info
+                    aria-label="Progress in grounding the current read, not project completion."
+                    size={14}
+                  />
                 </div>
-                <div className="progress-layout">
-                  <div className="progress-numbers">
+                <div className="progress-foundation">
+                  <div className="progress-foundation-hero">
+                    <p>
+                      <strong>{provenance.groundedClaims}</strong>
+                      <span>of {provenance.totalClaims}</span>
+                    </p>
                     <div>
-                      <strong>{snapshot.assessment.resolved_issue_count}</strong>
-                      <span>issues resolved · {openIssues.length} open</span>
-                    </div>
-                    <div>
-                      <strong className="critical-number">{criticalCount}</strong>
-                      <span>critical issues open</span>
+                      <b>grounded in your evidence</b>
+                      <span>the rest of your read is OSLO&apos;s inference</span>
                     </div>
                   </div>
-                  <div className="progress-bars">
-                    <div>
-                      <span>Dependencies confirmed</span>
-                      <strong>
-                        {snapshot.assessment.confirmed_dependency_count} / {totalConfirmationCount}
-                      </strong>
-                      <i>
-                        <b
-                          style={{
-                            width: totalConfirmationCount
-                              ? `${Math.min(
-                                  100,
-                                  (snapshot.assessment.confirmed_dependency_count /
-                                    totalConfirmationCount) *
-                                    100,
-                                )}%`
-                              : "100%",
-                          }}
-                        />
-                      </i>
-                    </div>
-                    <div>
-                      <span>Plan artifacts read</span>
-                      <strong>{snapshot.artifacts.length} / 7</strong>
-                      <i>
-                        <b
-                          style={{
-                            width: `${Math.min(100, (snapshot.artifacts.length / 7) * 100)}%`,
-                          }}
-                        />
-                      </i>
-                    </div>
+                  <div
+                    aria-label={`${provenance.groundedClaims} grounded and ${provenance.inferredClaims} inferred claims`}
+                    className="progress-foundation-bar"
+                    role="img"
+                  >
+                    {provenance.groundedClaims ? (
+                      <span
+                        className="is-grounded"
+                        style={{ flex: provenance.groundedClaims }}
+                      >
+                        <strong>{provenance.groundedClaims}</strong>
+                        Confirmed by evidence
+                      </span>
+                    ) : null}
+                    {provenance.inferredClaims ? (
+                      <span
+                        className="is-inferred"
+                        style={{ flex: provenance.inferredClaims }}
+                      >
+                        <strong>{provenance.inferredClaims}</strong>
+                        From OSLO
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="progress-foundation-legend">
+                    <span><i className="is-grounded" /> Grounded — your evidence</span>
+                    <span><i className="is-inferred" /> Inferred — OSLO&apos;s read</span>
+                  </div>
+                  {provenance.loadBearingInferences ? (
+                    <p className="progress-load-bearing">
+                      Your read leans on{" "}
+                      <strong>{provenance.loadBearingInferences}</strong>{" "}
+                      load-bearing inference
+                      {provenance.loadBearingInferences === 1 ? "" : "s"}{" "}
+                      <Link href={`/projects/${snapshot.project_id}/inference`}>
+                        See them <ArrowRight aria-hidden="true" size={11} />
+                      </Link>
+                    </p>
+                  ) : null}
+                  <div className="progress-work">
+                    <section>
+                      <p>Open</p>
+                      <div>
+                        <article>
+                          <strong>{openIssues.length}</strong>
+                          <span>Issues</span>
+                        </article>
+                        <article className="is-critical">
+                          <strong>{criticalCount}</strong>
+                          <span>Critical</span>
+                        </article>
+                        <article>
+                          <strong>{clarificationCount}</strong>
+                          <span>Open questions</span>
+                        </article>
+                      </div>
+                    </section>
+                    <section>
+                      <p>Closed</p>
+                      <div>
+                        <article>
+                          <strong>{snapshot.assessment.resolved_issue_count}</strong>
+                          <span>Issues resolved</span>
+                        </article>
+                        <article>
+                          <strong>{snapshot.assessment.confirmed_dependency_count}</strong>
+                          <span>Questions answered</span>
+                        </article>
+                      </div>
+                    </section>
                   </div>
                 </div>
               </section>
@@ -1061,7 +1155,7 @@ export function ProjectOverview({
                 </button>
                 {summaryOpen ? <p>{snapshot.summary}</p> : null}
               </section>
-            </>
+            </div>
           ) : initialView === "attention" ? (
             <AttentionView
               onAskOslo={(scope) => {
@@ -1081,6 +1175,8 @@ export function ProjectOverview({
               onOpenScope={openAttentionScope}
               issues={openIssues}
             />
+          ) : initialView === "inference" ? (
+            <InferenceMap onOpenIssue={openIssue} snapshot={snapshot} />
           ) : isArtifactView(initialView) ? (
             <ArtifactWorkspace
               analysisRunning={Boolean(analysisUpdateRunId)}
@@ -1107,6 +1203,8 @@ export function ProjectOverview({
               }}
               projectId={snapshot.project_id}
             />
+          ) : initialView === "reports" ? (
+            <ReportWorkspace history={initialHistory} snapshot={snapshot} />
           ) : (
             <DeferredWorkspace />
           )}
@@ -1302,9 +1400,11 @@ export function ProjectOverview({
 
 function ConfidenceBreakdown({
   assessment,
+  groundingQualifier,
   onClose,
 }: {
   assessment: OverviewSnapshot["assessment"];
+  groundingQualifier: string;
   onClose: () => void;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -1321,9 +1421,9 @@ function ConfidenceBreakdown({
     >
       <div className="confidence-breakdown-heading">
         <div>
-          <span>Confidence</span>
-          <strong>{assessment.confidence_index}</strong>
-          <em>{assessment.confidence_band}</em>
+          <span>Outcome Confidence</span>
+          <strong>{assessment.confidence_band}</strong>
+          <em>{groundingQualifier}</em>
         </div>
         <button aria-label="Close confidence breakdown" onClick={onClose} ref={closeButton} type="button">
           <X aria-hidden="true" size={16} />
@@ -1331,7 +1431,7 @@ function ConfidenceBreakdown({
       </div>
       <p>
         Understanding maturity — not project health, readiness, or probability.
-        Qualified by <strong>{assessment.reliability.toLowerCase()} reliability</strong>.
+        The grounding qualifier shows how much of the read rests directly on evidence.
       </p>
       <dl className="confidence-breakdown-dimensions">
         {dimensions.map((name) => (
