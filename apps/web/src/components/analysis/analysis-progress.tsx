@@ -3,14 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { analysisFailureCopy } from "@/lib/analysis-errors";
+
 const workflow = [
   ["submit_intake", "Building your understanding…", "Securing your project request…"],
   ["validate_scope", "Building your understanding…", "Checking the project boundary…"],
   ["ingest_parse", "Reading your evidence…", "Turning documents into stable evidence fragments…"],
   ["perceive", "Reading your evidence…", "Extracting facts, claims and gaps…"],
   ["retrieve_evidence", "Grounding the project read…", "Linking every conclusion to supporting evidence…"],
-  ["construct_artifacts", "Constructing your seven plan artifacts…", "Organising the plan into a complete project model…"],
-  ["checkpoint", "Constructing your seven plan artifacts…", "Saving a safe, restartable checkpoint…"],
+  ["construct_artifacts", "Constructing your seven documents…", "Flagging thin evidence as clarifications, not certainty…"],
+  ["checkpoint", "Constructing your seven documents…", "Saving a safe, restartable checkpoint…"],
   ["evaluate_advise", "Evaluating the plan…", "Assessing clarity, alignment and feasibility…"],
   ["validate_result", "Preparing your Overview…", "Validating the evidence and scoring contract…"],
   ["publish", "Preparing your Overview…", "Publishing your provisional first read…"],
@@ -19,7 +21,7 @@ const workflow = [
 const visibleStages = [
   "Read inputs",
   "Grounded evidence",
-  "Constructed plan artifacts",
+  "Constructed documents",
   "Evaluated the plan",
 ] as const;
 
@@ -33,7 +35,10 @@ export function AnalysisProgress({
   const router = useRouter();
   const [phase, setPhase] = useState<string>("submit_intake");
   const [completed, setCompleted] = useState<string[]>([]);
+  const [completedArtifacts, setCompletedArtifacts] = useState<string[]>([]);
   const [failed, setFailed] = useState<string | null>(null);
+  const [syncVersion, setSyncVersion] = useState(0);
+  const failureCopy = failed ? analysisFailureCopy(failed) : null;
   const activeIndex = Math.max(0, workflow.findIndex(([id]) => id === phase));
 
   useEffect(() => {
@@ -56,8 +61,16 @@ export function AnalysisProgress({
         setCompleted((current) => [...new Set([...current, payload.phase])]);
       }
     };
+    const onArtifactCompleted = (event: MessageEvent) => {
+      const payload = JSON.parse(event.data);
+      if (!payload.artifact_type) return;
+      setCompletedArtifacts((current) => [
+        ...new Set([...current, payload.artifact_type]),
+      ]);
+    };
     stream.addEventListener("analysis.phase_started", onProgress);
     stream.addEventListener("analysis.phase_completed", onProgress);
+    stream.addEventListener("analysis.artifact_completed", onArtifactCompleted);
     stream.addEventListener("assessment.published", () => {
       router.replace(`/projects/${projectId}/overview`);
     });
@@ -73,12 +86,13 @@ export function AnalysisProgress({
       closed = true;
       stream.close();
     };
-  }, [projectId, router, runId]);
+  }, [projectId, router, runId, syncVersion]);
 
   const visibleStage = useMemo(() => {
     if (activeIndex <= 2) return 0;
     if (activeIndex <= 4) return 1;
-    if (activeIndex <= 6) return 2;
+    if (activeIndex <= 6) return 1;
+    if (activeIndex === 7) return 2;
     return 3;
   }, [activeIndex]);
 
@@ -89,8 +103,14 @@ export function AnalysisProgress({
 
   const retry = async () => {
     setFailed(null);
-    await fetch(`/api/analysis-runs/${runId}/retry`, { method: "POST" });
-    window.location.reload();
+    const response = await fetch(`/api/analysis-runs/${runId}/retry`, {
+      method: "POST",
+    });
+    if (!response.ok) {
+      setFailed("ANALYSIS_RETRY_FAILED");
+      return;
+    }
+    setSyncVersion((current) => current + 1);
   };
 
   return (
@@ -99,13 +119,11 @@ export function AnalysisProgress({
         <div className="analysis-scanner" aria-hidden="true"><i /></div>
         {failed ? (
           <>
-            <p className="analysis-pill">Analysis paused</p>
-            <h1>Your progress is safe.</h1>
-            <p className="analysis-lede">
-              Completed work is checkpointed. Retry continues from the last safe step.
-            </p>
+            <p className="analysis-pill">Read paused</p>
+            <h1>{failureCopy?.title}</h1>
+            <p className="analysis-lede">{failureCopy?.detail}</p>
             <div className="failure-card" role="alert">
-              <strong>{failed.replaceAll("_", " ")}</strong>
+              <strong>{failureCopy?.title}</strong>
               <span>No incomplete result was published.</span>
             </div>
             <button className="button button-primary" onClick={retry} type="button">
@@ -129,7 +147,15 @@ export function AnalysisProgress({
               ))}
             </div>
             <div className="analysis-trace" aria-label="Completed analysis steps">
-              {completedTrace.length ? (
+              {phase === "construct_artifacts" ? (
+                <>
+                  <p>read inputs <span>· ok</span></p>
+                  <p>
+                    constructed documents
+                    <span> · {completedArtifacts.length} {completedArtifacts.length === 1 ? "document" : "documents"}</span>
+                  </p>
+                </>
+              ) : completedTrace.length ? (
                 completedTrace.map((stage) => (
                   <p key={stage}>
                     {stage.toLowerCase()} <span>· ok</span>

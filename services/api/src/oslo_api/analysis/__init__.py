@@ -1,7 +1,6 @@
 from oslo_api.analysis.harness import (
     AgentHarness,
     DeterministicAgentHarness,
-    FallbackAgentHarness,
 )
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
@@ -43,7 +42,6 @@ __all__ = [
     "AssessmentSnapshot",
     "DeterministicAgentHarness",
     "EvidenceFragment",
-    "FallbackAgentHarness",
     "HarnessCallMetadata",
     "HarnessInvocation",
     "InMemoryAnalysisStore",

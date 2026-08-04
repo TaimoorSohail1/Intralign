@@ -131,12 +131,12 @@ describe("startProjectAnalysis", () => {
     expect(fetcher).toHaveBeenCalledTimes(4);
   });
 
-  it("explains when recovery is blocked by the active-project limit", async () => {
+  it("surfaces a friendly replacement-project creation failure", async () => {
     const fetcher = vi.fn(async (input: RequestInfo | URL) => {
       if (String(input) === "/api/projects/new") {
         return new Response(
-          JSON.stringify({ code: "PROJECT_LIMIT_REACHED" }),
-          { status: 409 },
+          JSON.stringify({ message: "A replacement project could not be created." }),
+          { status: 503 },
         );
       }
       return new Response(JSON.stringify({ code: "PROJECT_NOT_FOUND" }), {
@@ -151,6 +151,6 @@ describe("startProjectAnalysis", () => {
         files: [new File(["pdf"], "plan.pdf")],
         fetcher,
       }),
-    ).rejects.toThrow(/active-project limit has been reached/i);
+    ).rejects.toThrow(/replacement project could not be created/i);
   });
 });

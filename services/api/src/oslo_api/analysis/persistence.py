@@ -23,8 +23,13 @@ from oslo_api.analysis.models import (
     ArtifactType,
     Assessment,
     AssessmentSnapshot,
+    ClaimKind,
+    ClaimProvenance,
+    ClaimRelation,
     EvidenceCitation,
+    EvidenceClaim,
     EvidenceFragment,
+    HarnessCallMetadata,
     Issue,
     Perception,
     ReliabilityBasis,
@@ -120,6 +125,34 @@ def _restore_state(payload: dict[str, object]) -> dict[str, object]:
                     location=item.get("location"),
                 )
                 for item in perception_data.get("evidence", [])
+            ),
+            structured_claims=tuple(
+                EvidenceClaim(
+                    id=item["id"],
+                    kind=ClaimKind(item["kind"]),
+                    subject=item["subject"],
+                    predicate=item["predicate"],
+                    value=item["value"],
+                    raw_text=item["raw_text"],
+                    evidence_ref=item["evidence_ref"],
+                    source_name=item.get("source_name"),
+                    location=item.get("location"),
+                    unit=item.get("unit"),
+                    numeric_value=item.get("numeric_value"),
+                    provenance=ClaimProvenance(
+                        item.get("provenance", "source_grounded")
+                    ),
+                )
+                for item in perception_data.get("structured_claims", [])
+            ),
+            claim_relations=tuple(
+                ClaimRelation(
+                    source_claim_id=item["source_claim_id"],
+                    target_claim_id=item["target_claim_id"],
+                    relation_type=item["relation_type"],
+                    evidence_refs=tuple(item.get("evidence_refs", [])),
+                )
+                for item in perception_data.get("claim_relations", [])
             ),
         )
     artifact_data = payload.get("artifacts")
@@ -489,6 +522,190 @@ class DatabaseAnalysisStore:
             )
             for row in rows
         )
+
+    def completed_artifacts(self, run_id: UUID) -> dict[ArtifactType, Artifact]:
+        with self._engine.connect() as connection:
+            rows = (
+                connection.execute(
+                    text(
+                        """
+                        select artifact_type, output_json
+                        from public.analysis_artifact_jobs
+                        where analysis_run_id = :run_id
+                          and status = 'completed'
+                          and output_json is not null
+                        """
+                    ),
+                    {"run_id": run_id},
+                )
+                .mappings()
+                .all()
+            )
+        return {
+            ArtifactType(row["artifact_type"]): _artifact_from_dict(row["output_json"])
+            for row in rows
+        }
+
+    def start_artifact_job(self, run_id: UUID, artifact_type: ArtifactType) -> None:
+        with self._engine.begin() as connection:
+            context = (
+                connection.execute(
+                    text(
+                        """
+                        select workspace_id, project_id
+                        from public.analysis_runs
+                        where id = :run_id
+                        """
+                    ),
+                    {"run_id": run_id},
+                )
+                .mappings()
+                .one()
+            )
+            connection.execute(
+                text(
+                    """
+                    insert into public.analysis_artifact_jobs (
+                      workspace_id, project_id, analysis_run_id, artifact_type,
+                      status, attempt_count, lease_owner, lease_expires_at,
+                      heartbeat_at, started_at
+                    ) values (
+                      :workspace_id, :project_id, :run_id, :artifact_type,
+                      'running', 1, cast(:run_id as text), now() + interval '2 minutes',
+                      now(), now()
+                    )
+                    on conflict (analysis_run_id, artifact_type) do update
+                    set status = 'running',
+                        attempt_count = public.analysis_artifact_jobs.attempt_count + 1,
+                        safe_error_code = null,
+                        retryable = null,
+                        lease_owner = cast(:run_id as text),
+                        lease_expires_at = now() + interval '2 minutes',
+                        heartbeat_at = now(),
+                        started_at = now(),
+                        completed_at = null,
+                        updated_at = now()
+                    """
+                ),
+                {
+                    "workspace_id": context["workspace_id"],
+                    "project_id": context["project_id"],
+                    "run_id": run_id,
+                    "artifact_type": artifact_type.value,
+                },
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "analysis.artifact_started",
+                self._run_status(connection, run_id),
+                AnalysisPhase.CONSTRUCT_ARTIFACTS,
+                {"artifact_type": artifact_type.value},
+            )
+
+    def complete_artifact_job(
+        self,
+        run_id: UUID,
+        artifact: Artifact,
+        metadata: HarnessCallMetadata | None = None,
+    ) -> None:
+        values = asdict(metadata) if metadata is not None else {}
+        with self._engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    update public.analysis_artifact_jobs
+                    set status = 'completed',
+                        output_json = cast(:output_json as jsonb),
+                        safe_error_code = null,
+                        retryable = null,
+                        lease_owner = null,
+                        lease_expires_at = null,
+                        heartbeat_at = now(),
+                        provider = :provider,
+                        model_id = :model_id,
+                        prompt_version = :prompt_version,
+                        provider_response_id = :provider_response_id,
+                        input_tokens = :input_tokens,
+                        output_tokens = :output_tokens,
+                        duration_ms = :duration_ms,
+                        execution_mode = :execution_mode,
+                        fallback_reason = :fallback_reason,
+                        completed_at = now(),
+                        updated_at = now()
+                    where analysis_run_id = :run_id
+                      and artifact_type = :artifact_type
+                    """
+                ),
+                {
+                    "run_id": run_id,
+                    "artifact_type": artifact.artifact_type.value,
+                    "output_json": json.dumps(asdict(artifact), default=_json_default),
+                    "provider": values.get("provider"),
+                    "model_id": values.get("model"),
+                    "prompt_version": values.get("prompt_version"),
+                    "provider_response_id": values.get("response_id"),
+                    "input_tokens": values.get("input_tokens"),
+                    "output_tokens": values.get("output_tokens"),
+                    "duration_ms": values.get("duration_ms"),
+                    "execution_mode": values.get("mode"),
+                    "fallback_reason": values.get("fallback_reason"),
+                },
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "analysis.artifact_completed",
+                self._run_status(connection, run_id),
+                AnalysisPhase.CONSTRUCT_ARTIFACTS,
+                {"artifact_type": artifact.artifact_type.value},
+            )
+
+    def fail_artifact_job(
+        self,
+        run_id: UUID,
+        artifact_type: ArtifactType,
+        *,
+        error_code: str,
+        retryable: bool,
+    ) -> None:
+        safe_code = error_code[:120]
+        with self._engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    update public.analysis_artifact_jobs
+                    set status = 'failed',
+                        safe_error_code = :error_code,
+                        retryable = :retryable,
+                        lease_owner = null,
+                        lease_expires_at = null,
+                        heartbeat_at = now(),
+                        completed_at = now(),
+                        updated_at = now()
+                    where analysis_run_id = :run_id
+                      and artifact_type = :artifact_type
+                    """
+                ),
+                {
+                    "run_id": run_id,
+                    "artifact_type": artifact_type.value,
+                    "error_code": safe_code,
+                    "retryable": retryable,
+                },
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "analysis.artifact_failed",
+                self._run_status(connection, run_id),
+                AnalysisPhase.CONSTRUCT_ARTIFACTS,
+                {
+                    "artifact_type": artifact_type.value,
+                    "code": safe_code,
+                    "retryable": retryable,
+                },
+            )
 
     def start_run(self, run_id: UUID) -> None:
         with self._engine.begin() as connection:
@@ -1287,6 +1504,11 @@ class DatabaseAnalysisStore:
                 occurred_at=row["occurred_at"],
                 error_code=row["payload"].get("code"),
                 retryable=row["payload"].get("retryable"),
+                artifact_type=(
+                    ArtifactType(row["payload"]["artifact_type"])
+                    if row["payload"].get("artifact_type")
+                    else None
+                ),
             )
             for row in rows
         )

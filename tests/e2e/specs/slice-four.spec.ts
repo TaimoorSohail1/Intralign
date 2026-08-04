@@ -19,7 +19,7 @@ async function createAnalyzedProject(page: import("@playwright/test").Page) {
     await existingProject.click();
     await expect(page).toHaveURL(/\/projects\/.+\/overview/);
     await expect(
-      page.getByText("Current evidence-qualified read", { exact: true }),
+      page.getByText("Project summary", { exact: true }),
     ).toBeVisible({ timeout: 120_000 });
     return;
   }
@@ -28,7 +28,7 @@ async function createAnalyzedProject(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: /Start your first project/ }).click();
   await page.getByRole("button", { name: /sample project/i }).click();
   await page.getByRole("button", { name: /See where I stand/ }).click();
-  await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 90_000 });
+  await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
 
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
   if (await orientation.isVisible()) {
@@ -39,7 +39,7 @@ async function createAnalyzedProject(page: import("@playwright/test").Page) {
     await page.getByRole("button", { name: "Finish tour" }).click();
   }
   await expect(
-    page.getByText("Current evidence-qualified read", { exact: true }),
+    page.getByText("Project summary", { exact: true }),
   ).toBeVisible({ timeout: 120_000 });
 }
 
@@ -48,7 +48,10 @@ test("Slice 4 renders the current-snapshot Attention Map and drills into finding
 }) => {
   await createAnalyzedProject(page);
 
-  await page.getByRole("link", { name: /^Attention map/ }).click();
+  await page
+    .getByRole("navigation", { name: "Workspace" })
+    .getByRole("link", { name: /^Attention map/ })
+    .click();
   await expect(page).toHaveURL(/\/attention/);
   await expect(page.getByRole("heading", { name: "Attention map" })).toBeVisible();
   await expect(
@@ -62,19 +65,13 @@ test("Slice 4 renders the current-snapshot Attention Map and drills into finding
   await page.keyboard.press("Enter");
 
   const issueDialog = page.getByRole("dialog", { name: "Issue details" });
-  const scopeDialog = page.getByRole("dialog", { name: "Scoped attention findings" });
-  await expect(issueDialog.or(scopeDialog)).toBeVisible();
-
-  if (await scopeDialog.isVisible()) {
-    await scopeDialog.locator(".attention-scope-item").first().click();
-    await expect(issueDialog).toBeVisible();
-    await expect(issueDialog.getByText("Open", { exact: true })).toBeVisible();
-    await expect(issueDialog.getByText("Addressed", { exact: true })).toBeVisible();
-    await expect(issueDialog.getByText("Resolved", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Close issue" }).click();
-    await expect(scopeDialog).toBeVisible();
-    await page.getByRole("button", { name: "Close scoped findings" }).click();
+  await page.waitForTimeout(100);
+  if (page.url().includes("/issues")) {
+    await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
+    await page.goBack();
+    await expect(page.getByRole("heading", { name: "Attention map" })).toBeVisible();
   } else {
+    await expect(issueDialog).toBeVisible();
     await expect(issueDialog.getByText("Open", { exact: true })).toBeVisible();
     await expect(issueDialog.getByText("Addressed", { exact: true })).toBeVisible();
     await expect(issueDialog.getByText("Resolved", { exact: true })).toBeVisible();
@@ -82,9 +79,11 @@ test("Slice 4 renders the current-snapshot Attention Map and drills into finding
   }
 
   await page.getByRole("button", { name: /Open Resources findings/ }).click();
-  await expect(scopeDialog).toBeVisible();
-  await expect(scopeDialog.getByText("Resources", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Close scoped findings" }).click();
+  await expect(page).toHaveURL(/\/issues\?artifact=resources/);
+  await expect(
+    page.getByRole("button", { name: /Resources \d+/ }),
+  ).toHaveAttribute("aria-pressed", "true");
 
+  await page.goBack();
   await expect(page.getByRole("button", { name: /Ask OSLO about this map/ })).toBeVisible();
 });

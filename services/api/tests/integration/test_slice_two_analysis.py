@@ -18,7 +18,7 @@ from oslo_api.analysis.history import list_project_history
 from oslo_api.analysis.object_storage import LocalObjectStorage
 from oslo_api.analysis.persistence import DatabaseAnalysisStore
 from oslo_api.analysis.service import DatabaseSliceTwoApplication
-from oslo_api.collaboration.service import DatabaseCollaborationService
+from oslo_api.collaboration.service import CollaborationError, DatabaseCollaborationService
 from oslo_api.settings import Settings
 
 SETTINGS = Settings()  # type: ignore[call-arg]
@@ -39,10 +39,10 @@ class FailingStageHarness(DeterministicAgentHarness):
             raise RuntimeError("PERCEIVE_FAILED")
         return super().perceive(**kwargs)
 
-    def construct(self, **kwargs):
+    def construct_artifact(self, **kwargs):
         if self.phase is AnalysisPhase.CONSTRUCT_ARTIFACTS:
             raise RuntimeError("CONSTRUCT_ARTIFACTS_FAILED")
-        return super().construct(**kwargs)
+        return super().construct_artifact(**kwargs)
 
     def evaluate(self, **kwargs):
         if self.phase is AnalysisPhase.EVALUATE_ADVISE:
@@ -51,10 +51,10 @@ class FailingStageHarness(DeterministicAgentHarness):
 
 
 class TitledHarness(DeterministicAgentHarness):
-    def construct(self, **kwargs):
-        return tuple(
-            replace(artifact, project_title="Northstar CRM Modernization")
-            for artifact in super().construct(**kwargs)
+    def construct_artifact(self, **kwargs):
+        return replace(
+            super().construct_artifact(**kwargs),
+            project_title="Northstar CRM Modernization",
         )
 
 
@@ -69,6 +69,97 @@ class RecordingReportMailer:
 
     def send_report(self, **payload) -> None:
         self.messages.append(payload)
+
+
+def test_clarification_is_durable_and_addressed_before_reanalysis_completes(
+    tmp_path,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        owner_id = connection.execute(
+            text("select id from auth.users where email = 'admin@oslo.local'")
+        ).scalar_one()
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Clarification lifecycle', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        baseline = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description="A migration plan with unresolved delivery ownership.",
+                source_names=("brief.md",),
+                idempotency_key=f"clarification-baseline:{project_id}",
+            )
+        )
+        assert baseline.snapshot is not None
+        issue = next(
+            item
+            for item in baseline.snapshot.assessment.issues
+            if item.clarification is not None
+        )
+        application = DatabaseSliceTwoApplication(
+            engine=engine,
+            store=store,
+            workflow=workflow,
+            executor=NoopExecutor(),  # type: ignore[arg-type]
+            document_store=DatabaseDocumentStore(
+                engine=engine,
+                object_store=LocalObjectStorage(tmp_path),
+            ),
+            extended_delay_seconds=0,
+        )
+
+        run = application.answer_issue(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            issue_id=issue.id,
+            answer="Priya owns migration and the legacy import is the fallback.",
+            key=f"clarification-answer:{project_id}",
+        )
+        updates = application.list_issue_actions(
+            actor_user_id=owner_id,
+            project_id=project_id,
+        )
+
+        assert run.status is AnalysisRunStatus.QUEUED
+        assert updates[0]["issue_id"] == issue.id
+        assert updates[0]["action"] == "clarification"
+        assert updates[0]["status"] == "addressed"
+        with engine.connect() as connection:
+            stored = connection.execute(
+                text(
+                    """
+                    select answer.analysis_run_id, issue.current_status
+                    from public.issue_answers answer
+                    join public.issues issue
+                      on issue.workspace_id = answer.workspace_id
+                     and issue.project_id = answer.project_id
+                     and issue.stable_key = answer.issue_stable_key
+                    where answer.project_id = :project_id
+                    """
+                ),
+                {"project_id": project_id},
+            ).mappings().one()
+        assert stored["analysis_run_id"] == run.id
+        assert stored["current_status"] == "addressed"
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
 
 
 def test_artifact_noop_is_inert_and_material_edit_uses_structured_evidence(
@@ -137,6 +228,7 @@ def test_artifact_noop_is_inert_and_material_edit_uses_structured_evidence(
                 {
                     **current["content"]["sections"][0],
                     "body": "The user confirmed the governed delivery outcome.",
+                    "provenance": "confirmed_by_user",
                 }
             ]
         }
@@ -165,6 +257,10 @@ def test_artifact_noop_is_inert_and_material_edit_uses_structured_evidence(
             artifact_type="intent",
         )
         assert after_reanalysis["version"] == edited["version"]
+        assert (
+            after_reanalysis["content"]["sections"][0]["provenance"]
+            == "confirmed_by_user"
+        )
 
         repeated, repeated_run = application.update_artifact(
             actor_user_id=owner_id,
@@ -288,8 +384,50 @@ def test_report_draft_and_immediate_delivery_are_durable() -> None:
             project_id=project_id,
         )
 
+        newer = AnalysisWorkflow(
+            store=DatabaseAnalysisStore(engine),
+            harness=DeterministicAgentHarness(),
+        ).run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.EXTENDED,
+                description="A governed project readout with newer evidence.",
+                source_names=("brief.md",),
+                parent_run_id=result.run_id,
+                idempotency_key=f"report-newer-analysis:{project_id}",
+            )
+        )
+        assert newer.snapshot is not None
+        with pytest.raises(CollaborationError) as stale_error:
+            service.deliver_report(
+                actor_user_id=owner_id,
+                project_id=project_id,
+                snapshot_id=result.snapshot.id,
+                recipient_email="sponsor@example.com",
+                recipient_label="Sponsor",
+                subject="Durable project readout",
+                content=content,
+                scheduled_for=datetime.now(UTC) - timedelta(seconds=1),
+            )
+        with pytest.raises(CollaborationError) as confirmed_stale_error:
+            service.deliver_report(
+                actor_user_id=owner_id,
+                project_id=project_id,
+                snapshot_id=result.snapshot.id,
+                recipient_email="sponsor@example.com",
+                recipient_label="Sponsor",
+                subject="Durable project readout",
+                content=content,
+                scheduled_for=datetime.now(UTC) - timedelta(seconds=1),
+                confirm_previous_analysis=True,
+            )
+
         assert reloaded["content"] == content
         assert delivery["status"] == "sent"
+        assert stale_error.value.code == "REPORT_PREVIOUS_ANALYSIS_BLOCKED"
+        assert confirmed_stale_error.value.code == "REPORT_PREVIOUS_ANALYSIS_BLOCKED"
         assert len(mailer.messages) == 1
         assert mailer.messages[0]["sections"] == content["sections"]
         with engine.connect() as connection:

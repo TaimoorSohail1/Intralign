@@ -136,6 +136,55 @@ describe("ReportWorkspace", () => {
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(7);
   });
 
+  it("does not repeat equivalent assumptions or recommendations", () => {
+    const repeated: OverviewSnapshot = {
+      ...snapshot,
+      artifacts: [
+        snapshot.artifacts[0],
+        {
+          ...snapshot.artifacts[0],
+          artifact_type: "schedule",
+        },
+      ],
+      assessment: {
+        ...snapshot.assessment,
+        issues: [
+          snapshot.assessment.issues[0],
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-REPORT-DUPLICATE",
+            artifact_type: "schedule",
+          },
+        ],
+      },
+    };
+
+    render(<ReportWorkspace snapshot={repeated} />);
+
+    const report = screen.getByRole("textbox", { name: "Edit readout" }).textContent ?? "";
+    expect(report.match(/The delivery lead can approve the cutover/g)).toHaveLength(1);
+    expect(report.match(/Recommended: Name an accountable owner and approval date/g)).toHaveLength(1);
+  });
+
+  it("inserts a paragraph without creating an extra report heading", () => {
+    const { container } = render(<ReportWorkspace snapshot={snapshot} />);
+    const editor = screen.getByRole("textbox", { name: "Edit readout" });
+    const summaryBody = editor.querySelector(
+      '[data-section="summary"] .report-section-body',
+    );
+    const paragraphsBefore = summaryBody?.querySelectorAll(":scope > p").length;
+
+    fireEvent.click(screen.getByRole("button", { name: "Insert paragraph" }));
+
+    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(7);
+    expect(summaryBody?.querySelectorAll(":scope > p")).toHaveLength(
+      (paragraphsBefore ?? 0) + 1,
+    );
+    expect(
+      container.querySelector('[data-section="summary"] .report-section-body > p:last-child br'),
+    ).toBeInTheDocument();
+  });
+
   it("supports section navigation, audience-specific asks, and real send feedback", async () => {
     render(<ReportWorkspace snapshot={snapshot} />);
 
@@ -149,16 +198,39 @@ describe("ReportWorkspace", () => {
       "Please resolve the highest-impact open decision",
     );
     fireEvent.click(screen.getByRole("button", { name: /Send/i }));
+    expect(screen.getByRole("dialog", { name: "Send readout" })).toHaveTextContent(
+      "Goes to Steering group as a read-only copy",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Change recipient" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Recipient email" }), {
       target: { value: "sponsor@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send now" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send to the steering group" }));
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent(
         "Report emailed to sponsor@example.com.",
       );
     });
     expect(fetch).toHaveBeenCalledWith(
+      `/api/projects/${snapshot.project_id}/report`,
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("shows friendly validation and does not call delivery for an invalid email", () => {
+    render(<ReportWorkspace snapshot={snapshot} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Send/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Change recipient" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Recipient email" }), {
+      target: { value: "not-an-email" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send to the sponsor" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Enter a valid recipient email address.",
+    );
+    expect(fetch).not.toHaveBeenCalledWith(
       `/api/projects/${snapshot.project_id}/report`,
       expect.objectContaining({ method: "POST" }),
     );
@@ -187,6 +259,26 @@ describe("ReportWorkspace", () => {
       expect.stringContaining("analysis-runs"),
       expect.anything(),
     );
+  });
+
+  it("persists the current document before starting a PDF export", async () => {
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+    render(<ReportWorkspace snapshot={snapshot} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    expect(screen.getByRole("dialog", { name: "Export readout" })).toBeInTheDocument();
+    expect(screen.getByText("Memos")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Export as PDF" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        `/api/projects/${snapshot.project_id}/report`,
+        expect.objectContaining({ method: "PUT", keepalive: true }),
+      );
+      expect(click).toHaveBeenCalledOnce();
+    });
   });
 
   it("hydrates device drafts after mount without changing the server render", async () => {
@@ -258,14 +350,70 @@ describe("ReportWorkspace", () => {
     render(<ReportWorkspace snapshot={snapshot} />);
 
     fireEvent.click(screen.getByRole("button", { name: /Send/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Change recipient" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Recipient email" }), {
       target: { value: "sponsor@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send now" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send to the sponsor" }));
 
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent("email delivery failed");
     });
     expect(screen.getByRole("status")).not.toHaveTextContent("Report emailed");
+  });
+
+  it("labels a previous-analysis report and blocks external sending until refresh", async () => {
+    vi.mocked(fetch).mockImplementation(
+      (_url: string | URL | Request, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                id: "delivery-previous",
+                status: "sent",
+                currency_state: "previous_analysis",
+                scheduled_for: "2026-07-27T12:00:00Z",
+              }),
+              { status: 201, headers: { "content-type": "application/json" } },
+            ),
+          );
+        }
+        if (!init?.method || init.method === "GET") {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                snapshot_id: "snapshot-newer",
+                content: null,
+                deliveries: [],
+              }),
+              { status: 200, headers: { "content-type": "application/json" } },
+            ),
+          );
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify({ message: "The report is from a previous analysis." }), {
+            status: 409,
+            headers: { "content-type": "application/json" },
+          }),
+        );
+      },
+    );
+    render(<ReportWorkspace snapshot={snapshot} />);
+
+    expect(await screen.findByText("Previous analysis")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Send/i }));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Refresh the report from the current analysis before sending or scheduling it.",
+    );
+    expect(fetch).not.toHaveBeenCalledWith(
+      `/api/projects/${snapshot.project_id}/report`,
+      expect.objectContaining({ method: "POST" }),
+    );
+
+    expect(
+      screen.queryByRole("checkbox", {
+        name: "I understand this report is based on a previous analysis",
+      }),
+    ).not.toBeInTheDocument();
   });
 });

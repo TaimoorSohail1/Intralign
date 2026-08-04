@@ -5,7 +5,7 @@ const apiUrl = process.env.OSLO_API_URL ?? "http://127.0.0.1:8000";
 export interface InvitationDetails {
   email: string;
   workspace_name: string;
-  role: "owner" | "collaborator" | "viewer";
+  role: "owner";
   expires_at: string;
   account_exists: boolean;
 }
@@ -23,7 +23,7 @@ export interface SessionPayload {
 export interface InvitationSummary {
   id: string;
   email: string;
-  role: "owner" | "collaborator" | "viewer";
+  role: "owner";
   status: "pending" | "accepted" | "revoked" | "expired";
   expires_at: string;
 }
@@ -239,14 +239,18 @@ export interface IssueActionSummary {
 }
 
 export interface ArtifactSection {
+  id?: string;
   heading: string;
   body: string;
   bullets: string[];
   columns: string[];
   rows: string[][];
+  provenance?: "from_oslo" | "confirmed_by_user";
   evidence_refs?: string[];
   row_evidence_refs?: string[][];
   row_states?: Array<"confirmed" | "inferred" | "conflicting" | "unknown">;
+  row_provenance?: Array<"from_oslo" | "confirmed_by_user">;
+  row_ids?: string[];
 }
 
 export interface ArtifactAssumption {
@@ -516,12 +520,11 @@ export function sendInvitation(input: {
   accessToken: string;
   workspaceId: string;
   email: string;
-  role: string;
 }): Promise<{ id: string; email: string }> {
   return apiRequest(`/v1/workspaces/${input.workspaceId}/invitations`, {
     method: "POST",
     headers: { authorization: `Bearer ${input.accessToken}` },
-    body: JSON.stringify({ email: input.email, role: input.role }),
+    body: JSON.stringify({ email: input.email }),
   });
 }
 
@@ -595,11 +598,10 @@ export interface WorkspaceNotificationSummary {
 export interface WorkspaceSummary {
   id: string;
   name: string;
-  role: "owner" | "collaborator" | "viewer";
+  role: "owner";
   plan: "free" | "basic";
   plan_label: string;
   price_usd_monthly: number;
-  active_project_limit: number;
   document_limit: number;
   word_limit: number;
   collaborator_seat_limit: number;
@@ -607,6 +609,7 @@ export interface WorkspaceSummary {
   monthly_analyses_used: number;
   can_manage_plan: boolean;
   member_count?: number;
+  collaborator_seats_used?: number;
   projects: WorkspaceProjectSummary[];
   notifications: WorkspaceNotificationSummary[];
 }
@@ -619,14 +622,14 @@ export interface WorkspacePreferences {
   display_name: string;
   role_title: string;
   workspace_name: string;
-  actor_role: "owner" | "collaborator" | "viewer";
+  actor_role: "owner";
   mentions_notifications: boolean;
   reply_notifications: boolean;
   shared_notifications: boolean;
 }
 
 export interface CollaborationState {
-  actor_role: "owner" | "collaborator" | "viewer";
+  actor_role: "owner";
   plan: {
     name: string;
     collaborator_seats: number;
@@ -637,7 +640,7 @@ export interface CollaborationState {
     reviewers_unmetered: boolean;
     export_formats: string[];
   };
-  participants: Array<{ id: string; display_name: string; role: string }>;
+  participants: Array<{ id: string; display_name: string; role: "owner" }>;
   invitations?: InvitationSummary[];
   comments: Array<{
     id: string;
@@ -790,6 +793,8 @@ export function getProjectReport(accessToken: string, projectId: string) {
       scheduled_for: string;
       sent_at: string | null;
       error_code: string | null;
+      currency_state: "current" | "previous_analysis";
+      previous_analysis_confirmed: boolean;
     }>;
   }>(`/v1/projects/${projectId}/report`, {
     method: "GET",
@@ -822,6 +827,7 @@ export function deliverProjectReport(input: {
   subject: string;
   content: ReportContent;
   scheduledFor?: string | null;
+  confirmPreviousAnalysis?: boolean;
 }) {
   return apiRequest<{
     id: string;
@@ -829,6 +835,8 @@ export function deliverProjectReport(input: {
     scheduled_for: string;
     sent_at: string | null;
     error_code: string | null;
+    currency_state: "current" | "previous_analysis";
+    previous_analysis_confirmed: boolean;
   }>(`/v1/projects/${input.projectId}/report/deliveries`, {
     method: "POST",
     headers: { authorization: `Bearer ${input.accessToken}` },
@@ -839,6 +847,7 @@ export function deliverProjectReport(input: {
       subject: input.subject,
       content: input.content,
       scheduled_for: input.scheduledFor || null,
+      confirm_previous_analysis: input.confirmPreviousAnalysis ?? false,
     }),
   });
 }

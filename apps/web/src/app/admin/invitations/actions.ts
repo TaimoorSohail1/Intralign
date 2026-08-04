@@ -14,13 +14,11 @@ export async function inviteMember(formData: FormData) {
   const session = await readSession();
   if (!session.accessToken || !session.workspaceId) redirect("/login");
   const email = String(formData.get("email") ?? "").trim();
-  const role = String(formData.get("role") ?? "collaborator");
   try {
     await sendInvitation({
       accessToken: session.accessToken,
       workspaceId: session.workspaceId,
       email,
-      role,
     });
   } catch (caught) {
     const message =

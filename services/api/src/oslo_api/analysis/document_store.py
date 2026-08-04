@@ -65,6 +65,7 @@ class DatabaseDocumentStore:
             raise DocumentRejected("DOCUMENT_TOO_LARGE")
         checksum = sha256(content).hexdigest()
         safe_name = Path(file_name).name[:255] or "document"
+        upload_title = " ".join(Path(safe_name).stem.replace("_", " ").split())[:160]
         suffix = Path(safe_name).suffix.lower()
         object_key = f"{workspace_id}/{project_id}/{checksum}{suffix}"
 
@@ -177,6 +178,21 @@ class DatabaseDocumentStore:
                     "parser_version": PARSER_VERSION,
                 },
             ).scalar_one()
+            connection.execute(
+                text(
+                    """
+                    update public.projects
+                    set name = :upload_title, updated_at = now()
+                    where id = :project_id
+                      and name = 'Untitled project'
+                      and nullif(trim(cast(:upload_title as text)), '') is not null
+                    """
+                ),
+                {
+                    "project_id": project_id,
+                    "upload_title": upload_title,
+                },
+            )
         return self._parse_and_persist(
             workspace_id=workspace_id,
             project_id=project_id,
@@ -279,8 +295,8 @@ class DatabaseDocumentStore:
 
             with self._engine.begin() as connection:
                 connection.execute(
-                    text("select pg_advisory_xact_lock(hashtext(cast(:workspace_id as text)))"),
-                    {"workspace_id": workspace_id},
+                    text("select pg_advisory_xact_lock(hashtext(cast(:project_id as text)))"),
+                    {"project_id": project_id},
                 )
                 existing_document_count = int(
                     connection.execute(
@@ -288,13 +304,13 @@ class DatabaseDocumentStore:
                             """
                             select count(*)
                             from public.source_documents
-                            where workspace_id = :workspace_id
+                            where project_id = :project_id
                               and status = 'parsed'
                               and id <> :document_id
                             """
                         ),
                         {
-                            "workspace_id": workspace_id,
+                            "project_id": project_id,
                             "document_id": document_id,
                         },
                     ).scalar_one()
@@ -309,13 +325,13 @@ class DatabaseDocumentStore:
                             from public.source_fragments sf
                             join public.source_documents sd
                               on sd.id = sf.source_document_id
-                            where sd.workspace_id = :workspace_id
+                            where sd.project_id = :project_id
                               and sd.status = 'parsed'
                               and sd.id <> :document_id
                             """
                         ),
                         {
-                            "workspace_id": workspace_id,
+                            "project_id": project_id,
                             "document_id": document_id,
                         },
                     ).scalar_one()

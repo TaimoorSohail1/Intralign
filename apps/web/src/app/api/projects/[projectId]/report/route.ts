@@ -1,9 +1,20 @@
 import {
   deliverProjectReport,
   getProjectReport,
+  OsloApiError,
   saveProjectReport,
 } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
+
+function reportError(error: unknown, fallback: string) {
+  if (error instanceof OsloApiError) {
+    return Response.json(
+      { message: error.message, detail: error.detail },
+      { status: error.status },
+    );
+  }
+  return Response.json({ message: fallback }, { status: 502 });
+}
 
 export async function GET(
   _request: Request,
@@ -17,10 +28,7 @@ export async function GET(
   try {
     return Response.json(await getProjectReport(session.accessToken, projectId));
   } catch (error) {
-    return Response.json(
-      { message: error instanceof Error ? error.message : "Report is unavailable." },
-      { status: 400 },
-    );
+    return reportError(error, "Report is unavailable.");
   }
 }
 
@@ -44,10 +52,7 @@ export async function PUT(
       }),
     );
   } catch (error) {
-    return Response.json(
-      { message: error instanceof Error ? error.message : "Report could not be saved." },
-      { status: 400 },
-    );
+    return reportError(error, "Report could not be saved.");
   }
 }
 
@@ -71,13 +76,11 @@ export async function POST(
       subject: body.subject,
       content: body.content,
       scheduledFor: body.scheduled_for,
+      confirmPreviousAnalysis: body.confirm_previous_analysis === true,
     });
     return Response.json(result, { status: 201 });
   } catch (error) {
-    return Response.json(
-      { message: error instanceof Error ? error.message : "Report delivery failed." },
-      { status: 400 },
-    );
+    return reportError(error, "Report delivery failed.");
   }
 }
 

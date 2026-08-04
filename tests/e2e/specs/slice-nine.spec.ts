@@ -26,8 +26,10 @@ async function openFirstProject(page: import("@playwright/test").Page) {
     await expect(page).toHaveURL(/\/intake\?project=/);
     await page.getByRole("button", { name: /sample project/i }).click();
     await page.getByRole("button", { name: /See where I stand/ }).click();
-    await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 90_000 });
-    await expect(page.getByText("Understanding is forming")).toBeVisible({ timeout: 120_000 });
+    await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
+    await expect(page.getByText("Project summary", { exact: true })).toBeVisible({
+      timeout: 120_000,
+    });
     await dismissOrientation(page);
     await page.goto("/workspace");
   }

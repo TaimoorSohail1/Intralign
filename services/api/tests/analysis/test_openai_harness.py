@@ -12,7 +12,11 @@ from oslo_api.analysis import (
     RunKind,
 )
 from oslo_api.analysis.harness import AgentHarnessError
-from oslo_api.analysis.models import HarnessInvocation
+from oslo_api.analysis.models import (
+    ClaimKind,
+    EvidenceClaim,
+    HarnessInvocation,
+)
 from oslo_api.analysis.openai_harness import OpenAIAgentHarness
 
 
@@ -533,7 +537,7 @@ def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> Non
     )
 
     assert construct_client.responses.requests[0]["max_output_tokens"] == 24_000
-    assert evaluate_client.responses.requests[0]["max_output_tokens"] == 3_500
+    assert evaluate_client.responses.requests[0]["max_output_tokens"] == 9_000
     evaluate_request = evaluate_client.responses.requests[0]
     evaluate_payload = json.loads(evaluate_request["input"][1]["content"])
     assert evaluate_payload["allowed_evidence_locators"] == [evidence_ref]
@@ -548,6 +552,19 @@ def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> Non
     )
     assert "absence checks" in evaluate_request["input"][0]["content"]
     assert "documented exception" in evaluate_request["input"][0]["content"]
+    assert "diagnosed problems and causes" in evaluate_request["input"][0]["content"]
+    assert (
+        "privacy, safety, accessibility and regulatory assurance"
+        in evaluate_request["input"][0]["content"]
+    )
+    assert "benefit double-counting" in evaluate_request["input"][0]["content"]
+    assert "A clear document can describe an undeliverable plan" in (
+        evaluate_request["input"][0]["content"]
+    )
+    assert "small owner-led" in evaluate_request["input"][0]["content"]
+    assert "do not repeat project-wide conflicts" in (
+        construct_client.responses.requests[0]["input"][0]["content"].lower()
+    )
 
 
 def test_evaluate_uses_the_latest_clarification_context() -> None:
@@ -607,6 +624,29 @@ def test_fast_pass_bounds_large_evidence_and_keeps_high_signal_fragments() -> No
     assert "Migration volume is unknown" in request_payload
     assert critical in perception.evidence
     assert len(perception.evidence) == len(ordinary) + 1
+
+
+def test_initial_evidence_selection_keeps_each_source_represented() -> None:
+    dominant = tuple(
+        EvidenceFragment(
+            reference=f"document:dominant:page:{index + 1}:fragment:{index}",
+            content=("Budget migration timeline dependency risk. " * 80),
+            source_name="dominant.pdf",
+        )
+        for index in range(60)
+    )
+    secondary = EvidenceFragment(
+        reference="document:secondary:page:1:fragment:0",
+        content=("The operational assurance approach is described here. " * 80),
+        source_name="secondary.pdf",
+    )
+
+    selected = OpenAIAgentHarness._select_evidence(
+        dominant + (secondary,),
+        kind=RunKind.INITIAL,
+    )
+
+    assert secondary.reference in {item.reference for item in selected}
 
 
 def test_construct_may_cite_any_evidence_fragment_supplied_by_perceive() -> None:
@@ -765,17 +805,80 @@ def test_dense_projects_construct_artifacts_in_bounded_shards() -> None:
             gaps=(),
             evidence_refs=tuple(item.reference for item in evidence),
             evidence=evidence,
+            structured_claims=(
+                EvidenceClaim(
+                    id="claim:freeze",
+                    kind=ClaimKind.DATE_RANGE,
+                    subject="Protected operating window",
+                    predicate="constrains",
+                    value="2027-01-01/2027-01-10",
+                    raw_text="The freeze runs from 1 January to 10 January 2027.",
+                    evidence_ref=evidence[0].reference,
+                ),
+            ),
         ),
         kind=RunKind.EXTENDED,
     )
 
     assert len(client.responses.requests) == 7
     assert {request["max_output_tokens"] for request in client.responses.requests} == {
-        6_000
+        8_000
     }
     assert tuple(item.artifact_type for item in artifacts) == ARTIFACT_TYPES
     assert all(item.sections for item in artifacts)
     assert all(item.project_title == "Northstar CRM Modernization" for item in artifacts)
+    payloads = [
+        json.loads(request["input"][1]["content"])
+        for request in client.responses.requests
+    ]
+    assert all(
+        sum(len(item["reference"]) + len(item["content"]) + 160 for item in payload["evidence"])
+        <= 18_000
+        for payload in payloads
+    )
+    assert all(
+        payload["output_limits"]
+        == {
+            "sections": 8,
+            "rows_total": 80,
+            "assumptions": 24,
+            "conflicts": 24,
+        }
+        for payload in payloads
+    )
+    assert all(payload["structured_claims"][0]["id"] == "claim:freeze" for payload in payloads)
+
+
+def test_moderately_dense_project_shards_before_monolithic_output_times_out() -> None:
+    evidence = tuple(
+        EvidenceFragment(
+            reference=f"document:plan:page:{index + 1}:fragment:0",
+            content=(f"Structured delivery evidence for section {index}. " * 90),
+            source_name="plan.pdf",
+        )
+        for index in range(5)
+    )
+    assert sum(len(item.content) for item in evidence) > 16_000
+    client = ShardedOpenAI()
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+
+    artifacts = harness.construct(
+        perception=Perception(
+            facts=("A moderately dense project was supplied.",),
+            claims=(),
+            gaps=(),
+            evidence_refs=tuple(item.reference for item in evidence),
+            evidence=evidence,
+        ),
+        kind=RunKind.INITIAL,
+    )
+
+    assert len(client.responses.requests) == 7
+    assert tuple(item.artifact_type for item in artifacts) == ARTIFACT_TYPES
 
 
 def test_construct_receives_an_explicit_exact_evidence_locator_allowlist() -> None:
@@ -819,6 +922,52 @@ def test_construct_receives_an_explicit_exact_evidence_locator_allowlist() -> No
     assert "copied exactly" in request["input"][0]["content"]
 
 
+def test_construct_quarantines_only_artifact_content_with_unsupported_evidence() -> None:
+    evidence_ref = "document:plan:page:1:fragment:0"
+    invented_ref = "document:plan:page:99:fragment:9"
+    payload = {
+        "project_title": None,
+        "project_title_confidence": "low",
+        "artifact": structured_artifact_payload(
+            ARTIFACT_TYPES[0],
+            evidence_ref,
+        ),
+    }
+    payload["artifact"]["sections"].append(
+        {
+            "heading": "Unsupported detail",
+            "body": "This content cites a locator that was never supplied.",
+            "bullets": [],
+            "columns": [],
+            "rows": [],
+            "evidence_refs": [invented_ref],
+            "row_evidence_refs": [],
+            "row_states": [],
+        }
+    )
+    client = SequencedOpenAI([payload, payload])
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+
+    artifact = harness.construct_artifact(
+        perception=Perception(
+            facts=("A supported fact.",),
+            claims=(),
+            gaps=(),
+            evidence_refs=(evidence_ref,),
+            evidence=(EvidenceFragment(reference=evidence_ref, content="Supported evidence."),),
+        ),
+        artifact_type=ARTIFACT_TYPES[0],
+        kind=RunKind.INITIAL,
+    )
+
+    assert [section.heading for section in artifact.sections] == ["Intent"]
+    assert len(client.responses.requests) == 1
+
+
 def test_output_limit_uses_a_specific_safe_failure_code() -> None:
     harness = OpenAIAgentHarness(
         api_key="not-used-by-the-fake",
@@ -835,7 +984,7 @@ def test_output_limit_uses_a_specific_safe_failure_code() -> None:
         )
     except AgentHarnessError as error:
         assert error.code == "OPENAI_OUTPUT_LIMIT"
-        assert error.retryable is False
+        assert error.retryable is True
     else:
         raise AssertionError("Output truncation must fail closed")
 
@@ -851,7 +1000,7 @@ def test_truncated_json_validation_error_is_classified_as_output_limit() -> None
         raise AssertionError("The fixture must produce a validation error")
 
     assert safe_error.code == "OPENAI_OUTPUT_LIMIT"
-    assert safe_error.retryable is False
+    assert safe_error.retryable is True
 
 
 def test_schema_invalid_response_is_retried_once_then_validated() -> None:
@@ -886,5 +1035,126 @@ def test_schema_invalid_response_is_retried_once_then_validated() -> None:
 
     assert result.facts == ("A validated fact.",)
     assert client.responses.calls == 2
+    repair_request = client.responses.requests[0]
+    repair_payload = json.loads(repair_request["input"][1]["content"])
+    assert repair_payload["schema_repair"]["validation_errors"] == [
+        {
+            "location": "response",
+            "type": "SchemaValidationError",
+            "message": "raw validation detail",
+        }
+    ]
+    assert "schema repair attempt" in repair_request["input"][0]["content"]
     assert invocation.metadata is not None
     assert invocation.metadata.attempts == 2
+
+
+def test_repeated_schema_failure_can_use_the_configured_fallback_model() -> None:
+    client = SchemaInvalidOnceOpenAI(
+        {
+            "facts": ["A validated fallback fact."],
+            "claims": [],
+            "gaps": [],
+            "evidence_refs": ["description:1"],
+        }
+    )
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-primary",
+        fallback_model="gpt-fallback",
+        client=client,
+        sleeper=lambda _: None,
+        max_retries=0,
+    )
+    invocation = HarnessInvocation(
+        run_id=UUID("018f9f7e-8de2-7000-8000-000000000020"),
+        phase=AnalysisPhase.PERCEIVE,
+    )
+
+    result = harness.perceive(
+        description="A validated fallback fact.",
+        source_names=(),
+        evidence=(),
+        kind=RunKind.INITIAL,
+        invocation=invocation,
+    )
+
+    assert result.facts == ("A validated fallback fact.",)
+    assert client.responses.requests[0]["model"] == "gpt-fallback"
+    assert invocation.metadata is not None
+    assert invocation.metadata.mode == "fallback"
+    assert invocation.metadata.fallback_reason == "OPENAI_SCHEMA_INVALID"
+
+
+def test_evaluate_quarantines_only_findings_with_unsupported_evidence() -> None:
+    evidence_ref = "document:plan:page:1:fragment:1"
+    invented_ref = "document:plan:page:99:fragment:9"
+    payload = {
+        "confidence_index": 45,
+        "confidence_band": "Low",
+        "reliability": "Moderate",
+        "clarity": "High",
+        "alignment": "Low",
+        "feasibility": "Low",
+        "coverage_audit": [
+            {
+                "artifact_type": artifact_type.value,
+                "completeness": "complete",
+                "checked_controls": ["coverage", "consistency"],
+                "missing_controls": [],
+            }
+            for artifact_type in ARTIFACT_TYPES
+        ],
+        "issues": [
+            {
+                "id": "ISS-SUPPORTED",
+                "artifact_type": "requirements",
+                "dimension": "Clarity",
+                "severity": "Moderate",
+                "finding_type": "clarity",
+                "exception_checked": True,
+                "title": "Supported requirement gap",
+                "why": "The source does not define a measurable threshold.",
+                "recommendation": "Define the threshold.",
+                "evidence_refs": [evidence_ref],
+                "clarification": "What threshold will apply?",
+                "status": "open",
+            },
+            {
+                "id": "ISS-UNSUPPORTED",
+                "artifact_type": "requirements",
+                "dimension": "Clarity",
+                "severity": "Critical",
+                "finding_type": "absence",
+                "exception_checked": True,
+                "title": "Unsupported requirement gap",
+                "why": "This finding cites evidence that was never supplied.",
+                "recommendation": "Do not publish it.",
+                "evidence_refs": [invented_ref],
+                "clarification": None,
+                "status": "open",
+            },
+        ],
+    }
+    client = SequencedOpenAI([payload, payload])
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+    perception = Perception(
+        facts=("A measurable threshold is not defined.",),
+        claims=(),
+        gaps=(),
+        evidence_refs=(evidence_ref,),
+        evidence=(EvidenceFragment(reference=evidence_ref, content="No threshold."),),
+    )
+
+    assessment = harness.evaluate(
+        artifacts=(),
+        perception=perception,
+        kind=RunKind.EXTENDED,
+    )
+
+    assert [issue.id for issue in assessment.issues] == ["ISS-SUPPORTED"]
+    assert len(client.responses.requests) == 1

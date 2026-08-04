@@ -1,5 +1,4 @@
 import re
-from dataclasses import replace
 from typing import Protocol
 
 from oslo_api.analysis.models import (
@@ -44,6 +43,15 @@ class AgentHarness(Protocol):
         kind: RunKind,
         invocation: HarnessInvocation | None = None,
     ) -> tuple[Artifact, ...]: ...
+
+    def construct_artifact(
+        self,
+        *,
+        perception: Perception,
+        artifact_type: ArtifactType,
+        kind: RunKind,
+        invocation: HarnessInvocation | None = None,
+    ) -> Artifact: ...
 
     def evaluate(
         self,
@@ -117,6 +125,26 @@ class DeterministicAgentHarness:
         kind: RunKind,
         invocation: HarnessInvocation | None = None,
     ) -> tuple[Artifact, ...]:
+        result = tuple(
+            self.construct_artifact(
+                perception=perception,
+                artifact_type=artifact_type,
+                kind=kind,
+                invocation=None,
+            )
+            for artifact_type in ARTIFACT_TYPES
+        )
+        self._record(invocation)
+        return result
+
+    def construct_artifact(
+        self,
+        *,
+        perception: Perception,
+        artifact_type: ArtifactType,
+        kind: RunKind,
+        invocation: HarnessInvocation | None = None,
+    ) -> Artifact:
         depth = "Extended" if kind is RunKind.EXTENDED else "Initial"
         evidence_text = " ".join(item.content for item in perception.evidence)
         timelines = self._timeline_values(evidence_text)
@@ -143,31 +171,28 @@ class DeterministicAgentHarness:
                 else ""
             ),
         }
-        result = tuple(
-            Artifact(
-                artifact_type=artifact_type,
-                title=self._titles[artifact_type],
-                summary=summaries.get(artifact_type)
-                or (
-                    f"{depth} evidence-qualified {self._titles[artifact_type].lower()} "
-                    f"derived from the submitted project information."
-                ),
-                reliability="Moderate",
-                evidence_refs=perception.evidence_refs,
-                sections=(
-                    ArtifactSection(
-                        heading=self._titles[artifact_type],
-                        body=summaries.get(artifact_type)
-                        or (
-                            f"{depth} evidence-qualified "
-                            f"{self._titles[artifact_type].lower()}."
-                        ),
-                        bullets=perception.facts[:20],
-                        evidence_refs=perception.evidence_refs,
+        result = Artifact(
+            artifact_type=artifact_type,
+            title=self._titles[artifact_type],
+            summary=summaries.get(artifact_type)
+            or (
+                f"{depth} evidence-qualified {self._titles[artifact_type].lower()} "
+                f"derived from the submitted project information."
+            ),
+            reliability="Moderate",
+            evidence_refs=perception.evidence_refs,
+            sections=(
+                ArtifactSection(
+                    heading=self._titles[artifact_type],
+                    body=summaries.get(artifact_type)
+                    or (
+                        f"{depth} evidence-qualified "
+                        f"{self._titles[artifact_type].lower()}."
                     ),
+                    bullets=perception.facts[:20],
+                    evidence_refs=perception.evidence_refs,
                 ),
-            )
-            for artifact_type in ARTIFACT_TYPES
+            ),
         )
         self._record(invocation)
         return result
@@ -422,119 +447,3 @@ class DeterministicAgentHarness:
                 evidence_refs=perception.evidence_refs,
             ),
         )
-
-
-class FallbackAgentHarness:
-    """Use deterministic fallback for Initial runs; Extended fails last-good safe."""
-
-    def __init__(self, *, primary: AgentHarness, fallback: AgentHarness) -> None:
-        self._primary = primary
-        self._fallback = fallback
-
-    def perceive(
-        self,
-        *,
-        description: str,
-        source_names: tuple[str, ...],
-        evidence: tuple[EvidenceFragment, ...],
-        kind: RunKind,
-        invocation: HarnessInvocation | None = None,
-    ) -> Perception:
-        return self._invoke(
-            "perceive",
-            kind=kind,
-            invocation=invocation,
-            description=description,
-            source_names=source_names,
-            evidence=evidence,
-        )
-
-    def construct(
-        self,
-        *,
-        perception: Perception,
-        kind: RunKind,
-        invocation: HarnessInvocation | None = None,
-    ) -> tuple[Artifact, ...]:
-        result = self._invoke(
-            "construct",
-            kind=kind,
-            invocation=invocation,
-            perception=perception,
-        )
-        if invocation and invocation.metadata and invocation.metadata.mode == "fallback":
-            return tuple(replace(item, basis="fallback") for item in result)
-        return result
-
-    def evaluate(
-        self,
-        *,
-        artifacts: tuple[Artifact, ...],
-        perception: Perception,
-        kind: RunKind,
-        context: str = "",
-        invocation: HarnessInvocation | None = None,
-    ) -> Assessment:
-        return self._invoke(
-            "evaluate",
-            kind=kind,
-            invocation=invocation,
-            artifacts=artifacts,
-            perception=perception,
-            context=context,
-        )
-
-    def _invoke(
-        self,
-        method_name: str,
-        *,
-        kind: RunKind,
-        invocation: HarnessInvocation | None,
-        **kwargs,
-    ):
-        if invocation is not None and invocation.fallback_active:
-            return self._fallback_call(
-                method_name,
-                invocation=invocation,
-                reason="PREVIOUS_NODE_FALLBACK",
-                kind=kind,
-                **kwargs,
-            )
-        try:
-            return getattr(self._primary, method_name)(
-                kind=kind,
-                invocation=invocation,
-                **kwargs,
-            )
-        except AgentHarnessError as error:
-            if kind is RunKind.EXTENDED:
-                raise
-            return self._fallback_call(
-                method_name,
-                invocation=invocation,
-                reason=error.code,
-                kind=kind,
-                **kwargs,
-            )
-
-    def _fallback_call(
-        self,
-        method_name: str,
-        *,
-        invocation: HarnessInvocation | None,
-        reason: str,
-        kind: RunKind,
-        **kwargs,
-    ):
-        result = getattr(self._fallback, method_name)(
-            kind=kind,
-            invocation=invocation,
-            **kwargs,
-        )
-        if invocation is not None and invocation.metadata is not None:
-            invocation.metadata = replace(
-                invocation.metadata,
-                mode="fallback",
-                fallback_reason=reason,
-            )
-        return result

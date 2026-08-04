@@ -41,8 +41,8 @@ describe("ProjectCollaborationControls", () => {
     render(<ProjectCollaborationControls projectId="project-1" />);
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
 
-    expect(await screen.findByText("People with workspace access")).toBeInTheDocument();
-    expect(screen.getByText("1/3 seats")).toBeInTheDocument();
+    expect(await screen.findByText("People on this project")).toBeInTheDocument();
+    expect(screen.getByText(/1 of 3 filled/)).toBeInTheDocument();
 
     vi.mocked(fetch)
       .mockResolvedValueOnce(
@@ -55,10 +55,10 @@ describe("ProjectCollaborationControls", () => {
         ),
       )
       .mockResolvedValueOnce(jsonResponse(collaboration));
-    fireEvent.click(screen.getByRole("button", { name: "Create snapshot link" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create a view-only link" }));
 
     expect(
-      await screen.findByText("A read-only snapshot is ready to share."),
+      await screen.findByText("A view-only snapshot is ready to share."),
     ).toBeInTheDocument();
     expect(fetch).toHaveBeenNthCalledWith(
       2,
@@ -77,7 +77,7 @@ describe("ProjectCollaborationControls", () => {
   it("creates an unmetered external review link with reviewer identity", async () => {
     render(<ProjectCollaborationControls projectId="project-1" />);
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
-    await screen.findByText("External review");
+    await screen.findByText("External review request");
 
     vi.mocked(fetch)
       .mockResolvedValueOnce(
@@ -114,7 +114,19 @@ describe("ProjectCollaborationControls", () => {
     });
   });
 
-  it("offers a read-only PDF export without starting analysis", async () => {
+  it("offers the five-section snapshot composer without starting analysis", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse(collaboration))
+      .mockResolvedValueOnce(jsonResponse({
+        state: "current",
+        summary: "The current project read.",
+        assessment: {
+          confidence_band: "Moderate",
+          reliability: "Moderate",
+          limiting_dimension: "feasibility",
+          issues: [],
+        },
+      }));
     render(<ProjectCollaborationControls projectId="project-1" />);
     const headerActions = screen.getByRole("group", {
       name: "Project sharing and export",
@@ -124,27 +136,29 @@ describe("ProjectCollaborationControls", () => {
     fireEvent.click(screen.getByRole("button", { name: "Export" }));
 
     expect(
-      await screen.findByRole("heading", { name: "Project snapshot · PDF" }),
+      await screen.findByRole("heading", { name: "Export a snapshot" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Download PDF" })).toHaveAttribute(
+    expect(screen.getByText("Strategic readout — the five-section read")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "§1The read" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /PDF/ })).toHaveAttribute(
       "href",
       "/api/projects/project-1/export",
     );
-    expect(fetch).toHaveBeenCalledTimes(0);
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it("lets an owner invite a collaborator and refreshes governed plan usage", async () => {
+  it("invites another owner without exposing alternative workspace roles", async () => {
     render(<ProjectCollaborationControls projectId="project-1" />);
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
 
-    expect(await screen.findByText("0/2 this month")).toBeInTheDocument();
+    expect(await screen.findByText(/2 of 2 left/)).toBeInTheDocument();
     vi.mocked(fetch)
       .mockResolvedValueOnce(
         jsonResponse(
           {
             id: "invitation-1",
             email: "amina@example.com",
-            role: "collaborator",
+            role: "owner",
             status: "pending",
             expires_at: "2026-08-10T00:00:00Z",
           },
@@ -159,7 +173,7 @@ describe("ProjectCollaborationControls", () => {
             {
               id: "invitation-1",
               email: "amina@example.com",
-              role: "collaborator",
+              role: "owner",
               status: "pending",
               expires_at: "2026-08-10T00:00:00Z",
             },
@@ -170,10 +184,12 @@ describe("ProjectCollaborationControls", () => {
     fireEvent.change(screen.getByLabelText("Email address"), {
       target: { value: "amina@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send invitation" }));
+    fireEvent.click(screen.getByRole("button", { name: "Invite" }));
 
     expect(await screen.findByText("Invitation sent to amina@example.com.")).toBeInTheDocument();
-    expect(await screen.findByText("1/2 this month")).toBeInTheDocument();
+    expect(await screen.findByText(/1 of 2 left/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Collaborator" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Viewer" })).not.toBeInTheDocument();
     expect(fetch).toHaveBeenNthCalledWith(
       2,
       "/api/projects/project-1/collaboration",
@@ -182,7 +198,6 @@ describe("ProjectCollaborationControls", () => {
         body: JSON.stringify({
           action: "invite",
           email: "amina@example.com",
-          role: "collaborator",
         }),
       }),
     );
@@ -198,7 +213,7 @@ describe("ProjectCollaborationControls", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Service unavailable");
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    expect(await screen.findByText("People with workspace access")).toBeInTheDocument();
+    expect(await screen.findByText("People on this project")).toBeInTheDocument();
   });
 
   it("revokes an active snapshot without affecting project analysis", async () => {
@@ -216,7 +231,7 @@ describe("ProjectCollaborationControls", () => {
     );
     render(<ProjectCollaborationControls projectId="project-1" />);
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
-    await screen.findByText("Active access");
+    await screen.findByText(/1 active snapshot link/);
 
     vi.mocked(fetch)
       .mockResolvedValueOnce(new Response(null, { status: 204 }))

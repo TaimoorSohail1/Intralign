@@ -82,7 +82,6 @@ class WorkspaceSummary:
     name: str
     role: str
     plan: str
-    active_project_limit: int
     projects: list[WorkspaceProject]
     notifications: list[WorkspaceNotification]
     plan_label: str = "Free"
@@ -94,6 +93,7 @@ class WorkspaceSummary:
     monthly_analyses_used: int = 0
     can_manage_plan: bool = False
     member_count: int = 1
+    collaborator_seats_used: int = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,7 +105,7 @@ class WorkspacePreferences:
     display_name: str = ""
     role_title: str = ""
     workspace_name: str = ""
-    actor_role: str = "viewer"
+    actor_role: str = "owner"
     mentions_notifications: bool = True
     reply_notifications: bool = True
     shared_notifications: bool = True
@@ -120,7 +120,6 @@ class SliceOneApplication(Protocol):
         actor_user_id: UUID,
         workspace_id: UUID,
         email: str,
-        role: MembershipRole,
     ) -> Invitation: ...
 
     def activate_invitation(

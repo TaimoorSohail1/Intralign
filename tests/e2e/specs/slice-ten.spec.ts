@@ -41,8 +41,10 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
     await expect(page).toHaveURL(/\/intake\?project=/);
     await page.getByRole("button", { name: /sample project/i }).click();
     await page.getByRole("button", { name: /See where I stand/ }).click();
-    await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 90_000 });
-    await expect(page.getByText("Understanding is forming")).toBeVisible({ timeout: 120_000 });
+    await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
+    await expect(page.getByText("Project summary", { exact: true })).toBeVisible({
+      timeout: 120_000,
+    });
     await dismissOrientation(page);
     await page.goto("/workspace");
     await expect(page.getByRole("link", { name: /Open project/ }).first()).toBeVisible();
@@ -64,14 +66,10 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
   await plans.getByRole("button", { name: "Done" }).click();
 
   await page.getByRole("button", { name: "New project" }).click();
-  const projectLimit = page.getByRole("dialog", {
-    name: "Your active project space is full",
-  });
-  await expect(projectLimit).toBeVisible();
-  await expect(projectLimit.getByText("Nothing is deleted")).toBeVisible();
-  await expect(projectLimit.getByRole("button", { name: "Explore upgrade" })).toBeVisible();
-  await expect(projectLimit.getByRole("button", { name: "Archive" }).first()).toBeVisible();
-  await projectLimit.getByRole("button", { name: "Explore upgrade" }).click();
+  await expect(page).toHaveURL(/\/intake\?project=/, { timeout: 30_000 });
+  await page.goto("/workspace");
+  await expect(page.getByText("Unlimited active projects")).toBeVisible();
+  await page.getByRole("button", { name: /Compare plans/ }).click();
 
   plans = page.getByRole("dialog", { name: "Your plan" });
   await expect(plans).toBeVisible();

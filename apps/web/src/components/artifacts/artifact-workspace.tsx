@@ -15,7 +15,14 @@ import {
   Sparkle,
 } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type FormEvent,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import type {
   ArtifactSection,
@@ -34,6 +41,8 @@ const artifactOrder = [
 ] as const;
 
 type Issue = OverviewSnapshot["assessment"]["issues"][number];
+type ClaimProvenance = NonNullable<ArtifactSection["provenance"]>;
+let editorIdSequence = 0;
 
 function label(value: string) {
   return value
@@ -43,6 +52,32 @@ function label(value: string) {
 
 function cloneContent(content: ArtifactWorkspaceSummary["content"]) {
   return structuredClone(content);
+}
+
+function nextEditorId(prefix: string) {
+  editorIdSequence += 1;
+  return `${prefix}-${editorIdSequence}`;
+}
+
+function ensureEditorIds(
+  content: ArtifactWorkspaceSummary["content"],
+  artifactType: string,
+) {
+  const normalized = cloneContent(content);
+  normalized.sections = normalized.sections.map((section, sectionIndex) => {
+    const sectionId =
+      section.id ?? nextEditorId(`${artifactType}-section-${sectionIndex + 1}`);
+    return {
+      ...section,
+      id: sectionId,
+      row_ids: section.rows.map(
+        (_, rowIndex) =>
+          section.row_ids?.[rowIndex] ??
+          nextEditorId(`${sectionId}-row-${rowIndex + 1}`),
+      ),
+    };
+  });
+  return normalized;
 }
 
 function sameContent(
@@ -65,6 +100,80 @@ function provenanceLabel(provenance: ArtifactWorkspaceSummary["provenance"]) {
   if (provenance === "confirmed_by_user") return "Confirmed by you";
   if (provenance === "mixed") return "Contains your edits";
   return "From OSLO";
+}
+
+function claimProvenanceLabel(
+  provenance: ClaimProvenance | undefined,
+  artifactProvenance: ArtifactWorkspaceSummary["provenance"],
+) {
+  if (provenance === "confirmed_by_user") return "Confirmed by you";
+  if (provenance === "from_oslo" || artifactProvenance === "from_oslo") {
+    return "From OSLO";
+  }
+  return "Contains your edits";
+}
+
+function evidenceStateLabel(state: NonNullable<ArtifactSection["row_states"]>[number]) {
+  if (state === "confirmed") return "Grounded in project evidence";
+  if (state === "inferred") return "Inferred by OSLO";
+  if (state === "conflicting") return "Conflicting project evidence";
+  return "Evidence origin unknown";
+}
+
+function rowProvenanceValues(
+  section: ArtifactSection,
+  artifactProvenance: ArtifactWorkspaceSummary["provenance"],
+) {
+  const legacyFallback: ClaimProvenance =
+    artifactProvenance === "from_oslo" ? "from_oslo" : "confirmed_by_user";
+  return section.rows.map(
+    (_, index) => section.row_provenance?.[index] ?? legacyFallback,
+  );
+}
+
+function StableEditableText({
+  as,
+  className,
+  onValueChange,
+  title,
+  value,
+}: {
+  as: "li" | "p" | "td";
+  className?: string;
+  onValueChange: (value: string) => void;
+  title?: string;
+  value: string;
+}) {
+  const elementRef = useRef<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    const element = elementRef.current;
+    if (element && element.textContent !== value) {
+      element.textContent = value;
+    }
+  }, [value]);
+
+  const handleInput = (event: FormEvent<HTMLElement>) => {
+    onValueChange(event.currentTarget.textContent ?? "");
+  };
+  const setElementRef = (element: HTMLElement | null) => {
+    elementRef.current = element;
+  };
+  const sharedProps = {
+    className,
+    contentEditable: true,
+    onInput: handleInput,
+    suppressContentEditableWarning: true,
+    title,
+  };
+
+  if (as === "p") {
+    return <p {...sharedProps} ref={setElementRef} />;
+  }
+  if (as === "li") {
+    return <li {...sharedProps} ref={setElementRef} />;
+  }
+  return <td {...sharedProps} ref={setElementRef} />;
 }
 
 export function ArtifactWorkspace({
@@ -108,8 +217,9 @@ export function ArtifactWorkspace({
       })
       .then((loaded) => {
         if (cancelled) return;
-        setArtifact(loaded);
-        setContent(cloneContent(loaded.content));
+        const normalizedContent = ensureEditorIds(loaded.content, artifactType);
+        setArtifact({ ...loaded, content: normalizedContent });
+        setContent(cloneContent(normalizedContent));
         historyRef.current = [];
         futureRef.current = [];
         setHistoryDepth(0);
@@ -142,8 +252,9 @@ export function ArtifactWorkspace({
         return response.json() as Promise<ArtifactWorkspaceSummary>;
       })
       .then((loaded) => {
-        setArtifact(loaded);
-        setContent(cloneContent(loaded.content));
+        const normalizedContent = ensureEditorIds(loaded.content, artifactType);
+        setArtifact({ ...loaded, content: normalizedContent });
+        setContent(cloneContent(normalizedContent));
         setStatus("saved");
       })
       .catch(() => setStatus("saved"));
@@ -206,8 +317,9 @@ export function ArtifactWorkspace({
         throw new Error(payload?.message ?? "Artifact save failed");
       }
       const saved = payload as ArtifactWorkspaceSummary;
-      setArtifact(saved);
-      setContent(cloneContent(saved.content));
+      const normalizedContent = ensureEditorIds(saved.content, artifactType);
+      setArtifact({ ...saved, content: normalizedContent });
+      setContent(cloneContent(normalizedContent));
       historyRef.current = [];
       futureRef.current = [];
       setHistoryDepth(0);
@@ -267,6 +379,22 @@ export function ArtifactWorkspace({
     );
   }
 
+  const activeIssue = issues[issueIndex] ?? null;
+  const issueSectionIndex = activeIssue
+    ? Math.max(
+        0,
+        content.sections.findIndex((section) => {
+          const sectionEvidence = new Set([
+            ...(section.evidence_refs ?? []),
+            ...(section.row_evidence_refs ?? []).flat(),
+          ]);
+          return activeIssue.evidence_refs.some((reference) =>
+            sectionEvidence.has(reference),
+          );
+        }),
+      )
+    : -1;
+
   return (
     <section className="artifact-workspace">
       <header className="artifact-editor-header">
@@ -274,7 +402,9 @@ export function ArtifactWorkspace({
           <h1>{artifact.title}</h1>
           <span className="editable-chip">Editable</span>
           <span className="artifact-provenance">
-            {provenanceLabel(artifact.provenance)}
+            {provenanceLabel(
+              sameContent(content, artifact.content) ? artifact.provenance : "mixed",
+            )}
           </span>
         </div>
         <div className="artifact-editor-toolbar">
@@ -353,11 +483,14 @@ export function ArtifactWorkspace({
               onClick={() =>
                 updateContent((draft) =>
                   draft.sections.push({
+                    id: nextEditorId(`${artifactType}-section`),
                     heading: "New section",
                     body: "",
                     bullets: [],
                     columns: [],
                     rows: [],
+                    row_ids: [],
+                    provenance: "confirmed_by_user",
                   }),
                 )
               }
@@ -446,10 +579,10 @@ export function ArtifactWorkspace({
       >
         {content.sections.map((section, sectionIndex) => (
           <ArtifactSectionEditor
-            activeIssue={issues[issueIndex] ?? null}
+            activeIssue={sectionIndex === issueSectionIndex ? activeIssue : null}
+            artifactProvenance={artifact.provenance}
             artifactType={artifactType}
-            confirmed={artifact.provenance !== "from_oslo"}
-            key={`${artifactType}-${sectionIndex}`}
+            key={section.id ?? `${artifactType}-${sectionIndex}`}
             onChange={(nextSection) =>
               updateContent((draft) => {
                 draft.sections[sectionIndex] = nextSection;
@@ -466,15 +599,15 @@ export function ArtifactWorkspace({
 
 function ArtifactSectionEditor({
   activeIssue,
+  artifactProvenance,
   artifactType,
-  confirmed,
   onChange,
   onOpenIssue,
   section,
 }: {
   activeIssue: Issue | null;
+  artifactProvenance: ArtifactWorkspaceSummary["provenance"];
   artifactType: string;
-  confirmed: boolean;
   onChange: (section: ArtifactSection) => void;
   onOpenIssue: (issue: Issue, target: HTMLElement) => void;
   section: ArtifactSection;
@@ -491,41 +624,51 @@ function ArtifactSectionEditor({
       >
         <DotsSixVertical size={14} />
       </button>
-      <span className="artifact-block-provenance">
-        {confirmed ? "Confirmed by you" : "From OSLO"}
+      <span
+        aria-label={`Provenance: ${claimProvenanceLabel(
+          section.provenance,
+          artifactProvenance,
+        )}`}
+        className="artifact-block-provenance"
+      >
+        {claimProvenanceLabel(section.provenance, artifactProvenance)}
       </span>
       {section.heading ? <h2>{section.heading}</h2> : null}
       {section.body || (!section.bullets.length && !section.rows.length) ? (
-        <p
+        <StableEditableText
+          as="p"
           className={
             issueHere
               ? `artifact-copy has-${issueHere.severity.toLowerCase()}-issue`
               : "artifact-copy"
           }
-          contentEditable
-          onInput={(event) =>
-            onChange({ ...section, body: event.currentTarget.textContent ?? "" })
+          onValueChange={(value) =>
+            onChange({
+              ...section,
+              body: value,
+              provenance: "confirmed_by_user",
+            })
           }
-          suppressContentEditableWarning
-        >
-          {section.body}
-        </p>
+          value={section.body}
+        />
       ) : null}
       {section.bullets.length ? (
         <ul className="artifact-bullets">
           {section.bullets.map((bullet, bulletIndex) => (
-            <li
-              contentEditable
-              key={`${bullet}-${bulletIndex}`}
-              onInput={(event) => {
+            <StableEditableText
+              as="li"
+              key={`${section.id ?? artifactType}-bullet-${bulletIndex}`}
+              onValueChange={(value) => {
                 const bullets = [...section.bullets];
-                bullets[bulletIndex] = event.currentTarget.textContent ?? "";
-                onChange({ ...section, bullets });
+                bullets[bulletIndex] = value;
+                onChange({
+                  ...section,
+                  bullets,
+                  provenance: "confirmed_by_user",
+                });
               }}
-              suppressContentEditableWarning
-            >
-              {bullet}
-            </li>
+              value={bullet}
+            />
           ))}
         </ul>
       ) : null}
@@ -541,8 +684,17 @@ function ArtifactSectionEditor({
                       onChange({
                         ...section,
                         rows: [section.columns.map(() => ""), ...section.rows],
+                        row_ids: [
+                          nextEditorId(`${section.id ?? artifactType}-row`),
+                          ...(section.row_ids ?? []),
+                        ],
+                        provenance: "confirmed_by_user",
                         row_evidence_refs: [[], ...(section.row_evidence_refs ?? [])],
                         row_states: ["confirmed", ...(section.row_states ?? [])],
+                        row_provenance: [
+                          "confirmed_by_user",
+                          ...rowProvenanceValues(section, artifactProvenance),
+                        ],
                       })
                     }
                     title="Insert row at top"
@@ -565,7 +717,13 @@ function ArtifactSectionEditor({
                             nextRow.splice(columnIndex + 1, 0, "");
                             return nextRow;
                           });
-                          onChange({ ...section, columns, rows });
+                          onChange({
+                            ...section,
+                            columns,
+                            rows,
+                            provenance: "confirmed_by_user",
+                            row_provenance: rows.map(() => "confirmed_by_user"),
+                          });
                         }}
                         type="button"
                       >
@@ -581,7 +739,13 @@ function ArtifactSectionEditor({
                           const rows = section.rows.map((row) =>
                             row.filter((_, index) => index !== columnIndex),
                           );
-                          onChange({ ...section, columns, rows });
+                          onChange({
+                            ...section,
+                            columns,
+                            rows,
+                            provenance: "confirmed_by_user",
+                            row_provenance: rows.map(() => "confirmed_by_user"),
+                          });
                         }}
                         type="button"
                       >
@@ -594,18 +758,40 @@ function ArtifactSectionEditor({
             </thead>
             <tbody>
               {section.rows.map((row, rowIndex) => (
-                <tr key={`${rowIndex}-${row.join("-")}`}>
+                <tr
+                  key={
+                    section.row_ids?.[rowIndex] ??
+                    `${section.id ?? artifactType}-row-${rowIndex}`
+                  }
+                >
                   <td className="artifact-row-gutter">
                     <span
+                      aria-label={`${evidenceStateLabel(
+                        section.row_states?.[rowIndex] ?? "unknown",
+                      )}; ${
+                        section.row_evidence_refs?.[rowIndex]?.length ?? 0
+                      } evidence reference(s)`}
                       className={`artifact-row-provenance is-${
                         section.row_states?.[rowIndex] ?? "unknown"
                       }`}
-                      title={`${
-                        section.row_states?.[rowIndex] ?? "unknown"
-                      } · ${
+                      title={`${evidenceStateLabel(
+                        section.row_states?.[rowIndex] ?? "unknown",
+                      )} · ${
                         section.row_evidence_refs?.[rowIndex]?.length ?? 0
                       } evidence reference(s)`}
                     />
+                    <span
+                      aria-label={`Provenance: ${claimProvenanceLabel(
+                        section.row_provenance?.[rowIndex],
+                        artifactProvenance,
+                      )}`}
+                      className="artifact-row-origin"
+                    >
+                      {claimProvenanceLabel(
+                        section.row_provenance?.[rowIndex],
+                        artifactProvenance,
+                      )}
+                    </span>
                     <button
                       aria-label="Reorder row — use Up and Down arrow keys to move"
                       className="artifact-row-grip"
@@ -624,11 +810,33 @@ function ArtifactSectionEditor({
                         const rowStates = [...(section.row_states ?? [])];
                         const [movedState] = rowStates.splice(rowIndex, 1);
                         rowStates.splice(targetIndex, 0, movedState ?? "unknown");
+                        const rowProvenance = rowProvenanceValues(
+                          section,
+                          artifactProvenance,
+                        );
+                        const rowIds = [...(section.row_ids ?? [])];
+                        const [movedRowId] = rowIds.splice(rowIndex, 1);
+                        rowIds.splice(
+                          targetIndex,
+                          0,
+                          movedRowId ??
+                            nextEditorId(`${section.id ?? artifactType}-row`),
+                        );
+                        const [movedProvenance] = rowProvenance.splice(rowIndex, 1);
+                        rowProvenance.splice(
+                          targetIndex,
+                          0,
+                          movedProvenance ?? "from_oslo",
+                        );
+                        rowProvenance[targetIndex] = "confirmed_by_user";
                         onChange({
                           ...section,
                           rows,
+                          provenance: "confirmed_by_user",
                           row_evidence_refs: rowEvidence,
                           row_states: rowStates,
+                          row_provenance: rowProvenance,
+                          row_ids: rowIds,
                         });
                       }}
                       title="Use Up and Down arrow keys to reorder"
@@ -645,11 +853,25 @@ function ArtifactSectionEditor({
                         rowEvidence.splice(rowIndex + 1, 0, []);
                         const rowStates = [...(section.row_states ?? [])];
                         rowStates.splice(rowIndex + 1, 0, "confirmed");
+                        const rowProvenance = rowProvenanceValues(
+                          section,
+                          artifactProvenance,
+                        );
+                        rowProvenance.splice(rowIndex + 1, 0, "confirmed_by_user");
+                        const rowIds = [...(section.row_ids ?? [])];
+                        rowIds.splice(
+                          rowIndex + 1,
+                          0,
+                          nextEditorId(`${section.id ?? artifactType}-row`),
+                        );
                         onChange({
                           ...section,
                           rows,
+                          provenance: "confirmed_by_user",
                           row_evidence_refs: rowEvidence,
                           row_states: rowStates,
+                          row_provenance: rowProvenance,
+                          row_ids: rowIds,
                         });
                       }}
                       type="button"
@@ -662,10 +884,20 @@ function ArtifactSectionEditor({
                         onChange({
                           ...section,
                           rows: section.rows.filter((_, index) => index !== rowIndex),
+                          provenance: "confirmed_by_user",
                           row_evidence_refs: (section.row_evidence_refs ?? []).filter(
                             (_, index) => index !== rowIndex,
                           ),
                           row_states: (section.row_states ?? []).filter(
+                            (_, index) => index !== rowIndex,
+                          ),
+                          row_provenance: rowProvenanceValues(
+                            section,
+                            artifactProvenance,
+                          ).filter(
+                            (_, index) => index !== rowIndex,
+                          ),
+                          row_ids: (section.row_ids ?? []).filter(
                             (_, index) => index !== rowIndex,
                           ),
                         })
@@ -676,28 +908,35 @@ function ArtifactSectionEditor({
                     </button>
                   </td>
                   {row.map((cell, cellIndex) => (
-                    <td
+                    <StableEditableText
+                      as="td"
                       className={
                         issueHere && rowIndex === 0 && cellIndex === row.length - 1
                           ? `has-${issueHere.severity.toLowerCase()}-issue`
                           : undefined
                       }
-                      contentEditable
                       key={`${rowIndex}-${cellIndex}`}
-                      onInput={(event) => {
+                      onValueChange={(value) => {
                         const rows = section.rows.map((item) => [...item]);
-                        rows[rowIndex][cellIndex] = event.currentTarget.textContent ?? "";
-                        onChange({ ...section, rows });
+                        rows[rowIndex][cellIndex] = value;
+                        const rowProvenance = rowProvenanceValues(
+                          section,
+                          artifactProvenance,
+                        );
+                        rowProvenance[rowIndex] = "confirmed_by_user";
+                        onChange({
+                          ...section,
+                          rows,
+                          row_provenance: rowProvenance,
+                        });
                       }}
-                      suppressContentEditableWarning
                       title={
                         issueHere && rowIndex === 0 && cellIndex === row.length - 1
                           ? `${issueHere.title}: ${issueHere.why}`
                           : undefined
                       }
-                    >
-                      {cell}
-                    </td>
+                      value={cell}
+                    />
                   ))}
                 </tr>
               ))}
@@ -709,8 +948,17 @@ function ArtifactSectionEditor({
               onChange({
                 ...section,
                 rows: [...section.rows, section.columns.map(() => "")],
+                provenance: "confirmed_by_user",
                 row_evidence_refs: [...(section.row_evidence_refs ?? []), []],
                 row_states: [...(section.row_states ?? []), "confirmed"],
+                row_provenance: [
+                  ...rowProvenanceValues(section, artifactProvenance),
+                  "confirmed_by_user",
+                ],
+                row_ids: [
+                  ...(section.row_ids ?? []),
+                  nextEditorId(`${section.id ?? artifactType}-row`),
+                ],
               })
             }
             type="button"

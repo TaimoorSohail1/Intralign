@@ -10,8 +10,11 @@ from oslo_api.analysis.models import (
     AnalysisRun,
     AnalysisRunRequest,
     AnalysisRunStatus,
+    Artifact,
+    ArtifactType,
     AssessmentSnapshot,
     EvidenceFragment,
+    HarnessCallMetadata,
     RunKind,
 )
 
@@ -57,6 +60,26 @@ class AnalysisStore(Protocol):
 
     def evidence_for(self, request: AnalysisRunRequest) -> tuple[EvidenceFragment, ...]: ...
 
+    def completed_artifacts(self, run_id: UUID) -> dict[ArtifactType, Artifact]: ...
+
+    def start_artifact_job(self, run_id: UUID, artifact_type: ArtifactType) -> None: ...
+
+    def complete_artifact_job(
+        self,
+        run_id: UUID,
+        artifact: Artifact,
+        metadata: HarnessCallMetadata | None = None,
+    ) -> None: ...
+
+    def fail_artifact_job(
+        self,
+        run_id: UUID,
+        artifact_type: ArtifactType,
+        *,
+        error_code: str,
+        retryable: bool,
+    ) -> None: ...
+
 
 class InMemoryAnalysisStore:
     def __init__(self) -> None:
@@ -64,6 +87,7 @@ class InMemoryAnalysisStore:
         self._events: dict[UUID, list[AnalysisEvent]] = {}
         self._current_snapshots: dict[UUID, AssessmentSnapshot] = {}
         self._idempotency: dict[tuple[UUID, str], UUID] = {}
+        self._artifact_jobs: dict[UUID, dict[ArtifactType, Artifact]] = {}
         self._lock = RLock()
         self._condition = Condition(self._lock)
 
@@ -78,6 +102,7 @@ class InMemoryAnalysisStore:
             run = AnalysisRun.queued(request)
             self._runs[run.id] = run
             self._events[run.id] = []
+            self._artifact_jobs[run.id] = {}
             if request.idempotency_key:
                 self._idempotency[(request.workspace_id, request.idempotency_key)] = run.id
             self._append_event(run, "analysis.queued", AnalysisRunStatus.QUEUED.value)
@@ -178,6 +203,61 @@ class InMemoryAnalysisStore:
     def evidence_for(self, request: AnalysisRunRequest) -> tuple[EvidenceFragment, ...]:
         return ()
 
+    def completed_artifacts(self, run_id: UUID) -> dict[ArtifactType, Artifact]:
+        with self._lock:
+            return deepcopy(self._artifact_jobs.get(run_id, {}))
+
+    def start_artifact_job(self, run_id: UUID, artifact_type: ArtifactType) -> None:
+        with self._condition:
+            run = self._runs[run_id]
+            self._append_event(
+                run,
+                "analysis.artifact_started",
+                run.status.value,
+                AnalysisPhase.CONSTRUCT_ARTIFACTS,
+                artifact_type=artifact_type,
+            )
+
+    def complete_artifact_job(
+        self,
+        run_id: UUID,
+        artifact: Artifact,
+        metadata: HarnessCallMetadata | None = None,
+    ) -> None:
+        del metadata
+        with self._condition:
+            run = self._runs[run_id]
+            self._artifact_jobs.setdefault(run_id, {})[artifact.artifact_type] = deepcopy(
+                artifact
+            )
+            self._append_event(
+                run,
+                "analysis.artifact_completed",
+                run.status.value,
+                AnalysisPhase.CONSTRUCT_ARTIFACTS,
+                artifact_type=artifact.artifact_type,
+            )
+
+    def fail_artifact_job(
+        self,
+        run_id: UUID,
+        artifact_type: ArtifactType,
+        *,
+        error_code: str,
+        retryable: bool,
+    ) -> None:
+        with self._condition:
+            run = self._runs[run_id]
+            self._append_event(
+                run,
+                "analysis.artifact_failed",
+                run.status.value,
+                AnalysisPhase.CONSTRUCT_ARTIFACTS,
+                artifact_type=artifact_type,
+                error_code=error_code,
+                retryable=retryable,
+            )
+
     def events_after(self, run_id: UUID, sequence: int) -> tuple[AnalysisEvent, ...]:
         with self._lock:
             return tuple(
@@ -208,6 +288,7 @@ class InMemoryAnalysisStore:
         *,
         error_code: str | None = None,
         retryable: bool | None = None,
+        artifact_type: ArtifactType | None = None,
     ) -> None:
         event = AnalysisEvent(
             run_id=run.id,
@@ -217,6 +298,7 @@ class InMemoryAnalysisStore:
             phase=phase,
             error_code=error_code,
             retryable=retryable,
+            artifact_type=artifact_type,
         )
         self._events[run.id].append(event)
         self._condition.notify_all()

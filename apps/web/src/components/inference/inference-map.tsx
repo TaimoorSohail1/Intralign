@@ -33,6 +33,19 @@ function ageLabel(createdAt: string) {
   return `${days} day${days === 1 ? "" : "s"}`;
 }
 
+function visualClaimMarkers(grounded: number, inferred: number) {
+  const total = grounded + inferred;
+  if (total <= 40) return { grounded, inferred };
+  const groundedMarkers = Math.max(
+    grounded > 0 ? 1 : 0,
+    Math.min(
+      grounded > 0 && inferred > 0 ? 39 : 40,
+      Math.round((grounded / total) * 40),
+    ),
+  );
+  return { grounded: groundedMarkers, inferred: 40 - groundedMarkers };
+}
+
 function AssumptionRow({
   assumption,
   issue,
@@ -119,31 +132,39 @@ export function InferenceMap({
         <div className="inference-document-rows">
           {provenance.artifacts
             .filter((artifact) => artifact.total > 0)
-            .map((artifact) => (
-              <Link
+            .map((artifact) => {
+              const markers = visualClaimMarkers(
+                artifact.grounded,
+                artifact.inferred,
+              );
+              return (
+                <Link
                 className={artifact.verifyFirst ? "is-verify-first" : ""}
                 href={`/projects/${snapshot.project_id}/artifacts/${artifact.artifactType}`}
                 key={artifact.artifactType}
               >
                 <span>{label(artifact.artifactType)}</span>
-                <span
-                  aria-label={`${artifact.grounded} grounded and ${artifact.inferred} inferred`}
-                  className="inference-pips"
-                  role="img"
-                >
-                  {Array.from({ length: artifact.grounded }, (_, index) => (
-                    <i className="is-grounded" key={`grounded-${index}`} />
-                  ))}
-                  {Array.from({ length: artifact.inferred }, (_, index) => (
-                    <i className="is-inferred" key={`inferred-${index}`} />
-                  ))}
+                <span className="inference-claim-visual">
+                  <span
+                    aria-label={`${artifact.grounded} grounded and ${artifact.inferred} inferred`}
+                    className="inference-pips"
+                    role="img"
+                  >
+                    {Array.from({ length: markers.grounded }, (_, index) => (
+                      <i className="is-grounded" key={`grounded-${index}`} />
+                    ))}
+                    {Array.from({ length: markers.inferred }, (_, index) => (
+                      <i className="is-inferred" key={`inferred-${index}`} />
+                    ))}
+                  </span>
+                  <span className="inference-counts">
+                    <strong>{artifact.grounded}</strong> grounded ·{" "}
+                    <strong>{artifact.inferred}</strong> inferred
+                  </span>
                 </span>
-                <span>
-                  <strong>{artifact.grounded}</strong> grounded ·{" "}
-                  <strong>{artifact.inferred}</strong> inferred
-                </span>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
         </div>
         <footer>
           <span><i className="is-grounded" /> Confirmed by evidence</span>
@@ -170,7 +191,7 @@ export function InferenceMap({
                 issue={snapshot.assessment.issues.find(
                   (candidate) => candidate.id === assumption.issueId,
                 )}
-                key={assumption.id}
+                key={`${assumption.artifactType}:${assumption.id}:${assumption.text}`}
                 onOpenIssue={onOpenIssue}
               />
             ))

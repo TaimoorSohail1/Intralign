@@ -44,6 +44,33 @@ def enrich_assessment(
     """Derive the Slice 3 console read from validated, persisted analysis output."""
 
     basis = _reliability_basis(artifacts)
+    reliability = (
+        "High"
+        if {
+            basis.coverage,
+            basis.evidence,
+            basis.assessability,
+        }
+        == {"High"}
+        else assessment.reliability
+    )
+    clarity_issues = tuple(
+        issue
+        for issue in assessment.issues
+        if issue.status != "resolved" and issue.dimension == "Clarity"
+    )
+    clarity = (
+        "High"
+        if basis.assessability == "High"
+        and not any(issue.severity == "Critical" for issue in clarity_issues)
+        and len(clarity_issues) <= 2
+        else assessment.clarity
+    )
+    assessment = replace(
+        assessment,
+        reliability=reliability,
+        clarity=clarity,
+    )
     limiting_dimension = min(
         ("clarity", "alignment", "feasibility"),
         key=lambda name: _BAND_ORDER.get(getattr(assessment, name), -1),
@@ -59,7 +86,7 @@ def enrich_assessment(
     direction = _confidence_direction(assessment, previous_snapshot)
     false_confidence = (
         assessment.confidence_band in {"High", "Very High"}
-        and assessment.reliability == "Low"
+        and reliability == "Low"
     )
     clarification_block = (
         structured_clarification[1]
@@ -88,11 +115,7 @@ def enrich_assessment(
                 f"{issue.title}?"
             ),
             status=(
-                "resolved"
-                if issue.id == clarification_issue_id
-                and issue.status != "resolved"
-                and complete_confirmation
-                else "addressed"
+                "addressed"
                 if issue.id == clarification_issue_id
                 and issue.status != "resolved"
                 else issue.status
@@ -138,14 +161,22 @@ def enrich_assessment(
                         status=(
                             "resolved"
                             if related_issue.status == "resolved"
-                            or complete_confirmation
                             else "addressed"
                         ),
                     )
                 else:
-                    issues.append(replace(previous_issue, status="resolved"))
+                    issues.append(
+                        replace(
+                            previous_issue,
+                            status=(
+                                "resolved"
+                                if complete_confirmation
+                                else "addressed"
+                            ),
+                        )
+                    )
     existing_ids = {issue.id for issue in issues}
-    if previous_snapshot is not None:
+    if previous_snapshot is not None and kind is RunKind.EXTENDED:
         issues.extend(
             issue
             for issue in previous_snapshot.assessment.issues
@@ -159,13 +190,14 @@ def enrich_assessment(
     )
     explanation = (
         f"The {assessment.confidence_band.lower()} confidence read is limited by "
-        f"{limiting_dimension}. Reliability is {assessment.reliability.lower()} "
+        f"{limiting_dimension}. Reliability is {reliability.lower()} "
         f"because coverage is {basis.coverage.lower()}, evidence is "
         f"{basis.evidence.lower()}, and assessability is "
         f"{basis.assessability.lower()}."
     )
     return replace(
         assessment,
+        reliability=reliability,
         understanding_stage=stage,
         reliability_basis=basis,
         confidence_direction=direction,
@@ -202,14 +234,20 @@ def _complete_user_confirmation(clarification: str | None) -> bool:
     if not answer_match:
         return False
     answer = " ".join(answer_match.group(1).split()).lower()
-    if len(answer) < 60:
-        return False
     incomplete = re.search(
         r"\b(unknown|unconfirmed|pending|tbd|not yet|cannot|unsure|"
         r"no fallback|but no|not approved|not confirmed)\b",
         answer,
     )
-    return incomplete is None
+    if incomplete is not None:
+        return False
+    explicit_closure = re.search(
+        r"\b(?:accountable|owns?|owner)\b.{0,100}"
+        r"\b(?:approved\s+fallback|fallback\s+is|effective|approved\s+by)\b|"
+        r"\bapproved\b.{0,100}\b(?:threshold|decision|date|owner|fallback)\b",
+        answer,
+    )
+    return len(answer) >= 60 or explicit_closure is not None
 
 
 def _reliability_basis(artifacts: tuple[Artifact, ...]) -> ReliabilityBasis:
@@ -221,22 +259,38 @@ def _reliability_basis(artifacts: tuple[Artifact, ...]) -> ReliabilityBasis:
         if covered >= 4
         else "Low"
     )
-    distinct_refs = {
-        evidence_ref
-        for artifact in artifacts
-        for evidence_ref in artifact.evidence_refs
-    }
+    distinct_refs = set()
+    row_count = 0
+    cited_row_count = 0
+    for artifact in artifacts:
+        distinct_refs.update(artifact.evidence_refs)
+        for section in artifact.sections:
+            distinct_refs.update(section.evidence_refs)
+            row_count += len(section.rows)
+            cited_row_count += sum(
+                bool(references) for references in section.row_evidence_refs
+            )
+            for references in section.row_evidence_refs:
+                distinct_refs.update(references)
+        for assumption in artifact.assumptions:
+            distinct_refs.update(assumption.evidence_refs)
+        for conflict in artifact.conflicts:
+            distinct_refs.update(conflict.evidence_refs)
     evidence = "High" if len(distinct_refs) >= 7 else "Moderate" if distinct_refs else "Low"
-    reliable = sum(
-        artifact.reliability in {"Moderate", "High"}
-        for artifact in artifacts
+    row_coverage = cited_row_count / row_count if row_count else 1
+    fully_reliable_artifacts = all(
+        artifact.reliability == "High" for artifact in artifacts
     )
     assessability = (
         "High"
-        if reliable == len(ARTIFACT_TYPES)
-        and all(artifact.reliability == "High" for artifact in artifacts)
+        if covered == len(ARTIFACT_TYPES)
+        and evidence == "High"
+        and (
+            fully_reliable_artifacts
+            or (row_count > 0 and row_coverage >= 0.9)
+        )
         else "Moderate"
-        if reliable >= 4
+        if covered >= 4 and row_coverage >= 0.6
         else "Low"
     )
     return ReliabilityBasis(

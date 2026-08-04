@@ -34,7 +34,7 @@ class InviteMember:
         clock: Callable[[], datetime],
         new_id: Callable[[], UUID],
         new_token: Callable[[], str],
-        validity: timedelta = timedelta(days=7),
+        validity: timedelta = timedelta(days=14),
     ) -> None:
         self._invitations = invitations
         self._memberships = memberships
@@ -58,7 +58,7 @@ class InviteMember:
             workspace_id=command.workspace_id,
             invited_by_user_id=command.invited_by_user_id,
             email=command.email.strip().lower(),
-            role=command.role,
+            role=MembershipRole.OWNER,
             token_hash=sha256(token.encode("utf-8")).digest(),
             status=InvitationStatus.PENDING,
             created_at=now,
