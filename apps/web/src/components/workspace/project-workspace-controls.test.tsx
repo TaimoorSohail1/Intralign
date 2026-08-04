@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { WorkspaceSummary } from "@/lib/server/oslo-api";
@@ -12,7 +12,6 @@ const workspace: WorkspaceSummary = {
   plan: "free",
   plan_label: "Free",
   price_usd_monthly: 0,
-  active_project_limit: 1,
   document_limit: 20,
   word_limit: 50_000,
   collaborator_seat_limit: 3,
@@ -180,6 +179,32 @@ describe("ProjectWorkspaceControls", () => {
     expect(screen.getByText("Analysis update 1")).toBeInTheDocument();
     expect(screen.getByText("Analysis update 8")).toBeInTheDocument();
     expect(screen.queryByText("Analysis update 9")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "View workspace activity" })).toBeInTheDocument();
+    expect(screen.getByText(/Notifications never start analysis/)).toBeInTheDocument();
+  });
+
+  it("places the governed plan control in the project sidebar footer", async () => {
+    render(
+      <>
+        <div data-testid="sidebar-plan-slot" id="project-sidebar-plan" />
+        <ProjectWorkspaceControls
+          planPortalId="project-sidebar-plan"
+          projectId="project-1"
+        />
+      </>,
+    );
+
+    const slot = screen.getByTestId("sidebar-plan-slot");
+    await waitFor(() => {
+      expect(within(slot).getByRole("button", { name: "Free" })).toBeInTheDocument();
+    });
+    expect(within(slot).getByText("Free plan")).toBeInTheDocument();
+    expect(within(slot).getByText("Your plan")).toBeInTheDocument();
+
+    fireEvent.click(within(slot).getByRole("button", { name: "Free" }));
+    expect(
+      await screen.findByRole("heading", { name: "Usage & limits" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Monthly analyses")).toBeInTheDocument();
+    expect(screen.getByText("Active projects")).toBeInTheDocument();
   });
 });

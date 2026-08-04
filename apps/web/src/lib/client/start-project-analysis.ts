@@ -161,14 +161,6 @@ export async function startProjectAnalysisWithRecovery(
     unknown
   >;
   if (!projectResponse.ok) {
-    if (
-      projectResponse.status === 409 ||
-      projectPayload.code === "PROJECT_LIMIT_REACHED"
-    ) {
-      throw new Error(
-        "This project is no longer available, and your active-project limit has been reached. Open Workspace to archive a project, then try again.",
-      );
-    }
     throw new Error(
       typeof projectPayload.message === "string"
         ? projectPayload.message

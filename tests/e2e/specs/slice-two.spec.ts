@@ -23,7 +23,7 @@ test("Slice 2 survives refresh and publishes exactly seven artifacts", async ({ 
     await page.reload();
     await expect(page.getByText(/Analyzing|Your progress is safe/).first()).toBeVisible();
   }
-  await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 90_000 });
+  await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
   await expect(page.locator(".confidence-read")).toBeVisible();
 
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });

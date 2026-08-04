@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
-from oslo_api.application import ProjectArchiveDenied, ProjectLimitReached
+from oslo_api.application import ProjectArchiveDenied
 from oslo_api.invitations import InvitePermissionDenied
 
 router = APIRouter(prefix="/v1", tags=["projects"])
@@ -54,7 +54,6 @@ class WorkspaceResponse(BaseModel):
     name: str
     role: str
     plan: str
-    active_project_limit: int
     plan_label: str
     price_usd_monthly: int
     document_limit: int
@@ -64,6 +63,7 @@ class WorkspaceResponse(BaseModel):
     monthly_analyses_used: int
     can_manage_plan: bool
     member_count: int
+    collaborator_seats_used: int
     projects: list[WorkspaceProjectResponse]
     notifications: list[WorkspaceNotificationResponse]
 
@@ -77,7 +77,7 @@ class WorkspacePreferencesResponse(BaseModel):
     display_name: str = ""
     role_title: str = ""
     workspace_name: str = ""
-    actor_role: str = "viewer"
+    actor_role: str = "owner"
     mentions_notifications: bool = True
     reply_notifications: bool = True
     shared_notifications: bool = True
@@ -118,14 +118,6 @@ def start_first_project(
         )
     except InvitePermissionDenied as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from error
-    except ProjectLimitReached as error:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={
-                "code": "PROJECT_LIMIT_REACHED",
-                "active_project_limit": error.active_project_limit,
-            },
-        ) from error
     return ProjectResponse.model_validate(project)
 
 
@@ -195,14 +187,6 @@ def restore_project(
         context.application.restore_project(
             actor_user_id=context.user.id, workspace_id=workspace_id, project_id=project_id
         )
-    except ProjectLimitReached as error:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={
-                "code": "PROJECT_LIMIT_REACHED",
-                "active_project_limit": error.active_project_limit,
-            },
-        ) from error
     except ProjectArchiveDenied as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from error
 

@@ -8,6 +8,7 @@ import {
   CreditCard,
   Desktop,
   Gear,
+  Key,
   LinkSimple,
   MagnifyingGlass,
   Moon,
@@ -33,6 +34,7 @@ const settingsSections = [
   { id: "workspace", label: "Workspace", group: "Workspace", Icon: Buildings },
   { id: "project-defaults", label: "Project defaults", group: "Workspace", Icon: SlidersHorizontal },
   { id: "collaboration", label: "Collaboration", group: "Workspace", Icon: Users },
+  { id: "access", label: "Access & invites", group: "Workspace", Icon: Key },
   { id: "membership", label: "Membership", group: "Workspace", Icon: Users, badge: "View" },
   { id: "subscription", label: "Subscription", group: "Plan", Icon: CreditCard, badge: "View" },
   { id: "billing", label: "Billing", group: "Plan", Icon: CreditCard, badge: "View" },
@@ -76,6 +78,7 @@ export function WorkspaceSettings({
   const [role, setRole] = useState(initial.role_title);
   const [workspaceState, setWorkspaceState] = useState(workspace);
   const [plansOpen, setPlansOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<typeof settingsSections[number]["id"]>("account");
   const [collaborationPreferences, setCollaborationPreferences] = useState<
     Record<string, boolean>
   >({
@@ -106,6 +109,7 @@ export function WorkspaceSettings({
           method: "PUT",
           headers: { "content-type": "application/json" },
           body: JSON.stringify(next),
+          keepalive: true,
         });
         const payload = await response.json().catch(() => null);
         if (!response.ok) {
@@ -140,6 +144,18 @@ export function WorkspaceSettings({
     return () => media.removeEventListener("change", applyTheme);
   }, [preferences.theme]);
 
+  useEffect(() => {
+    const syncSectionFromHash = () => {
+      const section = window.location.hash.slice(1);
+      if (settingsSections.some(({ id }) => id === section)) {
+        setActiveSection(section as typeof settingsSections[number]["id"]);
+      }
+    };
+    syncSectionFromHash();
+    window.addEventListener("hashchange", syncSectionFromHash);
+    return () => window.removeEventListener("hashchange", syncSectionFromHash);
+  }, []);
+
   const toggleCollaborationNotification = (title: string) => {
     setCollaborationPreferences((current) => {
       const next = { ...current, [title]: !current[title] };
@@ -163,6 +179,13 @@ export function WorkspaceSettings({
   };
 
   const sectionVisible = (id: typeof settingsSections[number]["id"]) => visibleSections.has(id);
+  const memberCount = workspaceState?.member_count ?? 1;
+  const collaboratorSeatsUsed = workspaceState?.collaborator_seats_used ?? memberCount;
+  const activeProjects = workspaceState?.projects.filter((project) => !project.archived).length ?? 1;
+  const activeProjectLimit = workspaceState?.plan === "basic" ? 3 : 1;
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1, 1);
+  const analysisReset = nextMonth.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
 
   return (
     <main className="settings-shell">
@@ -172,9 +195,14 @@ export function WorkspaceSettings({
           {["You", "Workspace", "Plan"].map((group) => (
             <div className="settings-nav-group" key={group}>
               <p>{group}</p>
-              {settingsSections.filter((section) => section.group === group).map(({ id, label, Icon, ...section }) => (
-                <a href={`#${id}`} key={id}>
-                  <Icon aria-hidden="true" size={15} />
+              {settingsSections.filter((section) => section.group === group).map(({ id, label, ...section }) => (
+                <a
+                  aria-current={activeSection === id ? "page" : undefined}
+                  className={activeSection === id ? "is-active" : undefined}
+                  href={`#${id}`}
+                  key={id}
+                  onClick={() => setActiveSection(id)}
+                >
                   <span>{label}</span>
                   {"badge" in section ? <small>{section.badge}</small> : null}
                 </a>
@@ -316,7 +344,18 @@ export function WorkspaceSettings({
           <article className="settings-section" id="workspace">
             <div className="settings-section-heading"><h2>Workspace</h2><p>The container your projects live in.</p></div>
             <div className="settings-card">
-              <label className="settings-field-row"><span>Workspace name</span><input onBlur={commitLocalIdentity} onChange={(event) => setLocalWorkspaceName(event.target.value)} value={localWorkspaceName} /></label>
+              <label className="settings-field-row">
+                <span>Workspace name</span>
+                <input
+                  disabled={preferences.actor_role !== "owner"}
+                  onBlur={commitLocalIdentity}
+                  onChange={(event) => setLocalWorkspaceName(event.target.value)}
+                  value={localWorkspaceName}
+                />
+                {preferences.actor_role !== "owner" ? (
+                  <small>Only a workspace owner can rename the workspace.</small>
+                ) : null}
+              </label>
               <div className="settings-row"><span>Workspace icon</span><small>First letter — {localWorkspaceName.slice(0, 1).toUpperCase()}. Picture upload comes later.</small></div>
             </div>
           </article>
@@ -335,7 +374,7 @@ export function WorkspaceSettings({
             <div className="settings-card">
               <div className="settings-row"><span><strong>Default sharing</strong><small>New projects remain private until you share them.</small></span><strong>Private</strong></div>
               <div className="settings-row">
-                <span><strong>Collaborator seats</strong><small>Owners and collaborators can edit; viewers and reviewers do not consume a seat.</small></span>
+                <span><strong>Owner seats</strong><small>Every workspace member is an Owner. External reviewers do not become members or consume a seat.</small></span>
                 <strong>{workspaceState ? `${workspaceState.collaborator_seat_limit} on ${workspaceState.plan_label}` : "3 on Free"}</strong>
               </div>
               <div className="settings-row"><span><strong>External reviewers</strong><small>Review links do not create membership or use a seat.</small></span><strong>Unlimited</strong></div>
@@ -353,9 +392,33 @@ export function WorkspaceSettings({
           </article>
         ) : null}
 
+        {sectionVisible("access") ? (
+          <article className="settings-section" id="access">
+            <div className="settings-section-heading"><h2>Access &amp; invites</h2><p>How many new people you can bring into OSLO.</p></div>
+            <div className="settings-card">
+              <div className="settings-row"><span>Release phase</span><span className="settings-fact-pill">GA</span></div>
+              <div className="settings-row settings-row-start">
+                <span>Invite allocation<small>Spent on a <strong>new</strong> person only.</small></span>
+                <span className="settings-row-value"><strong>Retired at GA</strong><small>Limits are now tier-based</small></span>
+              </div>
+              <div className="settings-row"><span>Waitlist</span><span className="settings-fact-pill">Retired at GA</span></div>
+              <div className="settings-row">
+                <span>Invite people</span>
+                {(workspaceState?.role ?? preferences.actor_role) === "owner" ? (
+                  <Link className="settings-primary-link" href="/admin/invitations">Manage invitations →</Link>
+                ) : (
+                  <small>Managed by workspace owners</small>
+                )}
+              </div>
+            </div>
+            <p className="settings-section-note"><strong>Asking anyone for their read is free — no invite, no seat.</strong></p>
+            <p className="settings-section-note">GA is active: the allocation and waitlist are retired. Invitations now follow your plan’s seat capacity.</p>
+          </article>
+        ) : null}
+
         {sectionVisible("membership") ? (
           <article className="settings-section" id="membership">
-            <div className="settings-section-heading"><h2>Membership <small>View</small></h2><p>Who is in this workspace. This view never grants or removes access.</p></div>
+            <div className="settings-section-heading"><h2>Membership <small>View</small></h2><p>Who is in this workspace. Nothing here grants or removes access.</p></div>
             <div className="settings-card">
               <div className="settings-row">
                 <span><strong>{localDisplayName}</strong><small>{email ?? "Workspace member"}</small></span>
@@ -363,15 +426,17 @@ export function WorkspaceSettings({
               </div>
               <div className="settings-row">
                 <span>
-                  {workspaceState
-                    ? `${workspaceState.member_count ?? 1} ${(workspaceState.member_count ?? 1) === 1 ? "member" : "members"}`
-                    : "1 member"}
+                  {`${memberCount} ${memberCount === 1 ? "member" : "members"}`}
                 </span>
                 {(workspaceState?.role ?? preferences.actor_role) === "owner" ? (
-                  <Link href="/admin/invitations">Manage invitations</Link>
+                  <Link href="#collaboration" onClick={() => setActiveSection("collaboration")}>Manage in Collaboration →</Link>
                 ) : (
                   <small>Owner-managed</small>
                 )}
+              </div>
+              <div className="settings-row settings-row-start">
+                <span>Owner seats<small>Every workspace member has the same Owner access.</small></span>
+                <strong>{`${collaboratorSeatsUsed} of ${workspaceState?.collaborator_seat_limit ?? 3} filled`}</strong>
               </div>
             </div>
           </article>
@@ -379,35 +444,44 @@ export function WorkspaceSettings({
 
         {sectionVisible("subscription") ? (
           <article className="settings-section" id="subscription">
-            <div className="settings-section-heading"><h2>Subscription <small>View</small></h2><p>Your plan and current usage. Nothing here interrupts an active project.</p></div>
+            <div className="settings-section-heading"><h2>Subscription <small>View</small></h2><p>Your plan, what you’re using, and what Basic adds.</p></div>
             <div className="settings-card">
               <div className="settings-row"><span>Plan</span><strong>{workspaceState?.plan_label ?? "Free"}</strong></div>
-              <div className="settings-row">
-                <span>Active projects</span>
-                <strong>
-                  {workspaceState
-                    ? `${workspaceState.projects.filter((project) => !project.archived).length} of ${workspaceState.active_project_limit}`
-                    : "1 of 1"}
-                </strong>
-              </div>
-              <div className="settings-row"><span>Evidence envelope</span><strong>{workspaceState ? `${workspaceState.document_limit} documents · ${workspaceState.word_limit.toLocaleString()} words` : "20 documents · 50,000 words"}</strong></div>
-              <div className="settings-row"><span>Monthly user-requested analyses</span><strong>{workspaceState?.monthly_analysis_limit == null ? "Unmetered in Alpha" : `${workspaceState.monthly_analyses_used} of ${workspaceState.monthly_analysis_limit}`}</strong></div>
-              <div className="settings-row"><span>Compare capacity</span><button className="settings-primary-button" onClick={() => setPlansOpen(true)} type="button">See plans</button></div>
+              <div className="settings-row settings-row-start"><span>Active projects<small>Free <strong>1</strong> · Basic <strong>3</strong>.</small></span><strong>{activeProjects <= activeProjectLimit ? `${activeProjects} of ${activeProjectLimit} active ${activeProjects === 1 ? "project" : "projects"}` : `${activeProjects} active projects · ${activeProjectLimit} included`}</strong></div>
+              {activeProjects > activeProjectLimit ? <div className="settings-cap-note">Existing projects remain available. The limit only gates adding another project.</div> : null}
+              <div className="settings-row settings-row-start"><span>Owner seats<small>Free <strong>3</strong> (including you) · Basic <strong>10</strong>.</small></span><strong>{`${collaboratorSeatsUsed} of ${workspaceState?.collaborator_seat_limit ?? 3} filled`}</strong></div>
+              <div className="settings-row settings-row-start"><span>If you downgrade over the seat limit<small>The limit gates who you can <strong>add</strong>.</small></span><span className="settings-fact-pill">No one is ever removed</span></div>
+              <div className="settings-row settings-row-start"><span>Monthly analyses<small>The one limit OSLO surfaces.</small></span><span className="settings-row-value"><strong>{workspaceState?.monthly_analysis_limit == null ? "Not yet set" : `${workspaceState?.monthly_analyses_used ?? 0} analyses used this month`}</strong><small>{workspaceState?.monthly_analysis_limit == null ? "Nothing is enforced" : `resets ${analysisReset}`}</small></span></div>
+              <div className="settings-row settings-row-start"><span>Beyond the monthly budget<small>Paid plans: metered overage, against a spend cap you set.</small></span><span className="settings-fact-pill">No silent overspend</span></div>
+              <div className="settings-row settings-row-start"><span>Invite allocation<small>Separate from your plan.</small></span><strong>Retired at GA</strong></div>
+              <div className="settings-row"><span>Export formats</span><strong>{workspaceState?.plan === "basic" ? "PDF · Copy summary · Export link" : "PDF"}</strong></div>
+              <div className="settings-row settings-row-start"><span>Documents<small><strong>Never metered.</strong></small></span><span className="settings-fact-pill">Unlimited on every plan</span></div>
+              <div className="settings-row settings-row-start"><span>History<small><strong>Never expires, never truncated.</strong></small></span><span className="settings-fact-pill">Full History on every plan</span></div>
+              <div className="settings-row"><span>Link revocation &amp; purpose-scoped expiry</span><span className="settings-fact-pill">On every plan</span></div>
+              <div className="settings-row"><span>Review requests and reviewer grants</span><span className="settings-fact-pill">Unlimited on every plan</span></div>
+              <div className="settings-row"><span>Compare the plans</span><button className="settings-primary-button" onClick={() => setPlansOpen(true)} type="button">Free vs Basic</button></div>
             </div>
+            <p className="settings-section-note"><strong>Free gives you the whole read.</strong> Basic adds capacity and scope.</p>
+            <p className="settings-section-note"><strong>What is metered:</strong> analysis runs, project and seat capacity, and labour OSLO does for you.</p>
           </article>
         ) : null}
 
         {sectionVisible("billing") ? (
           <article className="settings-section" id="billing">
-            <div className="settings-section-heading"><h2>Billing <small>View</small></h2><p>Nothing in this app charges you.</p></div>
-            <div className="settings-card"><div className="settings-row"><span>Payment method</span><small>None on file</small></div><div className="settings-row"><span>Invoices</span><small>None</small></div><div className="settings-row"><span>Managing your billing</span><small>Handled outside the app in Alpha</small></div></div>
+            <div className="settings-section-heading"><h2>Billing <small>Stub</small></h2><p>Not built in this release.</p></div>
+            <div className="settings-card"><div className="settings-row"><span>Payment method</span><small>Not built in this release</small></div><div className="settings-row"><span>Invoices</span><small>Not built in this release</small></div><div className="settings-row"><span>Price of Basic</span><strong>$12 / month</strong></div><div className="settings-row"><span>The forward ladder</span><small>Pro ~$39/mo · Team ~$99–149/seat · Enterprise custom</small></div></div>
+            <p className="settings-section-note">Upgrading is preview-only. No card is stored and no charge is made.</p>
           </article>
         ) : null}
 
         {sectionVisible("integrations") ? (
           <article className="settings-section" id="integrations">
             <div className="settings-section-heading"><h2>Integrations <small>Later</small></h2><p>Connecting other tools. Not built yet.</p></div>
-            <div className="settings-card settings-coming-soon"><Gear size={21} /><span>Governed workspace integrations arrive in a later slice.</span></div>
+            <div className="settings-card">
+              <div className="settings-row"><span>Connected tools</span><small>None</small></div>
+              <div className="settings-row"><span>Connecting a tool</span><span className="settings-later-pill"><Gear size={13} /> Arrives after this release</span></div>
+            </div>
+            <p className="settings-section-note">Bring documents to OSLO today. Direct connections come later.</p>
           </article>
         ) : null}
 

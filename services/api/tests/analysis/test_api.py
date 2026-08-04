@@ -707,7 +707,7 @@ def test_issue_resolution_rejects_a_stale_artifact_version_safely() -> None:
     assert response.json()["detail"] == "ARTIFACT_VERSION_CONFLICT"
 
 
-def test_overview_overlays_the_latest_persisted_issue_action() -> None:
+def test_overview_overlays_the_saved_resolution_and_addressed_status() -> None:
     slice_two = RecordingSliceTwo()
     slice_two.start_analysis(
         actor_user_id=USER_ID,
@@ -1019,6 +1019,8 @@ def test_artifact_workspace_loads_and_autosave_starts_reanalysis() -> None:
                         "bullets": ["Owner confirmed before launch."],
                         "columns": [],
                         "rows": [],
+                        "provenance": "confirmed_by_user",
+                        "row_provenance": [],
                     }
                 ]
             },
@@ -1028,9 +1030,14 @@ def test_artifact_workspace_loads_and_autosave_starts_reanalysis() -> None:
     assert loaded.status_code == 200
     assert loaded.json()["artifact_type"] == "intent"
     assert loaded.json()["provenance"] == "from_oslo"
+    assert loaded.json()["content"]["sections"][0]["provenance"] == "from_oslo"
     assert saved.status_code == 202
     assert saved.json()["version"] == 2
     assert saved.json()["provenance"] == "confirmed_by_user"
+    assert (
+        saved.json()["content"]["sections"][0]["provenance"]
+        == "confirmed_by_user"
+    )
     assert saved.json()["analysis_run"]["kind"] == "extended"
 
 
@@ -1108,6 +1115,40 @@ def test_artifact_workspace_rejects_malformed_table_rows() -> None:
     )
 
     assert response.status_code == 422
+
+
+def test_artifact_workspace_rejects_misaligned_row_provenance() -> None:
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=RecordingSliceTwo())
+    )
+
+    invalid_response = client.patch(
+        f"/v1/projects/{PROJECT_ID}/artifacts/schedule",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "artifact-save-misaligned-provenance",
+        },
+        json={
+            "expected_version": 1,
+            "content": {
+                "sections": [
+                    {
+                        "heading": "Milestones",
+                        "body": "",
+                        "bullets": [],
+                        "columns": ["Milestone", "Date"],
+                        "rows": [["Launch", "1 July"]],
+                        "row_provenance": [
+                            "from_oslo",
+                            "confirmed_by_user",
+                        ],
+                    }
+                ]
+            },
+        },
+    )
+
+    assert invalid_response.status_code == 422
 
 
 def test_artifact_workspace_rejects_a_heading_only_section() -> None:

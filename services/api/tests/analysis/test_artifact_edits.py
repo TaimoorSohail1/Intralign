@@ -31,6 +31,31 @@ def test_artifact_content_hash_is_stable_for_equivalent_key_order() -> None:
     assert artifact_content_hash(first) == artifact_content_hash(second)
 
 
+def test_editor_identity_fields_do_not_create_a_material_artifact_change() -> None:
+    stored = {
+        "sections": [
+            {
+                "heading": "Milestones",
+                "columns": ["Milestone", "Date"],
+                "rows": [["Launch", "1 August 2026"]],
+            }
+        ]
+    }
+    browser = {
+        "sections": [
+            {
+                "id": "section-schedule-1",
+                "heading": "Milestones",
+                "columns": ["Milestone", "Date"],
+                "rows": [["Launch", "1 August 2026"]],
+                "row_ids": ["row-schedule-1"],
+            }
+        ]
+    }
+
+    assert artifact_content_hash(stored) == artifact_content_hash(browser)
+
+
 def test_user_edit_evidence_is_structured_readable_and_has_no_internal_marker() -> None:
     evidence = build_user_edit_evidence(
         artifact_type="intent",

@@ -13,7 +13,7 @@ from oslo_api.application import (
     InvitationLimitReached,
 )
 from oslo_api.identity import SupabaseIdentityProvider
-from oslo_api.invitations import InvitationStatus, MembershipRole
+from oslo_api.invitations import InvitationStatus
 from oslo_api.settings import Settings
 
 SETTINGS = Settings()  # type: ignore[call-arg]
@@ -115,7 +115,6 @@ def test_owner_invitation_is_persisted_and_delivered_without_storing_raw_token()
         actor_user_id=owner_id,
         workspace_id=WORKSPACE_ID,
         email="integration.member@example.com",
-        role=MembershipRole.COLLABORATOR,
     )
 
     assert invitation.status is InvitationStatus.PENDING
@@ -156,7 +155,6 @@ def test_monthly_invitation_limit_is_audited_without_a_database_error() -> None:
             actor_user_id=owner_id,
             workspace_id=WORKSPACE_ID,
             email=f"monthly-limit-{index}@example.com",
-            role=MembershipRole.VIEWER,
         )
 
     with pytest.raises(InvitationLimitReached):
@@ -164,7 +162,6 @@ def test_monthly_invitation_limit_is_audited_without_a_database_error() -> None:
             actor_user_id=owner_id,
             workspace_id=WORKSPACE_ID,
             email="monthly-limit-blocked@example.com",
-            role=MembershipRole.VIEWER,
         )
 
     with engine.connect() as connection:
@@ -202,17 +199,15 @@ def test_duplicate_pending_invitation_is_idempotent_after_email_normalisation() 
         actor_user_id=owner_id,
         workspace_id=WORKSPACE_ID,
         email="  Duplicate.Integration@Example.com ",
-        role=MembershipRole.COLLABORATOR,
     )
     second = application.invite_member(
         actor_user_id=owner_id,
         workspace_id=WORKSPACE_ID,
         email=email,
-        role=MembershipRole.VIEWER,
     )
 
     assert second.id == first.id
-    assert second.role is MembershipRole.COLLABORATOR
+    assert second.role.value == "owner"
     assert len(mailer.messages) == 1
     with engine.connect() as connection:
         count = connection.execute(
@@ -246,7 +241,6 @@ def test_concurrent_double_send_creates_one_pending_invitation() -> None:
             actor_user_id=owner_id,
             workspace_id=WORKSPACE_ID,
             email=email,
-            role=MembershipRole.COLLABORATOR,
         )
 
     with ThreadPoolExecutor(max_workers=2) as executor:
@@ -282,7 +276,6 @@ def test_accept_and_revoke_race_has_one_terminal_winner() -> None:
         actor_user_id=owner_id,
         workspace_id=WORKSPACE_ID,
         email=email,
-        role=MembershipRole.OWNER,
     )
     raw_token = mailer.messages[0][2].rsplit("=", maxsplit=1)[1]
 
@@ -357,7 +350,6 @@ def test_existing_member_acceptance_is_idempotent_and_does_not_downgrade_role() 
             actor_user_id=owner_id,
             workspace_id=WORKSPACE_ID,
             email=email,
-            role=MembershipRole.VIEWER,
         )
         raw_token = mailer.messages[0][2].rsplit("=", maxsplit=1)[1]
 
@@ -451,7 +443,6 @@ def test_existing_user_can_join_a_different_workspace() -> None:
             actor_user_id=owner.id,
             workspace_id=workspace_id,
             email="admin@oslo.local",
-            role=MembershipRole.COLLABORATOR,
         )
         raw_token = mailer.messages[0][2].rsplit("=", maxsplit=1)[1]
         activation = application.accept_invitation_for_existing_user(
@@ -470,7 +461,7 @@ def test_existing_user_can_join_a_different_workspace() -> None:
                 ),
                 {"workspace_id": workspace_id, "user_id": admin_id},
             ).scalar_one()
-        assert role == "collaborator"
+        assert role == "owner"
     finally:
         with engine.begin() as connection:
             connection.execute(
@@ -507,7 +498,6 @@ def test_resend_invalidates_the_old_link_and_only_the_new_link_resolves() -> Non
         actor_user_id=owner_id,
         workspace_id=WORKSPACE_ID,
         email=email,
-        role=MembershipRole.COLLABORATOR,
     )
     old_token = mailer.messages[-1][2].rsplit("=", maxsplit=1)[1]
     replacement = application.resend_invitation(
@@ -553,7 +543,6 @@ def test_resolve_rejects_terminal_or_expired_invitations(state: str) -> None:
         actor_user_id=owner_id,
         workspace_id=WORKSPACE_ID,
         email=email,
-        role=MembershipRole.COLLABORATOR,
     )
     raw_token = mailer.messages[-1][2].rsplit("=", maxsplit=1)[1]
     now = datetime.now(UTC)
@@ -612,7 +601,6 @@ def test_persisted_invitation_can_be_resent_after_email_delivery_failure() -> No
             actor_user_id=owner_id,
             workspace_id=WORKSPACE_ID,
             email=email,
-            role=MembershipRole.COLLABORATOR,
         )
 
     with engine.connect() as connection:
@@ -679,7 +667,6 @@ def test_concurrent_activation_submissions_are_idempotent() -> None:
         actor_user_id=owner_id,
         workspace_id=WORKSPACE_ID,
         email=email,
-        role=MembershipRole.COLLABORATOR,
     )
     raw_token = mailer.messages[0][2].rsplit("=", maxsplit=1)[1]
 
@@ -723,7 +710,7 @@ def test_concurrent_activation_submissions_are_idempotent() -> None:
             {"workspace_id": WORKSPACE_ID, "user_id": activation.user_id},
         ).scalar_one()
 
-    assert membership.role == "collaborator"
+    assert membership.role == "owner"
     assert membership.welcome_seen_at is None
     assert invitation_status == "accepted"
     assert membership_count == 1

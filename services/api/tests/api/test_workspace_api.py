@@ -3,7 +3,6 @@ from uuid import UUID
 
 from fastapi.testclient import TestClient
 
-from oslo_api.application import ProjectLimitReached
 from oslo_api.main import create_app
 from oslo_api.slice_one import (
     AuthenticatedUser,
@@ -34,7 +33,6 @@ class RecordingWorkspaceApplication:
             workspace_name="OSLO Alpha",
             actor_role="owner",
         )
-        self.restore_at_limit = False
 
     def authenticate(self, access_token: str) -> AuthenticatedUser:
         assert access_token == "valid-access-token"
@@ -51,7 +49,6 @@ class RecordingWorkspaceApplication:
             name="OSLO Alpha",
             role="owner",
             plan="free",
-            active_project_limit=1,
             projects=[
                 WorkspaceProject(
                     id=PROJECT_ID,
@@ -89,8 +86,6 @@ class RecordingWorkspaceApplication:
     def restore_project(
         self, *, actor_user_id: UUID, workspace_id: UUID, project_id: UUID
     ) -> None:
-        if self.restore_at_limit:
-            raise ProjectLimitReached
         self.restored.append((actor_user_id, workspace_id, project_id))
 
     def mark_workspace_notifications_read(
@@ -150,8 +145,9 @@ def test_workspace_summary_serializes_projects_and_activity() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["name"] == "OSLO Alpha"
-    assert payload["active_project_limit"] == 1
+    assert "active_project_limit" not in payload
     assert payload["member_count"] == 1
+    assert payload["collaborator_seats_used"] == 1
     assert payload["projects"][0]["confidence_index"] == 62
     assert payload["notifications"][0]["key"] == "analysis:run-1"
 
@@ -176,20 +172,16 @@ def test_archive_and_notification_reads_are_scoped_to_actor_and_workspace() -> N
     assert application.read_keys == ["analysis:run-1"]
 
 
-def test_restore_enforces_the_active_project_limit() -> None:
+def test_restore_is_not_limited_by_the_workspace_plan() -> None:
     application = RecordingWorkspaceApplication()
-    application.restore_at_limit = True
 
     response = TestClient(create_app(slice_one=application)).post(
         f"/v1/workspaces/{WORKSPACE_ID}/projects/{PROJECT_ID}/restore",
         headers=HEADERS,
     )
 
-    assert response.status_code == 409
-    assert response.json()["detail"] == {
-        "code": "PROJECT_LIMIT_REACHED",
-        "active_project_limit": 1,
-    }
+    assert response.status_code == 204
+    assert application.restored == [(USER_ID, WORKSPACE_ID, PROJECT_ID)]
 
 
 def test_preferences_round_trip_without_starting_analysis() -> None:

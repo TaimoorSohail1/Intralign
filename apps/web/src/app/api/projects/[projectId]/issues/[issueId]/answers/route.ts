@@ -1,4 +1,4 @@
-import { answerProjectIssue } from "@/lib/server/oslo-api";
+import { answerProjectIssue, OsloApiError } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
 
 export async function POST(
@@ -29,7 +29,16 @@ export async function POST(
       idempotencyKey: payload.idempotencyKey,
     });
     return Response.json(run, { status: 202 });
-  } catch {
-    return Response.json({ message: "The answer could not be saved" }, { status: 400 });
+  } catch (error) {
+    if (error instanceof OsloApiError) {
+      return Response.json(
+        { message: error.message, detail: error.detail },
+        { status: error.status },
+      );
+    }
+    return Response.json(
+      { message: "The answer could not be saved" },
+      { status: 502 },
+    );
   }
 }

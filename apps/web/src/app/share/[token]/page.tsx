@@ -10,7 +10,6 @@ type SharePayload = {
     summary?: string;
     artifacts?: Array<{ artifact_type: string; title: string; summary: string; reliability: string }>;
     assessment?: {
-      confidence_index?: number;
       confidence_band?: string;
       clarity?: string;
       alignment?: string;
@@ -58,8 +57,8 @@ export default async function SharedSnapshotPage({
           <span className="public-readonly-badge">Read only · {shared.snapshot_state}</span>
         </header>
         <div className="public-confidence-card">
-          <strong>{assessment?.confidence_index ?? "—"}</strong>
-          <span><b>{assessment?.confidence_band ?? "Current read"}</b><small>Confidence index</small></span>
+          <strong>{assessment?.confidence_band ?? "Current read"}</strong>
+          <span><b>Outcome confidence</b><small>Evidence-qualified read, not a project score</small></span>
           <dl>
             <div><dt>Clarity</dt><dd>{assessment?.clarity ?? "—"}</dd></div>
             <div><dt>Alignment</dt><dd>{assessment?.alignment ?? "—"}</dd></div>

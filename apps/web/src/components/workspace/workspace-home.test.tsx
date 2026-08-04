@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { WorkspaceSummary } from "@/lib/server/oslo-api";
@@ -18,7 +18,6 @@ const workspace: WorkspaceSummary = {
   plan: "free",
   plan_label: "Free",
   price_usd_monthly: 0,
-  active_project_limit: 1,
   document_limit: 20,
   word_limit: 50_000,
   collaborator_seat_limit: 3,
@@ -78,7 +77,13 @@ describe("WorkspaceHome", () => {
     vi.unstubAllGlobals();
   });
 
-  it("shows project awareness, activity and the free-plan limit prompt", () => {
+  it("shows project awareness and creates another active project", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ id: "project-new" }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      }),
+    );
     render(<WorkspaceHome displayName="Taimoor" initial={workspace} />);
 
     expect(screen.getByRole("heading", { name: "OSLO Alpha" })).toBeInTheDocument();
@@ -86,14 +91,15 @@ describe("WorkspaceHome", () => {
     expect(screen.getByText("26 Jul 2026")).toBeInTheDocument();
     expect(screen.getByText("Extended Analysis complete")).toBeInTheDocument();
     expect(screen.getByText(/There is no portfolio score, average, or ranking/)).toBeInTheDocument();
-    expect(screen.getByText("1 active project included")).toBeInTheDocument();
+    expect(screen.getByText("Unlimited active projects")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "New project" }));
 
-    const dialog = screen.getByRole("dialog");
-    expect(within(dialog).getByText("Your active project space is full")).toBeInTheDocument();
-    expect(within(dialog).getByRole("button", { name: "Archive" })).toBeInTheDocument();
-    expect(within(dialog).getByRole("button", { name: "Explore upgrade" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith("/api/projects/new", { method: "POST" });
+      expect(push).toHaveBeenCalledWith("/intake?project=project-new");
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("archives without deleting and exposes the retained project", async () => {
@@ -113,7 +119,7 @@ describe("WorkspaceHome", () => {
     expect(screen.getAllByText("Read-only · retained safely")).toHaveLength(2);
   });
 
-  it("creates a project and routes into intake when capacity is available", async () => {
+  it("creates a project and routes into intake from an empty workspace", async () => {
     vi.mocked(fetch).mockResolvedValue(
       new Response(JSON.stringify({ id: "project-new" }), {
         status: 201,
@@ -134,76 +140,46 @@ describe("WorkspaceHome", () => {
     });
   });
 
-  it("does not expose owner-only archive controls to collaborators", () => {
-    render(
-      <WorkspaceHome
-        displayName="Collaborator"
-        initial={{ ...workspace, role: "collaborator", can_manage_plan: false }}
-      />,
-    );
-
-    expect(
-      screen.queryByRole("button", { name: "Archive Active transformation" }),
-    ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Archived projects/ }));
-    expect(screen.queryByRole("button", { name: "Restore" })).not.toBeInTheDocument();
-  });
-
-  it("keeps legacy over-limit workspaces usable without rendering an unbounded dialog", () => {
-    const legacyProjects = Array.from({ length: 8 }, (_, index) => ({
+  it("creates projects in workspaces that already contain many active projects", async () => {
+    const existingProjects = Array.from({ length: 8 }, (_, index) => ({
       ...workspace.projects[0],
-      id: `legacy-${index}`,
-      name: `Legacy project ${index + 1}`,
+      id: `existing-${index}`,
+      name: `Existing project ${index + 1}`,
       updated_at: `2026-07-${String(10 + index).padStart(2, "0")}T10:00:00Z`,
     }));
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ id: "project-nine" }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      }),
+    );
 
     render(
       <WorkspaceHome
         displayName="Taimoor"
-        initial={{ ...workspace, projects: legacyProjects }}
+        initial={{ ...workspace, projects: existingProjects }}
       />,
     );
-
-    expect(
-      screen.getByText("1 active project included · 8 existing projects retained"),
-    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "New project" }));
 
-    const dialog = screen.getByRole("dialog");
-    expect(within(dialog).getAllByRole("button", { name: "Archive" })).toHaveLength(5);
-    expect(
-      within(dialog).getByText(/5 most recently updated projects from 8 active projects/),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith("/intake?project=project-nine");
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("keeps legacy over-limit users in the capacity dialog after archiving one project", async () => {
-    const legacyProjects = Array.from({ length: 3 }, (_, index) => ({
-      ...workspace.projects[0],
-      id: `legacy-${index}`,
-      name: `Legacy project ${index + 1}`,
-      updated_at: `2026-07-${String(20 + index).padStart(2, "0")}T10:00:00Z`,
-    }));
+  it("restores an archived project while another project is active", async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 204 }));
 
-    render(
-      <WorkspaceHome
-        displayName="Taimoor"
-        initial={{ ...workspace, projects: legacyProjects }}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "New project" }));
-    fireEvent.click(within(screen.getByRole("dialog")).getAllByRole("button", { name: "Archive" })[0]);
+    render(<WorkspaceHome displayName="Taimoor" initial={workspace} />);
+    fireEvent.click(screen.getByRole("button", { name: /Archived projects/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Restore" }));
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        "/api/workspace/projects/legacy-2/archive",
+        "/api/workspace/projects/project-2/restore",
         { method: "POST" },
       );
     });
-
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText(/Archive 2 more active projects to create a new one/)).toBeInTheDocument();
   });
 });

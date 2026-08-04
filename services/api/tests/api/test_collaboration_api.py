@@ -218,6 +218,7 @@ def test_report_draft_and_delivery_are_server_backed() -> None:
             "recipient_label": "Sponsor",
             "subject": "Transformation readout",
             "content": content,
+            "confirm_previous_analysis": True,
         },
     )
 
@@ -226,6 +227,40 @@ def test_report_draft_and_delivery_are_server_backed() -> None:
     assert delivered.status_code == 201
     assert delivered.json()["status"] == "sent"
     assert collaboration.report_delivery["recipient_email"] == "sponsor@example.com"
+    assert collaboration.report_delivery["confirm_previous_analysis"] is True
+
+
+def test_report_export_uses_a_header_safe_unicode_filename() -> None:
+    class UnicodeReport(RecordingCollaboration):
+        def report_state(self, *, actor_user_id, project_id):
+            state = super().report_state(
+                actor_user_id=actor_user_id,
+                project_id=project_id,
+            )
+            return {
+                **state,
+                "project_name": "Project Lumen — Student Experience",
+                "content": {
+                    "sections": [
+                        {
+                            "id": f"section-{index}",
+                            "title": f"Section {index}",
+                            "body": ["Detail"],
+                        }
+                        for index in range(7)
+                    ]
+                },
+            }
+
+    response = client_for(UnicodeReport()).get(
+        f"/v1/projects/{PROJECT_ID}/reports/pdf",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    disposition = response.headers["content-disposition"]
+    assert "—" not in disposition
+    assert "filename*=UTF-8''Project%20Lumen%20%E2%80%94%20Student" in disposition
 
 
 def test_reviewer_response_is_recorded_without_starting_analysis() -> None:

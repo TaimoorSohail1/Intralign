@@ -20,21 +20,12 @@ class PlanPolicy:
     label: str
     price_usd_monthly: int
     judgment_profile: str
-    active_project_limit: int
     document_limit: int
     word_limit: int
     collaborator_seat_limit: int
     monthly_invitation_limit: int
     monthly_analysis_limit: int | None
     chat_is_metered: bool = False
-
-    def decide_project_capacity(self, *, active_projects: int) -> CapacityDecision:
-        if active_projects < self.active_project_limit:
-            return CapacityDecision(allowed=True)
-        return CapacityDecision(
-            allowed=False,
-            remedies=("archive_project", "compare_plans"),
-        )
 
     def decide_document_capacity(
         self, *, document_count: int, word_count: int
@@ -51,7 +42,7 @@ class PlanPolicy:
             return CapacityDecision(allowed=True)
         return CapacityDecision(
             allowed=False,
-            remedies=("invite_as_viewer", "compare_plans"),
+            remedies=("compare_plans",),
         )
 
 
@@ -61,7 +52,6 @@ _POLICIES = {
         label="Free",
         price_usd_monthly=0,
         judgment_profile="oslo-governed-v1",
-        active_project_limit=1,
         document_limit=20,
         word_limit=50_000,
         collaborator_seat_limit=3,
@@ -73,7 +63,6 @@ _POLICIES = {
         label="Basic",
         price_usd_monthly=12,
         judgment_profile="oslo-governed-v1",
-        active_project_limit=3,
         document_limit=40,
         word_limit=100_000,
         collaborator_seat_limit=10,

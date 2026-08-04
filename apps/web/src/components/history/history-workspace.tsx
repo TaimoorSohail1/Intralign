@@ -65,7 +65,7 @@ export function HistoryWorkspace({
   projectId,
 }: {
   history: ProjectHistory;
-  onAskOslo: (runId: string, prompt: string) => void;
+  onAskOslo?: (runId: string, prompt: string) => void;
   projectId: string;
 }) {
   const [filter, setFilter] = useState<HistoryFilter>("all");
@@ -184,7 +184,7 @@ export function HistoryWorkspace({
             <Info aria-label="History is read-only" size={14} />
           </p>
         </div>
-        {groups[0] ? (
+        {groups[0] && onAskOslo ? (
           <button
             className="history-ask"
             onClick={() =>
@@ -256,19 +256,21 @@ export function HistoryWorkspace({
                   </span>
                 </button>
                 <div className="history-run-actions">
-                  <button
-                    aria-label={`Ask OSLO about ${runTitle(group)}`}
-                    onClick={() =>
-                      onAskOslo(
-                        group.run_id,
-                        `Explain the ${runTitle(group)} historical read and what changed.`,
-                      )
-                    }
-                    type="button"
-                  >
-                    <Sparkle aria-hidden="true" size={12} weight="fill" />
-                    Ask OSLO
-                  </button>
+                  {onAskOslo ? (
+                    <button
+                      aria-label={`Ask OSLO about ${runTitle(group)}`}
+                      onClick={() =>
+                        onAskOslo(
+                          group.run_id,
+                          `Explain the ${runTitle(group)} historical read and what changed.`,
+                        )
+                      }
+                      type="button"
+                    >
+                      <Sparkle aria-hidden="true" size={12} weight="fill" />
+                      Ask OSLO
+                    </button>
+                  ) : null}
                   <span className={group.current ? "is-current" : ""}>
                     {group.current ? "Current" : "History"}
                   </span>

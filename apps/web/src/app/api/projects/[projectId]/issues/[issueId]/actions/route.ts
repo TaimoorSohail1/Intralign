@@ -1,4 +1,4 @@
-import { actOnProjectIssue } from "@/lib/server/oslo-api";
+import { actOnProjectIssue, OsloApiError } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
 
 const actions = new Set(["select", "apply", "custom"]);
@@ -34,7 +34,16 @@ export async function POST(
       idempotencyKey: payload.idempotencyKey,
     });
     return Response.json(result, { status: 202 });
-  } catch {
-    return Response.json({ message: "The issue action could not be saved" }, { status: 400 });
+  } catch (error) {
+    if (error instanceof OsloApiError) {
+      return Response.json(
+        { message: error.message, detail: error.detail },
+        { status: error.status },
+      );
+    }
+    return Response.json(
+      { message: "The issue action could not be saved" },
+      { status: 502 },
+    );
   }
 }

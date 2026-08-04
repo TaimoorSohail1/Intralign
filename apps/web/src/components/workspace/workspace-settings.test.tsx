@@ -17,6 +17,38 @@ const initial = {
   shared_notifications: true,
 };
 
+const workspace = {
+  id: "workspace-1",
+  name: "OSLO Alpha",
+  role: "owner" as const,
+  plan: "free" as const,
+  plan_label: "Free",
+  price_usd_monthly: 0,
+  document_limit: 20,
+  word_limit: 50_000,
+  collaborator_seat_limit: 3,
+  monthly_analysis_limit: 8,
+  monthly_analyses_used: 3,
+  can_manage_plan: true,
+  member_count: 2,
+  projects: [
+    {
+      id: "project-1",
+      name: "Current project",
+      status: "active",
+      archived: false,
+      updated_at: "2026-08-01T00:00:00Z",
+      analysis_status: "completed",
+      confidence_index: 3,
+      confidence_band: "Moderate",
+      reliability: "Moderate",
+      open_issues: 2,
+      artifact_count: 7,
+    },
+  ],
+  notifications: [],
+};
+
 describe("WorkspaceSettings", () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -60,7 +92,7 @@ describe("WorkspaceSettings", () => {
       />,
     );
 
-    expect(screen.getByRole("navigation", { name: "Settings" }).querySelectorAll("a")).toHaveLength(11);
+    expect(screen.getByRole("navigation", { name: "Settings" }).querySelectorAll("a")).toHaveLength(12);
     expect(screen.getByRole("heading", { name: "Account & workspace" })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Search settings" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Light" }));
@@ -71,6 +103,7 @@ describe("WorkspaceSettings", () => {
         expect.objectContaining({
           method: "PUT",
           body: expect.stringContaining('"theme":"light"'),
+          keepalive: true,
         }),
       );
     });
@@ -125,7 +158,7 @@ describe("WorkspaceSettings", () => {
 
     expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete account" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "See plans" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Free vs Basic" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole("searchbox", { name: "Search settings" }), {
       target: { value: "notifications" },
@@ -135,11 +168,11 @@ describe("WorkspaceSettings", () => {
     expect(screen.queryByRole("heading", { name: "Profile" })).not.toBeInTheDocument();
   });
 
-  it("persists profile fields and renders the backend membership role", async () => {
+  it("persists profile fields and renders the sole Owner membership role", async () => {
     render(
       <WorkspaceSettings
         displayName="Taimoor"
-        initial={{ ...initial, actor_role: "collaborator" }}
+        initial={{ ...initial, actor_role: "owner" }}
         workspaceName="OSLO Alpha"
       />,
     );
@@ -156,7 +189,46 @@ describe("WorkspaceSettings", () => {
         }),
       );
     });
-    expect(screen.getByText("Collaborator")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Manage invitations" })).not.toBeInTheDocument();
+    expect(screen.getByText("Owner")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /Manage invitations/ })).not.toHaveLength(0);
+    expect(
+      screen.getByRole("textbox", { name: /Workspace name/ }),
+    ).toBeEnabled();
+  });
+
+  it("matches the GA access, membership, subscription, and later-version settings contract", () => {
+    render(
+      <WorkspaceSettings
+        displayName="Taimoor"
+        email="taimoor@example.com"
+        initial={initial}
+        workspace={workspace}
+        workspaceName="OSLO Alpha"
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Access & invites" })).toBeInTheDocument();
+    expect(screen.getByText("GA")).toBeInTheDocument();
+    expect(screen.getAllByText("Retired at GA")).toHaveLength(3);
+    expect(
+      screen.getAllByRole("link", { name: /Manage invitations/ }).every(
+        (link) => link.getAttribute("href") === "/admin/invitations",
+      ),
+    ).toBe(true);
+
+    expect(screen.getByRole("heading", { name: /Membership/ })).toBeInTheDocument();
+    expect(screen.getByText("2 members")).toBeInTheDocument();
+    expect(screen.getAllByText("2 of 3 filled")).toHaveLength(2);
+
+    expect(screen.getByRole("heading", { name: /Subscription/ })).toBeInTheDocument();
+    expect(screen.getByText("1 of 1 active project")).toBeInTheDocument();
+    expect(screen.getByText("3 analyses used this month")).toBeInTheDocument();
+    expect(screen.getByText("No silent overspend")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Free vs Basic" })).toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { name: /Billing/ })).toBeInTheDocument();
+    expect(screen.getAllByText("Not built in this release")).toHaveLength(2);
+    expect(screen.getByRole("heading", { name: /Integrations/ })).toBeInTheDocument();
+    expect(screen.getByText("Arrives after this release")).toBeInTheDocument();
   });
 });

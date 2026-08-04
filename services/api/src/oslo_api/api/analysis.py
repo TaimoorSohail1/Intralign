@@ -287,22 +287,28 @@ class IssueActionRequest(BaseModel):
 class IssueActionResponse(BaseModel):
     issue_id: str
     action: Literal["select", "apply", "custom"]
-    status: Literal["addressed"]
+    status: Literal["open", "addressed", "resolved"]
     selected_resolution: str
     analysis_run: AnalysisRunResponse | None = None
 
 
 class ArtifactSectionPayload(BaseModel):
+    id: str | None = Field(default=None, max_length=200)
     heading: str = Field(default="", max_length=200)
     body: str = Field(default="", max_length=100_000)
     bullets: list[str] = Field(default_factory=list, max_length=100)
     columns: list[str] = Field(default_factory=list, max_length=20)
     rows: list[list[str]] = Field(default_factory=list, max_length=500)
+    provenance: Literal["from_oslo", "confirmed_by_user"] = "from_oslo"
     evidence_refs: list[str] = Field(default_factory=list, max_length=100)
     row_evidence_refs: list[list[str]] = Field(default_factory=list, max_length=500)
     row_states: list[
         Literal["confirmed", "inferred", "conflicting", "unknown"]
     ] = Field(default_factory=list, max_length=500)
+    row_provenance: list[
+        Literal["from_oslo", "confirmed_by_user"]
+    ] = Field(default_factory=list, max_length=500)
+    row_ids: list[str] = Field(default_factory=list, max_length=500)
 
     @field_validator("bullets")
     @classmethod
@@ -323,6 +329,12 @@ class ArtifactSectionPayload(BaseModel):
             raise ValueError("Artifact row evidence must match the row count")
         if self.row_states and len(self.row_states) != len(self.rows):
             raise ValueError("Artifact row states must match the row count")
+        if self.row_provenance and len(self.row_provenance) != len(self.rows):
+            raise ValueError("Artifact row provenance must match the row count")
+        if self.row_ids and len(self.row_ids) != len(self.rows):
+            raise ValueError("Artifact row ids must match the row count")
+        if any(not row_id.strip() or len(row_id) > 200 for row_id in self.row_ids):
+            raise ValueError("Artifact row ids must be non-empty and at most 200 characters")
         return self
 
 
@@ -446,12 +458,16 @@ def _overview_response(
                             "bullets": list(section.bullets),
                             "columns": list(section.columns),
                             "rows": [list(row) for row in section.rows],
+                            "provenance": "from_oslo",
                             "evidence_refs": list(section.evidence_refs),
                             "row_evidence_refs": [
                                 list(references)
                                 for references in section.row_evidence_refs
                             ],
                             "row_states": list(section.row_states),
+                            "row_provenance": [
+                                "from_oslo" for _ in section.rows
+                            ],
                         }
                         for section in artifact.sections
                     ]
@@ -513,10 +529,8 @@ def _overview_response(
                         if reference in citations
                     ],
                     clarification=issue.clarification,
-                    status=(
-                        issue.status
-                        if issue.status == "resolved"
-                        else latest_actions.get(issue.id, {}).get("status", issue.status)
+                    status=latest_actions.get(issue.id, {}).get(
+                        "status", issue.status
                     ),
                     selected_resolution=latest_actions.get(issue.id, {}).get(
                         "selected_resolution"
@@ -585,10 +599,8 @@ def _artifact_workspace_response(
                     if reference in citations
                 ],
                 clarification=issue.clarification,
-                status=(
-                    issue.status
-                    if issue.status == "resolved"
-                    else latest_actions.get(issue.id, {}).get("status", issue.status)
+                status=latest_actions.get(issue.id, {}).get(
+                    "status", issue.status
                 ),
                 selected_resolution=latest_actions.get(issue.id, {}).get(
                     "selected_resolution"
@@ -984,7 +996,7 @@ def act_on_project_issue(
     return IssueActionResponse(
         issue_id=result["issue_id"],
         action=result["action"],
-        status="addressed",
+        status=result["status"],
         selected_resolution=result["selected_resolution"],
         analysis_run=_run_response(run) if run is not None else None,
     )
@@ -1010,7 +1022,7 @@ def list_project_issue_actions(
         IssueActionResponse(
             issue_id=action["issue_id"],
             action=action["action"],
-            status="addressed",
+            status=action["status"],
             selected_resolution=action["selected_resolution"],
             analysis_run=(
                 _run_response(action["analysis_run"])
@@ -1019,6 +1031,7 @@ def list_project_issue_actions(
             ),
         )
         for action in actions
+        if action["action"] in {"select", "apply", "custom"}
     ]
 
 
@@ -1044,6 +1057,9 @@ def _format_sse(event: AnalysisEvent) -> str:
         "sequence": event.sequence,
         "status": event.status,
         "phase": event.phase.value if event.phase else None,
+        "artifact_type": (
+            event.artifact_type.value if event.artifact_type else None
+        ),
         "occurred_at": event.occurred_at.isoformat(),
         "error": (
             {"code": event.error_code, "retryable": event.retryable}

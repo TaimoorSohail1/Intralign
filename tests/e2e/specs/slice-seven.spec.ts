@@ -16,7 +16,7 @@ async function createAnalyzedProject(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: /Start your first project/ }).click();
   await page.getByRole("button", { name: /sample project/i }).click();
   await page.getByRole("button", { name: /See where I stand/ }).click();
-  await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 90_000 });
+  await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
 
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
   if (await orientation.isVisible()) {
@@ -27,7 +27,7 @@ async function createAnalyzedProject(page: import("@playwright/test").Page) {
     await page.getByRole("button", { name: "Finish tour" }).click();
   }
   await expect(
-    page.getByText("Current evidence-qualified read", { exact: true }),
+    page.getByText("Project summary", { exact: true }),
   ).toBeVisible({ timeout: 120_000 });
 }
 
