@@ -722,6 +722,10 @@ class DatabaseSliceOneApplication:
                           from public.outbox_events event
                           where event.workspace_id = :workspace_id
                             and event.event_type = 'review.responded'
+                        ), deduplicated_activity as (
+                          select distinct on (key) *
+                          from activity
+                          order by key, created_at desc
                         )
                         select
                           activity.key,
@@ -732,7 +736,7 @@ class DatabaseSliceOneApplication:
                           activity.title,
                           activity.created_at,
                           reads.notification_key is not null as read
-                        from activity
+                        from deduplicated_activity activity
                         join public.projects project on project.id = activity.project_id
                         left join public.workspace_notification_reads reads
                           on reads.workspace_id = :workspace_id
