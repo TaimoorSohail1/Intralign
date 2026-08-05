@@ -9,6 +9,21 @@ import { ProjectCollaborationControls } from "@/components/collaboration/project
 import { UsageLimitsModal } from "@/components/workspace/usage-limits-modal";
 import type { WorkspaceSummary } from "@/lib/server/oslo-api";
 
+type WorkspaceNotification = WorkspaceSummary["notifications"][number];
+
+function uniqueNotifications(notifications: WorkspaceNotification[]) {
+  const byKey = new Map<string, WorkspaceNotification>();
+  for (const notification of notifications) {
+    if (!byKey.has(notification.key)) byKey.set(notification.key, notification);
+  }
+  return Array.from(byKey.values());
+}
+
+function notificationProjectLabel(notification: WorkspaceNotification) {
+  if (notification.project_name !== "Untitled project") return notification.project_name;
+  return `${notification.project_name} · ${notification.project_id.slice(0, 8)}`;
+}
+
 function relativeTime(value: string) {
   const timestamp = new Date(value).getTime();
   if (Number.isNaN(timestamp)) return value;
@@ -101,7 +116,9 @@ export function ProjectWorkspaceControls({
     ? active.filter((project) => project.name.toLowerCase().includes(normalizedProjectQuery))
     : active;
   const visibleProjects = matchingProjects.slice(0, 8);
-  const notifications = Array.isArray(workspace?.notifications) ? workspace.notifications : [];
+  const notifications = uniqueNotifications(
+    Array.isArray(workspace?.notifications) ? workspace.notifications : [],
+  );
   const unread = notifications.filter((notification) => !notification.read);
   const visibleNotifications = notifications.slice(0, 8);
   const planLabel = workspace?.plan_label ?? "Free";
@@ -254,7 +271,7 @@ export function ProjectWorkspaceControls({
                       {notification.status === "failed" ? <WarningCircle size={15} /> : notification.kind === "extended" ? <Check size={15} /> : <DotsThree size={15} />}
                     </span>
                     <div>
-                      <p><strong>{notification.title}</strong><span>{notification.project_name} · {notification.status === "failed" ? "your last-good understanding is preserved" : notification.kind === "extended" ? "understanding refined — see History" : "the first read is ready"}</span></p>
+                      <p><strong>{notification.title}</strong><span>{notificationProjectLabel(notification)} · {notification.status === "failed" ? "your last-good understanding is preserved" : notification.kind === "extended" ? "understanding refined — see History" : "the first read is ready"}</span></p>
                       <small>{relativeTime(notification.created_at)} <i>{notification.status === "failed" ? "analysis failed" : "analysis complete"}</i></small>
                     </div>
                   </Link>

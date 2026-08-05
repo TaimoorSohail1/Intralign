@@ -148,7 +148,11 @@ function StableEditableText({
 
   useLayoutEffect(() => {
     const element = elementRef.current;
-    if (element && element.textContent !== value) {
+    if (
+      element &&
+      document.activeElement !== element &&
+      element.textContent !== value
+    ) {
       element.textContent = value;
     }
   }, [value]);

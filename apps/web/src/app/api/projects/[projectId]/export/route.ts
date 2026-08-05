@@ -8,7 +8,7 @@ export async function GET(
   const session = await readSession();
   if (!session.accessToken) return Response.json({ message: "Unauthorized" }, { status: 401 });
   const { projectId } = await context.params;
-  const response = await fetch(`${osloApiUrl}/v1/projects/${projectId}/reports/pdf`, {
+  const response = await fetch(`${osloApiUrl}/v1/projects/${projectId}/exports/pdf`, {
     headers: { authorization: `Bearer ${session.accessToken}` },
     cache: "no-store",
   });
@@ -17,7 +17,7 @@ export async function GET(
     const message =
       failure?.detail?.message ??
       failure?.message ??
-      "The report could not be exported.";
+      "The snapshot could not be exported.";
     return Response.json({ message }, { status: response.status });
   }
   const pdf = await response.arrayBuffer();

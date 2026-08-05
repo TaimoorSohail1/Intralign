@@ -410,9 +410,7 @@ def test_perceive_retries_once_with_exact_locator_correction() -> None:
     assert len(client.responses.requests) == 2
     correction_request = client.responses.requests[1]
     correction_payload = json.loads(correction_request["input"][1]["content"])
-    assert correction_payload["citation_correction"]["invalid_locators"] == [
-        invented_ref
-    ]
+    assert correction_payload["citation_correction"]["invalid_locator_count"] == 1
     assert correction_payload["allowed_evidence_locators"] == [evidence_ref]
     assert "correction attempt" in correction_request["input"][0]["content"].lower()
     assert invocation.metadata is not None

@@ -1,0 +1,2254 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\Hp\\Downloads\\oslo-app']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [11244] using WatchFiles
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [11856]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_understanding.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11856]
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\api\collaboration.py', 'services\api\src\oslo_api\analysis\understanding.py', 'services\api\tests\integration\test_slice_two_analysis.py', 'services\api\tests\api\test_collaboration_api.py', 'services\api\src\oslo_api\analysis\persistence.py', 'services\api\src\oslo_api\collaboration\service.py'. Reloading...
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [16152]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [16152]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [23380]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\tests\api\test_collaboration_api.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23380]
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\api\collaboration.py', 'services\api\src\oslo_api\collaboration\service.py'. Reloading...
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [6132]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6132]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [12968]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_provenance.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [12968]
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\provenance.py'. Reloading...
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [8892]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [8892]
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\api\analysis.py'. Reloading...
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [11800]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11800]
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\api\analysis.py'. Reloading...
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [3488]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3488]
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_api.py'. Reloading...
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [23056]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23056]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [5828]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_openai_harness.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [5828]
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\openai_harness.py'. Reloading...
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [23320]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23320]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [16812]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_understanding.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [16812]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [17232]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_understanding.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [17232]
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\understanding.py', 'services\api\src\oslo_api\analysis\workflow.py'. Reloading...
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [3096]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3096]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [856]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\service.py', 'services\api\src\oslo_api\analysis\user_evidence.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [856]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [19300]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\collaboration.py", line 178, in export_report
+    return Response(
+           ^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\responses.py", line 46, in __init__
+    self.init_headers(headers)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\responses.py", line 61, in init_headers
+    raw_headers = [(k.lower().encode("latin-1"), v.encode("latin-1")) for k, v in headers.items()]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\responses.py", line 61, in <listcomp>
+    raw_headers = [(k.lower().encode("latin-1"), v.encode("latin-1")) for k, v in headers.items()]
+                                                 ^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'latin-1' codec can't encode character '\u2014' in position 35: ordinal not in range(256)
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_provenance.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [19300]
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\api\projects.py', 'services\api\src\oslo_api\analysis\provenance.py', 'services\api\tests\analysis\test_advisor.py', 'services\api\src\oslo_api\application.py', 'services\api\tests\api\test_workspace_api.py', 'services\api\src\oslo_api\slice_one.py', 'services\api\src\oslo_api\collaboration\service.py'. Reloading...
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [13684]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [13684]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [23888]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\advisor.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23888]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [6568]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\slice_two.py', 'services\api\src\oslo_api\analysis\service.py', 'services\api\src\oslo_api\api\analysis.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6568]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [14820]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_api.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14820]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [17416]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_semantic_validation.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [17416]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [5260]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\semantic_validation.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [5260]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [7180]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\semantic_validation.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [7180]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [23520]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_semantic_validation.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23520]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [24020]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\semantic_validation.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [24020]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [2928]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\semantic_validation.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2928]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [8596]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\fastapi\routing.py", line 347, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\starlette\concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2641, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1033, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\api\projects.py", line 138, in get_workspace
+    summary = context.application.get_workspace_summary(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Hp\Downloads\oslo-app\services\api\src\oslo_api\application.py", line 839, in get_workspace_summary
+    member_count=member_count,
+                 ^^^^^^^^^^^^
+NameError: name 'member_count' is not defined
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\semantic_validation.py', 'services\api\src\oslo_api\api\analysis.py', 'services\api\src\oslo_api\application.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [8596]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [6428]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\tests\integration\test_slice_two_analysis.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6428]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [2780]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_provenance.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2780]
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\provenance.py'. Reloading...
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [7752]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [7752]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [15660]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\tests\analysis\test_provenance.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [15660]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [4680]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\analysis\provenance.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [4680]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [16548]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\api\projects.py', 'services\api\src\oslo_api\slice_two.py', 'services\api\src\oslo_api\email.py', 'services\api\tests\analysis\test_api.py', 'services\api\src\oslo_api\api\invitations.py', 'services\api\src\oslo_api\analysis\models.py', 'services\api\tests\analysis\test_artifact_edits.py', 'services\api\tests\integration\test_slice_two_analysis.py', 'services\api\src\oslo_api\analysis\artifact_edits.py', 'services\api\src\oslo_api\collaboration\pdf.py', 'services\api\src\oslo_api\analysis\user_evidence.py', 'services\api\src\oslo_api\analysis\provenance.py', 'services\api\src\oslo_api\tiering\__init__.py', 'services\api\src\oslo_api\analysis\document_store.py', 'services\api\tests\analysis\test_understanding.py', 'services\api\tests\tiering\test_policy.py', 'services\api\src\oslo_api\analysis\issue_identity.py', 'services\api\tests\analysis\test_provenance.py', 'services\api\src\oslo_api\analysis\harness.py', 'services\api\tests\analysis\test_advisor.py', 'services\api\src\oslo_api\tiering\repository.py', 'services\api\tests\api\test_collaboration_api.py', 'services\api\src\oslo_api\analysis\semantic_validation.py', 'services\api\src\oslo_api\analysis\persistence.py', 'services\api\tests\integration\test_postgres_invitation.py', 'services\api\src\oslo_api\analysis\service.py', 'services\api\src\oslo_api\analysis\workflow.py', 'services\api\tests\analysis\test_issue_identity.py', 'services\api\tests\analysis\test_semantic_validation.py', 'services\api\src\oslo_api\api\collaboration.py', 'services\api\src\oslo_api\tiering\policy.py', 'services\api\src\oslo_api\analysis\understanding.py', 'services\api\src\oslo_api\api\analysis.py', 'services\api\src\oslo_api\settings.py', 'services\api\tests\analysis\test_openai_harness.py', 'services\api\tests\collaboration\test_pdf.py', 'services\api\src\oslo_api\analysis\openai_harness.py', 'services\api\src\oslo_api\application.py', 'services\api\scripts\seed_local.py', 'services\api\tests\analysis\test_snapshot_privacy.py', 'services\api\tests\api\test_workspace_api.py', 'services\api\src\oslo_api\analysis\advisor.py', 'services\api\src\oslo_api\slice_one.py', 'services\api\tests\analysis\test_workflow.py', 'services\api\src\oslo_api\collaboration\service.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [16548]
+WARNING:  WatchFiles detected changes in 'services\api\src\oslo_api\api\projects.py', 'services\api\src\oslo_api\slice_two.py', 'services\api\src\oslo_api\email.py', 'services\api\tests\analysis\test_api.py', 'services\api\src\oslo_api\api\invitations.py', 'services\api\src\oslo_api\collaboration\service.py', 'services\api\src\oslo_api\analysis\models.py', 'services\api\tests\analysis\test_artifact_edits.py', 'services\api\tests\integration\test_slice_two_analysis.py', 'services\api\src\oslo_api\analysis\artifact_edits.py', 'services\api\src\oslo_api\collaboration\pdf.py', 'services\api\src\oslo_api\analysis\user_evidence.py', 'services\api\src\oslo_api\analysis\provenance.py', 'services\api\src\oslo_api\slice_one.py', 'services\api\src\oslo_api\tiering\__init__.py', 'services\api\src\oslo_api\analysis\document_store.py', 'services\api\tests\analysis\test_understanding.py', 'services\api\tests\tiering\test_policy.py', 'services\api\src\oslo_api\analysis\issue_identity.py', 'services\api\tests\analysis\test_provenance.py', 'services\api\src\oslo_api\analysis\harness.py', 'services\api\tests\analysis\test_advisor.py', 'services\api\src\oslo_api\tiering\repository.py', 'services\api\tests\api\test_collaboration_api.py', 'services\api\src\oslo_api\analysis\semantic_validation.py', 'services\api\src\oslo_api\analysis\persistence.py', 'services\api\tests\integration\test_postgres_invitation.py', 'services\api\src\oslo_api\analysis\service.py', 'services\api\src\oslo_api\analysis\workflow.py', 'services\api\tests\analysis\test_issue_identity.py', 'services\api\tests\analysis\test_semantic_validation.py', 'services\api\src\oslo_api\api\collaboration.py', 'services\api\src\oslo_api\tiering\policy.py', 'services\api\src\oslo_api\analysis\understanding.py', 'services\api\src\oslo_api\api\analysis.py', 'services\api\tests\analysis\test_openai_harness.py', 'services\api\src\oslo_api\settings.py', 'services\api\tests\collaboration\test_pdf.py', 'services\api\src\oslo_api\analysis\openai_harness.py', 'services\api\src\oslo_api\application.py', 'services\api\scripts\seed_local.py', 'services\api\tests\analysis\test_snapshot_privacy.py', 'services\api\tests\api\test_workspace_api.py', 'services\api\src\oslo_api\analysis\advisor.py', 'services\api\tests\analysis\test_workflow.py'. Reloading...
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [23844]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23844]
+C:\Users\Hp\Downloads\oslo-app\services\api\.venv\Lib\site-packages\langgraph\cache\base\__init__.py:8: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+INFO:     Started server process [21300]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

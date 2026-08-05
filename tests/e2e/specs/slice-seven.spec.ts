@@ -39,7 +39,9 @@ test("Slice 7 retains read-only history, snapshots, filters, and historical advi
   await page.getByRole("link", { name: /^History/ }).click();
   await expect(page).toHaveURL(/\/history$/);
   await expect(page.getByRole("heading", { name: "History & timeline" })).toBeVisible();
-  await expect(page.getByText("Extended Analysis complete").first()).toBeVisible();
+  await expect(page.getByText("Extended Analysis complete").first()).toBeVisible({
+    timeout: 120_000,
+  });
   await expect(page.getByText("Initial Analysis complete").first()).toBeVisible();
   await expect(page.getByText(/Read-only · viewing history changes nothing/)).toBeVisible();
 

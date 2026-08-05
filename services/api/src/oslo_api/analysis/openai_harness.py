@@ -723,8 +723,8 @@ class OpenAIAgentHarness:
             )
             if quarantined is not None:
                 _LOGGER.warning(
-                    "Quarantined unsupported analysis findings with locators: %s",
-                    ", ".join(invalid_refs),
+                    "Quarantined %s unsupported analysis finding locator(s).",
+                    len(invalid_refs),
                 )
                 return quarantined
             if correction_attempt == 1:
@@ -742,7 +742,7 @@ class OpenAIAgentHarness:
             current_payload = {
                 **payload,
                 "citation_correction": {
-                    "invalid_locators": invalid_refs,
+                    "invalid_locator_count": len(invalid_refs),
                     "allowed_evidence_locators": sorted(allowed_refs),
                     "instruction": (
                         "Return the complete corrected JSON contract. Every evidence "

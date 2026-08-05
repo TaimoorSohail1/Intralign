@@ -184,10 +184,10 @@ export function ProjectOverview({
   const [selectedResolutions, setSelectedResolutions] = useState<Record<string, string>>(
     () => issueResolutionMap(initial.assessment.issues),
   );
+  const [projectHistory, setProjectHistory] = useState(initialHistory);
   const [analysisUpdateRunId, setAnalysisUpdateRunId] = useState<string | null>(() => {
     const activeExtended = initial.extended_analysis;
-    return initial.state === "current" &&
-      (activeExtended?.status === "queued" || activeExtended?.status === "running")
+    return activeExtended?.status === "queued" || activeExtended?.status === "running"
       ? activeExtended.run_id
       : null;
   });
@@ -239,6 +239,28 @@ export function ProjectOverview({
             : "thinly grounded";
   const hasFirstValue = snapshot.artifacts.length > 0;
   const overviewScrollKey = `oslo:overview-scroll:${snapshot.project_id}`;
+
+  useEffect(() => {
+    if (!initialHistory) return;
+    let cancelled = false;
+    void fetch(`/api/projects/${snapshot.project_id}/history?category=all`, {
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json() as Promise<ProjectHistory>;
+      })
+      .then((nextHistory) => {
+        if (!cancelled && nextHistory) setProjectHistory(nextHistory);
+      })
+      .catch(() => {
+        // Keep the last history page when refresh fails. All other views still use
+        // the last atomically published Overview snapshot.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialHistory, snapshot.analysis_run_id, snapshot.project_id]);
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
@@ -1247,7 +1269,8 @@ export function ProjectOverview({
             />
           ) : initialView === "history" && initialHistory ? (
             <HistoryWorkspace
-              history={initialHistory}
+              analysisRunId={snapshot.analysis_run_id}
+              history={projectHistory ?? initialHistory}
               onAskOslo={(runId, prompt) => {
                 setAdvisorOpen(true);
                 void askQuestion(prompt, runId);
@@ -1255,7 +1278,7 @@ export function ProjectOverview({
               projectId={snapshot.project_id}
             />
           ) : initialView === "reports" ? (
-            <ReportWorkspace history={initialHistory} snapshot={snapshot} />
+            <ReportWorkspace history={projectHistory} snapshot={snapshot} />
           ) : (
             <DeferredWorkspace />
           )}

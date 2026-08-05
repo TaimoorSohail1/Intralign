@@ -57,15 +57,18 @@ test("Slice 8 provides workspace home, switching, awareness, settings, and safe 
   await page.getByLabel("Notifications").click();
   const notifications = page.getByRole("dialog", { name: "Notifications" });
   await expect(notifications).toBeVisible();
-  await expect(notifications.getByText("Workspace awareness")).toBeVisible();
-  await expect(notifications.getByText(/Awareness only/)).toBeVisible();
+  await expect(notifications.getByText("awareness", { exact: true })).toBeVisible();
+  await expect(
+    notifications.getByText(/Notifications never start analysis/),
+  ).toBeVisible();
   const markAllRead = notifications.getByRole("button", { name: "Mark all read" });
   if (await markAllRead.isEnabled()) {
     await markAllRead.click();
     await expect(markAllRead).toBeDisabled();
   }
-  await notifications.getByLabel("Notification settings").click();
-  await expect(page).toHaveURL(/\/settings#notifications$/);
+  await notifications.getByLabel("Close notifications").click();
+  await expect(notifications).toBeHidden();
+  await page.goto("/settings#notifications");
 
   await expect(page.getByRole("heading", { name: "Account & workspace" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Settings" })).toBeVisible();
