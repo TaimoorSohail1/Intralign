@@ -2,11 +2,11 @@
 
 Date: 5 August 2026  
 Branch: `fix/staging-release-blockers`  
-Deployed code commit: `2bafe3343ff1a7f389410bcfde9e027df4e5dc23`
+Deployed code commit: `61a1989`
 
 ## Executive result
 
-The targeted lifecycle, queueing, invitation, tier-limit, evidence-validation, advisor, and real-AI configuration failures have been fixed and deployed to staging. The staging application is suitable for stakeholder demonstrations, but it is not ready for a public production launch because outbound email is not configured, the Supabase project has a quota warning, a failed-project retry UI gap remains, and a full multi-document production benchmark is outstanding.
+The targeted lifecycle, queueing, invitation, tier-limit, evidence-validation, advisor, real-AI, and Postmark integration failures have been fixed and deployed to staging. The staging application is suitable for stakeholder demonstrations, but it is not ready for a public production launch because the configured Postmark sender still needs verification, the Supabase project has a quota warning, a failed-project retry UI gap remains, and a full multi-document production benchmark is outstanding.
 
 Recommendation: **GO for staging/demo; NO-GO for public production.**
 
@@ -22,7 +22,8 @@ Recommendation: **GO for staging/demo; NO-GO for public production.**
 | Tier limits differed between UI and server | Fixed | Free/Basic limits are centralized, displayed by the UI and enforced transactionally by the API. |
 | Duplicate completion notifications from one run | Fixed | The staging tracer created exactly one new completion notification. Older entries represent separate historical runs. |
 | Real AI analysis in staging | Fixed and verified | The existing key is configured in Heroku, `ANALYSIS_HARNESS=openai`, and a live analysis completed successfully. |
-| Real email delivery | Blocked by configuration | No SMTP host, username or password is configured. |
+| Real email delivery | Integration deployed; sender verification blocked | Postmark HTTPS delivery is configured for invitations and reports. The server token is valid, but Postmark rejected the configured Gmail From address because it is not yet a confirmed Sender Signature. |
+| Heroku OpenCV runtime | Fixed | The desktop OpenCV/libGL dependency was replaced at build time with headless OpenCV, and all Heroku shell hooks are forced to Linux line endings. API health returned `200 ready` after deployment. |
 
 ## Staging functional test
 
@@ -83,12 +84,14 @@ The browser automation did not capture the native PDF download event, but the st
 - Git diff check: **passed**
 - Staging API health: **ready**
 - Heroku web and worker dynos: **up**
+- Postmark mailer tests: **4 passed**
+- Postmark provider test: valid token; sender rejected until Sender Signature confirmation
 
 The full API non-integration suite did not finish within the local timeout during this validation run. The targeted changed-area suite passed, but the long-running full-suite test must be identified before production approval.
 
 ## Remaining production blockers
 
-1. Configure a verified SMTP/email provider and test invite, report-send and failure/retry delivery.
+1. Confirm the configured From address as a Postmark Sender Signature (or use a verified domain), then test invite, report-send and failure/retry delivery.
 2. Resolve the Supabase billing/quota warning so the service cannot be suspended after quota exhaustion.
 3. Repair the failed-project retry route: the current “Retry from Analysis” journey opens a blank intake instead of restoring the retained document.
 4. Run repeated uploads for multiple PDFs and measure analysis recall, success rate and p95 duration with the real provider.
@@ -97,4 +100,4 @@ The full API non-integration suite did not finish within the local timeout durin
 
 ## Final assessment
 
-The original staging lifecycle defects are resolved, the real OpenAI pipeline is active, and the application now fails safely. Code reliability is materially improved, but email provider setup, the failed-project retry repair, quota resolution and production-scale multi-document validation are still required before public launch.
+The original staging lifecycle defects are resolved, the real OpenAI pipeline is active, Postmark is integrated, and the application now fails safely. Code reliability is materially improved, but Postmark sender verification, the failed-project retry repair, quota resolution and production-scale multi-document validation are still required before public launch.
