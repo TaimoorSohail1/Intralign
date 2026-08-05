@@ -2,7 +2,8 @@
 
 Date: 5 August 2026  
 Branch: `fix/staging-release-blockers`  
-Deployed code commit: `61a1989`
+Deployed API code commit: `61a1989`  
+Deployed web code commit: `85c9925`
 
 ## Executive result
 
@@ -24,6 +25,15 @@ Recommendation: **GO for staging/demo; NO-GO for public production.**
 | Real AI analysis in staging | Fixed and verified | The existing key is configured in Heroku, `ANALYSIS_HARNESS=openai`, and a live analysis completed successfully. |
 | Real email delivery | Integration deployed; sender verification blocked | Postmark HTTPS delivery is configured for invitations and reports. The server token is valid, but Postmark rejected the configured Gmail From address because it is not yet a confirmed Sender Signature. |
 | Heroku OpenCV runtime | Fixed | The desktop OpenCV/libGL dependency was replaced at build time with headless OpenCV, and all Heroku shell hooks are forced to Linux line endings. API health returned `200 ready` after deployment. |
+| Invalid login produced a full-page server error | Fixed and deployed | Invalid credentials now return to `/login` with an inline message instead of producing HTTP 500. The live staging path was verified after deployment. |
+
+## 05 August configuration and login recheck
+
+- Staging had drifted back to `ANALYSIS_HARNESS=deterministic` with no OpenAI key in the API app.
+- The valid local OpenAI credential was restored to Heroku and accepted by the OpenAI API.
+- Staging now reports `ANALYSIS_HARNESS=openai`, the key is present, and API health returns `200 ready`.
+- The live web login returns HTTP 200. An invalid login stays on the sign-in page and shows a clear inline error.
+- Supabase currently contains only one synthetic confirmed staging account; a real owner account must still be provisioned before client handover.
 
 ## Staging functional test
 
@@ -76,7 +86,7 @@ The browser automation did not capture the native PDF download event, but the st
 
 ## Automated verification
 
-- Web tests: **116 passed**
+- Web tests: **117 passed**
 - Targeted API regression tests: **73 passed**
 - Ruff: **passed**
 - ESLint: **passed**
