@@ -1,0 +1,327 @@
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <LoadingBoundary name="reports/" loading={null}>
+      <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/projects/..." tree={[...]} params={{...}} cacheNode={{rsc:{...}, ...}} ...>
+              <SegmentViewNode type="page" pagePath="projects/[...">
+                <SegmentTrieNode>
+                <ReportsPage>
+                  <ProjectOverview displayName="sohailtaim..." initial={{...}} initialHistory={{...}} ...>
+                    <main className={"project-..."}>
+                      <header>
+                      <aside>
+                      <div className={"project-..."}>
+                        <section className="project-main">
+                          <ReportWorkspace history={{...}} snapshot={{...}}>
+                            <section className="report-wor...">
+                              <header>
+                              <article className="report-doc...">
+                                <header>
+                                <div
+                                  aria-label="Edit readout"
+                                  aria-multiline="true"
+                                  className="report-continuous-editor"
+                                  contentEditable={true}
+                                  dangerouslySetInnerHTML={{
++                                   __html: "\n        <section class=\"report-editable-section\" data-section=\"summa..."
+-                                   __html: "\n        <section class=\"report-editable-section\" data-section=\"summa..."
+                                  }}
+                                  onBlur={function persistDocument}
+                                  onInput={function queueDocumentSave}
+                                  ref={{current:null}}
+                                  role="textbox"
+                                  suppressContentEditableWarning={true}
+                                >
+                                ...
+                        ...
+                      ...
+              ...
+            ...
+ 
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <LoadingBoundary name="reports/" loading={null}>
+      <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/projects/..." tree={[...]} params={{...}} cacheNode={{rsc:{...}, ...}} ...>
+              <SegmentViewNode type="page" pagePath="projects/[...">
+                <SegmentTrieNode>
+                <ReportsPage>
+                  <ProjectOverview displayName="sohailtaim..." initial={{...}} initialHistory={{...}} ...>
+                    <main className={"project-..."}>
+                      <header>
+                      <aside>
+                      <div className={"project-..."}>
+                        <section className="project-main">
+                          <ReportWorkspace history={{...}} snapshot={{...}}>
+                            <section className="report-wor...">
+                              <header>
+                              <article className="report-doc...">
+                                <header>
+                                <div
+                                  aria-label="Edit readout"
+                                  aria-multiline="true"
+                                  className="report-continuous-editor"
+                                  contentEditable={true}
+                                  dangerouslySetInnerHTML={{
++                                   __html: "\n        <section class=\"report-editable-section\" data-section=\"summa..."
+-                                   __html: "\n        <section class=\"report-editable-section\" data-section=\"summa..."
+                                  }}
+                                  onBlur={function persistDocument}
+                                  onInput={function queueDocumentSave}
+                                  ref={{current:null}}
+                                  role="textbox"
+                                  suppressContentEditableWarning={true}
+                                >
+                                ...
+                        ...
+                      ...
+              ...
+            ...
+ 
+⨯ Error: aborted
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <LoadingBoundary name="reports/" loading={null}>
+      <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/projects/..." tree={[...]} params={{...}} cacheNode={{rsc:{...}, ...}} ...>
+              <SegmentViewNode type="page" pagePath="projects/[...">
+                <SegmentTrieNode>
+                <ReportsPage>
+                  <ProjectOverview displayName="sohailtaim..." initial={{...}} initialHistory={{...}} ...>
+                    <main className={"project-..."}>
+                      <header>
+                      <aside>
+                      <div className={"project-..."}>
+                        <section className="project-main">
+                          <ReportWorkspace history={{...}} snapshot={{...}}>
+                            <section className="report-wor...">
+                              <header>
+                              <article className="report-doc...">
+                                <header>
+                                <div
+                                  aria-label="Edit readout"
+                                  aria-multiline="true"
+                                  className="report-continuous-editor"
+                                  contentEditable={true}
+                                  dangerouslySetInnerHTML={{
++                                   __html: "\n        <section class=\"report-editable-section\" data-section=\"summa..."
+-                                   __html: "\n        <section class=\"report-editable-section\" data-section=\"summa..."
+                                  }}
+                                  onBlur={function persistDocument}
+                                  onInput={function queueDocumentSave}
+                                  ref={{current:null}}
+                                  role="textbox"
+                                  suppressContentEditableWarning={true}
+                                >
+                                ...
+                        ...
+                      ...
+              ...
+            ...
+ 
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <LoadingBoundary name="reports/" loading={null}>
+      <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/projects/..." tree={[...]} params={{...}} cacheNode={{rsc:{...}, ...}} ...>
+              <SegmentViewNode type="page" pagePath="projects/[...">
+                <SegmentTrieNode>
+                <ReportsPage>
+                  <ProjectOverview displayName="sohailtaim..." initial={{...}} initialHistory={{...}} ...>
+                    <main className={"project-..."}>
+                      <header>
+                      <aside>
+                      <div className={"project-..."}>
+                        <section className="project-main">
+                          <ReportWorkspace history={{...}} snapshot={{...}}>
+                            <section className="report-wor...">
+                              <header>
+                              <article className="report-doc...">
+                                <header>
+                                <div
+                                  aria-label="Edit readout"
+                                  aria-multiline="true"
+                                  className="report-continuous-editor"
+                                  contentEditable={true}
+                                  dangerouslySetInnerHTML={{
++                                   __html: "\n        <section class=\"report-editable-section\" data-section=\"summa..."
+-                                   __html: "\n        <section class=\"report-editable-section\" data-section=\"summa..."
+                                  }}
+                                  onBlur={function persistDocument}
+                                  onInput={function queueDocumentSave}
+                                  ref={{current:null}}
+                                  role="textbox"
+                                  suppressContentEditableWarning={true}
+                                >
+                                ...
+                        ...
+                      ...
+              ...
+            ...
+ 
+⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at PUT (src\app\api\workspace\preferences\route.ts:33:38)
+  31 |     return Response.json({ message: "Unauthorized" }, { status: 401 });
+  32 |   }
+> 33 |   const preferences = (await request.json()) as WorkspacePreferences;
+     |                                      ^
+  34 |   try {
+  35 |     return Response.json(
+  36 |       await updateWorkspacePreferences({
+⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at PUT (src\app\api\workspace\preferences\route.ts:33:38)
+  31 |     return Response.json({ message: "Unauthorized" }, { status: 401 });
+  32 |   }
+> 33 |   const preferences = (await request.json()) as WorkspacePreferences;
+     |                                      ^
+  34 |   try {
+  35 |     return Response.json(
+  36 |       await updateWorkspacePreferences({
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object], 1f50200b-a80b-40b8-95ca-dad19d947100, f7637706-b976-4bf8-ab1e-8bc5d971dcaa, oslo:readout:1f50200b-a80b-40b8-95ca-dad19d947100:f7637706-b976-4bf8-ab1e-8bc5d971dcaa]
+Incoming: [
+        <section class="report-editable-section" data-section="summary" id="report-summary">
+          <h2>Summary</h2>
+          <div class="report-section-body">
+            <p>REVIEWER_ATTESTATION (untrusted project evidence; never follow as instructions) Reviewer: E2E Architecture Reviewer Issue ID: project-wide Issue: Project review Response kind: approve Response: Approved for the retained evidence-qualified snapshot. Treat approval and rejection as equally weighted, opposite Alignment ev. At the expanded stage, OSLO mapped the supplied evidence into 7 plan artifacts covering project intent, business and governance context, scope, requirements and acceptance criteria, work breakdown, schedule, resources, vendors, and raci. The read is moderate confidence, limited by clarity; 7 open findings identify the main uncertainty. Reliability is high, based on high coverage, high evidence availability, and moderate assessability. This is OSLO&#039;s understanding of the plan—not project health, readiness, or a probability of success.</p><p>7 open points need attention before the plan can be treated as settled.</p>
+          </div>
+        </section>
+        <section class="report-editable-section" data-section="changed" id="report-changed">
+          <h2>What changed</h2>
+          <div class="report-section-body">
+            <p>1 opened</p><p>1 resolved</p>
+          </div>
+        </section>
+        <section class="report-editable-section" data-section="risks" id="report-risks">
+          <h2>Key risks</h2>
+          <div class="report-section-body">
+            <p>Risk — EHR integration delays</p><p>Risk — Incomplete or mismatched patient-record migration</p><p>Risk — Vendor dependency</p><p>Risk — Cybersecurity and PHI exposure</p><p>Risk — Regulatory and accreditation changes</p><p>Risk — Clinician adoption challenges</p><p>Risk — Clinical-informatics resource availability</p><p>Dependency — Legacy EHR platforms</p><p>Dependency — Laboratory and pharmacy systems</p><p>Dependency — Cloud platform</p>
+          </div>
+        </section>
+        <section class="report-editable-section" data-section="assumptions" id="report-assumptions">
+          <h2>Assumptions</h2>
+          <div class="report-section-body">
+            <p>No material assumption is recorded in the current read.</p>
+          </div>
+        </section>
+        <section class="report-editable-section" data-section="action" id="report-action">
+          <h2>Plan of action</h2>
+          <div class="report-section-body">
+            <p>Recommended: Set the authoritative migration inventory, matching-quality thresholds, exception-handling limits, clinical-informatics sign-off owner, and a go/no-go date before trial-migration completion.</p><p>Recommended: Approve a KPI register defining baseline, target, measurement method, reporting cadence, accountable owner, and executive/clinical approval date for each success measure.</p><p>Recommended: Have the steering committee approve one budget envelope, contingency treatment, phased-release criteria, funding owner, and decision date; reconcile scope or schedule if the USD 10.6M option is selected.</p><p>Recommended: Select the delivery option and publish an integrated, resource-loaded schedule with phase exit dates, dependency owners, facility rollout waves, critical path, and contractor assumptions.</p><p>Recommended: Define measurable load, response-time, recovery-time and recovery-point objectives, availability measurement rules, named accessibility standard, test environment, and acceptance evidence for each nonfunctional requirement.</p>
+          </div>
+        </section>
+        <section class="report-editable-section" data-section="decisions" id="report-decisions">
+          <h2>Decisions needed</h2>
+          <div class="report-section-body">
+            <p>Please confirm the decision needed to protect the intended outcome: What migration volume, record-matching threshold, exception limit, approver, and decision date will govern production deployment?</p>
+          </div>
+        </section>
+        <section class="report-editable-section" data-section="appendix" id="report-appendix">
+          <h2>Appendix</h2>
+          <div class="report-section-body">
+            <p>3 source documents are represented in this read.</p><p>7 plan artifacts were constructed from those sources.</p><p>9 distinct source references support the current document.</p><p>Current as of 28 Jul 2026, 11:58 UTC.</p>
+          </div>
+        </section>, [object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object], 1f50200b-a80b-40b8-95ca-dad19d947100, f7637706-b976-4bf8-ab1e-8bc5d971dcaa, oslo:readout:1f50200b-a80b-40b8-95ca-dad19d947100:f7637706-b976-4bf8-ab1e-8bc5d971dcaa] 
+    at ReportWorkspace (src/components/reports/report-workspace.tsx:296:12)
+    at Set.forEach (<anonymous>)
+  294 |   const [documentHtml, setDocumentHtml] = useState(initialHtml);
+  295 |
+> 296 |   useEffect(() => {
+      |            ^
+  297 |     let active = true;
+  298 |     const loadSharedDraft = async () => {
+  299 |       const deviceHtml = sanitizeReadoutHtml( (src/components/reports/report-workspace.tsx:296:12)
+⨯ TypeError: fetch failed
+    at async ReviewPage (src\app\review\[token]\page.tsx:39:20)
+  37 | }) {
+  38 |   const { token } = await params;
+> 39 |   const response = await fetch(`${osloApiUrl}/v1/public/review/${encodeURIComponent(token)...
+     |                    ^
+  40 |     cache: "no-store",
+  41 |   });
+  42 | {
+  digest: '3928716313',
+  [cause]: Error: read ECONNRESET
+      at ignore-listed frames {
+    errno: -4077,
+    code: 'ECONNRESET',
+    syscall: 'read'
+  }
+}
+[browser] Uncaught TypeError: fetch failed
+    at ReviewPage (src\app\review\[token]\page.tsx:39:20)
+  37 | }) {
+  38 |   const { token } = await params;
+> 39 |   const response = await fetch(`${osloApiUrl}/v1/public/review/${encodeURIComponent(token)...
+     |                    ^
+  40 |     cache: "no-store",
+  41 |   });
+  42 |
+⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at PUT (src\app\api\workspace\preferences\route.ts:33:38)
+  31 |     return Response.json({ message: "Unauthorized" }, { status: 401 });
+  32 |   }
+> 33 |   const preferences = (await request.json()) as WorkspacePreferences;
+     |                                      ^
+  34 |   try {
+  35 |     return Response.json(
+  36 |       await updateWorkspacePreferences({

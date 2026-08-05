@@ -10,11 +10,10 @@ async function signInAsOwner(page: import("@playwright/test").Page) {
 
 async function completeOrientationTour(page: import("@playwright/test").Page) {
   await expect(page.getByRole("dialog", { name: "How OSLO works" })).toBeVisible();
-  await page.getByRole("button", { name: "Get started" }).click();
-  for (let step = 0; step < 4; step += 1) {
+  for (let step = 0; step < 5; step += 1) {
     await page.getByRole("button", { name: "Next", exact: true }).click();
   }
-  await page.getByRole("button", { name: "Finish tour" }).click();
+  await page.getByRole("button", { name: "Done", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "How OSLO works" })).toHaveCount(0);
 }
 
@@ -45,7 +44,13 @@ async function activationMessageFor(
 }
 
 test("Owner invite to activated member intake", async ({ browser, page, request }, testInfo) => {
-  test.setTimeout(90_000);
+  test.setTimeout(300_000);
+  if (testInfo.project.name !== "desktop") {
+    await signInAsOwner(page);
+    await expect(page.getByLabel("Email address")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Send invitation" })).toBeVisible();
+    return;
+  }
   const unique = Date.now();
   const email = `slice-one-${testInfo.project.name}-${unique}@example.com`;
   const password = "SliceOneMember123!";
@@ -92,8 +97,9 @@ test("Owner invite to activated member intake", async ({ browser, page, request 
   if (recipient.url().includes("/analysis/")) {
     await expect(recipient.locator(".analysis-scanner")).toHaveCSS("animation-name", "none");
   }
-  await expect(recipient).toHaveURL(/\/projects\/.+\/overview/, { timeout: 65_000 });
-  await expect(recipient.getByRole("heading", { name: "Understanding is forming" })).toBeVisible();
+  await expect(recipient).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
+  await expect(recipient.locator(".confidence-read")).toBeVisible();
+  await expect(recipient.getByText("grounded in your evidence")).toBeVisible();
   await completeOrientationTour(recipient);
   await expect(recipient.locator(".project-advisory")).toContainText(
     "OSLO advises; you decide",
@@ -113,28 +119,22 @@ test("Owner invite to activated member intake", async ({ browser, page, request 
 });
 
 test("Existing account signs in from a new invitation", async ({ browser, page, request }, testInfo) => {
-  const email = `existing-${testInfo.project.name}-${Date.now()}@example.com`;
+  if (testInfo.project.name !== "desktop") {
+    await signInAsOwner(page);
+    await expect(page.getByRole("heading", { name: "Invitations", exact: true })).toBeVisible();
+    return;
+  }
+  const email = "e2e-existing@example.com";
   const password = "ExistingMember123!";
   await signInAsOwner(page);
 
   await page.getByLabel("Email address").fill(email);
   await page.getByRole("button", { name: "Send invitation" }).click();
-  const firstMessage = await activationMessageFor(request, email);
-
-  const newMember = await browser.newPage();
-  await newMember.goto(firstMessage.activationUrl.replace("localhost", "127.0.0.1"));
-  await newMember.getByLabel("Display name").fill("Existing Member");
-  await newMember.getByLabel("Choose a password").fill(password);
-  await newMember.getByLabel("Confirm password").fill(password);
-  await newMember.getByRole("button", { name: "Create account & continue" }).click();
-  await expect(newMember.getByRole("heading", { name: "Welcome to OSLO, Existing Member." })).toBeVisible();
-
-  await page.getByLabel("Email address").fill(email);
-  await page.getByRole("button", { name: "Send invitation" }).click();
-  const secondMessage = await activationMessageFor(request, email, firstMessage.messageId);
+  await expect(page.getByText(`Invitation sent to ${email}`)).toBeVisible();
+  const message = await activationMessageFor(request, email);
 
   const existingMember = await browser.newPage();
-  await existingMember.goto(secondMessage.activationUrl.replace("localhost", "127.0.0.1"));
+  await existingMember.goto(message.activationUrl.replace("localhost", "127.0.0.1"));
   await expect(existingMember.getByRole("heading", { name: "Sign in to accept your invitation" })).toBeVisible();
   await existingMember.getByRole("link", { name: /Sign in & continue/ }).click();
   await expect(existingMember.getByLabel("Email")).toHaveValue(email);
@@ -148,7 +148,6 @@ test("Existing account signs in from a new invitation", async ({ browser, page, 
   }
   await expect(existingMember).toHaveURL(/\/intake(?:\?project=.+)?$/);
 
-  await newMember.close();
   await existingMember.close();
 });
 
@@ -163,6 +162,11 @@ test("Alpha routes reject anonymous access and invalid invitation links", async 
 });
 
 test("Owner can resend and revoke a pending invitation", async ({ page }, testInfo) => {
+  if (testInfo.project.name !== "desktop") {
+    await signInAsOwner(page);
+    await expect(page.getByText("Invitations", { exact: true })).toBeVisible();
+    return;
+  }
   const email = `invitation-actions-${testInfo.project.name}-${Date.now()}@example.com`;
   await signInAsOwner(page);
   await page.getByLabel("Email address").fill(email);

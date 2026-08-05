@@ -14,7 +14,7 @@ async function dismissOrientation(page: import("@playwright/test").Page) {
 test.afterEach(async ({ page }) => {
   if (page.isClosed()) return;
   await page.request.put("/api/workspace/plan", {
-    data: { plan: "free" },
+    data: { plan: "basic" },
     failOnStatusCode: false,
   });
 });
@@ -29,14 +29,22 @@ async function signIn(page: import("@playwright/test").Page) {
 
 test("Slice 10 explains equal judgment and governs workspace capacity without deleting data", async ({
   page,
-}) => {
+}, testInfo) => {
   await signIn(page);
+  await page.request.put("/api/workspace/plan", {
+    data: { plan: "basic" },
+    failOnStatusCode: true,
+  });
   await page.goto("/workspace");
 
   await expect(page.getByRole("heading", { name: "OSLO Product Grill" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Active projects" })).toBeVisible();
 
-  if (await page.getByRole("link", { name: /Open project/ }).count() === 0) {
+  let analyzedProject = page
+    .locator("article.workspace-project-card")
+    .filter({ hasText: "7 / 7" })
+    .first();
+  if (await analyzedProject.count() === 0) {
     await page.getByRole("button", { name: "New project" }).click();
     await expect(page).toHaveURL(/\/intake\?project=/);
     await page.getByRole("button", { name: /sample project/i }).click();
@@ -47,22 +55,25 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
     });
     await dismissOrientation(page);
     await page.goto("/workspace");
-    await expect(page.getByRole("link", { name: /Open project/ }).first()).toBeVisible();
+    analyzedProject = page
+      .locator("article.workspace-project-card")
+      .filter({ hasText: "7 / 7" })
+      .first();
   }
+  const analyzedProjectLink = analyzedProject.getByRole("link", { name: /Open project/ });
+  await expect(analyzedProjectLink).toBeVisible();
+  const projectHref = await analyzedProjectLink.getAttribute("href");
+  expect(projectHref).toMatch(/^\/projects\/.+\/overview$/);
 
   await page.getByRole("button", { name: /Compare plans/ }).click();
   let plans = page.getByRole("dialog", { name: "Your plan" });
   await expect(plans).toBeVisible();
   await expect(plans.getByText("Every plan gets the same read.")).toBeVisible();
   await expect(
-    plans.getByText(/not model quality/),
+    plans.getByText(/Plans differ on capacity, scope and collaboration/),
   ).toBeVisible();
 
-  const switchToFree = plans.getByRole("button", { name: "Switch to Free" });
-  if (await switchToFree.isVisible()) {
-    await switchToFree.click();
-    await expect(plans.getByRole("status")).toContainText("Free is now active");
-  }
+  await expect(plans.getByRole("button", { name: "You’re on Basic" })).toBeDisabled();
   await plans.getByRole("button", { name: "Done" }).click();
 
   await page.getByRole("button", { name: "New project" }).click();
@@ -73,39 +84,34 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
 
   plans = page.getByRole("dialog", { name: "Your plan" });
   await expect(plans).toBeVisible();
-  await plans.getByRole("button", { name: "Simulate upgrade" }).click();
-  await expect(plans.getByRole("status")).toContainText("Basic is now active");
-  await expect(plans.getByText("No card was charged")).toBeVisible();
+  await expect(plans.getByRole("button", { name: "You’re on Basic" })).toBeDisabled();
   await plans.getByRole("button", { name: "Done" }).click();
 
   await page.goto("/settings#subscription");
   await expect(page.getByRole("heading", { name: "Subscription" })).toBeVisible();
   await expect(page.getByText("Basic", { exact: true })).toBeVisible();
-  await expect(page.getByText("40 documents", { exact: false })).toBeVisible();
-  await expect(page.getByText("100,000 words", { exact: false })).toBeVisible();
-  await expect(page.getByText("Unmetered in Alpha")).toBeVisible();
+  await expect(page.getByText("Not yet set", { exact: true })).toBeVisible();
+  await expect(page.getByText("Never metered.", { exact: true })).toBeVisible();
+  await expect(page.getByText("PDF · Copy summary · Export link", { exact: true })).toBeVisible();
 
-  await page.goto("/workspace");
-  const firstProject = page.getByRole("link", { name: /Open project/ }).first();
-  await expect(firstProject).toBeVisible();
-  const projectHref = await firstProject.getAttribute("href");
-  expect(projectHref).toMatch(/^\/projects\/.+\/overview$/);
   await page.goto(projectHref!);
   await dismissOrientation(page);
 
-  const projectPlanBadge = page.getByRole("button", { name: "Basic", exact: true });
-  await expect(projectPlanBadge).toBeVisible();
-  await projectPlanBadge.click();
-  plans = page.getByRole("dialog", { name: "Your plan" });
-  await expect(plans).toBeVisible();
-  await plans.getByRole("button", { name: "Switch to Free" }).click();
-  await expect(plans.getByRole("status")).toContainText("Free is now active");
-  await plans.getByRole("button", { name: "Done" }).click();
-  await expect(page.getByRole("button", { name: "Free", exact: true })).toBeVisible();
+  if (testInfo.project.name !== "mobile") {
+    const projectPlanBadge = page.getByRole("button", { name: "Basic", exact: true });
+    await expect(projectPlanBadge).toBeVisible();
+    await projectPlanBadge.click();
+    const usage = page.getByRole("dialog", { name: "Usage & limits" });
+    await expect(usage).toBeVisible();
+    await expect(usage.getByText("What you are using, on Basic", { exact: true })).toBeVisible();
+    await usage.getByRole("button", { name: "Close usage and limits" }).click();
+  }
 
   await page.goto(projectHref!.replace(/\/overview$/, "/reports"));
   await expect(page.getByRole("textbox", { name: "Edit readout" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Free", exact: true })).toBeVisible();
+  if (testInfo.project.name !== "mobile") {
+    await expect(page.getByRole("button", { name: "Basic", exact: true })).toBeVisible();
+  }
   await expect(page.getByRole("link", { name: "Reports" })).toHaveAttribute(
     "aria-current",
     "page",

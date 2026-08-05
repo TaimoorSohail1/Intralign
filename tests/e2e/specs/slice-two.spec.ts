@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+test.setTimeout(180_000);
+
 async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/login");
   await page.getByLabel("Email").fill("admin@oslo.local");
@@ -36,8 +38,11 @@ test("Slice 2 survives refresh and publishes exactly seven artifacts", async ({ 
   }
 
   await expect(page.getByText(/provisional|current/).first()).toBeVisible();
-  await expect(page.getByText("Plan artifacts read")).toBeVisible();
-  await expect(page.getByText("7 / 7")).toBeVisible();
+  await expect(
+    page
+      .getByRole("complementary", { name: "Project navigation" })
+      .locator('a[href*="/artifacts/"]'),
+  ).toHaveCount(7);
   await expect(page.locator(".project-advisory")).toContainText("OSLO advises; you decide");
   await expect(page.getByRole("dialog", { name: "Issue details" })).toHaveCount(0);
 

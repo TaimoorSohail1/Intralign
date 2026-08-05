@@ -60,10 +60,12 @@ function eventIcon(event: HistoryEvent) {
 }
 
 export function HistoryWorkspace({
+  analysisRunId,
   history,
   onAskOslo,
   projectId,
 }: {
+  analysisRunId?: string;
   history: ProjectHistory;
   onAskOslo?: (runId: string, prompt: string) => void;
   projectId: string;
@@ -115,7 +117,7 @@ export function HistoryWorkspace({
     return () => {
       active = false;
     };
-  }, [projectId]);
+  }, [analysisRunId, projectId]);
 
   const visibleGroups = useMemo(
     () =>

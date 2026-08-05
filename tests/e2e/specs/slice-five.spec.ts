@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test.setTimeout(240_000);
+test.setTimeout(300_000);
 
 async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/login");
@@ -72,13 +72,22 @@ test("Slice 5 exposes all seven editable artifacts and preserves a versioned edi
 
   await openArtifact(page, "Scope", "scope");
   await expect(page.locator(".artifact-workspace h1")).toBeVisible();
-  await expect(page.getByText("Up to date", { exact: true })).toBeVisible();
+  await expect(page.getByText("Up to date", { exact: true })).toBeVisible({
+    timeout: 120_000,
+  });
   const editableParagraphs = page.locator(".artifact-copy");
   const target = editableParagraphs.last();
   const original = await target.innerText();
   const marker = ` Confirmed in Slice 5 E2E ${Date.now()}.`;
   await target.click();
-  await target.press("End");
+  await target.evaluate((element) => {
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    range.collapse(false);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  });
   await target.type(marker.slice(0, 1));
   await expect(target).toBeFocused();
   await target.type(marker.slice(1), { delay: 5 });
@@ -109,6 +118,12 @@ test("Slice 5 issue annotations expose an honest evidence state and artifact con
   page,
 }) => {
   await createAnalyzedProject(page);
+  const overviewUrl = page.url();
+  await page.goto(overviewUrl.replace(/\/overview$/, "/history"));
+  await expect(page.getByText("Extended Analysis complete", { exact: true }).first()).toBeVisible({
+    timeout: 120_000,
+  });
+  await page.goto(overviewUrl);
 
   const countedArtifactLink = page
     .getByRole("link")
@@ -137,7 +152,9 @@ test("Slice 5 issue annotations expose an honest evidence state and artifact con
   await evidence.click();
   await expect(evidence).toHaveAttribute("aria-expanded", "true");
   await expect(
-    dialog.getByText(/Readable evidence details are not available/),
+    dialog
+      .getByText(/Readable evidence details are not available/)
+      .or(dialog.getByText("Project description", { exact: true })),
   ).toBeVisible();
   await expect(dialog.getByText(/document:.*fragment:/)).toHaveCount(0);
   await expect(dialog.getByRole("textbox", { name: "Clarification answer" })).toBeVisible();

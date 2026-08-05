@@ -25,7 +25,9 @@ export async function inviteMember(formData: FormData) {
       caught instanceof OsloApiError && caught.status === 422
         ? "Enter a valid email address."
         : caught instanceof OsloApiError && caught.status === 409
-          ? "That person already has an active invitation or workspace access."
+          ? caught.message === "OSLO API request failed"
+            ? "That person already has an active invitation or workspace access."
+            : caught.message
           : "The invitation could not be sent. Please try again.";
     redirect(
       `/admin/invitations?error=${encodeURIComponent(message)}&email=${encodeURIComponent(email)}`,
