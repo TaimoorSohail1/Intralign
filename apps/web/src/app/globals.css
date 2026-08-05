@@ -97,6 +97,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .activation-subtitle, .error-card p, .admin-copy {
   margin: 0 0 18px; color: var(--muted); font-size: 13px; line-height: 1.6;
 }
+.login-error {
+  margin: 0 0 14px; padding: 9px 11px; border: 1px solid rgb(199 91 91 / 42%);
+  border-radius: 8px; background: rgb(199 91 91 / 9%); color: #ef9a9a; font-size: 12px;
+}
 .eyebrow {
   margin: 0 0 8px; color: var(--primary-light); font-size: 10px;
   font-weight: 700; letter-spacing: .65px; text-transform: uppercase;

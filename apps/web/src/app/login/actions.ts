@@ -28,7 +28,7 @@ export async function signIn(formData: FormData) {
     headers: { apikey: publishableKey, "content-type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  if (!response.ok) throw new Error("Email or password is incorrect");
+  if (!response.ok) redirect("/login?error=invalid_credentials");
   const payload = await response.json();
   await writeSessionCookies(
     {
