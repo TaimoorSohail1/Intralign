@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { readSession, redirect, startProject } = vi.hoisted(() => ({
+const { completeWelcome, readSession, redirect, startProject } = vi.hoisted(() => ({
+  completeWelcome: vi.fn(),
   redirect: vi.fn((path: string) => {
     throw new Error(`REDIRECT:${path}`);
   }),
@@ -10,7 +11,19 @@ const { readSession, redirect, startProject } = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("@/lib/server/session", () => ({ readSession }));
-vi.mock("@/lib/server/oslo-api", () => ({ startProject }));
+vi.mock("@/lib/server/oslo-api", () => ({
+  OsloApiError: class OsloApiError extends Error {
+    constructor(
+      message: string,
+      readonly status: number,
+      readonly detail: unknown,
+    ) {
+      super(message);
+    }
+  },
+  completeWelcome,
+  startProject,
+}));
 
 describe("startFirstProject", () => {
   beforeEach(() => {
@@ -28,5 +41,21 @@ describe("startFirstProject", () => {
     await expect(startFirstProject()).rejects.toThrow(
       "REDIRECT:/intake?project=project-new",
     );
+  });
+
+  it("completes onboarding and opens the workspace when its project limit is full", async () => {
+    const { OsloApiError } = await import("@/lib/server/oslo-api");
+    startProject.mockRejectedValue(
+      new OsloApiError("Project limit reached", 409, {
+        code: "ACTIVE_PROJECT_LIMIT_REACHED",
+      }),
+    );
+    const { startFirstProject } = await import("./actions");
+
+    await expect(startFirstProject()).rejects.toThrow("REDIRECT:/workspace");
+    expect(completeWelcome).toHaveBeenCalledWith({
+      accessToken: "access-token",
+      workspaceId: "workspace-1",
+    });
   });
 });

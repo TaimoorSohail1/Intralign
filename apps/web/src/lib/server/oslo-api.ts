@@ -589,6 +589,16 @@ export function startProject(input: {
   });
 }
 
+export function completeWelcome(input: {
+  accessToken: string;
+  workspaceId: string;
+}): Promise<void> {
+  return apiRequest(`/v1/workspaces/${input.workspaceId}/welcome`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+  });
+}
+
 export interface WorkspaceProjectSummary {
   id: string;
   name: string;

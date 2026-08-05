@@ -128,6 +128,8 @@ class SliceOneApplication(Protocol):
 
     def get_session_context(self, *, actor_user_id: UUID) -> SessionContext: ...
 
+    def complete_welcome(self, *, actor_user_id: UUID, workspace_id: UUID) -> None: ...
+
     def invite_member(
         self,
         *,

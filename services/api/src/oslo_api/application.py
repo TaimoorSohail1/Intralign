@@ -256,6 +256,22 @@ class DatabaseSliceOneApplication:
             welcome_required=membership["welcome_seen_at"] is None,
         )
 
+    def complete_welcome(self, *, actor_user_id: UUID, workspace_id: UUID) -> None:
+        with self._engine.begin() as connection:
+            updated = connection.execute(
+                text(
+                    """
+                    update public.memberships
+                    set welcome_seen_at = coalesce(welcome_seen_at, now())
+                    where workspace_id = :workspace_id and user_id = :user_id
+                    returning user_id
+                    """
+                ),
+                {"workspace_id": workspace_id, "user_id": actor_user_id},
+            ).scalar_one_or_none()
+            if updated is None:
+                raise InvitePermissionDenied
+
     @staticmethod
     def _can_manage_invitations(
         connection: Connection, *, workspace_id: UUID, actor_user_id: UUID

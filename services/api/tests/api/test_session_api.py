@@ -28,6 +28,10 @@ class SessionApplication:
             welcome_required=False,
         )
 
+    def complete_welcome(self, *, actor_user_id: UUID, workspace_id: UUID) -> None:
+        assert actor_user_id == USER_ID
+        assert workspace_id == WORKSPACE_ID
+
 
 def test_owner_session_resolves_its_real_workspace() -> None:
     response = TestClient(create_app(slice_one=SessionApplication("owner"))).get(
@@ -55,3 +59,11 @@ def test_platform_admin_is_distinct_from_workspace_owner() -> None:
     assert response.status_code == 200
     assert response.json()["account_role"] == "admin"
 
+
+def test_owner_can_complete_welcome_without_creating_another_project() -> None:
+    response = TestClient(create_app(slice_one=SessionApplication("owner"))).post(
+        f"/v1/workspaces/{WORKSPACE_ID}/welcome",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 204

@@ -54,3 +54,24 @@ def get_session_context(
         ) from error
     return SessionContextResponse.model_validate(context)
 
+
+@router.post(
+    "/workspaces/{workspace_id}/welcome",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def complete_welcome(
+    workspace_id: UUID,
+    request: Request,
+    access_token: Annotated[str, Depends(require_access_token)],
+) -> None:
+    application = slice_one_application(request)
+    try:
+        user = application.authenticate(access_token)
+        application.complete_welcome(actor_user_id=user.id, workspace_id=workspace_id)
+    except InvalidSession as error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session is invalid or expired",
+        ) from error
+    except InvitePermissionDenied as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from error
