@@ -6,7 +6,7 @@ Deployed code commit: `2bafe3343ff1a7f389410bcfde9e027df4e5dc23`
 
 ## Executive result
 
-The targeted lifecycle, queueing, invitation, tier-limit, evidence-validation, and advisor failures have been fixed in code and deployed to staging. The staging application is suitable for stakeholder demonstrations, but it is not ready for a public production launch because real AI analysis and outbound email are not configured, the Supabase project has a quota warning, and a full multi-document production benchmark remains outstanding.
+The targeted lifecycle, queueing, invitation, tier-limit, evidence-validation, advisor, and real-AI configuration failures have been fixed and deployed to staging. The staging application is suitable for stakeholder demonstrations, but it is not ready for a public production launch because outbound email is not configured, the Supabase project has a quota warning, a failed-project retry UI gap remains, and a full multi-document production benchmark is outstanding.
 
 Recommendation: **GO for staging/demo; NO-GO for public production.**
 
@@ -16,12 +16,12 @@ Recommendation: **GO for staging/demo; NO-GO for public production.**
 |---|---|---|
 | Slow and unreliable process-local analysis queue | Fixed in architecture | Durable PostgreSQL job queue added; a separate Heroku worker dyno is running and processed the staging tracer reanalysis. |
 | Evidence validation failed the whole analysis | Fixed | Unsupported evidence locators are quarantined when verified evidence remains; incomplete findings are not published. |
-| OSLO chat failed without OpenAI | Fixed safely | Advisor now returns a grounded current-snapshot fallback instead of an API failure. Real AI chat still needs an OpenAI key. |
+| OSLO chat failed without OpenAI | Fixed and configured | Advisor has a grounded fallback, and staging now has a valid OpenAI key for live responses. |
 | Reanalysis, History and Overview counters disagreed | Fixed | One analysis version now drives Issues, artifacts, History, Overview, Reports and notifications. |
 | Failed invitation left active/pending access | Fixed | Failed first sends are revoked; failed resends restore the prior invitation. Staging test ended as `REVOKED`, not `PENDING`. |
 | Tier limits differed between UI and server | Fixed | Free/Basic limits are centralized, displayed by the UI and enforced transactionally by the API. |
 | Duplicate completion notifications from one run | Fixed | The staging tracer created exactly one new completion notification. Older entries represent separate historical runs. |
-| Real AI analysis in staging | Blocked by configuration | Staging still uses `ANALYSIS_HARNESS=deterministic` and has no `OPENAI_API_KEY`. |
+| Real AI analysis in staging | Fixed and verified | The existing key is configured in Heroku, `ANALYSIS_HARNESS=openai`, and a live analysis completed successfully. |
 | Real email delivery | Blocked by configuration | No SMTP host, username or password is configured. |
 
 ## Staging functional test
@@ -40,6 +40,18 @@ The existing Wayfarer staging project was used for a live end-to-end tracer.
 10. Notifications added one completion event for this run.
 
 Observed end-to-end time was approximately 73 seconds, including interaction and page refresh time. This is a successful tracer result, not a statistically valid p95 benchmark.
+
+### Real OpenAI validation
+
+Staging was subsequently switched from the deterministic harness to the real OpenAI provider. A second governed Requirements correction was submitted after the configuration restart:
+
+- API health returned `200 ready`.
+- The durable worker processed the new OpenAI job.
+- The live analysis completed successfully in approximately **35 seconds**.
+- Requirements advanced to version 5 and retained both confirmed resolutions.
+- History, Overview, Issues, Attention Map, Inference Map, Reports, all seven artifacts, and notifications reflected the same current run.
+- Reports were current as of `05 Aug 2026, 16:03 UTC`.
+- One completion notification was created for the new run.
 
 ## Route and feature coverage
 
@@ -76,13 +88,13 @@ The full API non-integration suite did not finish within the local timeout durin
 
 ## Remaining production blockers
 
-1. Configure `OPENAI_API_KEY` and switch staging from deterministic harness to the real provider, then rerun accuracy and latency benchmarks.
-2. Configure a verified SMTP/email provider and test invite, report-send and failure/retry delivery.
-3. Resolve the Supabase billing/quota warning so the service cannot be suspended after quota exhaustion.
-4. Run repeated uploads for multiple PDFs in a supported browser and measure analysis success rate and p95 duration.
+1. Configure a verified SMTP/email provider and test invite, report-send and failure/retry delivery.
+2. Resolve the Supabase billing/quota warning so the service cannot be suspended after quota exhaustion.
+3. Repair the failed-project retry route: the current “Retry from Analysis” journey opens a blank intake instead of restoring the retained document.
+4. Run repeated uploads for multiple PDFs and measure analysis recall, success rate and p95 duration with the real provider.
 5. Diagnose the full API-suite timeout and obtain a clean complete run.
 6. Add production monitoring and alerts for queue depth, job age, failure type, AI latency and email failures.
 
 ## Final assessment
 
-The original staging lifecycle defects are resolved and the application now fails safely. Local and staging previously behaved differently because staging lacked provider configuration and used the deterministic harness. Code reliability is materially improved, but external provider setup and production-scale validation are still required before public launch.
+The original staging lifecycle defects are resolved, the real OpenAI pipeline is active, and the application now fails safely. Code reliability is materially improved, but email provider setup, the failed-project retry repair, quota resolution and production-scale multi-document validation are still required before public launch.
