@@ -109,6 +109,16 @@ class ProjectArchiveDenied(Exception):
     """Raised when a member cannot archive or restore the requested project."""
 
 
+class ActiveProjectLimitReached(Exception):
+    """Raised when a new project would exceed the workspace plan."""
+
+    def __init__(self, policy: PlanPolicy) -> None:
+        self.plan = policy.code.value
+        self.active_project_limit = policy.active_project_limit
+        self.remedies = ("archive_project", "compare_plans")
+        super().__init__("Workspace active project limit reached")
+
+
 class SqlMembershipReader:
     def __init__(self, connection: Connection) -> None:
         self._connection = connection
@@ -374,6 +384,34 @@ class DatabaseSliceOneApplication:
                 expires_at=issued.invitation.expires_at,
             )
         except Exception as error:
+            with self._engine.begin() as connection:
+                connection.execute(
+                    text(
+                        "update public.invitations "
+                        "set status = 'revoked', revoked_at = now() "
+                        "where id = :invitation_id and status = 'pending'"
+                    ),
+                    {"invitation_id": issued.invitation.id},
+                )
+                connection.execute(
+                    text(
+                        """
+                        insert into public.audit_events (
+                          workspace_id, actor_user_id, action, subject_type,
+                          subject_id, metadata
+                        ) values (
+                          :workspace_id, :actor_user_id, 'invitation.delivery_failed',
+                          'invitation', :subject_id, cast(:metadata as jsonb)
+                        )
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "actor_user_id": actor_user_id,
+                        "subject_id": str(issued.invitation.id),
+                        "metadata": json.dumps({"email": issued.invitation.email}),
+                    },
+                )
             raise InvitationDeliveryFailed(issued.invitation.id) from error
         return issued.invitation
 
@@ -506,6 +544,23 @@ class DatabaseSliceOneApplication:
                 expires_at=issued.invitation.expires_at,
             )
         except Exception as error:
+            with self._engine.begin() as connection:
+                connection.execute(
+                    text(
+                        "update public.invitations "
+                        "set status = 'revoked', revoked_at = now() "
+                        "where id = :replacement_id and status = 'pending'"
+                    ),
+                    {"replacement_id": issued.invitation.id},
+                )
+                connection.execute(
+                    text(
+                        "update public.invitations "
+                        "set status = 'pending', revoked_at = null "
+                        "where id = :original_id and status = 'revoked'"
+                    ),
+                    {"original_id": invitation_id},
+                )
             raise InvitationDeliveryFailed(issued.invitation.id) from error
         return issued.invitation
 
@@ -562,6 +617,22 @@ class DatabaseSliceOneApplication:
         with self._engine.begin() as connection:
             if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
                 raise InvitePermissionDenied
+            connection.execute(
+                text("select pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
+                {"scope": f"active-projects:{workspace_id}"},
+            )
+            policy = get_workspace_plan(connection, workspace_id)
+            active_project_count = int(
+                connection.execute(
+                    text(
+                        "select count(*) from public.projects "
+                        "where workspace_id = :workspace_id and archived_at is null"
+                    ),
+                    {"workspace_id": workspace_id},
+                ).scalar_one()
+            )
+            if active_project_count >= policy.active_project_limit:
+                raise ActiveProjectLimitReached(policy)
             connection.execute(
                 text(
                     """
@@ -795,6 +866,11 @@ class DatabaseSliceOneApplication:
             can_manage_plan=role is MembershipRole.OWNER,
             member_count=member_count,
             collaborator_seats_used=collaborator_seats_used,
+            active_project_limit=policy.active_project_limit,
+            can_create_project=(
+                sum(row["archived_at"] is None for row in rows)
+                < policy.active_project_limit
+            ),
         )
 
     def set_workspace_plan(

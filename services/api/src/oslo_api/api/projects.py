@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
-from oslo_api.application import ProjectArchiveDenied
+from oslo_api.application import ActiveProjectLimitReached, ProjectArchiveDenied
 from oslo_api.invitations import InvitePermissionDenied
 
 router = APIRouter(prefix="/v1", tags=["projects"])
@@ -64,6 +64,8 @@ class WorkspaceResponse(BaseModel):
     can_manage_plan: bool
     member_count: int
     collaborator_seats_used: int
+    active_project_limit: int
+    can_create_project: bool
     projects: list[WorkspaceProjectResponse]
     notifications: list[WorkspaceNotificationResponse]
 
@@ -118,6 +120,16 @@ def start_first_project(
         )
     except InvitePermissionDenied as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from error
+    except ActiveProjectLimitReached as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "ACTIVE_PROJECT_LIMIT_REACHED",
+                "plan": error.plan,
+                "limit": error.active_project_limit,
+                "remedies": list(error.remedies),
+            },
+        ) from error
     return ProjectResponse.model_validate(project)
 
 

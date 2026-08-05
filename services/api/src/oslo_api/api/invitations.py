@@ -168,10 +168,7 @@ def invite_member(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
                 "code": "INVITATION_DELIVERY_FAILED",
-                "message": (
-                    "Invitation was saved but email delivery failed. "
-                    "Retry from Invitations."
-                ),
+                "message": "Email delivery failed, so no pending invitation was created.",
                 "invitation_id": str(error.invitation_id),
             },
         ) from error
@@ -223,10 +220,7 @@ def resend_invitation(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
                 "code": "INVITATION_DELIVERY_FAILED",
-                "message": (
-                    "Invitation was saved but email delivery failed. "
-                    "Retry from Invitations."
-                ),
+                "message": "Email delivery failed; the original invitation is still pending.",
                 "invitation_id": str(error.invitation_id),
             },
         ) from error

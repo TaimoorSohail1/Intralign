@@ -244,6 +244,7 @@ def test_missing_clarified_issue_is_not_resolved_when_reanalysis_splits_it() -> 
     tied = next(issue for issue in result.issues if issue.id == "ISS-OWNER")
     assert tied.status == "addressed"
     assert result.resolved_issue_count == 0
+    assert result.confirmed_dependency_count == 1
 
 
 def test_clarification_reanalysis_preserves_resolved_issue_when_model_omits_it() -> None:

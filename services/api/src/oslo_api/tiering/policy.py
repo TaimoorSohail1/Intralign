@@ -25,6 +25,7 @@ class PlanPolicy:
     collaborator_seat_limit: int
     monthly_invitation_limit: int
     monthly_analysis_limit: int | None
+    active_project_limit: int
     chat_is_metered: bool = False
 
     def decide_document_capacity(
@@ -57,6 +58,7 @@ _POLICIES = {
         collaborator_seat_limit=3,
         monthly_invitation_limit=2,
         monthly_analysis_limit=None,
+        active_project_limit=1,
     ),
     PlanCode.BASIC: PlanPolicy(
         code=PlanCode.BASIC,
@@ -68,6 +70,7 @@ _POLICIES = {
         collaborator_seat_limit=10,
         monthly_invitation_limit=5,
         monthly_analysis_limit=None,
+        active_project_limit=3,
     ),
 }
 

@@ -610,6 +610,8 @@ export interface WorkspaceSummary {
   can_manage_plan: boolean;
   member_count?: number;
   collaborator_seats_used?: number;
+  active_project_limit?: number;
+  can_create_project?: boolean;
   projects: WorkspaceProjectSummary[];
   notifications: WorkspaceNotificationSummary[];
 }

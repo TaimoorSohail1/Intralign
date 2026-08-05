@@ -6,8 +6,8 @@ def test_free_and_basic_share_the_same_judgment_and_unlimited_projects() -> None
     basic = get_plan_policy(PlanCode.BASIC)
 
     assert free.judgment_profile == basic.judgment_profile == "oslo-governed-v1"
-    assert not hasattr(free, "active_project_limit")
-    assert not hasattr(basic, "active_project_limit")
+    assert free.active_project_limit == 1
+    assert basic.active_project_limit == 3
     assert free.document_limit == 20
     assert basic.document_limit == 40
     assert free.word_limit == 50_000

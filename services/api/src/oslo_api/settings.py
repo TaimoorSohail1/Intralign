@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     smtp_port: int = 55325
     email_sender: str = "OSLO <no-reply@oslo.local>"
     analysis_worker_threads: int = Field(default=4, ge=1, le=32)
+    analysis_execution_mode: Literal["in_process", "durable"] = "in_process"
+    analysis_worker_poll_seconds: float = Field(default=1.0, ge=0.1, le=30)
+    analysis_worker_lease_seconds: int = Field(default=900, ge=60, le=3_600)
     analysis_artifact_worker_threads: int = Field(default=4, ge=1, le=16)
     analysis_phase_delay_ms: int = Field(default=120, ge=0, le=10_000)
     extended_analysis_delay_ms: int = Field(default=750, ge=0, le=60_000)

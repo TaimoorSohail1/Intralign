@@ -1,6 +1,8 @@
 import json
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
+from typing import Protocol
 from uuid import UUID
 
 from sqlalchemy import Engine, create_engine, text
@@ -22,6 +24,7 @@ from oslo_api.analysis.artifact_edits import (
 from oslo_api.analysis.document_store import DatabaseDocumentStore
 from oslo_api.analysis.harness import AgentHarness
 from oslo_api.analysis.history import append_history_event, list_project_history
+from oslo_api.analysis.job_queue import DatabaseAnalysisJobQueue
 from oslo_api.analysis.models import EvidenceFragment
 from oslo_api.analysis.object_storage import LocalObjectStorage
 from oslo_api.analysis.openai_harness import OpenAIAgentHarness
@@ -41,6 +44,10 @@ from oslo_api.slice_two import (
 from oslo_api.tiering.repository import get_workspace_plan
 
 
+class AnalysisDispatcher(Protocol):
+    def submit(self, function: Callable[[UUID], object], run_id: UUID) -> object: ...
+
+
 class DatabaseSliceTwoApplication:
     def __init__(
         self,
@@ -48,7 +55,7 @@ class DatabaseSliceTwoApplication:
         engine: Engine,
         store: DatabaseAnalysisStore,
         workflow: AnalysisWorkflow,
-        executor: ThreadPoolExecutor,
+        executor: AnalysisDispatcher,
         document_store: DatabaseDocumentStore,
         extended_delay_seconds: float = 0.5,
     ) -> None:
@@ -1314,6 +1321,13 @@ class DatabaseSliceTwoApplication:
             if extended.status is AnalysisRunStatus.QUEUED:
                 self._executor.submit(self._execute, extended.id)
 
+    def execute_queued_run(self, run_id: UUID) -> AnalysisRun:
+        self._execute(run_id)
+        run = self._store.get_run(run_id)
+        if run is None:
+            raise SliceTwoNotFound
+        return run
+
     def _workspace_for_project(self, actor_user_id: UUID, project_id: UUID) -> UUID:
         with self._engine.connect() as connection:
             workspace_id = connection.execute(
@@ -1378,14 +1392,19 @@ def build_slice_two_application() -> DatabaseSliceTwoApplication:
         artifact_workers_per_run=min(4, settings.analysis_artifact_worker_threads),
         artifact_worker_limit=settings.analysis_artifact_worker_threads,
     )
+    executor = (
+        DatabaseAnalysisJobQueue(engine)
+        if settings.analysis_execution_mode == "durable"
+        else ThreadPoolExecutor(
+            max_workers=settings.analysis_worker_threads,
+            thread_name_prefix="oslo-analysis",
+        )
+    )
     return DatabaseSliceTwoApplication(
         engine=engine,
         store=store,
         workflow=workflow,
-        executor=ThreadPoolExecutor(
-            max_workers=settings.analysis_worker_threads,
-            thread_name_prefix="oslo-analysis",
-        ),
+        executor=executor,
         document_store=document_store,
         extended_delay_seconds=settings.extended_analysis_delay_ms / 1000,
     )

@@ -236,7 +236,7 @@ def test_email_delivery_failure_is_reported_as_retryable() -> None:
     assert response.status_code == 503
     assert response.json()["detail"] == {
         "code": "INVITATION_DELIVERY_FAILED",
-        "message": "Invitation was saved but email delivery failed. Retry from Invitations.",
+        "message": "Email delivery failed, so no pending invitation was created.",
         "invitation_id": str(INVITATION_ID),
     }
 

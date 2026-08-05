@@ -145,7 +145,7 @@ def test_workspace_summary_serializes_projects_and_activity() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["name"] == "OSLO Alpha"
-    assert "active_project_limit" not in payload
+    assert payload["active_project_limit"] == 1
     assert payload["member_count"] == 1
     assert payload["collaborator_seats_used"] == 1
     assert payload["projects"][0]["confidence_index"] == 62

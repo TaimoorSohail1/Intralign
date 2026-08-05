@@ -94,6 +94,8 @@ class WorkspaceSummary:
     can_manage_plan: bool = False
     member_count: int = 1
     collaborator_seats_used: int = 1
+    active_project_limit: int = 1
+    can_create_project: bool = True
 
 
 @dataclass(frozen=True, slots=True)

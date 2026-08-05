@@ -11,7 +11,11 @@ from oslo_api.analysis import (
     InMemoryAnalysisStore,
     RunKind,
 )
-from oslo_api.analysis.advisor import OpenAIProjectAdvisor, ProjectAdvisorError
+from oslo_api.analysis.advisor import (
+    GroundedProjectAdvisor,
+    OpenAIProjectAdvisor,
+    ProjectAdvisorError,
+)
 
 WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
 PROJECT_ID = UUID("018f9f7e-8de2-7000-8000-000000000020")
@@ -115,3 +119,14 @@ def test_provider_failure_returns_only_a_safe_advisor_error() -> None:
 
     assert str(raised.value) == "PROJECT_ADVISOR_UNAVAILABLE"
     assert "Sensitive" not in str(raised.value)
+
+
+def test_grounded_fallback_answers_from_the_current_snapshot() -> None:
+    reply = GroundedProjectAdvisor().answer(
+        snapshot=completed_snapshot(),
+        question="What should I address first?",
+    )
+
+    assert reply.answer
+    assert "current read" in reply.answer.lower()
+    assert reply.follow_up_questions

@@ -35,7 +35,7 @@ export function UsageLimitsModal({
   if (!open) return null;
 
   const activeProjects = workspace.projects.filter((project) => !project.archived).length;
-  const activeProjectLimit = workspace.plan === "free" ? 1 : 3;
+  const activeProjectLimit = workspace.active_project_limit ?? (workspace.plan === "free" ? 1 : 3);
   const members = workspace.member_count ?? 1;
   const rows: UsageRow[] = [
     {

@@ -769,6 +769,15 @@ class OpenAIAgentHarness:
                 if set(getattr(issue, "evidence_refs", ())).issubset(allowed_refs)
             ]
             return output.model_copy(update={"issues": supported})
+        if isinstance(output, _PerceptionOutput):
+            supported_refs = [
+                reference
+                for reference in output.evidence_refs
+                if reference in allowed_refs
+            ]
+            if supported_refs:
+                return output.model_copy(update={"evidence_refs": supported_refs})
+            return None
         if isinstance(output, _SingleArtifactOutput):
             return OpenAIAgentHarness._quarantine_invalid_artifact_content(
                 output,

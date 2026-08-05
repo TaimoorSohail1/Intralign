@@ -966,6 +966,33 @@ def test_construct_quarantines_only_artifact_content_with_unsupported_evidence()
     assert len(client.responses.requests) == 1
 
 
+def test_perceive_quarantines_an_invalid_locator_when_supported_evidence_remains() -> None:
+    evidence_ref = "document:plan:page:1:fragment:0"
+    invented_ref = "document:plan:page:99:fragment:9"
+    payload = {
+        "facts": ["A supported fact."],
+        "claims": [],
+        "gaps": [],
+        "evidence_refs": [evidence_ref, invented_ref],
+    }
+    client = SequencedOpenAI([payload])
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+
+    result = harness.perceive(
+        description="A supported fact.",
+        source_names=(),
+        evidence=(EvidenceFragment(reference=evidence_ref, content="A supported fact."),),
+        kind=RunKind.INITIAL,
+    )
+
+    assert result.evidence_refs == (evidence_ref,)
+    assert len(client.responses.requests) == 1
+
+
 def test_output_limit_uses_a_specific_safe_failure_code() -> None:
     harness = OpenAIAgentHarness(
         api_key="not-used-by-the-fake",

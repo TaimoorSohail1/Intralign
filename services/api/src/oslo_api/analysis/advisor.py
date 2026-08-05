@@ -48,6 +48,76 @@ class UnavailableProjectAdvisor:
         raise ProjectAdvisorError("PROJECT_ADVISOR_UNAVAILABLE")
 
 
+class GroundedProjectAdvisor:
+    """A safe snapshot-only advisor used when the model provider is unavailable."""
+
+    def answer(
+        self,
+        *,
+        snapshot: AssessmentSnapshot,
+        question: str,
+    ) -> AdvisorReply:
+        assessment = snapshot.assessment
+        open_issues = [issue for issue in assessment.issues if issue.status != "resolved"]
+        severity_order = {"Critical": 0, "Moderate": 1, "Warning": 2}
+        open_issues.sort(key=lambda issue: severity_order.get(issue.severity, 3))
+        top = open_issues[0] if open_issues else None
+        normalized = " ".join(question.lower().split())
+
+        if "include" in normalized or "plan" in normalized and "what" in normalized:
+            artifact_names = ", ".join(artifact.title for artifact in snapshot.artifacts)
+            answer = (
+                f"The current read covers {artifact_names}. "
+                f"It contains {len(open_issues)} open issue{'s' if len(open_issues) != 1 else ''}."
+            )
+        elif "feasibility" in normalized:
+            answer = (
+                f"Feasibility is {assessment.feasibility} in the current read. "
+                + (
+                    f"The strongest visible reason is: {top.title}. {top.why}"
+                    if top is not None
+                    else "No open issue currently explains a lower feasibility read."
+                )
+            )
+        elif "changed" in normalized:
+            answer = (
+                f"The current read is {assessment.confidence_direction}. "
+                f"Outcome confidence is {assessment.confidence_band}, with "
+                f"{assessment.reliability.lower()} reliability."
+            )
+        elif top is not None:
+            answer = (
+                f"Start with the highest-priority issue in the current read: {top.title}. "
+                f"{top.recommendation}"
+            )
+        else:
+            answer = (
+                "The current read has no open issues. Review the seven artifacts and latest "
+                "History snapshot before making a decision."
+            )
+        follow_up = (
+            (top.clarification,) if top is not None and top.clarification else ()
+        )
+        return AdvisorReply(answer=answer, follow_up_questions=follow_up)
+
+
+class ResilientProjectAdvisor:
+    def __init__(self, primary: ProjectAdvisor, fallback: ProjectAdvisor) -> None:
+        self._primary = primary
+        self._fallback = fallback
+
+    def answer(
+        self,
+        *,
+        snapshot: AssessmentSnapshot,
+        question: str,
+    ) -> AdvisorReply:
+        try:
+            return self._primary.answer(snapshot=snapshot, question=question)
+        except ProjectAdvisorError:
+            return self._fallback.answer(snapshot=snapshot, question=question)
+
+
 class OpenAIProjectAdvisor:
     def __init__(
         self,
@@ -193,10 +263,14 @@ class OpenAIProjectAdvisor:
 
 
 def build_project_advisor(settings: Settings) -> ProjectAdvisor:
+    fallback = GroundedProjectAdvisor()
     if not settings.openai_api_key:
-        return UnavailableProjectAdvisor()
-    return OpenAIProjectAdvisor(
-        api_key=settings.openai_api_key,
-        model=settings.openai_fast_model,
-        timeout_seconds=settings.openai_timeout_seconds,
+        return fallback
+    return ResilientProjectAdvisor(
+        OpenAIProjectAdvisor(
+            api_key=settings.openai_api_key,
+            model=settings.openai_fast_model,
+            timeout_seconds=settings.openai_timeout_seconds,
+        ),
+        fallback,
     )

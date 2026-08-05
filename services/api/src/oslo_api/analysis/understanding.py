@@ -185,7 +185,7 @@ def enrich_assessment(
     issues_tuple = tuple(issues)
     resolved = sum(issue.status == "resolved" for issue in issues_tuple)
     confirmed = sum(
-        issue.status == "resolved" and bool(issue.clarification)
+        issue.status in {"addressed", "resolved"} and bool(issue.clarification)
         for issue in issues_tuple
     )
     explanation = (

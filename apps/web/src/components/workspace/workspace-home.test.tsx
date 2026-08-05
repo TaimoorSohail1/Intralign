@@ -24,6 +24,8 @@ const workspace: WorkspaceSummary = {
   monthly_analysis_limit: null,
   monthly_analyses_used: 0,
   can_manage_plan: true,
+  active_project_limit: 1,
+  can_create_project: true,
   projects: [
     {
       id: "project-1",
@@ -91,7 +93,7 @@ describe("WorkspaceHome", () => {
     expect(screen.getByText("26 Jul 2026")).toBeInTheDocument();
     expect(screen.getByText("Extended Analysis complete")).toBeInTheDocument();
     expect(screen.getByText(/There is no portfolio score, average, or ranking/)).toBeInTheDocument();
-    expect(screen.getByText("Unlimited active projects")).toBeInTheDocument();
+    expect(screen.getByText("1 active project")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "New project" }));
 
@@ -140,7 +142,7 @@ describe("WorkspaceHome", () => {
     });
   });
 
-  it("creates projects in workspaces that already contain many active projects", async () => {
+  it("blocks new projects when the active-project allowance is exhausted", async () => {
     const existingProjects = Array.from({ length: 8 }, (_, index) => ({
       ...workspace.projects[0],
       id: `existing-${index}`,
@@ -157,15 +159,11 @@ describe("WorkspaceHome", () => {
     render(
       <WorkspaceHome
         displayName="Taimoor"
-        initial={{ ...workspace, projects: existingProjects }}
+        initial={{ ...workspace, can_create_project: false, projects: existingProjects }}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "New project" }));
-
-    await waitFor(() => {
-      expect(push).toHaveBeenCalledWith("/intake?project=project-nine");
-    });
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New project" })).toBeDisabled();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("restores an archived project while another project is active", async () => {

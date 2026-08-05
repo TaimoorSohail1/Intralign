@@ -582,7 +582,7 @@ def test_resolve_rejects_terminal_or_expired_invitations(state: str) -> None:
         application.resolve_invitation(raw_token)
 
 
-def test_persisted_invitation_can_be_resent_after_email_delivery_failure() -> None:
+def test_failed_email_delivery_does_not_leave_a_pending_invitation() -> None:
     email = "delivery.failure.integration@example.com"
     engine = create_engine(DATABASE_URL)
     with engine.begin() as connection:
@@ -604,22 +604,15 @@ def test_persisted_invitation_can_be_resent_after_email_delivery_failure() -> No
         )
 
     with engine.connect() as connection:
-        failed_invitation_id = connection.execute(
-            text("select id from public.invitations where email = :email and status = 'pending'"),
+        pending = connection.execute(
+            text(
+                "select count(*) from public.invitations "
+                "where email = :email and status = 'pending'"
+            ),
             {"email": email},
         ).scalar_one()
-    recovery_mailer = RecordingInvitationMailer()
-    recovered = DatabaseSliceOneApplication(
-        engine=engine, mailer=recovery_mailer, web_url="http://localhost:3000"
-    )
-    replacement = recovered.resend_invitation(
-        actor_user_id=owner_id,
-        workspace_id=WORKSPACE_ID,
-        invitation_id=failed_invitation_id,
-    )
 
-    assert replacement.id != failed_invitation_id
-    assert len(recovery_mailer.messages) == 1
+    assert pending == 0
 
 
 def test_concurrent_activation_submissions_are_idempotent() -> None:

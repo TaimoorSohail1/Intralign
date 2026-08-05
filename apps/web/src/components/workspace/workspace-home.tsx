@@ -65,9 +65,17 @@ export function WorkspaceHome({
       : activeSorted;
   }, [activeSorted, projectQuery]);
   const activeVisible = activeFiltered.slice(0, visibleCount);
+  const activeProjectLimit = workspace.active_project_limit ?? (workspace.plan === "free" ? 1 : 3);
+  const canCreateProject = workspace.can_create_project ?? active.length < activeProjectLimit;
 
   const createProject = async () => {
     setError(null);
+    if (!canCreateProject) {
+      setError(
+        `The ${workspace.plan_label} plan includes ${activeProjectLimit} active project${activeProjectLimit === 1 ? "" : "s"}. Archive one or compare plans.`,
+      );
+      return;
+    }
     const response = await fetch("/api/projects/new", { method: "POST" });
     if (!response.ok) {
       setError("The project could not be created. Please try again.");
@@ -84,6 +92,9 @@ export function WorkspaceHome({
     ) return;
 
     newProjectHandled.current = true;
+    if (!canCreateProject) {
+      return;
+    }
     let cancelled = false;
     void fetch("/api/projects/new", { method: "POST" }).then(async (response) => {
       if (cancelled) return;
@@ -97,7 +108,7 @@ export function WorkspaceHome({
     return () => {
       cancelled = true;
     };
-  }, [openNewProject, router]);
+  }, [activeProjectLimit, canCreateProject, openNewProject, router, workspace.plan_label]);
 
   const setArchived = async (
     projectId: string,
@@ -152,8 +163,13 @@ export function WorkspaceHome({
             <span>Open a project or start a new strategic read.</span>
           </div>
           <div className="workspace-create-control">
-            <small>{active.length} active · unlimited</small>
-            <button className="workspace-primary-action" onClick={createProject} type="button">
+            <small>{active.length} active · {activeProjectLimit} included</small>
+            <button
+              className="workspace-primary-action"
+              disabled={!canCreateProject}
+              onClick={createProject}
+              type="button"
+            >
               <Plus size={16} weight="bold" />
               New project
             </button>
@@ -165,7 +181,7 @@ export function WorkspaceHome({
             <Sparkle size={18} />
             <div>
               <strong>{workspace.plan_label} plan</strong>
-              <span>Unlimited active projects</span>
+              <span>{activeProjectLimit} active project{activeProjectLimit === 1 ? "" : "s"}</span>
             </div>
           </div>
           <button onClick={() => setPlansOpen(true)} type="button">
