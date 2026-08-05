@@ -7,6 +7,48 @@ from email.message import EmailMessage
 from html import escape
 from typing import Any
 
+import httpx
+
+POSTMARK_EMAIL_URL = "https://api.postmarkapp.com/email"
+
+
+def _sender_address(sender: str, sender_name: str) -> str:
+    return f"{sender_name} <{sender}>" if sender_name.strip() else sender
+
+
+def _postmark_send(
+    *,
+    server_token: str,
+    sender: str,
+    sender_name: str,
+    recipient: str,
+    subject: str,
+    text_body: str,
+    html_body: str,
+    client_factory: Callable[[], httpx.Client],
+) -> None:
+    with client_factory() as client:
+        response = client.post(
+            POSTMARK_EMAIL_URL,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "X-Postmark-Server-Token": server_token,
+            },
+            json={
+                "From": _sender_address(sender, sender_name),
+                "To": recipient,
+                "Subject": subject,
+                "TextBody": text_body,
+                "HtmlBody": html_body,
+                "MessageStream": "outbound",
+            },
+        )
+        response.raise_for_status()
+        result = response.json()
+        if result.get("ErrorCode") != 0:
+            raise RuntimeError(f"Postmark rejected the email: {result.get('Message', 'unknown error')}")
+
 
 def _invitation_html(*, workspace_name: str, role: str, activation_url: str, expiry: str) -> str:
     safe_workspace_name = escape(workspace_name)
@@ -197,3 +239,108 @@ class SmtpReportMailer:
         )
         with self._smtp_factory(self._host, self._port) as smtp:
             smtp.send_message(message)
+
+
+class PostmarkInvitationMailer:
+    def __init__(
+        self,
+        *,
+        server_token: str,
+        sender: str,
+        sender_name: str,
+        client_factory: Callable[[], httpx.Client] = lambda: httpx.Client(timeout=15),
+    ) -> None:
+        self._server_token = server_token
+        self._sender = sender
+        self._sender_name = sender_name
+        self._client_factory = client_factory
+
+    def send_invitation(
+        self,
+        *,
+        email: str,
+        workspace_name: str,
+        role: str,
+        activation_url: str,
+        expires_at: datetime,
+    ) -> None:
+        expiry = expires_at.strftime("%d %B %Y")
+        text_body = f"""Youâ€™ve been invited to join {workspace_name} as {role} in OSLO Product Grill.
+
+Activate your account:
+{activation_url}
+
+This invitation expires on {expiry}.
+"""
+        _postmark_send(
+            server_token=self._server_token,
+            sender=self._sender,
+            sender_name=self._sender_name,
+            recipient=email,
+            subject=f"Youâ€™re invited to {workspace_name}",
+            text_body=text_body,
+            html_body=_invitation_html(
+                workspace_name=workspace_name,
+                role=role,
+                activation_url=activation_url,
+                expiry=expiry,
+            ),
+            client_factory=self._client_factory,
+        )
+
+
+class PostmarkReportMailer:
+    def __init__(
+        self,
+        *,
+        server_token: str,
+        sender: str,
+        sender_name: str,
+        client_factory: Callable[[], httpx.Client] = lambda: httpx.Client(timeout=15),
+    ) -> None:
+        self._server_token = server_token
+        self._sender = sender
+        self._sender_name = sender_name
+        self._client_factory = client_factory
+
+    def send_report(
+        self,
+        *,
+        email: str,
+        subject: str,
+        project_name: str,
+        recipient_label: str,
+        sections: list[dict],
+    ) -> None:
+        plain_lines = [project_name, f"Prepared for {recipient_label}", ""]
+        html_sections: list[str] = []
+        for section in sections:
+            title = str(section.get("title") or "Section")
+            paragraphs = [
+                str(item).strip()
+                for item in section.get("body", [])
+                if str(item).strip()
+            ]
+            plain_lines.extend([title, *paragraphs, ""])
+            html_sections.append(
+                f"<h2>{escape(title)}</h2>"
+                + "".join(f"<p>{escape(paragraph)}</p>" for paragraph in paragraphs)
+            )
+        html_body = (
+            '<!doctype html><html lang="en"><body style="font-family:Arial,sans-serif;'
+            'max-width:720px;margin:auto;color:#17191c">'
+            f"<h1>{escape(project_name)}</h1>"
+            f"<p>Prepared for {escape(recipient_label)}</p>"
+            + "".join(html_sections)
+            + "<hr><p>Sent from Intralign.</p></body></html>"
+        )
+        _postmark_send(
+            server_token=self._server_token,
+            sender=self._sender,
+            sender_name=self._sender_name,
+            recipient=email,
+            subject=subject,
+            text_body="\n".join(plain_lines),
+            html_body=html_body,
+            client_factory=self._client_factory,
+        )

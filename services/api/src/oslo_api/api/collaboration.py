@@ -13,7 +13,7 @@ from sqlalchemy import create_engine
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
 from oslo_api.collaboration.pdf import render_report_pdf, render_snapshot_pdf
 from oslo_api.collaboration.service import CollaborationError, DatabaseCollaborationService
-from oslo_api.email import SmtpReportMailer
+from oslo_api.email import PostmarkReportMailer, SmtpReportMailer
 from oslo_api.settings import Settings
 from oslo_api.slice_two import SliceTwoApplication
 
@@ -24,14 +24,22 @@ def collaboration_service(request: Request) -> DatabaseCollaborationService:
     service = request.app.state.collaboration
     if service is None:
         settings = Settings()
-        service = DatabaseCollaborationService(
-            create_engine(settings.database_url, pool_pre_ping=True),
-            settings.web_url,
-            SmtpReportMailer(
+        if settings.postmark_server_token:
+            report_mailer = PostmarkReportMailer(
+                server_token=settings.postmark_server_token.get_secret_value(),
+                sender=settings.email_from,
+                sender_name=settings.from_name,
+            )
+        else:
+            report_mailer = SmtpReportMailer(
                 host=settings.smtp_host,
                 port=settings.smtp_port,
                 sender=settings.email_sender,
-            ),
+            )
+        service = DatabaseCollaborationService(
+            create_engine(settings.database_url, pool_pre_ping=True),
+            settings.web_url,
+            report_mailer,
         )
         request.app.state.collaboration = service
     return service

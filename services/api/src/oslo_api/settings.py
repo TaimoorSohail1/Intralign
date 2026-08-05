@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     smtp_host: str = "127.0.0.1"
     smtp_port: int = 55325
     email_sender: str = "OSLO <no-reply@oslo.local>"
+    postmark_server_token: SecretStr | None = None
+    email_from: str = "no-reply@oslo.local"
+    from_name: str = "OSLO"
     analysis_worker_threads: int = Field(default=4, ge=1, le=32)
     analysis_execution_mode: Literal["in_process", "durable"] = "in_process"
     analysis_worker_poll_seconds: float = Field(default=1.0, ge=0.1, le=30)
