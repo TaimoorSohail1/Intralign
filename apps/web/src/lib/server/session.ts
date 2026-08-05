@@ -18,6 +18,10 @@ export async function writeSessionCookies(
   cookieStore.set("oslo_refresh_token", session.refresh_token, { ...common, maxAge: refreshLifetime });
   cookieStore.set("oslo_workspace_id", session.workspace_id, { ...common, maxAge: refreshLifetime });
   cookieStore.set("oslo_display_name", displayName, { ...common, maxAge: refreshLifetime });
+  cookieStore.set("oslo_account_role", session.account_role ?? "owner", {
+    ...common,
+    maxAge: refreshLifetime,
+  });
   cookieStore.set("oslo_session_lifetime", String(refreshLifetime), {
     ...common,
     maxAge: refreshLifetime,
@@ -30,6 +34,7 @@ export async function readSession() {
     accessToken: cookieStore.get("oslo_access_token")?.value,
     workspaceId: cookieStore.get("oslo_workspace_id")?.value,
     displayName: cookieStore.get("oslo_display_name")?.value,
+    accountRole: cookieStore.get("oslo_account_role")?.value,
   };
 }
 
@@ -40,6 +45,7 @@ export async function clearSessionCookies() {
     "oslo_refresh_token",
     "oslo_workspace_id",
     "oslo_display_name",
+    "oslo_account_role",
     "oslo_session_lifetime",
   ]) {
     cookieStore.delete(name);

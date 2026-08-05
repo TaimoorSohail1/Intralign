@@ -20,6 +20,7 @@ export default async function InvitationsPage({ searchParams }: InvitationsPageP
   const session = await readSession();
   if (!session.accessToken) redirect("/login");
   if (!session.workspaceId) redirect("/login");
+  if (session.accountRole !== "admin") redirect("/workspace");
   const { sent, updated, error, email } = await searchParams;
   let invitations;
   try {
@@ -35,11 +36,11 @@ export default async function InvitationsPage({ searchParams }: InvitationsPageP
   }
   return (
     <main className="admin-shell">
-      <header className="admin-header"><BrandLockup /><div><span className="role-badge">Owner</span><span>{session.displayName}</span><form action={logout}><button className="button button-ghost" type="submit">Log out</button></form></div></header>
+      <header className="admin-header"><BrandLockup /><div><span className="role-badge">Admin</span><span>{session.displayName}</span><form action={logout}><button className="button button-ghost" type="submit">Log out</button></form></div></header>
       <section className="admin-content">
         <p className="eyebrow">Workspace access</p><h1>Invitations</h1>
         <p className="admin-copy">Invite trusted teammates into OSLO. Every link is unique and expires after 14 days.</p>
-        {sent ? <p className="success-notice">Invitation sent to {sent}. Open Mailpit locally to view it.</p> : null}
+        {sent ? <p className="success-notice">Invitation sent to {sent}.</p> : null}
         {updated ? <p className="success-notice">Invitation {updated}.</p> : null}
         {error ? <p className="form-error" id="invite-error" role="alert">{error}</p> : null}
         <form action={inviteMember} className="invite-form">

@@ -22,6 +22,7 @@ from oslo_api.slice_one import (
     AuthSession,
     InvitationDetails,
     Project,
+    SessionContext,
     WorkspaceNotification,
     WorkspacePreferences,
     WorkspaceProject,
@@ -134,6 +135,19 @@ class SqlMembershipReader:
         return MembershipRole(role) if role else None
 
 
+class _PlatformAdminMembershipReader:
+    """Expose invitation-management authority without creating an Owner membership."""
+
+    def __init__(self, user_id: UUID, workspace_id: UUID) -> None:
+        self._user_id = user_id
+        self._workspace_id = workspace_id
+
+    def role_for(self, workspace_id: UUID, user_id: UUID) -> MembershipRole | None:
+        if workspace_id == self._workspace_id and user_id == self._user_id:
+            return MembershipRole.OWNER
+        return None
+
+
 class SqlInvitationStore:
     def __init__(self, connection: Connection) -> None:
         self._connection = connection
@@ -184,6 +198,90 @@ class DatabaseSliceOneApplication:
             raise RuntimeError("Identity provider is not configured")
         return self._identity.authenticate(access_token)
 
+    def get_session_context(self, *, actor_user_id: UUID) -> SessionContext:
+        with self._engine.connect() as connection:
+            admin = (
+                connection.execute(
+                    text(
+                        """
+                        select admin.workspace_id, profile.display_name, auth_user.email::text
+                        from private.platform_admins admin
+                        join public.profiles profile on profile.id = admin.user_id
+                        join auth.users auth_user on auth_user.id = admin.user_id
+                        where admin.user_id = :user_id
+                        """
+                    ),
+                    {"user_id": actor_user_id},
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if admin is not None:
+                return SessionContext(
+                    user_id=actor_user_id,
+                    email=admin["email"],
+                    workspace_id=admin["workspace_id"],
+                    display_name=admin["display_name"],
+                    account_role="admin",
+                    welcome_required=False,
+                )
+            membership = (
+                connection.execute(
+                    text(
+                        """
+                        select membership.workspace_id, membership.role,
+                               membership.welcome_seen_at, profile.display_name,
+                               auth_user.email::text
+                        from public.memberships membership
+                        join public.profiles profile on profile.id = membership.user_id
+                        join auth.users auth_user on auth_user.id = membership.user_id
+                        where membership.user_id = :user_id
+                        order by membership.created_at, membership.workspace_id
+                        limit 1
+                        """
+                    ),
+                    {"user_id": actor_user_id},
+                )
+                .mappings()
+                .one_or_none()
+            )
+        if membership is None:
+            raise InvitePermissionDenied
+        return SessionContext(
+            user_id=actor_user_id,
+            email=membership["email"],
+            workspace_id=membership["workspace_id"],
+            display_name=membership["display_name"],
+            account_role=membership["role"],
+            welcome_required=membership["welcome_seen_at"] is None,
+        )
+
+    @staticmethod
+    def _can_manage_invitations(
+        connection: Connection, *, workspace_id: UUID, actor_user_id: UUID
+    ) -> bool:
+        return bool(
+            connection.execute(
+                text(
+                    """
+                    select
+                      exists (
+                        select 1 from public.memberships
+                        where workspace_id = :workspace_id
+                          and user_id = :user_id
+                          and role = 'owner'
+                      )
+                      or exists (
+                        select 1 from private.platform_admins
+                        where workspace_id = :workspace_id
+                          and user_id = :user_id
+                      )
+                    """
+                ),
+                {"workspace_id": workspace_id, "user_id": actor_user_id},
+            ).scalar_one()
+        )
+
     def _record_blocked_limit_event(
         self,
         *,
@@ -218,7 +316,18 @@ class DatabaseSliceOneApplication:
         normalised_email = email.strip().lower()
         with self._engine.begin() as connection:
             memberships = SqlMembershipReader(connection)
-            if memberships.role_for(workspace_id, actor_user_id) is not MembershipRole.OWNER:
+            is_platform_admin = bool(
+                connection.execute(
+                    text(
+                        "select exists (select 1 from private.platform_admins "
+                        "where workspace_id = :workspace_id and user_id = :user_id)"
+                    ),
+                    {"workspace_id": workspace_id, "user_id": actor_user_id},
+                ).scalar_one()
+            )
+            if not self._can_manage_invitations(
+                connection, workspace_id=workspace_id, actor_user_id=actor_user_id
+            ):
                 raise InvitePermissionDenied
             connection.execute(
                 text("select pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
@@ -322,9 +431,14 @@ class DatabaseSliceOneApplication:
                     idempotency_key=f"invite-seat:{normalised_email}:blocked",
                 )
                 raise CollaboratorSeatLimitReached(policy)
+            invitation_memberships = (
+                _PlatformAdminMembershipReader(actor_user_id, workspace_id)
+                if is_platform_admin
+                else memberships
+            )
             issued = InviteMember(
                 invitations=SqlInvitationStore(connection),
-                memberships=memberships,
+                memberships=invitation_memberships,
                 clock=lambda: datetime.now(UTC),
                 new_id=uuid4,
                 new_token=lambda: token_urlsafe(32),
@@ -422,9 +536,8 @@ class DatabaseSliceOneApplication:
         workspace_id: UUID,
     ) -> list[Invitation]:
         with self._engine.connect() as connection:
-            if (
-                SqlMembershipReader(connection).role_for(workspace_id, actor_user_id)
-                is not MembershipRole.OWNER
+            if not self._can_manage_invitations(
+                connection, workspace_id=workspace_id, actor_user_id=actor_user_id
             ):
                 raise InvitePermissionDenied
             rows = (
@@ -472,7 +585,18 @@ class DatabaseSliceOneApplication:
     ) -> Invitation:
         with self._engine.begin() as connection:
             memberships = SqlMembershipReader(connection)
-            if memberships.role_for(workspace_id, actor_user_id) is not MembershipRole.OWNER:
+            is_platform_admin = bool(
+                connection.execute(
+                    text(
+                        "select exists (select 1 from private.platform_admins "
+                        "where workspace_id = :workspace_id and user_id = :user_id)"
+                    ),
+                    {"workspace_id": workspace_id, "user_id": actor_user_id},
+                ).scalar_one()
+            )
+            if not self._can_manage_invitations(
+                connection, workspace_id=workspace_id, actor_user_id=actor_user_id
+            ):
                 raise InvitePermissionDenied
             previous = (
                 connection.execute(
@@ -502,7 +626,11 @@ class DatabaseSliceOneApplication:
             )
             issued = InviteMember(
                 invitations=SqlInvitationStore(connection),
-                memberships=memberships,
+                memberships=(
+                    _PlatformAdminMembershipReader(actor_user_id, workspace_id)
+                    if is_platform_admin
+                    else memberships
+                ),
                 clock=lambda: datetime.now(UTC),
                 new_id=uuid4,
                 new_token=lambda: token_urlsafe(32),
@@ -572,9 +700,8 @@ class DatabaseSliceOneApplication:
         invitation_id: UUID,
     ) -> None:
         with self._engine.begin() as connection:
-            if (
-                SqlMembershipReader(connection).role_for(workspace_id, actor_user_id)
-                is not MembershipRole.OWNER
+            if not self._can_manage_invitations(
+                connection, workspace_id=workspace_id, actor_user_id=actor_user_id
             ):
                 raise InvitePermissionDenied
             revoked = connection.execute(

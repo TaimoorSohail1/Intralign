@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { acceptExistingInvitation } from "@/lib/server/oslo-api";
+import { acceptExistingInvitation, getSessionContext } from "@/lib/server/oslo-api";
 import { writeSessionCookies } from "@/lib/server/session";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:55321";
@@ -30,18 +30,22 @@ export async function signIn(formData: FormData) {
   });
   if (!response.ok) redirect("/login?error=invalid_credentials");
   const payload = await response.json();
+  const context = await getSessionContext({ accessToken: payload.access_token }).catch(() => null);
+  if (!context) redirect("/login?error=access_unavailable");
   await writeSessionCookies(
     {
       user_id: payload.user.id,
       email: payload.user.email,
-      workspace_id: "018f9f7e-8de2-7000-8000-000000000010",
+      workspace_id: context.workspace_id,
       access_token: payload.access_token,
       refresh_token: payload.refresh_token,
       expires_in: payload.expires_in,
-      welcome_required: false,
+      welcome_required: context.welcome_required,
+      account_role: context.account_role,
     },
     staySignedIn,
-    payload.user.user_metadata?.display_name ?? email.split("@")[0],
+    context.display_name,
   );
-  redirect("/admin/invitations");
+  if (context.account_role === "admin") redirect("/admin/invitations");
+  redirect(context.welcome_required ? "/welcome" : "/workspace");
 }

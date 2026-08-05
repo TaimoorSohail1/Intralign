@@ -29,6 +29,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {error === "invalid_credentials" ? (
           <p className="login-error" role="alert">Email or password is incorrect. Please try again.</p>
         ) : null}
+        {error === "access_unavailable" ? (
+          <p className="login-error" role="alert">This account does not have OSLO access.</p>
+        ) : null}
         {invite ? <input name="invitation_token" type="hidden" value={invite} /> : null}
         <div className="field"><label htmlFor="email">Email</label><input autoComplete="email" defaultValue={invitation?.email ?? localAdminEmail} id="email" name="email" readOnly={Boolean(invitation)} required type="email" /></div>
         <div className="field"><label htmlFor="password">Password</label><input autoComplete="current-password" defaultValue={localAdminPassword} id="password" name="password" required type="password" /></div>

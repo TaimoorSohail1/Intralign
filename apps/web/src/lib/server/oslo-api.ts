@@ -18,6 +18,16 @@ export interface SessionPayload {
   refresh_token: string;
   expires_in: number;
   welcome_required: boolean;
+  account_role?: "admin" | "owner";
+}
+
+export interface SessionContext {
+  user_id: string;
+  email: string;
+  workspace_id: string;
+  display_name: string;
+  account_role: "admin" | "owner";
+  welcome_required: boolean;
 }
 
 export interface InvitationSummary {
@@ -513,6 +523,15 @@ export function acceptExistingInvitation(input: {
   return apiRequest("/v1/invitations/accept-existing", {
     method: "POST",
     body: JSON.stringify(input),
+  });
+}
+
+export function getSessionContext(input: {
+  accessToken: string;
+}): Promise<SessionContext> {
+  return apiRequest("/v1/session", {
+    method: "GET",
+    headers: { authorization: `Bearer ${input.accessToken}` },
   });
 }
 

@@ -33,6 +33,16 @@ class ActivationResult:
 
 
 @dataclass(frozen=True, slots=True)
+class SessionContext:
+    user_id: UUID
+    email: str
+    workspace_id: UUID
+    display_name: str
+    account_role: str
+    welcome_required: bool
+
+
+@dataclass(frozen=True, slots=True)
 class InvitationDetails:
     email: str
     workspace_name: str
@@ -115,6 +125,8 @@ class WorkspacePreferences:
 
 class SliceOneApplication(Protocol):
     def authenticate(self, access_token: str) -> AuthenticatedUser: ...
+
+    def get_session_context(self, *, actor_user_id: UUID) -> SessionContext: ...
 
     def invite_member(
         self,
