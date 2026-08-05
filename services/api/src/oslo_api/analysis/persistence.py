@@ -727,6 +727,26 @@ class DatabaseAnalysisStore:
                 AnalysisRunStatus.RUNNING,
             )
 
+    def queue_run(self, run_id: UUID) -> None:
+        with self._engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    update public.analysis_runs
+                    set status = 'queued', error_code = null, completed_at = null,
+                        updated_at = now()
+                    where id = :run_id and status <> 'completed'
+                    """
+                ),
+                {"run_id": run_id},
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "analysis.retry_queued",
+                AnalysisRunStatus.QUEUED,
+            )
+
     def start_phase(self, run_id: UUID, phase: AnalysisPhase) -> None:
         with self._engine.begin() as connection:
             connection.execute(

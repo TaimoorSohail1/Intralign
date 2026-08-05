@@ -51,6 +51,17 @@ export function ProjectWorkspaceControls({
   const [planPortalTarget, setPlanPortalTarget] = useState<HTMLElement | null>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
 
+  const updateNow = async () => {
+    const response = await fetch(`/api/projects/${projectId}/analysis-runs/refresh`, {
+      method: "POST",
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok || !body?.run_id) {
+      throw new Error(body?.message ?? "Analysis could not refresh");
+    }
+    window.location.assign(`/projects/${projectId}/analysis/${body.run_id}`);
+  };
+
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       setPlanPortalTarget(
@@ -287,6 +298,7 @@ export function ProjectWorkspaceControls({
       {workspace ? (
         <UsageLimitsModal
           onClose={() => setUsageOpen(false)}
+          onUpdate={updateNow}
           open={usageOpen}
           workspace={workspace}
         />

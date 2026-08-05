@@ -255,16 +255,19 @@ def _claims_from_fragment(fragment: EvidenceFragment) -> tuple[EvidenceClaim, ..
     occupied: list[tuple[int, int]] = []
     range_predicates: list[str] = []
     for match in _FULL_RANGE_RE.finditer(text):
-        start = _as_date(
-            match.group("start"),
-            match.group("start_month"),
-            match.group("start_year"),
-        )
-        finish = _as_date(
-            match.group("finish"),
-            match.group("finish_month"),
-            match.group("finish_year"),
-        )
+        try:
+            start = _as_date(
+                match.group("start"),
+                match.group("start_month"),
+                match.group("start_year"),
+            )
+            finish = _as_date(
+                match.group("finish"),
+                match.group("finish_month"),
+                match.group("finish_year"),
+            )
+        except ValueError:
+            continue
         ranges.append((start, finish, match.group(0)))
         occupied.append(match.span())
         range_predicates.append(
@@ -273,12 +276,15 @@ def _claims_from_fragment(fragment: EvidenceFragment) -> tuple[EvidenceClaim, ..
     for match in _SAME_MONTH_RANGE_RE.finditer(text):
         if any(match.start() < finish and match.end() > start for start, finish in occupied):
             continue
-        start = _as_date(match.group("start"), match.group("month"), match.group("year"))
-        finish = _as_date(
-            match.group("finish"),
-            match.group("month"),
-            match.group("year"),
-        )
+        try:
+            start = _as_date(match.group("start"), match.group("month"), match.group("year"))
+            finish = _as_date(
+                match.group("finish"),
+                match.group("month"),
+                match.group("year"),
+            )
+        except ValueError:
+            continue
         ranges.append((start, finish, match.group(0)))
         occupied.append(match.span())
         range_predicates.append(
@@ -418,7 +424,10 @@ def _claims_from_fragment(fragment: EvidenceFragment) -> tuple[EvidenceClaim, ..
     for match in _SINGLE_DATE_RE.finditer(text):
         if any(match.start() < finish and match.end() > start for start, finish in occupied):
             continue
-        value = _as_date(match.group("day"), match.group("month"), match.group("year"))
+        try:
+            value = _as_date(match.group("day"), match.group("month"), match.group("year"))
+        except ValueError:
+            continue
         context = text[max(0, match.start() - 120) : match.end() + 120]
         local_predicate = _predicate_around(text, match.start(), match.end())
         date_predicate = (

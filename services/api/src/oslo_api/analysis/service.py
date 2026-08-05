@@ -26,7 +26,7 @@ from oslo_api.analysis.harness import AgentHarness
 from oslo_api.analysis.history import append_history_event, list_project_history
 from oslo_api.analysis.job_queue import DatabaseAnalysisJobQueue
 from oslo_api.analysis.models import EvidenceFragment
-from oslo_api.analysis.object_storage import LocalObjectStorage
+from oslo_api.analysis.object_storage import LocalObjectStorage, SupabaseObjectStorage
 from oslo_api.analysis.openai_harness import OpenAIAgentHarness
 from oslo_api.analysis.persistence import DatabaseAnalysisStore
 from oslo_api.analysis.user_evidence import (
@@ -121,6 +121,29 @@ class DatabaseSliceTwoApplication:
         if run.status is AnalysisRunStatus.QUEUED:
             self._executor.submit(self._execute, run.id)
         return run
+
+    def refresh_analysis(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        key: str,
+    ) -> AnalysisRun:
+        self._workspace_for_project(actor_user_id, project_id)
+        previous = self._store.latest_run_for_project(project_id, RunKind.INITIAL)
+        if previous is None:
+            raise SliceTwoNotFound
+        if previous.status in {AnalysisRunStatus.QUEUED, AnalysisRunStatus.RUNNING}:
+            return previous
+        return self.start_analysis(
+            actor_user_id=actor_user_id,
+            project_id=project_id,
+            description=previous.request.description,
+            source_names=previous.request.source_names,
+            source_document_ids=previous.request.source_document_ids,
+            kind=RunKind.INITIAL,
+            key=key,
+        )
 
     def get_run(self, *, actor_user_id: UUID, run_id: UUID) -> AnalysisRun:
         run = self._store.get_run(run_id)
@@ -224,8 +247,9 @@ class DatabaseSliceTwoApplication:
                 detail="The same governed run resumed from durable state.",
                 idempotency_key=f"history:analysis-retry:{run.id}",
             )
+        self._store.queue_run(run.id)
         self._executor.submit(self._execute, run.id)
-        return run
+        return self._store.get_run(run.id) or run
 
     def answer_issue(
         self,
@@ -1380,10 +1404,16 @@ def build_slice_two_application() -> DatabaseSliceTwoApplication:
     settings = Settings()  # type: ignore[call-arg]
     engine = create_engine(settings.database_url, pool_pre_ping=True)
     store = DatabaseAnalysisStore(engine)
-    document_store = DatabaseDocumentStore(
-        engine=engine,
-        object_store=LocalObjectStorage(settings.object_storage_path),
+    object_store = (
+        SupabaseObjectStorage(
+            base_url=settings.supabase_url,
+            secret_key=settings.supabase_secret_key,
+            bucket=settings.object_storage_bucket,
+        )
+        if settings.object_storage_backend == "supabase"
+        else LocalObjectStorage(settings.object_storage_path)
     )
+    document_store = DatabaseDocumentStore(engine=engine, object_store=object_store)
     harness = build_agent_harness(settings)
     workflow = AnalysisWorkflow(
         store=store,

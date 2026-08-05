@@ -262,4 +262,31 @@ describe("ProjectWorkspaceControls", () => {
     expect(screen.getByText("Monthly analyses")).toBeInTheDocument();
     expect(screen.getByText("Active projects")).toBeInTheDocument();
   });
+
+  it("starts a real refresh when Update now is selected", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(workspace), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ run_id: "refresh-run-1" }), {
+          status: 202,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+    render(<ProjectWorkspaceControls projectId="project-1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Free" }));
+    fireEvent.click(screen.getByRole("button", { name: "Update now" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenLastCalledWith(
+        "/api/projects/project-1/analysis-runs/refresh",
+        { method: "POST" },
+      );
+    });
+  });
 });

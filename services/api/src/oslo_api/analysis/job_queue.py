@@ -20,7 +20,8 @@ class DatabaseAnalysisJobQueue:
                     values (:run_id, 'queued')
                     on conflict (analysis_run_id) do update set
                       status = 'queued', available_at = now(), locked_at = null,
-                      locked_by = null, last_error = null, updated_at = now()
+                      locked_by = null, last_error = null, attempts = 0,
+                      updated_at = now()
                     """
                 ),
                 {"run_id": run_id},

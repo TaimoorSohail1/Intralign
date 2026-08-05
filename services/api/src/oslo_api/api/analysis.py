@@ -675,6 +675,28 @@ def start_analysis(
     return _start_response(run)
 
 
+@router.post(
+    "/projects/{project_id}/analysis-runs/refresh",
+    response_model=StartAnalysisResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def refresh_analysis(
+    project_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=8, max_length=200)],
+) -> StartAnalysisResponse:
+    try:
+        run = slice_two_application(request).refresh_analysis(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            key=idempotency_key,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    return _start_response(run)
+
+
 @router.get("/analysis-runs/{run_id}", response_model=AnalysisRunResponse)
 def get_analysis_run(
     run_id: UUID,

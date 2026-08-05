@@ -52,6 +52,14 @@ class SliceTwoApplication(Protocol):
         key: str,
     ) -> AnalysisRun: ...
 
+    def refresh_analysis(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        key: str,
+    ) -> AnalysisRun: ...
+
     def get_run(self, *, actor_user_id: UUID, run_id: UUID) -> AnalysisRun: ...
 
     def events_after(

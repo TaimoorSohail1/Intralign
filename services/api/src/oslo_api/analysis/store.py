@@ -32,6 +32,8 @@ class AnalysisStore(Protocol):
 
     def start_run(self, run_id: UUID) -> None: ...
 
+    def queue_run(self, run_id: UUID) -> None: ...
+
     def start_phase(self, run_id: UUID, phase: AnalysisPhase) -> None: ...
 
     def complete_phase(
@@ -134,6 +136,16 @@ class InMemoryAnalysisStore:
             run.status = AnalysisRunStatus.RUNNING
             run.updated_at = datetime.now(UTC)
             self._append_event(run, "analysis.started", run.status.value)
+
+    def queue_run(self, run_id: UUID) -> None:
+        with self._condition:
+            run = self._runs[run_id]
+            if run.status is AnalysisRunStatus.COMPLETED:
+                return
+            run.status = AnalysisRunStatus.QUEUED
+            run.error_code = None
+            run.updated_at = datetime.now(UTC)
+            self._append_event(run, "analysis.retry_queued", run.status.value)
 
     def start_phase(self, run_id: UUID, phase: AnalysisPhase) -> None:
         with self._condition:

@@ -42,6 +42,7 @@ def test_submit_persists_a_replayable_job() -> None:
     sql, parameters = engine.connection.calls[0]
     assert "insert into public.analysis_jobs" in sql
     assert "on conflict (analysis_run_id)" in sql
+    assert "attempts = 0" in sql
     assert parameters == {"run_id": RUN_ID}
 
 

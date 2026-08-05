@@ -2,6 +2,9 @@ import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Protocol
+from urllib.parse import quote
+
+import httpx
 
 
 class ObjectStorage(Protocol):
@@ -57,3 +60,77 @@ class LocalObjectStorage:
         if not target.is_relative_to(self._root):
             raise ValueError("OBJECT_KEY_INVALID")
         return target
+
+
+class SupabaseObjectStorage:
+    """Private, durable object storage backed by Supabase Storage."""
+
+    def __init__(
+        self,
+        *,
+        base_url: str,
+        secret_key: str,
+        bucket: str,
+        client: httpx.Client | None = None,
+    ) -> None:
+        self._base_url = base_url.rstrip("/")
+        self._bucket = bucket
+        self._client = client or httpx.Client(timeout=60)
+        self._headers = {
+            "apikey": secret_key,
+            "authorization": f"Bearer {secret_key}",
+        }
+
+    def put(self, object_key: str, content: bytes) -> None:
+        response = self._client.post(
+            self._object_url(object_key),
+            content=content,
+            headers={
+                **self._headers,
+                "content-type": "application/octet-stream",
+                "x-upsert": "false",
+            },
+        )
+        if response.status_code == 409:
+            return
+        response.raise_for_status()
+
+    def get(self, object_key: str) -> bytes:
+        response = self._client.get(
+            self._object_url(object_key),
+            headers=self._headers,
+        )
+        if response.status_code == 404:
+            raise FileNotFoundError(object_key)
+        response.raise_for_status()
+        return response.content
+
+    def exists(self, object_key: str) -> bool:
+        response = self._client.get(
+            self._object_url(object_key),
+            headers={**self._headers, "range": "bytes=0-0"},
+        )
+        if response.status_code == 404:
+            return False
+        response.raise_for_status()
+        return True
+
+    def delete(self, object_key: str) -> None:
+        response = self._client.delete(
+            self._object_url(object_key),
+            headers=self._headers,
+        )
+        if response.status_code == 404:
+            return
+        response.raise_for_status()
+
+    def _object_url(self, object_key: str) -> str:
+        if (
+            not object_key
+            or "\\" in object_key
+            or any(part in {"", ".", ".."} for part in object_key.split("/"))
+        ):
+            raise ValueError("OBJECT_KEY_INVALID")
+        bucket = quote(self._bucket, safe="")
+        key = quote(object_key, safe="/")
+        return f"{self._base_url}/storage/v1/object/{bucket}/{key}"

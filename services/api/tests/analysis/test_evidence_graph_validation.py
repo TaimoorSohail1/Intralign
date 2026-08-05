@@ -627,3 +627,16 @@ def test_enterprise_system_contract_requires_privacy_exit_and_system_acceptance(
     assert "Operational records have no data protection requirement" in titles
     assert "Hosted enterprise service has no exit or transition control" in titles
     assert "Deliverable acceptance has no system-level success gate" in titles
+
+
+def test_invalid_calendar_date_does_not_fail_the_complete_evidence_read() -> None:
+    evidence = (
+        _fragment(
+            8,
+            "The period report was issued on 31 June 2026 and remains source evidence.",
+        ),
+    )
+
+    # A source can contain a typo or a non-calendar date. It must remain available
+    # to OSLO as text instead of crashing the complete analysis run.
+    assert audit_project_evidence(evidence) == ()

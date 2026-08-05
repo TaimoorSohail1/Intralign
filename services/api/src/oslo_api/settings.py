@@ -44,4 +44,6 @@ class Settings(BaseSettings):
     # loop inside that recovery path, which previously allowed one artifact to
     # consume four full provider timeouts.
     openai_max_retries: int = Field(default=0, ge=0, le=3)
+    object_storage_backend: Literal["local", "supabase"] = "local"
+    object_storage_bucket: str = "oslo-source-documents"
     object_storage_path: Path = Path(__file__).resolve().parents[2] / ".data" / "uploads"

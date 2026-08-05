@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "@phosphor-icons/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import type { WorkspaceSummary } from "@/lib/server/oslo-api";
 
@@ -16,13 +16,17 @@ type UsageRow = {
 
 export function UsageLimitsModal({
   onClose,
+  onUpdate,
   open,
   workspace,
 }: {
   onClose: () => void;
+  onUpdate: () => Promise<void>;
   open: boolean;
   workspace: WorkspaceSummary;
 }) {
+  const [updating, setUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState("");
   useEffect(() => {
     if (!open) return;
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -33,6 +37,17 @@ export function UsageLimitsModal({
   }, [onClose, open]);
 
   if (!open) return null;
+
+  const updateNow = async () => {
+    setUpdating(true);
+    setUpdateError("");
+    try {
+      await onUpdate();
+    } catch (error) {
+      setUpdateError(error instanceof Error ? error.message : "Analysis could not refresh");
+      setUpdating(false);
+    }
+  };
 
   const activeProjects = workspace.projects.filter((project) => !project.archived).length;
   const activeProjectLimit = workspace.active_project_limit ?? (workspace.plan === "free" ? 1 : 3);
@@ -126,10 +141,15 @@ export function UsageLimitsModal({
                     <i aria-hidden="true"><b style={{ width: `${row.progress * 100}%` }} /></i>
                   ) : null}
                 </div>
-                {row.action ? <button type="button">{row.action}</button> : <em>{row.value}</em>}
+                {row.action ? (
+                  <button disabled={updating} onClick={updateNow} type="button">
+                    {updating ? "Updating…" : row.action}
+                  </button>
+                ) : <em>{row.value}</em>}
               </article>
             ))}
           </div>
+          {updateError ? <p className="form-error" role="alert">{updateError}</p> : null}
           <p className="usage-modal-label">Never limited, on any plan</p>
           <p className="usage-never-limited">Documents · History · asking for a read · every recommendation · editing by hand · “Update now”.</p>
         </div>
