@@ -415,6 +415,41 @@ def test_clarification_reanalysis_preserves_unrelated_open_issues_when_model_omi
     assert issues_by_id["ISS-MILESTONE"].status == "open"
 
 
+def test_extended_read_deduplicates_retained_issue_against_deeper_finding() -> None:
+    evidence_ref = "document:controls:page:4:fragment:1"
+    initial_issue = Issue(
+        id="ISS-INITIAL-FORECAST",
+        artifact_type=ARTIFACT_TYPES[0],
+        dimension="Alignment",
+        severity="Critical",
+        title="Forecast final cost is internally inconsistent",
+        why="The report gives three conflicting final-cost values.",
+        recommendation="Reconcile and approve one forecast final cost.",
+        evidence_refs=(evidence_ref,),
+    )
+    deeper_issue = replace(
+        initial_issue,
+        id="ISS-DEEPER-FORECAST",
+        artifact_type=ARTIFACT_TYPES[1],
+        title="Forecast final cost internally inconsistent",
+    )
+    previous = _snapshot(replace(_assessment(), issues=(initial_issue,)))
+
+    result = enrich_assessment(
+        assessment=replace(_assessment(score=61), issues=(deeper_issue,)),
+        artifacts=_artifacts(),
+        kind=RunKind.EXTENDED,
+        previous_snapshot=previous,
+        description="A deeper evidence-qualified read.",
+    )
+
+    assert len(result.issues) == 1
+    assert result.issues[0].title in {
+        initial_issue.title,
+        deeper_issue.title,
+    }
+
+
 def test_complete_user_confirmation_addresses_a_weakness_still_found_by_analysis() -> None:
     issue = Issue(
         id="ISS-OWNER",

@@ -1,6 +1,7 @@
 import re
 from dataclasses import replace
 
+from oslo_api.analysis.issue_identity import deduplicate_issues
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     Artifact,
@@ -182,7 +183,15 @@ def enrich_assessment(
             for issue in previous_snapshot.assessment.issues
             if issue.id not in existing_ids
         )
-    issues_tuple = tuple(issues)
+    # Extended reads retain findings that the deeper pass omitted so issue
+    # lifecycle remains stable.  Deduplicate after that merge as well: the
+    # deeper pass may describe the same weakness under another artifact or a
+    # newly stabilised identity.
+    issues_tuple = (
+        tuple(issues)
+        if clarification_issue_id
+        else deduplicate_issues(tuple(issues))
+    )
     resolved = sum(issue.status == "resolved" for issue in issues_tuple)
     confirmed = sum(
         issue.status in {"addressed", "resolved"} and bool(issue.clarification)
