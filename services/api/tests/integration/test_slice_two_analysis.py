@@ -680,7 +680,25 @@ def test_new_snapshot_does_not_resolve_issue_rows_without_resolution_evidence() 
                 ),
                 {"project_id": project_id},
             ).scalar_one()
+            reconciled_summary = connection.execute(
+                text(
+                    """
+                    select summary from public.project_history_events
+                    where project_id = :project_id
+                      and analysis_run_id = :run_id
+                      and event_type = 'issues.reconciled'
+                    """
+                ),
+                {"project_id": project_id, "run_id": result.run_id},
+            ).scalar_one()
         assert stale_status == "open"
+        current_snapshot = DatabaseAnalysisStore(engine).current_snapshot(project_id)
+        assert current_snapshot is not None
+        current_open_count = sum(
+            issue.status != "resolved"
+            for issue in current_snapshot.assessment.issues
+        )
+        assert reconciled_summary == f"{current_open_count} issues detected"
     finally:
         with engine.begin() as connection:
             connection.execute(

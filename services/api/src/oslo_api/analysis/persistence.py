@@ -295,6 +295,10 @@ def _snapshot_from_dict(data: dict) -> AssessmentSnapshot:
     )
 
 
+def _active_issue_keys(issues: tuple[Issue, ...]) -> set[str]:
+    return {issue.id for issue in issues if issue.status != "resolved"}
+
+
 class DatabaseAnalysisStore:
     def __init__(self, engine: Engine) -> None:
         self._engine = engine
@@ -965,22 +969,22 @@ class DatabaseAnalysisStore:
                 ),
                 {"project_id": snapshot.project_id},
             )
-            previous_issue_keys = set(
-                connection.execute(
-                    text(
-                        """
-                        select stable_key
-                        from public.issues
-                        where workspace_id = :workspace_id
-                          and project_id = :project_id
-                          and current_status <> 'resolved'
-                        """
-                    ),
-                    {
-                        "workspace_id": snapshot.workspace_id,
-                        "project_id": snapshot.project_id,
-                    },
-                ).scalars()
+            previous_snapshot_payload = connection.execute(
+                text(
+                    """
+                    select retained.snapshot_json
+                    from public.projects project
+                    left join public.assessment_snapshots retained
+                      on retained.analysis_run_id = project.current_analysis_run_id
+                    where project.id = :project_id
+                    """
+                ),
+                {"project_id": snapshot.project_id},
+            ).scalar_one_or_none()
+            previous_issue_keys = _active_issue_keys(
+                _snapshot_from_dict(previous_snapshot_payload).assessment.issues
+                if previous_snapshot_payload
+                else ()
             )
             connection.execute(
                 text(
@@ -1278,23 +1282,10 @@ class DatabaseAnalysisStore:
                     },
                 )
             run_kind = str(run_row["kind"])
-            current_issue_keys = set(
-                connection.execute(
-                    text(
-                        """
-                        select stable_key
-                        from public.issues
-                        where workspace_id = :workspace_id
-                          and project_id = :project_id
-                          and current_status <> 'resolved'
-                        """
-                    ),
-                    {
-                        "workspace_id": snapshot.workspace_id,
-                        "project_id": snapshot.project_id,
-                    },
-                ).scalars()
-            )
+            # History describes the atomically published read, not every issue row
+            # retained for lifecycle/audit purposes. Counting retained rows here made
+            # History disagree with Overview and Issues after a fresh reanalysis.
+            current_issue_keys = _active_issue_keys(snapshot.assessment.issues)
             opened = sorted(current_issue_keys - previous_issue_keys)
             resolved = sorted(previous_issue_keys - current_issue_keys)
             append_history_event(
