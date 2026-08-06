@@ -1304,7 +1304,11 @@ export function ProjectOverview({
             selectedResolution={selectedResolutions[selectedIssue.id] ?? null}
           />
         ) : advisorOpen ? (
-          <div className={orientation && activeTourStep === 5 ? "advisor-tour-target" : ""}>
+          <div
+            className={`project-sidepanel-slot ${
+              orientation && activeTourStep === 5 ? "advisor-tour-target" : ""
+            }`}
+          >
             <AdvisorPanel
             advisorError={advisorError}
             advisorPending={advisorPending}

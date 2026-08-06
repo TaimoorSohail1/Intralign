@@ -7163,6 +7163,24 @@ button.attention-cell { cursor: pointer; }
   scrollbar-gutter: stable;
 }
 
+.project-sidepanel-slot {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.project-sidepanel {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.project-sidepanel .chat-content {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .workspace-sidebar,
 .chat-content,
 .issue-panel {
@@ -7206,7 +7224,7 @@ button.attention-cell { cursor: pointer; }
   bottom: 24px;
 }
 
-@media (min-width: 981px) {
+@media (min-width: 1025px) {
   .project-sidepanel {
     position: relative;
     top: auto;
@@ -7215,7 +7233,7 @@ button.attention-cell { cursor: pointer; }
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1024px) {
   .project-sidepanel {
     position: fixed;
     top: 48px;

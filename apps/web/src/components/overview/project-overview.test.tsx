@@ -479,9 +479,11 @@ describe("ProjectOverview", () => {
     expect(
       screen.getByRole("region", { name: "Project content" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("complementary", { name: "OSLO project advisor" }),
-    ).toBeInTheDocument();
+    const advisor = screen.getByRole("complementary", {
+      name: "OSLO project advisor",
+    });
+    expect(advisor).toBeInTheDocument();
+    expect(advisor.parentElement).toHaveClass("project-sidepanel-slot");
     expect(
       screen.getByRole("region", { name: "OSLO conversation" }),
     ).toBeInTheDocument();
