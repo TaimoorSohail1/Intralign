@@ -377,76 +377,79 @@ class DatabaseSliceOneApplication:
                     created_at=existing["created_at"],
                     expires_at=existing["expires_at"],
                 )
-            policy = get_workspace_plan(connection, workspace_id)
-            monthly_invites_used = connection.execute(
-                text(
-                    """
-                    select count(*)
-                    from public.invitations
-                    where workspace_id = :workspace_id
-                      and created_at >= date_trunc('month', now())
-                      and (
-                        status = 'accepted'
-                        or (status = 'pending' and expires_at > now())
-                      )
-                    """
-                ),
-                {"workspace_id": workspace_id},
-            ).scalar_one()
-            if monthly_invites_used >= policy.monthly_invitation_limit:
-                self._record_blocked_limit_event(
-                    workspace_id=workspace_id,
-                    actor_user_id=actor_user_id,
-                    project_id=None,
-                    limit_kind="monthly_invitations",
-                    details={
-                        "plan": policy.code.value,
-                        "limit": policy.monthly_invitation_limit,
-                        "used": int(monthly_invites_used),
-                        "remedies": ["wait_for_next_month", "compare_plans"],
-                    },
-                    idempotency_key=f"invite-allocation:{normalised_email}:blocked",
-                )
-                raise InvitationLimitReached(policy)
-            reserved_workspace_seats = connection.execute(
-                text(
-                    """
-                    select
-                      (
-                        select count(*)
-                        from public.memberships
-                        where workspace_id = :workspace_id
-                      )
-                      +
-                      (
+            policy = None
+            reserved_workspace_seats = None
+            if not is_platform_admin:
+                policy = get_workspace_plan(connection, workspace_id)
+                monthly_invites_used = connection.execute(
+                    text(
+                        """
                         select count(*)
                         from public.invitations
                         where workspace_id = :workspace_id
-                          and status = 'pending'
-                          and expires_at > now()
-                      )
-                    """
-                ),
-                {"workspace_id": workspace_id},
-            ).scalar_one()
-            decision = policy.decide_collaborator_capacity(
-                occupied_seats=int(reserved_workspace_seats)
-            )
-            if not decision.allowed:
-                self._record_blocked_limit_event(
-                    workspace_id=workspace_id,
-                    actor_user_id=actor_user_id,
-                    project_id=None,
-                    limit_kind="collaborator_seats",
-                    details={
-                        "plan": policy.code.value,
-                        "limit": policy.collaborator_seat_limit,
-                        "occupied": int(reserved_workspace_seats),
-                        "remedies": list(decision.remedies),
-                    },
-                    idempotency_key=f"invite-seat:{normalised_email}:blocked",
+                          and created_at >= date_trunc('month', now())
+                          and (
+                            status = 'accepted'
+                            or (status = 'pending' and expires_at > now())
+                          )
+                        """
+                    ),
+                    {"workspace_id": workspace_id},
+                ).scalar_one()
+                if monthly_invites_used >= policy.monthly_invitation_limit:
+                    self._record_blocked_limit_event(
+                        workspace_id=workspace_id,
+                        actor_user_id=actor_user_id,
+                        project_id=None,
+                        limit_kind="monthly_invitations",
+                        details={
+                            "plan": policy.code.value,
+                            "limit": policy.monthly_invitation_limit,
+                            "used": int(monthly_invites_used),
+                            "remedies": ["wait_for_next_month", "compare_plans"],
+                        },
+                        idempotency_key=f"invite-allocation:{normalised_email}:blocked",
+                    )
+                    raise InvitationLimitReached(policy)
+                reserved_workspace_seats = connection.execute(
+                    text(
+                        """
+                        select
+                          (
+                            select count(*)
+                            from public.memberships
+                            where workspace_id = :workspace_id
+                          )
+                          +
+                          (
+                            select count(*)
+                            from public.invitations
+                            where workspace_id = :workspace_id
+                              and status = 'pending'
+                              and expires_at > now()
+                          )
+                        """
+                    ),
+                    {"workspace_id": workspace_id},
+                ).scalar_one()
+                decision = policy.decide_collaborator_capacity(
+                    occupied_seats=int(reserved_workspace_seats)
                 )
-                raise CollaboratorSeatLimitReached(policy)
+                if not decision.allowed:
+                    self._record_blocked_limit_event(
+                        workspace_id=workspace_id,
+                        actor_user_id=actor_user_id,
+                        project_id=None,
+                        limit_kind="collaborator_seats",
+                        details={
+                            "plan": policy.code.value,
+                            "limit": policy.collaborator_seat_limit,
+                            "occupied": int(reserved_workspace_seats),
+                            "remedies": list(decision.remedies),
+                        },
+                        idempotency_key=f"invite-seat:{normalised_email}:blocked",
+                    )
+                    raise CollaboratorSeatLimitReached(policy)
             invitation_memberships = (
                 _PlatformAdminMembershipReader(actor_user_id, workspace_id)
                 if is_platform_admin
@@ -489,20 +492,21 @@ class DatabaseSliceOneApplication:
                     ),
                 },
             )
-            record_limit_event(
-                connection,
-                workspace_id=workspace_id,
-                actor_user_id=actor_user_id,
-                project_id=None,
-                limit_kind="collaborator_seats",
-                outcome="allowed",
-                details={
-                    "plan": policy.code.value,
-                    "limit": policy.collaborator_seat_limit,
-                    "occupied_before": int(reserved_workspace_seats),
-                },
-                idempotency_key=f"invite-seat:{issued.invitation.id}:allowed",
-            )
+            if policy is not None and reserved_workspace_seats is not None:
+                record_limit_event(
+                    connection,
+                    workspace_id=workspace_id,
+                    actor_user_id=actor_user_id,
+                    project_id=None,
+                    limit_kind="collaborator_seats",
+                    outcome="allowed",
+                    details={
+                        "plan": policy.code.value,
+                        "limit": policy.collaborator_seat_limit,
+                        "occupied_before": int(reserved_workspace_seats),
+                    },
+                    idempotency_key=f"invite-seat:{issued.invitation.id}:allowed",
+                )
 
         query = urlencode({"token": issued.token})
         try:
