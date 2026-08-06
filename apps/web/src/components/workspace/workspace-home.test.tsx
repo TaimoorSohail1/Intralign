@@ -142,7 +142,7 @@ describe("WorkspaceHome", () => {
     });
   });
 
-  it("blocks new projects when the active-project allowance is exhausted", async () => {
+  it("explains the limit when the active-project allowance is exhausted", async () => {
     const existingProjects = Array.from({ length: 8 }, (_, index) => ({
       ...workspace.projects[0],
       id: `existing-${index}`,
@@ -162,7 +162,30 @@ describe("WorkspaceHome", () => {
         initial={{ ...workspace, can_create_project: false, projects: existingProjects }}
       />,
     );
-    expect(screen.getByRole("button", { name: "New project" })).toBeDisabled();
+    const newProject = screen.getByRole("button", { name: "New project" });
+    expect(newProject).toBeEnabled();
+    fireEvent.click(newProject);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "The Free plan includes 1 active project. Archive one or compare plans.",
+    );
+    expect(screen.getByRole("dialog", { name: "Your plan" })).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("explains the limit when the project switcher requests a new project", async () => {
+    render(
+      <WorkspaceHome
+        displayName="Taimoor"
+        initial={{ ...workspace, can_create_project: false }}
+        openNewProject
+      />,
+    );
+
+    expect(await screen.findByRole("dialog", { name: "Your plan" })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "The Free plan includes 1 active project. Archive one or compare plans.",
+    );
     expect(fetch).not.toHaveBeenCalled();
   });
 

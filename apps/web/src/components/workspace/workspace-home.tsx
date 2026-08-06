@@ -67,13 +67,14 @@ export function WorkspaceHome({
   const activeVisible = activeFiltered.slice(0, visibleCount);
   const activeProjectLimit = workspace.active_project_limit ?? (workspace.plan === "free" ? 1 : 3);
   const canCreateProject = workspace.can_create_project ?? active.length < activeProjectLimit;
+  const activeProjectLimitMessage =
+    `The ${workspace.plan_label} plan includes ${activeProjectLimit} active project${activeProjectLimit === 1 ? "" : "s"}. Archive one or compare plans.`;
 
   const createProject = async () => {
     setError(null);
     if (!canCreateProject) {
-      setError(
-        `The ${workspace.plan_label} plan includes ${activeProjectLimit} active project${activeProjectLimit === 1 ? "" : "s"}. Archive one or compare plans.`,
-      );
+      setError(activeProjectLimitMessage);
+      setPlansOpen(true);
       return;
     }
     const response = await fetch("/api/projects/new", { method: "POST" });
@@ -92,10 +93,17 @@ export function WorkspaceHome({
     ) return;
 
     newProjectHandled.current = true;
-    if (!canCreateProject) {
-      return;
-    }
     let cancelled = false;
+    if (!canCreateProject) {
+      queueMicrotask(() => {
+        if (cancelled) return;
+        setError(activeProjectLimitMessage);
+        setPlansOpen(true);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
     void fetch("/api/projects/new", { method: "POST" }).then(async (response) => {
       if (cancelled) return;
       if (!response.ok) {
@@ -108,7 +116,7 @@ export function WorkspaceHome({
     return () => {
       cancelled = true;
     };
-  }, [activeProjectLimit, canCreateProject, openNewProject, router, workspace.plan_label]);
+  }, [activeProjectLimitMessage, canCreateProject, openNewProject, router]);
 
   const setArchived = async (
     projectId: string,
@@ -166,7 +174,6 @@ export function WorkspaceHome({
             <small>{active.length} active · {activeProjectLimit} included</small>
             <button
               className="workspace-primary-action"
-              disabled={!canCreateProject}
               onClick={createProject}
               type="button"
             >
