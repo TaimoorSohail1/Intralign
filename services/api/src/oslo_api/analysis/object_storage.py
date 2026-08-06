@@ -6,6 +6,15 @@ from urllib.parse import quote
 
 import httpx
 
+_CONTENT_TYPES_BY_SUFFIX = {
+    ".pdf": "application/pdf",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ".txt": "text/plain",
+    ".md": "text/markdown",
+}
+
 
 class ObjectStorage(Protocol):
     """Storage boundary used by document ingestion.
@@ -81,12 +90,16 @@ class SupabaseObjectStorage:
             self._headers["authorization"] = f"Bearer {secret_key}"
 
     def put(self, object_key: str, content: bytes) -> None:
+        content_type = _CONTENT_TYPES_BY_SUFFIX.get(
+            Path(object_key).suffix.lower(),
+            "application/octet-stream",
+        )
         response = self._client.post(
             self._object_url(object_key),
             content=content,
             headers={
                 **self._headers,
-                "content-type": "application/octet-stream",
+                "content-type": content_type,
                 "x-upsert": "false",
             },
         )
@@ -99,7 +112,7 @@ class SupabaseObjectStorage:
             self._object_url(object_key),
             headers=self._headers,
         )
-        if response.status_code == 404:
+        if self._is_not_found(response):
             raise FileNotFoundError(object_key)
         response.raise_for_status()
         return response.content
@@ -109,7 +122,7 @@ class SupabaseObjectStorage:
             self._object_url(object_key),
             headers={**self._headers, "range": "bytes=0-0"},
         )
-        if response.status_code == 404:
+        if self._is_not_found(response):
             return False
         response.raise_for_status()
         return True
@@ -119,7 +132,7 @@ class SupabaseObjectStorage:
             self._object_url(object_key),
             headers=self._headers,
         )
-        if response.status_code == 404:
+        if self._is_not_found(response):
             return
         response.raise_for_status()
 
@@ -133,3 +146,17 @@ class SupabaseObjectStorage:
         bucket = quote(self._bucket, safe="")
         key = quote(object_key, safe="/")
         return f"{self._base_url}/storage/v1/object/{bucket}/{key}"
+
+    @staticmethod
+    def _is_not_found(response: httpx.Response) -> bool:
+        if response.status_code == 404:
+            return True
+        if response.status_code != 400:
+            return False
+        try:
+            payload = response.json()
+        except ValueError:
+            return False
+        return payload.get("code") == "NoSuchKey" or str(
+            payload.get("statusCode")
+        ) == "404"

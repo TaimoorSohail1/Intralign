@@ -33,6 +33,7 @@ def test_supabase_storage_puts_and_reads_a_private_object() -> None:
     assert put.url.path == "/storage/v1/object/source-documents/project/report.pdf"
     assert put.headers["apikey"] == "sb_secret_example"
     assert "authorization" not in put.headers
+    assert put.headers["content-type"] == "application/pdf"
     assert put.headers["x-upsert"] == "false"
 
 
@@ -63,9 +64,15 @@ def test_supabase_storage_exists_and_delete_are_idempotent() -> None:
 
     def handler(request: httpx.Request) -> httpx.Response:
         methods.append(request.method)
-        if request.method == "GET":
-            return httpx.Response(404)
-        return httpx.Response(200)
+        return httpx.Response(
+            400,
+            json={
+                "statusCode": "404",
+                "error": "not_found",
+                "message": "Object not found",
+                "code": "NoSuchKey",
+            },
+        )
 
     storage = SupabaseObjectStorage(
         base_url="https://example.supabase.co/",
