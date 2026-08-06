@@ -121,6 +121,34 @@ describe("WorkspaceHome", () => {
     expect(screen.getAllByText("Read-only · retained safely")).toHaveLength(2);
   });
 
+  it("can create a new project immediately after archiving the active project", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: "project-new" }), {
+          status: 201,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    render(
+      <WorkspaceHome
+        displayName="Taimoor"
+        initial={{ ...workspace, can_create_project: false }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Archive Active transformation" }));
+    await waitFor(() => {
+      expect(screen.getByText("Create your first project")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "New project" }));
+    await waitFor(() => {
+      expect(fetch).toHaveBeenLastCalledWith("/api/projects/new", { method: "POST" });
+      expect(push).toHaveBeenCalledWith("/intake?project=project-new");
+    });
+  });
+
   it("creates a project and routes into intake from an empty workspace", async () => {
     vi.mocked(fetch).mockResolvedValue(
       new Response(JSON.stringify({ id: "project-new" }), {

@@ -133,12 +133,17 @@ export function WorkspaceHome({
       setPendingId(null);
       return;
     }
-    setWorkspace((current) => ({
-      ...current,
-      projects: current.projects.map((project) =>
+    setWorkspace((current) => {
+      const projects = current.projects.map((project) =>
         project.id === projectId ? { ...project, archived: next } : project,
-      ),
-    }));
+      );
+      const activeProjectCount = projects.filter((project) => !project.archived).length;
+      return {
+        ...current,
+        projects,
+        can_create_project: activeProjectCount < activeProjectLimit,
+      };
+    });
     setPendingId(null);
     return true;
   };
