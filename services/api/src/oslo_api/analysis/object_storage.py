@@ -76,10 +76,9 @@ class SupabaseObjectStorage:
         self._base_url = base_url.rstrip("/")
         self._bucket = bucket
         self._client = client or httpx.Client(timeout=60)
-        self._headers = {
-            "apikey": secret_key,
-            "authorization": f"Bearer {secret_key}",
-        }
+        self._headers = {"apikey": secret_key}
+        if not secret_key.startswith("sb_secret_"):
+            self._headers["authorization"] = f"Bearer {secret_key}"
 
     def put(self, object_key: str, content: bytes) -> None:
         response = self._client.post(

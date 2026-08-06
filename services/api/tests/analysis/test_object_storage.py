@@ -20,7 +20,7 @@ def test_supabase_storage_puts_and_reads_a_private_object() -> None:
 
     storage = SupabaseObjectStorage(
         base_url="https://example.supabase.co",
-        secret_key="secret-value",
+        secret_key="sb_secret_example",
         bucket="source-documents",
         client=_client(handler),
     )
@@ -31,8 +31,31 @@ def test_supabase_storage_puts_and_reads_a_private_object() -> None:
     put = requests[0]
     assert put.method == "POST"
     assert put.url.path == "/storage/v1/object/source-documents/project/report.pdf"
-    assert put.headers["authorization"] == "Bearer secret-value"
+    assert put.headers["apikey"] == "sb_secret_example"
+    assert "authorization" not in put.headers
     assert put.headers["x-upsert"] == "false"
+
+
+def test_supabase_storage_keeps_bearer_header_for_legacy_service_role_jwt() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200)
+
+    storage = SupabaseObjectStorage(
+        base_url="https://example.supabase.co",
+        secret_key="eyJhbGciOiJIUzI1NiJ9.payload.signature",
+        bucket="source-documents",
+        client=_client(handler),
+    )
+
+    storage.put("project/report.pdf", b"source pdf")
+
+    assert requests[0].headers["apikey"] == "eyJhbGciOiJIUzI1NiJ9.payload.signature"
+    assert requests[0].headers["authorization"] == (
+        "Bearer eyJhbGciOiJIUzI1NiJ9.payload.signature"
+    )
 
 
 def test_supabase_storage_exists_and_delete_are_idempotent() -> None:
