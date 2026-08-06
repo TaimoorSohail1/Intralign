@@ -1392,6 +1392,12 @@ class DatabaseSliceOneApplication:
                     ),
                     {"user_id": user.id, "display_name": display_name.strip()},
                 )
+                accepted_workspace_id, accepted_role = self._acceptance_workspace(
+                    connection,
+                    invitation=invitation,
+                    user_id=user.id,
+                    display_name=display_name.strip(),
+                )
                 connection.execute(
                     text(
                         """
@@ -1400,16 +1406,18 @@ class DatabaseSliceOneApplication:
                         """
                     ),
                     {
-                        "workspace_id": invitation["workspace_id"],
+                        "workspace_id": accepted_workspace_id,
                         "user_id": user.id,
-                        "role": invitation["role"],
+                        "role": accepted_role,
                     },
                 )
                 accepted = connection.execute(
                     text(
                         """
                         update public.invitations
-                        set status = 'accepted', accepted_by = :user_id, accepted_at = :accepted_at
+                        set status = 'accepted', accepted_by = :user_id,
+                            accepted_at = :accepted_at,
+                            accepted_workspace_id = :accepted_workspace_id
                         where id = :invitation_id
                           and status = 'pending'
                           and expires_at > :accepted_at
@@ -1418,6 +1426,7 @@ class DatabaseSliceOneApplication:
                     {
                         "user_id": user.id,
                         "accepted_at": now,
+                        "accepted_workspace_id": accepted_workspace_id,
                         "invitation_id": invitation["id"],
                     },
                 )
@@ -1448,7 +1457,7 @@ class DatabaseSliceOneApplication:
         return ActivationResult(
             user_id=session.user_id,
             email=session.email,
-            workspace_id=invitation["workspace_id"],
+            workspace_id=accepted_workspace_id,
             access_token=session.access_token,
             refresh_token=session.refresh_token,
             expires_in=session.expires_in,
@@ -1511,13 +1520,6 @@ class DatabaseSliceOneApplication:
         if session.email.casefold() != invitation["email"].casefold():
             raise InvitationEmailMismatch
         with self._engine.begin() as connection:
-            membership_exists = connection.execute(
-                text(
-                    "select 1 from public.memberships "
-                    "where workspace_id = :workspace_id and user_id = :user_id"
-                ),
-                {"workspace_id": invitation["workspace_id"], "user_id": session.user_id},
-            ).scalar_one_or_none()
             connection.execute(
                 text(
                     """
@@ -1528,6 +1530,19 @@ class DatabaseSliceOneApplication:
                 ),
                 {"user_id": session.user_id, "display_name": session.email.split("@")[0]},
             )
+            accepted_workspace_id, accepted_role = self._acceptance_workspace(
+                connection,
+                invitation=invitation,
+                user_id=session.user_id,
+                display_name=session.email.split("@")[0],
+            )
+            membership_exists = connection.execute(
+                text(
+                    "select 1 from public.memberships "
+                    "where workspace_id = :workspace_id and user_id = :user_id"
+                ),
+                {"workspace_id": accepted_workspace_id, "user_id": session.user_id},
+            ).scalar_one_or_none()
             connection.execute(
                 text(
                     """
@@ -1537,9 +1552,9 @@ class DatabaseSliceOneApplication:
                     """
                 ),
                 {
-                    "workspace_id": invitation["workspace_id"],
+                    "workspace_id": accepted_workspace_id,
                     "user_id": session.user_id,
-                    "role": invitation["role"],
+                    "role": accepted_role,
                 },
             )
             accepted_at = datetime.now(UTC)
@@ -1547,7 +1562,9 @@ class DatabaseSliceOneApplication:
                 text(
                     """
                     update public.invitations
-                    set status = 'accepted', accepted_by = :user_id, accepted_at = :accepted_at
+                    set status = 'accepted', accepted_by = :user_id,
+                        accepted_at = :accepted_at,
+                        accepted_workspace_id = :accepted_workspace_id
                     where id = :invitation_id
                       and status = 'pending'
                       and expires_at > :accepted_at
@@ -1556,6 +1573,7 @@ class DatabaseSliceOneApplication:
                 {
                     "user_id": session.user_id,
                     "accepted_at": accepted_at,
+                    "accepted_workspace_id": accepted_workspace_id,
                     "invitation_id": invitation["id"],
                 },
             )
@@ -1581,7 +1599,7 @@ class DatabaseSliceOneApplication:
         return ActivationResult(
             user_id=session.user_id,
             email=session.email,
-            workspace_id=invitation["workspace_id"],
+            workspace_id=accepted_workspace_id,
             access_token=session.access_token,
             refresh_token=session.refresh_token,
             expires_in=session.expires_in,
@@ -1602,6 +1620,9 @@ class DatabaseSliceOneApplication:
             raise InvitationEmailMismatch
         if session.user_id != invitation["accepted_by"]:
             raise InvalidInvitation
+        accepted_workspace_id = (
+            invitation["accepted_workspace_id"] or invitation["workspace_id"]
+        )
         with self._engine.connect() as connection:
             membership = (
                 connection.execute(
@@ -1609,7 +1630,7 @@ class DatabaseSliceOneApplication:
                         "select created_at, welcome_seen_at from public.memberships "
                         "where workspace_id = :workspace_id and user_id = :user_id"
                     ),
-                    {"workspace_id": invitation["workspace_id"], "user_id": session.user_id},
+                    {"workspace_id": accepted_workspace_id, "user_id": session.user_id},
                 )
                 .mappings()
                 .one_or_none()
@@ -1620,7 +1641,7 @@ class DatabaseSliceOneApplication:
         return ActivationResult(
             user_id=session.user_id,
             email=session.email,
-            workspace_id=invitation["workspace_id"],
+            workspace_id=accepted_workspace_id,
             access_token=session.access_token,
             refresh_token=session.refresh_token,
             expires_in=session.expires_in,
@@ -1643,6 +1664,7 @@ class DatabaseSliceOneApplication:
                         """
                     select i.id, i.workspace_id, i.email::text, i.role,
                            i.status, i.created_at, i.expires_at, i.accepted_by,
+                           i.accepted_workspace_id, i.invited_by,
                            w.name as workspace_name
                     from public.invitations i
                     join public.workspaces w on w.id = i.workspace_id
@@ -1664,3 +1686,53 @@ class DatabaseSliceOneApplication:
         ):
             raise InvalidInvitation
         return invitation
+
+    @staticmethod
+    def _acceptance_workspace(
+        connection: Connection,
+        *,
+        invitation: RowMapping,
+        user_id: UUID,
+        display_name: str,
+    ) -> tuple[UUID, str]:
+        provisions_client_workspace = connection.execute(
+            text(
+                """
+                select exists (
+                  select 1
+                  from private.platform_admins admin
+                  where admin.user_id = :invited_by
+                    and admin.workspace_id = :workspace_id
+                    and not exists (
+                      select 1
+                      from public.memberships membership
+                      where membership.workspace_id = admin.workspace_id
+                        and membership.user_id = admin.user_id
+                    )
+                )
+                """
+            ),
+            {
+                "invited_by": invitation["invited_by"],
+                "workspace_id": invitation["workspace_id"],
+            },
+        ).scalar_one()
+        if not provisions_client_workspace:
+            return invitation["workspace_id"], invitation["role"]
+
+        workspace_id = uuid4()
+        workspace_name = f"{display_name.strip() or 'Client'} workspace"[:120]
+        connection.execute(
+            text(
+                """
+                insert into public.workspaces (id, name, created_by)
+                values (:workspace_id, :workspace_name, :user_id)
+                """
+            ),
+            {
+                "workspace_id": workspace_id,
+                "workspace_name": workspace_name,
+                "user_id": user_id,
+            },
+        )
+        return workspace_id, MembershipRole.OWNER.value

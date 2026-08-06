@@ -161,9 +161,9 @@ class SmtpInvitationMailer:
         message = EmailMessage()
         message["From"] = self._sender
         message["To"] = email
-        message["Subject"] = f"You’re invited to {workspace_name}"
+        message["Subject"] = f"You're invited to {workspace_name}"
         message.set_content(
-            f"""You’ve been invited to join {workspace_name} as {role} in OSLO Product Grill.
+            f"""You've been invited to join {workspace_name} as {role} in OSLO Product Grill.
 
 Activate your account:
 {activation_url}
@@ -265,7 +265,7 @@ class PostmarkInvitationMailer:
         expires_at: datetime,
     ) -> None:
         expiry = expires_at.strftime("%d %B %Y")
-        text_body = f"""Youâ€™ve been invited to join {workspace_name} as {role} in OSLO Product Grill.
+        text_body = f"""You've been invited to join {workspace_name} as {role} in OSLO Product Grill.
 
 Activate your account:
 {activation_url}
@@ -277,7 +277,7 @@ This invitation expires on {expiry}.
             sender=self._sender,
             sender_name=self._sender_name,
             recipient=email,
-            subject=f"Youâ€™re invited to {workspace_name}",
+            subject=f"You're invited to {workspace_name}",
             text_body=text_body,
             html_body=_invitation_html(
                 workspace_name=workspace_name,
