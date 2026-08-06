@@ -56,6 +56,14 @@ test("Slice 6 filters issues and persists a governed resolution selection", asyn
 
   const dialog = page.getByRole("dialog", { name: "Issue details" });
   await expect(dialog).toBeVisible();
+  await expect
+    .poll(() =>
+      dialog.evaluate((element) => ({
+        canScroll: element.scrollHeight > element.clientHeight,
+        overflowY: getComputedStyle(element).overflowY,
+      })),
+    )
+    .toEqual({ canScroll: true, overflowY: "auto" });
   await expect(dialog.getByRole("heading", { name: "Why this matters" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "What this weakens" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "OSLO recommended" })).toBeVisible();

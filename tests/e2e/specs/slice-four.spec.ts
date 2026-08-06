@@ -75,6 +75,14 @@ test("Slice 4 renders the current-snapshot Attention Map and drills into finding
     await expect(issueDialog.getByText("Open", { exact: true })).toBeVisible();
     await expect(issueDialog.getByText("Addressed", { exact: true })).toBeVisible();
     await expect(issueDialog.getByText("Resolved", { exact: true })).toBeVisible();
+    await expect
+      .poll(() =>
+        issueDialog.evaluate((element) => ({
+          canScroll: element.scrollHeight > element.clientHeight,
+          overflowY: getComputedStyle(element).overflowY,
+        })),
+      )
+      .toEqual({ canScroll: true, overflowY: "auto" });
     await page.getByRole("button", { name: "Close issue" }).click();
   }
 

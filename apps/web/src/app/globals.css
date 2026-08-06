@@ -7176,6 +7176,11 @@ button.attention-cell { cursor: pointer; }
   overflow: hidden;
 }
 
+.project-sidepanel.issue-panel {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .project-sidepanel .chat-content {
   min-height: 0;
   overflow-y: auto;
