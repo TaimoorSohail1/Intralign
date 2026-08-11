@@ -28,6 +28,7 @@ Concretely, that spine shows up everywhere as: *only reanalysis resolves* (an ac
 | [`acceptance/`](./acceptance/) | The doctrine-guardrail acceptance suite: the FE↔BE integration map + the **GT-01…GT-50** test register (Slices 9 + 10). | Wire these as CI gates. A red suite blocks the build. |
 | [`canon/`](./canon/) | The ratified **decision log** (`decisions/`), the **audits** that produced the slices (`audits/`), and **product references** (`product/`). | The "why." Trace any locked decision back to its DL/DR ratification here before overriding it. |
 | [`BUILD_SEQUENCE.md`](./BUILD_SEQUENCE.md) | Dependency-ordered build plan across the ten slices (Slice 10 = Phase B+), plus the Phase-A prototype corrections. | Read this before scheduling work. |
+| [`R2_VERTICAL_SLICE_STATUS_LEDGER.md`](./R2_VERTICAL_SLICE_STATUS_LEDGER.md) | The current implementation, UI/UX review, manual regression, functional-test, prototype-parity, and test-case status for every R2 slice. | **Read first whenever work resumes.** Update it in the same change that produces new evidence. |
 | [`BACKLOG.md`](./BACKLOG.md) | Epics (one per slice) and derived tickets, each tagged with its acceptance criteria, the honesty invariant/guard it must satisfy, and any owner-open blocker. | Import into your tracker (Linear/Jira/GitHub Issues). |
 | [`SIGNOFF.md`](./SIGNOFF.md) | The sign-off ledger and carried-forward items. | The scope contract. |
 

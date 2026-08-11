@@ -1,6 +1,8 @@
 # OSLO R2 — Start Here (developers)
 
-**What this is:** the signed-off build design for OSLO R2 — nine vertical slices, a reference prototype, an acceptance suite, and the decision canon behind it.
+**What this is:** the signed-off build design for OSLO R2 — ten vertical slices, a reference prototype, an acceptance suite, and the decision canon behind it.
+
+**Resuming implementation:** read [`R2_VERTICAL_SLICE_STATUS_LEDGER.md`](./R2_VERTICAL_SLICE_STATUS_LEDGER.md) first. It is the operational source of truth for what is implemented, reviewed, tested, manually regressed, and verified against the prototype. Update it in the same change that produces new delivery evidence.
 
 **Where it lives:** repo `oslo-knowledge-base`, branch **`release-2`**, folder **`release-2/`**. `main` is frozen R1 — don't build from it.
 
