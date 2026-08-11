@@ -6,9 +6,9 @@
 
 **Audited branch:** `codex/release-2-build`
 
-**Audited commit:** `c19083a`
+**Audited commit:** `29b11fc`
 
-**Working tree at audit:** current-run manual-regression/UI-audit evidence is committed at `c19083a`; only this ledger finalization is pending. No product change and no non-Slice-1 change is present.
+**Working tree at audit:** current-run manual-regression/UI-audit evidence is committed at `29b11fc`; only this ledger finalization is pending. No product change and no non-Slice-1 change is present.
 
 **Current owner-authorized work scope:** **Slices 1–3 only**
 
@@ -32,7 +32,7 @@
 - **6 guards are active; 54 are pending.** Slice 1 activates `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, and `GT-20`; the remaining slices are not functionally verified.
 - Slice 9's FE↔BE contract currently contains **58 mapped dynamic surfaces**.
 - All **6/6 Phase-A prototype corrections** checked by the gate are present.
-- Slice 1 has its core R2 implementation at `8b8f702` and same-state parity follow-up at `2958c4a`. Automated functional and prototype-parity gates pass. The 03:02-03:10 PKT retry again failed before the in-app browser attached a page; local Supabase was also unavailable to the scheduler account. Mandatory manual timeout/retry/last-good verification plus remaining manual accessibility checks remain open, so Slice 1 stays **IN PROGRESS**. Inherited R1 capabilities elsewhere remain **reuse candidates, not R2 completion evidence**.
+- Slice 1 has its core R2 implementation at `8b8f702` and same-state parity follow-up at `2958c4a`. Automated functional and prototype-parity gates pass. The 04:03-04:06 PKT retry again failed before the in-app browser attached a page; Docker Engine was also unresponsive and its stopped Windows service could not be started by the scheduler account. Mandatory manual timeout/retry/last-good verification plus remaining manual accessibility checks remain open, so Slice 1 stays **IN PROGRESS**. Inherited R1 capabilities elsewhere remain **reuse candidates, not R2 completion evidence**.
 
 ### Evidence commands
 
@@ -159,7 +159,7 @@ Reviewer / date:
 - Slice 1 masthead/parity follow-up: `2958c4a`
 - Slice 1 verification-evidence ledger commit: `2388702`
 - Slice 1 current browser-blocker evidence commit: `d609ff5`
-- Slice 1 latest browser-blocker evidence commit: `c19083a`
+- Slice 1 latest browser-blocker evidence commit: `29b11fc`
 - Slice 1 durable evidence: `../code/reports/r2/slice-01/`
 
 ---
