@@ -1,40 +1,33 @@
 # R2 Slice 01 UI/UX and accessibility audit
 
 **Mode:** combined UX/accessibility audit
-**Target:** executable Outcome Integrity overview and breakdown
+
+**Target:** executable Outcome Integrity Overview, masthead, and breakdown
+
 **Reference:** `release-2/oslo-prototype-r2.html` and Slice 1 AC-1…AC-10
-**Verdict:** **BLOCKED — captured comparison images are different workflow states; do not treat as a passing audit.**
 
-## Steps inspected
+**Verdict:** **PARTIAL PASS — same-state visual/responsive parity passes; remaining manual accessibility and failure-state checks block the full gate.**
 
-1. **Outcome Integrity overview — functionally healthy.** The five-step Fragile→Sound ramp, single limiting pillar, three decomposed pillar controls, moment-in-time framing, and pending live-tracking marker are exposed with accessible names. No 0–100 confidence or success-probability number appears on the integrity surface.
-2. **Integrity breakdown — functionally healthy after fix.** The toolbar trigger opens a named dialog, initial focus moves to its close control, Escape closes it, and the trigger regains focus in the verified component test. The dialog repeats anti-forecast copy and all three pillar explanations.
-3. **Tablet layout — geometry healthy.** At 768×1024 the header fits the viewport, body width equals client width, the main integrity card fits beside the compact navigation rail, and the three pillar controls remain readable.
-4. **Mobile layout — geometry healthy.** At 390×844 the page has no horizontal overflow, navigation becomes a bottom bar, the integrity card fits within 338px, and pillar controls stack vertically with approximately 292×75px targets.
+## Passed findings
 
-## Strengths
+1. **Hierarchy and copy.** The five-step Fragile→Sound ramp leads, the single limiting pillar follows, and all three pillar controls expose a band and count basis. Moment-in-time and live-tracking language is explicit; no probability or 0–100 integrity score appears.
+2. **Compact masthead parity.** Viability, Grounding, and Adaptability chips with mini range bars now accompany the integrity headline at the applicable desktop width. They collapse at narrower widths to prevent crowding while the full card remains available.
+3. **Breakdown behavior.** The named dialog receives initial focus, Escape closes it, and focus returns to the trigger. The dialog repeats the anti-forecast explanation and all three pillar details.
+4. **Tablet.** At 768×1024 the header and content fit with no horizontal overflow; the three pillar controls remain side by side and readable.
+5. **Mobile.** At 390×844 the page has no horizontal overflow; navigation becomes a bottom bar, content order is preserved, and pillar controls stack into full-width targets.
+6. **Same-state comparison.** Desktop, tablet, and mobile combined captures show the same Fragile/Adaptability-gated state, Sound Viability/Grounding, five-band ramp, decomposition, and next-action hierarchy.
 
-- Hierarchy leads with the maturity band and immediately names the gate.
-- Pillar controls expose both band and legible count basis.
-- Copy consistently says moment-in-time maturity and explicitly rejects health/readiness/probability framing.
-- Click targets are substantially larger than the WCAG 2.1 AA minimum target guidance.
-- Mobile and tablet reflow preserve content order and avoid horizontal scrolling.
+## Accessibility notes
 
-## Rejected screenshot evidence
+- Pillar controls and masthead trigger have accessible button names containing pillar/band context.
+- Focus-visible styling and dialog focus containment/restoration are present.
+- Targets exceed the WCAG 2.1 AA minimum guidance used by the existing design system.
+- Responsive reflow preserves reading order and avoids horizontal scrolling.
 
-- `screenshots/comparison-desktop.png`
-- `screenshots/comparison-tablet.png`
-- `screenshots/comparison-mobile.png`
+## Open checks
 
-All three comparisons were opened and inspected. In each pair, the reference is on the outcome-confirmation gate while the application is on the analyzed Overview. The mobile reference also visibly extends beyond its expected capture width in that state. Because the states differ, none can support a parity judgment.
+- A complete manual keyboard traversal, screen-reader announcement pass, reduced-motion observation, and 200% zoom inspection remain open.
+- The manual timeout/stale/retry/last-good flow remains open because the chosen in-app browser's action channel timed out.
+- Full WCAG compliance is not claimed.
 
-## Risks and open checks
-
-- Fresh screenshot capture failed in the chosen in-app browser, so typography, color, spacing, icon alignment, contrast, cropping, and visual focus styling were not accepted from same-state image evidence.
-- The reference prototype keeps all three pillar chips in the compact header; the executable app keeps the compact header to the headline and exposes pillars in the overview card/dialog. This is a visible structural difference that requires screenshot comparison and correction or an already-recorded waiver before parity can pass.
-- A full keyboard traversal, screen-reader announcement check, reduced-motion check, and 200% zoom inspection remain open.
-- Full WCAG compliance is not claimed from DOM/geometry evidence.
-
-## Required next action
-
-Repeat the audit in the in-app browser once its page can attach and capture. Advance the prototype through outcome confirmation before comparing it with the executable Overview. Capture and inspect matching desktop/tablet/mobile states, then resolve the header-structure difference and any image-visible defects.
+The visual parity artifact passes; the overall UI/UX gate remains partial until the remaining manual accessibility and failure-state checks are exercised.

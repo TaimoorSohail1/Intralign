@@ -461,11 +461,13 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("button", {
+    const integrityTrigger = screen.getByRole("button", {
         name: /Outcome Integrity Developing, limited by Grounding/i,
-      }),
-    ).toBeInTheDocument();
+      });
+    expect(integrityTrigger).toBeInTheDocument();
+    expect(within(integrityTrigger).getByText("Viability Solid")).toBeInTheDocument();
+    expect(within(integrityTrigger).getByText("Grounding Developing")).toBeInTheDocument();
+    expect(within(integrityTrigger).getByText("Adaptability Solid")).toBeInTheDocument();
     expect(screen.getByText("as of this analysis")).toBeInTheDocument();
     expect(screen.getByText("live tracking begins at execution")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Viability Solid/i })).toBeInTheDocument();

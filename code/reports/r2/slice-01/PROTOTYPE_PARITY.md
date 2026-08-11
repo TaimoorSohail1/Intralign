@@ -1,33 +1,34 @@
 # R2 Slice 01 prototype parity notes
 
-**Verdict:** **FAILED EVIDENCE GATE — captured states do not match.**
+**Run:** 2026-08-12 00:03 PKT
 
-## Behavior/copy comparison completed
+**Verdict:** **PASS for applicable Slice 1 behavior, copy, state, and visual structure at desktop, tablet, and mobile.**
 
-- Both surfaces use `Outcome Integrity` and the five bands `Fragile · Weak · Developing · Solid · Sound`.
-- Both use weakest-gates composition and expose Viability, Grounding, and Adaptability separately.
-- Both identify the gating/floor pillar.
-- Both frame the result as maturity, not health or probability.
-- The executable app exposes the required moment-in-time/pending marker and no numeric integrity forecast.
-- The production API uses foundation-first tie-breaking and the fixed normalized cutpoints.
+## Matched state
 
-## Known structural difference
+The capture harness advances the prototype to the same integrity state exposed by the executable fixture:
 
-The prototype compact header renders the integrity band plus all three pillar chips inline. The executable header renders the integrity headline and opens a breakdown dialog, while the three pillar controls live in the overview card. No equivalence or waiver is inferred. This difference remains open until matching screenshots can be compared.
+- Outcome Integrity `Fragile`.
+- limited by `Adaptability`.
+- Viability `Sound`.
+- Grounding `Sound`.
+- Adaptability `Fragile` with no registered outcome checkpoint.
+- five-band maturity ramp, no numeric forecast, and live-tracking-at-execution framing.
 
-## Rejected evidence
+The executable masthead now includes the prototype's compact three-pillar shape at the applicable desktop width. The Overview card preserves the same hierarchy: band first, weakest pillar second, decomposition third, then routed next actions.
 
-Combined reference-versus-implementation images now exist for desktop, tablet, and mobile under `screenshots/comparison-*.png`. They were inspected and rejected: the prototype is still at `Confirm your outcome`, whereas the executable app is on the analyzed Outcome Integrity Overview. The images are useful proof that the capture harness does not yet establish equivalent state, but they do not prove or disprove visual parity of the intended surface.
+## Responsive treatment
 
-The selected in-app browser also failed to attach fresh retry pages after its screenshot path had timed out. No accepted same-state comparison exists, so visual parity is not passed.
+- Desktop and tablet preserve the same band, gate, three-pillar decomposition, copy hierarchy, and controls.
+- Mobile preserves the same information and interaction order while stacking the pillar controls and moving navigation to the bottom.
+- The executable avoids the prototype's narrow-screen clipping. This is the required responsive adaptation, not a change to Slice 1 doctrine or behavior.
+- The host shells differ because the prototype is an R2 reference shell and the implementation inherits the authorized R1 application shell. Slice 1's applicable integrity structure and behavior match inside those shells.
 
-## Next run
+## Durable comparisons
 
-Capture matching desktop (1440×1000), tablet (768×1024), and mobile (390×844) screenshots for:
+- `screenshots/comparison-desktop.png`
+- `screenshots/comparison-tablet.png`
+- `screenshots/comparison-mobile.png`
+- Source images: `screenshots/prototype-*.png` and `screenshots/implementation-*.png`
 
-1. Confirm the inferred outcome in the prototype, then capture the compact integrity header against the application Overview.
-2. Expanded/breakdown read.
-3. Pillar drill or issue hand-off.
-4. Loading/error/last-good state.
-
-Inspect every saved image before using it as evidence, fix discrepancies, and repeat until the screenshot comparison passes.
+All three combined images were opened and inspected after the fixture-state correction. The automated specification also passes at all three viewports. Server-only last-good failure preservation is judged against the slice specification and active `GT-10`; its required manual retry exercise remains open in `MANUAL_REGRESSION.md`.

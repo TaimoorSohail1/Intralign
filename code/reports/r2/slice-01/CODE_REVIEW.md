@@ -1,31 +1,35 @@
 # R2 Slice 01 code review
 
-**Run:** 2026-08-11 23:34 PKT
+**Run:** 2026-08-12 00:03 PKT
+
 **Verdict:** actionable findings fixed; no unresolved code-level security finding.
 
 ## Security and privacy
 
-- Integrity is projected only after the existing authenticated application boundary has returned an actor-authorized project snapshot.
-- No new route bypasses workspace/project authorization; unauthorized/not-found behavior remains normalized to 404 at the API boundary.
+- Integrity is projected only after the existing authenticated project snapshot boundary authorizes the actor.
+- No new route bypasses workspace/project authorization; unauthorized/not-found behavior remains normalized to 404.
 - The integrity engine is pure domain code and imports no HTTP, SQL, Supabase, or token boundary.
-- No raw access, invitation, refresh, or service-role token is persisted or logged.
-- Derived checkpoint proposals require cited evidence before they may be marked registered; the model contract rejects fabricated registered checkpoints.
+- No access, invitation, refresh, or service-role token is persisted or logged.
+- Derived checkpoint proposals require cited evidence before registration; the model rejects fabricated registered checkpoints.
+- The parity specification uses local seeded fixtures and repository assets only; it adds no production endpoint or credential path.
 
 ## Data and failure behavior
 
-- The migration expands the existing issue-dimension check to the two authorized peer pillars only: Grounding and Adaptability.
-- Persisted snapshots deserialize the new integrity/checkpoint fields with backward-compatible defaults.
+- The migration expands issue dimensions only to the two authorized peer pillars: Grounding and Adaptability.
+- Persisted snapshots deserialize new integrity/checkpoint fields with backward-compatible defaults.
 - Direct acts and overlay reads do not mutate integrity; reanalysis remains the writer.
-- Failed governed nodes preserve the last-good snapshot under the active GT-10 test.
+- Failed governed nodes preserve the last-good snapshot under active `GT-10`.
 - Size-normalized fractions reject negative or numerator-greater-than-denominator inputs.
 
-## Fixed review findings
+## Fixed findings
 
-1. Grounding initially consumed only explicit assumption rows, contradicting the canonical provenance projection for evidence-cited snapshots. It now consumes the same evidence projection used by the UI and false-confidence detector.
-2. Integrity breakdown close behavior lost keyboard focus. The trigger is now retained and restored on Escape/close.
+1. Grounding consumed only explicit assumption rows instead of canonical provenance counts.
+2. Integrity breakdown Escape handling lost focus.
+3. The compact masthead omitted the prototype's all-pillar integrity shape; the three band chips now appear at widths where they fit and yield to the full card on smaller screens.
+4. The first comparison harness captured a mismatched prototype state. Its fixture now deterministically produces the executable Fragile/Adaptability-gated state before every capture.
 
 ## Complexity and consistency
 
-- The engine is isolated in `analysis/integrity.py`; API models only serialize the domain result.
-- Existing CAF details remain available as the Viability drill rather than being duplicated into the peer-pillar engine.
-- Canonical terminology is preserved: Outcome Integrity, Viability, Grounding, Adaptability, Issue, From OSLO, moment-in-time.
+- The engine remains isolated in `analysis/integrity.py`; API models serialize the domain result.
+- Existing CAF details remain the Viability drill rather than being duplicated into the peer-pillar engine.
+- Canonical terms are preserved: Outcome Integrity, Viability, Grounding, Adaptability, Issue, From OSLO, moment-in-time.

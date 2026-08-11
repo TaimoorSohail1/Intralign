@@ -5416,6 +5416,43 @@ button.attention-cell { cursor: pointer; }
   font-size: 8px;
 }
 
+.project-header-pillar-shape {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.project-header-pillar-shape > span {
+  min-width: 64px;
+  display: grid;
+  gap: 3px;
+  color: #9aa3ad;
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: left;
+  text-transform: none;
+}
+
+.project-header-pillar-shape > span.is-limiting {
+  color: #d6dbe0;
+}
+
+.project-header-pillar-shape i {
+  width: 100%;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #4a525c;
+}
+
+.project-header-pillar-shape i b {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: #91aaa5;
+}
+
 .confidence-ramp {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -7224,6 +7261,7 @@ button.attention-cell { cursor: pointer; }
       "brand switcher confidence collaboration plan notifications actions";
   }
   .project-context { display: none; }
+  .project-header-pillar-shape { display: none; }
   .report-editor-actions > button:nth-of-type(n + 6) { display: none; }
 }
 

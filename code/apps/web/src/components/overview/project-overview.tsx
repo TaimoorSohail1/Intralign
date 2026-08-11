@@ -689,6 +689,17 @@ export function ProjectOverview({
           <span className="project-header-confidence-dot" />
           <span>Outcome Integrity</span>
           <strong>{integrity.level}</strong>
+          <span aria-hidden="true" className="project-header-pillar-shape">
+            {integrity.decomposition.map((pillar) => (
+              <span
+                className={pillar.key === integrity.limiting_pillar ? "is-limiting" : ""}
+                key={pillar.key}
+              >
+                {pillar.key} {pillar.band}
+                <i><b style={{ width: `${pillar.basis * 100}%` }} /></i>
+              </span>
+            ))}
+          </span>
           <small>as of this analysis</small>
         </button>
         <div className="project-actions">
