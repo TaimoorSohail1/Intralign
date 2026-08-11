@@ -4,14 +4,25 @@ test.setTimeout(180_000);
 
 async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/login");
-  await page.getByLabel("Email").fill("admin@oslo.local");
-  await page.getByLabel("Password").fill("OsloLocalAdmin123!");
+  await page.getByLabel("Email").fill("e2e-owner@example.com");
+  await page.getByLabel("Password").fill("E2EOwner123!");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/admin\/invitations/);
+  await expect(page).toHaveURL(/\/(workspace|welcome)/);
 }
 
 test("Slice 2 survives refresh and publishes exactly seven artifacts", async ({ page }) => {
   await signIn(page);
+  const workspaceResponse = await page.request.get("/api/workspace");
+  expect(workspaceResponse.ok()).toBeTruthy();
+  const workspace = (await workspaceResponse.json()) as {
+    projects: Array<{ id: string; archived: boolean }>;
+  };
+  for (const project of workspace.projects.filter((candidate) => !candidate.archived)) {
+    const archiveResponse = await page.request.post(
+      `/api/workspace/projects/${project.id}/archive`,
+    );
+    expect(archiveResponse.ok()).toBeTruthy();
+  }
   await page.goto("/welcome");
   await page.getByRole("button", { name: /Start your first project/ }).click();
   await expect(page).toHaveURL(/\/intake\?project=/);

@@ -4,10 +4,10 @@ test.setTimeout(120_000);
 
 async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/login");
-  await page.getByLabel("Email").fill("admin@oslo.local");
-  await page.getByLabel("Password").fill("OsloLocalAdmin123!");
+  await page.getByLabel("Email").fill("e2e-owner@example.com");
+  await page.getByLabel("Password").fill("E2EOwner123!");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL(/\/admin\/invitations/, { timeout: 20_000 });
+  await page.waitForURL(/\/(workspace|welcome)/, { timeout: 20_000 });
 }
 
 test("Slice 8 provides workspace home, switching, awareness, settings, and safe capacity choices", async ({
@@ -89,5 +89,10 @@ test("Slice 8 provides workspace home, switching, awareness, settings, and safe 
     await page.goto("/workspace");
   }
   await page.getByRole("button", { name: "New project" }).click();
-  await expect(page).toHaveURL(/\/intake\?project=/, { timeout: 30_000 });
+  const plans = page.getByRole("dialog", { name: "Your plan" });
+  await expect(plans).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText(
+    "The Basic plan includes 3 active projects. Archive one or compare plans.",
+  );
+  await expect(page).toHaveURL(/\/workspace$/);
 });

@@ -21,10 +21,10 @@ test.afterEach(async ({ page }) => {
 
 async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/login");
-  await page.getByLabel("Email").fill("admin@oslo.local");
-  await page.getByLabel("Password").fill("OsloLocalAdmin123!");
+  await page.getByLabel("Email").fill("e2e-owner@example.com");
+  await page.getByLabel("Password").fill("E2EOwner123!");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL(/\/admin\/invitations/, { timeout: 20_000 });
+  await page.waitForURL(/\/(workspace|welcome)/, { timeout: 20_000 });
 }
 
 test("Slice 10 explains equal judgment and governs workspace capacity without deleting data", async ({
@@ -64,6 +64,21 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
   await expect(analyzedProjectLink).toBeVisible();
   const projectHref = await analyzedProjectLink.getAttribute("href");
   expect(projectHref).toMatch(/^\/projects\/.+\/overview$/);
+  const analyzedProjectId = projectHref!.split("/")[2];
+  const workspaceResponse = await page.request.get("/api/workspace");
+  expect(workspaceResponse.ok()).toBeTruthy();
+  const workspace = (await workspaceResponse.json()) as {
+    projects: Array<{ id: string; archived: boolean }>;
+  };
+  for (const project of workspace.projects.filter(
+    (candidate) => !candidate.archived && candidate.id !== analyzedProjectId,
+  )) {
+    const archiveResponse = await page.request.post(
+      `/api/workspace/projects/${project.id}/archive`,
+    );
+    expect(archiveResponse.ok()).toBeTruthy();
+  }
+  await page.reload();
 
   await page.getByRole("button", { name: /Compare plans/ }).click();
   let plans = page.getByRole("dialog", { name: "Your plan" });
@@ -79,7 +94,7 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
   await page.getByRole("button", { name: "New project" }).click();
   await expect(page).toHaveURL(/\/intake\?project=/, { timeout: 30_000 });
   await page.goto("/workspace");
-  await expect(page.getByText("Unlimited active projects")).toBeVisible();
+  await expect(page.getByText("3 active projects", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /Compare plans/ }).click();
 
   plans = page.getByRole("dialog", { name: "Your plan" });

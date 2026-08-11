@@ -4,14 +4,27 @@ test.setTimeout(300_000);
 
 async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/login");
-  await page.getByLabel("Email").fill("admin@oslo.local");
-  await page.getByLabel("Password").fill("OsloLocalAdmin123!");
+  await page.getByLabel("Email").fill("e2e-owner@example.com");
+  await page.getByLabel("Password").fill("E2EOwner123!");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL(/\/admin\/invitations/, { timeout: 20_000 });
+  await page.waitForURL(/\/(workspace|welcome)/, { timeout: 20_000 });
 }
 
 async function createAnalyzedProject(page: import("@playwright/test").Page) {
   await signIn(page);
+  await page.goto("/workspace");
+  const analyzedProject = page
+    .locator("article.workspace-project-card")
+    .filter({ hasText: "7 / 7" })
+    .first();
+  if (await analyzedProject.count()) {
+    await analyzedProject.getByRole("link", { name: /Open project/ }).click();
+    await expect(page).toHaveURL(/\/projects\/.+\/overview/);
+    await expect(page.getByText("Project summary", { exact: true })).toBeVisible({
+      timeout: 120_000,
+    });
+    return;
+  }
   await page.goto("/welcome");
   await page.getByRole("button", { name: /Start your first project/ }).click();
   await page.getByRole("button", { name: /sample project/i }).click();
