@@ -2,13 +2,13 @@
 
 **Purpose:** authoritative operational resumption ledger for the implementation status of the ten signed-off R2 delta slices.
 
-**Status snapshot:** 2026-08-11
+**Status snapshot:** 2026-08-12
 
 **Audited branch:** `codex/release-2-build`
 
-**Audited commit:** `8b8f702`
+**Audited commit:** `2958c4a`
 
-**Working tree at audit:** implementation commit clean; this ledger update and one untracked, unaccepted Slice-1 E2E candidate remain outside the implementation commit.
+**Working tree at audit:** Slice 1 implementation, parity follow-up, automated evidence, and durable reports are committed; only this ledger update remains uncommitted.
 
 **Current owner-authorized work scope:** **Slices 1–3 only**
 
@@ -32,7 +32,7 @@
 - **6 guards are active; 54 are pending.** Slice 1 activates `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, and `GT-20`; the remaining slices are not functionally verified.
 - Slice 9's FE↔BE contract currently contains **58 mapped dynamic surfaces**.
 - All **6/6 Phase-A prototype corrections** checked by the gate are present.
-- Slice 1 now has an R2 implementation at `8b8f702`; its automated functional gates pass, but manual timeout/retry verification and same-state prototype parity remain open. Inherited R1 capabilities elsewhere remain **reuse candidates, not R2 completion evidence**.
+- Slice 1 has its core R2 implementation at `8b8f702` and same-state parity follow-up at `2958c4a`. Automated functional and prototype-parity gates pass. Mandatory manual timeout/retry/last-good verification plus remaining manual accessibility checks remain open, so Slice 1 stays **IN PROGRESS**. Inherited R1 capabilities elsewhere remain **reuse candidates, not R2 completion evidence**.
 
 ### Evidence commands
 
@@ -87,7 +87,7 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 
 | Slice | Current delivery status | UI/UX review | Manual regression | Functional testing | Identical to prototype | Test cases | Next required action / dependency |
 |---|---|---|---|---|---|---|---|
-| **1 · Outcome-Integrity Engine** | **IN PROGRESS.** Implementation commit `8b8f702` delivers the normalized three-pillar engine, weakest-gate/foundation-first composition, false-confidence/checkpoint issues, persisted/API projection, Overview and breakdown UI, and issue ordering. Completion is withheld because two required verification gates remain open. | **PARTIAL · BLOCKED.** Desktop/tablet/mobile implementation captures exist and the live app's hierarchy, responsive geometry, copy, controls, and dialog behavior were inspected. The combined images were rejected because the prototype is pre-confirmation while the app is post-analysis; keyboard traversal, reduced motion, 200% zoom, and same-state visual comparison remain open. Evidence: `../code/reports/r2/slice-01/UI_UX_AUDIT.md`. | **PARTIAL PASS.** Real seeded-owner intake→analysis→Overview, breakdown, console, and responsive checks passed. A Grounding projection defect was found and fixed. Manual forced timeout/retry/last-good and a fresh screenshot capture could not be completed after the in-app browser stopped attaching pages. Evidence: `../code/reports/r2/slice-01/MANUAL_REGRESSION.md`. | **PASS at `8b8f702`.** `pnpm test:api`: 294 passed; `pnpm test:web -- --run --reporter=dot`: 23 files/124 passed; guardrail infrastructure: 4 passed; active selectors: 9 passed; lint/build/migration gates pass. Six Slice-1 guards are active. Evidence: `../code/reports/r2/slice-01/TEST_RESULTS.md`. | **FAILED EVIDENCE GATE.** Six source captures and three combined comparisons exist, but the compared workflow states differ. No equivalence or waiver is inferred. Evidence: `../code/reports/r2/slice-01/PROTOTYPE_PARITY.md` and `../code/reports/r2/slice-01/screenshots/`. | **Automated production coverage passing:** AC-1…AC-10 mapped through `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, `GT-20`; 6/6 guards active. **Completion test case remains open:** accepted same-state visual/E2E and manual failure/retry verification. | Resume Slice 1 only. Advance the prototype past outcome confirmation, recapture matching desktop/tablet/mobile states in the in-app browser, complete manual timeout/retry/last-good checks, fix any parity findings, and rerun gates. Do not acquire Slice 3 yet. |
+| **1 · Outcome-Integrity Engine** | **IN PROGRESS.** Core implementation `8b8f702` delivers the normalized three-pillar engine, weakest-gate/foundation-first composition, false-confidence/checkpoint issues, persisted/API projection, Overview/breakdown UI, and issue ordering. Follow-up `2958c4a` aligns the compact masthead and adds same-state desktop/tablet/mobile evidence. Completion is withheld for the remaining manual gates. | **PARTIAL PASS.** Same-state visual/responsive parity passes at desktop, tablet, and mobile; dialog focus/Escape restoration is automated. Complete manual keyboard traversal, screen-reader announcement, reduced-motion observation, and 200% zoom remain open. Evidence: `../code/reports/r2/slice-01/UI_UX_AUDIT.md`. | **PARTIAL PASS.** Real seeded-owner intake→analysis→Overview, breakdown, console, and responsive checks passed. A Grounding projection defect was found and fixed. Manual forced timeout/retry/last-good could not be completed after the chosen in-app browser's action channel timed out; no other browser was substituted. Evidence: `../code/reports/r2/slice-01/MANUAL_REGRESSION.md`. | **PASS at `2958c4a`.** `pnpm test:api`: 294 passed; `pnpm test:web`: 23 files/124 passed; Slice-1-only Playwright: 6 passed; guardrail infrastructure: 4 passed; active selectors: 9 passed; lint/build/migration/diff gates pass. Six Slice-1 guards are active. Evidence: `../code/reports/r2/slice-01/TEST_RESULTS.md`. | **PASS for applicable Slice 1 state and structure.** The prototype fixture and executable are Fragile, limited by Adaptability, with Viability/Grounding Sound; combined desktop/tablet/mobile images were inspected. The executable's narrow-screen reflow avoids reference clipping without changing doctrine. Evidence: `../code/reports/r2/slice-01/PROTOTYPE_PARITY.md` and `../code/reports/r2/slice-01/screenshots/`. | **Automated production coverage passing:** AC-1…AC-10 mapped through `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, `GT-20`; 6/6 guards active and 6/6 Slice-1 E2E viewport tests pass. **Completion remains open:** manual timeout/retry/last-good plus remaining manual accessibility checks. | Resume Slice 1 only. Complete the in-app-browser timeout/stale/retry/last-good journey and remaining manual keyboard/screen-reader/reduced-motion/200%-zoom checks, fix any findings, then rerun gates. Do not acquire Slice 3 yet. |
 | **2 · Issue Lifecycle & Grounding Acts** | **SIGNED OFF · WAITING ON SLICES 1 + 3.** No R2 lifecycle/attestation implementation evidence. DL-211 proposal-resolution scope is also unimplemented in production. | **REFERENCE APPROVED; APP NOT REVIEWED.** No executable-app review of the two “Acted on · not yet closed” forks, itemized findings, or cross-surface resolution sync. | **NOT RUN.** | **NOT RUN.** All lifecycle and DL-211 server twins are pending. | **NOT VERIFIED.** | **Designed:** AC-1…AC-11 plus DL-211 addendum; principal guards `GT-09…12`, `GT-25…27`, `GT-33`, `GT-51…56`. **Active/passing production tests: 0.** | Complete the Slice 1 issue model and Slice 3 reanalysis path; resolve the Slice 2 owner touchpoints before final lifecycle implementation. |
 | **3 · Reanalysis Engine + Freeze/Unlock** | **SIGNED OFF · READY · NOT STARTED.** R1 recompute machinery is a reuse candidate, but the R2 batching, Fast/Deep contract, STALE state, and latch are not R2-verified. | **REFERENCE APPROVED; APP NOT REVIEWED.** No review of executable stale, pending, freeze/unlock, progress, failure, or “your read moved” states. | **NOT RUN.** | **NOT RUN.** No active R2 tests for batching, latency, latching, or presentation-only freeze. | **NOT VERIFIED.** | **Designed:** AC-1…AC-10; principal guards `GT-04`, `GT-09`, `GT-10`, `GT-18`, `GT-23`, `GT-24`, plus shared async guards `GT-A1…A3`. **Active/passing production tests: 0.** | Begin with Slice 1 in Phase A. Owner inputs O-3/O-4 must be resolved for Fast-vs-Deep batch behavior and `confirmCount` semantics. |
 | **4 · Freemium Entitlement & Commitment Gate** | **SIGNED OFF · OWNER-BLOCKED.** Outside the current Slices 1–3 work window. Existing subscription/tiering code is not evidence of the R2 Outcome-unit or capacity-only commitment gate. | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** No active R2 entitlement, real-checkout, never-metered, archive, or intent tests. | **BLOCKED · NOT VERIFIED.** | **Designed:** AC-1…AC-10; principal guards `GT-01`, `GT-02`, `GT-03`, `GT-30`. **Active/passing production tests: 0.** | **Do not start.** Owner must explicitly reopen Slice 4. Its dependency on Slice 5 and owner choice O-6 remain recorded for later. |
@@ -109,7 +109,7 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 | 2 | Slice 2 | **ACTIVE SCOPE.** Begins after the Slice 1 issue object and Slice 3 reanalysis-only writer are available. |
 | 3 | Slices 4–10 | **OWNER-BLOCKED.** Do not start implementation, review, testing, or parity work until the owner explicitly reopens these slices. |
 
-**Immediate next work:** finish Slice 1's two open verification gates against implementation commit `8b8f702`. Do not acquire Slice 3 while Slice 1 remains `IN PROGRESS`. Slice 2 follows Slices 1 and 3. Do not advance Slices 4–10.
+**Immediate next work:** finish Slice 1's remaining manual failure/recovery and accessibility checks against `2958c4a`. Do not acquire Slice 3 while Slice 1 remains `IN PROGRESS`. Slice 2 follows Slices 1 and 3. Do not advance Slices 4–10.
 
 ---
 
@@ -156,7 +156,18 @@ Reviewer / date:
 - R2 import commit: `09befa5`
 - Phase 0 gate commit: `9efa6ae`
 - Slice 1 implementation commit: `8b8f702`
+- Slice 1 masthead/parity follow-up: `2958c4a`
 - Slice 1 durable evidence: `../code/reports/r2/slice-01/`
+
+---
+
+## 7. Active Slice 1 run plan — 2026-08-12
+
+1. Review the preserved Slice-1-only UI, E2E, report, and screenshot candidates against AC-1…AC-10 and the six active GT guards; keep only behavior supported by canon and fresh evidence.
+2. Complete the remaining manual timeout → stale/last-good → retry journey in the real application, plus full keyboard traversal, reduced-motion, 200% zoom, responsive, permissions, and adjacent-regression checks in the in-app browser.
+3. Capture and inspect current-run desktop, tablet, and mobile implementation and matching-state prototype screenshots; fix any Slice-1 parity discrepancy and repeat the comparison.
+4. Rerun the Slice-1 automated, guardrail, lint, build, migration, and scoped end-to-end gates; perform security/privacy/authorization/tenant-boundary/error-path Code Review.
+5. Update durable evidence and this ledger. Mark Slice 1 COMPLETE only if every required gate passes, commit the verified implementation, then commit the final ledger evidence separately.
 
 ---
 
