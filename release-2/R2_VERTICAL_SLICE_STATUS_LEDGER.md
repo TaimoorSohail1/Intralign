@@ -6,9 +6,9 @@
 
 **Audited branch:** `codex/release-2-build`
 
-**Audited commit:** `726186a`
+**Audited commit:** `d609ff5`
 
-**Working tree at audit:** current-run Slice-1 manual-regression/UI-audit and ledger updates remain uncommitted. No product change and no non-Slice-1 change is present.
+**Working tree at audit:** clean after the current-run Slice-1 manual-regression/UI-audit evidence commit. No product change and no non-Slice-1 change is present.
 
 **Current owner-authorized work scope:** **Slices 1–3 only**
 
@@ -158,6 +158,7 @@ Reviewer / date:
 - Slice 1 implementation commit: `8b8f702`
 - Slice 1 masthead/parity follow-up: `2958c4a`
 - Slice 1 verification-evidence ledger commit: `2388702`
+- Slice 1 current browser-blocker evidence commit: `d609ff5`
 - Slice 1 durable evidence: `../code/reports/r2/slice-01/`
 
 ---
