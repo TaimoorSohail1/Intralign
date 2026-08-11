@@ -40,6 +40,7 @@ import { buildProjectProvenance } from "@/lib/project-provenance";
 
 const dimensions = ["clarity", "alignment", "feasibility"] as const;
 const confidenceBands = ["Very Low", "Low", "Moderate", "High", "Very High"] as const;
+const integrityBands = ["Fragile", "Weak", "Developing", "Solid", "Sound"] as const;
 const artifactOrder = [
   "intent",
   "context",
@@ -59,11 +60,11 @@ const initialAdvisorQuestions = [
 const orientationSteps = [
   {
     title: "Your strategic read",
-    body: "Outcome Confidence is how mature OSLO’s understanding of your plan is. It sits on a five-step scale, always qualified by how well grounded the read is.",
+    body: "Outcome Integrity is the maturity of the plan OSLO can currently see. It is the weakest of Viability, Grounding, and Adaptability — never a health score or prediction.",
   },
   {
     title: "Your read, always visible",
-    body: "Outcome Confidence and how well grounded it is stay in the top bar. Click it for the Clarity · Alignment · Feasibility breakdown and the reliability basis.",
+    body: "Outcome Integrity and its limiting pillar stay in the top bar. Click it for the three-pillar decomposition and the evidence-qualified basis.",
   },
   {
     title: "Where to start",
@@ -87,18 +88,6 @@ const severityRank: Record<string, number> = {
   Moderate: 2,
   Warning: 1,
 };
-const dimensionStrength: Record<string, number> = {
-  High: 76,
-  Moderate: 55,
-  Low: 38,
-  "Very Low": 28,
-};
-const dimensionDescriptions = {
-  clarity: "How complete, explicit, and unambiguous the plan evidence is.",
-  alignment: "Whether the objectives, scope, dependencies, and decisions agree.",
-  feasibility: "Whether the schedule, resources, and dependencies support delivery.",
-} as const;
-
 type Issue = OverviewSnapshot["assessment"]["issues"][number];
 type ArtifactView = (typeof artifactOrder)[number];
 type ProjectView =
@@ -126,7 +115,17 @@ interface AttentionScope {
 }
 
 function issueSort(left: Issue, right: Issue) {
+  if (left.exposure_rank !== right.exposure_rank) {
+    return (right.exposure_rank ?? 0) - (left.exposure_rank ?? 0);
+  }
   return (severityRank[right.severity] ?? 0) - (severityRank[left.severity] ?? 0);
+}
+
+function issuePillar(issue: Issue) {
+  if (issue.pillar) return issue.pillar;
+  if (issue.id.startsWith("ISS-FC-")) return "Grounding";
+  if (issue.id.startsWith("ISS-CP-")) return "Adaptability";
+  return "Viability";
 }
 
 function artifactLabel(value: string) {
@@ -194,6 +193,7 @@ export function ProjectOverview({
   const advisorInFlight = useRef(false);
   const advisorStateBeforeIssue = useRef(true);
   const issueTrigger = useRef<HTMLElement | null>(null);
+  const integrityTrigger = useRef<HTMLButtonElement | null>(null);
   const mainScrollRegion = useRef<HTMLElement | null>(null);
   const messageId = useRef(0);
   const clarificationIdempotency = useRef<{
@@ -221,22 +221,8 @@ export function ProjectOverview({
   const clarificationCount = openIssues.filter((issue) => Boolean(issue.clarification)).length;
   const limitingDimension = snapshot.assessment.limiting_dimension;
   const provenance = useMemo(() => buildProjectProvenance(snapshot), [snapshot]);
-  const confidenceBandIndex = Math.max(
-    0,
-    confidenceBands.indexOf(
-      snapshot.assessment.confidence_band as (typeof confidenceBands)[number],
-    ),
-  );
-  const groundingQualifier =
-    provenance.totalClaims === 0
-      ? "forming"
-      : provenance.groundedClaims / provenance.totalClaims >= 0.75
-        ? "well grounded"
-        : provenance.groundedClaims / provenance.totalClaims >= 0.5
-          ? "largely grounded"
-          : provenance.groundedClaims / provenance.totalClaims >= 0.25
-            ? "partly grounded"
-            : "thinly grounded";
+  const integrity = snapshot.assessment.integrity;
+  const integrityBandIndex = Math.max(0, integrityBands.indexOf(integrity.level));
   const hasFirstValue = snapshot.artifacts.length > 0;
   const overviewScrollKey = `oslo:overview-scroll:${snapshot.project_id}`;
 
@@ -454,6 +440,10 @@ export function ProjectOverview({
     setSelectedIssue(null);
     setAdvisorOpen(advisorStateBeforeIssue.current);
     window.setTimeout(() => issueTrigger.current?.focus(), 0);
+  };
+  const closeIntegrityBreakdown = () => {
+    setConfidenceBreakdownOpen(false);
+    integrityTrigger.current?.focus();
   };
   const updateIssueLifecycle = (
     issueId: string,
@@ -684,11 +674,12 @@ export function ProjectOverview({
           </em>
         </div>
         <button
-          aria-label={`Outcome Confidence ${snapshot.assessment.confidence_band}, ${groundingQualifier}`}
+          aria-label={`Outcome Integrity ${integrity.level}, limited by ${integrity.limiting_pillar}`}
           aria-expanded={confidenceBreakdownOpen}
           className={`project-header-confidence ${
             orientation && activeTourStep === 1 ? "is-tour-target" : ""
           }`}
+          ref={integrityTrigger}
           onClick={() => {
             setSearchOpen(false);
             setConfidenceBreakdownOpen((current) => !current);
@@ -696,9 +687,9 @@ export function ProjectOverview({
           type="button"
         >
           <span className="project-header-confidence-dot" />
-          <span>Outcome Confidence</span>
-          <strong>{snapshot.assessment.confidence_band}</strong>
-          <small>{groundingQualifier}</small>
+          <span>Outcome Integrity</span>
+          <strong>{integrity.level}</strong>
+          <small>as of this analysis</small>
         </button>
         <div className="project-actions">
           <button
@@ -727,10 +718,9 @@ export function ProjectOverview({
       </header>
 
       {confidenceBreakdownOpen ? (
-        <ConfidenceBreakdown
+        <IntegrityBreakdown
           assessment={snapshot.assessment}
-          groundingQualifier={groundingQualifier}
-          onClose={() => setConfidenceBreakdownOpen(false)}
+          onClose={closeIntegrityBreakdown}
         />
       ) : null}
 
@@ -908,21 +898,21 @@ export function ProjectOverview({
         >
           {initialView === "overview" ? (
             <div className={`overview-stack ${hasFirstValue ? "has-first-value" : ""}`}>
-              <section className="confidence-read">
+              <section className="confidence-read integrity-read">
                 <div className="confidence-topline">
-                  <p className="eyebrow">Outcome confidence</p>
+                  <p className="eyebrow">Outcome integrity</p>
                   <span className={`snapshot-badge ${isProvisional ? "" : "is-current"}`}>
                     {snapshot.state.replace("_", "-")}
                   </span>
                 </div>
                 <div
-                  aria-label={`Outcome Confidence ${snapshot.assessment.confidence_band}, ${groundingQualifier}`}
+                  aria-label={`Outcome Integrity ${integrity.level}, limited by ${integrity.limiting_pillar}`}
                   className="confidence-ramp"
                   role="img"
                 >
-                  {confidenceBands.map((band, index) => (
+                  {integrityBands.map((band, index) => (
                     <span
-                      className={index === confidenceBandIndex ? "is-current" : ""}
+                      className={index === integrityBandIndex ? "is-current" : ""}
                       key={band}
                     >
                       <i />
@@ -932,20 +922,16 @@ export function ProjectOverview({
                 </div>
                 <div className="confidence-prototype-hero">
                   <div>
-                    <strong>{snapshot.assessment.confidence_band}</strong>
-                    <p>
-                      on the read is <b>{groundingQualifier}</b>
-                    </p>
+                    <strong>{integrity.level}</strong>
+                    <p>limited by <b>{integrity.limiting_pillar}</b></p>
                   </div>
                   <div className="confidence-limiter">
-                    <p>
-                      <strong>{artifactLabel(limitingDimension)}</strong> — the lowest.
-                      Confirm it to lift the read.
-                    </p>
+                    <p>Moment-in-time maturity read</p>
+                    <strong className="integrity-tracking">live tracking begins at execution</strong>
                     <button
                       onClick={() => {
                         setAdvisorOpen(true);
-                        void askQuestion("Explain the current Outcome Confidence");
+                        void askQuestion("Explain the current Outcome Integrity");
                       }}
                       type="button"
                     >
@@ -962,82 +948,46 @@ export function ProjectOverview({
                   </div>
                 ) : null}
                 <div className="confidence-divider" />
-                <div className="dimension-help">
-                  <p>What&apos;s driving it — hover or focus a dimension for detail</p>
-                  <button
-                    aria-expanded={confidenceDetailsOpen}
-                    aria-label="How confidence is calculated"
-                    onClick={() => setConfidenceDetailsOpen((current) => !current)}
-                    type="button"
-                  >
-                    <Info aria-hidden="true" size={13} />
-                    How calculated
-                  </button>
-                </div>
-                {confidenceDetailsOpen ? (
-                  <section className="confidence-method" aria-label="Confidence calculation">
-                    <p>{snapshot.assessment.confidence_explanation}</p>
-                    <dl>
-                      <div>
-                        <dt>Coverage</dt>
-                        <dd>{snapshot.assessment.reliability_basis.coverage}</dd>
-                      </div>
-                      <div>
-                        <dt>Evidence</dt>
-                        <dd>{snapshot.assessment.reliability_basis.evidence}</dd>
-                      </div>
-                      <div>
-                        <dt>Assessability</dt>
-                        <dd>{snapshot.assessment.reliability_basis.assessability}</dd>
-                      </div>
-                    </dl>
-                  </section>
-                ) : null}
-                <div className="dimension-bars">
-                  {dimensions.map((name) => {
-                    const value = snapshot.assessment[name];
-                    const limiting = name === limitingDimension;
-                    const valueIndex = Math.max(
-                      0,
-                      confidenceBands.indexOf(
-                        value as (typeof confidenceBands)[number],
-                      ),
-                    );
-                    return (
-                      <div className={limiting ? "is-limiting" : ""} key={name}>
-                        <span>{artifactLabel(name)}</span>
-                        <div
-                          aria-label={`${artifactLabel(name)}: ${value}`}
-                          className="dimension-ramp"
-                          role="img"
-                          tabIndex={0}
-                        >
-                          {confidenceBands.map((band, index) => (
-                            <i
-                              className={index <= valueIndex ? "is-filled" : ""}
-                              key={band}
-                            />
-                          ))}
-                          <span className="dimension-tooltip" role="tooltip">
-                            <strong>{artifactLabel(name)} · {value}</strong>
-                            {dimensionDescriptions[name]}
-                          </span>
-                        </div>
-                        <strong>{value}</strong>
-                      </div>
-                    );
-                  })}
+                <div className="integrity-pillars">
+                  {integrity.decomposition.map((pillar) => (
+                    <button
+                      aria-label={`${pillar.key} ${pillar.band}`}
+                      className={pillar.key === integrity.limiting_pillar ? "is-limiting" : ""}
+                      key={pillar.key}
+                      onClick={(event) => {
+                        const issue = openIssues.find(
+                          (candidate) => issuePillar(candidate) === pillar.key,
+                        );
+                        if (issue) {
+                          openIssue(issue, event.currentTarget);
+                          return;
+                        }
+                        router.push(
+                          `/projects/${snapshot.project_id}/issues?pillar=${pillar.key.toLowerCase()}`,
+                        );
+                      }}
+                      type="button"
+                    >
+                      <span>
+                        <strong>{pillar.key}</strong>
+                        <b>{pillar.band}</b>
+                      </span>
+                      <i aria-hidden="true"><b style={{ width: `${pillar.basis * 100}%` }} /></i>
+                      <small>{pillar.why[0]}</small>
+                      <CaretRight aria-hidden="true" size={13} />
+                    </button>
+                  ))}
                 </div>
                 <div className="confidence-footer">
-                  <span>{artifactLabel(snapshot.assessment.confidence_direction)}</span>
+                  <span>Weakest pillar gates the read</span>
                   <div>
                     <button
                       aria-expanded={confidenceDetailsOpen}
-                      aria-label="Why this confidence read"
+                      aria-label="Show Viability detail"
                       onClick={() => setConfidenceDetailsOpen((current) => !current)}
                       type="button"
                     >
-                      Why <CaretDown aria-hidden="true" size={11} />
+                      Viability detail <CaretDown aria-hidden="true" size={11} />
                     </button>
                     <Link
                       aria-label="Timeline"
@@ -1051,6 +1001,36 @@ export function ProjectOverview({
                     </Link>
                   </div>
                 </div>
+                {confidenceDetailsOpen ? (
+                  <section className="confidence-method" aria-label="Viability detail">
+                    <p>{snapshot.assessment.confidence_explanation}</p>
+                    <div className="dimension-bars">
+                      {dimensions.map((name) => {
+                        const value = snapshot.assessment[name];
+                        const limiting = name === limitingDimension;
+                        const valueIndex = Math.max(
+                          0,
+                          confidenceBands.indexOf(value as (typeof confidenceBands)[number]),
+                        );
+                        return (
+                          <div className={limiting ? "is-limiting" : ""} key={name}>
+                            <span>{artifactLabel(name)}</span>
+                            <div
+                              aria-label={`${artifactLabel(name)}: ${value}`}
+                              className="dimension-ramp"
+                              role="img"
+                            >
+                              {confidenceBands.map((band, index) => (
+                                <i className={index <= valueIndex ? "is-filled" : ""} key={band} />
+                              ))}
+                            </div>
+                            <strong>{value}</strong>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ) : null}
               </section>
 
               <section className={`start-here ${
@@ -1399,13 +1379,11 @@ export function ProjectOverview({
   );
 }
 
-function ConfidenceBreakdown({
+function IntegrityBreakdown({
   assessment,
-  groundingQualifier,
   onClose,
 }: {
   assessment: OverviewSnapshot["assessment"];
-  groundingQualifier: string;
   onClose: () => void;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -1416,45 +1394,40 @@ function ConfidenceBreakdown({
 
   return (
     <section
-      aria-label="Confidence breakdown"
+      aria-label="Integrity breakdown"
       className="confidence-breakdown"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") onClose();
+      }}
       role="dialog"
     >
       <div className="confidence-breakdown-heading">
         <div>
-          <span>Outcome Confidence</span>
-          <strong>{assessment.confidence_band}</strong>
-          <em>{groundingQualifier}</em>
+          <span>Outcome Integrity</span>
+          <strong>{assessment.integrity.level}</strong>
+          <em>limited by {assessment.integrity.limiting_pillar}</em>
         </div>
-        <button aria-label="Close confidence breakdown" onClick={onClose} ref={closeButton} type="button">
+        <button aria-label="Close integrity breakdown" onClick={onClose} ref={closeButton} type="button">
           <X aria-hidden="true" size={16} />
         </button>
       </div>
       <p>
-        Understanding maturity — not project health, readiness, or probability.
-        The grounding qualifier shows how much of the read rests directly on evidence.
+        Moment-in-time maturity — not project health, readiness, or probability.
+        Live tracking begins at execution.
       </p>
       <dl className="confidence-breakdown-dimensions">
-        {dimensions.map((name) => (
-          <div key={name}>
-            <dt>{artifactLabel(name)}</dt>
+        {assessment.integrity.decomposition.map((pillar) => (
+          <div key={pillar.key}>
+            <dt>{pillar.key}</dt>
             <dd>
-              <i><b style={{ width: `${dimensionStrength[assessment[name]] ?? 50}%` }} /></i>
-              <strong>{assessment[name]}</strong>
+              <i><b style={{ width: `${pillar.basis * 100}%` }} /></i>
+              <strong>{pillar.band}</strong>
             </dd>
+            <small>{pillar.why.join(" ")}</small>
           </div>
         ))}
       </dl>
-      <h3>Reliability basis</h3>
-      <dl className="confidence-breakdown-reliability">
-        {(["coverage", "evidence", "assessability"] as const).map((name) => (
-          <div key={name}>
-            <dt>{artifactLabel(name)}</dt>
-            <dd>{assessment.reliability_basis[name]}</dd>
-          </div>
-        ))}
-      </dl>
-      <small>{assessment.confidence_explanation}</small>
+      <small>The lowest pillar sets the overall integrity level.</small>
     </section>
   );
 }

@@ -24,6 +24,7 @@ from oslo_api.analysis.advisor import (
 )
 from oslo_api.analysis.documents import MAX_DOCUMENT_BYTES, DocumentRejected
 from oslo_api.analysis.provenance import build_project_provenance
+from oslo_api.analysis.understanding import with_integrity
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
 from oslo_api.slice_two import (
     SliceTwoAnalysisInProgress,
@@ -109,12 +110,33 @@ class IssueResponse(BaseModel):
     clarification: str | None
     status: str
     selected_resolution: str | None = None
+    pillar: str
+    dimensions: list[str]
+    finding_type: str
+    section: str
+    recommendation_from_oslo: bool
+    exposure_rank: float
 
 
 class ReliabilityBasisResponse(BaseModel):
     coverage: str
     evidence: str
     assessability: str
+
+
+class IntegrityPillarResponse(BaseModel):
+    key: str
+    band: str
+    basis: float
+    why: list[str]
+
+
+class IntegrityResponse(BaseModel):
+    level: str
+    limiting_pillar: str
+    decomposition: list[IntegrityPillarResponse]
+    posture: Literal["moment-in-time"]
+    tracking: Literal["pending-execution"]
 
 
 class AssessmentResponse(BaseModel):
@@ -133,6 +155,7 @@ class AssessmentResponse(BaseModel):
     confidence_explanation: str
     resolved_issue_count: int
     confirmed_dependency_count: int
+    integrity: IntegrityResponse
 
 
 class ArtifactProvenanceResponse(BaseModel):
@@ -423,6 +446,9 @@ def _overview_response(
     orientation_seen: bool = False,
     issue_actions: list[dict] | None = None,
 ) -> OverviewResponse:
+    assessment = with_integrity(snapshot.assessment, snapshot.artifacts)
+    if assessment.integrity is None:  # pragma: no cover - constructor invariant
+        raise RuntimeError("R2_INTEGRITY_PROJECTION_MISSING")
     latest_actions = {
         action["issue_id"]: action
         for action in (issue_actions or [])
@@ -495,24 +521,39 @@ def _overview_response(
             for artifact in snapshot.artifacts
         ],
         assessment=AssessmentResponse(
-            confidence_index=snapshot.assessment.confidence_index,
-            confidence_band=snapshot.assessment.confidence_band,
-            reliability=snapshot.assessment.reliability,
-            clarity=snapshot.assessment.clarity,
-            alignment=snapshot.assessment.alignment,
-            feasibility=snapshot.assessment.feasibility,
-            understanding_stage=snapshot.assessment.understanding_stage,
+            confidence_index=assessment.confidence_index,
+            confidence_band=assessment.confidence_band,
+            reliability=assessment.reliability,
+            clarity=assessment.clarity,
+            alignment=assessment.alignment,
+            feasibility=assessment.feasibility,
+            understanding_stage=assessment.understanding_stage,
             reliability_basis=ReliabilityBasisResponse(
-                coverage=snapshot.assessment.reliability_basis.coverage,
-                evidence=snapshot.assessment.reliability_basis.evidence,
-                assessability=snapshot.assessment.reliability_basis.assessability,
+                coverage=assessment.reliability_basis.coverage,
+                evidence=assessment.reliability_basis.evidence,
+                assessability=assessment.reliability_basis.assessability,
             ),
-            confidence_direction=snapshot.assessment.confidence_direction,
-            limiting_dimension=snapshot.assessment.limiting_dimension,
-            false_confidence=snapshot.assessment.false_confidence,
-            confidence_explanation=snapshot.assessment.confidence_explanation,
-            resolved_issue_count=snapshot.assessment.resolved_issue_count,
-            confirmed_dependency_count=snapshot.assessment.confirmed_dependency_count,
+            confidence_direction=assessment.confidence_direction,
+            limiting_dimension=assessment.limiting_dimension,
+            false_confidence=assessment.false_confidence,
+            confidence_explanation=assessment.confidence_explanation,
+            resolved_issue_count=assessment.resolved_issue_count,
+            confirmed_dependency_count=assessment.confirmed_dependency_count,
+            integrity=IntegrityResponse(
+                level=assessment.integrity.level,
+                limiting_pillar=assessment.integrity.limiting_pillar,
+                decomposition=[
+                    IntegrityPillarResponse(
+                        key=pillar.key,
+                        band=pillar.band,
+                        basis=pillar.basis,
+                        why=list(pillar.why),
+                    )
+                    for pillar in assessment.integrity.decomposition
+                ],
+                posture=assessment.integrity.posture,  # type: ignore[arg-type]
+                tracking=assessment.integrity.tracking,  # type: ignore[arg-type]
+            ),
             issues=[
                 IssueResponse(
                     id=issue.id,
@@ -535,14 +576,24 @@ def _overview_response(
                     selected_resolution=latest_actions.get(issue.id, {}).get(
                         "selected_resolution"
                     ),
+                    pillar=(
+                        "Viability"
+                        if issue.dimension in {"Clarity", "Alignment", "Feasibility"}
+                        else issue.dimension
+                    ),
+                    dimensions=list(issue.dimensions or (issue.dimension,)),
+                    finding_type=issue.finding_type or f"{issue.dimension} Gap",
+                    section=issue.section or issue.artifact_type.value,
+                    recommendation_from_oslo=issue.recommendation_from_oslo,
+                    exposure_rank=issue.exposure_rank,
                 )
-                for issue in snapshot.assessment.issues
+                for issue in assessment.issues
             ],
         ),
         provenance=ProjectProvenanceResponse.model_validate(
             build_project_provenance(
                 artifacts=snapshot.artifacts,
-                issues=snapshot.assessment.issues,
+                issues=assessment.issues,
             )
         ),
         published_at=snapshot.published_at,
@@ -599,12 +650,20 @@ def _artifact_workspace_response(
                     if reference in citations
                 ],
                 clarification=issue.clarification,
-                status=latest_actions.get(issue.id, {}).get(
-                    "status", issue.status
-                ),
+                status=latest_actions.get(issue.id, {}).get("status", issue.status),
                 selected_resolution=latest_actions.get(issue.id, {}).get(
                     "selected_resolution"
                 ),
+                pillar=(
+                    "Viability"
+                    if issue.dimension in {"Clarity", "Alignment", "Feasibility"}
+                    else issue.dimension
+                ),
+                dimensions=list(issue.dimensions or (issue.dimension,)),
+                finding_type=issue.finding_type or f"{issue.dimension} Gap",
+                section=issue.section or issue.artifact_type.value,
+                recommendation_from_oslo=issue.recommendation_from_oslo,
+                exposure_rank=issue.exposure_rank,
             )
             for issue in artifact["issues"]
         ],

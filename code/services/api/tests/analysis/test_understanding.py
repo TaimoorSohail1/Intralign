@@ -97,6 +97,57 @@ def test_high_confidence_with_low_reliability_is_flagged() -> None:
     assert assessment.confidence_direction == "unchanged"
 
 
+def test_inference_threatens_grounding_without_cross_contaminating_viability() -> None:
+    artifacts = list(_artifacts())
+    artifacts[0] = replace(
+        artifacts[0],
+        reliability="High",
+        sections=(
+            ArtifactSection(
+                heading="Primary outcome",
+                body="OSLO inferred the intended outcome from the plan context.",
+            ),
+        ),
+    )
+
+    assessment = enrich_assessment(
+        assessment=_assessment(),
+        artifacts=tuple(artifacts),
+        kind=RunKind.INITIAL,
+        previous_snapshot=None,
+        description="An inference-backed outcome without a CAF weakness.",
+    )
+
+    pillars = {
+        pillar.key: pillar for pillar in assessment.integrity.decomposition  # type: ignore[union-attr]
+    }
+    assert pillars["Viability"].band == "Sound"
+    assert pillars["Grounding"].basis == 0.75
+    assert pillars["Grounding"].band == "Weak"
+    assert any(issue.id == "ISS-FC-INTENT" for issue in assessment.issues)
+
+
+def test_grounding_uses_the_evidence_projection_when_assumptions_are_absent() -> None:
+    assessment = enrich_assessment(
+        assessment=_assessment(),
+        artifacts=_artifacts(),
+        kind=RunKind.INITIAL,
+        previous_snapshot=None,
+        description="An evidence-cited plan without explicit assumption rows.",
+    )
+
+    grounding = next(
+        pillar
+        for pillar in assessment.integrity.decomposition  # type: ignore[union-attr]
+        if pillar.key == "Grounding"
+    )
+    assert grounding.basis == 1
+    assert grounding.band == "Sound"
+    assert grounding.why == (
+        "4 of 4 load-bearing items rest on evidence",
+    )
+
+
 def test_high_coverage_high_reliability_artifacts_cannot_publish_low_reliability() -> None:
     artifacts = tuple(
         replace(artifact, reliability="High")

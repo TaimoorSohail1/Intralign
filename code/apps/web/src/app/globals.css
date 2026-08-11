@@ -5510,6 +5510,116 @@ button.attention-cell { cursor: pointer; }
   color: #fff;
 }
 
+/* R2 Slice 1 — moment-in-time Outcome Integrity. */
+.integrity-tracking {
+  color: #8fb7b0;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.integrity-pillars {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.integrity-pillars > button {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #374049;
+  border-radius: 9px;
+  background: #20252a;
+  color: #dfe3e6;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+.integrity-pillars > button:hover,
+.integrity-pillars > button:focus-visible {
+  border-color: #789c96;
+  outline: 2px solid rgb(120 156 150 / 22%);
+  outline-offset: 2px;
+  background: #252c30;
+  transform: translateY(-1px);
+}
+
+.integrity-pillars > button.is-limiting {
+  border-color: #668b85;
+  background: linear-gradient(145deg, #202b2b, #20252a 64%);
+}
+
+.integrity-pillars > button > span {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.integrity-pillars > button > span strong {
+  font-size: 11px;
+}
+
+.integrity-pillars > button > span b {
+  color: #9ec2bc;
+  font-size: 9px;
+}
+
+.integrity-pillars > button > i {
+  grid-column: 1 / -1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #48515a;
+}
+
+.integrity-pillars > button > i b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #91aaa6;
+}
+
+.integrity-pillars > button > small {
+  min-width: 0;
+  overflow: hidden;
+  color: #8f98a1;
+  font-size: 8px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.integrity-pillars > button > svg {
+  align-self: end;
+  color: #7c878f;
+}
+
+.confidence-breakdown-dimensions > div > small {
+  grid-column: 1 / -1;
+  margin-left: 82px;
+  color: #89929b;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+@media (max-width: 680px) {
+  .integrity-pillars { grid-template-columns: 1fr; }
+  .confidence-prototype-hero { grid-template-columns: 1fr; }
+  .confidence-limiter { justify-items: start; }
+  .confidence-footer { align-items: flex-start; gap: 12px; flex-direction: column; }
+  .confidence-footer > div { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .integrity-pillars > button { transition: none; }
+}
+
 .dimension-ramp {
   position: relative;
   display: grid;

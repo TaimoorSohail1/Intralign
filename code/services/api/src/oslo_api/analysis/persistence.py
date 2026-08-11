@@ -10,6 +10,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import Connection, Engine, text
 
 from oslo_api.analysis.history import append_history_event
+from oslo_api.analysis.integrity import Integrity, OutcomeCheckpoint, Pillar
 from oslo_api.analysis.models import (
     AnalysisEvent,
     AnalysisPhase,
@@ -223,6 +224,12 @@ def _issue_from_dict(data: dict) -> Issue:
         evidence_refs=tuple(data["evidence_refs"]),
         clarification=data.get("clarification"),
         status=data.get("status", "open"),
+        dimensions=tuple(data.get("dimensions", [])),
+        finding_type=data.get("finding_type", ""),
+        section=data.get("section", ""),
+        recommendation_from_oslo=data.get("recommendation_from_oslo", True),
+        load_bearing=data.get("load_bearing", True),
+        exposure_rank=float(data.get("exposure_rank", 0)),
     )
 
 
@@ -248,6 +255,40 @@ def _assessment_from_dict(data: dict) -> Assessment:
         confidence_explanation=data.get("confidence_explanation", ""),
         resolved_issue_count=data.get("resolved_issue_count", 0),
         confirmed_dependency_count=data.get("confirmed_dependency_count", 0),
+        outcome_checkpoints=tuple(
+            OutcomeCheckpoint(
+                id=item["id"],
+                workstream=item["workstream"],
+                leading_indicator=item["leading_indicator"],
+                timing=item["timing"],
+                lever=item["lever"],
+                registered=bool(item["registered"]),
+                evidence_refs=tuple(item.get("evidence_refs", [])),
+            )
+            for item in data.get("outcome_checkpoints", [])
+        ),
+        integrity=_integrity_from_dict(data.get("integrity")),
+    )
+
+
+def _integrity_from_dict(data: dict | None) -> Integrity | None:
+    if data is None:
+        return None
+    pillars = tuple(
+        Pillar(
+            key=item["key"],
+            band=item["band"],
+            basis=float(item["basis"]),
+            why=tuple(item.get("why", [])),
+        )
+        for item in data["decomposition"]
+    )
+    return Integrity(
+        level=data["level"],
+        limiting_pillar=data["limiting_pillar"],
+        decomposition=pillars,  # type: ignore[arg-type]
+        posture=data.get("posture", "moment-in-time"),
+        tracking=data.get("tracking", "pending-execution"),
     )
 
 

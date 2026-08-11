@@ -11,6 +11,7 @@ from oslo_api.analysis.models import (
     HarnessCallMetadata,
     HarnessInvocation,
     Issue,
+    OutcomeCheckpoint,
     Perception,
     RunKind,
 )
@@ -230,6 +231,18 @@ class DeterministicAgentHarness:
             alignment=alignment,
             feasibility=feasibility,
             issues=issues,
+            outcome_checkpoints=(
+                OutcomeCheckpoint(
+                    id="CHK-PROJECT-OUTCOME",
+                    workstream="Project outcome",
+                    leading_indicator=(
+                        "Evidence that the stated outcome is materializing"
+                    ),
+                    timing="Before the final delivery commitment",
+                    lever="Change scope, sequence, resources, or approach",
+                    registered=False,
+                ),
+            ),
         )
         self._record(invocation)
         return result

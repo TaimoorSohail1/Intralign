@@ -59,6 +59,17 @@ const snapshot: OverviewSnapshot = {
       "The moderate confidence read is limited by feasibility.",
     resolved_issue_count: 0,
     confirmed_dependency_count: 0,
+    integrity: {
+      level: "Developing",
+      limiting_pillar: "Grounding",
+      decomposition: [
+        { key: "Viability", band: "Solid", basis: 0.75, why: ["3 of 4 clear"] },
+        { key: "Grounding", band: "Developing", basis: 0.5, why: ["2 of 4 grounded"] },
+        { key: "Adaptability", band: "Solid", basis: 0.75, why: ["3 of 4 registered"] },
+      ],
+      posture: "moment-in-time",
+      tracking: "pending-execution",
+    },
     issues: [
       {
         id: "ISS-001",
@@ -356,7 +367,7 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    expect(screen.getAllByText(/Outcome confidence/i)).not.toHaveLength(0);
+    expect(screen.getAllByText(/Outcome integrity/i)).not.toHaveLength(0);
     expect(screen.getByRole("link", { name: "Timeline" })).toHaveAttribute(
       "href",
       "/projects/project-001/history",
@@ -441,7 +452,29 @@ describe("ProjectOverview", () => {
     }
   });
 
-  it("renders the Slice 3 project shell and evidence-qualified confidence read", () => {
+  it("renders the Slice 1 outcome-integrity read and its three pillar drills", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: /Outcome Integrity Developing, limited by Grounding/i,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("as of this analysis")).toBeInTheDocument();
+    expect(screen.getByText("live tracking begins at execution")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Viability Solid/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Grounding Developing/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Adaptability Solid/i })).toBeInTheDocument();
+    expect(screen.queryByText("52")).not.toBeInTheDocument();
+  });
+
+  it("renders the project shell and evidence-qualified integrity read", () => {
     render(
       <ProjectOverview
         displayName="Alex"
@@ -459,9 +492,9 @@ describe("ProjectOverview", () => {
       "href",
       "/projects/project-001/history",
     );
-    expect(screen.getAllByText("Moderate").length).toBeGreaterThan(0);
-    expect(screen.getByText("Strengthened")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "How confidence is calculated" })).toBeInTheDocument();
+    expect(screen.getAllByText("Developing").length).toBeGreaterThan(0);
+    expect(screen.getByText("Weakest pillar gates the read")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show Viability detail" })).toBeInTheDocument();
   });
 
   it("exposes navigation, project content, and advisor as independent regions", () => {
@@ -489,7 +522,7 @@ describe("ProjectOverview", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the five-step confidence ramp without exposing the numeric score", () => {
+  it("renders the five-step integrity ramp without exposing the numeric score", () => {
     render(
       <ProjectOverview
         displayName="Alex"
@@ -504,11 +537,11 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    expect(screen.getByText("Very Low")).toBeInTheDocument();
-    expect(screen.getAllByText("Low").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Moderate").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("High").length).toBeGreaterThan(0);
-    expect(screen.getByText("Very High")).toBeInTheDocument();
+    expect(screen.getByText("Fragile")).toBeInTheDocument();
+    expect(screen.getByText("Weak")).toBeInTheDocument();
+    expect(screen.getAllByText("Developing").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Solid").length).toBeGreaterThan(0);
+    expect(screen.getByText("Sound")).toBeInTheDocument();
     expect(screen.queryByText("/100")).not.toBeInTheDocument();
   });
 
@@ -578,7 +611,7 @@ describe("ProjectOverview", () => {
     expect(within(navigation).getByRole("button", { name: "Log out" })).toBeInTheDocument();
   });
 
-  it("opens the prototype confidence breakdown from the toolbar", () => {
+  it("opens the integrity breakdown from the toolbar", () => {
     render(
       <ProjectOverview
         displayName="Alex"
@@ -587,18 +620,25 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Outcome Confidence Moderate, well grounded",
-      }),
-    );
+    const trigger = screen.getByRole("button", {
+      name: "Outcome Integrity Developing, limited by Grounding",
+    });
+    trigger.focus();
+    fireEvent.click(trigger);
 
-    expect(screen.getByRole("dialog", { name: "Confidence breakdown" })).toBeInTheDocument();
-    expect(screen.getByText("Reliability basis")).toBeInTheDocument();
-    expect(screen.getByText("Assessability")).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Integrity breakdown" })).toBeInTheDocument();
+    expect(screen.getByText("The lowest pillar sets the overall integrity level.")).toBeInTheDocument();
+    expect(screen.getAllByText("2 of 4 grounded").length).toBeGreaterThan(0);
+    const close = screen.getByRole("button", { name: "Close integrity breakdown" });
+    expect(close).toHaveFocus();
+
+    fireEvent.keyDown(close, { key: "Escape" });
+
+    expect(screen.queryByRole("dialog", { name: "Integrity breakdown" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 
-  it("explains the deterministic confidence basis without another advisor call", () => {
+  it("explains the deterministic Viability basis without another advisor call", () => {
     const fetcher = vi.fn();
     vi.stubGlobal("fetch", fetcher);
     render(
@@ -609,11 +649,11 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Why this confidence read" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show Viability detail" }));
 
-    expect(screen.getByRole("region", { name: "Confidence calculation" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Viability detail" })).toBeInTheDocument();
     expect(screen.getByText(snapshot.assessment.confidence_explanation)).toBeInTheDocument();
-    expect(screen.getByText("Coverage")).toBeInTheDocument();
+    expect(screen.getByText("Clarity")).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher).toHaveBeenCalledWith("/api/workspace", { cache: "no-store" });
   });

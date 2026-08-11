@@ -515,6 +515,17 @@ def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> Non
                 for artifact_type in ARTIFACT_TYPES
             ],
             "issues": [],
+            "outcome_checkpoints": [
+                {
+                    "id": "CHK-ADOPTION",
+                    "workstream": "Adoption",
+                    "leading_indicator": "Weekly active teams",
+                    "timing": "Before rollout expansion",
+                    "lever": "Change enablement or rollout sequence",
+                    "registered": True,
+                    "evidence_refs": [evidence_ref],
+                }
+            ],
         }
     )
     evaluate_harness = OpenAIAgentHarness(
@@ -522,7 +533,7 @@ def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> Non
         model="gpt-fast",
         client=evaluate_client,
     )
-    evaluate_harness.evaluate(
+    assessment = evaluate_harness.evaluate(
         artifacts=artifacts,
         perception=perception,
         kind=RunKind.INITIAL,
@@ -548,6 +559,11 @@ def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> Non
     assert "authoritative user-confirmed project evidence" in (
         evaluate_request["input"][0]["content"]
     )
+    assert "Identify every outcome-bearing workstream" in (
+        evaluate_request["input"][0]["content"]
+    )
+    assert assessment.outcome_checkpoints[0].workstream == "Adoption"
+    assert assessment.outcome_checkpoints[0].registered is True
     assert "absence checks" in evaluate_request["input"][0]["content"]
     assert "documented exception" in evaluate_request["input"][0]["content"]
     assert "diagnosed problems and causes" in evaluate_request["input"][0]["content"]

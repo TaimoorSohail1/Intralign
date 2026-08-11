@@ -15,6 +15,12 @@ def _stage_contract(tmp_path: Path) -> tuple[dict[str, object], str]:
             encoding="utf-8"
         )
     )
+    guards = registry["guards"]
+    assert isinstance(guards, dict)
+    for registration in guards.values():
+        assert isinstance(registration, dict)
+        registration["status"] = "pending"
+        registration["tests"] = []
     markdown = (
         REPOSITORY_ROOT
         / "release-2"

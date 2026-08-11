@@ -122,6 +122,18 @@ export interface OverviewSnapshot {
     confidence_explanation: string;
     resolved_issue_count: number;
     confirmed_dependency_count: number;
+    integrity: {
+      level: "Fragile" | "Weak" | "Developing" | "Solid" | "Sound";
+      limiting_pillar: "Viability" | "Grounding" | "Adaptability";
+      decomposition: Array<{
+        key: "Viability" | "Grounding" | "Adaptability";
+        band: "Fragile" | "Weak" | "Developing" | "Solid" | "Sound";
+        basis: number;
+        why: string[];
+      }>;
+      posture: "moment-in-time";
+      tracking: "pending-execution";
+    };
     issues: Array<{
       id: string;
       artifact_type: string;
@@ -139,6 +151,12 @@ export interface OverviewSnapshot {
       clarification?: string | null;
       status: string;
       selected_resolution?: string | null;
+      pillar?: "Viability" | "Grounding" | "Adaptability";
+      dimensions?: string[];
+      finding_type?: string;
+      section?: string;
+      recommendation_from_oslo?: boolean;
+      exposure_rank?: number;
     }>;
   };
   provenance?: {

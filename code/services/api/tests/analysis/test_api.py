@@ -893,6 +893,34 @@ def test_overview_exposes_the_evidence_qualified_understanding_console() -> None
     assert assessment["confidence_explanation"]
     assert assessment["resolved_issue_count"] == 0
     assert assessment["confirmed_dependency_count"] == 0
+    integrity = assessment["integrity"]
+    assert integrity["level"] in {
+        "Fragile",
+        "Weak",
+        "Developing",
+        "Solid",
+        "Sound",
+    }
+    assert integrity["limiting_pillar"] in {
+        "Viability",
+        "Grounding",
+        "Adaptability",
+    }
+    assert [pillar["key"] for pillar in integrity["decomposition"]] == [
+        "Viability",
+        "Grounding",
+        "Adaptability",
+    ]
+    assert integrity["posture"] == "moment-in-time"
+    assert integrity["tracking"] == "pending-execution"
+    checkpoint_issue = next(
+        issue for issue in assessment["issues"] if issue["id"].startswith("ISS-CP-")
+    )
+    assert checkpoint_issue["pillar"] == "Adaptability"
+    assert checkpoint_issue["finding_type"] == "Coverage Gap"
+    assert checkpoint_issue["section"] == "Schedule"
+    assert checkpoint_issue["recommendation_from_oslo"] is True
+    assert checkpoint_issue["exposure_rank"] > 0
     provenance = response.json()["provenance"]
     assert provenance["schema_version"] == 1
     assert len(provenance["artifacts"]) == 7

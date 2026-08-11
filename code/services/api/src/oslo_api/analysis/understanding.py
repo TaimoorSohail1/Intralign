@@ -1,16 +1,24 @@
 import re
 from dataclasses import replace
 
+from oslo_api.analysis.integrity import (
+    IntegrityArtifact,
+    IntegrityIssue,
+    build_integrity_read,
+)
 from oslo_api.analysis.issue_identity import deduplicate_issues
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     Artifact,
+    ArtifactType,
     Assessment,
     AssessmentSnapshot,
     EvidenceFragment,
+    Issue,
     ReliabilityBasis,
     RunKind,
 )
+from oslo_api.analysis.provenance import build_project_provenance
 
 _BAND_ORDER = {
     "Very Low": 0,
@@ -204,7 +212,7 @@ def enrich_assessment(
         f"{basis.evidence.lower()}, and assessability is "
         f"{basis.assessability.lower()}."
     )
-    return replace(
+    enriched = replace(
         assessment,
         reliability=reliability,
         understanding_stage=stage,
@@ -216,6 +224,131 @@ def enrich_assessment(
         issues=issues_tuple,
         resolved_issue_count=resolved,
         confirmed_dependency_count=confirmed,
+    )
+    return with_integrity(enriched, artifacts)
+
+
+_INTEGRITY_ARTIFACT_TYPES = (
+    "intent",
+    "context",
+    "scope",
+    "requirements",
+)
+
+
+def with_integrity(
+    assessment: Assessment,
+    artifacts: tuple[Artifact, ...],
+) -> Assessment:
+    """Project the persisted analysis into the signed Slice 1 read contract."""
+
+    base_issues = tuple(
+        issue
+        for issue in assessment.issues
+        if not issue.id.startswith(("ISS-FC-", "ISS-CP-"))
+    )
+    provenance = build_project_provenance(artifacts=artifacts, issues=base_issues)
+    artifact_provenance = {
+        item["artifact_type"]: item for item in provenance["artifacts"]
+    }
+    by_type = {artifact.artifact_type.value: artifact for artifact in artifacts}
+    integrity_artifacts: list[IntegrityArtifact] = []
+    for artifact_type in _INTEGRITY_ARTIFACT_TYPES:
+        artifact = by_type.get(artifact_type)
+        if artifact is None:
+            continue
+        evidence = artifact_provenance[artifact_type]
+        open_caf_issue = any(
+            issue.status != "resolved"
+            and issue.artifact_type.value == artifact_type
+            and issue.dimension in {"Clarity", "Alignment", "Feasibility"}
+            for issue in base_issues
+        )
+        integrity_artifacts.append(
+            IntegrityArtifact(
+                key=artifact_type,
+                title=artifact.title,
+                viable=not open_caf_issue,
+                reads_strong=artifact.reliability == "High",
+                grounded_items=evidence["grounded"],
+                inferred_items=evidence["inferred"],
+                primary_outcome=artifact_type == "intent",
+                evidence_grounded_items=evidence["grounded"],
+                evidence_inferred_items=evidence["inferred"],
+            )
+        )
+    domain_issues = tuple(_domain_issue(issue) for issue in base_issues)
+    read = build_integrity_read(
+        artifacts=tuple(integrity_artifacts),
+        checkpoints=assessment.outcome_checkpoints,
+        issues=domain_issues,
+    )
+    by_id = {issue.id: issue for issue in base_issues}
+    for issue in read.issues:
+        if issue.id not in by_id:
+            by_id[issue.id] = _derived_issue(issue, artifacts)
+    ranked = tuple(
+        replace(
+            by_id[issue.id],
+            exposure_rank=float(len(read.issues) - index),
+        )
+        for index, issue in enumerate(read.issues)
+    )
+    return replace(
+        assessment,
+        issues=ranked,
+        integrity=read.integrity,
+        resolved_issue_count=sum(issue.status == "resolved" for issue in ranked),
+    )
+
+
+def _domain_issue(issue: Issue) -> IntegrityIssue:
+    pillar = (
+        "Viability"
+        if issue.dimension in {"Clarity", "Alignment", "Feasibility"}
+        else issue.dimension
+    )
+    return IntegrityIssue(
+        id=issue.id,
+        dim=pillar,
+        dims=(pillar,),
+        finding_type=issue.finding_type or f"{issue.dimension} Gap",
+        section=issue.section or issue.artifact_type.value,
+        severity=issue.severity,
+        status=issue.status,
+        title=issue.title,
+        why=issue.why,
+        recommendation=issue.recommendation,
+        recommendation_from_oslo=issue.recommendation_from_oslo,
+    )
+
+
+def _derived_issue(
+    issue: IntegrityIssue,
+    artifacts: tuple[Artifact, ...],
+) -> Issue:
+    artifact_type = next(
+        (
+            artifact.artifact_type
+            for artifact in artifacts
+            if artifact.title == issue.section
+        ),
+        ArtifactType.SCHEDULE,
+    )
+    return Issue(
+        id=issue.id,
+        artifact_type=artifact_type,
+        dimension=issue.dim,
+        severity=issue.severity,
+        title=issue.title,
+        why=issue.why,
+        recommendation=issue.recommendation,
+        evidence_refs=(),
+        status=issue.status,
+        dimensions=issue.dims,
+        finding_type=issue.finding_type,
+        section=issue.section,
+        recommendation_from_oslo=issue.recommendation_from_oslo,
     )
 
 

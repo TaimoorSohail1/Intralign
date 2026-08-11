@@ -24,6 +24,7 @@ from oslo_api.analysis.models import (
     HarnessCallMetadata,
     HarnessInvocation,
     Issue,
+    OutcomeCheckpoint,
     Perception,
     RunKind,
 )
@@ -33,7 +34,7 @@ _LOGGER = logging.getLogger(__name__)
 PROMPT_VERSIONS = {
     "perceive": "oslo-perceive-v5",
     "construct": "oslo-construct-v5",
-    "evaluate": "oslo-evaluate-v9",
+    "evaluate": "oslo-evaluate-v10",
 }
 ShortText = Annotated[str, Field(min_length=1, max_length=1_000)]
 LongText = Annotated[str, Field(min_length=1, max_length=4_000)]
@@ -159,6 +160,22 @@ class _CoverageAuditOutput(_StrictOutput):
     missing_controls: list[ShortText] = Field(default_factory=list, max_length=30)
 
 
+class _OutcomeCheckpointOutput(_StrictOutput):
+    id: Annotated[str, Field(min_length=1, max_length=100, pattern=r"^[A-Z0-9_-]+$")]
+    workstream: ShortText
+    leading_indicator: ShortText
+    timing: ShortText
+    lever: ShortText
+    registered: bool
+    evidence_refs: list[EvidenceReference] = Field(default_factory=list, max_length=20)
+
+    @model_validator(mode="after")
+    def registered_checkpoint_has_evidence(self) -> "_OutcomeCheckpointOutput":
+        if self.registered and not self.evidence_refs:
+            raise ValueError("Registered outcome checkpoints require source evidence")
+        return self
+
+
 class _AssessmentOutput(_StrictOutput):
     confidence_index: int = Field(ge=0, le=100)
     confidence_band: RatingBand
@@ -168,11 +185,18 @@ class _AssessmentOutput(_StrictOutput):
     feasibility: RatingBand
     coverage_audit: list[_CoverageAuditOutput] = Field(min_length=7, max_length=7)
     issues: list[_IssueOutput] = Field(max_length=60)
+    outcome_checkpoints: list[_OutcomeCheckpointOutput] = Field(
+        default_factory=list,
+        max_length=40,
+    )
 
     @model_validator(mode="after")
     def complete_coverage_audit(self) -> "_AssessmentOutput":
         if tuple(item.artifact_type for item in self.coverage_audit) != ARTIFACT_TYPES:
             raise ValueError("Coverage audit must contain all seven artifacts in order")
+        workstreams = [item.workstream.casefold() for item in self.outcome_checkpoints]
+        if len(workstreams) != len(set(workstreams)):
+            raise ValueError("Each outcome-bearing workstream requires one checkpoint")
         return self
 
 
@@ -605,7 +629,15 @@ class OpenAIAgentHarness:
                 "finding, actively check whether the source documents a rationale, approved "
                 "exception, change-control rule, dual sign-off, estimate, exclusion or later "
                 "measurement period; suppress the finding when that documented exception makes "
-                "it valid. Complexity alone is never a defect. Do not expose hidden "
+                "it valid. Complexity alone is never a defect. Identify every "
+                "outcome-bearing workstream and return exactly one outcome_checkpoints "
+                "row for it. A checkpoint must name the outcome leading indicator to read, "
+                "when to read it while corrective runway remains, and the scope, sequence, "
+                "resource, or approach lever available if it drifts. Set registered=true "
+                "only when the supplied evidence already contains that checkpoint and cite "
+                "its exact evidence locator; otherwise return a specific From-OSLO proposal "
+                "with registered=false and no fabricated evidence. Delivery milestones that "
+                "do not re-read the outcome are not outcome checkpoints. Do not expose hidden "
                 "reasoning. Every evidence_refs value must be copied exactly from "
                 "allowed_evidence_locators; never reconstruct or alter a locator. "
                 "Return only the required JSON contract."
@@ -620,7 +652,10 @@ class OpenAIAgentHarness:
             invocation=invocation,
             allowed_refs=allowed_refs,
             evidence_refs=lambda result: (
-                reference for issue in result.issues for reference in issue.evidence_refs
+                reference
+                for collection in (result.issues, result.outcome_checkpoints)
+                for item in collection
+                for reference in item.evidence_refs
             ),
         )
         return Assessment(
@@ -642,8 +677,23 @@ class OpenAIAgentHarness:
                     evidence_refs=tuple(item.evidence_refs),
                     clarification=item.clarification,
                     status=item.status,
+                    dimensions=(item.dimension,),
+                    finding_type=item.finding_type,
+                    section=item.artifact_type.value,
                 )
                 for item in output.issues
+            ),
+            outcome_checkpoints=tuple(
+                OutcomeCheckpoint(
+                    id=item.id,
+                    workstream=item.workstream,
+                    leading_indicator=item.leading_indicator,
+                    timing=item.timing,
+                    lever=item.lever,
+                    registered=item.registered,
+                    evidence_refs=tuple(item.evidence_refs),
+                )
+                for item in output.outcome_checkpoints
             ),
         )
 

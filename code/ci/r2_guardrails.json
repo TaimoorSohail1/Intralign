@@ -15,20 +15,52 @@
     "GT-04": {"status": "pending", "tests": []},
     "GT-05": {"status": "pending", "tests": []},
     "GT-06": {"status": "pending", "tests": []},
-    "GT-07": {"status": "pending", "tests": []},
+    "GT-07": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_integrity.py::test_integrity_composes_three_normalized_pillars_through_the_weakest_gate"
+      ]
+    },
     "GT-08": {"status": "pending", "tests": []},
     "GT-09": {"status": "pending", "tests": []},
-    "GT-10": {"status": "pending", "tests": []},
-    "GT-11": {"status": "pending", "tests": []},
+    "GT-10": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/analysis/test_api.py::test_overview_overlays_the_saved_resolution_and_addressed_status",
+        "services/api/tests/analysis/test_workflow.py::test_governed_node_failures_preserve_the_last_good_snapshot"
+      ]
+    },
+    "GT-11": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_integrity.py::test_flagging_grounds_the_read_without_raising_viability"
+      ]
+    },
     "GT-12": {"status": "pending", "tests": []},
-    "GT-13": {"status": "pending", "tests": []},
+    "GT-13": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_integrity.py::test_integrity_is_proportional_when_plan_size_changes"
+      ]
+    },
     "GT-14": {"status": "pending", "tests": []},
     "GT-15": {"status": "pending", "tests": []},
     "GT-16": {"status": "pending", "tests": []},
     "GT-17": {"status": "pending", "tests": []},
     "GT-18": {"status": "pending", "tests": []},
-    "GT-19": {"status": "pending", "tests": []},
-    "GT-20": {"status": "pending", "tests": []},
+    "GT-19": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_integrity.py::test_integrity_composes_three_normalized_pillars_through_the_weakest_gate",
+        "services/api/tests/r2/test_integrity.py::test_foundation_first_tie_breaking_is_deterministic"
+      ]
+    },
+    "GT-20": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_integrity_ui_contract.py::test_integrity_surface_uses_maturity_words_without_numeric_forecast"
+      ]
+    },
     "GT-21": {"status": "pending", "tests": []},
     "GT-22": {"status": "pending", "tests": []},
     "GT-23": {"status": "pending", "tests": []},

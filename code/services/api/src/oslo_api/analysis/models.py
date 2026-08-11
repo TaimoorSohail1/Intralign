@@ -5,6 +5,8 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
 
+from oslo_api.analysis.integrity import Integrity, OutcomeCheckpoint
+
 
 class RunKind(StrEnum):
     INITIAL = "initial"
@@ -218,6 +220,12 @@ class Issue:
     evidence_refs: tuple[str, ...]
     clarification: str | None = None
     status: str = "open"
+    dimensions: tuple[str, ...] = ()
+    finding_type: str = ""
+    section: str = ""
+    recommendation_from_oslo: bool = True
+    load_bearing: bool = True
+    exposure_rank: float = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -250,6 +258,8 @@ class Assessment:
     confidence_explanation: str = ""
     resolved_issue_count: int = 0
     confirmed_dependency_count: int = 0
+    outcome_checkpoints: tuple[OutcomeCheckpoint, ...] = ()
+    integrity: Integrity | None = None
 
 
 @dataclass(frozen=True, slots=True)

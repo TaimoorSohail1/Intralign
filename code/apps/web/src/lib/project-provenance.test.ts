@@ -57,6 +57,17 @@ const snapshot: OverviewSnapshot = {
     confidence_explanation: "Resources constrain the read.",
     resolved_issue_count: 0,
     confirmed_dependency_count: 0,
+    integrity: {
+      level: "Fragile",
+      limiting_pillar: "Viability",
+      decomposition: [
+        { key: "Viability", band: "Fragile", basis: 0, why: [] },
+        { key: "Grounding", band: "Fragile", basis: 0, why: [] },
+        { key: "Adaptability", band: "Fragile", basis: 0, why: [] },
+      ],
+      posture: "moment-in-time",
+      tracking: "pending-execution",
+    },
     issues: [
       {
         id: "ISS-OWNER",
