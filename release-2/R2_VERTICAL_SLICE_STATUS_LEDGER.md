@@ -6,9 +6,9 @@
 
 **Audited branch:** `codex/release-2-build`
 
-**Audited commit:** `397c07e`
+**Audited commit:** `c19083a`
 
-**Working tree at audit:** current-run manual-regression/UI-audit evidence is committed at `397c07e`; only this ledger finalization is pending. No product change and no non-Slice-1 change is present.
+**Working tree at audit:** current-run manual-regression/UI-audit evidence is committed at `c19083a`; only this ledger finalization is pending. No product change and no non-Slice-1 change is present.
 
 **Current owner-authorized work scope:** **Slices 1–3 only**
 
@@ -32,7 +32,7 @@
 - **6 guards are active; 54 are pending.** Slice 1 activates `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, and `GT-20`; the remaining slices are not functionally verified.
 - Slice 9's FE↔BE contract currently contains **58 mapped dynamic surfaces**.
 - All **6/6 Phase-A prototype corrections** checked by the gate are present.
-- Slice 1 has its core R2 implementation at `8b8f702` and same-state parity follow-up at `2958c4a`. Automated functional and prototype-parity gates pass. Mandatory manual timeout/retry/last-good verification plus remaining manual accessibility checks remain open, so Slice 1 stays **IN PROGRESS**. Inherited R1 capabilities elsewhere remain **reuse candidates, not R2 completion evidence**.
+- Slice 1 has its core R2 implementation at `8b8f702` and same-state parity follow-up at `2958c4a`. Automated functional and prototype-parity gates pass. The 03:02-03:10 PKT retry again failed before the in-app browser attached a page; local Supabase was also unavailable to the scheduler account. Mandatory manual timeout/retry/last-good verification plus remaining manual accessibility checks remain open, so Slice 1 stays **IN PROGRESS**. Inherited R1 capabilities elsewhere remain **reuse candidates, not R2 completion evidence**.
 
 ### Evidence commands
 
@@ -159,7 +159,7 @@ Reviewer / date:
 - Slice 1 masthead/parity follow-up: `2958c4a`
 - Slice 1 verification-evidence ledger commit: `2388702`
 - Slice 1 current browser-blocker evidence commit: `d609ff5`
-- Slice 1 latest browser-blocker evidence commit: `397c07e`
+- Slice 1 latest browser-blocker evidence commit: `c19083a`
 - Slice 1 durable evidence: `../code/reports/r2/slice-01/`
 
 ---
@@ -197,6 +197,18 @@ Reviewer / date:
 5. Record the exact result and keep Slice 1 `IN PROGRESS` unless every open gate passes.
 
 **Run result:** the required in-app browser connected, but two fresh-page requests timed out before a webview attached. Supported recovery retained the browser binding, confirmed empty controlled/user-visible tab lists, requested visibility and one fresh page; visibility remained false, the second page failed to attach, and both tab lists remained empty. Local Supabase, the seeded owner account, FastAPI, and Next.js were healthy. No substitute browser was used, no current-run screenshot or interaction was accepted, no automated suites were rerun because no code changed, and no product code changed. Durable manual/UI evidence is committed at `397c07e`. Slice 1 remains `IN PROGRESS`; no later slice was acquired and Slices 4–10 remain untouched.
+
+---
+
+## 10. Active Slice 1 resumption plan - 2026-08-12 03:00 PKT
+
+1. Reconnect the required in-app browser to the real local application and retain the browser binding through supported recovery.
+2. If a page attaches, exercise timeout to stale/last-good to retry and complete manual keyboard, announcement/focus, reduced-motion, 200% zoom, and responsive checks.
+3. Capture and inspect current-run screenshots before accepting UI/UX or prototype-parity evidence.
+4. Rerun the scoped automated gates only if manual verification passes or product code changes.
+5. Record the exact result and keep Slice 1 `IN PROGRESS` unless every open gate passes.
+
+**Run result:** the required in-app browser connected, but two fresh-page requests timed out before a webview attached. Supported recovery retained the browser binding, confirmed empty controlled/user-visible tab lists, exposed visibility, and requested one fresh page; the second request also failed before attachment. FastAPI returned `200` and Next.js returned `307`. Local Supabase could not be reseeded because Docker Desktop's service was unavailable to the scheduler account and `127.0.0.1:54321` remained closed; this would block the seeded journey after page attachment, but the browser failed first. No substitute browser, current-run screenshot, interaction, automated rerun, or product change was accepted. Durable manual/UI evidence is committed at `c19083a`. Slice 1 remains `IN PROGRESS`; no later slice was acquired and Slices 4-10 remain untouched.
 
 ---
 
