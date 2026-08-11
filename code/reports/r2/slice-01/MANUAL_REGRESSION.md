@@ -12,6 +12,8 @@
 
 **Second resumption retry:** 2026-08-12 02:02–02:05 PKT. The required in-app browser again connected and exposed its supported control surface. The first fresh page timed out before a webview attached. The documented recovery retained the browser binding, confirmed that controlled and user-visible tab lists were empty, requested visibility, and requested one fresh page. Visibility remained false, the second page also timed out before attachment, and both tab lists remained empty. Local Supabase, the seeded owner account, FastAPI on `127.0.0.1:8000`, and Next.js on `127.0.0.1:3002` were healthy. No interaction or screenshot was accepted, and no substitute browser was used.
 
+**Third resumption retry:** 2026-08-12 03:02-03:10 PKT. The required in-app browser connected and returned its supported control surface. The first fresh-page request timed out before a webview attached. The documented recovery retained the browser binding, confirmed empty controlled and user-visible tab lists, exposed visibility, and requested one fresh page; the second request also timed out before attachment. FastAPI returned `200` on `127.0.0.1:8000/health` and Next.js returned `307` on `127.0.0.1:3002`. Supabase could not be reseeded because Docker Desktop's service was unavailable to the scheduler account and the local `54321` endpoint remained closed, but the browser failed before navigation and therefore before authentication or database access could become the active gate. No interaction, screenshot, substitute browser, product change, or automated completion claim was accepted. The open manual gate is unchanged.
+
 ## Passed in the real application
 
 1. Signed in as the seeded workspace owner.

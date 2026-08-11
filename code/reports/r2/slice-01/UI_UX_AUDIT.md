@@ -14,6 +14,8 @@
 
 **Second resumption evidence limit (2026-08-12 02:05 PKT):** the in-app browser connected, but two fresh-page requests again failed before a webview attached. After the supported recovery path, visibility remained false and controlled/user-visible tab lists remained empty. The healthy seeded application therefore produced no current-run screenshot or interaction evidence; keyboard, assistive-technology, reduced-motion, 200% zoom, responsive, and failure-state checks remain open.
 
+**Third resumption evidence limit (2026-08-12 03:10 PKT):** the in-app browser connected, but two fresh-page requests failed before a webview attached. Supported recovery retained the browser binding, confirmed empty controlled/user-visible tab lists, exposed visibility, and requested a fresh page. The web (`307`) and API health (`200`) endpoints were reachable, but no page existed to inspect. Local Supabase was also unavailable because Docker Desktop's service could not be started by the scheduler account; this would block the seeded owner journey after attachment but did not cause the earlier webview attachment failure. No current-run screenshot or interaction evidence was accepted, so keyboard, assistive-technology, reduced-motion, 200% zoom, responsive, and failure-state checks remain open.
+
 ## Passed findings
 
 1. **Hierarchy and copy.** The five-step Fragile→Sound ramp leads, the single limiting pillar follows, and all three pillar controls expose a band and count basis. Moment-in-time and live-tracking language is explicit; no probability or 0–100 integrity score appears.
