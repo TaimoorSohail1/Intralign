@@ -1,7 +1,9 @@
+from collections.abc import Iterator
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
+import httpx
 import pytest
 from sqlalchemy import create_engine, text
 
@@ -19,6 +21,7 @@ from oslo_api.analysis.object_storage import LocalObjectStorage
 from oslo_api.analysis.persistence import DatabaseAnalysisStore
 from oslo_api.analysis.service import DatabaseSliceTwoApplication
 from oslo_api.collaboration.service import CollaborationError, DatabaseCollaborationService
+from oslo_api.identity import SupabaseIdentityProvider
 from oslo_api.settings import Settings
 
 SETTINGS = Settings()  # type: ignore[call-arg]
@@ -71,15 +74,62 @@ class RecordingReportMailer:
         self.messages.append(payload)
 
 
+@pytest.fixture(scope="module")
+def workspace_owner_id() -> Iterator[UUID]:
+    """Provide a real workspace Owner without conflating it with the platform Admin."""
+    engine = create_engine(SETTINGS.database_url)
+    with httpx.Client(timeout=20) as client:
+        identity = SupabaseIdentityProvider(
+            client=client,
+            supabase_url=SETTINGS.supabase_url,
+            api_key=SETTINGS.supabase_secret_key,
+        )
+        email = "slice-two-integration-owner@oslo.local"
+        owner = identity.find_user_by_email(email) or identity.create_user(
+            email=email,
+            password="SliceTwoIntegrationOwner123!",
+            display_name="Slice Two Integration Owner",
+        )
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    insert into public.profiles (id, display_name)
+                    values (:id, 'Slice Two Integration Owner')
+                    on conflict (id) do update set display_name = excluded.display_name
+                    """
+                ),
+                {"id": owner.id},
+            )
+            connection.execute(
+                text(
+                    """
+                    insert into public.memberships (workspace_id, user_id, role)
+                    values (:workspace_id, :user_id, 'owner')
+                    on conflict (workspace_id, user_id) do update set role = 'owner'
+                    """
+                ),
+                {"workspace_id": WORKSPACE_ID, "user_id": owner.id},
+            )
+        try:
+            yield owner.id
+        finally:
+            with engine.begin() as connection:
+                connection.execute(
+                    text("delete from public.memberships where user_id = :user_id"),
+                    {"user_id": owner.id},
+                )
+            identity.delete_user(owner.id)
+
+
 def test_clarification_is_durable_and_addressed_before_reanalysis_completes(
     tmp_path,
+    workspace_owner_id: UUID,
 ) -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
+    owner_id = workspace_owner_id
     with engine.begin() as connection:
-        owner_id = connection.execute(
-            text("select id from auth.users where email = 'admin@oslo.local'")
-        ).scalar_one()
         connection.execute(
             text(
                 """
@@ -164,13 +214,12 @@ def test_clarification_is_durable_and_addressed_before_reanalysis_completes(
 
 def test_artifact_noop_is_inert_and_material_edit_uses_structured_evidence(
     tmp_path,
+    workspace_owner_id: UUID,
 ) -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
+    owner_id = workspace_owner_id
     with engine.begin() as connection:
-        owner_id = connection.execute(
-            text("select id from auth.users where email = 'admin@oslo.local'")
-        ).scalar_one()
         connection.execute(
             text(
                 """
@@ -314,13 +363,11 @@ def test_artifact_noop_is_inert_and_material_edit_uses_structured_evidence(
             )
 
 
-def test_report_draft_and_immediate_delivery_are_durable() -> None:
+def test_report_draft_and_immediate_delivery_are_durable(workspace_owner_id: UUID) -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
+    owner_id = workspace_owner_id
     with engine.begin() as connection:
-        owner_id = connection.execute(
-            text("select id from auth.users where email = 'admin@oslo.local'")
-        ).scalar_one()
         connection.execute(
             text(
                 """
@@ -463,13 +510,13 @@ def test_report_draft_and_immediate_delivery_are_durable() -> None:
             )
 
 
-def test_postgres_analysis_is_checkpointed_and_published_atomically() -> None:
+def test_postgres_analysis_is_checkpointed_and_published_atomically(
+    workspace_owner_id: UUID,
+) -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
+    owner_id = workspace_owner_id
     with engine.begin() as connection:
-        owner_id = connection.execute(
-            text("select id from auth.users where email = 'admin@oslo.local'")
-        ).scalar_one()
         connection.execute(
             text(
                 """
@@ -625,13 +672,13 @@ def test_postgres_analysis_is_checkpointed_and_published_atomically() -> None:
             )
 
 
-def test_new_snapshot_does_not_resolve_issue_rows_without_resolution_evidence() -> None:
+def test_new_snapshot_does_not_resolve_issue_rows_without_resolution_evidence(
+    workspace_owner_id: UUID,
+) -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
+    owner_id = workspace_owner_id
     with engine.begin() as connection:
-        owner_id = connection.execute(
-            text("select id from auth.users where email = 'admin@oslo.local'")
-        ).scalar_one()
         connection.execute(
             text(
                 """
@@ -707,13 +754,13 @@ def test_new_snapshot_does_not_resolve_issue_rows_without_resolution_evidence() 
             )
 
 
-def test_history_falls_back_to_retained_snapshots_when_legacy_events_are_absent() -> None:
+def test_history_falls_back_to_retained_snapshots_when_legacy_events_are_absent(
+    workspace_owner_id: UUID,
+) -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
+    owner_id = workspace_owner_id
     with engine.begin() as connection:
-        owner_id = connection.execute(
-            text("select id from auth.users where email = 'admin@oslo.local'")
-        ).scalar_one()
         connection.execute(
             text(
                 """
@@ -775,13 +822,13 @@ def test_history_falls_back_to_retained_snapshots_when_legacy_events_are_absent(
             )
 
 
-def test_analysis_promotes_a_supported_title_and_increments_artifact_revisions() -> None:
+def test_analysis_promotes_a_supported_title_and_increments_artifact_revisions(
+    workspace_owner_id: UUID,
+) -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
+    owner_id = workspace_owner_id
     with engine.begin() as connection:
-        owner_id = connection.execute(
-            text("select id from auth.users where email = 'admin@oslo.local'")
-        ).scalar_one()
         connection.execute(
             text(
                 """
@@ -863,13 +910,12 @@ def test_analysis_promotes_a_supported_title_and_increments_artifact_revisions()
 )
 def test_postgres_refresh_retry_resumes_each_governed_llm_stage(
     failed_phase: AnalysisPhase,
+    workspace_owner_id: UUID,
 ) -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
+    owner_id = workspace_owner_id
     with engine.begin() as connection:
-        owner_id = connection.execute(
-            text("select id from auth.users where email = 'admin@oslo.local'")
-        ).scalar_one()
         connection.execute(
             text(
                 """
