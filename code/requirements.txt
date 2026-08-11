@@ -1,14 +1,1 @@
-fastapi>=0.111,<0.137  # 0.137 made include_router lazy; app vetted on 0.136.x (see pyproject)
-uvicorn[standard]>=0.30
-pydantic>=2.7
-pydantic-ai>=1.107,<2
-langgraph>=0.2
-langgraph-checkpoint-postgres>=2
-psycopg[binary]>=3.1
-supabase>=2.5
-neo4j>=5.20
-redis>=5.0
-opentelemetry-sdk>=1.25
-opentelemetry-instrumentation-fastapi>=0.46b0
-opentelemetry-exporter-otlp>=1.25
-langsmith>=0.1
+-e ./services/api

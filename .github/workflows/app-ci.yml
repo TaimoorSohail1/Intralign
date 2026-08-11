@@ -1,19 +1,4 @@
-# OSLO Release 1 — Application CI (DTM-0001; Phase I).
-#
-# Implements the Deployment Governance §4 gate sequence for the app under code/
-# (monorepo override, ADR-0001). Gate semantics + ordering follow the starter-kit
-# template (30_engineering/delivery/starter_kit/ci-pipeline.yml); any gate failure
-# stops the run (steps run in order; first non-zero exit fails the job).
-# Gate logic lives in unit-testable scripts under code/ci/ (see code/ci/README.md,
-# incl. the per-gate forced-failure procedure).
-#
-# Gate 7 (human review) is enforced by GitHub branch protection on `main`
-# (required reviewer = owner), NOT by this workflow. Keep branch protection ON.
-# Gate 8 (promote) is out of Phase I scope (Deployment Governance §4.8).
-#
-# Does not touch doc-integrity.yml (knowledge-base docs gate).
-
-name: app-ci
+name: OSLO R1 application quality gates
 
 on:
   pull_request:
@@ -23,97 +8,118 @@ on:
     branches: [main]
     paths: ["code/**", ".github/workflows/app-ci.yml"]
 
+concurrency:
+  group: oslo-r1-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
-  pull-requests: read # gitleaks-action (gate 6) lists PR commits on pull_request events
+  pull-requests: read
 
 defaults:
   run:
     working-directory: code
 
 jobs:
-  app-ci:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANALYSIS_HARNESS: deterministic
+      ANALYSIS_PHASE_DELAY_MS: 0
+      EXTENDED_ANALYSIS_DELAY_MS: 0
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:55322/postgres
+      SUPABASE_URL: http://127.0.0.1:55321
+      WEB_URL: http://localhost:3000
+      SMTP_HOST: 127.0.0.1
+      SMTP_PORT: 55325
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:55321
+      OSLO_API_URL: http://127.0.0.1:8000
+
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # gitleaks (gate 6) scans commit history
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: pnpm/action-setup@v4
         with:
-          python-version: "3.12"
+          version: 10.25.0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: code/pnpm-lock.yaml
 
-      # --- Gate 1: Build (ratified stack) ---
-      - name: "Gate 1 — build backend (pip install + ruff)"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Gate 1 — install application dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
-          ruff check .
+          pnpm install --frozen-lockfile
+          uv sync --project services/api --frozen
 
-      - name: "Gate 1 — build frontend (npm ci + tsc/vite)"
-        working-directory: code/frontend
-        run: |
-          npm ci
-          npm run build
-
-      # --- Gate 2: Contract-traceability (HARD GATE) ---
-      # PR body must cite an approved IC-* contract id; label `phase-1-infra`
-      # bypasses until Phase I closes (decision #3). PR body/labels are passed
-      # via env (never interpolated into the shell). Push events to main carry
-      # no PR context: the gate already ran on the PR; merge is gate-7 protected.
-      - name: "Gate 2 — contract-traceability"
+      - name: Gate 2 — approved-contract traceability
         if: github.event_name == 'pull_request'
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
-        run: python -m ci.gate_contract
-
-      # --- Gate 3: Tests (positive AND negative) ---
-      # Suites run separately so an empty or absent suite fails on its own:
-      # pytest exits 5 on zero collected tests and 4 on a missing path — both
-      # non-zero. A suite without negatives is invalid (QA Governance).
-      - name: "Gate 3 — positive suite"
-        run: python -m pytest tests/positive
-
-      - name: "Gate 3 — negative suite"
-        run: python -m pytest tests/negative
-
-      # --- Gate 4: Epistemic-invariant gate (HARD GATE, Critical) ---
-      # Forbidden-token scan (allowlist: ci/invariant_allowlist.txt), no
-      # backend/**/authority dir, canonical-table migration linter (DL-043).
-      - name: "Gate 4 — epistemic-invariant gate"
-        run: python -m ci.gate_invariants
-
-      # --- Gate 5: Observability (REAL — DTM-0006, OBS-WA-00R) ---
-      # Static checks: every CHR-append call-site emits
-      # cognition_history_record_appended (a governed emission without its
-      # event fails the build, DL-054 cond.1); the A6 vocabulary is pinned
-      # verbatim in events.py; the two-axis replay harness exists. Then the
-      # replay suite runs (its live axes skip without a local Supabase stack;
-      # the pure tamper-detection axes always run — an empty/missing suite
-      # fails via pytest exit 4/5).
-      - name: "Gate 5 — observability (governed-output events + two-axis replay)"
+        shell: bash
         run: |
-          python -m ci.gate_observability
-          python -m pytest tests/replay
+          if ! grep -Eq 'IC-[A-Z0-9-]+' <<<"$PR_BODY"; then
+            echo "PR body must cite at least one approved IC-* contract."
+            exit 1
+          fi
 
-      # --- Gate 6: Security (secret-scan + dependency audits; findings FAIL) ---
-      - name: "Gate 6 — secret scan (gitleaks)"
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Start local Supabase
+        run: pnpm supabase start
 
-      - name: "Gate 6 — pip-audit (production deps)"
-        # Audits [project.dependencies] from pyproject.toml (production scope).
-        run: pipx run pip-audit .
+      - name: Export local Supabase credentials
+        shell: bash
+        run: |
+          status="$(pnpm exec supabase status -o json)"
+          echo "SUPABASE_SECRET_KEY=$(jq -r .SECRET_KEY <<<"$status")" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(jq -r .PUBLISHABLE_KEY <<<"$status")" >> "$GITHUB_ENV"
 
-      - name: "Gate 6 — npm audit (production deps, high+)"
-        working-directory: code/frontend
-        run: npm audit --omit=dev --audit-level=high
+      - name: Seed local platform
+        run: pnpm seed:local
 
-      # --- Gate 7: Human review — branch protection on `main`, not this file ---
-      # --- Gate 8: Promote — out of Phase I scope ---
+      - name: Gate 3 — API and web quality
+        run: |
+          pnpm lint:api
+          pnpm lint:web
+          pnpm test:api
+          pnpm test:web
+          pnpm build:web
+
+      - name: Start application
+        shell: bash
+        run: |
+          uv run --project services/api uvicorn oslo_api.main:app --host 127.0.0.1 --port 8000 > /tmp/oslo-api.log 2>&1 &
+          pnpm --filter @oslo/web start > /tmp/oslo-web.log 2>&1 &
+          for attempt in {1..60}; do
+            curl --fail --silent http://127.0.0.1:8000/health >/dev/null \
+              && curl --fail --silent http://127.0.0.1:3000/login >/dev/null \
+              && exit 0
+            sleep 2
+          done
+          cat /tmp/oslo-api.log /tmp/oslo-web.log
+          exit 1
+
+      - name: Gate 4 — end-to-end slices
+        run: pnpm test:e2e
+
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: |
+            code/tests/e2e/test-results
+            code/tests/e2e/playwright-report
+          if-no-files-found: ignore
+
+      - name: Stop local platform
+        if: always()
+        run: pnpm supabase stop

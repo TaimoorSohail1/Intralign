@@ -1,0 +1,23 @@
+{
+  "name": "oslo-app",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.25.0",
+  "scripts": {
+    "heroku-postbuild": "bash scripts/heroku-build.sh",
+    "dev:web": "pnpm --filter @oslo/web dev",
+    "dev:api": "uv run --project services/api uvicorn oslo_api.main:app --reload --host 127.0.0.1 --port 8000",
+    "build:web": "pnpm --filter @oslo/web build",
+    "lint:web": "pnpm --filter @oslo/web lint",
+    "lint:api": "uv run --project services/api ruff check services/api/src services/api/tests services/api/scripts",
+    "test:web": "pnpm --filter @oslo/web test",
+    "test:api": "uv run --project services/api pytest services/api/tests",
+    "test:e2e": "pnpm --filter @oslo/e2e test",
+    "seed:local": "uv run --project services/api python services/api/scripts/seed_local.py",
+    "seed:e2e": "uv run --project services/api python services/api/scripts/seed_e2e.py",
+    "supabase": "supabase"
+  },
+  "devDependencies": {
+    "supabase": "^2.109.1"
+  }
+}

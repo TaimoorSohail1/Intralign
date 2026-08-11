@@ -1,46 +1,42 @@
-# OSLO Release 1 — Application (`code/`)
+# OSLO Product Grill
 
-Monorepo for the OSLO application: a Python cognition backend + a React frontend.
-Build rules: see [`CLAUDE.md`](./CLAUDE.md). Authoritative canon lives in the
-knowledge-base zones (`00_owner/`, `30_engineering/`, `20_handoff/`).
+Production application for the OSLO Product Grill vertical slices. The knowledge package and golden prototype remain external design inputs; this repository owns executable application code.
 
-> **Governance note:** placing app code here is a monorepo override of the ratified
-> default (a separate owner-owned `oslo` repo). It should be recorded as a decision/ADR
-> and ratified by the owner. Stack is bound by **DL-054**.
+## Repository boundaries
 
-## Stack (DL-054)
+- `apps/web` — Next.js App Router web application.
+- `services/api` — FastAPI application and business capabilities.
+- `packages/contracts` — generated/shared API contracts.
+- `packages/ui` — OSLO design tokens and reusable UI primitives.
+- `supabase` — reproducible local Supabase configuration and seed data.
+- `infra` — deployment and operational configuration.
+- `tests/e2e` — cross-service Playwright journeys.
+- `docs/adr` — decisions that affect multiple capabilities.
 
-- **Backend:** Python · FastAPI (transport) · Pydantic / Pydantic AI · LangGraph (orchestration)
-- **Frontend:** React · Vite · MUI · TanStack · Orval (client generated from the backend OpenAPI)
-- **Stores:** Supabase (Postgres + Auth/GoTrue + RLS + pgvector + Storage) · Neo4j · Redis
-- **Observability:** OpenTelemetry → Grafana · LangSmith (complement)
+Capability code stays together inside each service. Infrastructure adapters depend on application/domain interfaces, not the reverse.
 
-## Local bring-up (Phase I) — verified commands
+## Local platform
 
-```bash
-cp .env.example .env            # fill from owner-provided secrets; never commit .env
+1. Run `pnpm install`.
+2. Run `pnpm supabase start`.
+3. Run `pnpm seed:local`.
+4. In one terminal, run `pnpm dev:api`.
+5. In another terminal, run `pnpm dev:web`.
 
-# 1. Supabase (Postgres + Auth + pgvector + Storage) — via the Supabase CLI
-supabase start                  # then: supabase status → copy URL + keys into .env
-# NOTE (DL-054): use the ports `supabase status` PRINTS, not the CLI defaults — on this
-# machine they are shifted (API http://127.0.0.1:54331, DB 127.0.0.1:54332).
+The local admin is `admin@oslo.local`; its development-only default password is `OsloLocalAdmin123!`. Override both values with the seed environment variables documented in `.env.example`.
 
-# 2. The other backing services (Neo4j + Redis) + local observability (dev-only)
-docker compose --profile observability up -d
-#   otel-lgtm = OTLP collector (4317 gRPC / 4318 HTTP) + Grafana UI at http://localhost:3000
-#   omit `--profile observability` to run without the observability stack
+- Supabase API: `http://127.0.0.1:55321`
+- PostgreSQL: `127.0.0.1:55322`
+- Studio: `http://127.0.0.1:55323`
+- Mailpit: `http://127.0.0.1:55324`
 
-# 3. Backend (native) — Python project is rooted at code/
-pip install -e ".[dev]"
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 OTEL_SERVICE_NAME=oslo-backend \
-  uvicorn backend.api.app:app --reload
-# /health → 200; the trace appears in Grafana (http://localhost:3000) under Tempo,
-# service `oslo-backend`. Unset OTEL_EXPORTER_OTLP_ENDPOINT → app still boots (warns).
+## Verification
 
-# 4. Frontend (native) — backend must be serving /openapi.json first
-cd frontend && npm install && npm run api:gen && npm run dev
-```
+- API tests: `pnpm test:api`
+- API lint: `pnpm lint:api`
+- Web tests: `pnpm test:web`
+- Web lint: `pnpm lint:web`
+- Production web build: `pnpm build:web`
+- Desktop and mobile tracer: `pnpm test:e2e`
 
-Phase I is **done** only when the Definition of Done in
-`30_engineering/implementation/Phase_I_Foundation_and_Environment/IMPLEMENTATION_PLAN.md`
-holds (stores healthy, CI gates fail correctly, canonical stores append-only, Staging up).
+The tracer covers Owner login, invitation delivery through Mailpit, account activation, one-time Welcome, draft-project creation, intake entry, resend, and revoke.
