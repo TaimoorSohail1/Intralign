@@ -6,9 +6,9 @@
 
 **Audited branch:** `codex/release-2-build`
 
-**Audited commit:** `9efa6ae`
+**Audited commit:** `8b8f702`
 
-**Working tree at audit:** clean
+**Working tree at audit:** implementation commit clean; this ledger update and one untracked, unaccepted Slice-1 E2E candidate remain outside the implementation commit.
 
 **Current owner-authorized work scope:** **Slices 1–3 only**
 
@@ -29,10 +29,10 @@
 - The R2 reference prototype is healthy: headless verification on 2026-08-11 returned **85 checks, 0 failures, 0 page errors**.
 - The Phase 0 guardrail command is healthy: `pnpm test:r2-guardrails` returned **4 passed**.
 - The guard registry contains **60 guards**: `GT-01…GT-57` and `GT-A1…GT-A3`.
-- **0 guards are active; all 60 are pending.** Therefore no R2 slice is functionally verified in the executable application.
+- **6 guards are active; 54 are pending.** Slice 1 activates `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, and `GT-20`; the remaining slices are not functionally verified.
 - Slice 9's FE↔BE contract currently contains **58 mapped dynamic surfaces**.
 - All **6/6 Phase-A prototype corrections** checked by the gate are present.
-- The application code beneath `code/` is the inherited R1 baseline. Since the R2 design import, the only executable R2 work is the Phase 0 guardrail gate and a small prototype correction; inherited R1 capabilities are **reuse candidates, not R2 completion evidence**.
+- Slice 1 now has an R2 implementation at `8b8f702`; its automated functional gates pass, but manual timeout/retry verification and same-state prototype parity remain open. Inherited R1 capabilities elsewhere remain **reuse candidates, not R2 completion evidence**.
 
 ### Evidence commands
 
@@ -45,7 +45,8 @@ Expected audited output:
 
 ```text
 4 passed
-[R2 guardrails] 60 registered · 0 active · 60 pending · 58 mapped surfaces · 6/6 prototype corrections
+9 passed
+[R2 guardrails] 60 registered · 6 active · 54 pending · 58 mapped surfaces · 6/6 prototype corrections
 ```
 
 The prototype was separately opened headlessly with Chromium and evaluated through `_s10SelfCheck()`:
@@ -86,7 +87,7 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 
 | Slice | Current delivery status | UI/UX review | Manual regression | Functional testing | Identical to prototype | Test cases | Next required action / dependency |
 |---|---|---|---|---|---|---|---|
-| **1 · Outcome-Integrity Engine** | **SIGNED OFF · READY · NOT STARTED.** No R2 production implementation commit or active guard. R1 CAF/grounding primitives exist only as an unverified reuse baseline. | **REFERENCE APPROVED; APP NOT REVIEWED.** No executable-app comparison for the five-band integrity indicator, limiting pillar, decomposition, pending marker, or pillar drills. | **NOT RUN.** | **NOT RUN.** Slice-owned guards remain pending. | **NOT VERIFIED.** Prototype is the oracle; production parity has not been assessed. | **Designed:** AC-1…AC-10; principal guards `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, `GT-20`. **Active/passing production tests: 0.** | Start Phase A: implement the unified issue layer and three-pillar `Integrity` computation, then activate the associated guards. |
+| **1 · Outcome-Integrity Engine** | **IN PROGRESS.** Implementation commit `8b8f702` delivers the normalized three-pillar engine, weakest-gate/foundation-first composition, false-confidence/checkpoint issues, persisted/API projection, Overview and breakdown UI, and issue ordering. Completion is withheld because two required verification gates remain open. | **PARTIAL · BLOCKED.** Desktop/tablet/mobile implementation captures exist and the live app's hierarchy, responsive geometry, copy, controls, and dialog behavior were inspected. The combined images were rejected because the prototype is pre-confirmation while the app is post-analysis; keyboard traversal, reduced motion, 200% zoom, and same-state visual comparison remain open. Evidence: `../code/reports/r2/slice-01/UI_UX_AUDIT.md`. | **PARTIAL PASS.** Real seeded-owner intake→analysis→Overview, breakdown, console, and responsive checks passed. A Grounding projection defect was found and fixed. Manual forced timeout/retry/last-good and a fresh screenshot capture could not be completed after the in-app browser stopped attaching pages. Evidence: `../code/reports/r2/slice-01/MANUAL_REGRESSION.md`. | **PASS at `8b8f702`.** `pnpm test:api`: 294 passed; `pnpm test:web -- --run --reporter=dot`: 23 files/124 passed; guardrail infrastructure: 4 passed; active selectors: 9 passed; lint/build/migration gates pass. Six Slice-1 guards are active. Evidence: `../code/reports/r2/slice-01/TEST_RESULTS.md`. | **FAILED EVIDENCE GATE.** Six source captures and three combined comparisons exist, but the compared workflow states differ. No equivalence or waiver is inferred. Evidence: `../code/reports/r2/slice-01/PROTOTYPE_PARITY.md` and `../code/reports/r2/slice-01/screenshots/`. | **Automated production coverage passing:** AC-1…AC-10 mapped through `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, `GT-20`; 6/6 guards active. **Completion test case remains open:** accepted same-state visual/E2E and manual failure/retry verification. | Resume Slice 1 only. Advance the prototype past outcome confirmation, recapture matching desktop/tablet/mobile states in the in-app browser, complete manual timeout/retry/last-good checks, fix any parity findings, and rerun gates. Do not acquire Slice 3 yet. |
 | **2 · Issue Lifecycle & Grounding Acts** | **SIGNED OFF · WAITING ON SLICES 1 + 3.** No R2 lifecycle/attestation implementation evidence. DL-211 proposal-resolution scope is also unimplemented in production. | **REFERENCE APPROVED; APP NOT REVIEWED.** No executable-app review of the two “Acted on · not yet closed” forks, itemized findings, or cross-surface resolution sync. | **NOT RUN.** | **NOT RUN.** All lifecycle and DL-211 server twins are pending. | **NOT VERIFIED.** | **Designed:** AC-1…AC-11 plus DL-211 addendum; principal guards `GT-09…12`, `GT-25…27`, `GT-33`, `GT-51…56`. **Active/passing production tests: 0.** | Complete the Slice 1 issue model and Slice 3 reanalysis path; resolve the Slice 2 owner touchpoints before final lifecycle implementation. |
 | **3 · Reanalysis Engine + Freeze/Unlock** | **SIGNED OFF · READY · NOT STARTED.** R1 recompute machinery is a reuse candidate, but the R2 batching, Fast/Deep contract, STALE state, and latch are not R2-verified. | **REFERENCE APPROVED; APP NOT REVIEWED.** No review of executable stale, pending, freeze/unlock, progress, failure, or “your read moved” states. | **NOT RUN.** | **NOT RUN.** No active R2 tests for batching, latency, latching, or presentation-only freeze. | **NOT VERIFIED.** | **Designed:** AC-1…AC-10; principal guards `GT-04`, `GT-09`, `GT-10`, `GT-18`, `GT-23`, `GT-24`, plus shared async guards `GT-A1…A3`. **Active/passing production tests: 0.** | Begin with Slice 1 in Phase A. Owner inputs O-3/O-4 must be resolved for Fast-vs-Deep batch behavior and `confirmCount` semantics. |
 | **4 · Freemium Entitlement & Commitment Gate** | **SIGNED OFF · OWNER-BLOCKED.** Outside the current Slices 1–3 work window. Existing subscription/tiering code is not evidence of the R2 Outcome-unit or capacity-only commitment gate. | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** No active R2 entitlement, real-checkout, never-metered, archive, or intent tests. | **BLOCKED · NOT VERIFIED.** | **Designed:** AC-1…AC-10; principal guards `GT-01`, `GT-02`, `GT-03`, `GT-30`. **Active/passing production tests: 0.** | **Do not start.** Owner must explicitly reopen Slice 4. Its dependency on Slice 5 and owner choice O-6 remain recorded for later. |
@@ -108,7 +109,7 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 | 2 | Slice 2 | **ACTIVE SCOPE.** Begins after the Slice 1 issue object and Slice 3 reanalysis-only writer are available. |
 | 3 | Slices 4–10 | **OWNER-BLOCKED.** Do not start implementation, review, testing, or parity work until the owner explicitly reopens these slices. |
 
-**Immediate next tracer:** implement the smallest Slice 1 + Slice 3 path that reads one outcome, returns all three pillar bands, queues one grounding act, labels the read stale, and allows only `reanalysis.landed` to move the issue/integrity state. Slice 2 follows. Do not advance Slices 4–10.
+**Immediate next work:** finish Slice 1's two open verification gates against implementation commit `8b8f702`. Do not acquire Slice 3 while Slice 1 remains `IN PROGRESS`. Slice 2 follows Slices 1 and 3. Do not advance Slices 4–10.
 
 ---
 
@@ -154,6 +155,8 @@ Reviewer / date:
 - Gate infrastructure tests: `../code/tests/positive/ci/test_gate_r2_guardrails.py`, `../code/tests/negative/ci/test_gate_r2_guardrails.py`
 - R2 import commit: `09befa5`
 - Phase 0 gate commit: `9efa6ae`
+- Slice 1 implementation commit: `8b8f702`
+- Slice 1 durable evidence: `../code/reports/r2/slice-01/`
 
 ---
 
