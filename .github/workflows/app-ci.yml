@@ -1,15 +1,15 @@
-name: OSLO R1 application quality gates
+name: OSLO application quality gates
 
 on:
   pull_request:
     branches: [main]
-    paths: ["code/**", ".github/workflows/app-ci.yml"]
+    paths: ["code/**", "release-2/**", ".github/workflows/app-ci.yml"]
   push:
     branches: [main]
-    paths: ["code/**", ".github/workflows/app-ci.yml"]
+    paths: ["code/**", "release-2/**", ".github/workflows/app-ci.yml"]
 
 concurrency:
-  group: oslo-r1-ci-${{ github.ref }}
+  group: oslo-app-ci-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -72,6 +72,9 @@ jobs:
             exit 1
           fi
 
+      - name: Gate 2b — R2 doctrine-guardrail contract
+        run: pnpm test:r2-guardrails
+
       - name: Start local Supabase
         run: pnpm supabase start
 
@@ -97,7 +100,9 @@ jobs:
         shell: bash
         run: |
           uv run --project services/api uvicorn oslo_api.main:app --host 127.0.0.1 --port 8000 > /tmp/oslo-api.log 2>&1 &
+          echo $! > /tmp/oslo-api.pid
           pnpm --filter @oslo/web start > /tmp/oslo-web.log 2>&1 &
+          echo $! > /tmp/oslo-web.pid
           for attempt in {1..60}; do
             curl --fail --silent http://127.0.0.1:8000/health >/dev/null \
               && curl --fail --silent http://127.0.0.1:3000/login >/dev/null \
@@ -122,4 +127,11 @@ jobs:
 
       - name: Stop local platform
         if: always()
-        run: pnpm supabase stop
+        shell: bash
+        run: |
+          for pid_file in /tmp/oslo-api.pid /tmp/oslo-web.pid; do
+            if [[ -f "$pid_file" ]]; then
+              kill "$(cat "$pid_file")" 2>/dev/null || true
+            fi
+          done
+          pnpm supabase stop

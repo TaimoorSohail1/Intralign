@@ -3234,7 +3234,7 @@ function surveyDoorHTML(){
    Best practice: ask users who have EXPERIENCED the value, not first-run users (asking too early inflates
    "not disappointed" and misreads the ~40% bar). So the nudge fires only post-activation + engaged, once, and
    is dismissible; it opens the same survey. Feedback stays always-available (menu + left-rail); only the SURVEY
-   is triggered. Activation = first grounding act (confirm/flag/route → confirmCount++), per DL-173. */
+   is triggered. Initiated = first grounding act; Activated = second grounding act / unlock, per DR-6. */
 var _surveyNudged=false, _surveyNudgeDismissed=false;
 /* The nudge must NOT persist permanently (users go blind to a prompt that never leaves): auto-retire it once it's been
    shown + ignored for SV_NUDGE_TTL, re-offer after SV_NUDGE_SNOOZE, at most SV_NUDGE_MAX times, then stop for the
@@ -3243,7 +3243,7 @@ var SV_NUDGE_TTL=45000, SV_NUDGE_SNOOZE=120000, SV_NUDGE_MAX=3;   /* SIM:#23 */
 var _svNudgeShownTs=0, _svNudgeSnoozeUntil=0, _svNudgeShows=0, _svNudgeTimer=null;
 function _svNudgeArm(ms){ if(_svNudgeTimer) clearTimeout(_svNudgeTimer); _svNudgeTimer=setTimeout(function(){ _svNudgeTimer=null; if(typeof render==='function') render(); }, Math.max(200,ms)); }
 var _SURVEY_TRIGGER_AB='immediate';   /* internal knob for a later LIVE A/B: 'immediate' (at engagement) vs 'delayed' (more usage first). Not user-visible. */
-function _isActivated(){ return confirmCount>=1; }                         /* DL-173: first of {confirm, flag, route} */
+function _isActivated(){ return confirmCount>=2; }                         /* DR-6: second grounding act / unlock */
 function _isEngaged(){ if(typeof freezeOn==='function' && freezeOn()) return false; var thresh=(_SURVEY_TRIGGER_AB==='delayed')?4:3; return confirmCount>=thresh; }  /* past unlock (freeze off @2) + ≥1 act beyond = value experienced */   /* SIM:#15 */
 /* Procedural COACHING (how-to mechanics: "do them top to bottom", "click any name to rename", "click a node")
    teaches the first-run journey but becomes clutter once the user has the capability. Show it only while the user

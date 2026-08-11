@@ -12,6 +12,7 @@
     "lint:api": "uv run --project services/api ruff check services/api/src services/api/tests services/api/scripts",
     "test:web": "pnpm --filter @oslo/web test",
     "test:api": "uv run --project services/api pytest services/api/tests",
+    "test:r2-guardrails": "uv run --project services/api pytest tests/positive/ci/test_gate_r2_guardrails.py tests/negative/ci/test_gate_r2_guardrails.py && uv run --project services/api python -m ci.gate_r2_guardrails --run-active",
     "test:e2e": "pnpm --filter @oslo/e2e test",
     "seed:local": "uv run --project services/api python services/api/scripts/seed_local.py",
     "seed:e2e": "uv run --project services/api python services/api/scripts/seed_e2e.py",

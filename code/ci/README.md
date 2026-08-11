@@ -5,6 +5,26 @@ the Deployment Governance §4 gate sequence (semantics per the starter-kit
 `30_engineering/delivery/starter_kit/ci-pipeline.yml`). Steps run in order; the
 first failure stops the run and blocks the PR.
 
+## R2 doctrine-guardrail contract (Phase 0)
+
+`python -m ci.gate_r2_guardrails --run-active` validates the authoritative
+Slice 9 FE-to-BE Integration Map and the explicit guard registry in
+`ci/r2_guardrails.json`. The client-requested Phase 0 range is GT-01…GT-50.
+The current authoritative Slice 9 also defines GT-51…GT-57 and GT-A1…GT-A3;
+they are registered so later additions cannot silently disappear.
+
+- `pending` guards are visible and allowed to remain non-gating while their
+  slice is unbuilt.
+- `active` guards must name real pytest selectors and fail the CI run when the
+  behavior is red.
+- Removing a guard or leaving any Integration Map binding empty fails the gate.
+
+Run the Phase 0 gate locally from `code/`:
+
+```sh
+pnpm test:r2-guardrails
+```
+
 | Gate | Step(s) | Logic lives in |
 |---|---|---|
 | 1 Build | `pip install -e ".[dev]"` + `ruff check .`; frontend `npm ci` + `npm run build` (tsc + vite) | workflow |
