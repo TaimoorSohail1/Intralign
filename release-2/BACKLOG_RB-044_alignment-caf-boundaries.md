@@ -1,0 +1,9 @@
+# RB-044 — CAF dimension boundaries + deterministic structural-target assignment (alignment relational model)
+
+- **Status:** ✅ CLOSED → **RATIFIED 2026-08-09 → DL-210** (`canon/decisions/DL-210_CAF_DIMENSION_BOUNDARIES_AND_DETERMINISTIC_ASSIGNMENT.md`). Proposal: `GOVERNANCE_PROPOSAL_alignment-caf-boundaries-deterministic-assignment.md`.
+- **Raised:** 2026-08-09 (owner-directed R&D, continuation of RB-043/DL-209).
+- **Trigger:** DL-209 generalized the load-bearing test across pillars but left the CAF/Viability dimension endpoints — especially **Alignment** — implicit, and left an unreconciled tension with the canonical CAF Assessment Model (finding-type ≠ dimension; multi-dimension findings; Impact Assessment assigns by judgment) vs DL-209's deterministic, decompose-never-dual-class classification.
+- **Scope (see proposal):** (1) CAF dimension boundary cut (Clarity=definition · Alignment=edge/relational · Feasibility=achievability) + precedence; (2) Alignment as relational, assessed top-down outcome→roots, with optimization + misalignment outputs, tangent check, metric-mismatch folded in; (3) deterministic-by-structural-target dimension assignment (amends CAF Positions #10/#11; preserves #2/#13); (4) escalation valve + resolution lifecycle (runtime→user clarify/verify issue; model-gap→owner/governance); (5) model-gap leverage-gated known-unknown display + incompleteness ceiling (unknown ≠ Fragile).
+- **Amends canon:** `10_product/domain/CAF_ASSESSMENT_MODEL_V1.md` Positions #10/#11 (dimension assignment: judgment → deterministic-by-structural-target; judgment quarantined at L0 extraction, surfaced via escalation). Applies at R1 graduation.
+- **Realization:** extends DL-209 / `slices/10-load-bearing-sensitivity-engine.md`; candidate guards GT-46…GT-50.
+- **Closes on:** owner ratification → DL-210 record + CAF-model amendment staged + Slice 10/BUILD_SPEC extended + register updated.
