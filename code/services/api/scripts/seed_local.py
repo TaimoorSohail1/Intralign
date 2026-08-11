@@ -15,8 +15,15 @@ WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
 WORKSPACE_NAME = "OSLO Product Grill"
 
 
+def supabase_executable(repository_root: Path, *, platform_name: str | None = None) -> Path:
+    """Return the platform-specific Supabase CLI shim installed by pnpm."""
+    platform_name = platform_name or os.name
+    executable_name = "supabase.cmd" if platform_name == "nt" else "supabase"
+    return repository_root / "node_modules" / ".bin" / executable_name
+
+
 def local_status(repository_root: Path) -> dict[str, str]:
-    executable = repository_root / "node_modules" / ".bin" / "supabase.cmd"
+    executable = supabase_executable(repository_root)
     result = subprocess.run(  # noqa: S603
         [str(executable), "status", "-o", "json"],
         cwd=repository_root,
