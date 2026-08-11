@@ -10,6 +10,8 @@
 
 **Resumption retry:** 2026-08-12 01:02–01:05 PKT. The required Codex in-app browser connected and returned its supported control surface, but two fresh-page attempts timed out before a webview attached. After the first failure, the documented browser recovery procedure was applied: the existing browser binding was retained, controlled and user-visible tab lists were checked and found empty, a fresh tab was requested, and the visibility capability was exposed. Visibility remained false and a second fresh tab also failed to attach. The local Supabase, FastAPI, and Next.js services were healthy, with the API listening on `127.0.0.1:8000` and the web application on `127.0.0.1:3002`; therefore this run again produced no valid manual interaction or screenshot evidence.
 
+**Second resumption retry:** 2026-08-12 02:02–02:05 PKT. The required in-app browser again connected and exposed its supported control surface. The first fresh page timed out before a webview attached. The documented recovery retained the browser binding, confirmed that controlled and user-visible tab lists were empty, requested visibility, and requested one fresh page. Visibility remained false, the second page also timed out before attachment, and both tab lists remained empty. Local Supabase, the seeded owner account, FastAPI on `127.0.0.1:8000`, and Next.js on `127.0.0.1:3002` were healthy. No interaction or screenshot was accepted, and no substitute browser was used.
+
 ## Passed in the real application
 
 1. Signed in as the seeded workspace owner.
@@ -32,3 +34,5 @@ Automated tests prove failed reanalysis preserves the last-good snapshot and dir
 No alternative browser was substituted. The Product Design browser constraint and the user's explicit in-app-browser requirement therefore leave this gate open; Slice 1 must remain `IN PROGRESS`.
 
 The 01:02–01:05 PKT resumption attempt reached the same blocker before any page existed to control, so timeout → stale/last-good → retry and the remaining accessibility checks are still unexercised.
+
+The 02:02–02:05 PKT resumption attempt reproduced the same attachment blocker after the supported recovery path. The open manual gate is unchanged.
