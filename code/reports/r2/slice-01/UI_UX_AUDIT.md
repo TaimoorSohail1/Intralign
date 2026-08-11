@@ -8,6 +8,8 @@
 
 **Verdict:** **PARTIAL PASS — same-state visual/responsive parity passes; remaining manual accessibility and failure-state checks block the full gate.**
 
+**Current-run evidence limit (2026-08-12 00:09 PKT):** the required in-app browser could not attach a fresh page after three attempts. The automated same-state captures were regenerated and inspected, but they are not substituted for the missing current-run manual keyboard, assistive-technology, zoom, reduced-motion, or failure-state audit.
+
 ## Passed findings
 
 1. **Hierarchy and copy.** The five-step Fragile→Sound ramp leads, the single limiting pillar follows, and all three pillar controls expose a band and count basis. Moment-in-time and live-tracking language is explicit; no probability or 0–100 integrity score appears.

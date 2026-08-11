@@ -1,6 +1,8 @@
 # R2 Slice 01 code review
 
-**Run:** 2026-08-12 00:03 PKT
+**Run:** 2026-08-12 00:17 PKT
+
+**Reviewed implementation commits:** `8b8f702`, `2958c4a`
 
 **Verdict:** actionable findings fixed; no unresolved code-level security finding.
 

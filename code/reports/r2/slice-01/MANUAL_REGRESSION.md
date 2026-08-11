@@ -6,6 +6,8 @@
 
 **Verdict:** **PARTIAL PASS — completion blocked by the unexercised forced timeout/retry/last-good journey.**
 
+**Current-run retry:** 2026-08-12 00:00–00:09 PKT. The selected Codex in-app browser advertised the required backend, but three fresh-page attempts each timed out before a webview attached. Controlled and user-visible tab lists remained empty, and the visibility capability did not expose a page. No current-run interaction or screenshot was accepted from those attempts.
+
 ## Passed in the real application
 
 1. Signed in as the seeded workspace owner.
@@ -23,6 +25,6 @@
 
 ## Open manual gate
 
-Automated tests prove failed reanalysis preserves the last-good snapshot and direct issue actions do not move integrity. The required manual forced timeout → stale/last-good → retry journey could not be completed after the chosen in-app browser's semantic click and screenshot channels repeatedly timed out and fresh pages stopped attaching. The browser tabs and viewport overrides were finalized after the attempt.
+Automated tests prove failed reanalysis preserves the last-good snapshot and direct issue actions do not move integrity. The required manual forced timeout → stale/last-good → retry journey could not be completed after the chosen in-app browser's semantic click and screenshot channels repeatedly timed out and fresh pages stopped attaching. The 2026-08-12 retry reproduced the attachment failure before any page became controllable.
 
 No alternative browser was substituted. The Product Design browser constraint and the user's explicit in-app-browser requirement therefore leave this gate open; Slice 1 must remain `IN PROGRESS`.

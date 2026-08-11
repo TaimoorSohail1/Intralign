@@ -1,6 +1,6 @@
 # R2 Slice 01 prototype parity notes
 
-**Run:** 2026-08-12 00:03 PKT
+**Run:** 2026-08-12 00:17 PKT
 
 **Verdict:** **PASS for applicable Slice 1 behavior, copy, state, and visual structure at desktop, tablet, and mobile.**
 
@@ -31,4 +31,4 @@ The executable masthead now includes the prototype's compact three-pillar shape 
 - `screenshots/comparison-mobile.png`
 - Source images: `screenshots/prototype-*.png` and `screenshots/implementation-*.png`
 
-All three combined images were opened and inspected after the fixture-state correction. The automated specification also passes at all three viewports. Server-only last-good failure preservation is judged against the slice specification and active `GT-10`; its required manual retry exercise remains open in `MANUAL_REGRESSION.md`.
+All three combined images were regenerated, opened, and inspected after the fixture-state correction. The automated specification passes at all three viewports. Server-only last-good failure preservation is judged against the slice specification and active `GT-10`; its required manual retry exercise remains open in `MANUAL_REGRESSION.md`. These automated captures do not replace the blocked current-run in-app-browser audit.
