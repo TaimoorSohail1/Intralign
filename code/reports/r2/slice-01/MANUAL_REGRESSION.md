@@ -8,6 +8,8 @@
 
 **Current-run retry:** 2026-08-12 00:00–00:09 PKT. The selected Codex in-app browser advertised the required backend, but three fresh-page attempts each timed out before a webview attached. Controlled and user-visible tab lists remained empty, and the visibility capability did not expose a page. No current-run interaction or screenshot was accepted from those attempts.
 
+**Resumption retry:** 2026-08-12 01:02–01:05 PKT. The required Codex in-app browser connected and returned its supported control surface, but two fresh-page attempts timed out before a webview attached. After the first failure, the documented browser recovery procedure was applied: the existing browser binding was retained, controlled and user-visible tab lists were checked and found empty, a fresh tab was requested, and the visibility capability was exposed. Visibility remained false and a second fresh tab also failed to attach. The local Supabase, FastAPI, and Next.js services were healthy, with the API listening on `127.0.0.1:8000` and the web application on `127.0.0.1:3002`; therefore this run again produced no valid manual interaction or screenshot evidence.
+
 ## Passed in the real application
 
 1. Signed in as the seeded workspace owner.
@@ -28,3 +30,5 @@
 Automated tests prove failed reanalysis preserves the last-good snapshot and direct issue actions do not move integrity. The required manual forced timeout → stale/last-good → retry journey could not be completed after the chosen in-app browser's semantic click and screenshot channels repeatedly timed out and fresh pages stopped attaching. The 2026-08-12 retry reproduced the attachment failure before any page became controllable.
 
 No alternative browser was substituted. The Product Design browser constraint and the user's explicit in-app-browser requirement therefore leave this gate open; Slice 1 must remain `IN PROGRESS`.
+
+The 01:02–01:05 PKT resumption attempt reached the same blocker before any page existed to control, so timeout → stale/last-good → retry and the remaining accessibility checks are still unexercised.

@@ -10,6 +10,8 @@
 
 **Current-run evidence limit (2026-08-12 00:09 PKT):** the required in-app browser could not attach a fresh page after three attempts. The automated same-state captures were regenerated and inspected, but they are not substituted for the missing current-run manual keyboard, assistive-technology, zoom, reduced-motion, or failure-state audit.
 
+**Resumption evidence limit (2026-08-12 01:05 PKT):** the in-app browser connected, but two fresh-page requests failed before a webview attached even after the documented recovery procedure and visibility attempt. Controlled and user-visible tab lists remained empty. The healthy local application could not be manually inspected, so no open accessibility or failure-state check changed status.
+
 ## Passed findings
 
 1. **Hierarchy and copy.** The five-step Fragile→Sound ramp leads, the single limiting pillar follows, and all three pillar controls expose a band and count basis. Moment-in-time and live-tracking language is explicit; no probability or 0–100 integrity score appears.

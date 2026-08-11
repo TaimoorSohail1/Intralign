@@ -6,9 +6,9 @@
 
 **Audited branch:** `codex/release-2-build`
 
-**Audited commit:** `2388702`
+**Audited commit:** `726186a`
 
-**Working tree at audit:** the fresh Slice-1-only E2E rerun regenerated six parity screenshots; current-run report and ledger updates remain uncommitted. No non-Slice-1 product change is present.
+**Working tree at audit:** current-run Slice-1 manual-regression/UI-audit and ledger updates remain uncommitted. No product change and no non-Slice-1 change is present.
 
 **Current owner-authorized work scope:** **Slices 1–3 only**
 
@@ -171,6 +171,18 @@ Reviewer / date:
 5. Update durable evidence and this ledger. Mark Slice 1 COMPLETE only if every required gate passes, commit the verified implementation, then commit the final ledger evidence separately.
 
 **Run result:** candidate review, automated parity capture, all scoped functional/guardrail/lint/build/migration gates, and Code Review passed. Manual timeout/recovery and accessibility gates remain blocked because the required in-app browser failed to attach a page on three fresh attempts. Slice 1 remains `IN PROGRESS`; no later slice was acquired.
+
+---
+
+## 8. Active Slice 1 resumption plan — 2026-08-12
+
+1. Reconnect the required Codex in-app browser to the real local application without substituting another browser surface.
+2. Exercise the forced timeout → stale/last-good → retry journey and verify the last successful read is preserved throughout recovery.
+3. Complete manual keyboard traversal, dialog announcements/focus behavior, reduced-motion observation, 200% zoom, and desktop/tablet/mobile checks against the Slice 1 specification and prototype.
+4. Rerun the scoped Slice 1 automated, guardrail, lint, build, migration, and end-to-end gates if the manual gates pass; review security, privacy, authorization, tenant boundaries, and error handling.
+5. Update durable evidence and the ledger. Mark Slice 1 `COMPLETE` only if every open gate passes; otherwise record the exact blocker and keep Slice 1 `IN PROGRESS`.
+
+**Run result:** the required in-app browser connected, but two fresh-page requests timed out before a webview attached. The documented recovery procedure retained the existing browser binding, confirmed empty controlled/user-visible tab lists, requested a fresh tab, and attempted visibility; visibility remained false and the second page also failed to attach. Local Supabase, FastAPI, and Next.js services were healthy. No substitute browser was used, no valid manual evidence was produced, and no product code changed. Slice 1 remains `IN PROGRESS`; no later slice was acquired.
 
 ---
 
