@@ -212,4 +212,16 @@ Reviewer / date:
 
 ---
 
+## 11. Active Slice 1 resumption plan - 2026-08-12 04:02 PKT
+
+1. Restore the real seeded local application stack and reconnect the required Codex in-app browser without substituting another browser surface.
+2. If a page attaches, exercise timeout to stale/last-good to retry and complete manual keyboard, announcement/focus, reduced-motion, 200% zoom, permissions, adjacent-regression, and desktop/tablet/mobile checks.
+3. Capture, save, and inspect current-run implementation and matching-state prototype screenshots before accepting UI/UX or parity evidence.
+4. Rerun the scoped Slice 1 automated, guardrail, lint, build, migration, and end-to-end gates only if manual verification passes or product code changes; repeat Code Review for security, privacy, authorization, tenant boundaries, and error handling.
+5. Update durable evidence and this ledger. Mark Slice 1 `COMPLETE` only if every open gate passes; otherwise record the exact blocker and keep Slice 1 `IN PROGRESS`.
+
+**Run result:** the required in-app browser connected, but the first fresh-page request timed out before a webview attached. The documented browser-interaction recovery retained the binding, checked controlled and user-visible tab lists, requested visibility, and requested one fresh page; the retry also failed before attachment. Both tab lists were empty and visibility remained false afterward. Docker Desktop's user process and WSL distribution were running, but Docker Engine requests timed out and the stopped Windows service could not be started by the scheduler account; this would block the seeded journey after page attachment, but the browser failed before navigation. No substitute browser, current-run screenshot, interaction, automated rerun, or product change was accepted. Slice 1 remains `IN PROGRESS`; no later slice was acquired and Slices 4-10 remain untouched.
+
+---
+
 _This is an operational delivery ledger created at the owner's direction. Product and governance authority remain with the owner; this ledger reports evidence and must not be used to ratify or redefine scope._
