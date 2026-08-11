@@ -89,11 +89,20 @@ def ensure_application_records(*, database_url: str, user_id: UUID) -> None:
         )
         cursor.execute(
             """
-            insert into public.memberships (workspace_id, user_id, role, welcome_seen_at)
-            values (%s, %s, 'owner', now())
-            on conflict (workspace_id, user_id) do update set role = 'owner'
+            insert into private.platform_admins (singleton, user_id, workspace_id)
+            values (true, %s, %s)
+            on conflict (singleton) do update set
+              user_id = excluded.user_id,
+              workspace_id = excluded.workspace_id
             """,
-            (WORKSPACE_ID, user_id),
+            (user_id, WORKSPACE_ID),
+        )
+        cursor.execute(
+            """
+            delete from public.memberships
+            where user_id = %s
+            """,
+            (user_id,),
         )
         cursor.execute(
             """
@@ -123,7 +132,7 @@ def main() -> None:
         password=password,
     )
     ensure_application_records(database_url=status["DB_URL"], user_id=user_id)
-    print(f"Seeded local owner {email} in workspace {WORKSPACE_ID}.")
+    print(f"Seeded local platform administrator {email} in workspace {WORKSPACE_ID}.")
 
 
 if __name__ == "__main__":
