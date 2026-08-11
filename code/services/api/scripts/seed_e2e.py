@@ -21,6 +21,7 @@ E2E_MEMBER_EMAIL = "e2e-existing@example.com"
 E2E_MEMBER_PASSWORD = "ExistingMember123!"
 E2E_OWNER_EMAIL = "e2e-owner@example.com"
 E2E_OWNER_PASSWORD = "E2EOwner123!"
+E2E_WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000020")
 E2E_EMAIL_PATTERNS = (
     "slice-one-%@example.com",
     "existing-%@example.com",
@@ -71,18 +72,35 @@ def _reset_invitation_fixtures(
         )
         cursor.execute(
             """
-            delete from public.projects
-            where workspace_id = %s and created_by = %s
-            """,
-            (WORKSPACE_ID, owner_user_id),
-        )
-        cursor.execute(
-            """
             insert into public.profiles (id, display_name)
             values (%s, 'E2E Workspace Owner')
             on conflict (id) do update set
               display_name = excluded.display_name,
               updated_at = now()
+            """,
+            (owner_user_id,),
+        )
+        cursor.execute(
+            """
+            insert into public.workspaces (id, name, created_by)
+            values (%s, 'OSLO Product Grill', %s)
+            on conflict (id) do update set
+              name = excluded.name,
+              updated_at = now()
+            """,
+            (E2E_WORKSPACE_ID, owner_user_id),
+        )
+        cursor.execute(
+            """
+            delete from public.projects
+            where workspace_id = %s
+            """,
+            (E2E_WORKSPACE_ID,),
+        )
+        cursor.execute(
+            """
+            delete from public.memberships
+            where user_id = %s
             """,
             (owner_user_id,),
         )
@@ -96,7 +114,7 @@ def _reset_invitation_fixtures(
               role = excluded.role,
               welcome_seen_at = excluded.welcome_seen_at
             """,
-            (WORKSPACE_ID, owner_user_id),
+            (E2E_WORKSPACE_ID, owner_user_id),
         )
         cursor.execute(
             """
@@ -122,7 +140,7 @@ def _reset_invitation_fixtures(
               changed_by = excluded.changed_by,
               updated_at = now()
             """,
-            (WORKSPACE_ID, WORKSPACE_ID),
+            (E2E_WORKSPACE_ID, E2E_WORKSPACE_ID),
         )
 
 

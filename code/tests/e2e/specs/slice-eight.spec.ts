@@ -42,8 +42,7 @@ test("Slice 8 provides workspace home, switching, awareness, settings, and safe 
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
   await orientation.waitFor({ state: "visible", timeout: 3_000 }).catch(() => undefined);
   if (await orientation.isVisible()) {
-    await orientation.getByRole("button", { name: "Get started" }).click();
-    await orientation.getByRole("button", { name: "Skip tour" }).click();
+    await orientation.getByRole("button", { name: "Skip", exact: true }).click();
     await expect(orientation).toBeHidden();
   }
 
@@ -91,7 +90,7 @@ test("Slice 8 provides workspace home, switching, awareness, settings, and safe 
   await page.getByRole("button", { name: "New project" }).click();
   const plans = page.getByRole("dialog", { name: "Your plan" });
   await expect(plans).toBeVisible();
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.locator(".workspace-error")).toContainText(
     "The Basic plan includes 3 active projects. Archive one or compare plans.",
   );
   await expect(page).toHaveURL(/\/workspace$/);

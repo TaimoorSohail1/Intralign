@@ -6,8 +6,7 @@ async function dismissOrientation(page: import("@playwright/test").Page) {
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
   await orientation.waitFor({ state: "visible", timeout: 3_000 }).catch(() => undefined);
   if (!(await orientation.isVisible())) return;
-  await orientation.getByRole("button", { name: "Get started" }).click();
-  await orientation.getByRole("button", { name: "Skip tour" }).click();
+  await orientation.getByRole("button", { name: "Skip", exact: true }).click();
   await expect(orientation).toBeHidden();
 }
 

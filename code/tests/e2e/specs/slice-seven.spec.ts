@@ -33,11 +33,8 @@ async function createAnalyzedProject(page: import("@playwright/test").Page) {
 
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
   if (await orientation.isVisible()) {
-    await page.getByRole("button", { name: "Get started" }).click();
-    for (let step = 0; step < 4; step += 1) {
-      await page.getByRole("button", { name: "Next", exact: true }).click();
-    }
-    await page.getByRole("button", { name: "Finish tour" }).click();
+    await orientation.getByRole("button", { name: "Skip", exact: true }).click();
+    await expect(orientation).toBeHidden();
   }
   await expect(
     page.getByText("Project summary", { exact: true }),
@@ -69,12 +66,17 @@ test("Slice 7 retains read-only history, snapshots, filters, and historical advi
   await expect(snapshot).toBeHidden();
 
   await page.getByRole("button", { name: "All" }).click();
-  const extendedToggle = page.getByRole("button", {
+  const currentExtendedRun = page
+    .getByRole("article")
+    .filter({ hasText: "Extended Analysis complete" })
+    .filter({ has: page.getByText("Current", { exact: true }) })
+    .first();
+  const extendedToggle = currentExtendedRun.getByRole("button", {
     name: /Collapse Extended Analysis complete/,
   });
   await extendedToggle.click();
   await expect(
-    page.getByRole("button", { name: /Expand Extended Analysis complete/ }),
+    currentExtendedRun.getByRole("button", { name: /Expand Extended Analysis complete/ }),
   ).toBeVisible();
 
   let advisorBody: Record<string, unknown> | undefined;
@@ -89,7 +91,11 @@ test("Slice 7 retains read-only history, snapshots, filters, and historical advi
       status: 200,
     });
   });
-  await page
+  const advisorExtendedRun = page
+    .getByRole("article")
+    .filter({ hasText: "Extended Analysis complete" })
+    .last();
+  await advisorExtendedRun
     .getByRole("button", { name: /Ask OSLO about Extended Analysis complete/ })
     .click();
   await expect

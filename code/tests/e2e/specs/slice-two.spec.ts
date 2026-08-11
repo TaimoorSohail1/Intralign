@@ -41,11 +41,8 @@ test("Slice 2 survives refresh and publishes exactly seven artifacts", async ({ 
 
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
   if (await orientation.isVisible()) {
-    await page.getByRole("button", { name: "Get started" }).click();
-    for (let step = 0; step < 4; step += 1) {
-      await page.getByRole("button", { name: "Next", exact: true }).click();
-    }
-    await page.getByRole("button", { name: "Finish tour" }).click();
+    await orientation.getByRole("button", { name: "Skip", exact: true }).click();
+    await expect(orientation).toBeHidden();
   }
 
   await expect(page.getByText(/provisional|current/).first()).toBeVisible();
