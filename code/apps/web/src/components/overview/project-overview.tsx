@@ -2,6 +2,7 @@
 
 import {
   ArrowRight,
+  ArrowSquareOut,
   CaretDown,
   CaretRight,
   ChatTeardropDots,
@@ -19,6 +20,7 @@ import {
   Sparkle,
   X,
 } from "@phosphor-icons/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -41,6 +43,7 @@ import { buildProjectProvenance } from "@/lib/project-provenance";
 const dimensions = ["clarity", "alignment", "feasibility"] as const;
 const confidenceBands = ["Very Low", "Low", "Moderate", "High", "Very High"] as const;
 const integrityBands = ["Fragile", "Weak", "Developing", "Solid", "Sound"] as const;
+const intralignLogo = "data:image/webp;base64,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";
 const artifactOrder = [
   "intent",
   "context",
@@ -224,6 +227,11 @@ export function ProjectOverview({
   const integrity = snapshot.assessment.integrity;
   const integrityBandIndex = Math.max(0, integrityBands.indexOf(integrity.level));
   const hasFirstValue = snapshot.artifacts.length > 0;
+  const outcomeArtifact = snapshot.artifacts.find(
+    (artifact) => artifact.artifact_type === "intent",
+  );
+  const outcomeDefinition = outcomeArtifact?.summary ?? null;
+  const projectTitle = snapshot.project_title?.trim() || "Project";
   const overviewScrollKey = `oslo:overview-scroll:${snapshot.project_id}`;
 
   useEffect(() => {
@@ -675,19 +683,28 @@ export function ProjectOverview({
     >
       <header className="project-header">
         <Link className="project-toolbar-brand" href="/workspace">
-          <span aria-hidden="true">I</span>
-          <strong>Intralign</strong>
+          <Image
+            alt="Intralign"
+            height={20}
+            priority
+            src={intralignLogo}
+            unoptimized
+            width={116}
+          />
         </Link>
         <ProjectWorkspaceControls
           planPortalId="project-sidebar-plan"
           projectId={snapshot.project_id}
+          projectName={projectTitle}
         />
         <div className="project-context">
-          <strong>Project understanding</strong>
+          <strong>{projectTitle}</strong>
           <span aria-hidden="true">›</span>
           <em>
-            {initialView === "attention"
-              ? "Attention map"
+            {initialView === "overview"
+              ? "Issues"
+              : initialView === "attention"
+                ? "Attention map"
               : initialView === "inference"
                 ? "Inference map"
               : initialView === "reports"
@@ -750,6 +767,21 @@ export function ProjectOverview({
         </div>
       </header>
 
+      {initialView === "overview" && outcomeDefinition ? (
+        <button
+          aria-label={`Outcome: ${outcomeDefinition}`}
+          className="r2-outcome-anchor"
+          onClick={() => router.push(`/projects/${snapshot.project_id}/artifacts/intent`)}
+          type="button"
+        >
+          <span aria-hidden="true">◎</span>
+          <small>Outcome</small>
+          <strong>{outcomeDefinition}</strong>
+          <em>{outcomeArtifact?.evidence_refs.length ? "✓ grounded" : "OSLO inference"}</em>
+          <CaretRight aria-hidden="true" size={13} />
+        </button>
+      ) : null}
+
       {confidenceBreakdownOpen ? (
         <IntegrityBreakdown
           assessment={snapshot.assessment}
@@ -766,60 +798,52 @@ export function ProjectOverview({
           {initialView === "overview" ? "Views" : "Project"}
         </p>
         <nav aria-label="Workspace">
-          <Link
-            aria-current={initialView === "overview" ? "page" : undefined}
-            className={initialView === "overview" ? "is-current" : ""}
-            href={`/projects/${snapshot.project_id}/overview`}
-          >
-            <House aria-hidden="true" size={17} />
-            Overview
-          </Link>
-          <Link
-            aria-current={initialView === "issues" ? "page" : undefined}
-            aria-label={`Issues ${openIssues.length}`}
-            className={initialView === "issues" ? "is-current" : ""}
-            href={`/projects/${snapshot.project_id}/issues`}
-          >
-            <ListBullets aria-hidden="true" size={17} />
-            Issues
-            <span className="nav-count">{openIssues.length}</span>
-          </Link>
-          <Link
-            aria-current={initialView === "history" ? "page" : undefined}
-            className={initialView === "history" ? "is-current" : ""}
-            href={`/projects/${snapshot.project_id}/history`}
-          >
-            <ClockCounterClockwise aria-hidden="true" size={17} />
-            History
-          </Link>
-          <Link
-            aria-current={initialView === "attention" ? "page" : undefined}
-            className={`${initialView === "attention" ? "is-current" : ""} ${
-              orientation && activeTourStep === 3 ? "is-tour-target" : ""
-            }`}
-            href={`/projects/${snapshot.project_id}/attention`}
-            onClick={rememberOverviewPosition}
-          >
-            <MapTrifold aria-hidden="true" size={17} />
-            Attention map
-            {openIssues.length ? <span className="nav-count">{openIssues.length}</span> : null}
-          </Link>
-          <Link
-            aria-current={initialView === "inference" ? "page" : undefined}
-            className={initialView === "inference" ? "is-current" : ""}
-            href={`/projects/${snapshot.project_id}/inference`}
-          >
-            <Diamond aria-hidden="true" size={17} />
-            Inference map
-          </Link>
-          <Link
-            aria-current={initialView === "reports" ? "page" : undefined}
-            className={initialView === "reports" ? "is-current" : ""}
-            href={`/projects/${snapshot.project_id}/reports`}
-          >
-            <FileText aria-hidden="true" size={17} />
-            Reports
-          </Link>
+          {initialView === "overview" ? (
+            <>
+              <Link aria-current="page" aria-label={`Issues ${openIssues.length}`} className="is-current" href={`/projects/${snapshot.project_id}/overview`}>
+                <ListBullets aria-hidden="true" size={17} />
+                Issues
+                <span className="nav-count">{openIssues.length}</span>
+              </Link>
+              <Link href={`/projects/${snapshot.project_id}/artifacts/intent`}>
+                <Diamond aria-hidden="true" size={17} />
+                Your Outcome
+              </Link>
+              <Link href={`/projects/${snapshot.project_id}/inference`} onClick={rememberOverviewPosition}>
+                <MapTrifold aria-hidden="true" size={17} />
+                Grounding map
+              </Link>
+              <Link href={`/projects/${snapshot.project_id}/reports`}>
+                <FileText aria-hidden="true" size={17} />
+                Reports
+              </Link>
+              <Link href={`/projects/${snapshot.project_id}/history`}>
+                <ClockCounterClockwise aria-hidden="true" size={17} />
+                History
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link className="" href={`/projects/${snapshot.project_id}/overview`}>
+                <House aria-hidden="true" size={17} /> Overview
+              </Link>
+              <Link aria-current={initialView === "issues" ? "page" : undefined} aria-label={`Issues ${openIssues.length}`} className={initialView === "issues" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/issues`}>
+                <ListBullets aria-hidden="true" size={17} /> Issues <span className="nav-count">{openIssues.length}</span>
+              </Link>
+              <Link aria-current={initialView === "history" ? "page" : undefined} className={initialView === "history" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/history`}>
+                <ClockCounterClockwise aria-hidden="true" size={17} /> History
+              </Link>
+              <Link aria-current={initialView === "attention" ? "page" : undefined} className={initialView === "attention" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/attention`} onClick={rememberOverviewPosition}>
+                <MapTrifold aria-hidden="true" size={17} /> Attention map
+              </Link>
+              <Link aria-current={initialView === "inference" ? "page" : undefined} className={initialView === "inference" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/inference`}>
+                <Diamond aria-hidden="true" size={17} /> Inference map
+              </Link>
+              <Link aria-current={initialView === "reports" ? "page" : undefined} className={initialView === "reports" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/reports`}>
+                <FileText aria-hidden="true" size={17} /> Reports
+              </Link>
+            </>
+          )}
         </nav>
         <p className="workspace-label workspace-artifact-label">
           {initialView === "overview" ? "Documents" : "Plan artifacts"}
@@ -841,7 +865,9 @@ export function ProjectOverview({
                 key={artifactType}
               >
                 <FileText aria-hidden="true" size={15} />
-                {artifactLabel(artifactType)}
+                {initialView === "overview" && artifactType === "context"
+                  ? "Constraints"
+                  : artifactLabel(artifactType)}
                 {count ? <span className="nav-count">{count}</span> : null}
               </Link>
             );
@@ -858,11 +884,19 @@ export function ProjectOverview({
                 key={artifactType}
               >
                 <FileText aria-hidden="true" size={15} />
-                {artifactLabel(artifactType)}
+                {initialView === "overview" && artifactType === "work_breakdown"
+                  ? "Work breakdown"
+                  : artifactLabel(artifactType)}
                 {count ? <span className="nav-count">{count}</span> : null}
               </Link>
             );
           })}
+          {initialView === "overview" ? (
+            <Link href={`/projects/${snapshot.project_id}/reports`}>
+              <ArrowSquareOut aria-hidden="true" size={15} />
+              Full plan · export
+            </Link>
+          ) : null}
         </div>
         <div className="workspace-sidebar-footer">
           <button
@@ -1324,6 +1358,9 @@ export function ProjectOverview({
             extendedFailure={extendedFailure}
             extendedRetryError={extendedRetryError}
             extendedRetrying={extendedRetrying}
+            groundedClaims={provenance.groundedClaims}
+            inferredClaims={provenance.inferredClaims}
+            integrity={integrity}
             isProvisional={isProvisional}
             messages={messages}
             onAsk={askQuestion}
@@ -1331,7 +1368,11 @@ export function ProjectOverview({
             onQuestionChange={setQuestion}
             onRetry={retryExtendedAnalysis}
             onSubmit={submitQuestion}
-              question={question}
+            openIssueCount={openIssues.length}
+            question={question}
+            resolvedIssueCount={snapshot.assessment.resolved_issue_count}
+            r2Mode={initialView === "overview"}
+            topIssue={openIssues[0] ?? null}
             />
           </div>
         ) : null}
@@ -2501,6 +2542,9 @@ function AdvisorPanel({
   extendedFailure,
   extendedRetryError,
   extendedRetrying,
+  groundedClaims,
+  inferredClaims,
+  integrity,
   isProvisional,
   messages,
   onAsk,
@@ -2508,7 +2552,11 @@ function AdvisorPanel({
   onQuestionChange,
   onRetry,
   onSubmit,
+  openIssueCount,
   question,
+  resolvedIssueCount,
+  r2Mode,
+  topIssue,
 }: {
   advisorError: string | null;
   advisorPending: boolean;
@@ -2517,6 +2565,9 @@ function AdvisorPanel({
   extendedFailure: ReturnType<typeof analysisFailureCopy>;
   extendedRetryError: string | null;
   extendedRetrying: boolean;
+  groundedClaims: number;
+  inferredClaims: number;
+  integrity: OverviewSnapshot["assessment"]["integrity"];
   isProvisional: boolean;
   messages: ChatMessage[];
   onAsk: (question: string) => Promise<void>;
@@ -2524,7 +2575,11 @@ function AdvisorPanel({
   onQuestionChange: (question: string) => void;
   onRetry: () => Promise<void>;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  openIssueCount: number;
   question: string;
+  resolvedIssueCount: number;
+  r2Mode: boolean;
+  topIssue: Issue | null;
 }) {
   return (
     <aside aria-label="OSLO project advisor" className="project-sidepanel oslo-chat">
@@ -2542,6 +2597,11 @@ function AdvisorPanel({
         role="region"
         tabIndex={0}
       >
+        {r2Mode ? <p className="r2-advisor-session">
+          On your read · <b>{resolvedIssueCount} of {resolvedIssueCount + openIssueCount}</b> settled
+          {topIssue ? <> · next biggest exposure: <strong>{topIssue.title}</strong></> : null}
+          <span> · toward your outcome →</span>
+        </p> : null}
         <p className="chat-note">
           I&apos;ve completed the {isProvisional ? "initial" : "extended"} read. Start with
           the top issue, or ask about any part of the plan.
@@ -2568,6 +2628,24 @@ function AdvisorPanel({
           ) : null}
           {extendedRetryError ? <p className="chat-error" role="alert">{extendedRetryError}</p> : null}
         </div>
+        {r2Mode ? <><section className="r2-advisor-reasoning">
+          <p>Reasoning</p>
+          <strong>Outcome Integrity is gated by {integrity.limiting_pillar}.</strong>
+          <span>{integrity.decomposition.find((pillar) => pillar.key === integrity.limiting_pillar)?.why[0]}</span>
+        </section>
+        <section className="r2-advisor-basis">
+          <p>Reliability basis</p>
+          <span><b>{groundedClaims}</b> load-bearing details grounded · <b>{inferredClaims}</b> still OSLO&apos;s inference. The read is only as strong as what it rests on.</span>
+        </section>
+        {topIssue ? (
+          <section className="r2-advisor-next">
+            <p>◆ Your next move</p>
+            <strong>{topIssue.recommendation}</strong>
+            <button onClick={() => void onAsk(`Explain the top issue: ${topIssue.title}`)} type="button">
+              What settles it?
+            </button>
+          </section>
+        ) : null}</> : null}
         <div className="chat-messages">
           {messages.map((message) => (
             <p className={`chat-message chat-message-${message.role}`} key={message.id}>

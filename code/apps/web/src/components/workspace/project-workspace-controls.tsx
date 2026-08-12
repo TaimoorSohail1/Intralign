@@ -38,9 +38,11 @@ function relativeTime(value: string) {
 export function ProjectWorkspaceControls({
   planPortalId,
   projectId,
+  projectName,
 }: {
   planPortalId?: string;
   projectId: string;
+  projectName?: string;
 }) {
   const [workspace, setWorkspace] = useState<WorkspaceSummary | null>(null);
   const [open, setOpen] = useState(false);
@@ -195,7 +197,7 @@ export function ProjectWorkspaceControls({
           type="button"
         >
           <FolderOpen aria-hidden="true" className="project-switcher-icon" size={15} />
-          <span>{current?.name ?? "Project"}</span>
+          <span>{current?.name ?? projectName ?? "Project"}</span>
           <CaretDown aria-hidden="true" className="project-switcher-caret" size={13} />
         </button>
         {open ? (

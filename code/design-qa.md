@@ -1,39 +1,42 @@
 # Design QA
 
-## 2026-08-12 — R2 Slice 1 Outcome Integrity shell
+## 2026-08-12 — R2 Slice 1 exact-prototype parity pass
 
 ### Final result
 
-**Passed for the implemented Slice 1 UI scope.**
+**Passed for the implemented Slice 1 UI scope after an exact-size source/target comparison and live functional regression.**
 
 final result: passed
 
 ### Source and implementation evidence
 
-- Source: `reports/r2/slice-01/current-run/14-prototype-matched-956x1040.png`
-- Implementation: `reports/r2/slice-01/current-run/13-implementation-matched-956x1040.png`
-- Combined comparison: `reports/r2/slice-01/current-run/15-prototype-vs-implementation-matched.png`
-- Comparison viewport: 956 × 1040 CSS pixels in the same Codex in-app browser tab and state
+- Source: the unlocked, expanded **Issues** state in `release-2/oslo-prototype-r2.html`.
+- Implementation: the seeded project Overview at `http://127.0.0.1:3002/projects/cb25ee1c-82ed-407f-a46c-b591088fbdc6/overview`.
+- Comparison: source and implementation were captured into one side-by-side image in the Codex in-app browser at the same **1280 × 720 CSS-pixel viewport**.
+- Measured structure: production shell begins at `y=284` after excluding the prototype-only 33px banner; left rail is `265px`; advisor rail is `330px`; the three-pillar group begins at `x≈616`, matching the prototype at `x=617`.
 
 ### Visual findings
 
-- The expanded Outcome Integrity masthead, five-band maturity rail, three pillar cards, weakest-pillar treatment, Views/Documents navigation, exposure-ranked work queue, and persistent OSLO advisor follow the R2 prototype hierarchy and styling.
+- The real Intralign source logo, project switcher, current-surface breadcrumb, grounded Outcome anchor, expanded Outcome Integrity masthead, five-band maturity rail, three pillar cards, weakest-pillar treatment, Views/Documents taxonomy, exposure-ranked work queue, and persistent OSLO advisor follow the R2 prototype hierarchy and styling.
 - The queue exposes every server-ranked issue; the first issue carries the orange “Do this next” treatment and each row retains pillar, severity, rationale, rank, and affordance.
-- At the 956-pixel comparison width, the complete left navigation and OSLO advisor remain visible instead of collapsing over the integrity masthead.
+- The OSLO rail now exposes the prototype hierarchy using governed live data: session context, Reasoning, Reliability basis, Your next move, prompts, and composer.
 - No actionable P0, P1, or P2 mismatch remains inside Slice 1. Accepted dynamic differences are the project name, pillar readings, issue copy/count, and advisor copy because the implementation renders the real seeded project while the prototype renders its fixed DevNorth fixture.
-- The prototype-only explanatory banner is not shipped. The prototype's attested-outcome row belongs to the activation/project-shell state and is outside the Slice 1 engine delta.
+- The prototype-only explanatory banner and fixed sample-only notices are intentionally not shipped. The implementation does not fabricate the prototype's ten issues or moved-read notice when the live snapshot truthfully contains three open issues and no moved-read event.
 
 ### Interaction and accessibility findings
 
-- The top-ranked issue opens a working governed issue detail without dismissing OSLO; Escape closes it and restores focus to its trigger.
+- The top-ranked issue opens a working governed issue detail beside OSLO; closing it returns to the ranked queue.
 - Selecting the Adaptability pillar opens the related highest-exposure issue.
+- The Outcome anchor navigates to the live Intent artifact and browser Back returns to the same Overview.
+- A live advisor prompt returned the grounded next-step response from the existing advisor API.
 - Viability detail expands into a visible, readable region rather than leaving a hidden control target.
-- Regions and controls expose names for Outcome Integrity, the exposure-ranked queue, issue details, and advisor actions. Live-browser console errors: 0.
+- Desktop regions retain independent scroll ownership. At a 375px mobile viewport, document scroll width remained 375px with no horizontal page overflow.
+- Regions and controls expose names for the brand, outcome, Outcome Integrity, exposure-ranked queue, issue details, and advisor actions. Live-browser console errors: 0.
 
 ### Automated evidence
 
-- Focused Overview component suite: 35 passed
-- Full web suite: 23 files / 125 passed
+- Focused Overview component suite: 36 passed
+- Full web suite: 23 files / 126 passed
 - Slice 1 API contract and integrity tests: 19 passed
 - R2 guardrails: 4 infrastructure tests and 9 active selectors passed; 60 registered / 6 active / 54 pending
 - ESLint: passed with zero warnings

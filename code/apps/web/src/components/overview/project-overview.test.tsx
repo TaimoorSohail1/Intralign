@@ -457,6 +457,50 @@ describe("ProjectOverview", () => {
     expect(within(queue).getAllByText("Holds up")).toHaveLength(5);
   });
 
+  it("matches the R2 Slice 1 shell taxonomy and evidence-qualified advisor read", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={{
+          ...snapshot,
+          project_title: "Northstar migration",
+          artifacts: [
+            {
+              artifact_type: "intent",
+              title: "Intent",
+              summary: "Move the Northstar platform without interrupting customers.",
+              reliability: "High",
+              evidence_refs: ["document:brief:page:1:fragment:0"],
+              basis: "supported",
+            },
+            ...snapshot.artifacts,
+          ],
+        }}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("img", { name: "Intralign" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Outcome: Move the Northstar platform/i })).toBeInTheDocument();
+
+    const workspace = screen.getByRole("navigation", { name: "Workspace" });
+    expect(within(workspace).getAllByRole("link").map((link) => link.textContent)).toEqual([
+      expect.stringContaining("Issues"),
+      expect.stringContaining("Your Outcome"),
+      expect.stringContaining("Grounding map"),
+      expect.stringContaining("Reports"),
+      expect.stringContaining("History"),
+    ]);
+
+    const advisor = screen.getByRole("complementary", {
+      name: "OSLO project advisor",
+    });
+    expect(within(advisor).getByText("On your read", { exact: false })).toBeInTheDocument();
+    expect(within(advisor).getByText("Reasoning")).toBeInTheDocument();
+    expect(within(advisor).getByText("Reliability basis")).toBeInTheDocument();
+    expect(within(advisor).getByText(/Your next move/)).toBeInTheDocument();
+  });
+
   it("restores the Overview scroll position after returning from Attention Map", () => {
     vi.useFakeTimers();
     const scrollTo = vi.fn();
@@ -493,7 +537,7 @@ describe("ProjectOverview", () => {
     });
     const workspace = screen.getByRole("navigation", { name: "Workspace" });
     fireEvent.click(
-      within(workspace).getByRole("link", { name: /Attention map/ }),
+      within(workspace).getByRole("link", { name: "Grounding map" }),
     );
 
     expect(sessionStorage.getItem("oslo:overview-scroll:project-001")).toBe("640");
@@ -565,7 +609,7 @@ describe("ProjectOverview", () => {
     expect(screen.getByRole("navigation", { name: "Workspace" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Issues 1" })).toHaveAttribute(
       "href",
-      "/projects/project-001/issues",
+      "/projects/project-001/overview",
     );
     expect(screen.getByRole("link", { name: "History" })).toHaveAttribute(
       "href",
