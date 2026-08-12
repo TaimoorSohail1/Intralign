@@ -457,6 +457,31 @@ describe("ProjectOverview", () => {
     expect(within(queue).getAllByText("Holds up")).toHaveLength(5);
   });
 
+  it("starts with the compact prototype read and expands it on demand", () => {
+    const { container } = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const shell = container.querySelector("main");
+    expect(shell).toHaveClass("is-r2-slice-one");
+    expect(shell).not.toHaveClass("r2-integrity-expanded");
+
+    const toggle = screen.getByRole("button", {
+      name: "Expand Outcome Integrity",
+    });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(toggle);
+
+    expect(shell).toHaveClass("r2-integrity-expanded");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle).toHaveAccessibleName("Collapse Outcome Integrity");
+  });
+
   it("matches the R2 Slice 1 shell taxonomy and evidence-qualified advisor read", () => {
     render(
       <ProjectOverview

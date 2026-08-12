@@ -9488,3 +9488,199 @@ button.attention-cell { cursor: pointer; }
     grid-template-columns: 1fr;
   }
 }
+
+/* R2 Slice 1 exact-shell pass — mirrors the prototype's bounded, compact read. */
+.project-shell.is-r2-slice-one {
+  position: relative;
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  box-shadow: 0 0 0 1px rgb(35 44 55 / 36%);
+}
+
+.is-r2-slice-one .project-header-confidence {
+  min-width: 0;
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--r2-subtle);
+  text-transform: none;
+}
+
+.is-r2-slice-one .project-header-confidence:hover,
+.is-r2-slice-one .project-header-confidence:focus-visible,
+.is-r2-slice-one .project-header-confidence[aria-expanded="true"] {
+  border-color: transparent;
+  outline: 1px solid var(--r2-border-2);
+  outline-offset: 4px;
+  background: transparent;
+}
+
+.is-r2-slice-one .project-header-confidence-dot,
+.is-r2-slice-one .project-header-confidence > small { display: none; }
+
+.is-r2-slice-one .project-header-confidence > span:not(.project-header-pillar-shape) {
+  flex: 0 0 auto;
+  color: var(--r2-subtle);
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.is-r2-slice-one .project-header-confidence > strong {
+  flex: 0 0 auto;
+  color: var(--r2-viability);
+  font-size: 13px;
+}
+
+.is-r2-slice-one .project-header-pillar-shape {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.is-r2-slice-one .project-header-pillar-shape > span {
+  min-width: 92px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+  padding: 4px 8px;
+  overflow: hidden;
+  border: 1px solid var(--r2-border-2);
+  border-radius: 8px;
+  background: var(--r2-surface);
+  color: var(--r2-muted);
+  font-size: 8px;
+  font-weight: 650;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.is-r2-slice-one .project-header-pillar-shape > span.is-limiting {
+  border-color: rgb(127 160 201 / 50%);
+  background: rgb(127 160 201 / 8%);
+}
+
+.is-r2-slice-one .project-header-pillar-shape i {
+  width: 100%;
+  height: 3px;
+  margin: 0;
+  background: var(--r2-border-2);
+}
+
+.is-r2-slice-one .project-header-pillar-shape i b { height: 100%; }
+
+.is-r2-slice-one .r2-integrity-toggle {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--r2-muted);
+  cursor: pointer;
+}
+
+.is-r2-slice-one .r2-integrity-toggle:hover,
+.is-r2-slice-one .r2-integrity-toggle:focus-visible {
+  border-color: var(--r2-border-2);
+  background: var(--r2-surface);
+  color: var(--r2-text);
+}
+
+.is-r2-slice-one.r2-integrity-expanded .r2-integrity-toggle svg {
+  transform: rotate(180deg);
+}
+
+.is-r2-slice-one:not(.r2-integrity-expanded) .integrity-read { display: none; }
+
+.is-r2-slice-one .project-collaboration-actions > button[aria-label="Export"] {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .project-shell.is-r2-slice-one { padding-left: 266px; }
+
+  .is-r2-slice-one .project-header {
+    width: calc(100% + 266px);
+    margin-left: -266px;
+    grid-template-columns: 116px auto auto minmax(310px, 1fr) auto auto auto;
+    grid-template-areas: "brand switcher context confidence collaboration notifications actions";
+  }
+
+  .is-r2-slice-one .r2-outcome-anchor,
+  .is-r2-slice-one .integrity-read {
+    position: absolute;
+    width: 100%;
+  }
+
+  .is-r2-slice-one .workspace-sidebar {
+    position: absolute;
+    left: 0;
+    width: 266px;
+  }
+
+  .is-r2-slice-one .workspace-sidebar-footer { width: 266px; }
+
+  .is-r2-slice-one:not(.r2-integrity-expanded) .project-grid,
+  .is-r2-slice-one:not(.r2-integrity-expanded) .project-grid.is-panel-closed {
+    height: calc(100dvh - 86px);
+    margin-top: 34px;
+  }
+
+  .is-r2-slice-one:not(.r2-integrity-expanded) .workspace-sidebar {
+    top: 86px;
+    bottom: 0;
+  }
+
+  .is-r2-slice-one.r2-integrity-expanded .workspace-sidebar { top: 284px; }
+
+  .is-r2-slice-one .project-main {
+    padding: 16px 22px 90px;
+  }
+
+  .is-r2-slice-one.has-issue .project-main { padding: 0; }
+
+  .is-r2-slice-one .overview-stack {
+    max-width: 900px;
+    margin-inline: auto;
+  }
+
+  .is-r2-slice-one .overview-stack.has-first-value .start-here,
+  .is-r2-slice-one .overview-stack .start-here {
+    padding: 0 0 70px;
+  }
+
+  .is-r2-slice-one .issue-list { max-width: 820px; }
+}
+
+@media (min-width: 901px) and (max-width: 1180px) {
+  .is-r2-slice-one .project-context { display: none; }
+  .is-r2-slice-one .project-header {
+    grid-template-columns: 116px auto minmax(260px, 1fr) auto auto auto;
+    grid-template-areas: "brand switcher confidence collaboration notifications actions";
+  }
+}
+
+@media (max-width: 900px) {
+  .is-r2-slice-one .project-header-confidence { display: none; }
+  .is-r2-slice-one .r2-integrity-toggle { display: none; }
+  .is-r2-slice-one:not(.r2-integrity-expanded) .integrity-read { display: grid; }
+  .is-r2-slice-one .project-grid,
+  .is-r2-slice-one .project-grid.is-panel-closed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .is-r2-slice-one .project-main,
+  .is-r2-slice-one .project-sidepanel { min-width: 0; }
+}

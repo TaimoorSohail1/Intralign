@@ -169,6 +169,7 @@ export function ProjectOverview({
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [confidenceDetailsOpen, setConfidenceDetailsOpen] = useState(false);
   const [confidenceBreakdownOpen, setConfidenceBreakdownOpen] = useState(false);
+  const [r2IntegrityExpanded, setR2IntegrityExpanded] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -677,7 +678,9 @@ export function ProjectOverview({
 
   return (
     <main
-      className={`project-shell ${initialView === "overview" ? "is-r2-slice-one" : ""} ${selectedIssue ? "has-issue" : ""} ${
+      className={`project-shell ${initialView === "overview" ? "is-r2-slice-one" : ""} ${
+        initialView === "overview" && r2IntegrityExpanded ? "r2-integrity-expanded" : ""
+      } ${selectedIssue ? "has-issue" : ""} ${
         orientation ? "is-touring" : ""
       }`}
     >
@@ -742,6 +745,19 @@ export function ProjectOverview({
           <small>as of this analysis</small>
         </button>
         <div className="project-actions">
+          {initialView === "overview" ? (
+            <button
+              aria-controls="r2-integrity-summary"
+              aria-expanded={r2IntegrityExpanded}
+              aria-label={`${r2IntegrityExpanded ? "Collapse" : "Expand"} Outcome Integrity`}
+              className="r2-integrity-toggle"
+              onClick={() => setR2IntegrityExpanded((current) => !current)}
+              title={`${r2IntegrityExpanded ? "Collapse" : "Expand"} the read`}
+              type="button"
+            >
+              <CaretDown aria-hidden="true" size={13} />
+            </button>
+          ) : null}
           <button
             aria-label="Search project"
             className="project-search-button"
@@ -973,6 +989,7 @@ export function ProjectOverview({
               <section
                 aria-label="Outcome Integrity summary"
                 className="confidence-read integrity-read"
+                id="r2-integrity-summary"
               >
                 <div className="confidence-topline">
                   <p className="eyebrow">Outcome integrity</p>

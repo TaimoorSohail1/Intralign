@@ -1,5 +1,48 @@
 # Design QA
 
+## 2026-08-12 — R2 Slice 1 bounded-shell correction
+
+### Final result
+
+**Passed for the implemented Slice 1 shell, live work queue, and governed advisor scope.**
+
+final result: passed
+
+### Source and implementation evidence
+
+- Source: the activated R2 Slice 1 Issues state in `release-2/oslo-prototype-r2.html`.
+- Implementation: `http://127.0.0.1:3002/projects/cb25ee1c-82ed-407f-a46c-b591088fbdc6/overview`.
+- Exact-size comparison: `reports/r2-slice-1-qa-2026-08-12/exact-shell-pass/03-prototype-vs-implementation-1600x900.png` physically combines the source and implementation at the same 1600 × 900 CSS-pixel viewport.
+- Responsive evidence: `reports/r2-slice-1-qa-2026-08-12/exact-shell-pass/04-implementation-375x812.png` and `05-implementation-mobile-queue.png`.
+
+### Findings and fixes
+
+- P1 layout drift fixed: the production workspace was unconstrained while the prototype is bounded to 1600px. The Slice 1 shell now uses the same maximum width and stays centered on wider displays.
+- P1 hierarchy drift fixed: the 198px Outcome Integrity read was permanently expanded. Desktop now starts in the prototype's compact 52px masthead + 34px Outcome anchor state, with an accessible expand/collapse control for the full read.
+- P1 density drift fixed: the central reading body is capped at 900px and issue rows at 820px, matching the prototype instead of stretching across the available center column.
+- P2 responsive clipping fixed: the narrow-screen grid now uses `minmax(0, 1fr)` and zero minimum widths, keeping the full issue queue usable without page-level horizontal overflow.
+- The prototype's developer annotation strip and transient sample-only notices are not production UI. Project name, issue count/copy, integrity values, and advisor copy remain truthful live data rather than copied DevNorth fixtures.
+- Final comparison found no remaining actionable P0, P1, or P2 mismatch in the implemented Slice 1 scope.
+
+### Functional and accessibility verification
+
+- Compact Outcome Integrity expands and collapses with correct `aria-expanded`, accessible labels, and visible full-summary state.
+- The top-ranked issue opens the governed issue detail and closes back to the unchanged queue.
+- The advisor's suggested prompt returns a grounded next-step response from the existing API.
+- Outcome navigation opens the live Intent artifact and browser Back returns to Overview.
+- The mobile work queue remains reachable and readable in the narrow layout; the document has no horizontal page overflow.
+- Browser console errors: 0. One existing Next.js image aspect-ratio development warning remains outside this Slice 1 shell change.
+
+### Automated evidence
+
+- Focused Overview component suite: 37 passed
+- Full web suite: 23 files / 127 passed
+- Slice 1 API integrity and UI-contract tests: 19 passed
+- R2 guardrails: 4 infrastructure tests and 9 active selectors passed; 60 registered / 6 active / 54 pending
+- ESLint: passed
+- TypeScript and Next.js production build: passed
+- `git diff --check`: passed
+
 ## 2026-08-12 — R2 Slice 1 exact-prototype parity pass
 
 ### Final result
