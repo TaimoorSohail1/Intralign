@@ -4,7 +4,7 @@
 
 **Verdict:** **PASS for applicable Slice 1 behavior, copy, state, and visual structure at desktop, tablet, and mobile.**
 
-**Current-run evidence limit (2026-08-12 05:10 PKT):** the required in-app browser failed to attach both the initial and supported-recovery fresh pages, so no current-run implementation or prototype screenshot could be captured and inspected. The durable automated same-state comparison remains valid evidence for its recorded commit, but it is not substituted for the still-open manual audit.
+**Current-run evidence limit (2026-08-12 07:09 PKT):** the required in-app browser failed to attach both the initial and supported-recovery fresh pages, so no current-run implementation or prototype screenshot could be captured and inspected. The existing seeded platform endpoints were healthy; the page failed before navigation. The durable automated same-state comparison remains valid evidence for its recorded commit, but it is not substituted for the still-open manual audit.
 
 ## Matched state
 

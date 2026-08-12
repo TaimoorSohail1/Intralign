@@ -1,5 +1,15 @@
 # R2 Slice 01 run plan
 
+## Resumption plan - 2026-08-12 07:04 PKT
+
+1. Restore the seeded Supabase, FastAPI, and Next.js stack and reconnect the required Codex in-app browser.
+2. Complete the timeout to stale/last-good to retry journey plus keyboard, announcement/focus, reduced-motion, 200% zoom, permissions, adjacent-regression, and responsive checks if a page attaches.
+3. Save and inspect current-run desktop, tablet, and mobile screenshots before accepting UI/UX or prototype-parity evidence.
+4. Rerun automated gates and Code Review only after a successful manual gate or any product-code change.
+5. Keep Slice 1 `IN PROGRESS` unless every open gate passes; do not acquire Slice 3 or touch Slices 4-10.
+
+**Result:** Supabase Auth, PostgreSQL, FastAPI, and Next.js were reachable. The idempotent seed refresh stalled on the Docker control channel, but the existing seeded platform stayed healthy. The in-app browser timed out before attaching both the initial and supported-recovery fresh pages; controlled and user-visible tab lists stayed empty and visibility stayed false. No manual interaction, screenshot, product change, automated rerun, or completion claim was accepted. Slice 1 remains `IN PROGRESS`.
+
 **Acquired:** 2026-08-11
 **Starting branch / commit:** `codex/release-2-build` / `b649b25`
 **Contract:** `release-2/slices/01-integrity-engine.md` AC-1…AC-10 and GT-07, GT-10, GT-11, GT-13, GT-19, GT-20.
