@@ -1083,6 +1083,7 @@ describe("ProjectOverview", () => {
           project_id: "project-001",
           kind: "extended",
           status: "queued",
+          consolidated_event_ids: ["event-apply-001"],
         },
       }),
     });
@@ -1106,6 +1107,8 @@ describe("ProjectOverview", () => {
       );
       expect(screen.getByText("Confirmed by you")).toBeInTheDocument();
       expect(screen.getByLabelText("Issue status addressed")).toBeInTheDocument();
+      expect(screen.getByText("Your read is safely out of date.")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Undo last change" })).toBeInTheDocument();
     });
   });
 
@@ -1142,7 +1145,10 @@ describe("ProjectOverview", () => {
     ).toHaveLength(1);
     releaseResponse?.({
       ok: true,
-      json: async () => ({ run_id: "run-clarification-001" }),
+      json: async () => ({
+        run_id: "run-clarification-001",
+        consolidated_event_ids: ["event-clarification-001"],
+      }),
     });
 
     await waitFor(() => {
@@ -1153,6 +1159,8 @@ describe("ProjectOverview", () => {
       expect(screen.getByText("Re-analyzing…")).toBeInTheDocument();
       expect(screen.getByText("Saved · Analysis pending")).toBeInTheDocument();
       expect(screen.getByLabelText("Issue status addressed")).toBeInTheDocument();
+      expect(screen.getByText("Your read is safely out of date.")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Undo last change" })).toBeInTheDocument();
     });
   });
 

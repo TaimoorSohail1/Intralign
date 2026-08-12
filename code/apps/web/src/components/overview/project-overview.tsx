@@ -544,6 +544,30 @@ export function ProjectOverview({
     void askQuestion(question);
   };
 
+  const showQueuedReadChange = (run: {
+    run_id?: string | null;
+    consolidated_event_ids?: string[] | null;
+  }) => {
+    const eventIds = run.consolidated_event_ids ?? [];
+    setSnapshot((current) => ({
+      ...current,
+      freshness: {
+        state: "stale",
+        pending_count: Math.max(
+          current.freshness?.pending_count ?? 0,
+          eventIds.length || 1,
+        ),
+        based_on_run_id:
+          current.freshness?.based_on_run_id ?? current.analysis_run_id,
+        active_run_id: run.run_id ?? current.freshness?.active_run_id ?? null,
+        last_act_at: new Date().toISOString(),
+        last_landed_at: current.freshness?.last_landed_at ?? null,
+        latest_pending_event_id:
+          eventIds.at(-1) ?? current.freshness?.latest_pending_event_id ?? null,
+      },
+    }));
+  };
+
   const retryExtendedAnalysis = async () => {
     if (!extendedRun || extendedRetrying) return;
     setExtendedRetryError(null);
@@ -590,6 +614,7 @@ export function ProjectOverview({
         throw new Error(result.message || "Your answer could not be saved.");
       }
       updateIssueLifecycle(selectedIssue.id, "addressed");
+      showQueuedReadChange(result);
       setAnalysisUpdateRunId(result.run_id);
     } catch (error) {
       setClarificationError(
@@ -644,6 +669,7 @@ export function ProjectOverview({
         result.selected_resolution,
       );
       if (result.analysis_run?.run_id) {
+        showQueuedReadChange(result.analysis_run);
         setAnalysisUpdateRunId(result.analysis_run.run_id);
       }
     } catch (error) {
@@ -719,6 +745,7 @@ export function ProjectOverview({
             }
           : current.first_run,
       }));
+      setAnalysisUpdateRunId(null);
       setReanalysisFeedback("Pending change undone");
     } catch (error) {
       setReanalysisFeedback(
