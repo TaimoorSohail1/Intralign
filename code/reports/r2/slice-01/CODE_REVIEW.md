@@ -6,6 +6,8 @@
 
 **Verdict:** actionable findings fixed; no unresolved code-level security finding.
 
+**Current-run note (2026-08-12 05:10 PKT):** no product code changed, so Code Review was not repeated. The mandatory manual gate failed before a browser page attached; the prior implementation review remains the latest code evidence and does not close that manual gate.
+
 ## Security and privacy
 
 - Integrity is projected only after the existing authenticated project snapshot boundary authorizes the actor.

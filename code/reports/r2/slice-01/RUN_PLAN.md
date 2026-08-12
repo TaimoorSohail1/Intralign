@@ -12,4 +12,14 @@
 6. Exercise the real application manually and audit desktop, tablet, and mobile against `release-2/oslo-prototype-r2.html`; store screenshots, test summaries, parity notes, and the manual checklist in this directory.
 7. Commit coherent verified implementation, then record its exact SHA and final evidence in the ledger in a separate ledger commit.
 
+## Resumption plan - 2026-08-12 05:03 PKT
+
+1. Restore the seeded Supabase, FastAPI, and Next.js stack and reconnect the required Codex in-app browser.
+2. Complete the timeout to stale/last-good to retry journey plus keyboard, announcement/focus, reduced-motion, 200% zoom, permissions, adjacent-regression, and responsive checks if a page attaches.
+3. Save and inspect current-run desktop, tablet, and mobile screenshots before accepting UI/UX or prototype-parity evidence.
+4. Rerun automated gates and Code Review only after a successful manual gate or any product-code change.
+5. Keep Slice 1 `IN PROGRESS` unless every open gate passes; do not acquire Slice 3 or touch Slices 4-10.
+
+**Result:** the seeded platform endpoints, API, and web server were reachable, but the in-app browser timed out before attaching both the initial and supported-recovery fresh pages. No manual interaction, screenshot, product change, or automated completion claim was accepted. Slice 1 remains `IN PROGRESS`.
+
 No work is authorized for Slices 4–10. Slice 3 and Slice 2 remain unchanged during this run.
