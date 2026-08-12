@@ -292,6 +292,102 @@ def test_rejecting_a_proposal_records_history_against_the_source_read(
             )
 
 
+def test_accepting_a_build_proposal_creates_a_withdrawable_lifecycle_act(
+    tmp_path,
+    workspace_owner_id: UUID,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    owner_id = workspace_owner_id
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Withdraw accepted proposal', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description="A delivery plan with unresolved ownership and checkpoints.",
+                source_names=("brief.md",),
+                idempotency_key=f"proposal-withdraw-baseline:{project_id}",
+            )
+        )
+        application = DatabaseSliceTwoApplication(
+            engine=engine,
+            store=store,
+            workflow=workflow,
+            executor=NoopExecutor(),  # type: ignore[arg-type]
+            document_store=DatabaseDocumentStore(
+                engine=engine,
+                object_store=LocalObjectStorage(tmp_path),
+            ),
+            extended_delay_seconds=0,
+        )
+        proposal = next(
+            candidate
+            for candidate in application.list_issue_proposals(
+                actor_user_id=owner_id,
+                project_id=project_id,
+            )
+            if candidate["kind"] == "build"
+        )
+
+        accepted = application.decide_issue_proposal(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            proposal_id=UUID(proposal["id"]),
+            accepted=True,
+            surface="folded_read",
+            key=f"proposal-accept:{project_id}",
+        )
+        withdrawn = application.act_on_issue_lifecycle(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            issue_id=proposal["issue_id"],
+            act="withdraw",
+            basis=None,
+            evidence_ref=None,
+            resolution=None,
+            reviewer=None,
+            key=f"proposal-withdraw:{project_id}",
+        )
+
+        assert accepted["analysis_run"] is not None
+        assert withdrawn["status"] == "open"
+        assert withdrawn["attestation"]["supersedes"] is not None
+        with engine.connect() as connection:
+            acts = connection.execute(
+                text(
+                    """
+                    select act
+                    from public.issue_attestations
+                    where project_id = :project_id
+                      and issue_stable_key = :issue_id
+                    order by created_at
+                    """
+                ),
+                {"project_id": project_id, "issue_id": proposal["issue_id"]},
+            ).scalars().all()
+        assert [str(act) for act in acts] == ["fix", "withdraw"]
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
 def test_artifact_noop_is_inert_and_material_edit_uses_structured_evidence(
     tmp_path,
     workspace_owner_id: UUID,

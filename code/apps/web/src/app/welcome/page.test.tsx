@@ -24,7 +24,8 @@ describe("WelcomePage", () => {
 
     render(await WelcomePage());
 
-    expect(document.body).toHaveTextContent("Welcome to OSLO, Taimoor.");
-    expect(document.body).toHaveTextContent("Start your first project");
+    expect(document.body).toHaveTextContent("Welcome to Intralign, Taimoor.");
+    expect(document.body).toHaveTextContent("Outcome-driven Strategic Lifecycle Orchestration");
+    expect(document.body).toHaveTextContent("Start your first outcome");
   });
 });

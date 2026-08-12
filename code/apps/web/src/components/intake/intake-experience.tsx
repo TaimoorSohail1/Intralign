@@ -207,17 +207,19 @@ export function IntakeExperience({
   return (
     <main className="entry-shell intake-shell">
       <BrandLockup />
-      <h1 className="intake-title">See your plan like a strategic leader.</h1>
+      <h1 className="intake-title">Optimize your plan for the outcome you’re after.</h1>
       <p className="intake-subtitle">
-        Drop in a plan, brief, or notes. OSLO shows how clear, aligned, and feasible it is — and
-        where the issues are.
+        Drop in a plan, brief, backlog, or goals — a document, a schedule export, or just paste
+        your notes. <strong>OSLO</strong> — Intralign’s outcome-orchestration AI — shows you what
+        stands between it and your outcome: how clear, aligned, and feasible it is, and what to fix,
+        so you can close the gaps yourself.
       </p>
       <section className="composer">
         <textarea
           aria-label="Describe your project"
           disabled={!hydrated}
           onChange={(event) => setDescription(event.target.value)}
-          placeholder="e.g. We’re running DevNorth 2026, a one-day developer conference…"
+          placeholder="e.g. We’re running DevNorth 2026, a one-day developer conference on Sep 18 for ~450 attendees. Sponsors fund it. Venue, speakers, registration and on-site logistics are the big unknowns… — or just paste your goals and backlog; bullet points are fine."
           value={description}
         />
         {files.length > 0 ? (
@@ -254,27 +256,30 @@ export function IntakeExperience({
           />
           {!canStart ? <span className="composer-hint">Add a description, a document, or a template to start</span> : null}
           <button className="button button-primary" disabled={!canStart || !hydrated || submitting} onClick={startAnalysis} type="button">
-            {submitting ? "Starting analysis…" : "See where I stand →"}
+            {submitting ? "Starting analysis…" : "Get my analysis →"}
           </button>
         </div>
+        <p className="intake-micro">PDF, DOCX, PPTX, XLSX, CSV, TXT, MD · up to 10 files, 10 MB each · Your first read is usually ready in under a minute.</p>
         {error ? <p className="intake-error" role="alert">{error}</p> : null}
       </section>
-      <div className="template-list">
-        <span>or start from a template:</span>
-        {templates.map(([name, seed]) => (
-          <button className="template-pill" disabled={!hydrated} key={name} onClick={() => setDescription(seed)} type="button">
-            {name}
-          </button>
-        ))}
-      </div>
       <button
-        className="sample-link"
+        className="sample-link sample-link-primary"
         disabled={!hydrated}
         onClick={() => setDescription("DevNorth 2026 is a one-day developer conference for approximately 450 attendees on 18 September. Confirm the venue, programme, Wi-Fi capacity, sponsors, budget, schedule and delivery owners.")}
         type="button"
       >
-        See it on a sample project →
+        New to Intralign? See how it works on a sample plan →
       </button>
+      <details className="template-list">
+        <summary>or start from a template</summary>
+        <div className="template-options">
+          {templates.map(([name, seed]) => (
+            <button className="template-pill" disabled={!hydrated} key={name} onClick={() => setDescription(seed)} type="button">
+              {name}
+            </button>
+          ))}
+        </div>
+      </details>
       <footer className="entry-footer">ⓘ OSLO advises; you decide — you stay in control at every step.</footer>
     </main>
   );

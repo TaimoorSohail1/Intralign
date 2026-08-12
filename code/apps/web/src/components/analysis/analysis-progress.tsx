@@ -23,7 +23,15 @@ type OutcomeDecision = {
   outcome: string;
 };
 
-export function AnalysisProgress({ projectId, runId }: { projectId: string; runId: string }) {
+export function AnalysisProgress({
+  mode = "guided",
+  projectId,
+  runId,
+}: {
+  mode?: "guided" | "watch";
+  projectId: string;
+  runId: string;
+}) {
   const router = useRouter();
   const arcRef = useRef<HTMLIFrameElement>(null);
   const decisionOutcomeRef = useRef<string | null>(null);
@@ -166,8 +174,17 @@ export function AnalysisProgress({ projectId, runId }: { projectId: string; runI
       { oarc: "decision-result", ok: true },
       window.location.origin,
     );
+    if (mode === "guided") {
+      await fetch("/api/orientation", { method: "POST" }).catch(() => null);
+    }
     window.setTimeout(() => router.replace(`/projects/${projectId}/overview`), 850);
-  }, [projectId, router]);
+  }, [mode, projectId, router]);
+
+  useEffect(() => {
+    if (mode !== "watch" || !decision) return;
+    const handoff = window.setTimeout(() => void actOnOutcome("confirm"), 100);
+    return () => window.clearTimeout(handoff);
+  }, [actOnOutcome, decision, mode]);
 
   useEffect(() => {
     const onArcMessage = (event: MessageEvent) => {
@@ -190,9 +207,18 @@ export function AnalysisProgress({ projectId, runId }: { projectId: string; runI
     <main aria-busy={!decision && !failed} className="r2-analysis-page">
       <iframe
         className="r2-analysis-prototype-frame"
-        onLoad={() => setArcReady(true)}
+        data-oarc-complete={decision ? "true" : "false"}
+        data-oarc-elapsed={String(elapsed)}
+        data-oarc-events={arcEvents.join(",")}
+        data-oarc-outcome={decision?.outcome ?? ""}
+        data-oarc-progress={String(decision ? 100 : ((activeIndex + 1) / workflow.length) * 100)}
+        data-oarc-project-title={decision?.projectTitle ?? ""}
+        onLoad={() => {
+          setArcReady(true);
+          window.setTimeout(syncArc, 0);
+        }}
         ref={arcRef}
-        src="/r2/onboarding-arc.html?embed=1&live=1"
+        src={`/r2/onboarding-arc.html?embed=1&live=1&mode=${mode}`}
         title="OSLO analysis and outcome confirmation"
       />
 

@@ -138,6 +138,31 @@ def test_xlsx_is_extracted_into_sheet_and_cell_addressable_fragments() -> None:
     }
 
 
+def test_xlsx_simple_sum_formula_is_extracted_as_its_computed_value() -> None:
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Budget"
+    sheet.append(["Item", "Amount"])
+    sheet.append(["Venue", 12000000])
+    sheet.append(["Catering", 7500000])
+    sheet.append(["Total", "=SUM(B2:B3)"])
+    content = BytesIO()
+    workbook.save(content)
+
+    parsed = parse_document(
+        file_name="budget.xlsx",
+        declared_content_type=("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+        content=content.getvalue(),
+    )
+
+    assert parsed.fragments[0].content == (
+        "Item | Amount\n"
+        "Venue | 12000000\n"
+        "Catering | 7500000\n"
+        "Total | 19500000"
+    )
+
+
 def test_scanned_pdf_uses_ocr_and_preserves_page_reference() -> None:
     image = Image.new("RGB", (600, 800), "white")
     content = BytesIO()

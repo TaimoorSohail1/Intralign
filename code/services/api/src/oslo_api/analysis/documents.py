@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from functools import lru_cache
 from io import BytesIO
@@ -10,6 +11,7 @@ from docx import Document
 from docx.opc.exceptions import PackageNotFoundError
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
+from openpyxl.utils.cell import range_boundaries
 from PIL import Image
 from pptx import Presentation
 from pypdf import PdfReader
@@ -19,6 +21,7 @@ MAX_DOCUMENT_BYTES = 10 * 1024 * 1024
 CHUNK_SIZE = 2_000
 CHUNK_OVERLAP = 200
 MAX_SPREADSHEET_CELLS = 200_000
+SIMPLE_SUM_FORMULA = re.compile(r"^=SUM\(([A-Z]+\d+:[A-Z]+\d+)\)$", re.IGNORECASE)
 
 
 class DocumentRejected(ValueError):
@@ -299,7 +302,7 @@ def _parse_xlsx(content: bytes) -> ParsedDocument:
             rows: list[tuple[int, list[str]]] = []
             max_column = 0
             for row_number, row in enumerate(sheet.iter_rows(values_only=True), start=1):
-                values = ["" if value is None else str(value).strip() for value in row]
+                values = [_xlsx_display_value(sheet, value) for value in row]
                 while values and not values[-1]:
                     values.pop()
                 if not values or not any(values):
@@ -333,6 +336,36 @@ def _parse_xlsx(content: bytes) -> ParsedDocument:
         page_count=len(workbook.sheetnames),
         fragments=tuple(fragments),
     )
+
+
+def _xlsx_display_value(sheet: object, value: object) -> str:
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        return str(value).strip()
+
+    match = SIMPLE_SUM_FORMULA.fullmatch(value.strip())
+    if match is None:
+        return value.strip()
+
+    try:
+        min_column, min_row, max_column, max_row = range_boundaries(match.group(1))
+        total = 0.0
+        for row in sheet.iter_rows(
+            min_row=min_row,
+            max_row=max_row,
+            min_col=min_column,
+            max_col=max_column,
+            values_only=True,
+        ):
+            for cell_value in row:
+                if isinstance(cell_value, bool) or not isinstance(cell_value, (int, float)):
+                    return value.strip()
+                total += float(cell_value)
+    except (AttributeError, TypeError, ValueError):
+        return value.strip()
+
+    return format(total, ".15g")
 
 
 def _parse_text(content: bytes, suffix: str) -> ParsedDocument:

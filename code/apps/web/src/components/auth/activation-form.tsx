@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 
 interface ActivationFormProps {
   email: string;
@@ -9,33 +9,28 @@ interface ActivationFormProps {
   action?: (formData: FormData) => void | Promise<void>;
 }
 
-export function ActivationForm({
-  email,
-  token,
-  workspaceName,
-  action,
-}: ActivationFormProps) {
-  const [passwordError, setPasswordError] = useState("");
+const roleOptions = [
+  ["run", "I run the plan", "Delivery / project PM"],
+  ["own", "I own the outcome", "Business / functional owner"],
+  ["both", "I own it and run it", "Outcome owner + delivery lead"],
+  ["other", "Something else", "Other / not sure"],
+] as const;
 
+function displayNameFromEmail(email: string) {
+  return email
+    .split("@", 1)[0]
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+export function ActivationForm({ email, token, action }: ActivationFormProps) {
   return (
-    <form
-      action={action}
-      className="activation-card"
-      onSubmit={(event) => {
-        const formData = new FormData(event.currentTarget);
-        if (formData.get("password") !== formData.get("confirm_password")) {
-          event.preventDefault();
-          setPasswordError("Passwords do not match");
-        } else {
-          setPasswordError("");
-        }
-      }}
-    >
+    <form action={action} className="activation-card">
       <input name="token" type="hidden" value={token} />
       <h1>Activate your account</h1>
-      <p className="activation-subtitle">
-        Set your credentials to join {workspaceName} and finish activation.
-      </p>
+      <p className="activation-subtitle">Set your credentials to finish activation.</p>
 
       <div className="field">
         <label htmlFor="invited-email">Email (from your invite)</label>
@@ -53,6 +48,7 @@ export function ActivationForm({
         <label htmlFor="display-name">Display name</label>
         <input
           autoComplete="name"
+          defaultValue={displayNameFromEmail(email)}
           id="display-name"
           minLength={1}
           name="display_name"
@@ -60,6 +56,22 @@ export function ActivationForm({
           type="text"
         />
       </div>
+
+      <fieldset className="activation-role-fieldset">
+        <legend>
+          How do you work with this plan?
+          <span>Shapes what OSLO puts first — never the read itself</span>
+        </legend>
+        <div className="activation-role-grid">
+          {roleOptions.map(([value, title, detail], index) => (
+            <label className="activation-role-card" key={value}>
+              <input defaultChecked={index === 0} name="role_context" type="radio" value={value} />
+              <span className="activation-role-title">{title}</span>
+              <span className="activation-role-detail">{detail}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <div className="field">
         <label htmlFor="new-password">Choose a password</label>
@@ -74,19 +86,6 @@ export function ActivationForm({
         />
       </div>
 
-      <div className="field">
-        <label htmlFor="confirm-password">Confirm password</label>
-        <input
-          autoComplete="new-password"
-          id="confirm-password"
-          minLength={12}
-          name="confirm_password"
-          required
-          type="password"
-        />
-      </div>
-      {passwordError ? <p className="form-error" role="alert">{passwordError}</p> : null}
-
       <label className="stay-signed-in">
         <input defaultChecked name="stay_signed_in" type="checkbox" value="true" />
         <span>Stay signed in on this device</span>
@@ -95,6 +94,9 @@ export function ActivationForm({
       <button className="button button-primary button-full" type="submit">
         Create account &amp; continue <span aria-hidden="true">→</span>
       </button>
+      <Link className="activation-back-link" href={`/activate?token=${encodeURIComponent(token)}`}>
+        ← Back to the invitation
+      </Link>
     </form>
   );
 }

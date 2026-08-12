@@ -134,6 +134,79 @@ def _invitation_html(*, workspace_name: str, role: str, activation_url: str, exp
 </html>"""
 
 
+def _alpha_invitation_html(
+    *, workspace_name: str, role: str, activation_url: str, expiry: str
+) -> str:
+    safe_workspace_name = escape(workspace_name)
+    safe_role = escape(role)
+    safe_activation_url = escape(activation_url)
+    safe_expiry = escape(expiry)
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>You&rsquo;re invited to Intralign Alpha</title>
+  <style>
+    @media only screen and (max-width: 620px) {{
+      .email-shell {{ width:100% !important; }}
+      .email-card {{ padding:22px !important; }}
+      .email-button {{ display:block !important; text-align:center !important; }}
+    }}
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#101214;color:#f5f4f0;font-family:Arial,Helvetica,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+    Activate your invite-only Intralign Alpha account.
+  </div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#101214;">
+    <tr>
+      <td align="center" style="padding:64px 18px;">
+        <table role="presentation" width="580" cellspacing="0" cellpadding="0" border="0" class="email-shell" style="width:580px;max-width:580px;">
+          <tr>
+            <td align="center" style="padding:0 0 18px;">
+              <span style="font-size:24px;font-weight:800;color:#f5f4f0;">intralign</span>
+              <span style="padding-left:12px;font-size:11px;color:#7f91ad;">OSLO &middot; outcome-orchestration AI</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="email-card" style="padding:0;background:#171b1f;border:1px solid #37404a;border-radius:12px;overflow:hidden;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding:11px 18px;border-bottom:1px solid #37404a;font-size:11px;color:#7f91ad;">
+                    Inbox &middot; from the Intralign team &lt;invites@intralign.ai&gt;
+                    <span style="float:right;border:1px dashed #37404a;border-radius:99px;padding:2px 8px;">simulated email</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:18px;">
+                    <div style="margin-bottom:9px;font-size:12px;color:#7f91ad;">Invite to {safe_workspace_name} &middot; {safe_role}</div>
+                    <h1 style="margin:0 0 12px;font-size:22px;line-height:28px;color:#fff;">You&rsquo;re invited to Intralign Alpha</h1>
+                    <p style="margin:0 0 14px;font-size:14px;line-height:23px;color:#b8c1cd;">
+                      OSLO helps you drive your plan to the outcome you own: it shows where your plan is
+                      <strong style="color:#fff;">clear, aligned, and feasible</strong> &mdash; and where the issues are &mdash;
+                      so you close the gaps with AI-grade judgement, not guesswork. The Alpha is
+                      <strong style="color:#fff;">invite-only</strong>. Activate your account to get started.
+                    </p>
+                    <div style="margin:0 0 14px;padding:9px 11px;border:1px solid #37404a;border-radius:7px;background:#101214;color:#7f91ad;font:11px monospace;word-break:break-all;">activation link &middot; {safe_activation_url}</div>
+                    <a href="{safe_activation_url}" class="email-button" style="display:inline-block;padding:12px 20px;border-radius:8px;background:#df843f;color:#101214;font-size:14px;font-weight:800;text-decoration:none;">Activate account&nbsp;&rarr;</a>
+                    <p style="margin:14px 0 0;font-size:11px;line-height:18px;color:#7f91ad;">
+                      This link is unique to you and expires in 7 days ({safe_expiry}). You&rsquo;ll be authenticated from activation onward &mdash; no anonymous access in Alpha.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+
 class SmtpInvitationMailer:
     def __init__(
         self,
@@ -161,18 +234,21 @@ class SmtpInvitationMailer:
         message = EmailMessage()
         message["From"] = self._sender
         message["To"] = email
-        message["Subject"] = f"You're invited to {workspace_name}"
+        message["Subject"] = "You're invited to Intralign Alpha"
         message.set_content(
-            f"""You've been invited to join {workspace_name} as {role} in OSLO Product Grill.
+            f"""You're invited to Intralign Alpha for {workspace_name} as {role}.
 
-Activate your account:
+OSLO helps you drive your plan to the outcome you own. It shows where your plan is clear,
+aligned, and feasible, and where the issues are, so you can close the gaps.
+
+Activate account:
 {activation_url}
 
-This invitation expires on {expiry}.
+This unique link expires in 7 days ({expiry}).
 """
         )
         message.add_alternative(
-            _invitation_html(
+            _alpha_invitation_html(
                 workspace_name=workspace_name,
                 role=role,
                 activation_url=activation_url,
@@ -265,21 +341,24 @@ class PostmarkInvitationMailer:
         expires_at: datetime,
     ) -> None:
         expiry = expires_at.strftime("%d %B %Y")
-        text_body = f"""You've been invited to join {workspace_name} as {role} in OSLO Product Grill.
+        text_body = f"""You're invited to Intralign Alpha for {workspace_name} as {role}.
 
-Activate your account:
+OSLO helps you drive your plan to the outcome you own. It shows where your plan is clear,
+aligned, and feasible, and where the issues are, so you can close the gaps.
+
+Activate account:
 {activation_url}
 
-This invitation expires on {expiry}.
+This unique link expires in 7 days ({expiry}).
 """
         _postmark_send(
             server_token=self._server_token,
             sender=self._sender,
             sender_name=self._sender_name,
             recipient=email,
-            subject=f"You're invited to {workspace_name}",
+            subject="You're invited to Intralign Alpha",
             text_body=text_body,
-            html_body=_invitation_html(
+            html_body=_alpha_invitation_html(
                 workspace_name=workspace_name,
                 role=role,
                 activation_url=activation_url,

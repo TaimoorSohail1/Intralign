@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { ActivationForm } from "./activation-form";
 
@@ -21,15 +21,20 @@ describe("ActivationForm", () => {
     expect(screen.getByLabelText("Email (from your invite)")).toHaveAttribute(
       "readonly",
     );
+    expect(screen.getByLabelText("Display name")).toHaveValue("New Member");
+    expect(screen.getAllByRole("radio")).toHaveLength(4);
+    expect(screen.getByRole("radio", { name: /I run the plan/i })).toBeChecked();
     expect(screen.getByRole("checkbox", { name: "Stay signed in on this device" })).toBeChecked();
     expect(screen.getByRole("button", { name: "Create account & continue" })).toBeEnabled();
+    expect(screen.getByRole("link", { name: /Back to the invitation/ })).toHaveAttribute(
+      "href",
+      "/activate?token=activation-token",
+    );
   });
 
-  it("blocks weak and mismatched password confirmation", () => {
-    const action = vi.fn();
+  it("matches the prototype role choice and single-password form", () => {
     render(
       <ActivationForm
-        action={action}
         email="new.member@example.com"
         token="activation-token"
         workspaceName="OSLO Product Grill"
@@ -38,13 +43,9 @@ describe("ActivationForm", () => {
 
     const password = screen.getByLabelText("Choose a password");
     expect(password).toHaveAttribute("minlength", "12");
-    fireEvent.change(password, { target: { value: "ActivationTest123!" } });
-    fireEvent.change(screen.getByLabelText("Confirm password"), {
-      target: { value: "DifferentPassword123!" },
-    });
-    fireEvent.submit(screen.getByRole("button", { name: /Create account/ }).closest("form")!);
+    expect(screen.queryByLabelText("Confirm password")).not.toBeInTheDocument();
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Passwords do not match");
-    expect(action).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("radio", { name: /I own the outcome/i }));
+    expect(screen.getByRole("radio", { name: /I own the outcome/i })).toBeChecked();
   });
 });

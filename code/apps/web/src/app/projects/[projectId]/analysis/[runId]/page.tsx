@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AnalysisProgress } from "@/components/analysis/analysis-progress";
+import { getOrientationSeen } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
 
 export default async function AnalysisPage({
@@ -11,5 +12,12 @@ export default async function AnalysisPage({
   const session = await readSession();
   if (!session.accessToken) redirect("/login");
   const { projectId, runId } = await params;
-  return <AnalysisProgress projectId={projectId} runId={runId} />;
+  const orientationSeen = await getOrientationSeen(session.accessToken, projectId).catch(() => false);
+  return (
+    <AnalysisProgress
+      mode={orientationSeen ? "watch" : "guided"}
+      projectId={projectId}
+      runId={runId}
+    />
+  );
 }

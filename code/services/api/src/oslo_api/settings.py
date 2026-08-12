@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://postgres:postgres@127.0.0.1:55322/postgres"
     supabase_url: str = "http://127.0.0.1:55321"
     supabase_secret_key: str = Field(min_length=20)
-    web_url: str = "http://localhost:3000"
+    web_url: str = "http://127.0.0.1:3002"
     smtp_host: str = "127.0.0.1"
     smtp_port: int = 55325
     email_sender: str = "OSLO <no-reply@oslo.local>"

@@ -108,7 +108,6 @@ class RecordingSliceTwo:
         assert actor_user_id == USER_ID
         assert project_id == PROJECT_ID
         return self.orientation_seen
-
     def runtime_state(self, *, actor_user_id, project_id):
         assert actor_user_id == USER_ID
         assert project_id == PROJECT_ID
@@ -450,6 +449,20 @@ class RecordingSliceTwo:
             )
         )
         return artifact, run
+
+
+def test_orientation_state_is_available_before_the_overview_is_published() -> None:
+    slice_two = RecordingSliceTwo()
+    slice_two.orientation_seen = True
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
+
+    response = client.get(
+        f"/v1/projects/{PROJECT_ID}/orientation-seen",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"seen": True}
 
 
 class RecordingAdvisor:

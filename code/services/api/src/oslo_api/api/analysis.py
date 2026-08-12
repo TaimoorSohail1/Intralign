@@ -1493,6 +1493,22 @@ def decide_project_issue_proposal(
     )
 
 
+@router.get("/projects/{project_id}/orientation-seen")
+def orientation_state(
+    project_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+) -> dict[str, bool]:
+    try:
+        seen = slice_two_application(request).has_seen_orientation(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    return {"seen": seen}
+
+
 @router.post("/workspaces/{workspace_id}/orientation-seen", status_code=status.HTTP_204_NO_CONTENT)
 def mark_orientation_seen(
     workspace_id: UUID,

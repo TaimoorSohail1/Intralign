@@ -602,6 +602,20 @@ export function actOnProjectIssue(input: {
   );
 }
 
+export async function getOrientationSeen(
+  accessToken: string,
+  projectId: string,
+): Promise<boolean> {
+  const result = await apiRequest<{ seen: boolean }>(
+    `/v1/projects/${projectId}/orientation-seen`,
+    {
+      method: "GET",
+      headers: { authorization: `Bearer ${accessToken}` },
+    },
+  );
+  return result.seen;
+}
+
 export function actOnProjectIssueLifecycle(input: {
   accessToken: string;
   projectId: string;

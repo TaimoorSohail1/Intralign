@@ -49,7 +49,7 @@ import { buildProjectProvenance } from "@/lib/project-provenance";
 const dimensions = ["clarity", "alignment", "feasibility"] as const;
 const confidenceBands = ["Very Low", "Low", "Moderate", "High", "Very High"] as const;
 const integrityBands = ["Fragile", "Weak", "Developing", "Solid", "Sound"] as const;
-const intralignLogo = "data:image/webp;base64,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";
+const intralignLogo = "/intralign-logo.webp";
 export { intralignLogo };
 
 const artifactOrder = [
@@ -1453,17 +1453,24 @@ export function ProjectOverview({
               <section className={`start-here ${
                 orientation && activeTourStep === 2 ? "is-tour-target" : ""
               }`}>
-                {workspaceNoticeOpen ? (
-                  <section className="r2-workspace-open" aria-label="Workspace open">
+                <div
+                  className="r2-workspace-open-slot"
+                  data-state={workspaceNoticeOpen ? "open" : "dismissed"}
+                >
+                  <section
+                    aria-hidden={!workspaceNoticeOpen}
+                    aria-label={workspaceNoticeOpen ? "Workspace open" : undefined}
+                    className={`r2-workspace-open ${workspaceNoticeOpen ? "" : "is-dismissed"}`}
+                  >
                     <span aria-hidden="true">✦</span>
                     <div>
                       <strong>Your workspace is open.</strong>
                       <p>Your plan documents are on the left and OSLO&apos;s reasoning is on the right — every pillar and open issue travels with them.</p>
-                      <div><small>New to OSLO?</small><button onClick={() => { setTourStep(0); setOrientation(true); }} type="button">Take a 30-second tour →</button><button onClick={() => setWorkspaceNoticeOpen(false)} type="button">No thanks</button></div>
+                      <div><small>New to OSLO?</small><button disabled={!workspaceNoticeOpen} onClick={() => { setTourStep(0); setOrientation(true); }} tabIndex={workspaceNoticeOpen ? 0 : -1} type="button">Take a 30-second tour →</button><button disabled={!workspaceNoticeOpen} onClick={() => setWorkspaceNoticeOpen(false)} tabIndex={workspaceNoticeOpen ? 0 : -1} type="button">No thanks</button></div>
                     </div>
-                    <button aria-label="Dismiss workspace open message" onClick={() => setWorkspaceNoticeOpen(false)} type="button">×</button>
+                    <button aria-label={workspaceNoticeOpen ? "Dismiss workspace open message" : undefined} disabled={!workspaceNoticeOpen} onClick={() => setWorkspaceNoticeOpen(false)} tabIndex={workspaceNoticeOpen ? 0 : -1} type="button">×</button>
                   </section>
-                ) : null}
+                </div>
                 <div className="overview-label r2-worklist-label">
                   <p>Your work — most important first</p>
                   <span>Do them top to bottom; the order re-ranks itself as you go.</span>
@@ -2574,8 +2581,11 @@ function IssueProposalGroup({
         <span><CaretDown aria-hidden="true" size={12} /> <i aria-hidden="true">◆</i> OSLO proposes</span>
         <strong>{proposals.length} optional addition{proposals.length === 1 ? "" : "s"}</strong>
       </button>
-      {open ? (
-        <div className="r2-proposal-body">
+      <div
+        aria-hidden={!open}
+        className={`r2-proposal-body ${open ? "" : "is-collapsed"}`}
+        inert={!open}
+      >
           <p>
             Beyond what your plan rests on — <strong>accept or reject each, here.</strong>{" "}
             Optional: these round out your plan; they don&apos;t move your integrity band,
@@ -2608,8 +2618,7 @@ function IssueProposalGroup({
               </div>
             </article>
           ))}
-        </div>
-      ) : null}
+      </div>
     </section>
   );
 }
@@ -2633,7 +2642,7 @@ function IssueLifecycleTray({
   onView: (issue: Issue, trigger?: HTMLElement | null) => void;
   open: boolean;
 }) {
-  if (!issues.length) return null;
+  if (!issues.length && kind !== "resolved") return null;
   const statusCount = kind === "acted"
     ? `${issues.filter((issue) => issue.status === "needs_fix").length} to fix · ${
       issues.filter((issue) => issue.status === "needs_grounding").length
@@ -2650,8 +2659,11 @@ function IssueLifecycleTray({
         <span><CaretDown aria-hidden="true" size={12} /> {kind === "resolved" ? "✓" : "◇"} {label}</span>
         <strong>{countLabel ?? statusCount}</strong>
       </button>
-      {open ? (
-        <div className="r2-tray-body">
+      <div
+        aria-hidden={!open}
+        className={`r2-tray-body ${open ? "" : "is-collapsed"}`}
+        inert={!open}
+      >
           {issues.map((issue) => (
             <article className="r2-tray-row" key={issue.id}>
               <span aria-hidden="true">{kind === "resolved" ? "✓" : "○"}</span>
@@ -2690,8 +2702,7 @@ function IssueLifecycleTray({
               </div>
             </article>
           ))}
-        </div>
-      ) : null}
+      </div>
     </section>
   );
 }
@@ -2797,15 +2808,6 @@ function IssuePanel({
   useEffect(() => {
     closeButton.current?.focus();
   }, []);
-
-  useEffect(() => {
-    if (!inline) return;
-    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    panel.current?.scrollIntoView?.({
-      behavior: reduceMotion ? "auto" : "smooth",
-      block: "start",
-    });
-  }, [inline, issue.id]);
 
   useEffect(() => {
     let active = true;

@@ -129,7 +129,6 @@
   .dev .sp{flex:1}
   .dev .note{color:var(--amber)}
   html.embed .dev{display:none}
-  html.embed .modebtn{display:none!important}
   @media (max-width:700px){
     .top{gap:8px;padding:12px 14px;align-items:flex-start;flex-wrap:wrap}
     .brand .tag{display:none}
@@ -223,6 +222,7 @@
 var OARC_PARAMS=new URLSearchParams(window.location.search);
 var OARC_EMBED=OARC_PARAMS.get('embed')==='1';
 var OARC_LIVE=OARC_PARAMS.get('live')==='1';
+var OARC_MODE=OARC_PARAMS.get('mode')==='watch'?'watch':'guided';
 var OARC_REDUCED=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 if(OARC_EMBED) document.documentElement.classList.add('embed');
 var cv=document.getElementById('cv'), ctx=cv.getContext('2d'), DPR=Math.min(2,window.devicePixelRatio||1);
@@ -580,7 +580,7 @@ function loop(now){
 var raf=requestAnimationFrame(loop);
 
 /* ===================== ARC / BEAT CONTROLLER ===================== */
-var PASS_MS=60000, GUIDED_MIN=47500, entry='first', mode='guided';
+var PASS_MS=60000, GUIDED_MIN=47500, entry=OARC_MODE==='watch'?'return':'first', mode=OARC_MODE;
 var timers=[], t0=0, passDone=false, analysisComplete=false, doneCbs=[];
 function onDone(fn){ if(analysisComplete){ fn(); } else { doneCbs.push(fn); } }
 function clearTimers(){ timers.forEach(clearTimeout); timers=[]; }
@@ -750,6 +750,7 @@ function restart(){ start(); }
 
 function start(){
   clearTimers(); passDone=false; analysisComplete=false; doneCbs=[]; t0=Date.now();
+  if(typeof OARC_FRAME_SYNC!=='undefined') OARC_FRAME_SYNC='';
   orbGreen=1; ingesting=false; morphT=-1; _ev={}; _evCb={}; if(!OARC_LIVE) scheduleFastPass();
   $('passWrap').classList.remove('done'); $('passLab').textContent='Analyzing your plan'; var pe=$('passEta'); if(pe) pe.style.display=''; $('passFill').style.width='0%';
   buildGraph(); resetOverlays(); pilotOn=false; setNarrPos(178);
@@ -783,6 +784,13 @@ function oarcLiveProgress(d){
   if(d.complete){
     ['outcome','plan-structure','inference','pillars'].forEach(fireEvent);
     passComplete();
+    if(mode==='watch'){
+      clearTimers();
+      handOff();
+      oarcRewardFinal('confirm', OARC_OUTCOME, 'Locked in', false);
+      at(1100,function(){ oarcHandoff('confirm', OARC_OUTCOME); });
+      return;
+    }
     if(OARC_REDUCED){ clearTimers(); cls('ingest','on',false); handOff(); }
   }
 }
@@ -793,6 +801,23 @@ window.addEventListener('message',function(event){
   if(d.oarc==='sync') oarcLiveProgress(d);
   if(d.oarc==='decision-result') oarcDecisionResult(d);
 });
+var OARC_FRAME_SYNC='';
+function oarcSyncFromFrameElement(){
+  if(!OARC_EMBED||!window.frameElement) return;
+  var d=window.frameElement.dataset||{};
+  var complete=d.oarcComplete==='true';
+  var signature=[d.oarcProjectTitle||'',d.oarcOutcome||'',d.oarcEvents||'',d.oarcProgress||'',complete?'complete':(d.oarcElapsed||'')].join('|');
+  if(signature===OARC_FRAME_SYNC) return;
+  OARC_FRAME_SYNC=signature;
+  oarcLiveProgress({
+    projectTitle:d.oarcProjectTitle||'',
+    outcome:d.oarcOutcome||'',
+    events:(d.oarcEvents||'').split(',').filter(Boolean),
+    progress:Number(d.oarcProgress||0),
+    complete:complete,
+    elapsed:Number(d.oarcElapsed||0)
+  });
+}
 function oarcRefine(){ var ta=$('dOcEdit'); ta.value=OARC_OUTCOME;                       // edit INLINE on this card — no pivot to the app
   $('dOc').style.display='none'; ta.style.display='block';
   $('dActs').style.display='none'; $('dActsEdit').style.display='';
@@ -865,6 +890,8 @@ if(!window._S10.noJargon) console.warn('ARC ANTI-JARGON — banned phrase(s) pre
 if(!window._S10.demoSimsTagged) console.warn('ARC SIM-TAG — placeholder/invalid tag(s):', _simTagAudit());
 start();
 if(OARC_EMBED&&window.parent&&window.parent!==window){
+  oarcSyncFromFrameElement();
+  setInterval(oarcSyncFromFrameElement,250);
   try{ window.parent.postMessage({oarc:'ready'},window.location.origin); }catch(e){}
 }
 </script>

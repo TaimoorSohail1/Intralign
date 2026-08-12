@@ -52,6 +52,16 @@ describe("R2 onboarding arc prototype parity", () => {
     expect(shipped).toContain("{oarc:'decision'");
     expect(shipped).toContain("d.oarc==='decision-result'");
     expect(shipped).toContain("html.embed .dev{display:none}");
+    expect(shipped).toContain("oarcHandoff('confirm', OARC_OUTCOME)");
+    expect(shipped).toContain("if(typeof OARC_FRAME_SYNC!=='undefined') OARC_FRAME_SYNC=''");
     expect(shipped).toContain("prefers-reduced-motion:reduce");
+  });
+
+  it("keeps the production skip and replay control while hiding developer controls", async () => {
+    const shipped = await readFile(shippedPath, "utf8");
+    expect(shipped).toContain("OARC_MODE");
+    expect(shipped).not.toContain("html.embed .modebtn{display:none!important}");
+    expect(shipped).toContain("html.embed .dev{display:none}");
+    expect(shipped).toContain("'Skip the intro →':'↺ Replay intro'");
   });
 });

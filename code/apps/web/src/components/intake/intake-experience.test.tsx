@@ -9,7 +9,7 @@ describe("IntakeExperience", () => {
   it("keeps analysis blocked until the user adds meaningful input", () => {
     render(<IntakeExperience displayName="Alex" />);
 
-    const start = screen.getByRole("button", { name: /See where I stand/ });
+    const start = screen.getByRole("button", { name: /Get my analysis/ });
     expect(start).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText("Describe your project"), {
@@ -26,11 +26,15 @@ describe("IntakeExperience", () => {
   it("seeds the composer from one of the five supported templates", () => {
     render(<IntakeExperience displayName="Alex" />);
 
+    const templatePicker = screen.getByText(/start from a template/i).closest("details")!;
+    expect(templatePicker).not.toHaveAttribute("open");
+    fireEvent.click(screen.getByText(/start from a template/i));
+    expect(templatePicker).toHaveAttribute("open");
     expect(screen.getAllByRole("button", { name: /Event|Marketing Campaign|Product \/ Software Launch|Strategic Initiative|Generic Project Plan/ })).toHaveLength(5);
     fireEvent.click(screen.getByRole("button", { name: "Event" }));
 
     expect((screen.getByLabelText("Describe your project") as HTMLTextAreaElement).value).toContain("event");
-    expect(screen.getByRole("button", { name: /See where I stand/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Get my analysis/ })).toBeEnabled();
     expect(screen.queryByText(/guided q&a/i)).not.toBeInTheDocument();
   });
 
@@ -43,7 +47,7 @@ describe("IntakeExperience", () => {
     });
 
     expect(screen.getByText("plan.md")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /See where I stand/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Get my analysis/ })).toBeEnabled();
   });
 
   it("accepts PDF, DOCX, PPTX and XLSX together", () => {
@@ -77,16 +81,16 @@ describe("IntakeExperience", () => {
       "installer.exe is not a supported document",
     );
     expect(screen.queryByText("installer.exe", { selector: "li" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /See where I stand/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Get my analysis/ })).toBeDisabled();
   });
 
   it("loads the sample without starting analysis automatically", () => {
     render(<IntakeExperience displayName="Alex" />);
 
-    fireEvent.click(screen.getByRole("button", { name: /sample project/i }));
+    fireEvent.click(screen.getByRole("button", { name: /sample plan/i }));
 
     expect((screen.getByLabelText("Describe your project") as HTMLTextAreaElement).value).toContain("DevNorth");
-    expect(screen.getByRole("button", { name: /See where I stand/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Get my analysis/ })).toBeEnabled();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
   });
 
@@ -98,7 +102,7 @@ describe("IntakeExperience", () => {
       target: { value: "Launch the new customer portal" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /See where I stand/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Get my analysis/ }));
     expect(screen.getByRole("status")).toHaveTextContent(/Analyzing/i);
     await act(async () => vi.runAllTimersAsync());
 
@@ -121,7 +125,7 @@ describe("IntakeExperience", () => {
       target: { value: "Launch another project" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /See where I stand/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Get my analysis/ }));
     await act(async () => vi.runAllTimersAsync());
 
     expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();

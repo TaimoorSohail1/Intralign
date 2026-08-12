@@ -444,7 +444,7 @@ describe("ProjectOverview", () => {
   });
 
   it("renders the golden Overview hierarchy and routes prototype entry points", () => {
-    render(
+    const { container } = render(
       <ProjectOverview
         displayName="Alex"
         initial={snapshot}
@@ -455,8 +455,11 @@ describe("ProjectOverview", () => {
     expect(screen.getByText("OSLO · AI-first R2 prototype")).toBeInTheDocument();
     expect(screen.getByText("Sample")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Workspace open" })).toBeInTheDocument();
+    const workspaceSlot = container.querySelector(".r2-workspace-open-slot");
+    expect(workspaceSlot).toHaveAttribute("data-state", "open");
     fireEvent.click(screen.getByRole("button", { name: "Dismiss workspace open message" }));
     expect(screen.queryByRole("region", { name: "Workspace open" })).not.toBeInTheDocument();
+    expect(workspaceSlot).toHaveAttribute("data-state", "dismissed");
     expect(screen.getAllByText(/Outcome integrity/i)).not.toHaveLength(0);
     expect(screen.getByRole("link", { name: "Timeline" })).toHaveAttribute(
       "href",
@@ -468,6 +471,19 @@ describe("ProjectOverview", () => {
       "false",
     );
     expect(screen.queryByText("Analysis status")).not.toBeInTheDocument();
+  });
+
+  it("keeps the resolved lifecycle tray visible when no issue is settled yet", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("region", { name: "Resolved" })).toBeInTheDocument();
+    expect(screen.getByText("0 of 1 settled")).toBeInTheDocument();
   });
 
   it("renders the R2 Slice 1 integrity masthead and the complete exposure-ranked queue", () => {
@@ -630,6 +646,43 @@ describe("ProjectOverview", () => {
         { name: "Withdraw" },
       ),
     ).toBeInTheDocument();
+  });
+
+  it("keeps proposal and lifecycle tray geometry reserved while collapsed", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        initialProposals={[
+          {
+            id: "proposal-1",
+            issue_id: "ISS-001",
+            kind: "optional",
+            resolver_key: "optional:owner",
+            title: "Name a delivery fallback",
+            rationale: "The current plan has no documented fallback.",
+            artifact_type: "resources",
+            load_bearing: false,
+            accepted: false,
+            rejected: false,
+            surface: null,
+          },
+        ]}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const proposalRegion = screen.getAllByRole("region", { name: "OSLO proposes" }).at(-1)!;
+    const proposalBody = proposalRegion.querySelector(".r2-proposal-body");
+    fireEvent.click(within(proposalRegion).getByRole("button", { name: /OSLO proposes/i }));
+    expect(proposalBody).toBeInTheDocument();
+    expect(proposalBody).toHaveAttribute("aria-hidden", "true");
+
+    const resolvedRegion = screen.getByRole("region", { name: "Resolved" });
+    const resolvedBody = resolvedRegion.querySelector(".r2-tray-body");
+    fireEvent.click(within(resolvedRegion).getByRole("button", { name: /Resolved/i }));
+    expect(resolvedBody).toBeInTheDocument();
+    expect(resolvedBody).toHaveAttribute("aria-hidden", "true");
   });
 
   it("keeps the inline clarification behind the prototype recommendation disclosure", () => {
@@ -1216,6 +1269,9 @@ describe("ProjectOverview", () => {
   });
 
   it("expands an Overview issue inline without replacing the ranked queue", () => {
+    const scrollIntoView = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
     render(
       <ProjectOverview
         displayName="Alex"
@@ -1242,6 +1298,13 @@ describe("ProjectOverview", () => {
     expect(within(detail).getByText("Affects")).toBeInTheDocument();
     expect(within(detail).getByText("Holds up")).toBeInTheDocument();
     expect(screen.getByText("Your work — most important first")).toBeInTheDocument();
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    if (originalScrollIntoView) {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    } else {
+      delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
   });
 
   it("reveals readable evidence through a keyboard-operable disclosure and hides locator ids", () => {

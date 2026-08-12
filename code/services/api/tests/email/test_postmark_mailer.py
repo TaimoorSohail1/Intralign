@@ -40,10 +40,10 @@ def test_postmark_invitation_uses_transactional_api_and_branded_sender() -> None
     assert request.headers["X-Postmark-Server-Token"] == "server-token"
     assert payload["From"] == "Oslo <sender@example.com>"
     assert payload["To"] == "new.member@example.com"
-    assert payload["Subject"] == "You're invited to OSLO Product Grill"
-    assert "You've been invited" in payload["TextBody"]
+    assert payload["Subject"] == "You're invited to Intralign Alpha"
+    assert "OSLO helps you drive your plan to the outcome you own" in payload["TextBody"]
     assert payload["MessageStream"] == "outbound"
-    assert "Activate my account" in payload["HtmlBody"]
+    assert "Activate account" in payload["HtmlBody"]
     assert "https://app.example.com/activate?token=secret" in payload["TextBody"]
 
 

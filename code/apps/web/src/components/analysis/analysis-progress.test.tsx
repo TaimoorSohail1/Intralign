@@ -93,14 +93,14 @@ describe("AnalysisProgress", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<AnalysisProgress projectId="project-1" runId="run-1" />);
+    render(<AnalysisProgress mode="guided" projectId="project-1" runId="run-1" />);
     await screen.findByRole("button", { name: "Retry analysis" });
 
     fireEvent.click(screen.getByRole("button", { name: "Retry analysis" }));
 
     await waitFor(() => expect(statusRequest).toBe(2));
     expect(screen.getByRole("status")).toHaveTextContent("Drafting your plan documents…");
-    expect(frame()).toHaveAttribute("src", "/r2/onboarding-arc.html?embed=1&live=1");
+    expect(frame()).toHaveAttribute("src", "/r2/onboarding-arc.html?embed=1&live=1&mode=guided");
   });
 
   it("uses the exact prototype arc and sends truthful live analysis progress into it", async () => {
@@ -115,12 +115,13 @@ describe("AnalysisProgress", () => {
       ),
     );
 
-    render(<AnalysisProgress projectId="project-1" runId="run-1" />);
+    render(<AnalysisProgress mode="guided" projectId="project-1" runId="run-1" />);
     const arc = frame();
     const postMessage = vi.spyOn(arc.contentWindow!, "postMessage");
     emitArcMessage({ oarc: "ready" });
 
     await waitFor(() => expect(postMessage).toHaveBeenCalled());
+    expect(arc).toHaveAttribute("data-oarc-complete", "false");
     expect(postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         oarc: "sync",
@@ -135,6 +136,52 @@ describe("AnalysisProgress", () => {
 
     FakeEventSource.current?.emit("analysis.artifact_completed", { artifact_type: "intent" });
     expect(screen.getByRole("status")).toHaveTextContent("2 analysis steps complete");
+  });
+
+  it("mirrors completed live state onto the same-origin frame for race-free synchronization", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) =>
+        String(input).includes("/overview")
+          ? Response.json(completedOverview())
+          : Response.json({
+              status: "completed",
+              phase: "publish",
+              completed_phases: ["publish"],
+            }),
+      ),
+    );
+
+    render(<AnalysisProgress mode="guided" projectId="project-1" runId="run-1" />);
+
+    await waitFor(() => expect(frame()).toHaveAttribute("data-oarc-complete", "true"));
+    expect(frame()).toHaveAttribute(
+      "data-oarc-outcome",
+      "Ship the migration without customer interruption.",
+    );
+    expect(frame()).toHaveAttribute("data-oarc-events", expect.stringContaining("outcome"));
+  });
+
+  it("synchronizes after the embedded document loads even if its ready handshake raced", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) =>
+        String(input).includes("/overview")
+          ? Response.json(completedOverview())
+          : Response.json({
+              status: "completed",
+              phase: "publish",
+              completed_phases: ["publish"],
+            }),
+      ),
+    );
+
+    render(<AnalysisProgress mode="guided" projectId="project-1" runId="run-1" />);
+    const arc = frame();
+    const postMessage = vi.spyOn(arc.contentWindow!, "postMessage");
+
+    fireEvent.load(arc);
+    await waitFor(() => expect(postMessage).toHaveBeenCalled());
   });
 
   it.each([
@@ -157,7 +204,7 @@ describe("AnalysisProgress", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<AnalysisProgress projectId="project-1" runId="run-1" />);
+    render(<AnalysisProgress mode="guided" projectId="project-1" runId="run-1" />);
     expect(await screen.findByRole("status")).toHaveTextContent("Analysis complete");
     expect(replace).not.toHaveBeenCalled();
     const postMessage = vi.spyOn(frame().contentWindow!, "postMessage");
@@ -193,7 +240,7 @@ describe("AnalysisProgress", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<AnalysisProgress projectId="project-1" runId="run-1" />);
+    render(<AnalysisProgress mode="guided" projectId="project-1" runId="run-1" />);
     await screen.findByText(/Analysis complete/);
     const postMessage = vi.spyOn(frame().contentWindow!, "postMessage");
 
@@ -215,7 +262,7 @@ describe("AnalysisProgress", () => {
         Response.json({ status: "running", phase: "perceive", completed_phases: [] }),
       ),
     );
-    render(<AnalysisProgress projectId="project-1" runId="run-1" />);
+    render(<AnalysisProgress mode="guided" projectId="project-1" runId="run-1" />);
     await screen.findByRole("status");
     const fetchMock = vi.mocked(fetch);
 
@@ -230,5 +277,36 @@ describe("AnalysisProgress", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("uses the returning watch-it-work mode without replaying the guided arc", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json({ status: "running", phase: "perceive", completed_phases: [] }),
+      ),
+    );
+
+    render(<AnalysisProgress mode="watch" projectId="project-1" runId="run-1" />);
+
+    expect(frame()).toHaveAttribute("src", "/r2/onboarding-arc.html?embed=1&live=1&mode=watch");
+  });
+
+  it("hands a completed returning-client read back to Overview without waiting for a first-time decision", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/outcome-actions") && init?.method === "POST") {
+        return Response.json({ action: "confirm", outcome: completedOverview().summary });
+      }
+      if (url.includes("/overview")) return Response.json(completedOverview());
+      return Response.json({ status: "completed", phase: "publish", completed_phases: ["publish"] });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AnalysisProgress mode="watch" projectId="project-1" runId="run-1" />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/projects/project-1/overview"), {
+      timeout: 2_000,
+    });
   });
 });

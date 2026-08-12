@@ -1450,12 +1450,15 @@ class DatabaseSliceTwoApplication:
 
         run: AnalysisRun | None = None
         if accepted and str(proposal["kind"]) == "build":
-            applied = self.act_on_issue(
+            applied = self.act_on_issue_lifecycle(
                 actor_user_id=actor_user_id,
                 project_id=project_id,
                 issue_id=str(proposal["issue_stable_key"]),
-                action="apply",
+                act="fix",
+                basis=None,
+                evidence_ref=None,
                 resolution=str(proposal["title"]),
+                reviewer=None,
                 key=f"proposal-build:{key}",
             )
             run = applied["analysis_run"]

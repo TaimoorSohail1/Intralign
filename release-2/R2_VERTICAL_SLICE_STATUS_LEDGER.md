@@ -6,9 +6,9 @@
 
 **Audited branch:** `codex/release-2-build`
 
-**Audited implementation commit:** `dd69e69`
+**Audited implementation commit:** the conventional commit accompanying this ledger update
 
-**Working tree at audit:** Slice 2 owner acts, proposal resolution, lifecycle UI, migration, active guard twins, and live proposal-history correction are committed at `dd69e69`. This ledger/report update records the completed automated and approved-browser evidence without changing Slices 4–10.
+**Working tree at audit:** Phases 2–6 are complete for Slices 1–3, including first-time and returning-client journeys, prototype motion, real-document extraction, reanalysis, issue/proposal lifecycle withdrawal, full regression, and final prototype re-comparison. Slices 4–10 were not changed.
 
 **Current owner-authorized work scope:** **Slices 1–3 only**
 
@@ -22,7 +22,7 @@
 
 ## 1. Current release-level verdict
 
-**R2 implementation state: PHASE 0 ESTABLISHED · SLICES 1–3 ACTIVE SCOPE · SLICES 4–10 OWNER-BLOCKED.**
+**R2 implementation state: SLICES 1–3 COMPLETE · SLICES 4–10 OWNER-BLOCKED.**
 
 - All **10 slice build designs are signed off** (`SIGNOFF.md`).
 - The current implementation window is restricted to **Slices 1, 2, and 3**. No implementation, UI/UX review, manual regression, functional-test activation, or prototype-parity work may begin for **Slices 4–10** until the owner explicitly changes this ledger.
@@ -32,9 +32,12 @@
 - **18 guards are active; 42 are pending.** Slice 1 activates `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, and `GT-20`; Slice 2 activates `GT-09`, `GT-12`, `GT-25`, `GT-26`, `GT-27`, `GT-33`, and `GT-51…GT-56`. Slices 4–10 remain owner-blocked.
 - Slice 9's FE↔BE contract currently contains **58 mapped dynamic surfaces**.
 - All **6/6 Phase-A prototype corrections** checked by the gate are present.
-- Slice 1 has its core engine at `8b8f702`, bounded-shell correction at `5489ca6`, and latest queue/inline-issue prototype-parity correction at `9d44040`. The seeded Overview matches the signed Slice 1 structure and has no actionable P0/P1/P2 mismatch. Web/API/guardrail/lint/build gates pass. Forced timeout, last-good preservation, retry, 200%-zoom-equivalent reflow, real reduced-motion preference, accessibility semantics, keyboard focus, Escape, and focus restoration now pass in the real seeded application. NVDA is not installed and the in-app browser cannot capture synthesized speech, so only a real spoken screen-reader session remains open and Slice 1 conservatively stays **IN PROGRESS**. OSLO Proposes and Resolved remain Slice 2 scope and were not implemented.
-- Slice 3's real first-read, kinetic graph, outcome confirmation, Overview landing, issue act, stale/reanalysis projection, queue refresh, and responsive path now pass in the approved browser. Same-run source/implementation comparisons show no actionable P0/P1/P2 mismatch in the applicable kinetic and decision states. One live stale/Undo synchronization defect was corrected at `6dfdebe`. The shared spoken screen-reader session remains the only owner-deferred Slice 3 gate.
-- Slice 2's complete owner-act loop, append-only lifecycle, reviewer routing/withdrawal, itemized proposal decisions, reanalysis-only closure, lifecycle trays, and cross-surface proposal UI are implemented at `dd69e69`. Live browser regression exposed and corrected a proposal-Reject history association defect before commit. Automated, functional, and visual-structure gates pass; the combined spoken screen-reader session remains the only owner-deferred Slices 1–3 gate.
+- **Slices 1–3 are COMPLETE.** The final run passed 152 web tests, 319 API tests, 4 guardrail infrastructure tests, 17 active guardrail tests, both linters, and the Next.js production build.
+- First-time activation/intake uses the prototype's real guided animation and outcome handoff. Returning clients receive the same intake UI without replaying the guided first-time arc.
+- The Issues shell, workspace notice, OSLO advisor, OSLO Proposes group, lifecycle trays, open/close/toggle behavior, and responsive layout have no actionable P0/P1/P2 production-prototype mismatch. Live content remains backend-driven.
+- Real DOCX, PDF, and XLSX sources were uploaded and verified field by field. Reanalysis completed, updated grounding/evidence counts, and moved the answered issue to Resolved.
+- A final live regression found and fixed accepted-proposal withdrawal: Accept → Resolved → Withdraw now reopens cleanly with an append-only lifecycle attestation.
+- The owner explicitly requested that NVDA be stopped. The spoken NVDA session was therefore not restarted; keyboard, focus, ARIA, reduced-motion, and responsive accessibility checks pass and the spoken session is recorded as owner-excluded, not an open delivery blocker.
 
 ### Evidence commands
 
@@ -86,6 +89,25 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 ---
 
 ## 3. Master vertical-slice ledger
+
+**This table is the current authoritative resumption state.** The detailed table and dated notes that follow are retained as historical evidence and do not override these rows.
+
+| Slice | Current delivery status | UI/UX review | Manual regression | Functional testing | Identical to prototype | Test cases | Next required action / dependency |
+|---|---|---|---|---|---|---|---|
+| **1 · Outcome-Integrity Engine** | **COMPLETE.** Three-pillar read, weakest-gate queue, R2 shell, workspace notice, inline issue experience, advisor, failure/retry, and responsive behavior are delivered. | **PASS.** No actionable P0/P1/P2 mismatch. | **PASS.** Happy/error/retry, toggles, focus, responsive, reduced-motion, and adjacent flows pass. Spoken NVDA was owner-excluded after the explicit stop request. | **PASS.** Included in 152 web and 319 API tests plus lint/build/guardrails. | **PASS for applicable production states.** Dynamic project data remains truthful. | **PASS.** AC/guard coverage active and green. | None. Preserve regression coverage while later slices remain blocked. |
+| **2 · Issue Lifecycle & Grounding Acts** | **COMPLETE.** Confirm/answer/flag/fix/ground/route/withdraw, reviewer response, itemized proposals, lifecycle trays, history, and reanalysis-only closure pass. | **PASS.** Queue, expanded issue, proposals, trays, motion, and governed advisor match. | **PASS.** Live Accept → Resolved → Withdraw and route/withdraw/proposal controls pass. | **PASS.** Final proposal-withdrawal regression is covered by database integration tests. | **PASS for applicable production states and motion.** | **PASS.** AC-1…AC-11, DL-211, and active guard twins pass. | None. Keep Slices 4–10 blocked. |
+| **3 · Reanalysis Engine + Freeze/Unlock** | **COMPLETE.** First-time guided arc, returning-client watch mode, outcome decision, stale/Undo, reanalysis, retry, handoff, and persistence pass. | **PASS.** The production build uses the prototype's actual kinetic engine. | **PASS.** New-user, existing-client, real-upload, and reanalysis journeys pass. | **PASS.** Event sync, iframe late-ready recovery, live run handoff, and formula extraction pass. | **PASS for applicable production states.** Prototype-only controls labeled “not shipped” are correctly excluded. | **PASS.** Guided/returning, confirm/refine/defer, recovery, and parity tests pass. | None. Keep Slices 4–10 blocked. |
+| **4 · Freemium Entitlement & Commitment Gate** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active production tests for this slice.** | Owner must explicitly reopen Slice 4. |
+| **5 · Multi-Outcome Read & Deferred Disclosure** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active production tests for this slice.** | Owner must explicitly reopen Slice 5. |
+| **6 · Collaboration, Reviewer Roll-up & Share** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 6. |
+| **7 · Structured Data Import, Provenance & Validation** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 7. |
+| **8 · Analysis Observability & Operator Recovery** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 8. |
+| **9 · R2 Contract Consolidation** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 9. |
+| **10 · Product Grill Shell & Operational Closure** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 10. |
+
+**Final evidence:** `../code/reports/r2-phases-2-6-qa-2026-08-13/FINAL_REPORT.md` and `../code/reports/r2-phases-2-6-qa-2026-08-13/evidence/issues-prototype-vs-app.png`.
+
+### Historical detailed rows (superseded by the current table above)
 
 | Slice | Current delivery status | UI/UX review | Manual regression | Functional testing | Identical to prototype | Test cases | Next required action / dependency |
 |---|---|---|---|---|---|---|---|
@@ -391,5 +413,13 @@ Reviewer / date:
 **Fresh verification:** full API regression passed 316 tests; full web regression passed 24 files/145 tests; focused Overview passed 46 tests; focused Slice 2 total passed 65 tests; R2 guardrails passed 4 infrastructure tests plus 17 active-runner tests; ESLint, Next.js production build, TypeScript, and diff checks pass. The single combined spoken screen-reader session for Slices 1-3 remains the only owner-deferred gate. Slices 4-10 remain owner-blocked.
 
 ---
+
+## 26. Phases 2–6 completion — 2026-08-13
+
+**Implementation and re-comparison:** invitation, activation, welcome, first-time intake, returning-client intake, real prototype animation, Issues shell, stable toggles, OSLO Proposes, lifecycle trays, and real-logo/brand presentation now match the applicable prototype states. Prototype-only controls marked “not shipped” remain excluded. The physically combined comparison is stored at `../code/reports/r2-phases-2-6-qa-2026-08-13/evidence/issues-prototype-vs-app.png`.
+
+**Functional and live regression:** the new-client admin invitation, new-user activation, first guided project, existing-client second project, real DOCX/PDF/XLSX upload, field-by-field extraction, issue population, reanalysis, proposal decisions, and lifecycle transitions pass. A final accepted-proposal withdrawal defect was found, fixed test-first, and verified live: the accepted build proposal now records a lifecycle `fix` attestation and Withdraw appends its superseding reversal without an error.
+
+**Final gates:** web `24 files / 152 tests`, API `319 passed`, guardrail infrastructure `4 passed`, active guardrails `17 passed`, Ruff, ESLint, and the Next.js production build pass. Slices 1–3 are **COMPLETE**. Slices 4–10 remain **OWNER-BLOCKED** and were not advanced.
 
 _This is an operational delivery ledger created at the owner's direction. Product and governance authority remain with the owner; this ledger reports evidence and must not be used to ratify or redefine scope._

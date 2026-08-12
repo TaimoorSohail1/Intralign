@@ -47,11 +47,11 @@ def test_invitation_email_contains_workspace_expiry_and_activation_link() -> Non
     body = message.get_body(preferencelist=("plain",)).get_content()
     assert (connection.host, connection.port) == ("mail.local", 2525)
     assert message["To"] == "new.member@example.com"
-    assert message["Subject"] == "You're invited to OSLO Product Grill"
-    assert "You've been invited" in body
+    assert message["Subject"] == "You're invited to Intralign Alpha"
+    assert "OSLO helps you drive your plan to the outcome you own" in body
     assert "http://localhost:3000/activate?token=secret" in body
     assert "27 July 2026" in body
-    assert "Collaborator" in body
+    assert "OSLO Product Grill" in body
 
 
 def test_invitation_email_has_branded_responsive_html_and_fallback_link() -> None:
@@ -82,9 +82,10 @@ def test_invitation_email_has_branded_responsive_html_and_fallback_link() -> Non
     html = message.get_body(preferencelist=("html",)).get_content()
     assert '<meta name="viewport" content="width=device-width, initial-scale=1.0">' in html
     assert 'role="presentation"' in html
-    assert "OSLO" in html
-    assert "Activate my account" in html
-    assert "This secure invitation expires on 27 July 2026" in html
-    assert "Collaborator" in html
+    assert "Intralign" in html
+    assert "You&rsquo;re invited to Intralign Alpha" in html
+    assert "Activate account" in html
+    assert "expires in 7 days" in html
+    assert "OSLO Product Grill" in html
     assert activation_url.replace("&", "&amp;") in html
-    assert "If the button doesn&rsquo;t work" in html
+    assert "This link is unique to you" in html
