@@ -43,7 +43,7 @@ def test_submit_persists_a_replayable_job() -> None:
     assert "insert into public.analysis_jobs" in sql
     assert "on conflict (analysis_run_id)" in sql
     assert "attempts = 0" in sql
-    assert parameters == {"run_id": RUN_ID}
+    assert parameters == {"run_id": RUN_ID, "delay_seconds": 0}
 
 
 def test_claim_uses_a_lease_and_skip_locked() -> None:

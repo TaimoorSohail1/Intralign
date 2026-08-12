@@ -13,6 +13,18 @@ class RunKind(StrEnum):
     EXTENDED = "extended"
 
 
+class AnalysisPassKind(StrEnum):
+    FAST = "fast"
+    DEEP = "deep"
+
+
+class ReanalysisTrigger(StrEnum):
+    INTAKE = "intake"
+    BATCH = "batch"
+    EXPLICIT = "explicit"
+    DEEP_SUPERSEDE = "deep_supersede"
+
+
 class AnalysisRunStatus(StrEnum):
     QUEUED = "queued"
     RUNNING = "running"
@@ -85,6 +97,11 @@ class AnalysisRunRequest:
     parent_run_id: UUID | None = None
     fail_at: AnalysisPhase | None = None
     consumes_analysis_allowance: bool = False
+    pass_kind: AnalysisPassKind = AnalysisPassKind.FAST
+    reanalysis_trigger: ReanalysisTrigger = ReanalysisTrigger.INTAKE
+    consolidated_event_ids: tuple[UUID, ...] = ()
+    provisional: bool = False
+    auto_retry_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)

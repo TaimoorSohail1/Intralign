@@ -74,7 +74,7 @@ describe("AnalysisProgress", () => {
     expect(screen.getByText("Analyzing…")).toBeInTheDocument();
   });
 
-  it("matches the prototype language while constructing seven documents", async () => {
+  it("matches the prototype language while drafting the plan documents", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -89,18 +89,62 @@ describe("AnalysisProgress", () => {
     render(<AnalysisProgress projectId="project-1" runId="run-1" />);
 
     expect(
-      await screen.findByRole("heading", { name: "Constructing your seven documents…" }),
+      await screen.findByRole("heading", { name: "Drafting your plan documents…" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Flagging thin evidence as clarifications, not certainty…"),
+      screen.getByText("Intent · Scope · Requirements · Constraints · Work breakdown · Schedule · Resourcing"),
     ).toBeInTheDocument();
 
     FakeEventSource.current?.emit("analysis.artifact_completed", {
       artifact_type: "intent",
     });
 
-    expect(await screen.findByText("constructed documents")).toBeInTheDocument();
-    expect(screen.getByText("· 1 document")).toBeInTheDocument();
+    expect(await screen.findByText("drafted plan")).toBeInTheDocument();
+    expect(screen.getByText("· 1 ready")).toBeInTheDocument();
     expect(screen.queryByText(/plan artifacts/i)).not.toBeInTheDocument();
+  });
+
+  it("holds the completed Fast Pass on the prototype outcome decision before Overview", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/outcome-actions") && init?.method === "POST") {
+        return Response.json({ action: "confirm", outcome: "Ship the migration", analysis_run: null });
+      }
+      if (url.includes("/overview")) {
+        return Response.json({
+          project_title: "Migration",
+          summary: "Ship the migration without customer interruption.",
+          artifacts: [
+            {
+              artifact_type: "intent",
+              summary: "Ship the migration without customer interruption.",
+              content: { sections: [] },
+            },
+          ],
+          assessment: {
+            integrity: { decomposition: [] },
+          },
+        });
+      }
+      return Response.json({
+        status: "completed",
+        phase: "publish",
+        completed_phases: ["publish"],
+        pass_kind: "fast",
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AnalysisProgress projectId="project-1" runId="run-1" />);
+
+    expect(await screen.findByText("Confirm your outcome")).toBeInTheDocument();
+    expect(screen.getByText(/Ship the migration without customer interruption/)).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /Yes — this is my outcome/i }));
+
+    await waitFor(() =>
+      expect(replace).toHaveBeenCalledWith("/projects/project-1/overview"),
+    );
   });
 });

@@ -1,4 +1,5 @@
 from copy import deepcopy
+from dataclasses import replace
 from datetime import UTC, datetime
 from threading import Condition, RLock
 from typing import Protocol
@@ -24,6 +25,22 @@ class AnalysisStore(Protocol):
 
     def get_run(self, run_id: UUID) -> AnalysisRun | None: ...
 
+    def merge_queued_run(
+        self,
+        run_id: UUID,
+        *,
+        evidence: tuple[EvidenceFragment, ...],
+        event_ids: tuple[UUID, ...],
+    ) -> AnalysisRun: ...
+
+    def withdraw_queued_event(
+        self,
+        run_id: UUID,
+        *,
+        event_id: UUID,
+        evidence_references: tuple[str, ...],
+    ) -> AnalysisRun: ...
+
     def latest_run_for_project(
         self,
         project_id: UUID,
@@ -33,6 +50,8 @@ class AnalysisStore(Protocol):
     def start_run(self, run_id: UUID) -> None: ...
 
     def queue_run(self, run_id: UUID) -> None: ...
+
+    def queue_auto_retry(self, run_id: UUID) -> AnalysisRun: ...
 
     def start_phase(self, run_id: UUID, phase: AnalysisPhase) -> None: ...
 
@@ -96,9 +115,7 @@ class InMemoryAnalysisStore:
     def create_run(self, request: AnalysisRunRequest) -> AnalysisRun:
         with self._condition:
             if request.idempotency_key:
-                existing_id = self._idempotency.get(
-                    (request.workspace_id, request.idempotency_key)
-                )
+                existing_id = self._idempotency.get((request.workspace_id, request.idempotency_key))
                 if existing_id:
                     return deepcopy(self._runs[existing_id])
             run = AnalysisRun.queued(request)
@@ -114,6 +131,53 @@ class InMemoryAnalysisStore:
         with self._lock:
             run = self._runs.get(run_id)
             return deepcopy(run) if run else None
+
+    def merge_queued_run(
+        self,
+        run_id: UUID,
+        *,
+        evidence: tuple[EvidenceFragment, ...],
+        event_ids: tuple[UUID, ...],
+    ) -> AnalysisRun:
+        with self._condition:
+            run = self._runs[run_id]
+            if run.status is not AnalysisRunStatus.QUEUED:
+                raise ValueError("Only a queued analysis run can accept another change")
+            run.request = replace(
+                run.request,
+                user_evidence=run.request.user_evidence + evidence,
+                consolidated_event_ids=tuple(
+                    dict.fromkeys((*run.request.consolidated_event_ids, *event_ids))
+                ),
+            )
+            run.updated_at = datetime.now(UTC)
+            self._append_event(run, "analysis.batch_extended", run.status.value)
+            return deepcopy(run)
+
+    def withdraw_queued_event(
+        self,
+        run_id: UUID,
+        *,
+        event_id: UUID,
+        evidence_references: tuple[str, ...],
+    ) -> AnalysisRun:
+        with self._condition:
+            run = self._runs[run_id]
+            if run.status is not AnalysisRunStatus.QUEUED:
+                raise ValueError("Only a queued analysis run can withdraw a pending change")
+            references = set(evidence_references)
+            run.request = replace(
+                run.request,
+                user_evidence=tuple(
+                    item for item in run.request.user_evidence if item.reference not in references
+                ),
+                consolidated_event_ids=tuple(
+                    item for item in run.request.consolidated_event_ids if item != event_id
+                ),
+            )
+            run.updated_at = datetime.now(UTC)
+            self._append_event(run, "analysis.pending_change_withdrawn", run.status.value)
+            return deepcopy(run)
 
     def latest_run_for_project(
         self,
@@ -146,6 +210,20 @@ class InMemoryAnalysisStore:
             run.error_code = None
             run.updated_at = datetime.now(UTC)
             self._append_event(run, "analysis.retry_queued", run.status.value)
+
+    def queue_auto_retry(self, run_id: UUID) -> AnalysisRun:
+        with self._condition:
+            run = self._runs[run_id]
+            if run.status is not AnalysisRunStatus.FAILED:
+                raise ValueError("Only a failed analysis run can be automatically retried")
+            if run.request.auto_retry_count >= 1:
+                raise ValueError("The transient automatic retry has already been used")
+            run.request = replace(run.request, auto_retry_count=1)
+            run.status = AnalysisRunStatus.QUEUED
+            run.error_code = None
+            run.updated_at = datetime.now(UTC)
+            self._append_event(run, "analysis.auto_retry_queued", run.status.value)
+            return deepcopy(run)
 
     def start_phase(self, run_id: UUID, phase: AnalysisPhase) -> None:
         with self._condition:
@@ -239,9 +317,7 @@ class InMemoryAnalysisStore:
         del metadata
         with self._condition:
             run = self._runs[run_id]
-            self._artifact_jobs.setdefault(run_id, {})[artifact.artifact_type] = deepcopy(
-                artifact
-            )
+            self._artifact_jobs.setdefault(run_id, {})[artifact.artifact_type] = deepcopy(artifact)
             self._append_event(
                 run,
                 "analysis.artifact_completed",

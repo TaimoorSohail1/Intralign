@@ -76,6 +76,11 @@ export interface AnalysisRunSummary {
   phase?: string | null;
   completed_phases?: string[];
   error_code?: string | null;
+  pass_kind?: "fast" | "deep";
+  trigger?: "intake" | "batch" | "explicit" | "deep_supersede";
+  consolidated_event_ids?: string[];
+  provisional?: boolean;
+  auto_retry_count?: number;
 }
 
 export interface UploadedDocumentSummary {
@@ -195,6 +200,35 @@ export interface OverviewSnapshot {
   project_title?: string | null;
   source_document_count?: number;
   extended_analysis?: AnalysisRunSummary | null;
+  freshness?: {
+    state: "fresh" | "stale" | "reanalyzing";
+    pending_count: number;
+    based_on_run_id: string | null;
+    active_run_id: string | null;
+    last_act_at: string | null;
+    last_landed_at: string | null;
+    latest_pending_event_id?: string | null;
+  };
+  first_run?: {
+    first_run: boolean;
+    onboarded: boolean;
+    grounding_act_count: number;
+    ever_unlocked: boolean;
+    unlock_threshold: number;
+    freeze_on: boolean;
+  };
+  read_moved_notifications?: Array<{
+    id: string;
+    analysis_run_id: string;
+    pillar_deltas: Array<{ pillar: string; from: string | null; to: string }>;
+    settled_causes: string[];
+    previous_band: string | null;
+    current_band: string | null;
+    delivery_kind: "transient" | "durable";
+    seen_at: string | null;
+    expires_at: string | null;
+    created_at: string;
+  }>;
 }
 
 export interface AdvisorReplySummary {
@@ -372,6 +406,61 @@ export function retryAnalysis(
   return apiRequest(`/v1/analysis-runs/${runId}/retry`, {
     method: "POST",
     headers: { authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function runProjectReanalysis(input: {
+  accessToken: string;
+  projectId: string;
+  deep?: boolean;
+  idempotencyKey: string;
+}): Promise<AnalysisRunSummary> {
+  return apiRequest(`/v1/projects/${input.projectId}/reanalysis:run`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${input.accessToken}`,
+      "Idempotency-Key": input.idempotencyKey,
+    },
+    body: JSON.stringify({ deep: input.deep ?? false }),
+  });
+}
+
+export function undoPendingAct(input: {
+  accessToken: string;
+  projectId: string;
+  eventId: string;
+}): Promise<{
+  event_id: string;
+  state: "withdrawn";
+  pending_count: number;
+  grounding_act_count: number;
+  ever_unlocked: boolean;
+  freeze_on: boolean;
+}> {
+  return apiRequest(`/v1/projects/${input.projectId}/acts/${input.eventId}`, {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+  });
+}
+
+export function actOnPrimaryOutcome(input: {
+  accessToken: string;
+  projectId: string;
+  action: "confirm" | "refine" | "defer";
+  outcome?: string;
+  idempotencyKey: string;
+}): Promise<{
+  action: "confirm" | "refine" | "defer";
+  outcome: string;
+  analysis_run: AnalysisRunSummary | null;
+}> {
+  return apiRequest(`/v1/projects/${input.projectId}/outcome-actions`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${input.accessToken}`,
+      "Idempotency-Key": input.idempotencyKey,
+    },
+    body: JSON.stringify({ action: input.action, outcome: input.outcome }),
   });
 }
 

@@ -109,6 +109,57 @@ class RecordingSliceTwo:
         assert project_id == PROJECT_ID
         return self.orientation_seen
 
+    def runtime_state(self, *, actor_user_id, project_id):
+        assert actor_user_id == USER_ID
+        assert project_id == PROJECT_ID
+        snapshot = self.store.current_snapshot(project_id)
+        return {
+            "freshness": {
+                "state": "fresh",
+                "pending_count": 0,
+                "based_on_run_id": snapshot.analysis_run_id if snapshot else None,
+                "active_run_id": None,
+                "last_act_at": None,
+                "last_landed_at": snapshot.published_at if snapshot else None,
+                "latest_pending_event_id": None,
+            },
+            "first_run": {
+                "first_run": False,
+                "onboarded": True,
+                "grounding_act_count": 2,
+                "ever_unlocked": True,
+                "unlock_threshold": 2,
+                "freeze_on": False,
+            },
+            "notifications": [],
+        }
+
+    def run_reanalysis_now(self, *, actor_user_id, project_id, deep, key):
+        assert actor_user_id == USER_ID
+        assert project_id == PROJECT_ID
+        request = AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=project_id,
+            requested_by=actor_user_id,
+            kind=RunKind.EXTENDED,
+            description="Explicit governed reanalysis.",
+            source_names=(),
+            idempotency_key=key,
+        )
+        return self.store.create_run(request)
+
+    def withdraw_pending_act(self, *, actor_user_id, project_id, event_id):
+        assert actor_user_id == USER_ID
+        assert project_id == PROJECT_ID
+        return {
+            "event_id": event_id,
+            "state": "withdrawn",
+            "pending_count": 0,
+            "grounding_act_count": 1,
+            "ever_unlocked": True,
+            "freeze_on": False,
+        }
+
     def upload_document(
         self,
         *,
@@ -472,9 +523,7 @@ def test_authenticated_user_lists_append_only_project_history() -> None:
                 "confidence_band": "Moderate",
                 "confidence_direction": "up",
                 "understanding_stage": "expanded",
-                "changes": [
-                    {"label": "Feasibility Very Low → Low", "tone": "positive"}
-                ],
+                "changes": [{"label": "Feasibility Very Low → Low", "tone": "positive"}],
                 "events": [
                     {
                         "id": 9,
@@ -504,9 +553,7 @@ def test_authenticated_user_lists_append_only_project_history() -> None:
         ],
         "next_cursor": None,
     }
-    client = TestClient(
-        create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two)
-    )
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
 
     response = client.get(
         f"/v1/projects/{PROJECT_ID}/history?category=analysis",
@@ -569,9 +616,7 @@ def test_project_history_accepts_collaboration_events() -> None:
         "trend": [],
         "next_cursor": None,
     }
-    client = TestClient(
-        create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two)
-    )
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
 
     response = client.get(
         f"/v1/projects/{PROJECT_ID}/history?category=collaboration",
@@ -633,6 +678,28 @@ def test_authenticated_user_answers_an_issue_and_starts_reanalysis() -> None:
     assert response.json()["project_id"] == str(PROJECT_ID)
     assert response.json()["kind"] == "extended"
     assert response.json()["status"] == "queued"
+
+
+def test_authenticated_user_can_withdraw_a_pending_act_without_relatching_freeze() -> None:
+    event_id = UUID("018f9f7e-8de2-7000-8000-000000000077")
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=RecordingSliceTwo())
+    )
+
+    response = client.delete(
+        f"/v1/projects/{PROJECT_ID}/acts/{event_id}",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "event_id": str(event_id),
+        "state": "withdrawn",
+        "pending_count": 0,
+        "grounding_act_count": 1,
+        "ever_unlocked": True,
+        "freeze_on": False,
+    }
 
 
 def test_authenticated_user_selects_and_applies_an_issue_resolution() -> None:
@@ -741,9 +808,7 @@ def test_overview_overlays_the_saved_resolution_and_addressed_status() -> None:
     assert response.status_code == 200
     issue = response.json()["assessment"]["issues"][0]
     assert issue["status"] == "addressed"
-    assert issue["selected_resolution"] == (
-        "Assign Priya as the accountable migration owner."
-    )
+    assert issue["selected_resolution"] == ("Assign Priya as the accountable migration owner.")
 
 
 def test_history_snapshot_does_not_overlay_current_issue_actions() -> None:
@@ -836,9 +901,7 @@ def test_overview_reports_a_failed_extended_run_for_safe_retry() -> None:
         retryable=True,
     )
     slice_two.latest_extended = slice_two.store.get_run(extended.id)
-    client = TestClient(
-        create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two)
-    )
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
 
     response = client.get(
         f"/v1/projects/{PROJECT_ID}/overview",
@@ -854,6 +917,11 @@ def test_overview_reports_a_failed_extended_run_for_safe_retry() -> None:
         "phase": "perceive",
         "completed_phases": [],
         "error_code": "EVIDENCE_REFERENCE_CONTRACT_FAILED",
+        "pass_kind": "fast",
+        "trigger": "intake",
+        "consolidated_event_ids": [],
+        "provisional": False,
+        "auto_retry_count": 0,
     }
 
 
@@ -869,9 +937,7 @@ def test_overview_exposes_the_evidence_qualified_understanding_console() -> None
         key="slice-three-overview-001",
     )
     slice_two.complete_latest()
-    client = TestClient(
-        create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two)
-    )
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
 
     response = client.get(
         f"/v1/projects/{PROJECT_ID}/overview",
@@ -941,9 +1007,7 @@ def test_overview_exposes_readable_issue_evidence_without_requiring_raw_ids() ->
         key="slice-three-citations-001",
     )
     slice_two.complete_latest()
-    client = TestClient(
-        create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two)
-    )
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
 
     response = client.get(
         f"/v1/projects/{PROJECT_ID}/overview",
@@ -1062,10 +1126,7 @@ def test_artifact_workspace_loads_and_autosave_starts_reanalysis() -> None:
     assert saved.status_code == 202
     assert saved.json()["version"] == 2
     assert saved.json()["provenance"] == "confirmed_by_user"
-    assert (
-        saved.json()["content"]["sections"][0]["provenance"]
-        == "confirmed_by_user"
-    )
+    assert saved.json()["content"]["sections"][0]["provenance"] == "confirmed_by_user"
     assert saved.json()["analysis_run"]["kind"] == "extended"
 
 
@@ -1103,16 +1164,11 @@ def test_artifact_workspace_returns_readable_issue_evidence() -> None:
     )
 
     assert response.status_code == 200
-    returned_issue = next(
-        item for item in response.json()["issues"] if item["id"] == issue.id
-    )
+    returned_issue = next(item for item in response.json()["issues"] if item["id"] == issue.id)
     assert returned_issue["evidence"]
     assert returned_issue["evidence"][0]["source_name"] == "Project description"
     assert returned_issue["status"] == "addressed"
-    assert (
-        returned_issue["selected_resolution"]
-        == "Confirm the accountable delivery owner."
-    )
+    assert returned_issue["selected_resolution"] == "Confirm the accountable delivery owner."
 
 
 def test_artifact_workspace_rejects_malformed_table_rows() -> None:

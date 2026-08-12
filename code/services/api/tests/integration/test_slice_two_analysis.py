@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import create_engine, text
 
 from oslo_api.analysis import (
+    AnalysisPassKind,
     AnalysisPhase,
     AnalysisRunRequest,
     AnalysisRunStatus,
@@ -859,6 +860,7 @@ def test_analysis_promotes_a_supported_title_and_increments_artifact_revisions(
                 project_id=project_id,
                 requested_by=owner_id,
                 kind=RunKind.EXTENDED,
+                pass_kind=AnalysisPassKind.DEEP,
                 description="Northstar CRM Modernization project.",
                 source_names=source_names,
                 parent_run_id=initial.run_id,

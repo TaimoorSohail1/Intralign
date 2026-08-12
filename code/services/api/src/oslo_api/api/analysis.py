@@ -46,13 +46,18 @@ class StartAnalysisRequest(BaseModel):
 
     @model_validator(mode="after")
     def meaningful_input(self) -> "StartAnalysisRequest":
-        if (
-            not self.description.strip()
-            and not self.source_names
-            and not self.source_document_ids
-        ):
+        if not self.description.strip() and not self.source_names and not self.source_document_ids:
             raise ValueError("A description or document is required")
         return self
+
+
+class RunReanalysisRequest(BaseModel):
+    deep: bool = False
+
+
+class OutcomeActionRequest(BaseModel):
+    action: Literal["confirm", "refine", "defer"]
+    outcome: str | None = Field(default=None, max_length=2_000)
 
 
 class StartAnalysisResponse(BaseModel):
@@ -60,6 +65,8 @@ class StartAnalysisResponse(BaseModel):
     project_id: UUID
     kind: RunKind
     status: str
+    pass_kind: Literal["fast", "deep"]
+    trigger: Literal["intake", "batch", "explicit", "deep_supersede"]
 
 
 class UploadedDocumentResponse(BaseModel):
@@ -77,6 +84,26 @@ class AnalysisRunResponse(BaseModel):
     phase: str | None
     completed_phases: list[str]
     error_code: str | None
+    pass_kind: Literal["fast", "deep"]
+    trigger: Literal["intake", "batch", "explicit", "deep_supersede"]
+    consolidated_event_ids: list[UUID]
+    provisional: bool
+    auto_retry_count: int
+
+
+class OutcomeActionResponse(BaseModel):
+    action: Literal["confirm", "refine", "defer"]
+    outcome: str
+    analysis_run: AnalysisRunResponse | None
+
+
+class UndoPendingActResponse(BaseModel):
+    event_id: UUID
+    state: Literal["withdrawn"]
+    pending_count: int
+    grounding_act_count: int
+    ever_unlocked: bool
+    freeze_on: bool
 
 
 class ArtifactResponse(BaseModel):
@@ -199,6 +226,38 @@ class ProjectProvenanceResponse(BaseModel):
     this_week: ProvenanceMovementResponse
 
 
+class ReadFreshnessResponse(BaseModel):
+    state: Literal["fresh", "stale", "reanalyzing"]
+    pending_count: int
+    based_on_run_id: UUID | None
+    active_run_id: UUID | None
+    last_act_at: datetime | None
+    last_landed_at: datetime | None
+    latest_pending_event_id: UUID | None = None
+
+
+class FirstRunResponse(BaseModel):
+    first_run: bool
+    onboarded: bool
+    grounding_act_count: int
+    ever_unlocked: bool
+    unlock_threshold: int
+    freeze_on: bool
+
+
+class ReadMovedNotificationResponse(BaseModel):
+    id: UUID
+    analysis_run_id: UUID
+    pillar_deltas: list[dict]
+    settled_causes: list[str]
+    previous_band: str | None
+    current_band: str | None
+    delivery_kind: Literal["transient", "durable"]
+    seen_at: datetime | None
+    expires_at: datetime | None
+    created_at: datetime
+
+
 class OverviewResponse(BaseModel):
     snapshot_id: UUID
     analysis_run_id: UUID
@@ -213,6 +272,9 @@ class OverviewResponse(BaseModel):
     project_title: str | None = None
     source_document_count: int = 0
     extended_analysis: AnalysisRunResponse | None = None
+    freshness: ReadFreshnessResponse
+    first_run: FirstRunResponse
+    read_moved_notifications: list[ReadMovedNotificationResponse]
 
 
 class HistoryChangeResponse(BaseModel):
@@ -325,12 +387,12 @@ class ArtifactSectionPayload(BaseModel):
     provenance: Literal["from_oslo", "confirmed_by_user"] = "from_oslo"
     evidence_refs: list[str] = Field(default_factory=list, max_length=100)
     row_evidence_refs: list[list[str]] = Field(default_factory=list, max_length=500)
-    row_states: list[
-        Literal["confirmed", "inferred", "conflicting", "unknown"]
-    ] = Field(default_factory=list, max_length=500)
-    row_provenance: list[
-        Literal["from_oslo", "confirmed_by_user"]
-    ] = Field(default_factory=list, max_length=500)
+    row_states: list[Literal["confirmed", "inferred", "conflicting", "unknown"]] = Field(
+        default_factory=list, max_length=500
+    )
+    row_provenance: list[Literal["from_oslo", "confirmed_by_user"]] = Field(
+        default_factory=list, max_length=500
+    )
     row_ids: list[str] = Field(default_factory=list, max_length=500)
 
     @field_validator("bullets")
@@ -371,9 +433,7 @@ class ArtifactContentPayload(BaseModel):
             has_bullets = any(item.strip() for item in section.bullets)
             has_rows = any(any(cell.strip() for cell in row) for row in section.rows)
             if not (has_body or has_bullets or has_rows):
-                raise ValueError(
-                    "Each artifact section needs body text, a bullet, or a table row"
-                )
+                raise ValueError("Each artifact section needs body text, a bullet, or a table row")
         return self
 
 
@@ -424,6 +484,8 @@ def _start_response(run: AnalysisRun) -> StartAnalysisResponse:
         project_id=run.request.project_id,
         kind=run.request.kind,
         status=run.status.value,
+        pass_kind=run.request.pass_kind.value,
+        trigger=run.request.reanalysis_trigger.value,
     )
 
 
@@ -436,6 +498,11 @@ def _run_response(run: AnalysisRun) -> AnalysisRunResponse:
         phase=run.current_phase.value if run.current_phase else None,
         completed_phases=[phase.value for phase in run.completed_phases],
         error_code=run.error_code,
+        pass_kind=run.request.pass_kind.value,
+        trigger=run.request.reanalysis_trigger.value,
+        consolidated_event_ids=list(run.request.consolidated_event_ids),
+        provisional=run.request.provisional,
+        auto_retry_count=run.request.auto_retry_count,
     )
 
 
@@ -445,14 +512,12 @@ def _overview_response(
     *,
     orientation_seen: bool = False,
     issue_actions: list[dict] | None = None,
+    runtime_state: dict | None = None,
 ) -> OverviewResponse:
     assessment = with_integrity(snapshot.assessment, snapshot.artifacts)
     if assessment.integrity is None:  # pragma: no cover - constructor invariant
         raise RuntimeError("R2_INTEGRITY_PROJECTION_MISSING")
-    latest_actions = {
-        action["issue_id"]: action
-        for action in (issue_actions or [])
-    }
+    latest_actions = {action["issue_id"]: action for action in (issue_actions or [])}
     citations = {
         citation.reference: EvidenceResponse(
             source_name=citation.source_name,
@@ -460,6 +525,26 @@ def _overview_response(
             excerpt=citation.excerpt,
         )
         for citation in snapshot.evidence_citations
+    }
+    runtime_state = runtime_state or {
+        "freshness": {
+            "state": "fresh",
+            "pending_count": 0,
+            "based_on_run_id": snapshot.analysis_run_id,
+            "active_run_id": None,
+            "last_act_at": None,
+            "last_landed_at": snapshot.published_at,
+            "latest_pending_event_id": None,
+        },
+        "first_run": {
+            "first_run": False,
+            "onboarded": True,
+            "grounding_act_count": 2,
+            "ever_unlocked": True,
+            "unlock_threshold": 2,
+            "freeze_on": False,
+        },
+        "notifications": [],
     }
     return OverviewResponse(
         snapshot_id=snapshot.id,
@@ -487,13 +572,10 @@ def _overview_response(
                             "provenance": "from_oslo",
                             "evidence_refs": list(section.evidence_refs),
                             "row_evidence_refs": [
-                                list(references)
-                                for references in section.row_evidence_refs
+                                list(references) for references in section.row_evidence_refs
                             ],
                             "row_states": list(section.row_states),
-                            "row_provenance": [
-                                "from_oslo" for _ in section.rows
-                            ],
+                            "row_provenance": ["from_oslo" for _ in section.rows],
                         }
                         for section in artifact.sections
                     ]
@@ -570,12 +652,8 @@ def _overview_response(
                         if reference in citations
                     ],
                     clarification=issue.clarification,
-                    status=latest_actions.get(issue.id, {}).get(
-                        "status", issue.status
-                    ),
-                    selected_resolution=latest_actions.get(issue.id, {}).get(
-                        "selected_resolution"
-                    ),
+                    status=latest_actions.get(issue.id, {}).get("status", issue.status),
+                    selected_resolution=latest_actions.get(issue.id, {}).get("selected_resolution"),
                     pillar=(
                         "Viability"
                         if issue.dimension in {"Clarity", "Alignment", "Feasibility"}
@@ -602,6 +680,12 @@ def _overview_response(
         extended_analysis=(
             _run_response(extended_analysis) if extended_analysis is not None else None
         ),
+        freshness=ReadFreshnessResponse.model_validate(runtime_state["freshness"]),
+        first_run=FirstRunResponse.model_validate(runtime_state["first_run"]),
+        read_moved_notifications=[
+            ReadMovedNotificationResponse.model_validate(notification)
+            for notification in runtime_state["notifications"]
+        ],
     )
 
 
@@ -611,10 +695,7 @@ def _artifact_workspace_response(
     *,
     issue_actions: list[dict] | None = None,
 ) -> ArtifactWorkspaceResponse:
-    latest_actions = {
-        action["issue_id"]: action
-        for action in (issue_actions or [])
-    }
+    latest_actions = {action["issue_id"]: action for action in (issue_actions or [])}
     citations = {
         citation.reference: EvidenceResponse(
             source_name=citation.source_name,
@@ -651,9 +732,7 @@ def _artifact_workspace_response(
                 ],
                 clarification=issue.clarification,
                 status=latest_actions.get(issue.id, {}).get("status", issue.status),
-                selected_resolution=latest_actions.get(issue.id, {}).get(
-                    "selected_resolution"
-                ),
+                selected_resolution=latest_actions.get(issue.id, {}).get("selected_resolution"),
                 pillar=(
                     "Viability"
                     if issue.dimension in {"Clarity", "Alignment", "Feasibility"}
@@ -756,6 +835,91 @@ def refresh_analysis(
     return _start_response(run)
 
 
+@router.post(
+    "/projects/{project_id}/reanalysis:run",
+    response_model=StartAnalysisResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def run_reanalysis_now(
+    project_id: UUID,
+    payload: RunReanalysisRequest,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=8, max_length=200)],
+) -> StartAnalysisResponse:
+    try:
+        run = slice_two_application(request).run_reanalysis_now(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            deep=payload.deep,
+            key=idempotency_key,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    return _start_response(run)
+
+
+@router.delete(
+    "/projects/{project_id}/acts/{event_id}",
+    response_model=UndoPendingActResponse,
+)
+def undo_pending_act(
+    project_id: UUID,
+    event_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+) -> UndoPendingActResponse:
+    try:
+        result = slice_two_application(request).withdraw_pending_act(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            event_id=event_id,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error),
+        ) from error
+    return UndoPendingActResponse.model_validate(result)
+
+
+@router.post(
+    "/projects/{project_id}/outcome-actions",
+    response_model=OutcomeActionResponse,
+)
+def act_on_primary_outcome(
+    project_id: UUID,
+    payload: OutcomeActionRequest,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=8, max_length=200)],
+) -> OutcomeActionResponse:
+    try:
+        result = slice_two_application(request).act_on_outcome(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            action=payload.action,
+            outcome=payload.outcome,
+            key=idempotency_key,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(error),
+        ) from error
+    return OutcomeActionResponse(
+        action=result["action"],
+        outcome=result["outcome"],
+        analysis_run=(
+            _run_response(result["analysis_run"]) if result["analysis_run"] is not None else None
+        ),
+    )
+
+
 @router.get("/analysis-runs/{run_id}", response_model=AnalysisRunResponse)
 def get_analysis_run(
     run_id: UUID,
@@ -816,6 +980,10 @@ def current_overview(
             actor_user_id=context.user.id,
             project_id=project_id,
         )
+        runtime_state = application.runtime_state(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+        )
     except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
     return _overview_response(
@@ -823,6 +991,7 @@ def current_overview(
         extended_analysis,
         orientation_seen=orientation_seen,
         issue_actions=issue_actions,
+        runtime_state=runtime_state,
     )
 
 
@@ -1138,14 +1307,10 @@ def _format_sse(event: AnalysisEvent) -> str:
         "sequence": event.sequence,
         "status": event.status,
         "phase": event.phase.value if event.phase else None,
-        "artifact_type": (
-            event.artifact_type.value if event.artifact_type else None
-        ),
+        "artifact_type": (event.artifact_type.value if event.artifact_type else None),
         "occurred_at": event.occurred_at.isoformat(),
         "error": (
-            {"code": event.error_code, "retryable": event.retryable}
-            if event.error_code
-            else None
+            {"code": event.error_code, "retryable": event.retryable} if event.error_code else None
         ),
     }
     return (

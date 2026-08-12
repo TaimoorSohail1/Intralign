@@ -3,6 +3,7 @@ from time import sleep
 from uuid import UUID
 
 from oslo_api.analysis import (
+    AnalysisPassKind,
     AnalysisPhase,
     AnalysisRunRequest,
     AnalysisRunStatus,
@@ -102,6 +103,23 @@ class UnavailableOpenAIHarness(DeterministicAgentHarness):
 class AuthenticationRejectedHarness(DeterministicAgentHarness):
     def perceive(self, **kwargs):
         raise AgentHarnessError("OPENAI_AUTHENTICATION", retryable=False)
+
+
+class KindRecordingHarness(DeterministicAgentHarness):
+    def __init__(self) -> None:
+        self.kinds: list[RunKind] = []
+
+    def perceive(self, **kwargs):
+        self.kinds.append(kwargs["kind"])
+        return super().perceive(**kwargs)
+
+    def construct_artifact(self, **kwargs):
+        self.kinds.append(kwargs["kind"])
+        return super().construct_artifact(**kwargs)
+
+    def evaluate(self, **kwargs):
+        self.kinds.append(kwargs["kind"])
+        return super().evaluate(**kwargs)
 
 
 class DocumentEvidenceStore(InMemoryAnalysisStore):
@@ -771,3 +789,28 @@ def test_extended_openai_failure_preserves_last_good_without_fallback() -> None:
     assert extended.error_code == "OPENAI_UNAVAILABLE"
     assert store.current_snapshot(PROJECT_ID) == baseline.snapshot
     assert store.events_after(extended.run_id, 0)[-1].retryable is True
+
+
+def test_fast_reanalysis_uses_the_fast_harness_budget_without_becoming_provisional() -> None:
+    store = InMemoryAnalysisStore()
+    harness = KindRecordingHarness()
+    workflow = AnalysisWorkflow(store=store, harness=harness)
+    run = store.create_run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.EXTENDED,
+            description="Reassess the current migration plan.",
+            source_names=("plan.md",),
+            pass_kind=AnalysisPassKind.FAST,
+        )
+    )
+
+    result = workflow.resume(run.id)
+
+    assert result.status is AnalysisRunStatus.COMPLETED
+    assert harness.kinds
+    assert set(harness.kinds) == {RunKind.INITIAL}
+    assert result.snapshot is not None
+    assert result.snapshot.state == "current"

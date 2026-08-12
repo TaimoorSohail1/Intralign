@@ -13,6 +13,7 @@ from oslo_api.analysis.history import append_history_event
 from oslo_api.analysis.integrity import Integrity, OutcomeCheckpoint, Pillar
 from oslo_api.analysis.models import (
     AnalysisEvent,
+    AnalysisPassKind,
     AnalysisPhase,
     AnalysisRun,
     AnalysisRunRequest,
@@ -33,6 +34,7 @@ from oslo_api.analysis.models import (
     HarnessCallMetadata,
     Issue,
     Perception,
+    ReanalysisTrigger,
     ReliabilityBasis,
     RunKind,
 )
@@ -78,10 +80,7 @@ def evidence_location(locator: dict[str, object]) -> str:
     if kind == "pptx_slide":
         return f"Slide {locator.get('slide', 1)}"
     if kind == "xlsx_range":
-        return (
-            f"Sheet: {locator.get('sheet', 'Sheet')} · "
-            f"{locator.get('cell_range', 'A1')}"
-        )
+        return f"Sheet: {locator.get('sheet', 'Sheet')} · {locator.get('cell_range', 'A1')}"
     return f"Page {locator.get('page', 1)}"
 
 
@@ -140,9 +139,7 @@ def _restore_state(payload: dict[str, object]) -> dict[str, object]:
                     location=item.get("location"),
                     unit=item.get("unit"),
                     numeric_value=item.get("numeric_value"),
-                    provenance=ClaimProvenance(
-                        item.get("provenance", "source_grounded")
-                    ),
+                    provenance=ClaimProvenance(item.get("provenance", "source_grounded")),
                 )
                 for item in perception_data.get("structured_claims", [])
             ),
@@ -182,8 +179,7 @@ def _artifact_from_dict(data: dict) -> Artifact:
                 rows=tuple(tuple(row) for row in section.get("rows", [])),
                 evidence_refs=tuple(section.get("evidence_refs", [])),
                 row_evidence_refs=tuple(
-                    tuple(references)
-                    for references in section.get("row_evidence_refs", [])
+                    tuple(references) for references in section.get("row_evidence_refs", [])
                 ),
                 row_states=tuple(section.get("row_states", [])),
             )
@@ -354,13 +350,17 @@ class DatabaseAnalysisStore:
                     insert into public.analysis_runs (
                       id, workspace_id, project_id, requested_by, kind, status,
                       description, source_names, source_document_ids, user_evidence,
-                      idempotency_key, parent_run_id, consumes_analysis_allowance
+                      idempotency_key, parent_run_id, consumes_analysis_allowance,
+                      pass_kind, reanalysis_trigger, consolidated_event_ids,
+                      provisional, auto_retry_count
                     ) values (
                       :id, :workspace_id, :project_id, :requested_by, :kind, 'queued',
                       :description, cast(:source_names as jsonb),
                       cast(:source_document_ids as jsonb), cast(:user_evidence as jsonb),
                       :key, :parent_run_id,
-                      :consumes_analysis_allowance
+                      :consumes_analysis_allowance, :pass_kind, :reanalysis_trigger,
+                      cast(:consolidated_event_ids as jsonb), :provisional,
+                      :auto_retry_count
                     )
                     on conflict (workspace_id, idempotency_key) do nothing
                     returning id
@@ -377,12 +377,17 @@ class DatabaseAnalysisStore:
                     "source_document_ids": json.dumps(
                         [str(document_id) for document_id in request.source_document_ids]
                     ),
-                    "user_evidence": json.dumps(
-                        [asdict(item) for item in request.user_evidence]
-                    ),
+                    "user_evidence": json.dumps([asdict(item) for item in request.user_evidence]),
                     "key": key,
                     "parent_run_id": request.parent_run_id,
                     "consumes_analysis_allowance": request.consumes_analysis_allowance,
+                    "pass_kind": request.pass_kind.value,
+                    "reanalysis_trigger": request.reanalysis_trigger.value,
+                    "consolidated_event_ids": json.dumps(
+                        [str(event_id) for event_id in request.consolidated_event_ids]
+                    ),
+                    "provisional": request.provisional,
+                    "auto_retry_count": request.auto_retry_count,
                 },
             ).scalar_one_or_none()
             actual_id = (
@@ -418,7 +423,9 @@ class DatabaseAnalysisStore:
                         select id, workspace_id, project_id, requested_by, kind, status,
                                description, source_names, source_document_ids, user_evidence,
                                idempotency_key, parent_run_id,
-                               consumes_analysis_allowance,
+                               consumes_analysis_allowance, pass_kind,
+                               reanalysis_trigger, consolidated_event_ids,
+                               provisional, auto_retry_count,
                                current_phase, error_code, created_at, updated_at
                         from public.analysis_runs where id = :run_id
                         """
@@ -490,6 +497,13 @@ class DatabaseAnalysisStore:
             idempotency_key=row["idempotency_key"],
             parent_run_id=row["parent_run_id"],
             consumes_analysis_allowance=bool(row["consumes_analysis_allowance"]),
+            pass_kind=AnalysisPassKind(row["pass_kind"]),
+            reanalysis_trigger=ReanalysisTrigger(row["reanalysis_trigger"]),
+            consolidated_event_ids=tuple(
+                UUID(event_id) for event_id in row["consolidated_event_ids"]
+            ),
+            provisional=bool(row["provisional"]),
+            auto_retry_count=int(row["auto_retry_count"]),
         )
         return AnalysisRun(
             id=row["id"],
@@ -503,6 +517,93 @@ class DatabaseAnalysisStore:
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )
+
+    def merge_queued_run(
+        self,
+        run_id: UUID,
+        *,
+        evidence: tuple[EvidenceFragment, ...],
+        event_ids: tuple[UUID, ...],
+    ) -> AnalysisRun:
+        with self._engine.begin() as connection:
+            updated = connection.execute(
+                text(
+                    """
+                    update public.analysis_runs
+                    set user_evidence = user_evidence || cast(:evidence as jsonb),
+                        consolidated_event_ids = (
+                          select coalesce(jsonb_agg(distinct item), '[]'::jsonb)
+                          from jsonb_array_elements(
+                            consolidated_event_ids || cast(:event_ids as jsonb)
+                          ) item
+                        ),
+                        updated_at = now()
+                    where id = :run_id and status = 'queued'
+                    """
+                ),
+                {
+                    "run_id": run_id,
+                    "evidence": json.dumps([asdict(item) for item in evidence]),
+                    "event_ids": json.dumps([str(event_id) for event_id in event_ids]),
+                },
+            )
+            if updated.rowcount != 1:
+                raise ValueError("Only a queued analysis run can accept another change")
+            self._append_event(
+                connection,
+                run_id,
+                "analysis.batch_extended",
+                AnalysisRunStatus.QUEUED,
+            )
+        run = self.get_run(run_id)
+        if run is None:  # pragma: no cover - guarded by the update above
+            raise RuntimeError("ANALYSIS_RUN_NOT_FOUND_AFTER_BATCH_MERGE")
+        return run
+
+    def withdraw_queued_event(
+        self,
+        run_id: UUID,
+        *,
+        event_id: UUID,
+        evidence_references: tuple[str, ...],
+    ) -> AnalysisRun:
+        with self._engine.begin() as connection:
+            updated = connection.execute(
+                text(
+                    """
+                    update public.analysis_runs
+                    set user_evidence = (
+                          select coalesce(jsonb_agg(item), '[]'::jsonb)
+                          from jsonb_array_elements(user_evidence) item
+                          where not (item->>'reference' = any(:references))
+                        ),
+                        consolidated_event_ids = (
+                          select coalesce(jsonb_agg(item), '[]'::jsonb)
+                          from jsonb_array_elements(consolidated_event_ids) item
+                          where item #>> '{}' <> :event_id
+                        ),
+                        updated_at = now()
+                    where id = :run_id and status = 'queued'
+                    """
+                ),
+                {
+                    "run_id": run_id,
+                    "event_id": str(event_id),
+                    "references": list(evidence_references),
+                },
+            )
+            if updated.rowcount != 1:
+                raise ValueError("Only a queued analysis run can withdraw a pending change")
+            self._append_event(
+                connection,
+                run_id,
+                "analysis.pending_change_withdrawn",
+                AnalysisRunStatus.QUEUED,
+            )
+        run = self.get_run(run_id)
+        if run is None:  # pragma: no cover - guarded by the update above
+            raise RuntimeError("ANALYSIS_RUN_NOT_FOUND_AFTER_PENDING_WITHDRAWAL")
+        return run
 
     def latest_run_for_project(
         self,
@@ -792,6 +893,33 @@ class DatabaseAnalysisStore:
                 AnalysisRunStatus.QUEUED,
             )
 
+    def queue_auto_retry(self, run_id: UUID) -> AnalysisRun:
+        with self._engine.begin() as connection:
+            updated = connection.execute(
+                text(
+                    """
+                    update public.analysis_runs
+                    set status = 'queued', error_code = null, completed_at = null,
+                        auto_retry_count = 1, updated_at = now()
+                    where id = :run_id and status = 'failed'
+                      and auto_retry_count = 0
+                    """
+                ),
+                {"run_id": run_id},
+            )
+            if updated.rowcount != 1:
+                raise ValueError("The transient automatic retry is not available")
+            self._append_event(
+                connection,
+                run_id,
+                "analysis.auto_retry_queued",
+                AnalysisRunStatus.QUEUED,
+            )
+        run = self.get_run(run_id)
+        if run is None:  # pragma: no cover - guarded by the update above
+            raise RuntimeError("ANALYSIS_RUN_NOT_FOUND_AFTER_AUTO_RETRY")
+        return run
+
     def start_phase(self, run_id: UUID, phase: AnalysisPhase) -> None:
         with self._engine.begin() as connection:
             connection.execute(
@@ -1005,9 +1133,7 @@ class DatabaseAnalysisStore:
                 .one()
             )
             connection.execute(
-                text(
-                    "select pg_advisory_xact_lock(hashtext(cast(:project_id as text)))"
-                ),
+                text("select pg_advisory_xact_lock(hashtext(cast(:project_id as text)))"),
                 {"project_id": snapshot.project_id},
             )
             previous_snapshot_payload = connection.execute(
@@ -1057,12 +1183,8 @@ class DatabaseAnalysisStore:
                     "reliability": artifact.reliability,
                     "basis": artifact.basis,
                     "evidence_refs": list(artifact.evidence_refs),
-                    "content": {
-                        "sections": [asdict(section) for section in artifact.sections]
-                    },
-                    "assumptions": [
-                        asdict(assumption) for assumption in artifact.assumptions
-                    ],
+                    "content": {"sections": [asdict(section) for section in artifact.sections]},
+                    "assumptions": [asdict(assumption) for assumption in artifact.assumptions],
                     "conflicts": [asdict(conflict) for conflict in artifact.conflicts],
                 }
                 previous_artifact = (
@@ -1366,9 +1488,7 @@ class DatabaseAnalysisStore:
                 category="issues",
                 event_type="issues.reconciled",
                 summary=f"{len(current_issue_keys)} issues detected",
-                detail=(
-                    f"{len(opened)} opened and {len(resolved)} resolved in this read."
-                ),
+                detail=(f"{len(opened)} opened and {len(resolved)} resolved in this read."),
                 idempotency_key=f"history:issues-reconciled:{run_id}",
                 payload={"opened": opened, "resolved": resolved},
             )

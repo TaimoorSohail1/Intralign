@@ -14,6 +14,7 @@ from oslo_api.analysis.harness import AgentHarness, AgentHarnessError
 from oslo_api.analysis.issue_identity import deduplicate_issues, stabilize_issue_ids
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
+    AnalysisPassKind,
     AnalysisPhase,
     AnalysisRunRequest,
     AnalysisRunResult,
@@ -130,6 +131,11 @@ class AnalysisWorkflow:
         if phase in set(run.completed_phases):
             return graph_state
         request = run.request
+        harness_kind = (
+            RunKind.INITIAL
+            if request.pass_kind is AnalysisPassKind.FAST
+            else RunKind.EXTENDED
+        )
         state = dict(run.checkpoint_state)
 
         if phase in {
@@ -149,7 +155,7 @@ class AnalysisWorkflow:
                 description=request.description,
                 source_names=request.source_names,
                 evidence=self._store.evidence_for(request) + request.user_evidence,
-                kind=request.kind,
+                kind=harness_kind,
                 invocation=invocation,
             )
             evidence_graph = build_evidence_graph(perception.evidence)
@@ -182,7 +188,7 @@ class AnalysisWorkflow:
                                     self._harness.construct_artifact(
                                         perception=state["perception"],
                                         artifact_type=artifact_type,
-                                        kind=request.kind,
+                                        kind=harness_kind,
                                         invocation=invocation,
                                     ),
                                 )
@@ -251,7 +257,7 @@ class AnalysisWorkflow:
             model_assessment = self._harness.evaluate(
                 artifacts=state["artifacts"],
                 perception=state["perception"],
-                kind=request.kind,
+                kind=harness_kind,
                 context=request.description,
                 invocation=invocation,
             )

@@ -44,6 +44,8 @@ const dimensions = ["clarity", "alignment", "feasibility"] as const;
 const confidenceBands = ["Very Low", "Low", "Moderate", "High", "Very High"] as const;
 const integrityBands = ["Fragile", "Weak", "Developing", "Solid", "Sound"] as const;
 const intralignLogo = "data:image/webp;base64,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";
+export { intralignLogo };
+
 const artifactOrder = [
   "intent",
   "context",
@@ -180,6 +182,8 @@ export function ProjectOverview({
   const [advisorError, setAdvisorError] = useState<string | null>(null);
   const [extendedRetrying, setExtendedRetrying] = useState(false);
   const [extendedRetryError, setExtendedRetryError] = useState<string | null>(null);
+  const [reanalysisPending, setReanalysisPending] = useState(false);
+  const [reanalysisFeedback, setReanalysisFeedback] = useState<string | null>(null);
   const [clarificationAnswer, setClarificationAnswer] = useState("");
   const [clarificationPending, setClarificationPending] = useState(false);
   const [clarificationError, setClarificationError] = useState<string | null>(null);
@@ -655,6 +659,76 @@ export function ProjectOverview({
 
   const extendedFailure = analysisFailureCopy(extendedRun?.error_code);
 
+  const runReanalysisNow = async () => {
+    if (reanalysisPending) return;
+    setReanalysisPending(true);
+    setReanalysisFeedback(null);
+    try {
+      const response = await fetch(`/api/projects/${snapshot.project_id}/reanalysis`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ pass_kind: "fast" }),
+      });
+      if (!response.ok) throw new Error("Reanalysis could not be queued.");
+      const run = await response.json();
+      if (run.run_id) setAnalysisUpdateRunId(run.run_id);
+      setSnapshot((current) => ({
+        ...current,
+        freshness: current.freshness
+          ? { ...current.freshness, state: "reanalyzing", active_run_id: run.run_id ?? null }
+          : current.freshness,
+      }));
+      setReanalysisFeedback("Reanalysis queued");
+    } catch (error) {
+      setReanalysisFeedback(
+        error instanceof Error ? error.message : "Reanalysis could not be queued.",
+      );
+    } finally {
+      setReanalysisPending(false);
+    }
+  };
+
+  const undoLatestPendingAct = async () => {
+    const eventId = snapshot.freshness?.latest_pending_event_id;
+    if (!eventId || reanalysisPending) return;
+    setReanalysisPending(true);
+    setReanalysisFeedback(null);
+    try {
+      const response = await fetch(
+        `/api/projects/${snapshot.project_id}/acts/${eventId}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) throw new Error("The change can no longer be undone.");
+      const result = await response.json();
+      setSnapshot((current) => ({
+        ...current,
+        freshness: current.freshness
+          ? {
+              ...current.freshness,
+              state: result.pending_count > 0 ? "stale" : "fresh",
+              pending_count: result.pending_count,
+              latest_pending_event_id: null,
+            }
+          : current.freshness,
+        first_run: current.first_run
+          ? {
+              ...current.first_run,
+              grounding_act_count: result.grounding_act_count,
+              ever_unlocked: result.ever_unlocked,
+              freeze_on: result.freeze_on,
+            }
+          : current.first_run,
+      }));
+      setReanalysisFeedback("Pending change undone");
+    } catch (error) {
+      setReanalysisFeedback(
+        error instanceof Error ? error.message : "The change could not be undone.",
+      );
+    } finally {
+      setReanalysisPending(false);
+    }
+  };
+
   const panelVisible = advisorOpen || Boolean(selectedIssue);
   const activeTourStep = tourStep ?? 0;
   const issuePanel = selectedIssue ? (
@@ -989,12 +1063,83 @@ export function ProjectOverview({
       <div className={`project-grid ${panelVisible ? "" : "is-panel-closed"}`}>
         <section
           aria-label="Project content"
-          className="project-main"
+          className={`project-main ${snapshot.first_run?.freeze_on ? "is-first-run-frozen" : ""}`}
           ref={mainScrollRegion}
           tabIndex={0}
         >
           {initialView === "overview" ? (
             <>
+              {snapshot.freshness && snapshot.freshness.state !== "fresh" ? (
+                <section
+                  aria-label="Read freshness"
+                  className={`r2-read-freshness is-${snapshot.freshness?.state}`}
+                >
+                  <div>
+                    <strong>
+                      {snapshot.freshness?.state === "reanalyzing"
+                        ? "Reanalyzing your latest changes…"
+                        : "Your read is safely out of date."}
+                    </strong>
+                    <p>
+                      The last completed read stays visible while OSLO consolidates{" "}
+                      {snapshot.freshness?.pending_count || "your"} latest change
+                      {snapshot.freshness?.pending_count === 1 ? "" : "s"}.
+                    </p>
+                  </div>
+                  {snapshot.freshness?.state === "stale" ? (
+                    <span className="r2-read-freshness-actions">
+                      {snapshot.freshness.latest_pending_event_id ? (
+                        <button
+                          className="button"
+                          disabled={reanalysisPending}
+                          onClick={() => void undoLatestPendingAct()}
+                          type="button"
+                        >
+                          Undo last change
+                        </button>
+                      ) : null}
+                      <button
+                        className="button"
+                        disabled={reanalysisPending}
+                        onClick={() => void runReanalysisNow()}
+                        type="button"
+                      >
+                        {reanalysisPending ? "Queuing…" : "Reanalyze now"}
+                      </button>
+                    </span>
+                  ) : (
+                    <span className="r2-read-freshness-pulse" aria-hidden="true" />
+                  )}
+                </section>
+              ) : null}
+              {reanalysisFeedback ? (
+                <p className="r2-reanalysis-feedback" role="status">{reanalysisFeedback}</p>
+              ) : null}
+              {snapshot.read_moved_notifications?.[0] ? (
+                <section className="r2-read-moved" role="status">
+                  <Sparkle aria-hidden="true" size={16} weight="fill" />
+                  <div>
+                    <strong>Your read moved.</strong>
+                    <p>
+                      {snapshot.read_moved_notifications[0].previous_band || "The previous read"}
+                      {" → "}
+                      {snapshot.read_moved_notifications[0].current_band || integrity.level}
+                      {snapshot.read_moved_notifications[0].settled_causes[0]
+                        ? ` because ${snapshot.read_moved_notifications[0].settled_causes[0]}`
+                        : " after your latest grounded change"}.
+                    </p>
+                  </div>
+                </section>
+              ) : null}
+              {snapshot.first_run?.freeze_on ? (
+                <section className="r2-first-run-guide" aria-label="First run guidance">
+                  <span>{snapshot.first_run.grounding_act_count} of {snapshot.first_run.unlock_threshold}</span>
+                  <div>
+                    <strong>Ground two decisions to open the full workspace.</strong>
+                    <p>Your plan remains available. Start with the top issue; every confirmed, flagged, or routed decision counts.</p>
+                  </div>
+                </section>
+              ) : null}
               <div className={`overview-stack ${hasFirstValue ? "has-first-value" : ""}`}>
               <section
                 aria-label="Outcome Integrity summary"

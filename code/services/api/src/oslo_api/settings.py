@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     analysis_artifact_worker_threads: int = Field(default=4, ge=1, le=16)
     analysis_phase_delay_ms: int = Field(default=120, ge=0, le=10_000)
     extended_analysis_delay_ms: int = Field(default=750, ge=0, le=60_000)
+    reanalysis_debounce_ms: int = Field(default=1_500, ge=0, le=60_000)
+    reanalysis_cooldown_ms: int = Field(default=5_000, ge=0, le=120_000)
+    reanalysis_max_wait_ms: int = Field(default=16_000, ge=1_000, le=300_000)
+    read_moved_immediate_threshold_ms: int = Field(default=5_000, ge=0, le=120_000)
+    read_moved_linger_ms: int = Field(default=16_000, ge=1_000, le=300_000)
+    first_run_unlock_threshold: int = Field(default=2, ge=1, le=10)
     analysis_harness: Literal["auto", "deterministic", "openai"] = "auto"
     openai_api_key: str | None = None
     openai_model: str | None = None

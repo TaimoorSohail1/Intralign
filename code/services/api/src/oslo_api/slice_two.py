@@ -93,6 +93,32 @@ class SliceTwoApplication(Protocol):
         project_id: UUID,
     ) -> AnalysisRun | None: ...
 
+    def runtime_state(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+    ) -> dict: ...
+
+    def run_reanalysis_now(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        deep: bool,
+        key: str,
+    ) -> AnalysisRun: ...
+
+    def act_on_outcome(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        action: str,
+        outcome: str | None,
+        key: str,
+    ) -> dict: ...
+
     def list_history(
         self,
         *,

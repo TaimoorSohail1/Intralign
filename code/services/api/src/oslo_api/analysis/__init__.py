@@ -5,6 +5,7 @@ from oslo_api.analysis.harness import (
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     AnalysisEvent,
+    AnalysisPassKind,
     AnalysisPhase,
     AnalysisRun,
     AnalysisRunRequest,
@@ -19,6 +20,7 @@ from oslo_api.analysis.models import (
     HarnessInvocation,
     Issue,
     Perception,
+    ReanalysisTrigger,
     ReliabilityBasis,
     RunKind,
 )
@@ -29,6 +31,7 @@ __all__ = [
     "ARTIFACT_TYPES",
     "AgentHarness",
     "AnalysisEvent",
+    "AnalysisPassKind",
     "AnalysisPhase",
     "AnalysisRun",
     "AnalysisRunRequest",
@@ -48,5 +51,6 @@ __all__ = [
     "Issue",
     "Perception",
     "ReliabilityBasis",
+    "ReanalysisTrigger",
     "RunKind",
 ]

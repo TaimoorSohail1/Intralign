@@ -12,19 +12,28 @@ class DatabaseAnalysisJobQueue:
 
     def submit(self, function: Callable[[UUID], object], run_id: UUID) -> None:
         del function
+        self.submit_after(run_id, delay_seconds=0)
+
+    def submit_after(self, run_id: UUID, *, delay_seconds: float) -> None:
         with self._engine.begin() as connection:
             connection.execute(
                 text(
                     """
-                    insert into public.analysis_jobs (analysis_run_id, status)
-                    values (:run_id, 'queued')
+                    insert into public.analysis_jobs (
+                      analysis_run_id, status, available_at
+                    ) values (
+                      :run_id, 'queued',
+                      now() + make_interval(secs => :delay_seconds)
+                    )
                     on conflict (analysis_run_id) do update set
-                      status = 'queued', available_at = now(), locked_at = null,
+                      status = 'queued',
+                      available_at = now() + make_interval(secs => :delay_seconds),
+                      locked_at = null,
                       locked_by = null, last_error = null, attempts = 0,
                       updated_at = now()
                     """
                 ),
-                {"run_id": run_id},
+                {"run_id": run_id, "delay_seconds": delay_seconds},
             )
 
     def claim(self, *, worker_id: str, lease_seconds: int) -> UUID | None:

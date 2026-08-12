@@ -140,6 +140,91 @@ afterEach(() => {
 });
 
 describe("ProjectOverview", () => {
+  it("keeps the last good read visible while stale and offers an immediate reanalysis", async () => {
+    const staleSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      freshness: {
+        state: "stale",
+        pending_count: 2,
+        based_on_run_id: "run-001",
+        active_run_id: null,
+        last_act_at: "2026-08-12T12:00:00Z",
+        last_landed_at: "2026-08-12T11:59:00Z",
+      },
+    };
+    const fetchMock = vi.fn().mockImplementation(async () =>
+      Response.json({ run_id: "run-002", status: "queued" }, { status: 202 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={staleSnapshot}
+        initialView="overview"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Your read is safely out of date.")).toBeInTheDocument();
+    expect(screen.getByText(/last completed read stays visible/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reanalyze now" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/projects/project-001/reanalysis",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+    expect(await screen.findByText("Reanalysis queued")).toBeInTheDocument();
+  });
+
+  it("withdraws the latest pending change without hiding the last good read", async () => {
+    const staleSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      freshness: {
+        state: "stale",
+        pending_count: 1,
+        based_on_run_id: "run-001",
+        active_run_id: null,
+        last_act_at: "2026-08-12T12:00:00Z",
+        last_landed_at: "2026-08-12T11:59:00Z",
+        latest_pending_event_id: "event-001",
+      },
+    };
+    const fetchMock = vi.fn().mockImplementation(async () =>
+      Response.json({
+        event_id: "event-001",
+        state: "withdrawn",
+        pending_count: 0,
+        grounding_act_count: 1,
+        ever_unlocked: true,
+        freeze_on: false,
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={staleSnapshot}
+        initialView="overview"
+        logoutAction={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Undo last change" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/projects/project-001/acts/event-001",
+        { method: "DELETE" },
+      ),
+    );
+    expect(await screen.findByText("Pending change undone")).toBeInTheDocument();
+    expect(screen.queryByText("Your read is safely out of date.")).not.toBeInTheDocument();
+  });
+
   it("renders the Slice 6 Issues workspace with live grouping and filters", () => {
     render(
       <ProjectOverview
