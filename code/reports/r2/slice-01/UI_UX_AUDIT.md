@@ -20,6 +20,8 @@
 
 **Fifth resumption evidence limit (2026-08-12 05:10 PKT):** Supabase Auth, PostgreSQL, FastAPI, and the Next.js listener were reachable, but the in-app browser's initial and one supported-recovery fresh-page requests both timed out before a webview attached. The same binding was retained; controlled and user-visible tab lists were empty, and a visibility request remained false. No page existed to capture or inspect. Per the audit evidence rules, no prior or automated screenshot was substituted for current-run evidence. Keyboard, assistive-technology, reduced-motion, 200% zoom, responsive, and failure-state checks remain open.
 
+**Sixth resumption evidence limit (2026-08-12 06:08 PKT):** the in-app browser's initial and one supported-recovery fresh-page requests both timed out before a webview attached. The same binding was retained; controlled and user-visible tab lists stayed empty, and a visibility request remained false. Docker Engine was separately unresponsive and its stopped Windows service could not be opened by the scheduler account, but the page failed before navigation. No source state existed to capture or inspect. Per the audit evidence rules, no prior or automated screenshot was substituted for current-run evidence. Keyboard, assistive-technology, reduced-motion, 200% zoom, responsive, and failure-state checks remain open.
+
 ## Passed findings
 
 1. **Hierarchy and copy.** The five-step Fragile→Sound ramp leads, the single limiting pillar follows, and all three pillar controls expose a band and count basis. Moment-in-time and live-tracking language is explicit; no probability or 0–100 integrity score appears.
