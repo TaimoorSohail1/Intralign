@@ -1,5 +1,41 @@
 # Design QA
 
+## 2026-08-12 — R2 Slice 1 queue and inline-issue parity correction
+
+### Final result
+
+**Passed for the implemented Slice 1 header, workspace-open notice, exposure-ranked queue, inline issue read, and persistent OSLO advisor.**
+
+final result: passed
+
+### Source and implementation evidence
+
+- Source: the signed R2 prototype Issues queue and expanded issue states in `release-2/oslo-prototype-r2.html`, including the owner-provided reference captures.
+- Implementation: `http://127.0.0.1:3002/projects/cb25ee1c-82ed-407f-a46c-b591088fbdc6/overview` at a 1600 × 900 viewport.
+- Queue comparison: `reports/r2-slice-1-qa-2026-08-12/inline-issue-pass/queue-comparison.png` physically combines the prototype and corrected implementation.
+- Expanded issue comparison: `reports/r2-slice-1-qa-2026-08-12/inline-issue-pass/inline-comparison.png` physically combines the prototype and corrected implementation.
+
+### Findings and corrections
+
+- P1 header drift fixed: added the R2 prototype masthead, OFFICIAL treatment, SAMPLE badge, compact Outcome Integrity state, and aligned 86px content start.
+- P1 queue hierarchy fixed: added the prototype workspace-open notice and preserved the ranked queue, first-action emphasis, pillar/severity pills, and persistent advisor rail.
+- P1 interaction drift fixed: an issue now expands inline at its ranked position instead of replacing the queue; the other issue rows remain visible.
+- P2 detail hierarchy fixed: the inline read now includes the prototype's title/pillar/severity treatment, issue summary, Affects/Holds up context, first-time guide, recommendation, evidence, why-it-matters, weakening, and possible resolution paths.
+- The inline read is a non-modal dialog with `aria-controls`/`aria-expanded`, Escape-to-close, and focus restoration to its issue row.
+- No actionable P0, P1, or P2 mismatch remains in Slice 1. Dynamic project names, issue counts/copy, integrity values, and advisor text remain truthful live data rather than copied DevNorth fixtures.
+- OSLO Proposes and Resolved are intentionally excluded because the signed slice documentation assigns them to Slice 2, not Slice 1.
+
+### Verification
+
+- In-app browser: queue, inline opening/closing, keyboard focus restoration, persistent advisor, pillar navigation, desktop layout, and no horizontal document overflow passed.
+- Focused Overview suite: 38 passed.
+- Full web suite: 23 files / 128 passed.
+- Slice 1 API contract suite: 19 passed earlier in the same run; no API code changed in this correction.
+- R2 guardrails: 4 infrastructure tests and 9 active selectors passed earlier in the same run; no guard mapping changed.
+- ESLint: passed.
+- TypeScript and Next.js production build: passed.
+
+
 ## 2026-08-12 — R2 Slice 1 bounded-shell correction
 
 ### Final result

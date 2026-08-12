@@ -367,6 +367,11 @@ describe("ProjectOverview", () => {
       />,
     );
 
+    expect(screen.getByText("OSLO · AI-first R2 prototype")).toBeInTheDocument();
+    expect(screen.getByText("Sample")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Workspace open" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss workspace open message" }));
+    expect(screen.queryByRole("region", { name: "Workspace open" })).not.toBeInTheDocument();
     expect(screen.getAllByText(/Outcome integrity/i)).not.toHaveLength(0);
     expect(screen.getByRole("link", { name: "Timeline" })).toHaveAttribute(
       "href",
@@ -850,6 +855,35 @@ describe("ProjectOverview", () => {
       expect(screen.getByLabelText("OSLO project advisor")).toBeInTheDocument();
       expect(issueButton).toHaveFocus();
     });
+  });
+
+  it("expands an Overview issue inline without replacing the ranked queue", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const queue = screen.getByRole("region", {
+      name: "Exposure-ranked issue queue",
+    });
+    const issueButton = within(queue).getByRole("button", {
+      name: /Migration ownership is unresolved/i,
+    });
+
+    fireEvent.click(issueButton);
+
+    const detail = screen.getByRole("dialog", { name: "Issue details" });
+    expect(queue).toContainElement(detail);
+    expect(detail).toHaveClass("is-inline");
+    expect(detail).not.toHaveAttribute("aria-modal");
+    expect(issueButton).toHaveAttribute("aria-expanded", "true");
+    expect(issueButton).toHaveAttribute("aria-controls", "issue-detail-ISS-001");
+    expect(within(detail).getByText("Affects")).toBeInTheDocument();
+    expect(within(detail).getByText("Holds up")).toBeInTheDocument();
+    expect(screen.getByText("Your work — most important first")).toBeInTheDocument();
   });
 
   it("reveals readable evidence through a keyboard-operable disclosure and hides locator ids", () => {

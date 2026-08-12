@@ -23,7 +23,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { OverviewSnapshot, ProjectHistory } from "@/lib/server/oslo-api";
@@ -166,6 +166,7 @@ export function ProjectOverview({
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [advisorOpen, setAdvisorOpen] = useState(true);
+  const [workspaceNoticeOpen, setWorkspaceNoticeOpen] = useState(true);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [confidenceDetailsOpen, setConfidenceDetailsOpen] = useState(false);
   const [confidenceBreakdownOpen, setConfidenceBreakdownOpen] = useState(false);
@@ -389,6 +390,7 @@ export function ProjectOverview({
         const panel = document.querySelector<HTMLElement>(
           '[role="dialog"][aria-label="Issue details"]',
         );
+        if (panel?.classList.contains("is-inline")) return;
         const focusable = panel?.querySelectorAll<HTMLElement>(
           'button:not([disabled]), textarea:not([disabled]), input:not([disabled]), a[href]',
         );
@@ -660,6 +662,7 @@ export function ProjectOverview({
       analysisRunning={Boolean(analysisUpdateRunId)}
       answer={clarificationAnswer}
       error={clarificationError ?? issueActionError}
+      inline={initialView === "overview"}
       issue={selectedIssue}
       projectId={snapshot.project_id}
       onAnswerChange={setClarificationAnswer}
@@ -684,6 +687,12 @@ export function ProjectOverview({
         orientation ? "is-touring" : ""
       }`}
     >
+      {initialView === "overview" ? (
+        <div className="r2-prototype-banner">
+          <strong>OSLO · AI-first R2 prototype</strong>
+          <span><b>Official</b> One walkable shell: the read is home · artifacts + execution plan in the center · reasoning + chat on the right</span>
+        </div>
+      ) : null}
       <header className="project-header">
         <Link className="project-toolbar-brand" href="/workspace">
           <Image
@@ -700,8 +709,9 @@ export function ProjectOverview({
           projectId={snapshot.project_id}
           projectName={projectTitle}
         />
-        <div className="project-context">
-          <strong>{projectTitle}</strong>
+        {initialView === "overview" ? <span className="r2-sample-badge">Sample</span> : null}
+        <div className={`project-context ${initialView === "overview" ? "is-overview" : ""}`}>
+          {initialView === "overview" ? null : <strong>{projectTitle}</strong>}
           <span aria-hidden="true">›</span>
           <em>
             {initialView === "overview"
@@ -1128,6 +1138,17 @@ export function ProjectOverview({
               <section className={`start-here ${
                 orientation && activeTourStep === 2 ? "is-tour-target" : ""
               }`}>
+                {workspaceNoticeOpen ? (
+                  <section className="r2-workspace-open" aria-label="Workspace open">
+                    <span aria-hidden="true">✦</span>
+                    <div>
+                      <strong>Your workspace is open.</strong>
+                      <p>Your plan documents are on the left and OSLO&apos;s reasoning is on the right — every pillar and open issue travels with them.</p>
+                      <div><small>New to OSLO?</small><button onClick={() => { setTourStep(0); setOrientation(true); }} type="button">Take a 30-second tour →</button><button onClick={() => setWorkspaceNoticeOpen(false)} type="button">No thanks</button></div>
+                    </div>
+                    <button aria-label="Dismiss workspace open message" onClick={() => setWorkspaceNoticeOpen(false)} type="button">×</button>
+                  </section>
+                ) : null}
                 <div className="overview-label r2-worklist-label">
                   <p>Your work — most important first</p>
                   <span>Do them top to bottom; the order re-ranks itself as you go.</span>
@@ -1137,28 +1158,37 @@ export function ProjectOverview({
                   className="issue-list"
                   role="region"
                 >
-                  {openIssues.map((issue, index) => (
-                    <button
-                      className={`issue-row issue-row-${issue.severity.toLowerCase()}`}
-                      key={issue.id}
-                      onClick={(event) => openIssue(issue, event.currentTarget)}
-                      type="button"
-                    >
-                      <span className="r2-issue-rank">{index + 1}</span>
-                      <span className="r2-issue-copy">
-                        {index === 0 ? <b>◆ Do this next</b> : null}
-                        <strong>{issue.title}</strong>
-                        <small><em>Holds up</em> {issue.why}</small>
-                      </span>
-                      <span className={`r2-pillar r2-pillar-${issuePillar(issue).toLowerCase()}`}>
-                        {issuePillar(issue)}
-                      </span>
-                      <span className={`severity severity-${issue.severity.toLowerCase()}`}>
-                        {issue.severity}
-                      </span>
-                      <CaretRight aria-hidden="true" className="r2-issue-caret" size={13} />
-                    </button>
-                  ))}
+                  {openIssues.map((issue, index) => {
+                    const isSelected = selectedIssue?.id === issue.id;
+                    return (
+                      <Fragment key={issue.id}>
+                        <button
+                          aria-controls={isSelected ? `issue-detail-${issue.id}` : undefined}
+                          aria-expanded={isSelected}
+                          className={`issue-row issue-row-${issue.severity.toLowerCase()} ${
+                            isSelected ? "is-expanded" : ""
+                          }`}
+                          onClick={(event) => openIssue(issue, event.currentTarget)}
+                          type="button"
+                        >
+                          <span className="r2-issue-rank">{index + 1}</span>
+                          <span className="r2-issue-copy">
+                            {index === 0 && !isSelected ? <b>◆ Do this next</b> : null}
+                            <strong>{issue.title}</strong>
+                            <small><em>Holds up</em> {issue.why}</small>
+                          </span>
+                          <span className={`r2-pillar r2-pillar-${issuePillar(issue).toLowerCase()}`}>
+                            {issuePillar(issue)}
+                          </span>
+                          <span className={`severity severity-${issue.severity.toLowerCase()}`}>
+                            {issue.severity}
+                          </span>
+                          <CaretRight aria-hidden="true" className="r2-issue-caret" size={13} />
+                        </button>
+                        {isSelected ? issuePanel : null}
+                      </Fragment>
+                    );
+                  })}
                 </div>
                 <Link
                   className="attention-map-link"
@@ -1303,7 +1333,7 @@ export function ProjectOverview({
                 {summaryOpen ? <p>{snapshot.summary}</p> : null}
               </section>
               </div>
-              {issuePanel}
+              {initialView !== "overview" ? issuePanel : null}
             </>
           ) : initialView === "attention" ? (
             <AttentionView
@@ -2130,6 +2160,7 @@ function IssuePanel({
   analysisRunning,
   answer,
   error,
+  inline,
   issue,
   projectId,
   onAnswerChange,
@@ -2143,6 +2174,7 @@ function IssuePanel({
   analysisRunning: boolean;
   answer: string;
   error: string | null;
+  inline: boolean;
   issue: Issue;
   projectId: string;
   onAnswerChange: (value: string) => void;
@@ -2268,12 +2300,18 @@ function IssuePanel({
     <aside
       aria-describedby={analysisRunning ? "issue-analysis-pending-status" : undefined}
       aria-label="Issue details"
-      aria-modal="true"
-      className="project-sidepanel issue-panel"
+      aria-modal={inline ? undefined : "true"}
+      className={`project-sidepanel issue-panel ${inline ? "is-inline" : ""}`}
+      id={`issue-detail-${issue.id}`}
       role="dialog"
     >
       <div className="issue-panel-heading">
         <div>
+          {inline ? (
+            <span className={`r2-pillar r2-pillar-${issuePillar(issue).toLowerCase()}`}>
+              {issuePillar(issue)}
+            </span>
+          ) : null}
           <span className={`severity severity-${issue.severity.toLowerCase()}`}>
             {issue.severity}
           </span>
@@ -2288,6 +2326,15 @@ function IssuePanel({
           <X aria-hidden="true" size={20} />
         </button>
       </div>
+      {inline ? (
+        <div className="issue-inline-summary">
+          <p>{issue.why}</p>
+          <dl>
+            <div><dt>Affects</dt><dd><span>{artifactLabel(issue.artifact_type)}</span><span>{artifactLabel(issue.dimension)}</span></dd></div>
+            <div><dt>Holds up</dt><dd>{issue.why}</dd></div>
+          </dl>
+        </div>
+      ) : null}
       <p className="issue-meta">
         Dimension · {issue.dimension} &nbsp; Section · {artifactLabel(issue.artifact_type)}
         &nbsp; Type · Finding
@@ -2312,11 +2359,20 @@ function IssuePanel({
           </span>
         </p>
       ) : null}
+      {inline ? (
+        <div className="issue-inline-guide">
+          <strong>First time here · what {issuePillar(issue)} means</strong>
+          <p>
+            This is one of the load-bearing issues holding back the current read. Review
+            what OSLO is basing it on, then decide the next move from your evidence.
+          </p>
+        </div>
+      ) : null}
       <button className="ask-oslo-issue" onClick={onAsk} type="button">
         <Sparkle aria-hidden="true" size={12} weight="fill" />
         Ask OSLO about this issue
       </button>
-      <section>
+      <section className="issue-why-matters">
         <h3>Why this matters</h3>
         <p>{issue.why}</p>
       </section>
@@ -2356,7 +2412,7 @@ function IssuePanel({
           </div>
         ) : null}
       </section>
-      <section>
+      <section className="issue-what-weakens">
         <h3>What this weakens</h3>
         <p>
           This finding lowers the {issue.dimension.toLowerCase()} read for{" "}
@@ -2405,7 +2461,7 @@ function IssuePanel({
           <button onClick={onAsk} type="button">Discuss</button>
         </div>
       </section>
-      <section>
+      <section className="issue-resolution-paths">
         <h3>Possible resolution paths</h3>
         <div className="resolution-path">
           <span><ArrowRight aria-hidden="true" size={12} />{issue.recommendation}</span>
@@ -2543,7 +2599,7 @@ function IssuePanel({
           <p className="clarification-error" role="alert">{collaborationError}</p>
         ) : null}
       </section>
-      <p className="issue-history-pointer">
+      <p className={`issue-history-pointer ${inline ? "is-inline" : ""}`}>
         Status changes and reviewer attestations are retained in project history.
       </p>
       {error ? <p className="clarification-error" role="alert">{error}</p> : null}
