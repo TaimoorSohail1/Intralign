@@ -1,4 +1,46 @@
-# Prototype 10 design QA
+# Design QA
+
+## 2026-08-12 — R2 Slice 1 Outcome Integrity shell
+
+### Final result
+
+**Passed for the implemented Slice 1 UI scope.**
+
+final result: passed
+
+### Source and implementation evidence
+
+- Source: `reports/r2/slice-01/current-run/14-prototype-matched-956x1040.png`
+- Implementation: `reports/r2/slice-01/current-run/13-implementation-matched-956x1040.png`
+- Combined comparison: `reports/r2/slice-01/current-run/15-prototype-vs-implementation-matched.png`
+- Comparison viewport: 956 × 1040 CSS pixels in the same Codex in-app browser tab and state
+
+### Visual findings
+
+- The expanded Outcome Integrity masthead, five-band maturity rail, three pillar cards, weakest-pillar treatment, Views/Documents navigation, exposure-ranked work queue, and persistent OSLO advisor follow the R2 prototype hierarchy and styling.
+- The queue exposes every server-ranked issue; the first issue carries the orange “Do this next” treatment and each row retains pillar, severity, rationale, rank, and affordance.
+- At the 956-pixel comparison width, the complete left navigation and OSLO advisor remain visible instead of collapsing over the integrity masthead.
+- No actionable P0, P1, or P2 mismatch remains inside Slice 1. Accepted dynamic differences are the project name, pillar readings, issue copy/count, and advisor copy because the implementation renders the real seeded project while the prototype renders its fixed DevNorth fixture.
+- The prototype-only explanatory banner is not shipped. The prototype's attested-outcome row belongs to the activation/project-shell state and is outside the Slice 1 engine delta.
+
+### Interaction and accessibility findings
+
+- The top-ranked issue opens a working governed issue detail without dismissing OSLO; Escape closes it and restores focus to its trigger.
+- Selecting the Adaptability pillar opens the related highest-exposure issue.
+- Viability detail expands into a visible, readable region rather than leaving a hidden control target.
+- Regions and controls expose names for Outcome Integrity, the exposure-ranked queue, issue details, and advisor actions. Live-browser console errors: 0.
+
+### Automated evidence
+
+- Focused Overview component suite: 35 passed
+- Full web suite: 23 files / 125 passed
+- Slice 1 API contract and integrity tests: 19 passed
+- R2 guardrails: 4 infrastructure tests and 9 active selectors passed; 60 registered / 6 active / 54 pending
+- ESLint: passed with zero warnings
+- TypeScript and Next.js production build: passed
+- `git diff --check`: passed
+
+## Prototype 10 design QA
 
 ## Final result
 

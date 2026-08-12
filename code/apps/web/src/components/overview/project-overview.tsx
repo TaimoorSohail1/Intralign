@@ -250,14 +250,16 @@ export function ProjectOverview({
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
-    const compact = window.matchMedia("(max-width: 980px)");
+    const compact = window.matchMedia(
+      initialView === "overview" ? "(max-width: 900px)" : "(max-width: 980px)",
+    );
     const keepMainConsoleAvailable = (event: MediaQueryListEvent | MediaQueryList) => {
       if (event.matches) setAdvisorOpen(false);
     };
     keepMainConsoleAvailable(compact);
     compact.addEventListener("change", keepMainConsoleAvailable);
     return () => compact.removeEventListener("change", keepMainConsoleAvailable);
-  }, []);
+  }, [initialView]);
 
   useEffect(() => {
     const orientationTimer = window.setTimeout(
@@ -430,7 +432,7 @@ export function ProjectOverview({
   const openIssue = (issue: Issue, trigger?: HTMLElement | null) => {
     advisorStateBeforeIssue.current = advisorOpen;
     issueTrigger.current = trigger ?? (document.activeElement as HTMLElement | null);
-    setAdvisorOpen(false);
+    if (initialView !== "overview") setAdvisorOpen(false);
     setSelectedIssue(issue);
     setClarificationAnswer("");
     setClarificationError(null);
@@ -644,10 +646,30 @@ export function ProjectOverview({
 
   const panelVisible = advisorOpen || Boolean(selectedIssue);
   const activeTourStep = tourStep ?? 0;
+  const issuePanel = selectedIssue ? (
+    <IssuePanel
+      analysisRunning={Boolean(analysisUpdateRunId)}
+      answer={clarificationAnswer}
+      error={clarificationError ?? issueActionError}
+      issue={selectedIssue}
+      projectId={snapshot.project_id}
+      onAnswerChange={setClarificationAnswer}
+      onAsk={() => {
+        closeIssue();
+        setAdvisorOpen(true);
+        void askQuestion(`Explain this issue: ${selectedIssue.title}`);
+      }}
+      onClose={closeIssue}
+      onIssueAction={actOnIssue}
+      onSubmit={submitClarification}
+      pending={clarificationPending || issueActionPending}
+      selectedResolution={selectedResolutions[selectedIssue.id] ?? null}
+    />
+  ) : null;
 
   return (
     <main
-      className={`project-shell ${selectedIssue ? "has-issue" : ""} ${
+      className={`project-shell ${initialView === "overview" ? "is-r2-slice-one" : ""} ${selectedIssue ? "has-issue" : ""} ${
         orientation ? "is-touring" : ""
       }`}
     >
@@ -740,7 +762,9 @@ export function ProjectOverview({
         className="workspace-sidebar"
         tabIndex={0}
       >
-        <p className="workspace-label">Project</p>
+        <p className="workspace-label">
+          {initialView === "overview" ? "Views" : "Project"}
+        </p>
         <nav aria-label="Workspace">
           <Link
             aria-current={initialView === "overview" ? "page" : undefined}
@@ -797,7 +821,9 @@ export function ProjectOverview({
             Reports
           </Link>
         </nav>
-        <p className="workspace-label workspace-artifact-label">Plan artifacts</p>
+        <p className="workspace-label workspace-artifact-label">
+          {initialView === "overview" ? "Documents" : "Plan artifacts"}
+        </p>
         <div className="workspace-artifact-group">
           <span>Understanding</span>
           {artifactOrder.slice(0, 4).map((artifactType) => {
@@ -908,8 +934,12 @@ export function ProjectOverview({
           tabIndex={0}
         >
           {initialView === "overview" ? (
-            <div className={`overview-stack ${hasFirstValue ? "has-first-value" : ""}`}>
-              <section className="confidence-read integrity-read">
+            <>
+              <div className={`overview-stack ${hasFirstValue ? "has-first-value" : ""}`}>
+              <section
+                aria-label="Outcome Integrity summary"
+                className="confidence-read integrity-read"
+              >
                 <div className="confidence-topline">
                   <p className="eyebrow">Outcome integrity</p>
                   <span className={`snapshot-badge ${isProvisional ? "" : "is-current"}`}>
@@ -1047,32 +1077,35 @@ export function ProjectOverview({
               <section className={`start-here ${
                 orientation && activeTourStep === 2 ? "is-tour-target" : ""
               }`}>
-                <div className="overview-label">
-                  <p>Start here</p>
-                  <Info aria-hidden="true" size={14} />
+                <div className="overview-label r2-worklist-label">
+                  <p>Your work — most important first</p>
+                  <span>Do them top to bottom; the order re-ranks itself as you go.</span>
                 </div>
-                <div className="issue-list">
-                  {openIssues.slice(0, 4).map((issue, index) => (
+                <div
+                  aria-label="Exposure-ranked issue queue"
+                  className="issue-list"
+                  role="region"
+                >
+                  {openIssues.map((issue, index) => (
                     <button
                       className={`issue-row issue-row-${issue.severity.toLowerCase()}`}
                       key={issue.id}
                       onClick={(event) => openIssue(issue, event.currentTarget)}
                       type="button"
                     >
+                      <span className="r2-issue-rank">{index + 1}</span>
+                      <span className="r2-issue-copy">
+                        {index === 0 ? <b>◆ Do this next</b> : null}
+                        <strong>{issue.title}</strong>
+                        <small><em>Holds up</em> {issue.why}</small>
+                      </span>
+                      <span className={`r2-pillar r2-pillar-${issuePillar(issue).toLowerCase()}`}>
+                        {issuePillar(issue)}
+                      </span>
                       <span className={`severity severity-${issue.severity.toLowerCase()}`}>
                         {issue.severity}
                       </span>
-                      <strong>{issue.title}</strong>
-                      {index === 0 ? (
-                        <span className="issue-review">
-                          Review <ArrowRight aria-hidden="true" size={12} />
-                        </span>
-                      ) : (
-                        <span className="issue-location">
-                          in {artifactLabel(issue.artifact_type)}
-                          <CaretRight aria-hidden="true" size={12} />
-                        </span>
-                      )}
+                      <CaretRight aria-hidden="true" className="r2-issue-caret" size={13} />
                     </button>
                   ))}
                 </div>
@@ -1218,7 +1251,9 @@ export function ProjectOverview({
                 </button>
                 {summaryOpen ? <p>{snapshot.summary}</p> : null}
               </section>
-            </div>
+              </div>
+              {issuePanel}
+            </>
           ) : initialView === "attention" ? (
             <AttentionView
               onAskOslo={(scope) => {
@@ -1275,26 +1310,7 @@ export function ProjectOverview({
           )}
         </section>
 
-        {selectedIssue ? (
-          <IssuePanel
-            analysisRunning={Boolean(analysisUpdateRunId)}
-            answer={clarificationAnswer}
-            error={clarificationError ?? issueActionError}
-            issue={selectedIssue}
-            projectId={snapshot.project_id}
-            onAnswerChange={setClarificationAnswer}
-            onAsk={() => {
-              closeIssue();
-              setAdvisorOpen(true);
-              void askQuestion(`Explain this issue: ${selectedIssue.title}`);
-            }}
-            onClose={closeIssue}
-            onIssueAction={actOnIssue}
-            onSubmit={submitClarification}
-            pending={clarificationPending || issueActionPending}
-            selectedResolution={selectedResolutions[selectedIssue.id] ?? null}
-          />
-        ) : advisorOpen ? (
+        {selectedIssue && initialView !== "overview" ? issuePanel : advisorOpen ? (
           <div
             className={`project-sidepanel-slot ${
               orientation && activeTourStep === 5 ? "advisor-tour-target" : ""

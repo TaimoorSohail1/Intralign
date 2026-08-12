@@ -380,6 +380,83 @@ describe("ProjectOverview", () => {
     expect(screen.queryByText("Analysis status")).not.toBeInTheDocument();
   });
 
+  it("renders the R2 Slice 1 integrity masthead and the complete exposure-ranked queue", () => {
+    const exposureSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      assessment: {
+        ...snapshot.assessment,
+        issues: [
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-LOW",
+            title: "Lower exposure issue",
+            exposure_rank: 1,
+            severity: "Warning",
+          },
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-HIGH",
+            title: "Highest exposure issue",
+            exposure_rank: 5,
+          },
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-MID",
+            title: "Middle exposure issue",
+            exposure_rank: 3,
+            severity: "Moderate",
+          },
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-SECOND",
+            title: "Second exposure issue",
+            exposure_rank: 4,
+            severity: "Moderate",
+          },
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-FOURTH",
+            title: "Fourth exposure issue",
+            exposure_rank: 2,
+            severity: "Warning",
+          },
+        ],
+      },
+    };
+
+    const { container } = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={exposureSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector("main")).toHaveClass("is-r2-slice-one");
+    expect(
+      screen.getByRole("region", { name: "Outcome Integrity summary" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Views")).toBeInTheDocument();
+    expect(screen.getByText("Documents")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show Viability detail" }));
+    expect(screen.getByRole("region", { name: "Viability detail" })).toBeVisible();
+
+    const queue = screen.getByRole("region", {
+      name: "Exposure-ranked issue queue",
+    });
+    const issueButtons = within(queue).getAllByRole("button");
+    expect(issueButtons).toHaveLength(5);
+    expect(issueButtons.map((button) => button.textContent)).toEqual([
+      expect.stringContaining("Highest exposure issue"),
+      expect.stringContaining("Second exposure issue"),
+      expect.stringContaining("Middle exposure issue"),
+      expect.stringContaining("Fourth exposure issue"),
+      expect.stringContaining("Lower exposure issue"),
+    ]);
+    expect(within(queue).getAllByText("Holds up")).toHaveLength(5);
+  });
+
   it("restores the Overview scroll position after returning from Attention Map", () => {
     vi.useFakeTimers();
     const scrollTo = vi.fn();
@@ -684,7 +761,7 @@ describe("ProjectOverview", () => {
     );
   });
 
-  it("closes the advisor for issue review and restores focus when the drawer closes", async () => {
+  it("keeps the governed advisor beside R2 issue review and restores focus when it closes", async () => {
     render(
       <ProjectOverview
         displayName="Alex"
@@ -696,7 +773,7 @@ describe("ProjectOverview", () => {
     issueButton.focus();
     fireEvent.click(issueButton);
 
-    expect(screen.queryByLabelText("OSLO project advisor")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("OSLO project advisor")).toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "Issue details" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Close issue" }));
 
