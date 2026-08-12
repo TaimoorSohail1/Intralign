@@ -1,5 +1,35 @@
 # Design QA
 
+## 2026-08-12 — R2 Slice 1 manual completion audit
+
+### Final result
+
+**Passed every browser-executable remaining gate; spoken screen-reader output remains unverified because no screen reader is installed in the QA environment.**
+
+final result: partial pass
+
+### Manual evidence
+
+- Forced timeout preserved the last successful issue queue and integrity read, did not publish an incomplete result, and exposed a clear retry action.
+- Retry displayed an in-progress state and completed successfully; the run returned to `completed` / `extended_transition` without losing the last-good read.
+- A 200%-zoom-equivalent 482 CSS-pixel viewport had no horizontal overflow, preserved all three issues, and exposed the mobile OSLO entry point.
+- With the real operating-system reduced-motion preference enabled, the browser reported `prefers-reduced-motion: reduce`; transitions collapsed to effectively zero and no animated spinner remained. The operating-system preference was restored after the check.
+- The issue disclosure exposes a labeled non-modal `dialog`, `aria-controls`, `aria-expanded`, a polite advisor live region, named landmarks, initial focus on Close, Escape-to-close, and focus restoration to the originating issue row.
+- Browser console: 0 errors. Five repeated Next.js image-development warnings remain and do not affect the Slice 1 flow.
+
+### Evidence files
+
+- `reports/r2-slice-1-qa-2026-08-12/manual-completion/02-timeout-last-good.png`
+- `reports/r2-slice-1-qa-2026-08-12/manual-completion/03-retry-running.png`
+- `reports/r2-slice-1-qa-2026-08-12/manual-completion/04-retry-complete.png`
+- `reports/r2-slice-1-qa-2026-08-12/manual-completion/05-zoom-200-equivalent.png`
+- `reports/r2-slice-1-qa-2026-08-12/manual-completion/06-reduced-motion.png`
+- `reports/r2-slice-1-qa-2026-08-12/manual-completion/07-screen-reader-dialog.png`
+
+### Remaining limitation
+
+- NVDA is not installed, and synthesized screen-reader speech cannot be captured or asserted through the in-app browser. Accessibility-tree, landmark, live-region, keyboard, dialog, Escape, and focus-return behavior pass, but the ledger conservatively keeps the real spoken assistive-technology session open.
+
 ## 2026-08-12 — R2 Slice 1 queue and inline-issue parity correction
 
 ### Final result
