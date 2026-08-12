@@ -4,9 +4,9 @@
 
 ### Current result
 
-**Prototype source parity and automated regression pass; final same-viewport visual proof and live manual regression remain blocked by the approved browser policy.**
+**The production first-read journey, kinetic animation, outcome confirmation, Overview landing, issue action, freshness/reanalysis feedback, queue refresh, responsive layout, and matched-state prototype comparison pass in the approved in-app browser. One live-state defect was found and fixed at `6dfdebe`: queued issue actions now expose the stale-read banner and Undo control immediately.**
 
-final result: blocked
+final result: partial pass
 
 ### Implemented Slice 3 surfaces
 
@@ -26,11 +26,31 @@ final result: blocked
 - Shipped animation asset: JavaScript syntax check passed; production HTTP returned 200 with `text/html; charset=UTF-8`; API health returned 200/ready.
 - Local Slice 3 database migration: applied successfully.
 
-### Blocking manual evidence
+### Live manual and visual evidence
 
-- The Codex in-app browser was selected for QA, but its URL security policy rejected inspection of the local `127.0.0.1:3002` page. Per the browser safety contract, no alternative browser or indirect workaround was used.
-- Therefore no new same-viewport combined prototype/implementation image exists for Slice 3. The animation source and visible state/copy parity are mechanically verified, but final pixel-level parity is not claimed without the required screenshot comparison.
-- Live journeys still required: first read, outcome confirmation, batched acts, pending Undo, mid-run follow-up, provisional/failure/retry, Deep supersession, read-moved, reload persistence, responsive/zoom/reduced-motion, and the owner-deferred shared spoken screen-reader audit.
+- Ran the real sample-plan intake through the first analysis, watched the graph reveal and pillar animation, confirmed the inferred outcome, and landed on the real Overview.
+- Opened an issue, submitted a user-owned clarification, observed `Addressed` plus `Saved · Analysis pending`, completed reanalysis, and confirmed that the queue and evidence projection refreshed without breaking navigation or the advisor rail.
+- Exercised the recommended action path. The first run exposed a UI synchronization defect: the server queued the change but the top-level stale/Undo state was not projected immediately. The production fix now projects that state from the action response, and focused assertions cover both clarification and recommended-action paths.
+- Verified the Undo control is visible and actionable while the run is pending. When analysis had already acquired the change, the server correctly rejected the late withdrawal and the UI announced `The change can no longer be undone.`
+- Tested the production Overview at a narrow mobile viewport. The page reflowed without horizontal page overflow and kept the integrity read reachable.
+- Opened the signed prototype and production animation in separate approved tabs, captured graph and outcome-decision states, and produced same-run comparison images. The core kinetic engine, card geometry, typography, colors, and controls match; live project/outcome values and animation timing remain truthfully dynamic, and prototype-only developer controls remain intentionally absent from production.
+- A fresh direct production run and a fresh direct prototype run had zero reproducible console errors. One earlier `MutationObserver` error existed on the initially claimed browser tab during tooling startup but did not reproduce in either clean tab. The prototype's own anti-jargon debug warning remains source behavior and does not interrupt the flow.
+
+### Evidence files
+
+- `reports/r2-slice-3-qa-2026-08-12/manual-live/01-intake-populated.png`
+- `reports/r2-slice-3-qa-2026-08-12/manual-live/03-graph-reveal.png`
+- `reports/r2-slice-3-qa-2026-08-12/manual-live/06-outcome-decision.png`
+- `reports/r2-slice-3-qa-2026-08-12/manual-live/09-reanalysis-complete.png`
+- `reports/r2-slice-3-qa-2026-08-12/manual-live/10-mobile-overview.png`
+- `reports/r2-slice-3-qa-2026-08-12/manual-live/15-prototype-vs-implementation.png`
+- `reports/r2-slice-3-qa-2026-08-12/manual-live/17-decision-prototype-vs-implementation.png`
+- `reports/r2-slice-3-qa-2026-08-12/manual-live/18-fixed-stale-undo.png`
+- `reports/r2-slice-3-qa-2026-08-12/manual-live/19-stale-undo-visible.png`
+
+### Remaining limitation
+
+- The owner-deferred shared spoken screen-reader session for Slices 1–3 remains open because the QA environment cannot capture synthesized screen-reader speech. Failure/retry, Deep supersession, read-moved, origin rejection, reduced-motion, and persistence recovery remain covered by passing automated tests rather than being artificially forced during this visible happy-path session.
 
 ## 2026-08-12 — R2 Slice 1 manual completion audit
 
