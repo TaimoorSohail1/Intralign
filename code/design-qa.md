@@ -52,6 +52,14 @@ final result: partial pass
 
 - The owner-deferred shared spoken screen-reader session for Slices 1–3 remains open because the QA environment cannot capture synthesized screen-reader speech. Failure/retry, Deep supersession, read-moved, origin rejection, reduced-motion, and persistence recovery remain covered by passing automated tests rather than being artificially forced during this visible happy-path session.
 
+### Final outcome-control verification
+
+- A fresh approved-browser run rendered all three production decisions together: `Yes — this is my outcome`, `Close — I’ll refine it`, and `Not sure yet — keep it as OSLO’s inference`.
+- **Confirm passed:** the decision entered a disabled saving state, persisted successfully, and landed on Overview with `Your workspace is open`.
+- **Refine passed:** the editor opened with the inferred outcome, accepted replacement text, exposed Save and Cancel, and Cancel returned to the original decision without changing ownership.
+- **Keep as inference passed:** the flow preserved the outcome as OSLO’s inference and landed on the usable Overview without falsely claiming user confirmation.
+- Visible evidence: `reports/r2-slice-3-button-qa-2026-08-12/01-decision-controls.jpg` through `04-confirmed-overview.jpg`.
+
 ## 2026-08-12 — R2 Slice 1 manual completion audit
 
 ### Final result
