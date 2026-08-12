@@ -1,5 +1,34 @@
 # Design QA
 
+## 2026-08-12 — R2 Slice 3 implementation review
+
+### Current result
+
+**Implementation and automated regression pass; exact visual parity and live manual regression remain blocked.**
+
+final result: partial pass
+
+### Implemented Slice 3 surfaces
+
+- Prototype-shaped first-analysis sequence with real run-event progress, plan graph, Fast/Deep state, truthful 45/60-second messaging, and primary-outcome confirm/refine/defer actions.
+- Overview freshness states for STALE, reanalyzing, fresh, Reanalyze now, pending Undo, last-good preservation, and causal read-moved feedback.
+- Presentation-only first-run freeze and a durable, latched two-grounding-act unlock.
+
+### Automated evidence
+
+- API: 303 passed.
+- Web: 23 files / 131 passed.
+- R2 guardrails: 4 infrastructure tests and 9 active selectors passed.
+- Ruff and ESLint: passed.
+- TypeScript and Next.js production build: passed.
+- Local Slice 3 database migration: applied successfully.
+
+### Blocking manual evidence
+
+- The Codex in-app browser was selected for QA, but its URL security policy rejected reloading the local `127.0.0.1:3002` page. Per the browser safety contract, no alternative browser or indirect workaround was used.
+- Therefore no new same-viewport combined prototype/implementation image exists for Slice 3, and exact visual parity is not claimed.
+- Live journeys still required: first read, outcome confirmation, batched acts, pending Undo, mid-run follow-up, provisional/failure/retry, Deep supersession, read-moved, reload persistence, responsive/zoom/reduced-motion, and the owner-deferred shared spoken screen-reader audit.
+
 ## 2026-08-12 — R2 Slice 1 manual completion audit
 
 ### Final result
