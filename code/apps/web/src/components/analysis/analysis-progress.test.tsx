@@ -30,6 +30,35 @@ class FakeEventSource {
   close() {}
 }
 
+function frame() {
+  return screen.getByTitle("OSLO analysis and outcome confirmation") as HTMLIFrameElement;
+}
+
+function emitArcMessage(data: object, options?: { origin?: string; source?: MessageEventSource | null }) {
+  window.dispatchEvent(
+    new MessageEvent("message", {
+      data,
+      origin: options?.origin ?? window.location.origin,
+      source: options?.source === undefined ? frame().contentWindow : options.source,
+    }),
+  );
+}
+
+function completedOverview() {
+  return {
+    project_title: "Migration",
+    summary: "Ship the migration without customer interruption.",
+    artifacts: [
+      {
+        artifact_type: "intent",
+        summary: "Ship the migration without customer interruption.",
+        content: { sections: [] },
+      },
+    ],
+    assessment: { integrity: { decomposition: [] } },
+  };
+}
+
 describe("AnalysisProgress", () => {
   beforeEach(() => {
     vi.stubGlobal("EventSource", FakeEventSource);
@@ -39,14 +68,13 @@ describe("AnalysisProgress", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("reconnects to the running analysis without reloading the failed page", async () => {
     let statusRequest = 0;
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-      if (init?.method === "POST") {
-        return new Response("{}", { status: 202 });
-      }
+      if (init?.method === "POST") return new Response("{}", { status: 202 });
       statusRequest += 1;
       return Response.json(
         statusRequest === 1
@@ -71,10 +99,11 @@ describe("AnalysisProgress", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry analysis" }));
 
     await waitFor(() => expect(statusRequest).toBe(2));
-    expect(screen.getByText("Analyzing…")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Drafting your plan documents…");
+    expect(frame()).toHaveAttribute("src", "/r2/onboarding-arc.html?embed=1&live=1");
   });
 
-  it("matches the prototype language while drafting the plan documents", async () => {
+  it("uses the exact prototype arc and sends truthful live analysis progress into it", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -87,45 +116,38 @@ describe("AnalysisProgress", () => {
     );
 
     render(<AnalysisProgress projectId="project-1" runId="run-1" />);
+    const arc = frame();
+    const postMessage = vi.spyOn(arc.contentWindow!, "postMessage");
+    emitArcMessage({ oarc: "ready" });
 
-    expect(
-      await screen.findByRole("heading", { name: "Drafting your plan documents…" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Intent · Scope · Requirements · Constraints · Work breakdown · Schedule · Resourcing"),
-    ).toBeInTheDocument();
+    await waitFor(() => expect(postMessage).toHaveBeenCalled());
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        oarc: "sync",
+        events: expect.arrayContaining(["plan-structure", "inference"]),
+        complete: false,
+      }),
+      window.location.origin,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Drafting your plan documents… Stage 5 of 8. 2 analysis steps complete.",
+    );
 
-    FakeEventSource.current?.emit("analysis.artifact_completed", {
-      artifact_type: "intent",
-    });
-
-    expect(await screen.findByText("drafted plan")).toBeInTheDocument();
-    expect(screen.getByText("· 1 ready")).toBeInTheDocument();
-    expect(screen.queryByText(/plan artifacts/i)).not.toBeInTheDocument();
+    FakeEventSource.current?.emit("analysis.artifact_completed", { artifact_type: "intent" });
+    expect(screen.getByRole("status")).toHaveTextContent("2 analysis steps complete");
   });
 
-  it("holds the completed Fast Pass on the prototype outcome decision before Overview", async () => {
+  it.each([
+    ["confirm", null, "Ship the migration without customer interruption."],
+    ["refine", "Ship safely in my words", "Ship safely in my words"],
+    ["defer", null, "Ship the migration without customer interruption."],
+  ] as const)("persists the prototype %s outcome decision before navigating", async (action, text, expectedOutcome) => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.includes("/outcome-actions") && init?.method === "POST") {
-        return Response.json({ action: "confirm", outcome: "Ship the migration", analysis_run: null });
+        return Response.json({ action, outcome: expectedOutcome, analysis_run: null });
       }
-      if (url.includes("/overview")) {
-        return Response.json({
-          project_title: "Migration",
-          summary: "Ship the migration without customer interruption.",
-          artifacts: [
-            {
-              artifact_type: "intent",
-              summary: "Ship the migration without customer interruption.",
-              content: { sections: [] },
-            },
-          ],
-          assessment: {
-            integrity: { decomposition: [] },
-          },
-        });
-      }
+      if (url.includes("/overview")) return Response.json(completedOverview());
       return Response.json({
         status: "completed",
         phase: "publish",
@@ -136,15 +158,77 @@ describe("AnalysisProgress", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<AnalysisProgress projectId="project-1" runId="run-1" />);
-
-    expect(await screen.findByText("Confirm your outcome")).toBeInTheDocument();
-    expect(screen.getByText(/Ship the migration without customer interruption/)).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent("Analysis complete");
     expect(replace).not.toHaveBeenCalled();
+    const postMessage = vi.spyOn(frame().contentWindow!, "postMessage");
 
-    fireEvent.click(screen.getByRole("button", { name: /Yes — this is my outcome/i }));
+    emitArcMessage({ oarc: "decision", action, text });
 
     await waitFor(() =>
-      expect(replace).toHaveBeenCalledWith("/projects/project-1/overview"),
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/projects/project-1/outcome-actions",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining(`\"outcome\":\"${expectedOutcome}\"`),
+        }),
+      ),
     );
+    expect(postMessage).toHaveBeenCalledWith(
+      { oarc: "decision-result", ok: true },
+      window.location.origin,
+    );
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/projects/project-1/overview"), {
+      timeout: 1_500,
+    });
+  });
+
+  it("keeps the outcome decision available when persistence fails", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/outcome-actions") && init?.method === "POST") {
+        return new Response("no", { status: 503 });
+      }
+      if (url.includes("/overview")) return Response.json(completedOverview());
+      return Response.json({ status: "completed", phase: "publish", completed_phases: ["publish"] });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AnalysisProgress projectId="project-1" runId="run-1" />);
+    await screen.findByText(/Analysis complete/);
+    const postMessage = vi.spyOn(frame().contentWindow!, "postMessage");
+
+    emitArcMessage({ oarc: "decision", action: "confirm", text: null });
+
+    await waitFor(() =>
+      expect(postMessage).toHaveBeenCalledWith(
+        { oarc: "decision-result", ok: false },
+        window.location.origin,
+      ),
+    );
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("ignores forged outcome messages from another origin or window", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json({ status: "running", phase: "perceive", completed_phases: [] }),
+      ),
+    );
+    render(<AnalysisProgress projectId="project-1" runId="run-1" />);
+    await screen.findByRole("status");
+    const fetchMock = vi.mocked(fetch);
+
+    emitArcMessage(
+      { oarc: "decision", action: "confirm", text: null },
+      { origin: "https://example.invalid" },
+    );
+    emitArcMessage(
+      { oarc: "decision", action: "confirm", text: null },
+      { source: window },
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(replace).not.toHaveBeenCalled();
   });
 });

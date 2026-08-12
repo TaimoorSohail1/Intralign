@@ -4,29 +4,32 @@
 
 ### Current result
 
-**Implementation and automated regression pass; exact visual parity and live manual regression remain blocked.**
+**Prototype source parity and automated regression pass; final same-viewport visual proof and live manual regression remain blocked by the approved browser policy.**
 
-final result: partial pass
+final result: blocked
 
 ### Implemented Slice 3 surfaces
 
-- Prototype-shaped first-analysis sequence with real run-event progress, plan graph, Fast/Deep state, truthful 45/60-second messaging, and primary-outcome confirm/refine/defer actions.
+- The former simplified canvas approximation has been removed. The shipped first-analysis screen now runs the prototype's actual `onboarding-arc-prototype.html` kinetic graph engine, narration sequence, pillar illumination, outcome decision card, refine/defer states, and acknowledgment motion.
+- Production-only adapters bind that source to real run-event progress, the real project title/outcome, honest 45/60-second messages, secure same-origin messaging, outcome persistence, save failure/retry, responsive layout, reduced motion, dialog naming, and focus entry.
 - Overview freshness states for STALE, reanalyzing, fresh, Reanalyze now, pending Undo, last-good preservation, and causal read-moved feedback.
 - Presentation-only first-run freeze and a durable, latched two-grounding-act unlock.
 
 ### Automated evidence
 
+- Focused Slice 3 parity/flow: 2 files / 10 passed, including exact `buildGraph` and animation-loop source comparison, every visible narration/decision state, live event synchronization, confirm/refine/defer, persistence failure, and cross-origin rejection.
 - API: 303 passed.
-- Web: 23 files / 131 passed.
-- R2 guardrails: 4 infrastructure tests and 9 active selectors passed.
+- Web: 24 files / 138 passed.
+- R2 guardrails: 4 infrastructure tests passed; the active runner passed 9 tests across 6 active guard IDs, with all 6 prototype corrections present.
 - Ruff and ESLint: passed.
 - TypeScript and Next.js production build: passed.
+- Shipped animation asset: JavaScript syntax check passed; production HTTP returned 200 with `text/html; charset=UTF-8`; API health returned 200/ready.
 - Local Slice 3 database migration: applied successfully.
 
 ### Blocking manual evidence
 
-- The Codex in-app browser was selected for QA, but its URL security policy rejected reloading the local `127.0.0.1:3002` page. Per the browser safety contract, no alternative browser or indirect workaround was used.
-- Therefore no new same-viewport combined prototype/implementation image exists for Slice 3, and exact visual parity is not claimed.
+- The Codex in-app browser was selected for QA, but its URL security policy rejected inspection of the local `127.0.0.1:3002` page. Per the browser safety contract, no alternative browser or indirect workaround was used.
+- Therefore no new same-viewport combined prototype/implementation image exists for Slice 3. The animation source and visible state/copy parity are mechanically verified, but final pixel-level parity is not claimed without the required screenshot comparison.
 - Live journeys still required: first read, outcome confirmation, batched acts, pending Undo, mid-run follow-up, provisional/failure/retry, Deep supersession, read-moved, reload persistence, responsive/zoom/reduced-motion, and the owner-deferred shared spoken screen-reader audit.
 
 ## 2026-08-12 — R2 Slice 1 manual completion audit

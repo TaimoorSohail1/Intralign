@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OSLO — Outcome Orchestration onboarding arc (kinetic)</title>
+<style>
+  :root{
+    --bg:#0b0f13; --text:#e7ecf3; --muted:#9aa6b4; --subtle:#6b7683;
+    --cool:#7fa0c9; --cool-bright:#a9c4e6; --grounded:#4fc3a1; --amber:#e0a94e; --action:#d97a3a; --violet:#8f86d8;
+    --border:#232b34; --border2:#2b343e; --surface:#141a21;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg)}
+  body{color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+  .app{position:fixed;inset:0;z-index:2;pointer-events:none}
+  .app>*{pointer-events:auto}
+  /* top */
+  .top{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:14px;padding:16px 22px;font-size:12px;color:var(--muted);z-index:6}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;color:var(--text)}
+  .brand .m{width:22px;height:22px;border-radius:6px;background:var(--action);display:flex;align-items:center;justify-content:center;color:#111;font-weight:800;font-size:13px}
+  .arc-logo{height:22px;width:auto;display:block}
+  .pass{margin-left:12px;display:flex;align-items:center;gap:9px;min-width:260px}
+  .pass .lab{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+  .pass .eta{font-size:10.5px;color:var(--subtle);white-space:nowrap}   /* soft duration ceiling — sets the wait expectation */
+  .pass .bar{position:relative;flex:1;height:3px;border-radius:99px;background:var(--border);overflow:hidden}
+  .pass .fill{position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,var(--cool),var(--grounded));transition:width .15s linear}
+  .pass.done .lab{color:var(--grounded)}
+  .modebtn{margin-left:auto;background:rgba(20,26,33,.6);border:1px solid var(--border2);color:var(--muted);border-radius:99px;padding:7px 15px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;backdrop-filter:blur(6px)}
+  .modebtn:hover{color:var(--text);border-color:var(--cool)}
+  /* narration */
+  .narr{position:fixed;left:0;right:0;bottom:200px;display:flex;justify-content:center;z-index:5;pointer-events:none}
+  .narr .inner{max-width:720px;text-align:center;padding:0 24px;opacity:0;transform:translateY(10px);transition:opacity .30s ease,transform .30s ease}
+  .narr .inner.on{opacity:1;transform:none}
+  .narr .ln{font-size:22px;line-height:1.4;font-weight:600;letter-spacing:-.01em;color:var(--text);margin:0}
+  .narr .ln b{color:#fff;font-weight:700}
+  .narr .ln .pd{color:#a9c4e6;font-weight:600;font-style:normal;text-decoration:underline dotted rgba(169,196,230,.65);text-underline-offset:3px}   /* .pd = pulled from YOUR plan — makes personalizations obvious */
+  /* pillars overlay */
+  .pillars{position:fixed;left:0;right:0;top:50%;transform:translateY(-50%);display:flex;gap:16px;justify-content:center;z-index:4;pointer-events:none}
+  .pill{opacity:0;transform:translateY(16px) scale(.94);transition:all .5s cubic-bezier(.2,.8,.2,1);border:1px solid var(--border2);border-radius:14px;padding:15px 18px;width:186px;text-align:left;background:rgba(17,22,28,.82);backdrop-filter:blur(8px)}
+  .pill.on{opacity:1;transform:none}
+  .pill .k{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:7px}
+  .pill.via .k{color:var(--cool)} .pill.grd .k{color:var(--grounded)} .pill.ada .k{color:var(--violet)}
+  .pill .q{font-size:12.5px;color:var(--muted);margin-top:7px;line-height:1.45}
+  /* chain / name */
+  .brandline{position:fixed;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;z-index:4;pointer-events:none;opacity:0;transition:opacity .6s}
+  .brandline.on{opacity:1}
+  .brandline::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:780px;height:300px;background:radial-gradient(ellipse at center,rgba(11,15,19,.94) 0%,rgba(11,15,19,.78) 42%,rgba(11,15,19,0) 74%);z-index:-1}
+  .brandline .flow{font-size:14px;color:var(--muted);letter-spacing:.02em}
+  .brandline .seg{display:inline-block;opacity:0;transform:translateY(7px);transition:opacity .45s cubic-bezier(.2,.8,.2,1),transform .45s cubic-bezier(.2,.8,.2,1);color:var(--cool-bright);font-weight:600}
+  .brandline .seg.on{opacity:1;transform:none}
+  .brandline .seg.mid{color:var(--muted);font-weight:500}
+  .brandline .arw{display:inline-block;opacity:0;transition:opacity .4s;margin:0 8px;color:var(--subtle)}
+  .brandline .arw.on{opacity:1}
+  .brandline .name{font-size:34px;font-weight:800;letter-spacing:-.015em;color:#fff;margin-top:16px;text-shadow:0 0 42px rgba(127,160,201,.45);opacity:0;transform:translateY(12px) scale(.96);transition:opacity .6s cubic-bezier(.2,.8,.2,1),transform .6s cubic-bezier(.2,.8,.2,1)}
+  .brandline .name.on{opacity:1;transform:none}
+  /* pilot label */
+  .pilot{position:fixed;left:50%;bottom:285px;transform:translateX(-50%);text-align:center;z-index:4;opacity:0;transition:opacity .7s;pointer-events:none}
+  .pilot.on{opacity:1}
+  .pilot .lab{font-size:12.5px;color:var(--cool-bright);font-weight:600;letter-spacing:.02em}
+  /* still-reading hold (event-driven guided tail) */
+  .stillread{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);font-size:12.5px;color:var(--muted);letter-spacing:.02em;z-index:5;opacity:0;transition:opacity .5s;pointer-events:none;display:flex;align-items:center;gap:8px}
+  .stillread.on{opacity:1}
+  .stillread::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--cool);animation:sr 1.1s ease-in-out infinite}
+  @keyframes sr{0%,100%{opacity:.3}50%{opacity:1}}
+  /* Scene 0 · ingestion (analysis steps below the orange orb) */
+  .ingest{position:fixed;left:0;right:0;top:59%;display:flex;flex-direction:column;align-items:center;text-align:center;z-index:5;opacity:0;transition:opacity .5s;pointer-events:none;padding:0 24px}
+  .ingest.on{opacity:1}
+  .ig-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--action);color:var(--action);border-radius:99px;padding:4px 12px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+  .ig-dot{width:7px;height:7px;border-radius:50%;background:var(--action);animation:sr 1.1s ease-in-out infinite}
+  .ig-title{font-size:22px;font-weight:650;letter-spacing:-.01em;color:var(--text);margin-bottom:8px}
+  .ig-desc{font-size:14px;color:var(--muted);min-height:20px;max-width:640px}
+  .ig-stage{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--subtle);margin-top:20px}
+  .ig-trace{width:min(520px,80vw);margin:12px auto 0;text-align:left}
+  .ig-trace .tr{font-size:12px;color:var(--subtle);opacity:0;transition:opacity .4s;padding:3px 0;border-top:1px solid var(--border)}
+  .ig-trace .tr.on{opacity:1}
+  /* discipline name — a persistent brand descriptor in the masthead */
+  .brand .tag{font-weight:600;font-size:11px;color:var(--subtle);letter-spacing:.03em;padding-left:11px;border-left:1px solid var(--border2)}
+  /* pillar row — the three judgments, between viz and caption */
+  .pillbar{position:fixed;left:50%;bottom:314px;transform:translateX(-50%);display:flex;gap:8px;z-index:5;opacity:0;transition:opacity .5s;pointer-events:none}
+  .pillbar.on{opacity:1}
+  .pb{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:5px 13px;border-radius:99px;border:1px solid var(--border2);color:var(--subtle);background:rgba(17,22,28,.7);transition:color .35s,border-color .35s,background .35s}
+  .pb.active{background:rgba(11,15,19,.92)}
+  .pb.via.active{color:var(--cool-bright);border-color:var(--cool-bright)}
+  .pb.grd.active{color:var(--amber);border-color:var(--amber)}
+  .pb.ada.active{color:var(--violet);border-color:var(--violet)}
+  /* watch */
+  .watch{position:fixed;right:0;top:0;bottom:0;width:min(430px,42vw);padding:88px 34px 96px;z-index:5;display:none;flex-direction:column;background:linear-gradient(90deg,transparent,rgba(11,15,19,.72) 22%)}
+  .watch.on{display:flex}
+  .watch .rh{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+  .finding{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--border);opacity:0;transform:translateX(10px);transition:all .45s cubic-bezier(.2,.8,.2,1)}
+  .finding.on{opacity:1;transform:none}
+  .finding .fi{flex:none;margin-top:1px;font-size:13px}
+  .finding .ft{font-size:13.5px;color:var(--text);line-height:1.42}
+  .finding .fs{font-size:11.5px;color:var(--subtle);margin-top:2px}
+  .fi.parse{color:var(--cool)} .fi.inf{color:var(--amber)} .fi.pillar{color:var(--grounded)} .fi.crit{color:#eb8a8a}
+  /* decision */
+  .decision{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:7;opacity:0;transition:opacity .7s;padding:0 24px}
+  .decision.on{display:flex;opacity:1}
+  .dcard{max-width:600px;border:1px solid var(--border2);background:rgba(17,22,28,.95);border-radius:16px;padding:28px 30px;box-shadow:0 30px 90px -30px rgba(0,0,0,.9);backdrop-filter:blur(10px)}
+  .dcard .eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--subtle);margin-bottom:14px}
+  .dcard .oc{font-size:23px;font-weight:750;line-height:1.28;letter-spacing:-.01em;margin-bottom:12px}
+  .dcard .hint{font-size:14px;color:var(--muted);line-height:1.55;margin-bottom:20px}
+  .dcard .hint b{color:var(--text)}
+  .dcard .acts{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .btn{border:none;border-radius:12px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left;display:flex;flex-direction:column;gap:3px;line-height:1.2}
+  .btn>span{font-size:11.5px;font-weight:500;opacity:.85}
+  .btn.primary{background:var(--action);color:#160b04}
+  .btn.ghost{background:var(--surface);color:var(--text);border:1px solid var(--border2)}
+  .btn.ghost>span{color:var(--muted)}
+  .dcard .defer{background:none;border:none;color:var(--subtle);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;padding:2px 0}
+  .dcard .defer:hover{color:var(--muted)}
+  .dcard .oc-edit{width:100%;box-sizing:border-box;margin:0 0 12px;min-height:74px;resize:vertical;padding:11px 13px;border:1px solid rgba(127,160,201,.55);border-radius:11px;background:rgba(10,14,18,.5);color:var(--text);font-family:inherit;font-size:19px;font-weight:600;line-height:1.35}
+  .dcard .oc-edit:focus{outline:none;border-color:#a9c4e6}
+  /* brief ACKNOWLEDGMENT only — the substantive celebration now lands in the app (grounding uncapped) */
+  .dack{display:flex;align-items:center;justify-content:center;gap:9px;padding:20px 8px;opacity:0;transform:translateY(4px);transition:opacity .3s ease,transform .3s ease}
+  .dack.on{opacity:1;transform:none}
+  .dack .k{font-size:17px;line-height:1}
+  .dack.commit .k{color:#4fc3a1}
+  .dack.defer .k{color:#a9c4e6}
+  .dack .t{font-size:16px;font-weight:700;color:var(--text)}
+  /* dev */
+  .dev{position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 20px;background:rgba(8,11,14,.88);border-top:1px solid var(--border);font-size:11.5px;color:var(--subtle);z-index:8;backdrop-filter:blur(6px)}
+  .dev b{color:var(--muted);font-weight:700;margin-right:3px}
+  .dev button{background:var(--surface);border:1px solid var(--border2);color:var(--muted);border-radius:8px;padding:6px 11px;font-size:11.5px;cursor:pointer;font-family:inherit}
+  .dev button:hover{color:var(--text);border-color:var(--cool)}
+  .dev button.act{border-color:var(--cool);color:var(--cool-bright)}
+  .dev .sp{flex:1}
+  .dev .note{color:var(--amber)}
+  html.embed .dev{display:none}
+  html.embed .modebtn{display:none!important}
+  @media (max-width:700px){
+    .top{gap:8px;padding:12px 14px;align-items:flex-start;flex-wrap:wrap}
+    .brand .tag{display:none}
+    .pass{order:2;width:100%;min-width:0;margin-left:0}
+    .pass .eta{display:none}
+    .narr{bottom:132px}
+    .narr .ln{font-size:18px}
+    .pillbar{bottom:202px}
+    .dcard{padding:22px 20px}
+    .dcard .oc{font-size:20px}
+    .dcard .acts{flex-direction:column}
+    .btn{width:100%}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  }
+</style>
+</head>
+<body>
+<canvas id="cv" aria-hidden="true"></canvas>
+<div class="app">
+  <div class="top">
+    <div class="brand"><img class="arc-logo" src="data:image/webp;base64,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" alt="Intralign"> <span class="tag">Outcome Orchestration</span></div>
+    <div class="pass" id="passWrap"><span class="lab" id="passLab">Analyzing your plan</span><span class="eta" id="passEta">· usually under a minute</span><span class="bar"><span class="fill" id="passFill"></span></span></div>
+    <button class="modebtn" id="modeBtn" onclick="toggleMode()">Skip the intro →</button>
+  </div>
+
+  <div class="pillars" id="pillars">
+    <div class="pill via" id="pv"><div class="k">◑ Viable</div><div class="q">Is the path clear, aligned, and feasible?</div></div>
+    <div class="pill grd" id="pg"><div class="k">◑ Grounded</div><div class="q">Are the evidence, assumptions, and inferences visible?</div></div>
+    <div class="pill ada" id="pa"><div class="k">◑ Adaptable</div><div class="q">Can you catch drift before the outcome is at risk?</div></div>
+  </div>
+
+  <div class="brandline" id="brandline">
+    <div class="flow" id="flow"><span class="seg">Outcome</span><span class="arw">→</span><span class="seg mid">Living Hypothesis</span><span class="arw">→</span><span class="seg mid">Continuous Judgment</span><span class="arw">→</span><span class="seg">Successful Delivery</span></div>
+    <div class="name" id="bname">Outcome Orchestration</div>
+  </div>
+
+  <div class="pilot" id="pilot"><div class="lab">↑ You — behind the plan, steering the outcome</div></div>
+  <div class="stillread" id="stillread">Finishing your read of the plan…</div>
+  <div class="pillbar" id="pillbar"><span class="pb via" id="pb-via">Viable</span><span class="pb grd" id="pb-grd">Grounded</span><span class="pb ada" id="pb-ada">Adaptable</span></div>
+
+  <div class="narr"><div class="inner" id="narr"><div class="ln"></div></div></div>
+
+  <!-- Scene 0 · ingestion — the original 8-stage analysis, shown while the fast pass captures the outcome + issues -->
+  <div class="ingest" id="ingest">
+    <div class="ig-pill"><span class="ig-dot"></span><span id="ig-lab">Analyzing…</span></div>
+    <div class="ig-title" id="ig-title"></div>
+    <div class="ig-desc" id="ig-desc"></div>
+    <div class="ig-stage" id="ig-stage"></div>
+    <div class="ig-trace" id="ig-trace"></div>
+  </div>
+
+  <div class="watch" id="watch"><div class="rh" id="watchRh">Reading your plan…</div><div id="findings"></div></div>
+
+  <div class="decision" id="decision">
+    <div aria-describedby="dHint" aria-labelledby="dEye" class="dcard" id="dcard" role="dialog" tabindex="-1">
+      <div class="eyebrow" id="dEye">Confirm your outcome</div>
+      <div class="oc" id="dOc">“Run DevNorth 2026 as a sold‑out, well‑rated one‑day developer conference.”</div>
+      <textarea class="oc-edit" id="dOcEdit" spellcheck="true" style="display:none"></textarea>
+      <div class="hint" id="dHint">Either way, <b>you own it</b> — OSLO advises, you decide. Until you confirm, it stays OSLO’s inference.</div>
+      <div class="acts" id="dActs">
+        <button class="btn primary" onclick="oarcConfirm()">✓ Yes — this is my outcome<span>Lock it in and steer by it</span></button>
+        <button class="btn ghost" onclick="oarcRefine()">Close — I’ll refine it<span>Reword it right here</span></button>
+      </div>
+      <div class="acts" id="dActsEdit" style="display:none">
+        <button class="btn primary" onclick="oarcSaveRefine()">✓ Save — this is my outcome<span>In your own words</span></button>
+        <button class="btn ghost" onclick="oarcCancelRefine()">Cancel<span>Keep OSLO’s wording</span></button>
+      </div>
+      <button class="defer" id="dDefer" onclick="oarcDefer()">Not sure yet — keep it as OSLO’s inference →</button>
+    </div>
+  </div>
+
+  <div class="dev">
+    <span><b>Prototype controls</b> (not shipped)</span>
+    <button id="d-first" class="act" onclick="setEntry('first')">First run · Guided</button>
+    <button id="d-ret" onclick="setEntry('return')">Returning · Watch‑it‑work</button>
+    <span class="sp"></span>
+    <span><b>Fast pass</b></span>
+    <button id="p-60" class="act" onclick="setPass(60000)">~60s</button>
+    <button id="p-15" onclick="setPass(15000)">15s</button>
+    <span><b>Gates</b></span>
+    <button id="d-gate" onclick="toggleGates()">fast</button>
+    <button onclick="restart()">↻ Restart</button>
+    <span id="devnote" class="note"></span>
+  </div>
+</div>
+
+<script>
+/* ===================== KINETIC NETWORK ENGINE ===================== */
+var OARC_PARAMS=new URLSearchParams(window.location.search);
+var OARC_EMBED=OARC_PARAMS.get('embed')==='1';
+var OARC_LIVE=OARC_PARAMS.get('live')==='1';
+var OARC_REDUCED=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+if(OARC_EMBED) document.documentElement.classList.add('embed');
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d'), DPR=Math.min(2,window.devicePixelRatio||1);
+var W=0,H=0,narrWrap=null;
+function resize(){ W=cv.clientWidth; H=cv.clientHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+window.addEventListener('resize',resize); resize();
+
+var COL={cool:[127,160,201], coolB:[169,196,230], grn:[79,195,161], amber:[224,169,78], violet:[143,134,216], neu:[120,128,138], orange:[217,122,58]};
+function lerpC(a,b,t){ return [Math.round(a[0]+(b[0]-a[0])*t), Math.round(a[1]+(b[1]-a[1])*t), Math.round(a[2]+(b[2]-a[2])*t)]; }
+var orbGreen=1, ingesting=false, morphT=-1;   // Scene 0 ingestion: orange scanner orb → morph → green outcome orb
+var orbForm=1, ingestT0=0, FORM_MS=7000;   // Scene 0 orb FORMATION: 0=faint/organic → 1=solid orange disk (reached just before the green morph)
+function rgba(c,a){ return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')'; }
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+var nodes=[], edges=[], particles=[], cam={cx:0,cy:0,zoom:1, tcx:0,tcy:0,tzoom:1};
+var pillarNodes={via:[],grd:[],ada:[]};
+
+function buildGraph(){
+  nodes=[]; edges=[]; particles=[]; pillarNodes={via:[],grd:[],ada:[]};
+  var seed=7; function rnd(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }
+  var outcome={id:0,x:0,y:0,tx:0,ty:0,r:26,kind:'outcome',born:0,glow:0};
+  nodes.push(outcome);
+  var dels=3;
+  for(var d=0; d<dels; d++){
+    var da=(-Math.PI/2) + (d-1)*0.95;
+    var dx=Math.cos(da)*150, dy=Math.sin(da)*130;
+    var del=addNode(dx,dy,10,'del',0); edge(0,del.id);
+    var ws=2+Math.floor(rnd()*2);
+    for(var w=0; w<ws; w++){
+      var wa=da + (w-(ws-1)/2)*0.5;
+      var wx=Math.cos(wa)*300+ (rnd()-.5)*40, wy=Math.sin(wa)*250+(rnd()-.5)*40;
+      var wsn=addNode(wx,wy,7,'ws',0); edge(del.id,wsn.id);
+      var tk=2+Math.floor(rnd()*2);
+      for(var t=0; t<tk; t++){
+        var ta=wa+(t-(tk-1)/2)*0.32;
+        var tx=Math.cos(ta)*(430+rnd()*70), ty=Math.sin(ta)*(360+rnd()*60);
+        var inf=rnd()<0.42;
+        var tn=addNode(tx,ty,4.5,inf?'inf':'task',0); tn.del=d; edge(wsn.id,tn.id);
+        // pillar association for illumination
+        if(inf) pillarNodes.grd.push(tn.id);
+        (d===0?pillarNodes.via:d===2?pillarNodes.ada:pillarNodes.via).push(tn.id);
+      }
+    }
+  }
+  nameThePlan();
+  cam.cx=0;cam.cy=0;cam.zoom=1.6;cam.tcx=0;cam.tcy=0;cam.tzoom=2.5;
+}
+function addNode(x,y,r,kind,born){ var n={id:nodes.length,x:x*0.14,y:y*0.14,tx:x,ty:y,r:r,kind:kind,born:Infinity,glow:0}; nodes.push(n); return n; }
+function edge(a,b){ edges.push({a:a,b:b,drawn:0,born:0,hot:0}); }
+function nodeById(id){ return nodes[id]; }
+var wifiNode=-1, sponsorDel=-1, scanT=-1, annotateT0=0, assumeNode=-1, inferNode=-1;
+var OARC_PROJECT_TITLE='DevNorth 2026';
+function nameThePlan(){   // label key nodes so the graph reads as THEIR plan (DevNorth 2026 example)   /* SIM:#22 */
+  var dl=nodes.filter(function(n){return n.kind==='del';});
+  var ws=nodes.filter(function(n){return n.kind==='ws';});
+  var tk=nodes.filter(function(n){return n.kind==='task';});
+  var inf=nodes.filter(function(n){return n.kind==='inf';});
+  if(nodes[0]) nodes[0].name=OARC_PROJECT_TITLE;
+  if(dl[0]){ dl[0].name='Revenue & sponsorship'; sponsorDel=dl[0].id; }
+  if(dl[1]) dl[1].name='Attendance & on‑site';
+  if(dl[2]) dl[2].name='Speaker program';
+  if(ws[0]) ws[0].name='Sponsor outreach';
+  if(ws[1]) ws[1].name='On‑site logistics';
+  if(tk[0]) tk[0].name='Confirm venue contract';
+  // pick the assumption + inference examples from DIFFERENT branches so they read as separate, not two adjacent dots
+  var aCand=null,iCand=null;
+  for(var q=0;q<inf.length;q++){ if(inf[q].del===0){ aCand=inf[q]; break; } }            // assumption under the first deliverable (left)
+  if(!aCand) aCand=inf[0];
+  for(var q2=0;q2<inf.length;q2++){ if(inf[q2].del===2){ iCand=inf[q2]; break; } }        // inference under the last deliverable (right — opposite side)
+  if(!iCand){ for(var q3=inf.length-1;q3>=0;q3--){ if(inf[q3]!==aCand && inf[q3].del!==(aCand&&aCand.del)){ iCand=inf[q3]; break; } } }
+  if(!iCand){ iCand = (inf[inf.length-1]!==aCand)?inf[inf.length-1]:null; }
+  if(aCand){ aCand.name='Wi‑Fi capacity is sufficient'; aCand.itype='assumption'; wifiNode=aCand.id; assumeNode=aCand.id; }   // a plan assumption (taken on faith)
+  if(iCand && iCand!==aCand){ iCand.name='Sponsor count is on track'; iCand.itype='inference'; inferNode=iCand.id; }           // an OSLO inference (gap it filled), far from the assumption
+}
+
+function revealAll(overMs){ var now=performance.now();
+  var phase={del:0.02, ws:0.34, task:0.66, inf:0.66};
+  nodes.forEach(function(n){ if(n.kind==='outcome'){ return; }
+    var base=(phase[n.kind]!=null?phase[n.kind]:0.4)*overMs;
+    n.born=now+ base + Math.random()*overMs*0.22; });
+  edges.forEach(function(e){ e.born=Math.max(nodes[e.a].born,nodes[e.b].born)+50; });
+}
+function spawnParticle(){
+  var e=edges[Math.floor(Math.random()*edges.length)]; if(!e||e.drawn<0.9) return;
+  particles.push({e:e,t:1,sp:0.006+Math.random()*0.01,life:1});
+}
+var infActive=false, hotPath=[], annotateOutcome=false, edgesAlive=false, autoMode=false, judgment=null;
+var tags=[], hlKind=null, hlT0=0;
+function tagNode(id,text,dur,color,type){ tags.push({id:id, text:text, t0:performance.now(), dur:dur, color:color||COL.cool, type:type||null}); }
+function tagTier(kind,typeLabel,color){ hlKind=kind; hlT0=performance.now(); var n=nodes.find(function(nn){return nn.kind===kind;}); if(n) tagNode(n.id, n.name||typeLabel, 3000, color, typeLabel); }   // TYPE label first, then the plan data
+// ── cluster tag: a TYPE label that brackets a CLUSTER of nodes (a node + its children), not a single dot ──
+var groupTags=[];
+function tagCluster(kind,typeLabel,color){ hlKind=kind; hlT0=performance.now();
+  var host=nodes.find(function(nn){return nn.kind===kind;}); if(!host) return;
+  var members=[host.id]; edges.forEach(function(e){ if(e.a===host.id) members.push(e.b); });   // host + one level of children = the cluster
+  groupTags.push({ids:members, text:host.name||typeLabel, type:typeLabel, color:color||COL.cool, t0:performance.now(), dur:3600}); }
+// ── plan frame: a labelled outline that names the WHOLE plan ──
+var planFrame={on:false,t0:0,name:''};
+function showPlanFrame(name){ planFrame.on=true; planFrame.t0=performance.now(); planFrame.name=name; }
+function lightInference(){ infActive=true; }
+function tracePath(){
+  // pick a deep inferred node and light the path to the outcome
+  var infs=nodes.filter(function(n){return n.kind==='inf';}); if(!infs.length) return;
+  var target=infs[Math.floor(infs.length/2)]; var path=[target.id];
+  var cur=target.id; var guard=0;
+  while(cur!==0 && guard++<20){ var pe=edges.find(function(e){return e.b===cur;}); if(!pe) break; path.push(pe.a); cur=pe.a; }
+  hotPath=path;
+  edges.forEach(function(e){ e.hot = (path.indexOf(e.a)>=0 && path.indexOf(e.b)>=0)?1:0; });
+}
+
+var pilotOn=false, steward={on:false};
+function drawSteward(now,sx,sy){
+  if(!steward.on) return;
+  var vx=sx(0), vy=sy(145);
+  var lit=nodes.filter(function(n){ return n.born>=0 && now>=n.born && n.kind!=='outcome'; });
+  var tops=lit.sort(function(a,b){ return a.y-b.y; }).slice(0,4);
+  var targets=[nodes[0]].concat(tops);
+  targets.forEach(function(n){ if(!n) return; var nx=sx(n.x), ny=sy(n.y);
+    var g=ctx.createLinearGradient(vx,vy,nx,ny);
+    g.addColorStop(0,rgba(COL.cool,0.26)); g.addColorStop(1,rgba(COL.cool,0.015));
+    ctx.strokeStyle=g; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(vx,vy-8); ctx.lineTo(nx,ny); ctx.stroke(); });
+  var gg=ctx.createRadialGradient(vx,vy,0,vx,vy,58);
+  gg.addColorStop(0,rgba(COL.coolB,0.42)); gg.addColorStop(1,rgba(COL.coolB,0));
+  ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(vx,vy,58,0,7); ctx.fill();
+  ctx.fillStyle=rgba(COL.coolB,0.96);
+  ctx.beginPath(); ctx.arc(vx,vy+16,18,Math.PI,0); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.arc(vx,vy-4,9,0,7); ctx.fill();
+}
+function shiftPath(){
+  var leafs=nodes.filter(function(n){ return n.kind==='task'||n.kind==='inf'; });
+  leafs.forEach(function(n,i){ if(i%3===0){ var a=0.13, c=Math.cos(a), s=Math.sin(a);
+    var nx=n.tx*c-n.ty*s, ny=n.tx*s+n.ty*c; n.tx=nx; n.ty=ny; } });
+}
+// ── the three judgments, lit ON the plan (no floating cards) ──
+function setJudgment(k){ judgment=k; tags=[];
+  ['via','grd','ada'].forEach(function(p){ var el=$('pb-'+p); if(el) el.classList.toggle('active', p===k); });
+  edges.forEach(function(e){ e.hot=0; e.lit=0; }); nodes.forEach(function(n){ n.lit=0; n._spot=0; });
+  if(k==='via'){ edges.forEach(function(e){ if(nodes[e.a].kind==='outcome'||nodes[e.a].kind==='del') e.lit=1; });
+    nodes.forEach(function(n){ if(n.kind==='del'||n.kind==='ws') n.lit=1; }); }
+  else if(k==='grd'){ infActive=true;
+    nodes.filter(function(n){return n.kind==='inf';}).forEach(function(inf){ inf.lit=1; var cur=inf.id, guard=0; while(cur!==0 && guard++<20){ var pe=edges.find(function(e){return e.b===cur;}); if(!pe) break; pe.lit=1; cur=pe.a; } }); }
+  else if(k==='ada'){ edges.forEach(function(e){ if(nodes[e.a].kind==='outcome'||nodes[e.a].kind==='del') e.lit=1; });
+    nodes.forEach(function(n){ if(n.kind==='del'||n.kind==='ws') n.lit=1; }); shiftPath(); }
+}
+function drawJudgment(now,sx,sy){
+  if(!judgment) return;   // the label now lives in the DOM pillar row below the viz; here we only light the plan
+  if(judgment==='ada'){ edges.forEach(function(e){ if(!e.lit) return; var mx=(sx(nodes[e.a].x)+sx(nodes[e.b].x))/2, my=(sy(nodes[e.a].y)+sy(nodes[e.b].y))/2; ctx.save(); ctx.translate(mx,my); ctx.rotate(Math.PI/4); ctx.fillStyle=rgba(COL.violet,0.92); ctx.fillRect(-3.4,-3.4,6.8,6.8); ctx.restore(); }); }
+}
+function drawPlanFrame(now,sx,sy){   // outlines every born node and titles the whole thing "PLAN — <name>"
+  if(!planFrame.on) return; var DUR=6500, age=now-planFrame.t0; if(age>DUR){ planFrame.on=false; return; }
+  var fade=Math.min(1, Math.min(age/320,(DUR-age)/520)); if(fade<=0) return;
+  var minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9,c=0;
+  nodes.forEach(function(n){ if(!(n.born>=0&&now>=n.born)) return; var x=sx(n.x),y=sy(n.y); if(x<minx)minx=x; if(y<miny)miny=y; if(x>maxx)maxx=x; if(y>maxy)maxy=y; c++; });
+  if(c<2) return; var pad=36; minx-=pad;miny-=pad;maxx+=pad;maxy+=pad;
+  ctx.setLineDash([6,7]); ctx.strokeStyle=rgba(COL.coolB,0.30*fade); ctx.lineWidth=1.2; roundRect(minx,miny,maxx-minx,maxy-miny,24); ctx.stroke(); ctx.setLineDash([]);
+  var lab='PLAN', nm=planFrame.name;
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.font='700 8.5px -apple-system,sans-serif'; var lw=ctx.measureText(lab).width;
+  ctx.font='600 11px -apple-system,sans-serif'; var nw=ctx.measureText(nm).width;
+  var bw=Math.max(lw,nw)+18, bx=minx+16, by=miny-13;
+  ctx.fillStyle='rgba(11,15,19,'+(0.9*fade)+')'; roundRect(bx,by-11,bw,34,8); ctx.fill();
+  ctx.strokeStyle=rgba(COL.coolB,0.5*fade); ctx.lineWidth=1; ctx.stroke();
+  ctx.font='700 8.5px -apple-system,sans-serif'; ctx.fillStyle=rgba(COL.coolB,fade); ctx.fillText(lab,bx+9,by-1);
+  var nmFade=Math.min(fade,Math.max(0,(age-360)/300));
+  ctx.font='600 11px -apple-system,sans-serif'; ctx.fillStyle='rgba(231,236,243,'+nmFade+')'; ctx.fillText(nm,bx+9,by+13);
+}
+function drawGroupTags(now,sx,sy){   // the cluster brackets for tier labels
+  for(var i=groupTags.length-1;i>=0;i--){ var g=groupTags[i], age=now-g.t0; if(age>g.dur){ groupTags.splice(i,1); continue; }
+    var fade=Math.min(1, Math.min(age/220,(g.dur-age)/380));
+    var minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9,c=0;
+    g.ids.forEach(function(id){ var n=nodes[id]; if(!n||!(n.born>=0&&now>=n.born)) return; var x=sx(n.x),y=sy(n.y); if(x<minx)minx=x;if(y<miny)miny=y;if(x>maxx)maxx=x;if(y>maxy)maxy=y;c++; });
+    if(c<1) continue; var pad=19; minx-=pad;miny-=pad;maxx+=pad;maxy+=pad;
+    var tc=g.color||COL.cool;
+    ctx.fillStyle=rgba(tc,0.055*fade); roundRect(minx,miny,maxx-minx,maxy-miny,18); ctx.fill();
+    ctx.strokeStyle=rgba(tc,0.5*fade); ctx.lineWidth=1.2; roundRect(minx,miny,maxx-minx,maxy-miny,18); ctx.stroke();
+    var ety=(g.type||'').toUpperCase();
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.font='700 8.5px -apple-system,sans-serif'; var tyW=ctx.measureText(ety).width;
+    ctx.font='600 11px -apple-system,sans-serif'; var nmW=ctx.measureText(g.text).width;
+    var bw=Math.max(tyW,nmW)+16, bx=minx-2, by=miny-24;
+    ctx.fillStyle='rgba(11,15,19,'+(0.9*fade)+')'; roundRect(bx,by-11,bw,33,8); ctx.fill();
+    ctx.strokeStyle=rgba(tc,0.5*fade); ctx.lineWidth=1; ctx.stroke();
+    ctx.font='700 8.5px -apple-system,sans-serif'; ctx.fillStyle=rgba(tc,fade); ctx.fillText(ety,bx+9,by-1);
+    var nmFade=Math.min(fade,Math.max(0,(age-360)/300));
+    ctx.font='600 11px -apple-system,sans-serif'; ctx.fillStyle='rgba(231,236,243,'+nmFade+')'; ctx.fillText(g.text,bx+9,by+13);
+  }
+}
+var watchOn=false;
+function drawWatchScene(now,sx,sy){   // RETURNING / "watch it work": bind the orange orb to the findings summary so nothing floats alone
+  if(!watchOn) return; var o=nodes[0]; if(!o) return; var ox=sx(o.x), oy=sy(o.y), R=o.r*cam.zoom;
+  // 1) the orb emits scan rings — it is actively working
+  for(var k=0;k<2;k++){ var ph=((now/1900)+k*0.5)%1; ctx.strokeStyle=rgba(COL.orange,0.30*(1-ph)); ctx.lineWidth=1.4; ctx.beginPath(); ctx.arc(ox,oy,R*(1.5+ph*3.0),0,7); ctx.stroke(); }
+  // 2) ambient orbiters — reading activity around the core
+  for(var i=0;i<4;i++){ var a=now/760+i*1.57, rr=R*(2.1+0.45*Math.sin(now/850+i)); var px=ox+Math.cos(a)*rr, py=oy+Math.sin(a)*rr*0.62; ctx.fillStyle=rgba(COL.orange,0.55); ctx.beginPath(); ctx.arc(px,py,1.7,0,7); ctx.fill(); }
+  // 3) connectors from the orb to each surfaced finding — the orb visibly PRODUCES the summary
+  var rows=document.querySelectorAll('#findings .finding.on'); if(!rows.length) return; var cr=cv.getBoundingClientRect();
+  for(var j=0;j<rows.length;j++){ var rc=rows[j].getBoundingClientRect(); if(!rc.width) continue; var rx=rc.left-cr.left, ry=rc.top-cr.top+rc.height/2;
+    var g=ctx.createLinearGradient(ox,oy,rx,ry); g.addColorStop(0,rgba(COL.orange,0.26)); g.addColorStop(1,rgba(COL.orange,0.015));
+    ctx.strokeStyle=g; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(rx,ry); ctx.stroke();
+    var t=((now/1500)+j*0.17)%1, px=ox+(rx-ox)*t, py=oy+(ry-oy)*t;   // a pulse travels orb → finding
+    ctx.fillStyle=rgba(COL.orange,0.85*(1-t)+0.15); ctx.beginPath(); ctx.arc(px,py,2.1,0,7); ctx.fill(); }
+}
+function startScan(){ scanT=performance.now(); }
+function drawScan(now,sx,sy){ if(scanT<0) return; var age=now-scanT; if(age>1700){ scanT=-1; return; }
+  var p=age/1700, o=nodes[0], r=40+p*Math.max(W,H)*0.55, ox0=sx(o.x), oy0=sy(o.y);
+  ctx.strokeStyle=rgba(COL.coolB, 0.2*(1-p)); ctx.lineWidth=7; ctx.beginPath(); ctx.arc(ox0,oy0,r,0,7); ctx.stroke();
+  ctx.strokeStyle=rgba(COL.coolB, 0.5*(1-p)); ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(ox0,oy0,r,0,7); ctx.stroke();
+}
+function loop(now){
+  // camera ease
+  cam.zoom += (cam.tzoom-cam.zoom)*0.07;
+  cam.cx += (cam.tcx-cam.cx)*0.07;
+  cam.cy += (cam.tcy-cam.cy)*0.07;
+  // keep the script text centered ON the outcome node: it pans off viewport-center in some scenes (e.g. Scene 3's
+  // camTo cx=68 to hold both example nodes), which used to leave the narration sitting to its right. Track the pan on
+  // the OUTER .narr wrapper (leaving the inner's fade transform intact); ignore the ±3.5 micro-drift so the text is stable.
+  if(!narrWrap) narrWrap=document.querySelector('.narr');
+  if(narrWrap && nodes[0]){ var _ndx=(nodes[0].x-cam.cx)*cam.zoom, _tx=(Math.abs(_ndx)<0.5?'':'translateX('+_ndx.toFixed(1)+'px)');
+    if(narrWrap.style.transform!==_tx) narrWrap.style.transform=_tx; }
+  ctx.clearRect(0,0,W,H);
+  var driftX=Math.sin(now/2700)*3.5, driftY=Math.cos(now/3300)*3.0;   // calm global float so the scene never freezes
+  var ox=W/2+driftX, oy=H/2+driftY;
+  function sx(x){ return ox + (x-cam.cx)*cam.zoom; }
+  function sy(y){ return oy + (y-cam.cy)*cam.zoom; }
+  // node position ease + glow
+  nodes.forEach(function(n){
+    var vis=n.born>=0 && now>=n.born;
+    if(vis){ n.x+=(n.tx-n.x)*0.12; n.y+=(n.ty-n.y)*0.12; n.glow+=(1-n.glow)*0.08; }
+  });
+  // edges
+  edges.forEach(function(e){
+    var a=nodes[e.a], b=nodes[e.b];
+    if(e.born>0 && now>=e.born) e.drawn+=(1-e.drawn)*0.10;
+    if(e.drawn<0.02) return;
+    var x1=sx(a.x),y1=sy(a.y),x2=sx(b.x),y2=sy(b.y);
+    var mx=x1+(x2-x1)*e.drawn, my=y1+(y2-y1)*e.drawn;
+    var hot=e.hot>0.5;
+    var base=0.16;
+    if(edgesAlive) base=0.13+0.16*(0.5+0.5*Math.sin(now/520 + e.a*0.9 + e.b*0.3));   // living hypothesis: edges pulse
+    if(autoMode) base*=0.5;   // execution recedes / becomes automated
+    if(e.lit){ var jc=(judgment==='grd')?COL.amber:(judgment==='ada')?COL.violet:COL.coolB;   // a judgment lit on the plan
+      var jp=0.6+0.3*(0.5+0.5*Math.sin(now/360 - e.a*0.2));
+      ctx.strokeStyle=rgba(jc, jp*0.28); ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(mx,my); ctx.stroke();   // glow
+      ctx.strokeStyle=rgba(jc, Math.min(1,jp+0.18)); ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(mx,my); ctx.stroke();   // core
+    } else {
+      ctx.strokeStyle= hot?rgba(COL.amber,0.85):rgba(COL.cool,base); ctx.lineWidth= hot?1.6:(edgesAlive?1.15:1);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(mx,my); ctx.stroke();
+    }
+  });
+  // particles (energy toward the outcome)
+  if(particles.length<110 && Math.random()<(edgesAlive?0.9:0.6)) spawnParticle();
+  for(var i=particles.length-1;i>=0;i--){ var p=particles[i]; p.t-=p.sp; if(p.t<=0){ particles.splice(i,1); continue; }
+    var a=nodes[p.e.a], b=nodes[p.e.b]; // travel from b(child)->a(parent)=toward outcome
+    var x=b.x+(a.x-b.x)*(1-p.t), y=b.y+(a.y-b.y)*(1-p.t);
+    var px=sx(x),py=sy(y);
+    ctx.fillStyle=rgba(COL.grn,0.5*p.t+0.2); ctx.beginPath(); ctx.arc(px,py,1.6,0,7); ctx.fill();
+  }
+  // nodes
+  nodes.forEach(function(n){
+    if(!(n.born>=0 && now>=n.born)) return;
+    var x=sx(n.x),y=sy(n.y), g=n.glow;
+    if(n.kind==='outcome'){
+      if(morphT>=0){ orbGreen=Math.min(1,(now-morphT)/1100); if(orbGreen>=1) morphT=-1; }   // Scene 0 → Scene 1 morph
+      if(ingesting && orbGreen<1){ orbForm=Math.min(1,Math.max(0.05,(now-ingestT0)/FORM_MS)); }
+      var form=(ingesting&&orbGreen<1)?orbForm:1, org=1-form;
+      // organic wobble while forming — extra low-frequency breathing that damps out as the orb consolidates
+      var pr=1+Math.sin(now/650)*0.06 + org*(Math.sin(now/430)*0.055+Math.sin(now/910)*0.06), R=n.r*cam.zoom*pr;
+      var oc=(orbGreen>=1)?COL.grn:lerpC(COL.orange,COL.grn,orbGreen);
+      // diffuse glow — broad + soft while forming, tightening as it solidifies
+      var gR=R*(2.6+org*0.9), grd=ctx.createRadialGradient(x,y,0,x,y,gR);
+      grd.addColorStop(0,rgba(oc,0.24+0.32*form)); grd.addColorStop(1,rgba(oc,0));
+      ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(x,y,gR,0,7); ctx.fill();
+      // organic soft core — a gradient blob with no hard edge, always present (this is the "faint organic" body early on)
+      var cR=R*(1.06+org*0.5), cg=ctx.createRadialGradient(x,y,0,x,y,cR);
+      cg.addColorStop(0,rgba(oc,0.30+0.34*form)); cg.addColorStop(0.72,rgba(oc,0.20+0.26*form)); cg.addColorStop(1,rgba(oc,0));
+      ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(x,y,cR,0,7); ctx.fill();
+      // crisp SOLID disk — fades in only as the orb consolidates (form²), reaching the solid reference state just before green
+      var solid=0.95*form*form; if(solid>0.01){ ctx.fillStyle=rgba(oc,solid); ctx.beginPath(); ctx.arc(x,y,R,0,7); ctx.fill(); }
+      if(ingesting){ var sa=now/480, sA=0.4+0.6*form;   // analysis scanner aperture (Scene 0) — fades in with the orb
+        ctx.strokeStyle=rgba(COL.orange,0.14*sA); ctx.lineWidth=1.4; ctx.beginPath(); ctx.arc(x,y,R*1.75,0,7); ctx.stroke();
+        ctx.strokeStyle=rgba(COL.orange,0.6*sA); ctx.lineWidth=2.4; ctx.beginPath(); ctx.arc(x,y,R*1.75,sa,sa+1.7); ctx.stroke(); }
+      ctx.fillStyle='#08130f'; ctx.font='700 '+Math.max(8,10*cam.zoom*0.5)+'px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      if(cam.zoom>1.3 && orbGreen>0.6) ctx.fillText('◎', x, y);
+      if(annotateOutcome){
+        for(var ri=0;ri<2;ri++){ var ph=((now/1500)+ri*0.5)%1, rr=R*(1.15+ph*2.1);
+          ctx.strokeStyle=rgba(COL.grn,0.5*(1-ph)); ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(x,y,rr,0,7); ctx.stroke(); }
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        var olab=(nodes[0].name||''), aage=now-annotateT0;
+        ctx.font='700 9px -apple-system,sans-serif'; var eyW=ctx.measureText('OUTCOME').width;
+        ctx.font='700 12px -apple-system,sans-serif'; var nmW=ctx.measureText(olab).width;
+        var bw=Math.max(eyW,nmW)+24, ly=y-R-38;
+        ctx.fillStyle='rgba(11,15,19,.9)'; roundRect(x-bw/2, ly-13, bw, 38, 12); ctx.fill();
+        ctx.strokeStyle=rgba(COL.grn,0.55); ctx.lineWidth=1; ctx.stroke();
+        ctx.font='700 9px -apple-system,sans-serif'; ctx.fillStyle=rgba(COL.grn,0.95); ctx.fillText('OUTCOME', x, ly-3);
+        var nmFade=Math.max(0,Math.min(1,(aage-520)/360));
+        ctx.font='700 12px -apple-system,sans-serif'; ctx.fillStyle='rgba(231,236,243,'+nmFade+')'; ctx.fillText(olab, x, ly+12);
+      }
+      return;
+    }
+    var inf=n.kind==='inf'; var breathe = inf&&infActive ? (1+Math.sin(now/500+n.id)*0.25) : (1+Math.sin(now/1300+n.id)*0.05);
+    var col = inf ? (infActive?COL.amber:COL.neu) : COL.cool;
+    var A=(autoMode && (n.kind==='task'||n.kind==='inf'||n.kind==='ws'))?0.3:1;   // detail recedes as execution automates
+    var R=n.r*cam.zoom*breathe*g;
+    if(hlKind===n.kind && now-hlT0<1400){ var hb=Math.max(0,1-(now-hlT0)/1400); R*=1+0.5*hb; A=Math.min(1,A+0.5*hb); }   // tier highlight
+    var spotOn = n._spot && (now-n._spot)<4000; if(spotOn){ R*=1.55; A=1; }   // spotlighted example node (assumption / inference) — make it unmistakable
+    // halo
+    var grd2=ctx.createRadialGradient(x,y,0,x,y,R*2.4);
+    grd2.addColorStop(0,rgba(col, (inf&&infActive?0.5:0.32)*A)); grd2.addColorStop(1,rgba(col,0));
+    ctx.fillStyle=grd2; ctx.beginPath(); ctx.arc(x,y,R*2.4,0,7); ctx.fill();
+    if(inf){ ctx.fillStyle=rgba(col, (infActive?0.16:0.09)*A); ctx.beginPath(); ctx.arc(x,y,R,0,7); ctx.fill();
+             ctx.strokeStyle=rgba(col,(infActive?0.98:0.7)*A); ctx.lineWidth=1.7; ctx.beginPath(); ctx.arc(x,y,R,0,7); ctx.stroke();
+             if(n.itype==='inference'){ ctx.setLineDash([2.3,2.3]); ctx.strokeStyle=rgba(col,(infActive?0.9:0.6)*A); ctx.lineWidth=1.1; ctx.beginPath(); ctx.arc(x,y,R*0.52,0,7); ctx.stroke(); ctx.setLineDash([]); } }   // inference = dashed inner ring (OSLO-derived); assumption = plain hollow
+    else { ctx.fillStyle=rgba(col,0.9*A); ctx.beginPath(); ctx.arc(x,y,R,0,7); ctx.fill(); }
+    if(spotOn){ var sph=((now/950))%1; ctx.strokeStyle=rgba(COL.amber,0.55*(1-sph)); ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y,R*(1.5+sph*1.7),0,7); ctx.stroke();   // expanding halo ping
+      ctx.strokeStyle=rgba(COL.amber,0.95); ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y,R+3.5,0,7); ctx.stroke(); }   // steady bright ring
+    if(n.lit){ var jc2=(judgment==='grd')?COL.amber:(judgment==='ada')?COL.violet:COL.coolB;
+      var gl=ctx.createRadialGradient(x,y,0,x,y,R*2.8); gl.addColorStop(0,rgba(jc2,0.42)); gl.addColorStop(1,rgba(jc2,0));
+      ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(x,y,R*2.8,0,7); ctx.fill();
+      ctx.strokeStyle=rgba(jc2,0.9); ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(x,y,R+2.5,0,7); ctx.stroke(); }
+  });
+  // node labels — TYPE first, then the plan data
+  for(var ti=tags.length-1;ti>=0;ti--){ var tg=tags[ti], age=now-tg.t0; if(age>tg.dur){ tags.splice(ti,1); continue; }
+    var tn=nodes[tg.id]; if(!tn||!(tn.born>=0&&now>=tn.born)) continue;
+    var tc=tg.color||COL.cool;
+    var nx=sx(tn.x), ny=sy(tn.y), fade=Math.min(1, Math.min(age/220,(tg.dur-age)/340)), lx=nx+15;
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    if(tg.type){
+      var ety=tg.type.toUpperCase();
+      ctx.font='700 8.5px -apple-system,sans-serif'; var tyW=ctx.measureText(ety).width;
+      ctx.font='600 11px -apple-system,sans-serif'; var nmW=ctx.measureText(tg.text).width;
+      var bw=Math.max(tyW,nmW)+16, ly=ny-22;
+      ctx.strokeStyle=rgba(tc,0.42*fade); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(nx,ny); ctx.lineTo(lx-3,ly+10); ctx.stroke();
+      ctx.fillStyle='rgba(11,15,19,'+(0.9*fade)+')'; roundRect(lx-7, ly-11, bw, 33, 8); ctx.fill();
+      ctx.strokeStyle=rgba(tc,0.5*fade); ctx.lineWidth=1; ctx.stroke();
+      ctx.font='700 8.5px -apple-system,sans-serif'; ctx.fillStyle=rgba(tc, fade); ctx.fillText(ety, lx, ly-1);
+      var nmFade=Math.min(fade, Math.max(0,(age-400)/320));
+      ctx.font='600 11px -apple-system,sans-serif'; ctx.fillStyle='rgba(231,236,243,'+nmFade+')'; ctx.fillText(tg.text, lx, ly+13);
+    } else {
+      ctx.font='600 11px -apple-system,sans-serif';
+      var tw=ctx.measureText(tg.text).width, ly2=ny-15;
+      ctx.strokeStyle=rgba(tc,0.42*fade); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(nx,ny); ctx.lineTo(lx-3,ly2); ctx.stroke();
+      ctx.fillStyle='rgba(11,15,19,'+(0.85*fade)+')'; roundRect(lx-7,ly2-9,tw+14,18,9); ctx.fill();
+      ctx.strokeStyle=rgba(tc,0.5*fade); ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle='rgba(231,236,243,'+fade+')'; ctx.fillText(tg.text, lx, ly2);
+    }
+  }
+  drawPlanFrame(now,sx,sy);
+  drawGroupTags(now,sx,sy);
+  drawWatchScene(now,sx,sy);
+  drawScan(now,sx,sy);
+  drawJudgment(now,sx,sy);
+  drawSteward(now,sx,sy);
+  raf=requestAnimationFrame(loop);
+}
+var raf=requestAnimationFrame(loop);
+
+/* ===================== ARC / BEAT CONTROLLER ===================== */
+var PASS_MS=60000, GUIDED_MIN=47500, entry='first', mode='guided';
+var timers=[], t0=0, passDone=false, analysisComplete=false, doneCbs=[];
+function onDone(fn){ if(analysisComplete){ fn(); } else { doneCbs.push(fn); } }
+function clearTimers(){ timers.forEach(clearTimeout); timers=[]; }
+function at(ms,fn){ timers.push(setTimeout(fn,ms)); }
+function $(id){ return document.getElementById(id); }
+function cls(id,c,on){ var e=$(id); if(e) e.classList.toggle(c,on!==false); }
+
+function line(t){ var box=$('narr'); box.classList.remove('on');
+  setTimeout(function(){ var el=box.querySelector('.ln'); if(el) el.innerHTML=t; box.classList.add('on'); }, 150); }
+function hideLine(){ $('narr').classList.remove('on'); }
+function setNarrPos(px){ var n=document.querySelector('.narr'); if(n) n.style.bottom=px+'px'; }
+function camTo(zoom,cx,cy){ cam.tzoom=zoom; cam.tcx=cx; cam.tcy=cy; }
+
+function resetOverlays(){ ['pillars','pv','pg','pa','brandline','pilot','stillread','pillbar','ingest'].forEach(function(id){ cls(id,'on',false); });
+  ['via','grd','ada'].forEach(function(p){ var el=$('pb-'+p); if(el) el.classList.remove('active'); });
+  steward.on=false; annotateOutcome=false; edgesAlive=false; autoMode=false; watchOn=false; tags=[]; groupTags=[]; planFrame.on=false; hlKind=null; scanT=-1;
+  var fl=$('flow'); if(fl){ Array.prototype.forEach.call(fl.querySelectorAll('.seg,.arw'),function(e){ e.classList.remove('on'); }); }
+  var bn=$('bname'); if(bn) bn.classList.remove('on');
+  $('watch').classList.remove('on'); $('decision').classList.remove('on'); infActive=false; hotPath=[]; judgment=null; edges.forEach(function(e){e.hot=0;e.lit=0;}); nodes.forEach(function(n){n.lit=0;n._spot=0;}); }
+function buildName(){ cls('brandline','on');
+  var fl=$('flow'), segs=fl.querySelectorAll('.seg'), arws=fl.querySelectorAll('.arw');
+  Array.prototype.forEach.call(segs,function(s,i){ at(120+i*360, function(){ s.classList.add('on'); }); });
+  Array.prototype.forEach.call(arws,function(a,i){ at(120+i*360+240, function(){ a.classList.add('on'); }); });
+  at(120+segs.length*360+160, function(){ $('bname').classList.add('on'); }); }
+function showStillReading(on){ cls('stillread','on',on); }
+function guidedHandOff(){
+  if(analysisComplete){ showStillReading(false); handOff(); }
+  else { showStillReading(true); $('devnote').textContent='Read done at the ~47s floor — holding on a live “still reading” state until analysis‑complete (never a dead frame).';
+    onDone(function(){ showStillReading(false); handOff(); }); } }
+
+// ── simulated FAST-PASS event stream (the real backend emits these progressively — capability #21). Adjustable delays. ──
+var EV_DELAY={outcome:8400, 'plan-structure':13000, inference:20000, pillars:30000};   // ms from start; when each piece of the minimal read is retrieved (mirrors the ingest steps)   /* SIM:#21 */
+var _slowGates=false, _ev={}, _evCb={};
+function fireEvent(n){ if(_ev[n]) return; _ev[n]=true; var cbs=_evCb[n]||[]; _evCb[n]=[]; cbs.forEach(function(f){ try{f();}catch(e){} }); }
+function onEvent(n,fn){ if(_ev[n]){ fn(); } else { (_evCb[n]=_evCb[n]||[]).push(fn); } }
+function scheduleFastPass(){ var m=_slowGates?2.4:1;   /* SIM:#21 */
+  at(EV_DELAY['outcome']*m,        function(){ fireEvent('outcome'); });         // ← "Mapping what your outcome rests on"
+  at(EV_DELAY['plan-structure']*m, function(){ fireEvent('plan-structure'); });   // ← "Drafting your plan documents"
+  at(EV_DELAY['inference']*m,      function(){ fireEvent('inference'); });        // ← "Separating evidence from inference"
+  at(EV_DELAY['pillars']*m,        function(){ fireEvent('pillars'); }); }        // ← "Assessing your plan"
+/* gate a scene transition on a fast-pass event — if the data isn't retrieved yet, HOLD on a live "still reading" beat (never a dead frame or a fabricated reveal) until it fires */
+function gate(ev, next, holdMsg){
+  if(_ev[ev]){ next(); return; }
+  showStillReading(true); if(holdMsg) line(holdMsg);
+  $('devnote').textContent='Holding — waiting on the fast pass for “'+ev+'”.';
+  onEvent(ev, function(){ showStillReading(false); $('devnote').textContent=''; next(); });
+}
+
+// ── Scene 0 · ingestion — the original 8-stage analysis; lags/gates the reveal until the fast pass has the outcome + issues ──
+var IG_SEQ=[   /* SIM:#22 */
+  {t:'Reading your inputs…', d:'Opening your brief and any attachments…', tr:'read inputs'},
+  {t:'Drafting your plan documents…', d:'Intent · Scope · Requirements · Constraints · Work breakdown · Schedule · Resourcing', tr:'drafted plan'},
+  {t:'Separating evidence from inference…', d:'What you stated, versus what OSLO had to infer', tr:'evidence vs. inference'},
+  {t:'Mapping what your outcome rests on…', d:'How the parts of your plan connect to the result', tr:'mapped the outcome'},
+  {t:'Noting your open questions…', d:'The assumptions and unknowns your plan still carries', tr:'flagged open questions'},
+  {t:'Assessing your plan…', d:'Viability, grounding, and adaptability across your documents', tr:'assessed viability · grounding · adaptability'},
+  {t:'Pulling your read together…', d:'One clear picture of where you stand', tr:'pulled your read together'},
+  {t:'Your read is ready.', d:'Ordering the issues by what most threatens your outcome', tr:'initial read complete'}
+];
+function startMorph(){ morphT=performance.now(); orbForm=1; }   // the orb is fully solid by the time it turns green
+function runIngest(){
+  ingesting=true; orbGreen=0; orbForm=0.05; ingestT0=performance.now(); camTo(1.25,0,45); cls('ingest','on');
+  var tr=$('ig-trace'); tr.innerHTML=IG_SEQ.map(function(s){ return '<div class="tr">'+s.tr+' · <span style="color:var(--grounded)">ok</span></div>'; }).join('');
+  var rows=tr.children, STEP=1200, n=IG_SEQ.length, GATE=n-1; FORM_MS=GATE*STEP;   // solidify across the analysis, hitting solid at the final step
+  function showStep(i){ var s=IG_SEQ[i]; $('ig-title').textContent=s.t; $('ig-desc').textContent=s.d;
+    $('ig-stage').textContent=(i<n-1)?('Stage '+(i+1)+' of '+n):'Read ready'; $('ig-lab').textContent=(i<n-1)?'Analyzing…':'Ready';
+    for(var k=0;k<=i;k++) if(rows[k]) rows[k].classList.add('on'); }
+  for(var i=0;i<GATE;i++){ (function(i){ at(i*STEP, function(){ showStep(i); }); })(i); }
+  // the FINAL "read is ready" step + the morph gate on the OUTCOME actually being retrieved (Scene 1 needs it)
+  at(GATE*STEP, function(){
+    var proceed=function(){ showStep(GATE); startMorph(); at(800, function(){ cls('ingest','on',false); ingesting=false; runReveal(); }); };
+    if(_ev['outcome']){ proceed(); }
+    else { $('ig-title').textContent='Still reading your plan…'; $('ig-desc').textContent='Finishing the read of your outcome before we show it.'; $('ig-lab').textContent='Reading…'; $('ig-stage').textContent='Waiting for your outcome';
+      onEvent('outcome', proceed); }
+  });
+}
+function runGuided(){ runIngest(); }
+// ── the reveal, restructured into EVENT-GATED phases: each scene waits on the data it needs ──
+function runReveal(){ var mb=$('modeBtn'); if(mb) mb.style.display='';   // landed on Scene 1 — the intro is now skippable
+  phaseOutcome(); }
+function phaseOutcome(){   // Scene 1 · the outcome (already retrieved — that's what let us morph)
+  at(300,  function(){ camTo(2.5,0,0); annotateOutcome=true; annotateT0=performance.now(); line('Every project begins with an <b>outcome</b>.'); });
+  at(3400, function(){ line('The one result you must deliver.'); });
+  at(5800, function(){ gate('plan-structure', phasePlan, 'Reading the shape of your plan…'); });   // → Scene 2 when the plan STRUCTURE is parsed
+}
+function phasePlan(){   // Scene 2a · plan structure — the tree + tier labels (needs plan-structure; safe to show, it's just layout)
+  annotateOutcome=false; setNarrPos(266); revealAll(2200); line('AI drafts a plan in seconds.'); at(360,function(){ camTo(0.9,0,-40); });
+  // HOLD the plan frame + every grouping label until the tree has finished expanding (~3.3s) — no border on a moving tree
+  at(3300, function(){ showPlanFrame(OARC_PROJECT_TITLE+' plan'); });
+  at(3900, function(){ line('This is your <span class="pd">'+escapeText(OARC_PROJECT_TITLE)+'</span> plan.'); });           // caption lands AFTER the frame draws (staggered)
+  at(4900, function(){ tagTier('del','Deliverable',COL.coolB); });                                                        // deliverable = a single node
+  at(6400, function(){ tagCluster('ws','Workstream',COL.coolB); });                                                       // only workstream is grouped — a cluster of tasks, not one dot
+  at(7000, function(){ line('A <b>workstream</b> groups its tasks.'); });                                                 // caption after the cluster bracket appears
+  at(9400, function(){ tagTier('task','Task'); });                                                                        // task = a single leaf
+  at(9900, function(){ line('A plan isn’t the outcome.'); });
+  at(12200,function(){ edgesAlive=true; line('It’s a <b>living hypothesis</b>.'); });
+  at(13800,function(){ gate('inference', phaseInference, 'Separating your evidence from OSLO’s inference…'); });   // → the inference beats only once OSLO has classified them (never claim "assumptions" before they exist)
+}
+function phaseInference(){   // Scene 2b · what OSLO had to fill in — OSLO recognizes BOTH assumptions and inferences
+  lightInference(); hlKind='inf'; hlT0=performance.now(); camTo(0.7,68,-18); line('Some of it isn’t stated.');   // zoom+recenter to hold BOTH examples (far-left assumption + far-right inference) with label room
+  at(2000,function(){ line('OSLO fills the gaps two ways.'); });
+  at(4000,function(){ if(nodes[assumeNode])nodes[assumeNode]._spot=performance.now(); tagNode(assumeNode,'“Wi‑Fi capacity is sufficient”',7600,COL.amber,'Assumption'); });   // spotlight the example — its plan statement is the label
+  at(4600,function(){ line('One is an <b>assumption</b>.'); });                                                         // caption lands after the node lights (staggered)
+  at(7400,function(){ if(nodes[assumeNode])nodes[assumeNode]._spot=performance.now(); if(nodes[inferNode])nodes[inferNode]._spot=performance.now(); tagNode(inferNode,'“Sponsor count is on track”',5000,COL.amber,'Inference'); });   // both glow together; dashed inner ring marks the inferred one
+  at(8000,function(){ line('The other, an <b>inference</b>.'); });
+  at(10600,function(){ tracePath(); line('Both ripple to your outcome.'); });
+  at(12600,function(){ gate('pillars', phasePillars, 'Weighing viability, grounding, and adaptability…'); });   // → Scene 3 when the pillar reads are ready
+}
+function phasePillars(){   // Scene 3 · how OSLO reads it (needs pillars-ready — the 3 issues + findings)
+  camTo(0.72,0,-20); setNarrPos(255); cls('pillbar','on'); startScan(); line('Now OSLO reads it.');
+  at(2900, function(){ setJudgment('via'); });
+  at(3400, function(){ line('<b>Viable</b>? Clear, aligned, feasible.'); });
+  at(5900, function(){ tagNode(sponsorDel,'no limit on sponsor space',4600,COL.coolB); });
+  at(6400, function(){ line('<span class="pd">Sponsors</span> could crowd out <span class="pd">attendees</span>.'); });   // plan-derived entities → .pd (personalization)
+  at(8900, function(){ setJudgment('grd'); });
+  at(9400, function(){ line('<b>Grounded</b>? Evidence visible?'); });
+  at(11900,function(){ if(nodes[wifiNode])nodes[wifiNode]._spot=performance.now(); tagNode(wifiNode,'“Wi‑Fi capacity is sufficient”',5400,COL.amber,'Assumption'); });   // sample ASSUMPTION from the plan
+  at(12500,function(){ line('This <b>assumption</b> is unverified.'); });
+  at(15000,function(){ if(nodes[inferNode])nodes[inferNode]._spot=performance.now(); tagNode(inferNode,'“Sponsor count is on track”',4600,COL.amber,'Inference'); });   // sample INFERENCE from the plan
+  at(15600,function(){ line('This one OSLO <b>inferred</b>.'); });
+  at(18100,function(){ setJudgment('ada'); });
+  at(18600,function(){ line('<b>Adaptable</b>? Catch drift in time?'); });
+  at(21100,function(){ tagNode(0,'no early outcome checkpoints',4600,COL.violet); });
+  at(21700,function(){ line('No early outcome checkpoints.'); });
+  at(23400,function(){ phaseDecision(); });
+}
+function phaseDecision(){   // Scene 4 → the first decision (the minimal read — outcome + plan + pillars — is in hand)
+  judgment=null; edges.forEach(function(e){e.lit=0;}); nodes.forEach(function(n){n.lit=0;}); cls('pillbar','on',false); camTo(1.05,0,0); setNarrPos(285); line('That’s how OSLO reads your plan.');
+  at(2600, function(){ line('Now — your first decision.'); });
+  at(4600, function(){ handOff(); });
+}
+
+var WF=[
+  {i:'parse',t:'Parsed your brief — 3 deliverables, 8 workstreams, 21 tasks.',s:'Revenue & sponsorship · Attendance & on‑site · Program'},
+  {i:'inf',t:'14 assumptions inferred to fill gaps.',s:'They read solid — but rest on OSLO’s guess, not your evidence.'},
+  {i:'pillar',t:'Viability — a key limit is missing.',s:'Nothing limits how much space sponsors get, so they could crowd out attendees.'},
+  {i:'crit',t:'Critical: venue Wi‑Fi capacity assumed, never verified.',s:'The whole on‑site experience rides on it.'},
+  {i:'crit',t:'Critical: 40% of revenue rests on an inferred sponsor count.',s:'Nothing shows one is signed.'},
+  {i:'pillar',t:'Adaptability low — no outcome checkpoints.',s:'Nothing re‑reads the outcome early enough to change course.'},
+  {i:'pillar',t:'Integrity assembled — the weakest pillar gates it.',s:'Your read is ready for your first decision.'}
+];
+function runWatch(){
+  // RETURNING / "watch it work": the orange cycling analysis orb is the focus (NOT the plan graph); the findings feed is the analysis summary
+  $('watch').classList.add('on'); $('narr').classList.remove('on');
+  ingesting=true; orbGreen=0; morphT=-1; watchOn=true;    // orange scanning orb, cycling aperture — no tree; scene binds it to the findings
+  camTo(1.7,120,0);                                       // orb sits center-left, prominent; findings panel has the right
+  var f=$('findings'); f.innerHTML='';
+  WF.forEach(function(x,i){ var row=document.createElement('div'); row.className='finding';
+    row.innerHTML='<span class="fi '+x.i+'">'+(x.i==='crit'?'▲':x.i==='inf'?'◌':x.i==='parse'?'≡':'◑')+'</span><div><div class="ft">'+x.t+'</div><div class="fs">'+x.s+'</div></div>';
+    f.appendChild(row); var frac=[.06,.18,.32,.46,.6,.76,.9][i]||((i+1)/8); at(frac*PASS_MS,function(){ row.classList.add('on'); }); });
+  onDone(function(){ $('watchRh').textContent='Analysis complete'; ingesting=false; startMorph(); at(1100,function(){ handOff(); }); });   // orb settles orange→green, then hand off
+}
+
+function handOff(){ passComplete(); watchOn=false; camTo(2.0,0,0); cls('brandline','on',false); showStillReading(false); $('narr').classList.remove('on'); $('watch').classList.remove('on'); $('decision').classList.add('on');
+  var dc=$('dcard'); if(dc) setTimeout(function(){ try{ dc.focus(); }catch(e){} },0);
+  $('devnote').textContent = mode==='watch' ? 'Handed off the instant analysis completed — no pad.' : 'Handed off at the first decision (held to the ~47s guided floor).'; }
+
+function tickPass(){ function frame(){ var e=Date.now()-t0, p=Math.min(1,e/PASS_MS); $('passFill').style.width=(p*100)+'%';
+  if(p>=1){ passComplete(); return; } timers.push(setTimeout(frame,120)); } frame(); }
+function passComplete(){ if(passDone) return; passDone=true; analysisComplete=true; $('passFill').style.width='100%'; $('passLab').textContent='Analysis complete'; var pe=$('passEta'); if(pe) pe.style.display='none'; $('passWrap').classList.add('done'); var cbs=doneCbs; doneCbs=[]; cbs.forEach(function(f){ f(); }); }
+
+function toggleMode(){ mode=(mode==='guided')?'watch':'guided'; start(); }
+function setEntry(e){ entry=e; mode=(e==='return')?'watch':'guided'; cls('d-first','act',e==='first'); cls('d-ret','act',e==='return'); start(); }
+function setPass(ms){ PASS_MS=ms; cls('p-60','act',ms===60000); cls('p-15','act',ms===15000); start(); }
+function toggleGates(){ _slowGates=!_slowGates; cls('d-gate','act',_slowGates); var b=$('d-gate'); if(b) b.textContent=_slowGates?'slow · holds':'fast'; start(); }   // demo: slow the fast-pass events so the scene gates HOLD
+function restart(){ start(); }
+
+function start(){
+  clearTimers(); passDone=false; analysisComplete=false; doneCbs=[]; t0=Date.now();
+  orbGreen=1; ingesting=false; morphT=-1; _ev={}; _evCb={}; if(!OARC_LIVE) scheduleFastPass();
+  $('passWrap').classList.remove('done'); $('passLab').textContent='Analyzing your plan'; var pe=$('passEta'); if(pe) pe.style.display=''; $('passFill').style.width='0%';
+  buildGraph(); resetOverlays(); pilotOn=false; setNarrPos(178);
+  $('modeBtn').textContent=(mode==='guided')?'Skip the intro →':'↺ Replay intro';
+  $('modeBtn').style.display=(mode==='guided')?'none':'';   // Scene 0 (ingestion) is NOT skippable — hidden until Scene 1 (guided); shown right away in watch mode (no Scene 0)
+  $('devnote').textContent='';
+  if(!OARC_LIVE) tickPass();
+  if(OARC_REDUCED&&OARC_LIVE){
+    cls('ingest','on'); $('ig-lab').textContent='Analyzing…'; $('ig-title').textContent='Reading your inputs…';
+    $('ig-desc').textContent='OSLO is building your first read.'; $('ig-stage').textContent='Analysis in progress';
+  } else if(mode==='guided') runGuided(); else runWatch();
+}
+// when embedded in the product (iframe), hand off to the real Overview instead of alerting
+var OARC_OUTCOME='Run DevNorth 2026 as a sold‑out, well‑rated one‑day developer conference.';
+function escapeText(v){ return String(v||'').replace(/[&<>"']/g,function(ch){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch]; }); }
+function oarcConfigure(d){
+  if(d&&typeof d.projectTitle==='string'&&d.projectTitle.trim()) OARC_PROJECT_TITLE=d.projectTitle.trim();
+  if(d&&typeof d.outcome==='string'&&d.outcome.trim()) OARC_OUTCOME=d.outcome.trim();
+  var oc=$('dOc'); if(oc) oc.textContent='“'+OARC_OUTCOME+'”';
+  if(nodes[0]) nodes[0].name=OARC_PROJECT_TITLE;
+}
+function oarcLiveProgress(d){
+  if(!d) return;
+  oarcConfigure(d);
+  if(typeof d.progress==='number') $('passFill').style.width=Math.max(0,Math.min(100,d.progress))+'%';
+  if(!d.complete&&typeof d.elapsed==='number'){
+    var eta=$('passEta');
+    if(eta) eta.textContent=d.elapsed>=60000?'· preparing a safe provisional read':(d.elapsed>=45000?'· still working — your current read is safe':'· usually under a minute');
+  }
+  (d.events||[]).forEach(fireEvent);
+  if(d.complete){
+    ['outcome','plan-structure','inference','pillars'].forEach(fireEvent);
+    passComplete();
+    if(OARC_REDUCED){ clearTimers(); cls('ingest','on',false); handOff(); }
+  }
+}
+window.addEventListener('message',function(event){
+  if(!OARC_EMBED||event.source!==window.parent||event.origin!==window.location.origin) return;
+  var d=event.data;
+  if(!d) return;
+  if(d.oarc==='sync') oarcLiveProgress(d);
+  if(d.oarc==='decision-result') oarcDecisionResult(d);
+});
+function oarcRefine(){ var ta=$('dOcEdit'); ta.value=OARC_OUTCOME;                       // edit INLINE on this card — no pivot to the app
+  $('dOc').style.display='none'; ta.style.display='block';
+  $('dActs').style.display='none'; $('dActsEdit').style.display='';
+  $('dDefer').style.display='none';
+  $('dEye').textContent='Reword your outcome';
+  $('dHint').innerHTML='Put it in <b>your own words</b> — saving makes it yours.';
+  ta.focus(); try{ ta.setSelectionRange(ta.value.length, ta.value.length); }catch(e){} }
+function oarcCancelRefine(){ $('dOcEdit').style.display='none'; $('dOc').style.display='';
+  $('dActsEdit').style.display='none'; $('dActs').style.display='';
+  $('dDefer').style.display='';
+  $('dEye').textContent='Confirm your outcome';
+  $('dHint').innerHTML='Either way, <b>you own it</b> — OSLO advises, you decide. Until you confirm, it stays OSLO’s inference.'; }
+function oarcSaveRefine(){ var ta=$('dOcEdit'); var v=(ta.value||'').trim(); if(!v){ ta.focus(); return; } OARC_OUTCOME=v;
+  $('dOc').textContent='“'+v+'”';
+  oarcReward('refine', v, 'Saved — in your words', 'You’ll steer by this. Opening your plan…'); }
+function oarcConfirm(){ oarcReward('confirm', OARC_OUTCOME, 'Locked in', 'You’ll steer by this outcome. Opening your plan…'); }
+function oarcDefer(){ oarcReward('defer', OARC_OUTCOME, 'Kept as OSLO’s inference', 'You can confirm it anytime. Opening your plan…'); }
+/* acknowledge + REWARD in the scene first, THEN hand off to the app */
+var OARC_PENDING_DECISION=null;
+function oarcReward(action, text, title){
+  if(OARC_EMBED&&OARC_LIVE&&window.parent&&window.parent!==window){
+    OARC_PENDING_DECISION={action:action,text:text,title:title};
+    Array.prototype.forEach.call(document.querySelectorAll('#dcard button,#dcard textarea'),function(el){ el.disabled=true; });
+    $('dEye').textContent='Saving your decision…';
+    try{ window.parent.postMessage({oarc:'decision',action:action,text:text||null},window.location.origin); }catch(e){}
+    return;
+  }
+  oarcRewardFinal(action,text,title,true);
+}
+function oarcDecisionResult(d){
+  var pending=OARC_PENDING_DECISION; if(!pending) return;
+  if(!d.ok){
+    Array.prototype.forEach.call(document.querySelectorAll('#dcard button,#dcard textarea'),function(el){ el.disabled=false; });
+    $('dEye').textContent='Decision not saved — try again';
+    $('dHint').innerHTML='Your outcome is unchanged. <b>Nothing was lost.</b>';
+    OARC_PENDING_DECISION=null;
+    return;
+  }
+  oarcRewardFinal(pending.action,pending.text,pending.title,false);
+  OARC_PENDING_DECISION=null;
+}
+function oarcRewardFinal(action, text, title, shouldHandoff){ var card=$('dcard'); if(!card){ if(shouldHandoff) oarcHandoff(action,text); return; }
+  var commit=(action!=='defer');
+  card.innerHTML='<div class="dack '+(commit?'commit':'defer')+'" id="dRw"><span class="k">'+(commit?'✓':'◎')+'</span><span class="t">'+title+' →</span></div>';
+  var rw=$('dRw'); setTimeout(function(){ if(rw) rw.classList.add('on'); }, 20);
+  if(shouldHandoff) setTimeout(function(){ oarcHandoff(action, text); }, 800); }   // quick ack, then hand off — the app carries the real reward
+function oarcHandoff(a, text){ if(window.parent && window.parent!==window){ try{ window.parent.postMessage({oarc:'handoff', action:a, text:text||null}, window.location.origin); }catch(e){} }
+  else { alert('→ '+a+(text?(': '+text):'')); } }
+/* ═══ ANTI-JARGON RULE (parallels the product's _S10.noJargon) ═══ banned phrases must never reach the user, static OR
+   dynamic. Blocklist = REGEX literals (can't match itself). Add a term ⇒ also fix the copy with a plain replacement.
+   Allowed on purpose: "assumption"/"inference" (the arc teaches them), "living hypothesis". */
+var JARGON=[ /\bunbounded\b/i, /capped at the root/i, /single point of failure/i, /fuzzy edge/i, /where the line sits/i, /isn.t bounded/i ];
+function _jargonAudit(){ var hits={};
+  var src=''; try{ var ss=document.querySelectorAll('script'); for(var i=0;i<ss.length;i++){ if(!ss[i].src) src+='\n'+ss[i].textContent; } }catch(e){}
+  src=src.replace(/\/\*[\s\S]*?\*\//g,' ');   // drop /* */ dev comments (apostrophes in prose would false-trip the string scan)
+  var lits=(src.match(/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`/g)||[]).join('\n');   // every narration/UI string literal — covers beats that haven't played yet
+  var dom=''; try{ dom=document.body.innerText||''; }catch(e){}
+  JARGON.forEach(function(re){ var m=(lits+'\n'+dom).match(re); if(m) hits[m[0]]=1; });
+  return Object.keys(hits); }
+/* SIM-tag rule (parallels the product) — every demo sim carries a SIM tag naming its OSLO_BACKEND_CAPABILITIES entry;
+   the gate rejects a placeholder (TODO after the marker) or an out-of-range number. Case-sensitive; literals don't self-match. */
+var SIM_MAX_CAP=23;
+function _simTagAudit(){ var bad=[];
+  var src=''; try{ var ss=document.querySelectorAll('script'); for(var i=0;i<ss.length;i++){ if(!ss[i].src) src+='\n'+ss[i].textContent; } }catch(e){}
+  (src.match(/SIM:(TODO|UNREGISTERED|\?)/g)||[]).forEach(function(t){ bad.push(t); });
+  (src.match(/SIM:#(\d+)/g)||[]).forEach(function(t){ var n=parseInt(t.slice(5),10); if(!(n>=1&&n<=SIM_MAX_CAP)) bad.push(t); });
+  return bad; }
+window._S10={ noJargon: _jargonAudit().length===0, demoSimsTagged: _simTagAudit().length===0 };   // green when clean
+if(!window._S10.noJargon) console.warn('ARC ANTI-JARGON — banned phrase(s) present:', _jargonAudit());
+if(!window._S10.demoSimsTagged) console.warn('ARC SIM-TAG — placeholder/invalid tag(s):', _simTagAudit());
+start();
+if(OARC_EMBED&&window.parent&&window.parent!==window){
+  try{ window.parent.postMessage({oarc:'ready'},window.location.origin); }catch(e){}
+}
+</script>
+</body>
+</html>
