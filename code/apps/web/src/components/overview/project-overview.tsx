@@ -61,6 +61,7 @@ const artifactOrder = [
   "schedule",
   "resources",
 ] as const;
+const r2UnderstandingOrder = ["intent", "scope", "requirements", "context"] as const;
 const initialAdvisorQuestions = [
   "What should I do next?",
   "Why is Feasibility where it is?",
@@ -176,6 +177,7 @@ export function ProjectOverview({
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [advisorOpen, setAdvisorOpen] = useState(true);
+  const [advisorWide, setAdvisorWide] = useState(false);
   const [workspaceNoticeOpen, setWorkspaceNoticeOpen] = useState(true);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [confidenceDetailsOpen, setConfidenceDetailsOpen] = useState(false);
@@ -897,6 +899,7 @@ export function ProjectOverview({
       error={clarificationError ?? issueActionError}
       inline={initialView === "overview"}
       issue={selectedIssue}
+      key={selectedIssue.id}
       projectId={snapshot.project_id}
       onAnswerChange={setClarificationAnswer}
       onAsk={() => {
@@ -931,7 +934,7 @@ export function ProjectOverview({
       {initialView === "overview" ? (
         <div className="r2-prototype-banner">
           <strong>OSLO · AI-first R2 prototype</strong>
-          <span><b>Official</b> One walkable shell: the read is home · artifacts + execution plan in the center · reasoning + chat on the right</span>
+          <span><b>Official</b> One walkable shell: the read is home · artifacts + execution plan in the center · reasoning + chat on the right · Issues / History / Reports / Map / ⌘K as doors. Wired to the honest weakest-gates model.</span>
         </div>
       ) : null}
       <header className="project-header">
@@ -1117,17 +1120,13 @@ export function ProjectOverview({
         </p>
         <div className="workspace-artifact-group">
           <span>Understanding</span>
-          {artifactOrder.slice(0, 4).map((artifactType) => {
+          {r2UnderstandingOrder.map((artifactType) => {
             const count = openIssues.filter(
               (issue) => issue.artifact_type === artifactType,
             ).length;
             return (
               <Link
-                className={`${initialView === artifactType ? "is-current" : ""} ${
-                  orientation && activeTourStep === 4 && artifactType === "resources"
-                    ? "is-tour-target"
-                    : ""
-                }`}
+                className={initialView === artifactType ? "is-current" : ""}
                 href={`/projects/${snapshot.project_id}/artifacts/${artifactType}`}
                 key={artifactType}
               >
@@ -1146,7 +1145,11 @@ export function ProjectOverview({
             ).length;
             return (
               <Link
-                className={initialView === artifactType ? "is-current" : ""}
+                className={`${initialView === artifactType ? "is-current" : ""} ${
+                  orientation && activeTourStep === 4 && artifactType === "resources"
+                    ? "is-tour-target"
+                    : ""
+                }`}
                 href={`/projects/${snapshot.project_id}/artifacts/${artifactType}`}
                 key={artifactType}
               >
@@ -1227,7 +1230,7 @@ export function ProjectOverview({
         </div>
       </aside>
 
-      <div className={`project-grid ${panelVisible ? "" : "is-panel-closed"}`}>
+      <div className={`project-grid ${panelVisible ? "" : "is-panel-closed"} ${advisorWide ? "is-advisor-wide" : ""}`}>
         <section
           aria-label="Project content"
           className={`project-main ${snapshot.first_run?.freeze_on ? "is-first-run-frozen" : ""}`}
@@ -1790,11 +1793,13 @@ export function ProjectOverview({
             onQuestionChange={setQuestion}
             onRetry={retryExtendedAnalysis}
             onSubmit={submitQuestion}
+            onWideChange={setAdvisorWide}
             openIssueCount={openIssues.length}
             question={question}
             resolvedIssueCount={snapshot.assessment.resolved_issue_count}
             r2Mode={initialView === "overview"}
             topIssue={openIssues[0] ?? null}
+            wide={advisorWide}
             />
           </div>
         ) : null}
@@ -2580,9 +2585,6 @@ function IssueProposalGroup({
             <article className="r2-proposal-row" key={proposal.id}>
               <span aria-hidden="true">◆</span>
               <div>
-                <span className={`r2-proposal-kind is-${proposal.kind}`}>
-                  {proposal.kind === "build" ? "Build fix" : "Optional"}
-                </span>
                 <strong>{proposal.title}</strong>
                 <small><b>Why:</b> {proposal.rationale} · in {artifactLabel(proposal.artifact_type ?? "plan")}</small>
               </div>
@@ -2738,6 +2740,8 @@ function IssuePanel({
   selectedResolution: string | null;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLElement>(null);
+  const [clarificationOpen, setClarificationOpen] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [proposalsOpen, setProposalsOpen] = useState(true);
   const [otherWaysOpen, setOtherWaysOpen] = useState(false);
@@ -2793,6 +2797,15 @@ function IssuePanel({
   useEffect(() => {
     closeButton.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (!inline) return;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    panel.current?.scrollIntoView?.({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }, [inline, issue.id]);
 
   useEffect(() => {
     let active = true;
@@ -2883,8 +2896,9 @@ function IssuePanel({
       aria-describedby={analysisRunning ? "issue-analysis-pending-status" : undefined}
       aria-label="Issue details"
       aria-modal={inline ? undefined : "true"}
-      className={`project-sidepanel issue-panel ${inline ? "is-inline" : ""}`}
+      className={`project-sidepanel issue-panel ${inline ? "is-inline" : ""} severity-${issue.severity.toLowerCase()}`}
       id={`issue-detail-${issue.id}`}
+      ref={panel}
       role="dialog"
     >
       <div className="issue-panel-heading">
@@ -3001,7 +3015,7 @@ function IssuePanel({
           {artifactLabel(issue.artifact_type)} until the plan contains verified evidence.
         </p>
       </section>
-      {issue.clarification ? (
+      {issue.clarification && (!inline || clarificationOpen || analysisRunning) ? (
         <form className="clarification-form" onSubmit={onSubmit}>
           <h3>Clarification request</h3>
           <strong>{issue.clarification}</strong>
@@ -3070,6 +3084,17 @@ function IssuePanel({
             <button onClick={onAsk} type="button">Discuss</button>
           </div>
         )}
+        {inline && issue.clarification ? (
+          <button
+            aria-expanded={clarificationOpen}
+            aria-label="Let OSLO ask you a question"
+            className="issue-clarification-disclosure"
+            onClick={() => setClarificationOpen((current) => !current)}
+            type="button"
+          >
+            Let OSLO ask you a question →
+          </button>
+        ) : null}
       </section>
       {inline && routingOpen ? (
         <section className="issue-route-panel" aria-label="Ask for evidence">
@@ -3306,11 +3331,13 @@ function AdvisorPanel({
   onQuestionChange,
   onRetry,
   onSubmit,
+  onWideChange,
   openIssueCount,
   question,
   resolvedIssueCount,
   r2Mode,
   topIssue,
+  wide,
 }: {
   advisorError: string | null;
   advisorPending: boolean;
@@ -3329,17 +3356,30 @@ function AdvisorPanel({
   onQuestionChange: (question: string) => void;
   onRetry: () => Promise<void>;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onWideChange: (wide: boolean) => void;
   openIssueCount: number;
   question: string;
   resolvedIssueCount: number;
   r2Mode: boolean;
   topIssue: Issue | null;
+  wide: boolean;
 }) {
   return (
-    <aside aria-label="OSLO project advisor" className="project-sidepanel oslo-chat">
+    <aside aria-label="OSLO project advisor" className={`project-sidepanel oslo-chat ${wide ? "is-wide" : ""}`}>
       <div className="chat-heading">
         <span aria-hidden="true">O</span>
-        <div><strong>OSLO</strong><small>Project advisor</small></div>
+        <div><strong>OSLO</strong><small>thinking with you — advisory, acts only when you say so</small></div>
+        {r2Mode ? <em className="r2-advisor-governed">Governed</em> : null}
+        {r2Mode ? (
+          <button
+            aria-label={wide ? "Narrow OSLO panel" : "Widen OSLO panel"}
+            className="r2-advisor-width"
+            onClick={() => onWideChange(!wide)}
+            type="button"
+          >
+            ↔ {wide ? "Narrow" : "Wider"}
+          </button>
+        ) : null}
         <button aria-label="Hide the OSLO panel" onClick={onClose} type="button">
           <CaretRight aria-hidden="true" size={16} />
         </button>

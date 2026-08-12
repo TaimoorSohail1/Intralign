@@ -528,6 +528,11 @@ describe("ProjectOverview", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Views")).toBeInTheDocument();
     expect(screen.getByText("Documents")).toBeInTheDocument();
+    expect(
+      Array.from(container.querySelectorAll(".workspace-artifact-group > a"))
+        .slice(0, 4)
+        .map((link) => link.textContent?.trim()),
+    ).toEqual(["Intent", "Scope", "Requirements", "Constraints"]);
 
     fireEvent.click(screen.getByRole("button", { name: "Show Viability detail" }));
     expect(screen.getByRole("region", { name: "Viability detail" })).toBeVisible();
@@ -609,7 +614,7 @@ describe("ProjectOverview", () => {
 
     expect(screen.getByRole("region", { name: "OSLO proposes" })).toBeInTheDocument();
     expect(screen.getByText("Name a delivery fallback")).toBeInTheDocument();
-    expect(screen.getByText("Optional")).toBeInTheDocument();
+    expect(screen.queryByText("Optional")).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Awaiting evidence" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Acted on, not yet closed" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Resolved" })).toBeInTheDocument();
@@ -625,6 +630,22 @@ describe("ProjectOverview", () => {
         { name: "Withdraw" },
       ),
     ).toBeInTheDocument();
+  });
+
+  it("keeps the inline clarification behind the prototype recommendation disclosure", () => {
+    render(
+      <ProjectOverview displayName="Alex" initial={snapshot} logoutAction={vi.fn()} />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
+    );
+
+    expect(screen.queryByLabelText("Clarification answer")).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Let OSLO ask you a question" }),
+    );
+    expect(screen.getByLabelText("Clarification answer")).toBeVisible();
   });
 
   it("keeps a persistent Start here when the ranked worklist is clear", () => {
@@ -1182,6 +1203,18 @@ describe("ProjectOverview", () => {
     });
   });
 
+  it("offers the prototype governed and wider advisor controls", () => {
+    const { container } = render(
+      <ProjectOverview displayName="Alex" initial={snapshot} logoutAction={vi.fn()} />,
+    );
+
+    expect(screen.getByText("Governed")).toBeInTheDocument();
+    const widen = screen.getByRole("button", { name: "Widen OSLO panel" });
+    fireEvent.click(widen);
+    expect(container.querySelector(".project-grid")).toHaveClass("is-advisor-wide");
+    expect(screen.getByRole("button", { name: "Narrow OSLO panel" })).toBeInTheDocument();
+  });
+
   it("expands an Overview issue inline without replacing the ranked queue", () => {
     render(
       <ProjectOverview
@@ -1378,6 +1411,9 @@ describe("ProjectOverview", () => {
     );
     fireEvent.click(
       screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Let OSLO ask you a question" }),
     );
     fireEvent.change(screen.getByLabelText("Clarification answer"), {
       target: { value: "Priya owns migration; the legacy import is the fallback." },

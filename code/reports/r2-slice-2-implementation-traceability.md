@@ -43,9 +43,13 @@ Slice 2 builds on the verified Slice 1 issue object and Slice 3 reanalysis write
 | Gate | Result |
 |---|---|
 | Full API regression | **316 passed**: 315 tests in the main run plus the isolated integrity UI-contract subprocess test |
-| Full web regression | **143 passed** across 24 files |
-| Slice 2 focused web/domain tests | **63 passed**: 53 web plus 10 lifecycle/proposal/UI-contract tests |
+| Full web regression | **145 passed** across 24 files |
+| Slice 2 focused web/domain tests | **65 passed**: 55 web plus 10 lifecycle/proposal/UI-contract tests |
 | R2 doctrine guardrails | **4 infrastructure + 17 active tests passed**; 60 registered, 18 active, 42 pending, 58 surfaces, 6/6 prototype corrections |
 | Static checks | Ruff and ESLint passed |
 | Production build | Next.js build and TypeScript validation passed |
 | Live browser regression | Route, scoped grant, withdraw, proposal Reject, proposal count update, confirm, reanalysis, and Resolved tray passed |
+
+### Final UI and motion audit
+
+The final matched-state audit is recorded in `r2-slice-2-ui-qa-2026-08-13/REPORT.md`. It verifies the queue, expanded issue, proposal/lifecycle, advisor, responsive, and motion states at the prototype's 1280 x 720 viewport. No actionable P0/P1/P2 mismatch remains for applicable Slice 2 UI. Dynamic project content remains backend-driven, and the combined spoken screen-reader session remains owner-deferred.
