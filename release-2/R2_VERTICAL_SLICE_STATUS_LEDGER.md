@@ -6,9 +6,9 @@
 
 **Audited branch:** `codex/release-2-build`
 
-**Audited commit:** `29b11fc`
+**Audited commit:** `139cc0c`
 
-**Working tree at audit:** current-run manual-regression/UI-audit evidence is committed at `29b11fc`; only this ledger finalization is pending. No product change and no non-Slice-1 change is present.
+**Working tree at audit:** current-run Slice 1 blocker evidence is committed at `139cc0c`; only this ledger finalization is pending. No product change and no non-Slice-1 change is present.
 
 **Current owner-authorized work scope:** **Slices 1–3 only**
 
@@ -32,7 +32,7 @@
 - **6 guards are active; 54 are pending.** Slice 1 activates `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, and `GT-20`; the remaining slices are not functionally verified.
 - Slice 9's FE↔BE contract currently contains **58 mapped dynamic surfaces**.
 - All **6/6 Phase-A prototype corrections** checked by the gate are present.
-- Slice 1 has its core R2 implementation at `8b8f702` and same-state parity follow-up at `2958c4a`. Automated functional and prototype-parity gates pass. The 04:03-04:06 PKT retry again failed before the in-app browser attached a page; Docker Engine was also unresponsive and its stopped Windows service could not be started by the scheduler account. Mandatory manual timeout/retry/last-good verification plus remaining manual accessibility checks remain open, so Slice 1 stays **IN PROGRESS**. Inherited R1 capabilities elsewhere remain **reuse candidates, not R2 completion evidence**.
+- Slice 1 has its core R2 implementation at `8b8f702` and same-state parity follow-up at `2958c4a`. Automated functional and prototype-parity gates pass. The 05:03-05:10 PKT retry again failed before the in-app browser attached either the initial or supported-recovery fresh page; local Supabase Auth, PostgreSQL, FastAPI, and Next.js were reachable, while the idempotent seed refresh timed out waiting on the unresponsive Docker Engine. Mandatory manual timeout/retry/last-good verification plus remaining manual accessibility checks remain open, so Slice 1 stays **IN PROGRESS**. Inherited R1 capabilities elsewhere remain **reuse candidates, not R2 completion evidence**.
 
 ### Evidence commands
 
@@ -159,7 +159,7 @@ Reviewer / date:
 - Slice 1 masthead/parity follow-up: `2958c4a`
 - Slice 1 verification-evidence ledger commit: `2388702`
 - Slice 1 current browser-blocker evidence commit: `d609ff5`
-- Slice 1 latest browser-blocker evidence commit: `29b11fc`
+- Slice 1 latest browser-blocker evidence commit: `139cc0c`
 - Slice 1 durable evidence: `../code/reports/r2/slice-01/`
 
 ---
@@ -221,6 +221,18 @@ Reviewer / date:
 5. Update durable evidence and this ledger. Mark Slice 1 `COMPLETE` only if every open gate passes; otherwise record the exact blocker and keep Slice 1 `IN PROGRESS`.
 
 **Run result:** the required in-app browser connected, but the first fresh-page request timed out before a webview attached. The documented browser-interaction recovery retained the binding, checked controlled and user-visible tab lists, requested visibility, and requested one fresh page; the retry also failed before attachment. Both tab lists were empty and visibility remained false afterward. Docker Desktop's user process and WSL distribution were running, but Docker Engine requests timed out and the stopped Windows service could not be started by the scheduler account; this would block the seeded journey after page attachment, but the browser failed before navigation. No substitute browser, current-run screenshot, interaction, automated rerun, or product change was accepted. Slice 1 remains `IN PROGRESS`; no later slice was acquired and Slices 4-10 remain untouched.
+
+---
+
+## 12. Active Slice 1 resumption plan - 2026-08-12 05:03 PKT
+
+1. Restore the real seeded local application stack and reconnect the explicitly required Codex in-app browser without substituting another browser surface.
+2. If a page attaches, exercise timeout to stale/last-good to retry and complete manual keyboard, announcement/focus, reduced-motion, 200% zoom, permissions, adjacent-regression, and desktop/tablet/mobile checks.
+3. Capture, save, and inspect current-run screenshots before accepting UI/UX or same-state prototype-parity evidence.
+4. Rerun the scoped Slice 1 automated, guardrail, lint, build, migration, and end-to-end gates only if manual verification passes or product code changes; repeat Code Review for security, privacy, authorization, tenant boundaries, and error handling.
+5. Update durable evidence and this ledger. Mark Slice 1 `COMPLETE` only if every open gate passes; otherwise record the exact blocker and keep Slice 1 `IN PROGRESS`.
+
+**Run result:** local Supabase Auth returned `200`, PostgreSQL accepted connections, FastAPI returned `200`, and Next.js listened on `127.0.0.1:3002`. The idempotent seed refresh timed out while the Supabase CLI waited on the unresponsive Docker Engine, but the already-running platform endpoints remained healthy. The required in-app browser connected; its initial fresh-page request timed out before attachment. Supported recovery retained the binding, confirmed empty controlled/user-visible tab lists, requested visibility, and requested one fresh page; visibility remained false and the retry also timed out before attachment. No substitute browser, current-run screenshot, interaction, automated rerun, product change, or completion claim was accepted. Slice 1 remains `IN PROGRESS`; no later slice was acquired and Slices 4-10 remain untouched.
 
 ---
 
