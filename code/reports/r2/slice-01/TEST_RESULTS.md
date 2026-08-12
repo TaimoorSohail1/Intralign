@@ -42,6 +42,7 @@ The repository-wide Playwright command was intentionally not run because it incl
 ## Rerun notes
 
 - No automated suite was rerun during the 2026-08-12 05:03-05:10 PKT resumption because no product code changed and the mandatory manual gate failed before a browser page existed. The passing results above remain the latest implementation evidence; they are not used to claim manual completion.
+- No automated suite was rerun during the 2026-08-12 08:03-08:10 PKT resumption because no product code changed and the mandatory manual gate again failed before a browser page existed. The passing results above remain the latest implementation evidence; they are not used to claim manual completion.
 
 - The first scoped E2E attempt recorded 3 implementation failures and 3 prototype passes because the local Next.js process had exited before navigation (`ERR_CONNECTION_REFUSED`). After restarting that same local process, the identical command passed 6/6.
 - A first production-build attempt compiled successfully but exhausted Node memory while TypeScript ran concurrently with the full API, web, guardrail, and lint suites. The build was rerun alone and passed completely; no product defect was implicated.

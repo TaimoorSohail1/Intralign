@@ -1,5 +1,15 @@
 # R2 Slice 01 run plan
 
+## Resumption plan - 2026-08-12 08:03 PKT
+
+1. Restore the seeded Supabase, FastAPI, and Next.js stack and reconnect the required Codex in-app browser.
+2. Complete the timeout to stale/last-good to retry journey plus keyboard, announcement/focus, reduced-motion, 200% zoom, permissions, adjacent-regression, and responsive checks if a page attaches.
+3. Save and inspect current-run desktop, tablet, and mobile screenshots before accepting UI/UX or prototype-parity evidence.
+4. Rerun automated gates and Code Review only after a successful manual gate or any product-code change.
+5. Keep Slice 1 `IN PROGRESS` unless every open gate passes; do not acquire Slice 3 or touch Slices 4-10.
+
+**Result:** Supabase Auth and REST returned `200`, PostgreSQL listened on `127.0.0.1:55322`, FastAPI returned `200` on `/health`, and Next.js returned `200` on `/login`. The idempotent seed refresh stalled after 49 seconds and was stopped; the existing seeded platform endpoints remained healthy. The required in-app browser connected, but the initial and one supported-recovery fresh-page requests both timed out before a webview attached. The existing binding was retained; controlled and user-visible tab lists stayed empty, requesting visibility remained false, and no substitute browser was used. No manual interaction, current-run screenshot, product change, automated rerun, or completion claim was accepted. Slice 1 remains `IN PROGRESS`.
+
 ## Resumption plan - 2026-08-12 07:04 PKT
 
 1. Restore the seeded Supabase, FastAPI, and Next.js stack and reconnect the required Codex in-app browser.

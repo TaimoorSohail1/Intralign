@@ -6,6 +6,8 @@
 
 **Current-run evidence limit (2026-08-12 07:09 PKT):** the required in-app browser failed to attach both the initial and supported-recovery fresh pages, so no current-run implementation or prototype screenshot could be captured and inspected. The existing seeded platform endpoints were healthy; the page failed before navigation. The durable automated same-state comparison remains valid evidence for its recorded commit, but it is not substituted for the still-open manual audit.
 
+**Latest evidence limit (2026-08-12 08:10 PKT):** the required in-app browser again failed to attach both the initial and one supported-recovery fresh page, so no current-run implementation or prototype screenshot could be captured and inspected. The same browser binding stayed connected, controlled and user-visible tab lists were empty, requesting visibility remained false, and the local application endpoints were healthy. The durable automated same-state comparison remains valid for its recorded commit, but it is not substituted for current-run manual parity evidence.
+
 ## Matched state
 
 The capture harness advances the prototype to the same integrity state exposed by the executable fixture:
