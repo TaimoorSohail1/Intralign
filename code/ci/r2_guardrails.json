@@ -22,7 +22,12 @@
       ]
     },
     "GT-08": {"status": "pending", "tests": []},
-    "GT-09": {"status": "pending", "tests": []},
+    "GT-09": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_withdraw_appends_a_reversal_reopens_and_preserves_activation"
+      ]
+    },
     "GT-10": {
       "status": "active",
       "tests": [
@@ -36,7 +41,12 @@
         "services/api/tests/r2/test_integrity.py::test_flagging_grounds_the_read_without_raising_viability"
       ]
     },
-    "GT-12": {"status": "pending", "tests": []},
+    "GT-12": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_comment_never_grounds_or_changes_any_lifecycle_band"
+      ]
+    },
     "GT-13": {
       "status": "active",
       "tests": [
@@ -65,15 +75,37 @@
     "GT-22": {"status": "pending", "tests": []},
     "GT-23": {"status": "pending", "tests": []},
     "GT-24": {"status": "pending", "tests": []},
-    "GT-25": {"status": "pending", "tests": []},
-    "GT-26": {"status": "pending", "tests": []},
-    "GT-27": {"status": "pending", "tests": []},
+    "GT-25": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_withdraw_appends_a_reversal_reopens_and_preserves_activation"
+      ]
+    },
+    "GT-26": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_confirm_is_typed_and_only_reanalysis_resolves",
+        "services/api/tests/r2/test_issue_lifecycle.py::test_reviewer_reject_is_an_attributed_answered_flag"
+      ]
+    },
+    "GT-27": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_fix_then_grounding_are_separate_acts_and_only_the_second_closes"
+      ]
+    },
     "GT-28": {"status": "pending", "tests": []},
     "GT-29": {"status": "pending", "tests": []},
     "GT-30": {"status": "pending", "tests": []},
     "GT-31": {"status": "pending", "tests": []},
     "GT-32": {"status": "pending", "tests": []},
-    "GT-33": {"status": "pending", "tests": []},
+    "GT-33": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_fix_then_grounding_are_separate_acts_and_only_the_second_closes",
+        "services/api/tests/r2/test_slice_two_ui_contract.py::test_slice_two_renders_itemized_cross_surface_owner_work_without_blank_state"
+      ]
+    },
     "GT-34": {"status": "pending", "tests": []},
     "GT-35": {"status": "pending", "tests": []},
     "GT-36": {"status": "pending", "tests": []},
@@ -91,12 +123,43 @@
     "GT-48": {"status": "pending", "tests": []},
     "GT-49": {"status": "pending", "tests": []},
     "GT-50": {"status": "pending", "tests": []},
-    "GT-51": {"status": "pending", "tests": []},
-    "GT-52": {"status": "pending", "tests": []},
-    "GT-53": {"status": "pending", "tests": []},
-    "GT-54": {"status": "pending", "tests": []},
-    "GT-55": {"status": "pending", "tests": []},
-    "GT-56": {"status": "pending", "tests": []},
+    "GT-51": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_proposal_resolution.py::test_build_finding_stays_open_until_every_resolver_lands_via_reanalysis"
+      ]
+    },
+    "GT-52": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_proposal_resolution.py::test_inference_and_optional_proposals_are_additive_and_ground_nothing"
+      ]
+    },
+    "GT-53": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_proposal_resolution.py::test_build_finding_stays_open_until_every_resolver_lands_via_reanalysis",
+        "services/api/tests/r2/test_slice_two_ui_contract.py::test_slice_two_renders_itemized_cross_surface_owner_work_without_blank_state"
+      ]
+    },
+    "GT-54": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_slice_two_ui_contract.py::test_slice_two_renders_itemized_cross_surface_owner_work_without_blank_state"
+      ]
+    },
+    "GT-55": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_slice_two_ui_contract.py::test_slice_two_renders_itemized_cross_surface_owner_work_without_blank_state"
+      ]
+    },
+    "GT-56": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_slice_two_ui_contract.py::test_slice_two_renders_itemized_cross_surface_owner_work_without_blank_state"
+      ]
+    },
     "GT-57": {"status": "pending", "tests": []},
     "GT-A1": {"status": "pending", "tests": []},
     "GT-A2": {"status": "pending", "tests": []},

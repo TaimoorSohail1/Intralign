@@ -213,6 +213,85 @@ def test_clarification_is_durable_and_addressed_before_reanalysis_completes(
             )
 
 
+def test_rejecting_a_proposal_records_history_against_the_source_read(
+    tmp_path,
+    workspace_owner_id: UUID,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    owner_id = workspace_owner_id
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Proposal decision history', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        baseline = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description="A delivery plan with unresolved ownership and checkpoints.",
+                source_names=("brief.md",),
+                idempotency_key=f"proposal-baseline:{project_id}",
+            )
+        )
+        application = DatabaseSliceTwoApplication(
+            engine=engine,
+            store=store,
+            workflow=workflow,
+            executor=NoopExecutor(),  # type: ignore[arg-type]
+            document_store=DatabaseDocumentStore(
+                engine=engine,
+                object_store=LocalObjectStorage(tmp_path),
+            ),
+            extended_delay_seconds=0,
+        )
+        proposal = application.list_issue_proposals(
+            actor_user_id=owner_id,
+            project_id=project_id,
+        )[0]
+
+        decision = application.decide_issue_proposal(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            proposal_id=UUID(proposal["id"]),
+            accepted=False,
+            surface="folded_read",
+            key=f"proposal-reject:{project_id}",
+        )
+
+        assert decision["analysis_run"] is None
+        assert decision["proposal"]["rejected"] is True
+        with engine.connect() as connection:
+            history_run_id = connection.execute(
+                text(
+                    """
+                    select analysis_run_id
+                    from public.project_history_events
+                    where project_id = :project_id
+                      and event_type = 'proposal.rejected'
+                    """
+                ),
+                {"project_id": project_id},
+            ).scalar_one()
+        assert history_run_id == baseline.run_id
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
 def test_artifact_noop_is_inert_and_material_edit_uses_structured_evidence(
     tmp_path,
     workspace_owner_id: UUID,

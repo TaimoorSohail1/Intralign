@@ -26,7 +26,13 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
-import type { OverviewSnapshot, ProjectHistory } from "@/lib/server/oslo-api";
+import type {
+  IssueBasis,
+  IssueLifecycleAct,
+  IssueProposalSummary,
+  OverviewSnapshot,
+  ProjectHistory,
+} from "@/lib/server/oslo-api";
 import { ArtifactWorkspace } from "@/components/artifacts/artifact-workspace";
 import { HistoryWorkspace } from "@/components/history/history-workspace";
 import { InferenceMap } from "@/components/inference/inference-map";
@@ -154,6 +160,7 @@ export function ProjectOverview({
   initialView = "overview",
   initialHistory,
   initialIssueFilters = defaultIssueFilters,
+  initialProposals = [],
 }: {
   initial: OverviewSnapshot;
   displayName: string;
@@ -161,6 +168,7 @@ export function ProjectOverview({
   initialView?: ProjectView;
   initialHistory?: ProjectHistory;
   initialIssueFilters?: IssueFilters;
+  initialProposals?: IssueProposalSummary[];
 }) {
   const router = useRouter();
   const [snapshot, setSnapshot] = useState(initial);
@@ -189,6 +197,12 @@ export function ProjectOverview({
   const [clarificationError, setClarificationError] = useState<string | null>(null);
   const [issueActionPending, setIssueActionPending] = useState(false);
   const [issueActionError, setIssueActionError] = useState<string | null>(null);
+  const [proposals, setProposals] = useState(initialProposals);
+  const [proposalActionPending, setProposalActionPending] = useState<string | null>(null);
+  const [proposalOpen, setProposalOpen] = useState(true);
+  const [awaitingOpen, setAwaitingOpen] = useState(true);
+  const [actedOpen, setActedOpen] = useState(true);
+  const [resolvedOpen, setResolvedOpen] = useState(true);
   const [selectedResolutions, setSelectedResolutions] = useState<Record<string, string>>(
     () => issueResolutionMap(initial.assessment.issues),
   );
@@ -225,7 +239,29 @@ export function ProjectOverview({
         .sort(issueSort),
     [snapshot.assessment.issues],
   );
-  const clarificationIssue = openIssues.find((issue) => Boolean(issue.clarification));
+  const rankedIssues = useMemo(
+    () => openIssues.filter((issue) => issue.status === "open"),
+    [openIssues],
+  );
+  const awaitingEvidenceIssues = useMemo(
+    () => openIssues.filter((issue) => issue.status === "routed"),
+    [openIssues],
+  );
+  const actedIssues = useMemo(
+    () => openIssues.filter((issue) =>
+      ["addressed", "needs_fix", "needs_grounding"].includes(issue.status),
+    ),
+    [openIssues],
+  );
+  const resolvedIssues = useMemo(
+    () => snapshot.assessment.issues.filter((issue) => issue.status === "resolved"),
+    [snapshot.assessment.issues],
+  );
+  const undecidedProposals = useMemo(
+    () => proposals.filter((proposal) => !proposal.accepted && !proposal.rejected),
+    [proposals],
+  );
+  const clarificationIssue = rankedIssues.find((issue) => Boolean(issue.clarification));
   const criticalCount = openIssues.filter((issue) => issue.severity === "Critical").length;
   const clarificationCount = openIssues.filter((issue) => Boolean(issue.clarification)).length;
   const limitingDimension = snapshot.assessment.limiting_dimension;
@@ -714,6 +750,102 @@ export function ProjectOverview({
     }
   };
 
+  const actOnIssueLifecycle = async (
+    issue: Issue,
+    act: IssueLifecycleAct,
+    options: {
+      basis?: IssueBasis | null;
+      evidenceRef?: string | null;
+      resolution?: string | null;
+      reviewer?: { id: string; display_name: string; role: string } | null;
+    } = {},
+  ) => {
+    if (issueActionPending) return;
+    setIssueActionPending(true);
+    setIssueActionError(null);
+    try {
+      const response = await fetch(
+        `/api/projects/${snapshot.project_id}/issues/${encodeURIComponent(issue.id)}/acts`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            act,
+            basis: options.basis ?? null,
+            evidenceRef: options.evidenceRef ?? null,
+            resolution: options.resolution ?? null,
+            reviewer: options.reviewer ?? null,
+            idempotencyKey: crypto.randomUUID(),
+          }),
+        },
+      );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.message || "The issue act could not be saved.");
+      }
+      updateIssueLifecycle(
+        issue.id,
+        result.status,
+        act === "fix" ? options.resolution ?? undefined : undefined,
+      );
+      if (result.analysis_run?.run_id) {
+        showQueuedReadChange(result.analysis_run);
+        setAnalysisUpdateRunId(result.analysis_run.run_id);
+      }
+    } catch (error) {
+      setIssueActionError(
+        error instanceof Error
+          ? error.message
+          : "The issue act could not be saved. Please try again.",
+      );
+    } finally {
+      setIssueActionPending(false);
+    }
+  };
+
+  const decideProposal = async (
+    proposal: IssueProposalSummary,
+    accepted: boolean,
+    surface: "issue_card" | "artifact" | "folded_read",
+  ) => {
+    if (proposalActionPending) return;
+    setProposalActionPending(proposal.id);
+    setIssueActionError(null);
+    try {
+      const response = await fetch(
+        `/api/projects/${snapshot.project_id}/proposals/${proposal.id}/decisions`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            accepted,
+            surface,
+            idempotencyKey: crypto.randomUUID(),
+          }),
+        },
+      );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.proposal) {
+        throw new Error(result.message || "The proposal decision could not be saved.");
+      }
+      setProposals((current) =>
+        current.map((item) => item.id === proposal.id ? result.proposal : item),
+      );
+      if (result.analysis_run?.run_id) {
+        showQueuedReadChange(result.analysis_run);
+        setAnalysisUpdateRunId(result.analysis_run.run_id);
+      }
+    } catch (error) {
+      setIssueActionError(
+        error instanceof Error
+          ? error.message
+          : "The proposal decision could not be saved. Please try again.",
+      );
+    } finally {
+      setProposalActionPending(null);
+    }
+  };
+
   const undoLatestPendingAct = async () => {
     const eventId = snapshot.freshness?.latest_pending_event_id;
     if (!eventId || reanalysisPending) return;
@@ -774,8 +906,16 @@ export function ProjectOverview({
       }}
       onClose={closeIssue}
       onIssueAction={actOnIssue}
+      onLifecycleAct={(act, options) => actOnIssueLifecycle(selectedIssue, act, options)}
+      onProposalDecision={(proposal, accepted) =>
+        decideProposal(proposal, accepted, "issue_card")
+      }
       onSubmit={submitClarification}
       pending={clarificationPending || issueActionPending}
+      proposalPending={proposalActionPending}
+      proposals={undecidedProposals.filter(
+        (proposal) => proposal.issue_id === selectedIssue.id,
+      )}
       selectedResolution={selectedResolutions[selectedIssue.id] ?? null}
     />
   ) : null;
@@ -1330,7 +1470,7 @@ export function ProjectOverview({
                   className="issue-list"
                   role="region"
                 >
-                  {openIssues.map((issue, index) => {
+                  {rankedIssues.map((issue, index) => {
                     const isSelected = selectedIssue?.id === issue.id;
                     return (
                       <Fragment key={issue.id}>
@@ -1362,6 +1502,21 @@ export function ProjectOverview({
                     );
                   })}
                 </div>
+                {!rankedIssues.length ? (
+                  <section className="r2-cleared-start" aria-label="Start here" role="status">
+                    <strong>✦ Start here</strong>
+                    <span>
+                      {actedIssues.length
+                        ? "Finish the acted-on items below; they are not closed until reanalysis verifies them."
+                        : awaitingEvidenceIssues.length
+                          ? "Review the evidence requests below while OSLO keeps their answers attributed."
+                          : undecidedProposals.length
+                            ? "Decide the itemized OSLO proposals below; each one stays optional until you accept it."
+                            : "Your exposure-ranked worklist is clear. Review the settled items below or continue with your plan."}
+                    </span>
+                  </section>
+                ) : null}
+                {selectedIssue && selectedIssue.status !== "open" ? issuePanel : null}
                 <Link
                   className="attention-map-link"
                   href={`/projects/${snapshot.project_id}/attention`}
@@ -1387,6 +1542,47 @@ export function ProjectOverview({
                       <ArrowRight aria-hidden="true" size={12} />
                     </button>
                   </div>
+                ) : null}
+                <IssueProposalGroup
+                  onDecision={(proposal, accepted) =>
+                    decideProposal(proposal, accepted, "folded_read")
+                  }
+                  onToggle={() => setProposalOpen((current) => !current)}
+                  open={proposalOpen}
+                  pendingId={proposalActionPending}
+                  proposals={undecidedProposals}
+                  surface="folded_read"
+                />
+                <IssueLifecycleTray
+                  issues={awaitingEvidenceIssues}
+                  kind="awaiting"
+                  label="Awaiting evidence"
+                  onAct={actOnIssueLifecycle}
+                  onToggle={() => setAwaitingOpen((current) => !current)}
+                  onView={openIssue}
+                  open={awaitingOpen}
+                />
+                <IssueLifecycleTray
+                  issues={actedIssues}
+                  kind="acted"
+                  label="Acted on, not yet closed"
+                  onAct={actOnIssueLifecycle}
+                  onToggle={() => setActedOpen((current) => !current)}
+                  onView={openIssue}
+                  open={actedOpen}
+                />
+                <IssueLifecycleTray
+                  countLabel={`${resolvedIssues.length} of ${snapshot.assessment.issues.length} settled`}
+                  issues={resolvedIssues}
+                  kind="resolved"
+                  label="Resolved"
+                  onAct={actOnIssueLifecycle}
+                  onToggle={() => setResolvedOpen((current) => !current)}
+                  onView={openIssue}
+                  open={resolvedOpen}
+                />
+                {issueActionError && !selectedIssue ? (
+                  <p className="r2-lifecycle-error" role="alert">{issueActionError}</p>
                 ) : null}
               </section>
 
@@ -1537,6 +1733,13 @@ export function ProjectOverview({
                 void askQuestion(prompt);
               }}
               onOpenIssue={openIssue}
+              onProposalDecision={(proposal, accepted) =>
+                decideProposal(proposal, accepted, "artifact")
+              }
+              proposalPending={proposalActionPending}
+              proposals={undecidedProposals.filter(
+                (proposal) => proposal.artifact_type === initialView,
+              )}
               projectId={snapshot.project_id}
             />
           ) : initialView === "issues" ? (
@@ -2328,6 +2531,169 @@ function MatrixRow({
   );
 }
 
+type IssueLifecycleActOptions = {
+  basis?: IssueBasis | null;
+  evidenceRef?: string | null;
+  resolution?: string | null;
+  reviewer?: { id: string; display_name: string; role: string } | null;
+};
+
+function IssueProposalGroup({
+  onDecision,
+  onToggle,
+  open,
+  pendingId,
+  proposals,
+  surface,
+}: {
+  onDecision: (proposal: IssueProposalSummary, accepted: boolean) => void;
+  onToggle: () => void;
+  open: boolean;
+  pendingId: string | null;
+  proposals: IssueProposalSummary[];
+  surface: "issue_card" | "folded_read";
+}) {
+  if (!proposals.length) return null;
+  return (
+    <section
+      aria-label="OSLO proposes"
+      className={`r2-proposal-group ${surface === "issue_card" ? "is-issue-card" : ""}`}
+      role="region"
+    >
+      <button
+        aria-expanded={open}
+        className="r2-proposal-heading"
+        onClick={onToggle}
+        type="button"
+      >
+        <span><CaretDown aria-hidden="true" size={12} /> <i aria-hidden="true">◆</i> OSLO proposes</span>
+        <strong>{proposals.length} optional addition{proposals.length === 1 ? "" : "s"}</strong>
+      </button>
+      {open ? (
+        <div className="r2-proposal-body">
+          <p>
+            Beyond what your plan rests on — <strong>accept or reject each, here.</strong>{" "}
+            Optional: these round out your plan; they don&apos;t move your integrity band,
+            and nothing enters until you decide.
+          </p>
+          {proposals.map((proposal) => (
+            <article className="r2-proposal-row" key={proposal.id}>
+              <span aria-hidden="true">◆</span>
+              <div>
+                <span className={`r2-proposal-kind is-${proposal.kind}`}>
+                  {proposal.kind === "build" ? "Build fix" : "Optional"}
+                </span>
+                <strong>{proposal.title}</strong>
+                <small><b>Why:</b> {proposal.rationale} · in {artifactLabel(proposal.artifact_type ?? "plan")}</small>
+              </div>
+              <div>
+                <button
+                  aria-label={`Accept ${proposal.title}`}
+                  disabled={pendingId === proposal.id}
+                  onClick={() => onDecision(proposal, true)}
+                  type="button"
+                >
+                  {pendingId === proposal.id ? "Saving…" : "Accept"}
+                </button>
+                <button
+                  aria-label={`Reject ${proposal.title}`}
+                  disabled={pendingId === proposal.id}
+                  onClick={() => onDecision(proposal, false)}
+                  type="button"
+                >
+                  Reject
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function IssueLifecycleTray({
+  countLabel,
+  issues,
+  kind,
+  label,
+  onAct,
+  onToggle,
+  onView,
+  open,
+}: {
+  countLabel?: string;
+  issues: Issue[];
+  kind: "awaiting" | "acted" | "resolved";
+  label: string;
+  onAct: (issue: Issue, act: IssueLifecycleAct, options?: IssueLifecycleActOptions) => void;
+  onToggle: () => void;
+  onView: (issue: Issue, trigger?: HTMLElement | null) => void;
+  open: boolean;
+}) {
+  if (!issues.length) return null;
+  const statusCount = kind === "acted"
+    ? `${issues.filter((issue) => issue.status === "needs_fix").length} to fix · ${
+      issues.filter((issue) => issue.status === "needs_grounding").length
+    } to ground`
+    : `${issues.length}`;
+  return (
+    <section aria-label={label} className={`r2-lifecycle-tray is-${kind}`} role="region">
+      <button
+        aria-expanded={open}
+        className="r2-tray-heading"
+        onClick={onToggle}
+        type="button"
+      >
+        <span><CaretDown aria-hidden="true" size={12} /> {kind === "resolved" ? "✓" : "◇"} {label}</span>
+        <strong>{countLabel ?? statusCount}</strong>
+      </button>
+      {open ? (
+        <div className="r2-tray-body">
+          {issues.map((issue) => (
+            <article className="r2-tray-row" key={issue.id}>
+              <span aria-hidden="true">{kind === "resolved" ? "✓" : "○"}</span>
+              <div>
+                <strong>{issue.title}</strong>
+                {issue.attested_by ? (
+                  <small>{artifactLabel(issue.basis ?? "documented")} · Confirmed by {issue.attested_by.display_name}</small>
+                ) : null}
+              </div>
+              <span className={`r2-pillar r2-pillar-${issuePillar(issue).toLowerCase()}`}>
+                {issuePillar(issue)}
+              </span>
+              <div className="r2-tray-actions">
+                {issue.status === "needs_fix" ? (
+                  <button
+                    onClick={() => onAct(issue, "fix", { resolution: issue.recommendation })}
+                    type="button"
+                  >Fix it in your plan</button>
+                ) : null}
+                {issue.status === "needs_grounding" ? (
+                  <button
+                    onClick={() => onAct(issue, "ground", {
+                      basis: "verified-directly",
+                      evidenceRef: issue.evidence_refs.at(0) ?? `user:direct-confirm:${issue.id}`,
+                    })}
+                    type="button"
+                  >Ground it on evidence</button>
+                ) : null}
+                {issue.status === "addressed" ? <span>Waiting for reanalysis</span> : null}
+                <button
+                  aria-label={`View ${issue.title}`}
+                  onClick={(event) => onView(issue, event.currentTarget)}
+                  type="button"
+                >View →</button>
+                <button onClick={() => onAct(issue, "withdraw")} type="button">Withdraw</button>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function IssuePanel({
   analysisRunning,
   answer,
@@ -2339,8 +2705,12 @@ function IssuePanel({
   onAsk,
   onClose,
   onIssueAction,
+  onLifecycleAct,
+  onProposalDecision,
   onSubmit,
   pending,
+  proposalPending,
+  proposals,
   selectedResolution,
 }: {
   analysisRunning: boolean;
@@ -2356,12 +2726,23 @@ function IssuePanel({
     action: "select" | "apply" | "custom",
     resolution: string,
   ) => Promise<void>;
+  onLifecycleAct: (
+    act: IssueLifecycleAct,
+    options?: IssueLifecycleActOptions,
+  ) => Promise<void>;
+  onProposalDecision: (proposal: IssueProposalSummary, accepted: boolean) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   pending: boolean;
+  proposalPending: string | null;
+  proposals: IssueProposalSummary[];
   selectedResolution: string | null;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [proposalsOpen, setProposalsOpen] = useState(true);
+  const [otherWaysOpen, setOtherWaysOpen] = useState(false);
+  const [routingOpen, setRoutingOpen] = useState(false);
+  const [discussionVisible, setDiscussionVisible] = useState(false);
   const [customResolution, setCustomResolution] = useState("");
   const [comments, setComments] = useState<Array<{
     id: string;
@@ -2379,6 +2760,35 @@ function IssuePanel({
   const [reviewCopied, setReviewCopied] = useState(false);
   const evidence = issue.evidence ?? [];
   const effectiveStatus = issue.status;
+  const routeIssue = async (reviewer: { id: string; display_name: string; role: string }) => {
+    setReviewPending(true);
+    setCollaborationError("");
+    try {
+      const response = await fetch(`/api/projects/${projectId}/collaboration`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "review",
+          issueId: issue.id,
+          reviewerName: reviewer.display_name,
+          reviewerEmail: null,
+        }),
+      });
+      const created = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(created.message ?? "Review route could not be created.");
+      await onLifecycleAct("route", {
+        reviewer: { ...reviewer, id: created.id ?? reviewer.id },
+      });
+      setReviewLink(created.url ?? "");
+      setRoutingOpen(false);
+    } catch (caught) {
+      setCollaborationError(
+        caught instanceof Error ? caught.message : "Review route could not be created.",
+      );
+    } finally {
+      setReviewPending(false);
+    }
+  };
 
   useEffect(() => {
     closeButton.current?.focus();
@@ -2512,7 +2922,7 @@ function IssuePanel({
         &nbsp; Type · Finding
       </p>
       <div className="issue-lifecycle" aria-label={`Issue status ${effectiveStatus}`}>
-        {["open", "addressed", "resolved"].map((status) => (
+        {["open", "addressed", "routed", "needs_fix", "needs_grounding", "resolved"].map((status) => (
           <span className={status === effectiveStatus ? "is-current" : ""} key={status}>
             {artifactLabel(status)}
           </span>
@@ -2619,39 +3029,138 @@ function IssuePanel({
         <h3>OSLO recommended</h3>
         <strong>{issue.recommendation}</strong>
         <p>
-          Applying this fix creates a new user-confirmed artifact version and re-runs the
-          governed analysis. OSLO never marks the issue resolved without that new read.
+          {inline
+            ? "Confirm it and it rests on your evidence instead — that’s grounding, and it’s what lifts your read."
+            : "Applying this fix creates a new user-confirmed artifact version and re-runs the governed analysis. OSLO never marks the issue resolved without that new read."}
         </p>
-        <div className="issue-action-row">
-          <button
-            disabled={pending || analysisRunning}
-            onClick={() => void onIssueAction("apply", issue.recommendation)}
-            type="button"
-          >
-            Apply this fix
-          </button>
-          <button onClick={onAsk} type="button">Discuss</button>
-        </div>
+        {inline ? (
+          <div className="issue-action-row is-lifecycle">
+            <button
+              aria-label="Confirm — it holds"
+              disabled={pending || analysisRunning}
+              onClick={() => void onLifecycleAct("confirm", {
+                basis: "verified-directly",
+                evidenceRef: issue.evidence_refs.at(0) ?? `user:direct-confirm:${issue.id}`,
+              })}
+              type="button"
+            >
+              ✓ Confirm — it holds
+            </button>
+            <button
+              disabled={pending || analysisRunning}
+              onClick={() => void onLifecycleAct("flag", {
+                basis: "verified-directly",
+                evidenceRef: issue.evidence_refs.at(0) ?? `user:direct-flag:${issue.id}`,
+              })}
+              type="button"
+            >
+              It doesn&apos;t hold →
+            </button>
+            <button onClick={() => setRoutingOpen(true)} type="button">→ Ask for evidence →</button>
+          </div>
+        ) : (
+          <div className="issue-action-row">
+            <button
+              disabled={pending || analysisRunning}
+              onClick={() => void onIssueAction("apply", issue.recommendation)}
+              type="button"
+            >
+              Apply this fix
+            </button>
+            <button onClick={onAsk} type="button">Discuss</button>
+          </div>
+        )}
       </section>
-      <section className="issue-resolution-paths">
-        <h3>Possible resolution paths</h3>
-        <div className="resolution-path">
-          <span><ArrowRight aria-hidden="true" size={12} />{issue.recommendation}</span>
+      {inline && routingOpen ? (
+        <section className="issue-route-panel" aria-label="Ask for evidence">
+          <h3>⇢ Ask for evidence — who can ground it?</h3>
+          <p>
+            <strong>Asking for evidence</strong> routes the question; their answer grounds
+            the read, attributed to them. It stays OSLO&apos;s inference — not grounded —
+            until they answer.
+          </p>
           <button
-            disabled={pending || analysisRunning}
-            onClick={() => void onIssueAction("select", issue.recommendation)}
+            disabled={pending || analysisRunning || reviewPending}
+            onClick={() => void routeIssue({
+              id: "project-collaborator",
+              display_name: "Project collaborator",
+              role: "collaborator",
+            })}
             type="button"
           >
-            Select this path
+            <span><b>Project collaborator</b> · collaborator <small>Sees your full read · co-grounds with you</small></span>
+            <strong>Ask →</strong>
           </button>
-        </div>
-        <div className="resolution-path">
-          <span>
-            <ArrowRight aria-hidden="true" size={12} />
-            Confirm an accountable owner, decision date, and fallback.
-          </span>
-          <button onClick={onAsk} type="button">Discuss</button>
-        </div>
+          <button
+            disabled={pending || analysisRunning || reviewPending}
+            onClick={() => void routeIssue({
+              id: "external-evidence-holder",
+              display_name: "External evidence holder",
+              role: "external",
+            })}
+            type="button"
+          >
+            <span><b>External evidence holder</b> · scoped <small>Gets only this question + its source · answers once</small></span>
+            <strong>Ask →</strong>
+          </button>
+          <h3>Or just discuss it</h3>
+          <p>
+            A <strong>comment</strong> is discussion only. It never grounds the read or
+            resolves the issue; the item stays open.
+          </p>
+          <button
+            onClick={() => {
+              setDiscussionVisible(true);
+              setRoutingOpen(false);
+            }}
+            type="button"
+          >
+            <span><b>Comment / @mention</b> <small>Start a discussion — doesn&apos;t move the read</small></span>
+            <strong>Comment →</strong>
+          </button>
+          <button className="issue-route-cancel" onClick={() => setRoutingOpen(false)} type="button">Cancel</button>
+        </section>
+      ) : null}
+      <IssueProposalGroup
+        onDecision={onProposalDecision}
+        onToggle={() => setProposalsOpen((current) => !current)}
+        open={proposalsOpen}
+        pendingId={proposalPending}
+        proposals={proposals}
+        surface="issue_card"
+      />
+      <section className="issue-resolution-paths">
+        <button
+          aria-expanded={otherWaysOpen}
+          aria-label="Other ways to handle this"
+          className="issue-other-ways-disclosure"
+          onClick={() => setOtherWaysOpen((current) => !current)}
+          type="button"
+        >
+          <span><strong>Other ways to handle this</strong><small>Alternative approaches and tradeoffs.</small></span>
+          <CaretDown aria-hidden="true" size={14} />
+        </button>
+        {otherWaysOpen ? (
+          <div className="issue-other-ways-content">
+            <div className="resolution-path">
+              <span><ArrowRight aria-hidden="true" size={12} />{issue.recommendation}</span>
+              <button
+                disabled={pending || analysisRunning}
+                onClick={() => void onIssueAction("select", issue.recommendation)}
+                type="button"
+              >
+                Select this path
+              </button>
+            </div>
+            <div className="resolution-path">
+              <span>
+                <ArrowRight aria-hidden="true" size={12} />
+                Confirm an accountable owner, decision date, and fallback.
+              </span>
+              <button onClick={onAsk} type="button">Discuss</button>
+            </div>
+          </div>
+        ) : null}
       </section>
       {selectedResolution ? (
         <section className="confirmed-resolution" aria-live="polite">
@@ -2677,7 +3186,7 @@ function IssuePanel({
           Apply custom fix
         </button>
       </section>
-      <section className="issue-collaboration">
+      <section className={`issue-collaboration ${discussionVisible ? "is-visible" : ""}`}>
         <div className="issue-collaboration-heading">
           <div>
             <h3>Discussion</h3>

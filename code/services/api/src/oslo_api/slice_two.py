@@ -179,12 +179,44 @@ class SliceTwoApplication(Protocol):
         key: str,
     ) -> dict: ...
 
+    def act_on_issue_lifecycle(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        issue_id: str,
+        act: str,
+        basis: str | None,
+        evidence_ref: str | None,
+        resolution: str | None,
+        reviewer: dict | None,
+        key: str,
+    ) -> dict: ...
+
     def list_issue_actions(
         self,
         *,
         actor_user_id: UUID,
         project_id: UUID,
     ) -> list[dict]: ...
+
+    def list_issue_proposals(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+    ) -> list[dict]: ...
+
+    def decide_issue_proposal(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        proposal_id: UUID,
+        accepted: bool,
+        surface: str,
+        key: str,
+    ) -> dict: ...
 
     def get_artifact(
         self,

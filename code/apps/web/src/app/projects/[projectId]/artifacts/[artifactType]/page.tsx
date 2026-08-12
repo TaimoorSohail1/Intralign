@@ -2,7 +2,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { logout } from "@/app/logout-action";
 import { ProjectOverview } from "@/components/overview/project-overview";
-import { getOverview } from "@/lib/server/oslo-api";
+import { getOverview, getProjectIssueProposals } from "@/lib/server/oslo-api";
+import type { IssueProposalSummary } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
 
 const artifactTypes = new Set([
@@ -25,8 +26,12 @@ export default async function ArtifactPage({
   const { projectId, artifactType } = await params;
   if (!artifactTypes.has(artifactType)) notFound();
   let snapshot;
+  let proposals: IssueProposalSummary[] = [];
   try {
-    snapshot = await getOverview(session.accessToken, projectId);
+    [snapshot, proposals] = await Promise.all([
+      getOverview(session.accessToken, projectId),
+      getProjectIssueProposals({ accessToken: session.accessToken, projectId }),
+    ]);
   } catch {
     redirect(`/intake?project=${projectId}`);
   }
@@ -34,6 +39,7 @@ export default async function ArtifactPage({
     <ProjectOverview
       displayName={session.displayName ?? "Member"}
       initial={snapshot}
+      initialProposals={proposals}
       initialView={artifactType as "intent"}
       logoutAction={logout}
     />

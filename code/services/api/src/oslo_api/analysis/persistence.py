@@ -1384,6 +1384,35 @@ class DatabaseAnalysisStore:
                         ),
                     },
                 )
+                connection.execute(
+                    text(
+                        """
+                        insert into public.issue_proposals (
+                          workspace_id, project_id, issue_stable_key, stable_key,
+                          kind, resolver_key, title, rationale, artifact_type,
+                          load_bearing, created_by_run_id
+                        ) values (
+                          :workspace_id, :project_id, :issue_stable_key,
+                          :stable_key, 'build', :resolver_key, :title, :rationale,
+                          cast(:artifact_type as public.plan_artifact_type),
+                          :load_bearing, :run_id
+                        )
+                        on conflict (project_id, stable_key) do nothing
+                        """
+                    ),
+                    {
+                        "workspace_id": snapshot.workspace_id,
+                        "project_id": snapshot.project_id,
+                        "issue_stable_key": issue.id,
+                        "stable_key": f"build:{issue.id}:primary",
+                        "resolver_key": f"{issue.artifact_type.value}:primary",
+                        "title": issue.recommendation or f"Address {issue.title}",
+                        "rationale": issue.why,
+                        "artifact_type": issue.artifact_type.value,
+                        "load_bearing": issue.severity in {"Critical", "Moderate"},
+                        "run_id": run_id,
+                    },
+                )
             connection.execute(
                 text(
                     """

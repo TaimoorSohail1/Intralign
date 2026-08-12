@@ -137,6 +137,10 @@ class IssueResponse(BaseModel):
     clarification: str | None
     status: str
     selected_resolution: str | None = None
+    basis: str | None = None
+    evidence_ref: str | None = None
+    attested_by: dict | None = None
+    routed_to: dict | None = None
     pillar: str
     dimensions: list[str]
     finding_type: str
@@ -374,6 +378,94 @@ class IssueActionResponse(BaseModel):
     action: Literal["select", "apply", "custom"]
     status: Literal["open", "addressed", "resolved"]
     selected_resolution: str
+    analysis_run: AnalysisRunResponse | None = None
+
+
+class IssueLifecycleReviewerRequest(BaseModel):
+    id: str = Field(min_length=1, max_length=200)
+    display_name: str = Field(min_length=1, max_length=200)
+    role: str = Field(default="reviewer", min_length=1, max_length=100)
+
+
+class IssueLifecycleActRequest(BaseModel):
+    act: Literal["confirm", "flag", "fix", "ground", "route", "withdraw"]
+    basis: Literal[
+        "documented",
+        "vendor-or-owner-verified",
+        "verified-directly",
+        "answered",
+    ] | None = None
+    evidence_ref: str | None = Field(default=None, max_length=1_000)
+    resolution: str | None = Field(default=None, max_length=5_000)
+    reviewer: IssueLifecycleReviewerRequest | None = None
+
+    @model_validator(mode="after")
+    def validate_lifecycle_act(self) -> "IssueLifecycleActRequest":
+        if self.act in {"confirm", "ground"} and self.basis is None:
+            raise ValueError("A typed basis is required for this act")
+        if self.act == "fix" and not (self.resolution or "").strip():
+            raise ValueError("A plan change is required for a fix")
+        if self.act == "route" and self.reviewer is None:
+            raise ValueError("A reviewer is required for a route")
+        return self
+
+
+class IssueLifecycleActorResponse(BaseModel):
+    id: str
+    display_name: str
+    role: str
+
+
+class IssueAttestationResponse(BaseModel):
+    id: str
+    act: Literal["confirm", "flag", "fix", "ground", "route", "withdraw"]
+    basis: Literal[
+        "documented",
+        "vendor-or-owner-verified",
+        "verified-directly",
+        "answered",
+    ] | None
+    evidence_ref: str | None
+    attributed_to: IssueLifecycleActorResponse
+    supersedes: str | None
+
+
+class IssueLifecycleActResponse(BaseModel):
+    issue_id: str
+    act: Literal["confirm", "flag", "fix", "ground", "route", "withdraw"]
+    status: Literal[
+        "open",
+        "addressed",
+        "routed",
+        "needs_fix",
+        "needs_grounding",
+        "resolved",
+    ]
+    attestation: IssueAttestationResponse
+    analysis_run: AnalysisRunResponse | None = None
+
+
+class IssueProposalResponse(BaseModel):
+    id: str
+    issue_id: str
+    kind: Literal["build", "inference", "optional"]
+    resolver_key: str
+    title: str
+    rationale: str
+    artifact_type: str | None
+    load_bearing: bool
+    accepted: bool
+    rejected: bool
+    surface: Literal["issue_card", "artifact", "folded_read"] | None
+
+
+class IssueProposalDecisionRequest(BaseModel):
+    accepted: bool
+    surface: Literal["issue_card", "artifact", "folded_read"]
+
+
+class IssueProposalDecisionResponse(BaseModel):
+    proposal: IssueProposalResponse
     analysis_run: AnalysisRunResponse | None = None
 
 
@@ -654,6 +746,10 @@ def _overview_response(
                     clarification=issue.clarification,
                     status=latest_actions.get(issue.id, {}).get("status", issue.status),
                     selected_resolution=latest_actions.get(issue.id, {}).get("selected_resolution"),
+                    basis=latest_actions.get(issue.id, {}).get("basis"),
+                    evidence_ref=latest_actions.get(issue.id, {}).get("evidence_ref"),
+                    attested_by=latest_actions.get(issue.id, {}).get("attested_by"),
+                    routed_to=latest_actions.get(issue.id, {}).get("routed_to"),
                     pillar=(
                         "Viability"
                         if issue.dimension in {"Clarity", "Alignment", "Feasibility"}
@@ -733,6 +829,10 @@ def _artifact_workspace_response(
                 clarification=issue.clarification,
                 status=latest_actions.get(issue.id, {}).get("status", issue.status),
                 selected_resolution=latest_actions.get(issue.id, {}).get("selected_resolution"),
+                basis=latest_actions.get(issue.id, {}).get("basis"),
+                evidence_ref=latest_actions.get(issue.id, {}).get("evidence_ref"),
+                attested_by=latest_actions.get(issue.id, {}).get("attested_by"),
+                routed_to=latest_actions.get(issue.id, {}).get("routed_to"),
                 pillar=(
                     "Viability"
                     if issue.dimension in {"Clarity", "Alignment", "Feasibility"}
@@ -1252,6 +1352,56 @@ def act_on_project_issue(
     )
 
 
+@router.post(
+    "/projects/{project_id}/issues/{issue_id}/acts",
+    response_model=IssueLifecycleActResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def act_on_project_issue_lifecycle(
+    project_id: UUID,
+    issue_id: str,
+    payload: IssueLifecycleActRequest,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+    idempotency_key: Annotated[
+        str,
+        Header(alias="Idempotency-Key", min_length=8, max_length=200),
+    ],
+) -> IssueLifecycleActResponse:
+    try:
+        result = slice_two_application(request).act_on_issue_lifecycle(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            issue_id=issue_id,
+            act=payload.act,
+            basis=payload.basis,
+            evidence_ref=payload.evidence_ref,
+            resolution=payload.resolution,
+            reviewer=payload.reviewer.model_dump() if payload.reviewer else None,
+            key=idempotency_key,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    except (SliceTwoIssueNotAnswerable, ValueError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error) or "ISSUE_NOT_ACTIONABLE",
+        ) from error
+    except SliceTwoArtifactConflict as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="ARTIFACT_VERSION_CONFLICT",
+        ) from error
+    run = result.get("analysis_run")
+    return IssueLifecycleActResponse(
+        issue_id=result["issue_id"],
+        act=result["act"],
+        status=result["status"],
+        attestation=IssueAttestationResponse.model_validate(result["attestation"]),
+        analysis_run=_run_response(run) if run is not None else None,
+    )
+
+
 @router.get(
     "/projects/{project_id}/issue-actions",
     response_model=list[IssueActionResponse],
@@ -1283,6 +1433,64 @@ def list_project_issue_actions(
         for action in actions
         if action["action"] in {"select", "apply", "custom"}
     ]
+
+
+@router.get(
+    "/projects/{project_id}/proposals",
+    response_model=list[IssueProposalResponse],
+)
+def list_project_issue_proposals(
+    project_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+) -> list[IssueProposalResponse]:
+    try:
+        proposals = slice_two_application(request).list_issue_proposals(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    return [IssueProposalResponse.model_validate(proposal) for proposal in proposals]
+
+
+@router.post(
+    "/projects/{project_id}/proposals/{proposal_id}/decisions",
+    response_model=IssueProposalDecisionResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def decide_project_issue_proposal(
+    project_id: UUID,
+    proposal_id: UUID,
+    payload: IssueProposalDecisionRequest,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+    idempotency_key: Annotated[
+        str,
+        Header(alias="Idempotency-Key", min_length=8, max_length=200),
+    ],
+) -> IssueProposalDecisionResponse:
+    try:
+        result = slice_two_application(request).decide_issue_proposal(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            proposal_id=proposal_id,
+            accepted=payload.accepted,
+            surface=payload.surface,
+            key=idempotency_key,
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    except (SliceTwoIssueNotAnswerable, ValueError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error) or "PROPOSAL_NOT_ACTIONABLE",
+        ) from error
+    run = result.get("analysis_run")
+    return IssueProposalDecisionResponse(
+        proposal=IssueProposalResponse.model_validate(result["proposal"]),
+        analysis_run=_run_response(run) if run is not None else None,
+    )
 
 
 @router.post("/workspaces/{workspace_id}/orientation-seen", status_code=status.HTTP_204_NO_CONTENT)

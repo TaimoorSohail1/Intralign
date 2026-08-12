@@ -372,6 +372,41 @@ class DatabaseSliceTwoApplication:
                     "issue_id": issue_id,
                 },
             )
+            connection.execute(
+                text(
+                    """
+                    insert into public.issue_attestations (
+                      workspace_id, project_id, issue_stable_key, act,
+                      actor_user_id, attributed_to, basis, evidence_ref,
+                      analysis_run_id, idempotency_key
+                    )
+                    select :workspace_id, :project_id, :issue_id, 'answer',
+                           :actor_user_id,
+                           jsonb_build_object(
+                             'id', cast(profile.id as text),
+                             'display_name', profile.display_name,
+                             'role', membership.role
+                           ),
+                           'answered', :evidence_ref, :analysis_run_id,
+                           :idempotency_key
+                    from public.profiles profile
+                    join public.memberships membership
+                      on membership.user_id = profile.id
+                     and membership.workspace_id = :workspace_id
+                    where profile.id = :actor_user_id
+                    on conflict (workspace_id, idempotency_key) do nothing
+                    """
+                ),
+                {
+                    "workspace_id": workspace_id,
+                    "project_id": project_id,
+                    "issue_id": issue_id,
+                    "actor_user_id": actor_user_id,
+                    "evidence_ref": clarification_evidence.reference,
+                    "analysis_run_id": run.id,
+                    "idempotency_key": f"clarification:{key}",
+                },
+            )
             append_history_event(
                 connection,
                 workspace_id=workspace_id,
@@ -399,12 +434,7 @@ class DatabaseSliceTwoApplication:
         body: str,
         key: str,
     ) -> AnalysisRun:
-        """Re-run from reviewer evidence without mutating the issue lifecycle.
-
-        Reviewer approval is evidence, not a user decision. The governed analysis
-        may change the read, but the reviewer response never marks an issue
-        addressed or resolved.
-        """
+        """Promote reviewer evidence through the same reanalysis-only lifecycle."""
 
         workspace_id = self._workspace_for_project(actor_user_id, project_id)
         snapshot = self._store.current_snapshot(project_id)
@@ -444,6 +474,59 @@ class DatabaseSliceTwoApplication:
             consumes_analysis_allowance=False,
         )
         with self._engine.begin() as connection:
+            if issue_id is not None:
+                reviewer_act = "flag" if response_kind == "reject" else "answer"
+                connection.execute(
+                    text(
+                        """
+                        insert into public.issue_attestations (
+                          workspace_id, project_id, issue_stable_key, act,
+                          actor_user_id, attributed_to, basis, evidence_ref,
+                          analysis_run_id, idempotency_key
+                        ) values (
+                          :workspace_id, :project_id, :issue_id,
+                          cast(:act as public.issue_attestation_act), :actor_user_id,
+                          cast(:attributed_to as jsonb), 'answered', :evidence_ref,
+                          :analysis_run_id, :idempotency_key
+                        )
+                        on conflict (workspace_id, idempotency_key) do nothing
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                        "issue_id": issue_id,
+                        "act": reviewer_act,
+                        "actor_user_id": actor_user_id,
+                        "attributed_to": json.dumps(
+                            {
+                                "id": f"reviewer:{key}",
+                                "display_name": reviewer_name,
+                                "role": "reviewer",
+                            }
+                        ),
+                        "evidence_ref": reviewer_evidence.reference,
+                        "analysis_run_id": run.id,
+                        "idempotency_key": f"review-attestation:{key}",
+                    },
+                )
+                connection.execute(
+                    text(
+                        """
+                        update public.issues
+                        set current_status = 'addressed', updated_at = now()
+                        where workspace_id = :workspace_id
+                          and project_id = :project_id
+                          and stable_key = :issue_id
+                          and current_status <> 'resolved'
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                        "issue_id": issue_id,
+                    },
+                )
             append_history_event(
                 connection,
                 workspace_id=workspace_id,
@@ -698,6 +781,352 @@ class DatabaseSliceTwoApplication:
             "status": "addressed",
         }
 
+    def act_on_issue_lifecycle(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        issue_id: str,
+        act: str,
+        basis: str | None,
+        evidence_ref: str | None,
+        resolution: str | None,
+        reviewer: dict | None,
+        key: str,
+    ) -> dict:
+        workspace_id = self._workspace_for_project(actor_user_id, project_id)
+        snapshot = self._store.current_snapshot(project_id)
+        if snapshot is None:
+            raise SliceTwoNotFound
+        issue = next(
+            (candidate for candidate in snapshot.assessment.issues if candidate.id == issue_id),
+            None,
+        )
+        if issue is None:
+            raise SliceTwoNotFound
+        parent_run = self._store.get_run(snapshot.analysis_run_id)
+        if parent_run is None:
+            raise SliceTwoNotFound
+
+        with self._engine.begin() as connection:
+            existing = (
+                connection.execute(
+                    text(
+                        """
+                        select attestation.id, attestation.act, attestation.basis,
+                               attestation.evidence_ref, attestation.attributed_to,
+                               attestation.supersedes, attestation.analysis_run_id,
+                               issue.current_status
+                        from public.issue_attestations attestation
+                        join public.issues issue
+                          on issue.workspace_id = attestation.workspace_id
+                         and issue.project_id = attestation.project_id
+                         and issue.stable_key = attestation.issue_stable_key
+                        where attestation.workspace_id = :workspace_id
+                          and attestation.idempotency_key = :idempotency_key
+                        """
+                    ),
+                    {"workspace_id": workspace_id, "idempotency_key": key},
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if existing is not None:
+                run = (
+                    self._store.get_run(existing["analysis_run_id"])
+                    if existing["analysis_run_id"] is not None
+                    else None
+                )
+                return {
+                    "issue_id": issue_id,
+                    "act": str(existing["act"]),
+                    "status": str(existing["current_status"]),
+                    "attestation": {
+                        "id": str(existing["id"]),
+                        "act": str(existing["act"]),
+                        "basis": str(existing["basis"]) if existing["basis"] else None,
+                        "evidence_ref": existing["evidence_ref"],
+                        "attributed_to": dict(existing["attributed_to"]),
+                        "supersedes": (
+                            str(existing["supersedes"])
+                            if existing["supersedes"] is not None
+                            else None
+                        ),
+                    },
+                    "analysis_run": run,
+                }
+            issue_row = (
+                connection.execute(
+                    text(
+                        """
+                        select current_status
+                        from public.issues
+                        where workspace_id = :workspace_id
+                          and project_id = :project_id
+                          and stable_key = :issue_id
+                        for update
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                        "issue_id": issue_id,
+                    },
+                )
+                .mappings()
+                .one_or_none()
+            )
+            actor_row = (
+                connection.execute(
+                    text(
+                        """
+                        select profile.display_name, membership.role
+                        from public.profiles profile
+                        join public.memberships membership
+                          on membership.user_id = profile.id
+                         and membership.workspace_id = :workspace_id
+                        where profile.id = :actor_user_id
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "actor_user_id": actor_user_id,
+                    },
+                )
+                .mappings()
+                .one()
+            )
+            latest_attestation_id = connection.execute(
+                text(
+                    """
+                    select id from public.issue_attestations
+                    where workspace_id = :workspace_id
+                      and project_id = :project_id
+                      and issue_stable_key = :issue_id
+                    order by created_at desc
+                    limit 1
+                    """
+                ),
+                {
+                    "workspace_id": workspace_id,
+                    "project_id": project_id,
+                    "issue_id": issue_id,
+                },
+            ).scalar_one_or_none()
+        if issue_row is None:
+            raise SliceTwoNotFound
+
+        current_status = str(issue_row["current_status"])
+        allowed_acts = {"confirm", "flag", "fix", "ground", "route", "withdraw"}
+        if act not in allowed_acts:
+            raise ValueError("ISSUE_LIFECYCLE_ACT_INVALID")
+        if act in {"confirm", "ground"} and basis is None:
+            raise ValueError("ISSUE_ACT_REQUIRES_BASIS")
+        if act == "ground" and current_status != "needs_grounding":
+            raise ValueError("GROUND_REQUIRES_MITIGATED_ISSUE")
+        if act == "fix" and current_status not in {"open", "needs_fix"}:
+            raise ValueError("FIX_REQUIRES_OPEN_OR_NEEDS_FIX_ISSUE")
+        if act == "fix" and not (resolution or "").strip():
+            raise ValueError("FIX_REQUIRES_PLAN_CHANGE")
+        if act == "route" and (current_status != "open" or reviewer is None):
+            raise ValueError("ROUTE_REQUIRES_OPEN_ISSUE_AND_REVIEWER")
+        if act == "withdraw" and (current_status == "open" or latest_attestation_id is None):
+            raise ValueError("ISSUE_HAS_NO_LIVE_ACT_TO_WITHDRAW")
+        if current_status == "resolved" and act != "withdraw":
+            raise ValueError("RESOLVED_ISSUE_IS_NOT_ACTIONABLE")
+
+        attributed_to = {
+            "id": str(actor_user_id),
+            "display_name": str(actor_row["display_name"]),
+            "role": str(actor_row["role"]),
+        }
+        run: AnalysisRun | None = None
+        plan_change_ref: str | None = None
+        routed_to: dict | None = None
+        supersedes: UUID | None = None
+
+        if act == "route":
+            routed_to = reviewer
+            live_status = "routed"
+            route_event_id, _ = self._enqueue_change(
+                workspace_id=workspace_id,
+                actor_user_id=actor_user_id,
+                project_id=project_id,
+                event_key=f"issue-route:{key}",
+                change_kind="route",
+                scope=issue.artifact_type.value,
+                evidence={},
+                requires_deep_pass=False,
+            )
+            self._record_grounding_act(
+                event_id=route_event_id,
+                workspace_id=workspace_id,
+                project_id=project_id,
+                actor_user_id=actor_user_id,
+            )
+            with self._engine.begin() as connection:
+                connection.execute(
+                    text(
+                        """
+                        update public.reanalysis_change_events
+                        set state = 'consumed', consumed_at = now()
+                        where id = :event_id and state = 'pending'
+                        """
+                    ),
+                    {"event_id": route_event_id},
+                )
+                connection.execute(
+                    text(
+                        """
+                        update public.project_read_freshness
+                        set state = case when pending_count > 1
+                              then 'stale'::public.read_freshness_state
+                              else 'fresh'::public.read_freshness_state end,
+                            pending_count = greatest(pending_count - 1, 0),
+                            updated_at = now()
+                        where project_id = :project_id
+                        """
+                    ),
+                    {"project_id": project_id},
+                )
+        elif act == "fix":
+            applied = self.act_on_issue(
+                actor_user_id=actor_user_id,
+                project_id=project_id,
+                issue_id=issue_id,
+                action="apply",
+                resolution=(resolution or "").strip(),
+                key=f"lifecycle-fix:{key}",
+            )
+            run = applied["analysis_run"]
+            plan_change_ref = (
+                f"artifact:{applied['artifact_type']}:v{applied['artifact_version']}"
+            )
+            live_status = "addressed"
+        else:
+            if act == "withdraw":
+                supersedes = latest_attestation_id
+            reference = evidence_ref or f"user:issue-act:{act}:{key}"
+            evidence = EvidenceFragment(
+                reference=reference,
+                content=(
+                    (resolution or "").strip()
+                    or f"The user recorded a governed {act} act for {issue.title}."
+                ),
+                source_name="Issue attestation",
+                location=issue.title,
+            )
+            run = self._batched_reanalysis_run(
+                workspace_id=workspace_id,
+                actor_user_id=actor_user_id,
+                project_id=project_id,
+                parent_run=parent_run,
+                evidence=(evidence,),
+                event_key=f"issue-{act}:{key}",
+                change_kind={
+                    "confirm": "confirm",
+                    "flag": "flag",
+                    "ground": "ground",
+                    "withdraw": "withdraw",
+                }[act],
+                scope=issue.artifact_type.value,
+                consumes_analysis_allowance=False,
+            )
+            live_status = "open" if act == "withdraw" else "addressed"
+
+        with self._engine.begin() as connection:
+            attestation = (
+                connection.execute(
+                    text(
+                        """
+                        insert into public.issue_attestations (
+                          workspace_id, project_id, issue_stable_key, act,
+                          actor_user_id, attributed_to, basis, evidence_ref,
+                          plan_change_ref, routed_to, supersedes, analysis_run_id,
+                          idempotency_key
+                        ) values (
+                          :workspace_id, :project_id, :issue_id,
+                          cast(:act as public.issue_attestation_act), :actor_user_id,
+                          cast(:attributed_to as jsonb),
+                          cast(:basis as public.issue_attestation_basis),
+                          :evidence_ref, :plan_change_ref, cast(:routed_to as jsonb),
+                          :supersedes, :analysis_run_id, :idempotency_key
+                        )
+                        returning id, act, basis, evidence_ref, attributed_to, supersedes
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                        "issue_id": issue_id,
+                        "act": act,
+                        "actor_user_id": actor_user_id,
+                        "attributed_to": json.dumps(attributed_to),
+                        "basis": basis,
+                        "evidence_ref": evidence_ref,
+                        "plan_change_ref": plan_change_ref,
+                        "routed_to": json.dumps(routed_to) if routed_to else None,
+                        "supersedes": supersedes,
+                        "analysis_run_id": run.id if run is not None else None,
+                        "idempotency_key": key,
+                    },
+                )
+                .mappings()
+                .one()
+            )
+            connection.execute(
+                text(
+                    """
+                    update public.issues
+                    set current_status = :status, updated_at = now()
+                    where workspace_id = :workspace_id
+                      and project_id = :project_id
+                      and stable_key = :issue_id
+                    """
+                ),
+                {
+                    "status": live_status,
+                    "workspace_id": workspace_id,
+                    "project_id": project_id,
+                    "issue_id": issue_id,
+                },
+            )
+            append_history_event(
+                connection,
+                workspace_id=workspace_id,
+                project_id=project_id,
+                analysis_run_id=run.id if run is not None else snapshot.analysis_run_id,
+                actor_id=actor_user_id,
+                actor_type="user",
+                category="decisions",
+                event_type=f"grounding_act.{act}",
+                summary=f"Issue {act} recorded",
+                detail=f"{issue.title} now reads {live_status.replace('_', ' ')}.",
+                issue_id=issue_id,
+                artifact_type=issue.artifact_type.value,
+                idempotency_key=f"history:issue-lifecycle:{key}",
+                payload={"basis": basis, "evidence_ref": evidence_ref},
+            )
+
+        return {
+            "issue_id": issue_id,
+            "act": act,
+            "status": live_status,
+            "attestation": {
+                "id": str(attestation["id"]),
+                "act": str(attestation["act"]),
+                "basis": str(attestation["basis"]) if attestation["basis"] else None,
+                "evidence_ref": attestation["evidence_ref"],
+                "attributed_to": dict(attestation["attributed_to"]),
+                "supersedes": (
+                    str(attestation["supersedes"])
+                    if attestation["supersedes"] is not None
+                    else None
+                ),
+            },
+            "analysis_run": run,
+        }
+
     def list_issue_actions(
         self,
         *,
@@ -765,6 +1194,28 @@ class DatabaseSliceTwoApplication:
                 .mappings()
                 .all()
             )
+            attestations = (
+                connection.execute(
+                    text(
+                        """
+                        select distinct on (issue_stable_key)
+                               issue_stable_key, act, basis, evidence_ref,
+                               attributed_to, routed_to, plan_change_ref,
+                               analysis_run_id, created_at
+                        from public.issue_attestations
+                        where workspace_id = :workspace_id
+                          and project_id = :project_id
+                        order by issue_stable_key, created_at desc
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                    },
+                )
+                .mappings()
+                .all()
+            )
         updates = [
             {
                 "issue_id": str(action["issue_stable_key"]),
@@ -801,10 +1252,274 @@ class DatabaseSliceTwoApplication:
             }
             for answer in answers
         )
+        clarification_issue_keys = {
+            str(answer["issue_stable_key"]) for answer in answers
+        }
+        updates.extend(
+            {
+                "issue_id": str(attestation["issue_stable_key"]),
+                "action": (
+                    "clarification"
+                    if str(attestation["act"]) == "answer"
+                    and str(attestation["issue_stable_key"])
+                    in clarification_issue_keys
+                    else str(attestation["act"])
+                ),
+                "status": lifecycle_by_issue.get(
+                    str(attestation["issue_stable_key"]), "open"
+                ),
+                "selected_resolution": attestation["plan_change_ref"],
+                "artifact_type": None,
+                "artifact_version": None,
+                "analysis_run": (
+                    self._store.get_run(attestation["analysis_run_id"])
+                    if attestation["analysis_run_id"] is not None
+                    else None
+                ),
+                "basis": (
+                    str(attestation["basis"])
+                    if attestation["basis"] is not None
+                    else None
+                ),
+                "evidence_ref": attestation["evidence_ref"],
+                "attested_by": dict(attestation["attributed_to"]),
+                "routed_to": (
+                    dict(attestation["routed_to"])
+                    if attestation["routed_to"] is not None
+                    else None
+                ),
+                "created_at": attestation["created_at"],
+            }
+            for attestation in attestations
+        )
         latest_by_issue: dict[str, dict] = {}
         for update in sorted(updates, key=lambda item: item["created_at"], reverse=True):
             latest_by_issue.setdefault(update["issue_id"], update)
         return list(latest_by_issue.values())
+
+    def list_issue_proposals(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+    ) -> list[dict]:
+        workspace_id = self._workspace_for_project(actor_user_id, project_id)
+        with self._engine.begin() as connection:
+            rows = (
+                connection.execute(
+                    text(
+                        """
+                        select proposal.id, proposal.issue_stable_key,
+                               proposal.kind, proposal.resolver_key,
+                               proposal.title, proposal.rationale,
+                               proposal.artifact_type, proposal.load_bearing,
+                               decision.accepted, decision.surface
+                        from public.issue_proposals proposal
+                        left join lateral (
+                          select candidate.accepted, candidate.surface
+                          from public.issue_proposal_decisions candidate
+                          where candidate.proposal_id = proposal.id
+                          order by candidate.created_at desc
+                          limit 1
+                        ) decision on true
+                        where proposal.workspace_id = :workspace_id
+                          and proposal.project_id = :project_id
+                        order by proposal.created_at, proposal.id
+                        """
+                    ),
+                    {"workspace_id": workspace_id, "project_id": project_id},
+                )
+                .mappings()
+                .all()
+            )
+        return [
+            {
+                "id": str(row["id"]),
+                "issue_id": str(row["issue_stable_key"]),
+                "kind": str(row["kind"]),
+                "resolver_key": str(row["resolver_key"]),
+                "title": str(row["title"]),
+                "rationale": str(row["rationale"]),
+                "artifact_type": (
+                    str(row["artifact_type"])
+                    if row["artifact_type"] is not None
+                    else None
+                ),
+                "load_bearing": bool(row["load_bearing"]),
+                "accepted": row["accepted"] is True,
+                "rejected": row["accepted"] is False,
+                "surface": str(row["surface"]) if row["surface"] else None,
+            }
+            for row in rows
+        ]
+
+    def decide_issue_proposal(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        proposal_id: UUID,
+        accepted: bool,
+        surface: str,
+        key: str,
+    ) -> dict:
+        workspace_id = self._workspace_for_project(actor_user_id, project_id)
+        allowed_surfaces = {"issue_card", "artifact", "folded_read"}
+        if surface not in allowed_surfaces:
+            raise ValueError("PROPOSAL_SURFACE_INVALID")
+        with self._engine.begin() as connection:
+            existing = (
+                connection.execute(
+                    text(
+                        """
+                        select decision.analysis_run_id, proposal.issue_stable_key
+                        from public.issue_proposal_decisions decision
+                        join public.issue_proposals proposal
+                          on proposal.id = decision.proposal_id
+                        where decision.workspace_id = :workspace_id
+                          and decision.idempotency_key = :idempotency_key
+                        """
+                    ),
+                    {"workspace_id": workspace_id, "idempotency_key": key},
+                )
+                .mappings()
+                .one_or_none()
+            )
+            proposal = (
+                connection.execute(
+                    text(
+                        """
+                        select proposal.id, proposal.issue_stable_key,
+                               proposal.kind, proposal.title, proposal.artifact_type,
+                               coalesce(
+                                 proposal.created_by_run_id,
+                                 project.current_analysis_run_id
+                               ) as source_analysis_run_id,
+                               issue.current_status,
+                               latest.accepted as latest_accepted
+                        from public.issue_proposals proposal
+                        join public.projects project
+                          on project.workspace_id = proposal.workspace_id
+                         and project.id = proposal.project_id
+                        join public.issues issue
+                          on issue.workspace_id = proposal.workspace_id
+                         and issue.project_id = proposal.project_id
+                         and issue.stable_key = proposal.issue_stable_key
+                        left join lateral (
+                          select decision.accepted
+                          from public.issue_proposal_decisions decision
+                          where decision.proposal_id = proposal.id
+                          order by decision.created_at desc
+                          limit 1
+                        ) latest on true
+                        where proposal.workspace_id = :workspace_id
+                          and proposal.project_id = :project_id
+                          and proposal.id = :proposal_id
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                        "proposal_id": proposal_id,
+                    },
+                )
+                .mappings()
+                .one_or_none()
+            )
+        if proposal is None:
+            raise SliceTwoNotFound
+        if existing is not None:
+            run = (
+                self._store.get_run(existing["analysis_run_id"])
+                if existing["analysis_run_id"] is not None
+                else None
+            )
+            current = next(
+                proposal_item
+                for proposal_item in self.list_issue_proposals(
+                    actor_user_id=actor_user_id,
+                    project_id=project_id,
+                )
+                if proposal_item["id"] == str(proposal_id)
+            )
+            return {"proposal": current, "analysis_run": run}
+        if proposal["latest_accepted"] is not None:
+            raise ValueError("PROPOSAL_ALREADY_DECIDED")
+        if proposal["current_status"] == "resolved":
+            raise ValueError("FINDING_ALREADY_RESOLVED")
+
+        run: AnalysisRun | None = None
+        if accepted and str(proposal["kind"]) == "build":
+            applied = self.act_on_issue(
+                actor_user_id=actor_user_id,
+                project_id=project_id,
+                issue_id=str(proposal["issue_stable_key"]),
+                action="apply",
+                resolution=str(proposal["title"]),
+                key=f"proposal-build:{key}",
+            )
+            run = applied["analysis_run"]
+
+        with self._engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    insert into public.issue_proposal_decisions (
+                      workspace_id, project_id, proposal_id, accepted,
+                      actor_user_id, surface, analysis_run_id, idempotency_key
+                    ) values (
+                      :workspace_id, :project_id, :proposal_id, :accepted,
+                      :actor_user_id,
+                      cast(:surface as public.issue_proposal_surface),
+                      :analysis_run_id, :idempotency_key
+                    )
+                    """
+                ),
+                {
+                    "workspace_id": workspace_id,
+                    "project_id": project_id,
+                    "proposal_id": proposal_id,
+                    "accepted": accepted,
+                    "actor_user_id": actor_user_id,
+                    "surface": surface,
+                    "analysis_run_id": run.id if run is not None else None,
+                    "idempotency_key": key,
+                },
+            )
+            history_run_id = (
+                run.id if run is not None else proposal["source_analysis_run_id"]
+            )
+            if history_run_id is None:
+                raise RuntimeError("PROPOSAL_HISTORY_REQUIRES_ANALYSIS_RUN")
+            append_history_event(
+                connection,
+                workspace_id=workspace_id,
+                project_id=project_id,
+                analysis_run_id=history_run_id,
+                actor_id=actor_user_id,
+                actor_type="user",
+                category="decisions",
+                event_type=("proposal.accepted" if accepted else "proposal.rejected"),
+                summary=("Proposal accepted" if accepted else "Proposal rejected"),
+                detail=str(proposal["title"]),
+                issue_id=str(proposal["issue_stable_key"]),
+                artifact_type=(
+                    str(proposal["artifact_type"])
+                    if proposal["artifact_type"] is not None
+                    else None
+                ),
+                idempotency_key=f"history:proposal:{key}",
+                payload={"proposal_id": str(proposal_id), "surface": surface},
+            )
+        current = next(
+            proposal_item
+            for proposal_item in self.list_issue_proposals(
+                actor_user_id=actor_user_id,
+                project_id=project_id,
+            )
+            if proposal_item["id"] == str(proposal_id)
+        )
+        return {"proposal": current, "analysis_run": run}
 
     def get_artifact(
         self,
@@ -1882,6 +2597,74 @@ class DatabaseSliceTwoApplication:
                     ),
                     {"event_ids": list(run.request.consolidated_event_ids)},
                 )
+            connection.execute(
+                text(
+                    """
+                    with landed as (
+                      select distinct on (issue_stable_key)
+                             issue_stable_key, act
+                      from public.issue_attestations
+                      where analysis_run_id = :run_id
+                      order by issue_stable_key, created_at desc
+                    )
+                    update public.issues issue
+                    set current_status = case landed.act
+                          when 'flag' then 'needs_fix'
+                          when 'fix' then 'needs_grounding'
+                          when 'withdraw' then 'open'
+                          else 'resolved'
+                        end,
+                        updated_at = now()
+                    from landed
+                    where issue.project_id = :project_id
+                      and issue.stable_key = landed.issue_stable_key
+                    """
+                ),
+                {"run_id": run.id, "project_id": run.request.project_id},
+            )
+            connection.execute(
+                text(
+                    """
+                    with run_findings as (
+                      select distinct proposal.issue_stable_key
+                      from public.issue_proposals proposal
+                      join public.issue_proposal_decisions decision
+                        on decision.proposal_id = proposal.id
+                      where decision.analysis_run_id = :run_id
+                        and decision.accepted
+                        and proposal.kind = 'build'
+                    ), completed as (
+                      select finding.issue_stable_key
+                      from run_findings finding
+                      where not exists (
+                        select 1
+                        from public.issue_proposals required
+                        where required.project_id = :project_id
+                          and required.issue_stable_key = finding.issue_stable_key
+                          and required.kind = 'build'
+                          and not exists (
+                            select 1
+                            from public.issue_proposal_decisions latest
+                            where latest.proposal_id = required.id
+                              and latest.accepted
+                              and not exists (
+                                select 1
+                                from public.issue_proposal_decisions newer
+                                where newer.proposal_id = required.id
+                                  and newer.created_at > latest.created_at
+                              )
+                          )
+                      )
+                    )
+                    update public.issues issue
+                    set current_status = 'resolved', updated_at = now()
+                    from completed
+                    where issue.project_id = :project_id
+                      and issue.stable_key = completed.issue_stable_key
+                    """
+                ),
+                {"run_id": run.id, "project_id": run.request.project_id},
+            )
             pending_count = connection.execute(
                 text(
                     """

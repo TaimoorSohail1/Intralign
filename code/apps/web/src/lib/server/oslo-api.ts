@@ -156,6 +156,10 @@ export interface OverviewSnapshot {
       clarification?: string | null;
       status: string;
       selected_resolution?: string | null;
+      basis?: "documented" | "vendor-or-owner-verified" | "verified-directly" | "answered" | null;
+      evidence_ref?: string | null;
+      attested_by?: { id: string; display_name: string; role: string } | null;
+      routed_to?: { id: string; display_name: string; role: string } | null;
       pillar?: "Viability" | "Grounding" | "Adaptability";
       dimensions?: string[];
       finding_type?: string;
@@ -409,6 +413,38 @@ export function retryAnalysis(
   });
 }
 
+export type IssueLifecycleAct = "confirm" | "flag" | "fix" | "ground" | "route" | "withdraw";
+export type IssueBasis = "documented" | "vendor-or-owner-verified" | "verified-directly" | "answered";
+
+export interface IssueLifecycleActSummary {
+  issue_id: string;
+  act: IssueLifecycleAct;
+  status: "open" | "addressed" | "routed" | "needs_fix" | "needs_grounding" | "resolved";
+  attestation: {
+    id: string;
+    act: IssueLifecycleAct;
+    basis: IssueBasis | null;
+    evidence_ref: string | null;
+    attributed_to: { id: string; display_name: string; role: string };
+    supersedes: string | null;
+  };
+  analysis_run?: AnalysisRunSummary | null;
+}
+
+export interface IssueProposalSummary {
+  id: string;
+  issue_id: string;
+  kind: "build" | "inference" | "optional";
+  resolver_key: string;
+  title: string;
+  rationale: string;
+  artifact_type: string | null;
+  load_bearing: boolean;
+  accepted: boolean;
+  rejected: boolean;
+  surface: "issue_card" | "artifact" | "folded_read" | null;
+}
+
 export function runProjectReanalysis(input: {
   accessToken: string;
   projectId: string;
@@ -561,6 +597,70 @@ export function actOnProjectIssue(input: {
       body: JSON.stringify({
         action: input.action,
         resolution: input.resolution,
+      }),
+    },
+  );
+}
+
+export function actOnProjectIssueLifecycle(input: {
+  accessToken: string;
+  projectId: string;
+  issueId: string;
+  act: IssueLifecycleAct;
+  basis?: IssueBasis | null;
+  evidenceRef?: string | null;
+  resolution?: string | null;
+  reviewer?: { id: string; display_name: string; role: string } | null;
+  idempotencyKey: string;
+}): Promise<IssueLifecycleActSummary> {
+  return apiRequest(
+    `/v1/projects/${input.projectId}/issues/${encodeURIComponent(input.issueId)}/acts`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${input.accessToken}`,
+        "Idempotency-Key": input.idempotencyKey,
+      },
+      body: JSON.stringify({
+        act: input.act,
+        basis: input.basis ?? null,
+        evidence_ref: input.evidenceRef ?? null,
+        resolution: input.resolution ?? null,
+        reviewer: input.reviewer ?? null,
+      }),
+    },
+  );
+}
+
+export function getProjectIssueProposals(input: {
+  accessToken: string;
+  projectId: string;
+}): Promise<IssueProposalSummary[]> {
+  return apiRequest(`/v1/projects/${input.projectId}/proposals`, {
+    method: "GET",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+  });
+}
+
+export function decideProjectIssueProposal(input: {
+  accessToken: string;
+  projectId: string;
+  proposalId: string;
+  accepted: boolean;
+  surface: "issue_card" | "artifact" | "folded_read";
+  idempotencyKey: string;
+}): Promise<{ proposal: IssueProposalSummary; analysis_run?: AnalysisRunSummary | null }> {
+  return apiRequest(
+    `/v1/projects/${input.projectId}/proposals/${input.proposalId}/decisions`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${input.accessToken}`,
+        "Idempotency-Key": input.idempotencyKey,
+      },
+      body: JSON.stringify({
+        accepted: input.accepted,
+        surface: input.surface,
       }),
     },
   );

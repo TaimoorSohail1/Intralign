@@ -547,6 +547,246 @@ describe("ProjectOverview", () => {
     expect(within(queue).getAllByText("Holds up")).toHaveLength(5);
   });
 
+  it("renders the Slice 2 prototype proposal and lifecycle trays without mixing acted items into the ranked queue", () => {
+    const lifecycleSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      assessment: {
+        ...snapshot.assessment,
+        issues: [
+          snapshot.assessment.issues[0],
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-FIX",
+            title: "Delivery owner needs a fix",
+            status: "needs_fix",
+          },
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-GROUND",
+            title: "Contingency fix needs evidence",
+            status: "needs_grounding",
+          },
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-ROUTED",
+            title: "Vendor capacity is awaiting evidence",
+            status: "routed",
+          },
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-RESOLVED",
+            title: "Sponsor commitment",
+            status: "resolved",
+            basis: "verified-directly",
+            attested_by: { id: "user-1", display_name: "Alex", role: "owner" },
+          },
+        ],
+      },
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={lifecycleSnapshot}
+        initialProposals={[
+          {
+            id: "proposal-1",
+            issue_id: "ISS-001",
+            kind: "optional",
+            resolver_key: "optional:owner",
+            title: "Name a delivery fallback",
+            rationale: "The current plan has no documented fallback.",
+            artifact_type: "resources",
+            load_bearing: false,
+            accepted: false,
+            rejected: false,
+            surface: null,
+          },
+        ]}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("region", { name: "OSLO proposes" })).toBeInTheDocument();
+    expect(screen.getByText("Name a delivery fallback")).toBeInTheDocument();
+    expect(screen.getByText("Optional")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Awaiting evidence" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Acted on, not yet closed" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Resolved" })).toBeInTheDocument();
+    expect(screen.getByText("1 of 5 settled")).toBeInTheDocument();
+
+    const queue = screen.getByRole("region", { name: "Exposure-ranked issue queue" });
+    expect(within(queue).getAllByRole("button")).toHaveLength(1);
+    expect(within(queue).getByText("Migration ownership is unresolved")).toBeInTheDocument();
+    expect(within(queue).queryByText("Delivery owner needs a fix")).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("region", { name: "Awaiting evidence" })).getByRole(
+        "button",
+        { name: "Withdraw" },
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps a persistent Start here when the ranked worklist is clear", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={{
+          ...snapshot,
+          assessment: {
+            ...snapshot.assessment,
+            issues: snapshot.assessment.issues.map((issue) => ({
+              ...issue,
+              status: "needs_grounding" as const,
+            })),
+          },
+        }}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const start = screen.getByRole("status", { name: "Start here" });
+    expect(start).toHaveTextContent("Finish the acted-on items below");
+    expect(screen.getByRole("region", { name: "Exposure-ranked issue queue" })).toBeEmptyDOMElement();
+  });
+
+  it("creates a secure review route before moving an issue to Awaiting evidence", async () => {
+    const fetcher = vi.fn().mockImplementation(async (request: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(request);
+      if (url.endsWith("/collaboration") && init?.method === "POST") {
+        return Response.json({ id: "review-grant-1", url: "http://localhost:3002/review/token" }, { status: 201 });
+      }
+      if (url.endsWith("/collaboration")) {
+        return Response.json({ comments: [] });
+      }
+      if (url.endsWith("/acts")) {
+        return Response.json({
+          issue_id: "ISS-001",
+          act: "route",
+          status: "routed",
+          attestation: null,
+          analysis_run: null,
+        }, { status: 202 });
+      }
+      return Response.json({});
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(
+      <ProjectOverview displayName="Alex" initial={snapshot} logoutAction={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Ask for evidence/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Project collaborator/i }));
+
+    await waitFor(() => expect(fetcher).toHaveBeenCalledWith(
+      "/api/projects/project-001/collaboration",
+      expect.objectContaining({ method: "POST" }),
+    ));
+    const reviewCall = fetcher.mock.calls.find(
+      ([url, init]) => String(url).endsWith("/collaboration") && init?.method === "POST",
+    );
+    expect(fetcher.mock.calls.some(([url, init]) => String(url).endsWith("/acts") && init?.method === "POST")).toBe(true);
+    const reviewBody = JSON.parse(String(reviewCall?.[1]?.body));
+    expect(reviewBody).toMatchObject({
+      action: "review",
+      issueId: "ISS-001",
+      reviewerName: "Project collaborator",
+    });
+    expect(reviewCall).toBeDefined();
+  });
+
+  it("records Slice 2 owner acts and proposal decisions from the same prototype surfaces", async () => {
+    const fetcher = vi.fn().mockImplementation(async (request: RequestInfo | URL) => {
+      const url = String(request);
+      if (url.includes("/proposals/proposal-1/decisions")) {
+        return Response.json({
+          proposal: {
+            id: "proposal-1",
+            issue_id: "ISS-001",
+            kind: "optional",
+            resolver_key: "optional:owner",
+            title: "Name a delivery fallback",
+            rationale: "The current plan has no documented fallback.",
+            artifact_type: "resources",
+            load_bearing: false,
+            accepted: true,
+            rejected: false,
+            surface: "folded_read",
+          },
+          analysis_run: null,
+        });
+      }
+      return Response.json({
+        issue_id: "ISS-001",
+        act: "confirm",
+        status: "addressed",
+        attestation: {
+          id: "attestation-1",
+          act: "confirm",
+          basis: "verified-directly",
+          evidence_ref: "document:plan:page:1:fragment:0",
+          attributed_to: { id: "user-1", display_name: "Alex", role: "owner" },
+          supersedes: null,
+        },
+        analysis_run: {
+          run_id: "run-confirm-1",
+          consolidated_event_ids: ["event-confirm-1"],
+        },
+      }, { status: 202 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        initialProposals={[
+          {
+            id: "proposal-1",
+            issue_id: "ISS-001",
+            kind: "optional",
+            resolver_key: "optional:owner",
+            title: "Name a delivery fallback",
+            rationale: "The current plan has no documented fallback.",
+            artifact_type: "resources",
+            load_bearing: false,
+            accepted: false,
+            rejected: false,
+            surface: null,
+          },
+        ]}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
+
+    await waitFor(() => expect(fetcher).toHaveBeenCalledWith(
+      "/api/projects/project-001/issues/ISS-001/acts",
+      expect.objectContaining({ method: "POST" }),
+    ));
+    const actCall = fetcher.mock.calls.find(([url]) => String(url).endsWith("/acts"));
+    expect(JSON.parse(String(actCall?.[1]?.body))).toMatchObject({
+      act: "confirm",
+      basis: "verified-directly",
+      evidenceRef: "document:plan:page:1:fragment:0",
+    });
+
+    const foldedProposal = screen.getAllByRole("region", { name: "OSLO proposes" }).at(-1)!;
+    fireEvent.click(within(foldedProposal).getByRole("button", { name: "Accept Name a delivery fallback" }));
+    await waitFor(() => expect(fetcher).toHaveBeenCalledWith(
+      "/api/projects/project-001/proposals/proposal-1/decisions",
+      expect.objectContaining({ method: "POST" }),
+    ));
+    const proposalCall = fetcher.mock.calls.find(([url]) => String(url).includes("/proposals/"));
+    expect(JSON.parse(String(proposalCall?.[1]?.body))).toMatchObject({
+      accepted: true,
+      surface: "folded_read",
+    });
+  });
+
   it("starts with the compact prototype read and expands it on demand", () => {
     const { container } = render(
       <ProjectOverview
@@ -1027,6 +1267,7 @@ describe("ProjectOverview", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
     );
+    fireEvent.click(screen.getByRole("button", { name: "Other ways to handle this" }));
     fireEvent.click(screen.getByRole("button", { name: "Select this path" }));
 
     const confirmation = (await screen.findByText("Confirmed by you")).closest("section");
@@ -1070,14 +1311,21 @@ describe("ProjectOverview", () => {
     expect(screen.getByLabelText("Issue status addressed")).toBeInTheDocument();
   });
 
-  it("applies a recommended fix through versioned re-analysis", async () => {
+  it("confirms a recommendation through the typed Slice 2 lifecycle", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
         issue_id: "ISS-001",
-        action: "apply",
+        act: "confirm",
         status: "addressed",
-        selected_resolution: "Confirm an accountable owner.",
+        attestation: {
+          id: "attestation-confirm-1",
+          act: "confirm",
+          basis: "verified-directly",
+          evidence_ref: "document:plan:page:1:fragment:0",
+          attributed_to: { id: "user-1", display_name: "Alex", role: "owner" },
+          supersedes: null,
+        },
         analysis_run: {
           run_id: "run-apply-001",
           project_id: "project-001",
@@ -1098,15 +1346,15 @@ describe("ProjectOverview", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Apply this fix" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
 
     await waitFor(() => {
       expect(screen.getByRole("dialog", { name: "Issue details" })).toHaveAttribute(
         "aria-describedby",
         "issue-analysis-pending-status",
       );
-      expect(screen.getByText("Confirmed by you")).toBeInTheDocument();
       expect(screen.getByLabelText("Issue status addressed")).toBeInTheDocument();
+      expect(screen.getByText("Waiting for reanalysis")).toBeInTheDocument();
       expect(screen.getByText("Your read is safely out of date.")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Undo last change" })).toBeInTheDocument();
     });

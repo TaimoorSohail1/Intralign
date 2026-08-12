@@ -179,6 +179,47 @@ describe("ArtifactWorkspace", () => {
     expect(screen.getAllByText("Delivery baseline is unresolved")).toHaveLength(1);
   });
 
+  it("keeps proposals itemized and records the decision from the artifact surface", async () => {
+    const onProposalDecision = vi.fn();
+    const proposal = {
+      id: "proposal-schedule-1",
+      issue_id: "ISS-SCHEDULE",
+      kind: "build" as const,
+      resolver_key: "schedule:approved-baseline",
+      title: "Add the approved delivery baseline",
+      rationale: "The current schedule has no approved baseline.",
+      artifact_type: "schedule",
+      load_bearing: true,
+      accepted: false,
+      rejected: false,
+      surface: null,
+    };
+
+    render(
+      <ArtifactWorkspace
+        analysisRunning={false}
+        artifactType="schedule"
+        onAnalysisStarted={vi.fn()}
+        onAskOslo={vi.fn()}
+        onOpenIssue={vi.fn()}
+        onProposalDecision={onProposalDecision}
+        proposals={[proposal]}
+        projectId="project-001"
+      />,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole("region", { name: "OSLO proposes in this artifact" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", {
+      name: "Accept Add the approved delivery baseline in Schedule",
+    }));
+    expect(onProposalDecision).toHaveBeenCalledWith(proposal, true);
+  });
+
   it("supports keyboard row reordering", async () => {
     render(
       <ArtifactWorkspace

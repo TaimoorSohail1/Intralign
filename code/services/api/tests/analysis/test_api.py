@@ -255,6 +255,109 @@ class RecordingSliceTwo:
         assert project_id == PROJECT_ID
         return self.issue_actions
 
+    def act_on_issue_lifecycle(
+        self,
+        *,
+        actor_user_id,
+        project_id,
+        issue_id,
+        act,
+        basis,
+        evidence_ref,
+        resolution,
+        reviewer,
+        key,
+    ):
+        assert actor_user_id == USER_ID
+        assert project_id == PROJECT_ID
+        assert issue_id == "ISS-001"
+        assert act == "flag"
+        assert basis == "documented"
+        assert evidence_ref == "evidence:registration-export"
+        assert resolution is None
+        assert reviewer is None
+        assert key == "issue-lifecycle-flag-001"
+        run = self.store.create_run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=actor_user_id,
+                kind=RunKind.EXTENDED,
+                description="Flagged from documented evidence.",
+                source_names=(),
+                idempotency_key=f"issue-lifecycle:{key}",
+            )
+        )
+        return {
+            "issue_id": issue_id,
+            "act": act,
+            "status": "addressed",
+            "attestation": {
+                "id": "attestation-001",
+                "act": act,
+                "basis": basis,
+                "evidence_ref": evidence_ref,
+                "attributed_to": {
+                    "id": str(actor_user_id),
+                    "display_name": "Member",
+                    "role": "owner",
+                },
+                "supersedes": None,
+            },
+            "analysis_run": run,
+        }
+
+    def list_issue_proposals(self, *, actor_user_id, project_id):
+        assert actor_user_id == USER_ID
+        assert project_id == PROJECT_ID
+        return [
+            {
+                "id": "018f9f7e-8de2-7000-8000-000000000155",
+                "issue_id": "ISS-001",
+                "kind": "build",
+                "resolver_key": "accountable-owner",
+                "title": "Assign Priya as the accountable owner.",
+                "rationale": "The delivery path needs one accountable owner.",
+                "artifact_type": "requirements",
+                "load_bearing": True,
+                "accepted": False,
+                "rejected": False,
+                "surface": None,
+            }
+        ]
+
+    def decide_issue_proposal(
+        self,
+        *,
+        actor_user_id,
+        project_id,
+        proposal_id,
+        accepted,
+        surface,
+        key,
+    ):
+        proposal = self.list_issue_proposals(
+            actor_user_id=actor_user_id,
+            project_id=project_id,
+        )[0]
+        assert str(proposal_id) == proposal["id"]
+        assert accepted is True
+        assert surface == "artifact"
+        assert key == "proposal-decision-001"
+        proposal = {**proposal, "accepted": True, "surface": surface}
+        run = self.store.create_run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=actor_user_id,
+                kind=RunKind.EXTENDED,
+                description=proposal["title"],
+                source_names=(),
+                idempotency_key=f"proposal:{key}",
+            )
+        )
+        return {"proposal": proposal, "analysis_run": run}
+
     def list_history(
         self,
         *,
@@ -748,6 +851,68 @@ def test_authenticated_user_selects_and_applies_an_issue_resolution() -> None:
     assert persisted.json()[0]["selected_resolution"] == (
         "Assign Priya as the accountable migration owner."
     )
+
+
+def test_authenticated_user_enqueues_a_typed_flag_attestation() -> None:
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=RecordingSliceTwo())
+    )
+
+    response = client.post(
+        f"/v1/projects/{PROJECT_ID}/issues/ISS-001/acts",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "issue-lifecycle-flag-001",
+        },
+        json={
+            "act": "flag",
+            "basis": "documented",
+            "evidence_ref": "evidence:registration-export",
+        },
+    )
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "addressed"
+    assert response.json()["attestation"] == {
+        "id": "attestation-001",
+        "act": "flag",
+        "basis": "documented",
+        "evidence_ref": "evidence:registration-export",
+        "attributed_to": {
+            "id": str(USER_ID),
+            "display_name": "Member",
+            "role": "owner",
+        },
+        "supersedes": None,
+    }
+    assert response.json()["analysis_run"]["kind"] == "extended"
+
+
+def test_proposal_decision_is_shared_across_surfaces_and_reanalyzed() -> None:
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=RecordingSliceTwo())
+    )
+
+    listed = client.get(
+        f"/v1/projects/{PROJECT_ID}/proposals",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+    decided = client.post(
+        f"/v1/projects/{PROJECT_ID}/proposals/"
+        "018f9f7e-8de2-7000-8000-000000000155/decisions",
+        headers={
+            "Authorization": "Bearer valid-access-token",
+            "Idempotency-Key": "proposal-decision-001",
+        },
+        json={"accepted": True, "surface": "artifact"},
+    )
+
+    assert listed.status_code == 200
+    assert listed.json()[0]["accepted"] is False
+    assert decided.status_code == 202
+    assert decided.json()["proposal"]["accepted"] is True
+    assert decided.json()["proposal"]["surface"] == "artifact"
+    assert decided.json()["analysis_run"]["kind"] == "extended"
 
 
 def test_issue_resolution_rejects_a_stale_artifact_version_safely() -> None:

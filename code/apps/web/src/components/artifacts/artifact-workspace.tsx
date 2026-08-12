@@ -27,6 +27,7 @@ import {
 import type {
   ArtifactSection,
   ArtifactWorkspaceSummary,
+  IssueProposalSummary,
   OverviewSnapshot,
 } from "@/lib/server/oslo-api";
 
@@ -186,6 +187,9 @@ export function ArtifactWorkspace({
   onAnalysisStarted,
   onAskOslo,
   onOpenIssue,
+  onProposalDecision,
+  proposalPending,
+  proposals = [],
   analysisRunning,
 }: {
   artifactType: string;
@@ -193,6 +197,9 @@ export function ArtifactWorkspace({
   onAnalysisStarted: (runId: string) => void;
   onAskOslo: (question: string) => void;
   onOpenIssue: (issue: Issue, target: HTMLElement) => void;
+  onProposalDecision?: (proposal: IssueProposalSummary, accepted: boolean) => void;
+  proposalPending?: string | null;
+  proposals?: IssueProposalSummary[];
   analysisRunning: boolean;
 }) {
   const [artifact, setArtifact] = useState<ArtifactWorkspaceSummary | null>(null);
@@ -597,6 +604,40 @@ export function ArtifactWorkspace({
           />
         ))}
       </div>
+      {proposals.length && onProposalDecision ? (
+        <section aria-label="OSLO proposes in this artifact" className="artifact-proposals">
+          <header>
+            <span aria-hidden="true">◆</span>
+            <div>
+              <strong>OSLO proposes</strong>
+              <small>{proposals.length} item{proposals.length === 1 ? "" : "s"} for this document · you decide</small>
+            </div>
+          </header>
+          {proposals.map((proposal) => (
+            <article key={proposal.id}>
+              <span aria-hidden="true">◆</span>
+              <div>
+                <strong>{proposal.title}</strong>
+                <small><b>Why:</b> {proposal.rationale}</small>
+              </div>
+              <div>
+                <button
+                  aria-label={`Accept ${proposal.title} in ${label(artifactType)}`}
+                  disabled={proposalPending === proposal.id}
+                  onClick={() => onProposalDecision(proposal, true)}
+                  type="button"
+                >{proposalPending === proposal.id ? "Saving…" : "Accept"}</button>
+                <button
+                  aria-label={`Reject ${proposal.title} in ${label(artifactType)}`}
+                  disabled={proposalPending === proposal.id}
+                  onClick={() => onProposalDecision(proposal, false)}
+                  type="button"
+                >Reject</button>
+              </div>
+            </article>
+          ))}
+        </section>
+      ) : null}
     </section>
   );
 }
