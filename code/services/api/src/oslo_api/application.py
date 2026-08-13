@@ -808,10 +808,14 @@ class DatabaseSliceOneApplication:
                                latest.snapshot_state,
                                (latest.snapshot_json -> 'assessment' ->> 'confidence_index')::int
                                  as confidence_index,
-                               latest.snapshot_json -> 'assessment' ->> 'confidence_band'
-                                 as confidence_band,
+                               coalesce(
+                                 latest.snapshot_json -> 'assessment' -> 'integrity' ->> 'level',
+                                 latest.snapshot_json -> 'assessment' ->> 'confidence_band'
+                               ) as confidence_band,
                                latest.snapshot_json -> 'assessment' ->> 'reliability'
                                  as reliability,
+                               latest.snapshot_json -> 'assessment' -> 'integrity'
+                                 ->> 'limiting_pillar' as weakest_pillar,
                                coalesce(issue_counts.open_issues, 0) as open_issues,
                                coalesce(jsonb_array_length(latest.snapshot_json -> 'artifacts'), 0)
                                  as artifact_count
@@ -825,8 +829,13 @@ class DatabaseSliceOneApplication:
                         ) latest on true
                         left join lateral (
                           select count(*)::int as open_issues
-                          from public.issues i
-                          where i.project_id = p.id and i.current_status <> 'resolved'
+                          from jsonb_array_elements(
+                            coalesce(
+                              latest.snapshot_json -> 'assessment' -> 'issues',
+                              '[]'::jsonb
+                            )
+                          ) issue
+                          where coalesce(issue ->> 'status', 'open') <> 'resolved'
                         ) issue_counts on true
                         where p.workspace_id = :workspace_id
                         order by p.archived_at nulls first, p.updated_at desc
@@ -936,6 +945,7 @@ class DatabaseSliceOneApplication:
                     reliability=row["reliability"],
                     open_issues=row["open_issues"],
                     artifact_count=row["artifact_count"],
+                    weakest_pillar=row["weakest_pillar"],
                 )
                 for row in rows
             ],

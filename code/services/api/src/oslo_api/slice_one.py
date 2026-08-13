@@ -72,6 +72,7 @@ class WorkspaceProject:
     reliability: str | None
     open_issues: int
     artifact_count: int
+    weakest_pillar: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

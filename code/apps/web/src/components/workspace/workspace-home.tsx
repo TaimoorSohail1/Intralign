@@ -148,7 +148,7 @@ export function WorkspaceHome({
               </p>
               <dl>
                 <div><dt>Outcome Integrity</dt><dd>{currentProject.confidence_band ?? "Not read"}</dd></div>
-                <div><dt>Reliability</dt><dd>{currentProject.reliability}</dd></div>
+                <div><dt>Weakest pillar</dt><dd>{currentProject.weakest_pillar ?? "Not read"}</dd></div>
                 <div><dt>Open issues</dt><dd>{currentProject.open_issues}</dd></div>
                 <div><dt>Plan artifacts</dt><dd>{currentProject.artifact_count}</dd></div>
               </dl>

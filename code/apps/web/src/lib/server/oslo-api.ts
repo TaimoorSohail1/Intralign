@@ -835,6 +835,7 @@ export interface WorkspaceProjectSummary {
   reliability: string | null;
   open_issues: number;
   artifact_count: number;
+  weakest_pillar?: string | null;
 }
 
 export interface WorkspaceNotificationSummary {

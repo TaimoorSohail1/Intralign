@@ -39,6 +39,7 @@ const workspace: WorkspaceSummary = {
       reliability: "Moderate",
       open_issues: 4,
       artifact_count: 7,
+      weakest_pillar: "Grounding",
     },
     {
       id: "project-2",
@@ -52,6 +53,7 @@ const workspace: WorkspaceSummary = {
       reliability: "High",
       open_issues: 1,
       artifact_count: 7,
+      weakest_pillar: "Viability",
     },
   ],
   notifications: [
@@ -92,6 +94,8 @@ describe("WorkspaceHome", () => {
     expect(screen.getByRole("heading", { name: "Active transformation" })).toBeInTheDocument();
     expect(screen.getByText(/No portfolio score across plans/)).toBeInTheDocument();
     expect(screen.getByText("New plan")).toBeInTheDocument();
+    expect(screen.getByText("Weakest pillar")).toBeInTheDocument();
+    expect(screen.getByText("Grounding")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "New project" }));
 
