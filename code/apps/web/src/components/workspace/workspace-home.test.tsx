@@ -99,7 +99,7 @@ describe("WorkspaceHome", () => {
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith("/api/projects/new", { method: "POST" });
-      expect(push).toHaveBeenCalledWith("/intake?project=project-new");
+      expect(push).toHaveBeenCalledWith("/intake?project=project-new&returning=1");
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
@@ -145,7 +145,7 @@ describe("WorkspaceHome", () => {
     fireEvent.click(screen.getByRole("button", { name: "New project" }));
     await waitFor(() => {
       expect(fetch).toHaveBeenLastCalledWith("/api/projects/new", { method: "POST" });
-      expect(push).toHaveBeenCalledWith("/intake?project=project-new");
+      expect(push).toHaveBeenCalledWith("/intake?project=project-new&returning=1");
     });
   });
 
@@ -159,7 +159,7 @@ describe("WorkspaceHome", () => {
     render(
       <WorkspaceHome
         displayName="Taimoor"
-        initial={{ ...workspace, projects: workspace.projects.filter((project) => project.archived) }}
+        initial={{ ...workspace, projects: [] }}
       />,
     );
 

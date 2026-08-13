@@ -127,6 +127,21 @@ No actionable P0, P1, or P2 mismatch remains. Live issue names, counts, and anal
 
 final result: passed
 
+## R2 sidebar, returning-client, and banner-reflow parity — 13 August 2026
+
+- Sidebar utility controls are contained inside the sidebar at the audited 1280 × 720 viewport.
+- Existing clients carry an explicit returning state through intake and land in the prototype watch-it-work analysis path.
+- First/Returning playback controls synchronize their active state on initial load and restart.
+- Dismissing the workspace-open notice removes it from layout; the worklist advances by the full former banner height with no retained blank slot.
+- The root first-run shell continues to apply the prototype blur/focus state when `freeze_on` is active.
+- The combined source/application comparison is stored at `reports/r2-parity-followup-2026-08-13/screenshots/prototype-vs-app-side-by-side.png`.
+- Full web tests: 156 passed; focused follow-up tests: 71 passed.
+- R2 guardrails: 4 infrastructure tests and 17 active tests passed.
+- ESLint: passed.
+- TypeScript and Next.js production build: passed.
+
+final result: passed
+
 ### Source and implementation evidence
 
 - Source: the signed R2 prototype Issues queue and expanded issue states in `release-2/oslo-prototype-r2.html`, including the owner-provided reference captures.

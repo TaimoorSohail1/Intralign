@@ -3,9 +3,35 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { IntakeExperience } from "./intake-experience";
 
+vi.mock("@/lib/client/start-project-analysis", () => ({
+  startProjectAnalysis: vi.fn(async () => ({ run_id: "run-returning" })),
+}));
+
 afterEach(cleanup);
 
 describe("IntakeExperience", () => {
+  it("preserves returning-client mode when handing an existing client to analysis", async () => {
+    const navigate = vi.fn();
+    render(
+      <IntakeExperience
+        displayName="Alex"
+        navigate={navigate}
+        projectId="project-2"
+        returningClient
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Describe your project"), {
+      target: { value: "Launch the next client project" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Get my analysis/ }));
+
+    await vi.waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(
+        "/projects/project-2/analysis/run-returning?returning=1",
+      );
+    });
+  });
   it("keeps analysis blocked until the user adds meaningful input", () => {
     render(<IntakeExperience displayName="Alex" />);
 

@@ -1100,6 +1100,7 @@ export function ProjectOverview({
         className="workspace-sidebar"
         tabIndex={0}
       >
+        <div className="workspace-sidebar-content">
         <p className="workspace-label">
           {initialView === "overview" ? "Views" : "Project"}
         </p>
@@ -1203,6 +1204,7 @@ export function ProjectOverview({
               Full plan · export
             </Link>
           ) : null}
+        </div>
         </div>
         <div className="workspace-sidebar-footer">
           <button
@@ -1527,24 +1529,25 @@ export function ProjectOverview({
               <section className={`start-here ${
                 orientation && activeTourStep === 2 ? "is-tour-target" : ""
               }`}>
-                <div
-                  className="r2-workspace-open-slot"
-                  data-state={workspaceNoticeOpen ? "open" : "dismissed"}
-                >
-                  <section
-                    aria-hidden={!workspaceNoticeOpen}
-                    aria-label={workspaceNoticeOpen ? "Workspace open" : undefined}
-                    className={`r2-workspace-open ${workspaceNoticeOpen ? "" : "is-dismissed"}`}
+                {workspaceNoticeOpen ? (
+                  <div
+                    className="r2-workspace-open-slot"
+                    data-state="open"
                   >
+                    <section
+                      aria-label="Workspace open"
+                      className="r2-workspace-open"
+                    >
                     <span aria-hidden="true">✦</span>
                     <div>
                       <strong>Your workspace is open.</strong>
                       <p>Your plan documents are on the left and OSLO&apos;s reasoning is on the right — every pillar and open issue travels with them.</p>
-                      <div><small>New to OSLO?</small><button disabled={!workspaceNoticeOpen} onClick={() => { setTourStep(0); setOrientation(true); }} tabIndex={workspaceNoticeOpen ? 0 : -1} type="button">Take a 30-second tour →</button><button disabled={!workspaceNoticeOpen} onClick={() => setWorkspaceNoticeOpen(false)} tabIndex={workspaceNoticeOpen ? 0 : -1} type="button">No thanks</button></div>
+                      <div><small>New to OSLO?</small><button onClick={() => { setTourStep(0); setOrientation(true); }} type="button">Take a 30-second tour →</button><button onClick={() => setWorkspaceNoticeOpen(false)} type="button">No thanks</button></div>
                     </div>
-                    <button aria-label={workspaceNoticeOpen ? "Dismiss workspace open message" : undefined} disabled={!workspaceNoticeOpen} onClick={() => setWorkspaceNoticeOpen(false)} tabIndex={workspaceNoticeOpen ? 0 : -1} type="button">×</button>
-                  </section>
-                </div>
+                      <button aria-label="Dismiss workspace open message" onClick={() => setWorkspaceNoticeOpen(false)} type="button">×</button>
+                    </section>
+                  </div>
+                ) : null}
                 <div className="overview-label r2-worklist-label">
                   <p>Your work — most important first</p>
                   <span>Do them top to bottom; the order re-ranks itself as you go.</span>

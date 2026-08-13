@@ -438,3 +438,15 @@ _This is an operational delivery ledger created at the owner's direction. Produc
 **Final gates:** web **24 files / 154 tests passed**; API **323 tests passed**; R2 guardrails **4 infrastructure + 17 active tests passed** with 18 active guards and 6/6 prototype corrections; ESLint, Ruff, TypeScript, Next.js production build, and diff check passed. A Windows-only UTF-8 subprocess-decoding defect in the rendered Slice 2 guard was corrected and the guard rerun passed.
 
 **Remaining work:** no requested P0/P1/P2 UI or functional defect remains. Live issue text, counts, recommendation copy, and analysis events intentionally remain backend-driven instead of copying prototype fixtures. Slices 4-10 remain **OWNER-BLOCKED**.
+
+---
+
+## 28. Sidebar, returning-client, and workspace-notice follow-up — 2026-08-13
+
+**UI parity result:** the four owner-reported visual defects are fixed. Quick Tour, Feedback, plan, and account controls are contained inside the desktop sidebar; established workspaces carry an explicit returning-client state into the watch-it-work analysis; the Returning control remains visibly active after load/restart; and dismissing “Your workspace is open” removes the banner from layout so the issue queue moves up without a blank gap. The existing first-run `freeze_on` root-shell class continues to provide the prototype blur/focus state.
+
+**Evidence:** `../code/reports/r2-parity-followup-2026-08-13/FINAL_REPORT.md` and `../code/reports/r2-parity-followup-2026-08-13/screenshots/prototype-vs-app-side-by-side.png`.
+
+**Verification:** full web regression **24 files / 156 tests passed**; focused follow-up regression **4 files / 71 tests passed**; R2 guardrails **4 infrastructure + 17 active tests passed** with 6/6 prototype corrections; ESLint passed; Next.js production build and TypeScript passed; live browser checks passed for sidebar containment, workspace-notice reflow, visible prototype playback controls, and returning-client watch mode. This follow-up closes the listed UI defects only; previously recorded real-document semantic extraction and source-specific advisor-quality items remain separate open gates. Slices 4–10 remain owner-blocked.
+
+_This is an operational delivery ledger created at the owner's direction. Product and governance authority remain with the owner; this ledger reports evidence and must not be used to ratify or redefine scope._

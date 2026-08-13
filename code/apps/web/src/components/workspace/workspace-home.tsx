@@ -13,7 +13,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { PlanComparisonModal } from "@/components/workspace/plan-comparison-modal";
 import type { WorkspaceSummary } from "@/lib/server/oslo-api";
@@ -67,6 +67,14 @@ export function WorkspaceHome({
   const activeVisible = activeFiltered.slice(0, visibleCount);
   const activeProjectLimit = workspace.active_project_limit ?? (workspace.plan === "free" ? 1 : 3);
   const canCreateProject = workspace.can_create_project ?? active.length < activeProjectLimit;
+  const isReturningClient = workspace.projects.some(
+    (project) => project.analysis_status !== "not_analyzed",
+  );
+  const intakeHref = useCallback(
+    (projectId: string) =>
+      `/intake?project=${projectId}${isReturningClient ? "&returning=1" : ""}`,
+    [isReturningClient],
+  );
   const activeProjectLimitMessage =
     `The ${workspace.plan_label} plan includes ${activeProjectLimit} active project${activeProjectLimit === 1 ? "" : "s"}. Archive one or compare plans.`;
 
@@ -83,7 +91,7 @@ export function WorkspaceHome({
       return;
     }
     const project = await response.json();
-    router.push(`/intake?project=${project.id}`);
+    router.push(intakeHref(project.id));
   };
 
   useEffect(() => {
@@ -111,12 +119,12 @@ export function WorkspaceHome({
         return;
       }
       const project = await response.json();
-      router.push(`/intake?project=${project.id}`);
+      router.push(intakeHref(project.id));
     });
     return () => {
       cancelled = true;
     };
-  }, [activeProjectLimitMessage, canCreateProject, openNewProject, router]);
+  }, [activeProjectLimitMessage, canCreateProject, intakeHref, openNewProject, router]);
 
   const setArchived = async (
     projectId: string,
@@ -269,7 +277,7 @@ export function WorkspaceHome({
               </dl>
               <Link href={
                 project.analysis_status === "not_analyzed"
-                  ? `/intake?project=${project.id}`
+                  ? intakeHref(project.id)
                   : `/projects/${project.id}/overview`
               }>
                 Open project <ArrowRight size={15} />

@@ -8,6 +8,8 @@ import { startProjectAnalysis } from "@/lib/client/start-project-analysis";
 interface IntakeExperienceProps {
   displayName: string;
   projectId?: string;
+  returningClient?: boolean;
+  navigate?: (href: string) => void;
   logoutAction?: () => Promise<void>;
 }
 
@@ -40,6 +42,7 @@ const maxFileBytes = 10 * 1024 * 1024;
 const maxTotalBytes = 50 * 1024 * 1024;
 
 async function noOpLogout() {}
+const navigateWindow = (href: string) => window.location.assign(href);
 
 const subscribeToHydration = () => () => {};
 
@@ -71,6 +74,8 @@ function AccountMenu({ displayName, logoutAction }: { displayName: string; logou
 export function IntakeExperience({
   displayName,
   projectId,
+  returningClient = false,
+  navigate = navigateWindow,
   logoutAction = noOpLogout,
 }: IntakeExperienceProps) {
   const hydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
@@ -129,7 +134,9 @@ export function IntakeExperience({
           description,
           files,
         });
-        window.location.assign(`/projects/${projectId}/analysis/${result.run_id}`);
+        navigate(
+          `/projects/${projectId}/analysis/${result.run_id}${returningClient ? "?returning=1" : ""}`,
+        );
         return;
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : "Analysis could not start");

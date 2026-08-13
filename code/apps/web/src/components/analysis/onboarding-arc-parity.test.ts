@@ -67,6 +67,8 @@ describe("R2 onboarding arc prototype parity", () => {
     expect(shipped).toContain("setPass(60000)");
     expect(shipped).toContain("setPass(15000)");
     expect(shipped).toContain("toggleGates()");
+    expect(shipped).toContain("cls('d-first','act',entry==='first')");
+    expect(shipped).toContain("cls('d-ret','act',entry==='return')");
     expect(shipped).toContain("onclick=\"restart()\"");
     expect(shipped).toContain("'Skip the intro →':'↺ Replay intro'");
   });

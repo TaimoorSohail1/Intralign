@@ -459,7 +459,7 @@ describe("ProjectOverview", () => {
     expect(workspaceSlot).toHaveAttribute("data-state", "open");
     fireEvent.click(screen.getByRole("button", { name: "Dismiss workspace open message" }));
     expect(screen.queryByRole("region", { name: "Workspace open" })).not.toBeInTheDocument();
-    expect(workspaceSlot).toHaveAttribute("data-state", "dismissed");
+    expect(container.querySelector(".r2-workspace-open-slot")).not.toBeInTheDocument();
     expect(screen.getAllByText(/Outcome integrity/i)).not.toHaveLength(0);
     expect(screen.getByRole("link", { name: "Timeline" })).toHaveAttribute(
       "href",
@@ -471,6 +471,26 @@ describe("ProjectOverview", () => {
       "false",
     );
     expect(screen.queryByText("Analysis status")).not.toBeInTheDocument();
+  });
+
+  it("keeps the sidebar utilities inside the scroll-safe sidebar layout", () => {
+    const { container } = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const sidebar = screen.getByRole("complementary", { name: "Project navigation" });
+    const content = container.querySelector(".workspace-sidebar-content");
+    const footer = container.querySelector(".workspace-sidebar-footer");
+    expect(content).toBeInTheDocument();
+    expect(footer).toBeInTheDocument();
+    expect(sidebar).toContainElement(content as HTMLElement);
+    expect(sidebar).toContainElement(footer as HTMLElement);
+    expect(screen.getByRole("button", { name: "Take a quick tour" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Feedback" })).toBeVisible();
   });
 
   it("keeps the resolved lifecycle tray visible when no issue is settled yet", () => {

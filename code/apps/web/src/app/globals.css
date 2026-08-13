@@ -10155,18 +10155,39 @@ button.attention-cell { cursor: pointer; }
   contain: layout paint;
 }
 
-.is-r2-slice-one .r2-workspace-open.is-dismissed {
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-  animation: none;
-}
-
 .is-r2-slice-one .r2-workspace-open > span {
   color: var(--r2-grounding);
   font-size: 21px;
   text-shadow: 0 0 16px rgb(79 195 161 / 70%);
   animation: r2-unlock-pulse 2.1s ease-in-out 2;
+}
+
+/* R2 parity: utility actions stay inside the sidebar while only the document
+   navigation scrolls. The controls therefore remain visible at every desktop
+   height and cannot drift outside the sidebar. */
+@media (min-width: 681px) {
+  .is-r2-slice-one .workspace-sidebar {
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+
+  .is-r2-slice-one .workspace-sidebar-content {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 16px 10px 10px;
+    scrollbar-width: thin;
+  }
+
+  .is-r2-slice-one .workspace-sidebar-footer {
+    position: static;
+    width: 100% !important;
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding: 10px 10px 14px;
+  }
 }
 
 @keyframes r2-unlock-in {

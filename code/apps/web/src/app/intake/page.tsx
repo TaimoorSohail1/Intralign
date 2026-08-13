@@ -7,17 +7,18 @@ import { readSession } from "@/lib/server/session";
 export default async function IntakePage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string }>;
+  searchParams: Promise<{ project?: string; returning?: string }>;
 }) {
   const session = await readSession();
   if (!session.accessToken) redirect("/login");
-  const { project } = await searchParams;
+  const { project, returning } = await searchParams;
   if (!project) redirect("/welcome");
   return (
     <IntakeExperience
       displayName={session.displayName ?? "there"}
       logoutAction={logout}
       projectId={project}
+      returningClient={returning === "1"}
     />
   );
 }
