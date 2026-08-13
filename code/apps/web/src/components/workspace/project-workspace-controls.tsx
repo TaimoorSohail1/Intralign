@@ -154,8 +154,7 @@ export function ProjectWorkspaceControls({
         <strong>{planLabel} plan</strong>
         <small>
           {active.length} {active.length === 1 ? "project" : "projects"}
-          {workspace ? ` · ${workspace.collaborator_seat_limit} seats` : ""}
-          {workspace?.plan === "free" ? " · 2 invites/mo" : ""}
+          {workspace ? " · people not capacity-gated" : ""}
         </small>
       </span>
       <em>Your plan</em>

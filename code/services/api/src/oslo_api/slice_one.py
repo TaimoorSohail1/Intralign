@@ -98,7 +98,7 @@ class WorkspaceSummary:
     price_usd_monthly: int = 0
     document_limit: int = 20
     word_limit: int = 50_000
-    collaborator_seat_limit: int = 3
+    collaborator_seat_limit: int | None = None
     monthly_analysis_limit: int | None = None
     monthly_analyses_used: int = 0
     can_manage_plan: bool = False
@@ -188,14 +188,6 @@ class SliceOneApplication(Protocol):
 
     def get_workspace_summary(
         self, *, actor_user_id: UUID, workspace_id: UUID
-    ) -> WorkspaceSummary: ...
-
-    def set_workspace_plan(
-        self,
-        *,
-        actor_user_id: UUID,
-        workspace_id: UUID,
-        plan: str,
     ) -> WorkspaceSummary: ...
 
     def archive_project(

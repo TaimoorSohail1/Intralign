@@ -10,7 +10,6 @@ from oslo_api.application import (
     DatabaseSliceOneApplication,
     InvalidInvitation,
     InvitationDeliveryFailed,
-    InvitationLimitReached,
 )
 from oslo_api.identity import SupabaseIdentityProvider
 from oslo_api.invitations import InvitationStatus
@@ -138,7 +137,7 @@ def test_owner_invitation_is_persisted_and_delivered_without_storing_raw_token()
     assert audit_action == "invitation.created"
 
 
-def test_monthly_invitation_limit_is_audited_without_a_database_error() -> None:
+def test_invitations_are_not_plan_metered_or_written_as_limit_events() -> None:
     engine = create_engine(DATABASE_URL)
     with engine.begin() as connection:
         owner_id = connection.execute(
@@ -150,34 +149,33 @@ def test_monthly_invitation_limit_is_audited_without_a_database_error() -> None:
         web_url="http://localhost:3000",
     )
 
-    for index in range(2):
+    for index in range(3):
         application.invite_member(
             actor_user_id=owner_id,
             workspace_id=WORKSPACE_ID,
             email=f"monthly-limit-{index}@example.com",
         )
 
-    with pytest.raises(InvitationLimitReached):
-        application.invite_member(
-            actor_user_id=owner_id,
-            workspace_id=WORKSPACE_ID,
-            email="monthly-limit-blocked@example.com",
-        )
-
     with engine.connect() as connection:
-        event = connection.execute(
+        invitation_count = connection.execute(
             text(
                 """
-                select limit_kind, outcome
-                from public.workspace_limit_events
-                where workspace_id = :workspace_id
-                order by created_at desc
-                limit 1
+                select count(*) from public.invitations
+                where workspace_id = :workspace_id and status = 'pending'
                 """
             ),
             {"workspace_id": WORKSPACE_ID},
-        ).mappings().one()
-    assert event == {"limit_kind": "monthly_invitations", "outcome": "blocked"}
+        ).scalar_one()
+        event_count = connection.execute(
+            text(
+                "select count(*) from public.workspace_limit_events "
+                "where workspace_id = :workspace_id "
+                "and limit_kind in ('monthly_invitations', 'collaborator_seats')"
+            ),
+            {"workspace_id": WORKSPACE_ID},
+        ).scalar_one()
+    assert invitation_count == 3
+    assert event_count == 0
 
 
 def test_duplicate_pending_invitation_is_idempotent_after_email_normalisation() -> None:

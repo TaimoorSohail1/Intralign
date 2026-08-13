@@ -183,9 +183,6 @@ export function WorkspaceSettings({
   const collaboratorSeatsUsed = workspaceState?.collaborator_seats_used ?? memberCount;
   const activeProjects = workspaceState?.projects.filter((project) => !project.archived).length ?? 1;
   const activeProjectLimit = workspaceState?.plan === "basic" ? 3 : 1;
-  const nextMonth = new Date();
-  nextMonth.setMonth(nextMonth.getMonth() + 1, 1);
-  const analysisReset = nextMonth.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
 
   return (
     <main className="settings-shell">
@@ -374,8 +371,8 @@ export function WorkspaceSettings({
             <div className="settings-card">
               <div className="settings-row"><span><strong>Default sharing</strong><small>New projects remain private until you share them.</small></span><strong>Private</strong></div>
               <div className="settings-row">
-                <span><strong>Owner seats</strong><small>Every workspace member is an Owner. External reviewers do not become members or consume a seat.</small></span>
-                <strong>{workspaceState ? `${workspaceState.collaborator_seat_limit} on ${workspaceState.plan_label}` : "3 on Free"}</strong>
+                <span><strong>Workspace members</strong><small>Members, reviewers and Viewers never consume plan capacity.</small></span>
+                <strong>Not capacity-gated</strong>
               </div>
               <div className="settings-row"><span><strong>External reviewers</strong><small>Review links do not create membership or use a seat.</small></span><strong>Unlimited</strong></div>
               <div className="settings-row"><span><strong>Snapshot links</strong><small>Read-only, revocable, and retained for 30 days.</small></span><strong>30 days</strong></div>
@@ -399,7 +396,7 @@ export function WorkspaceSettings({
               <div className="settings-row"><span>Release phase</span><span className="settings-fact-pill">GA</span></div>
               <div className="settings-row settings-row-start">
                 <span>Invite allocation<small>Spent on a <strong>new</strong> person only.</small></span>
-                <span className="settings-row-value"><strong>Retired at GA</strong><small>Limits are now tier-based</small></span>
+                <span className="settings-row-value"><strong>Not capacity-gated</strong><small>Neutral abuse controls still apply</small></span>
               </div>
               <div className="settings-row"><span>Waitlist</span><span className="settings-fact-pill">Retired at GA</span></div>
               <div className="settings-row">
@@ -412,7 +409,7 @@ export function WorkspaceSettings({
               </div>
             </div>
             <p className="settings-section-note"><strong>Asking anyone for their read is free — no invite, no seat.</strong></p>
-            <p className="settings-section-note">GA is active: the allocation and waitlist are retired. Invitations now follow your plan’s seat capacity.</p>
+            <p className="settings-section-note">Invitations and membership do not change with Free or Basic.</p>
           </article>
         ) : null}
 
@@ -435,8 +432,8 @@ export function WorkspaceSettings({
                 )}
               </div>
               <div className="settings-row settings-row-start">
-                <span>Owner seats<small>Every workspace member has the same Owner access.</small></span>
-                <strong>{`${collaboratorSeatsUsed} of ${workspaceState?.collaborator_seat_limit ?? 3} filled`}</strong>
+                <span>Workspace members<small>People never consume plan capacity.</small></span>
+                <strong>{`${collaboratorSeatsUsed} active`}</strong>
               </div>
             </div>
           </article>
@@ -449,28 +446,30 @@ export function WorkspaceSettings({
               <div className="settings-row"><span>Plan</span><strong>{workspaceState?.plan_label ?? "Free"}</strong></div>
               <div className="settings-row settings-row-start"><span>Active projects<small>Free <strong>1</strong> · Basic <strong>3</strong>.</small></span><strong>{activeProjects <= activeProjectLimit ? `${activeProjects} of ${activeProjectLimit} active ${activeProjects === 1 ? "project" : "projects"}` : `${activeProjects} active projects · ${activeProjectLimit} included`}</strong></div>
               {activeProjects > activeProjectLimit ? <div className="settings-cap-note">Existing projects remain available. The limit only gates adding another project.</div> : null}
-              <div className="settings-row settings-row-start"><span>Owner seats<small>Free <strong>3</strong> (including you) · Basic <strong>10</strong>.</small></span><strong>{`${collaboratorSeatsUsed} of ${workspaceState?.collaborator_seat_limit ?? 3} filled`}</strong></div>
-              <div className="settings-row settings-row-start"><span>If you downgrade over the seat limit<small>The limit gates who you can <strong>add</strong>.</small></span><span className="settings-fact-pill">No one is ever removed</span></div>
-              <div className="settings-row settings-row-start"><span>Monthly analyses<small>The one limit OSLO surfaces.</small></span><span className="settings-row-value"><strong>{workspaceState?.monthly_analysis_limit == null ? "Not yet set" : `${workspaceState?.monthly_analyses_used ?? 0} analyses used this month`}</strong><small>{workspaceState?.monthly_analysis_limit == null ? "Nothing is enforced" : `resets ${analysisReset}`}</small></span></div>
-              <div className="settings-row settings-row-start"><span>Beyond the monthly budget<small>Paid plans: metered overage, against a spend cap you set.</small></span><span className="settings-fact-pill">No silent overspend</span></div>
-              <div className="settings-row settings-row-start"><span>Invite allocation<small>Separate from your plan.</small></span><strong>Retired at GA</strong></div>
-              <div className="settings-row"><span>Export formats</span><strong>{workspaceState?.plan === "basic" ? "PDF · Copy summary · Export link" : "PDF"}</strong></div>
-              <div className="settings-row settings-row-start"><span>Documents<small><strong>Never metered.</strong></small></span><span className="settings-fact-pill">Unlimited on every plan</span></div>
+              <div className="settings-row settings-row-start"><span>Active outcomes<small>Free <strong>1</strong> · Basic supports multiple.</small></span><strong>Capacity only</strong></div>
+              <div className="settings-row settings-row-start"><span>Workspace members<small>People never consume plan capacity.</small></span><strong>{`${collaboratorSeatsUsed} active · no plan cap`}</strong></div>
+              <div className="settings-row settings-row-start"><span>Analysis and chat<small>Never metered as a monthly allowance.</small></span><span className="settings-fact-pill">Uncapped on every plan</span></div>
+              <div className="settings-row"><span>Manual file export</span><strong>Available on every plan</strong></div>
+              <div className="settings-row settings-row-start"><span>Intake envelope<small>Measured by extracted words, not file count.</small></span><span className="settings-fact-pill">~50k Free · ~100k Basic</span></div>
               <div className="settings-row settings-row-start"><span>History<small><strong>Never expires, never truncated.</strong></small></span><span className="settings-fact-pill">Full History on every plan</span></div>
               <div className="settings-row"><span>Link revocation &amp; purpose-scoped expiry</span><span className="settings-fact-pill">On every plan</span></div>
               <div className="settings-row"><span>Review requests and reviewer grants</span><span className="settings-fact-pill">Unlimited on every plan</span></div>
               <div className="settings-row"><span>Compare the plans</span><button className="settings-primary-button" onClick={() => setPlansOpen(true)} type="button">Free vs Basic</button></div>
             </div>
             <p className="settings-section-note"><strong>Free gives you the whole read.</strong> Basic adds capacity and scope.</p>
-            <p className="settings-section-note"><strong>What is metered:</strong> analysis runs, project and seat capacity, and labour OSLO does for you.</p>
+            <p className="settings-section-note"><strong>What is capacity-gated:</strong> active Plans, active Outcomes, and the extracted-word intake envelope.</p>
           </article>
         ) : null}
 
         {sectionVisible("billing") ? (
           <article className="settings-section" id="billing">
-            <div className="settings-section-heading"><h2>Billing <small>Stub</small></h2><p>Not built in this release.</p></div>
-            <div className="settings-card"><div className="settings-row"><span>Payment method</span><small>Not built in this release</small></div><div className="settings-row"><span>Invoices</span><small>Not built in this release</small></div><div className="settings-row"><span>Price of Basic</span><strong>$12 / month</strong></div><div className="settings-row"><span>The forward ladder</span><small>Pro ~$39/mo · Team ~$99–149/seat · Enterprise custom</small></div></div>
-            <p className="settings-section-note">Upgrading is preview-only. No card is stored and no charge is made.</p>
+            <div className="settings-section-heading"><h2>Billing</h2><p>Secure checkout, invoices and cancellation are hosted by Stripe.</p></div>
+            <div className="settings-card">
+              <div className="settings-row"><span>Price of Basic</span><strong>$29 / month · $290 / year</strong></div>
+              <div className="settings-row"><span>Workspace price</span><strong>Flat · never per seat</strong></div>
+              <div className="settings-row"><span>Payment method, invoices and cancellation</span><button className="settings-primary-button" onClick={() => setPlansOpen(true)} type="button">{workspaceState?.plan === "basic" ? "Manage secure billing" : "View Basic"}</button></div>
+            </div>
+            <p className="settings-section-note">Basic activates only after Stripe sends a verified payment event. Cancellation preserves every record.</p>
           </article>
         ) : null}
 

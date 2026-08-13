@@ -123,6 +123,80 @@ def workspace_owner_id() -> Iterator[UUID]:
             identity.delete_user(owner.id)
 
 
+def test_confirming_the_primary_outcome_updates_the_first_class_outcome_record(
+    tmp_path,
+    workspace_owner_id: UUID,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "insert into public.projects (id, workspace_id, name, status, created_by) "
+                "values (:id, :workspace_id, 'Outcome declaration', 'draft', :owner_id)"
+            ),
+            {
+                "id": project_id,
+                "workspace_id": WORKSPACE_ID,
+                "owner_id": workspace_owner_id,
+            },
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        baseline = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=workspace_owner_id,
+                kind=RunKind.INITIAL,
+                description="A governed plan whose outcome the owner will confirm.",
+                source_names=("brief.md",),
+                idempotency_key=f"outcome-declaration-baseline:{project_id}",
+            )
+        )
+        assert baseline.snapshot is not None
+        application = DatabaseSliceTwoApplication(
+            engine=engine,
+            store=store,
+            workflow=workflow,
+            executor=NoopExecutor(),  # type: ignore[arg-type]
+            document_store=DatabaseDocumentStore(
+                engine=engine,
+                object_store=LocalObjectStorage(tmp_path),
+            ),
+            extended_delay_seconds=0,
+        )
+
+        application.act_on_outcome(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            action="confirm",
+            outcome="Reduce failed customer handoffs",
+            key=f"confirm-primary-outcome:{project_id}",
+        )
+
+        with engine.connect() as connection:
+            stored = connection.execute(
+                text(
+                    "select title, provenance from public.project_outcomes "
+                    "where project_id = :project_id and is_primary"
+                ),
+                {"project_id": project_id},
+            ).mappings().one()
+        assert dict(stored) == {
+            "title": "Reduce failed customer handoffs",
+            "provenance": "declared",
+        }
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+        engine.dispose()
+
+
 def test_clarification_is_durable_and_addressed_before_reanalysis_completes(
     tmp_path,
     workspace_owner_id: UUID,
@@ -155,6 +229,25 @@ def test_clarification_is_durable_and_addressed_before_reanalysis_completes(
             )
         )
         assert baseline.snapshot is not None
+        inferred_outcome = next(
+            artifact.summary
+            for artifact in baseline.snapshot.artifacts
+            if artifact.artifact_type.value == "intent"
+        )
+        with engine.connect() as connection:
+            stored_outcome = connection.execute(
+                text(
+                    "select title, status, is_primary, provenance "
+                    "from public.project_outcomes where project_id = :project_id"
+                ),
+                {"project_id": project_id},
+            ).mappings().one()
+        assert dict(stored_outcome) == {
+            "title": inferred_outcome,
+            "status": "active",
+            "is_primary": True,
+            "provenance": "inferred",
+        }
         issue = next(
             item
             for item in baseline.snapshot.assessment.issues

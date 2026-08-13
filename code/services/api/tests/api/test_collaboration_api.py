@@ -32,9 +32,8 @@ class RecordingCollaboration:
             "actor_role": "owner",
             "plan": {
                 "name": "Free",
-                "collaborator_seats": 3,
-                "collaborator_seats_used": 1,
-                "monthly_invites": 2,
+                "collaborators_unmetered": True,
+                "invitations_unmetered": True,
                 "viewers_unlimited": True,
                 "reviewers_unmetered": True,
                 "export_formats": ["pdf"],
@@ -167,9 +166,8 @@ def test_collaboration_state_is_authenticated_and_exposes_plan_boundaries() -> N
     assert response.status_code == 200
     assert response.json()["plan"] == {
         "name": "Free",
-        "collaborator_seats": 3,
-        "collaborator_seats_used": 1,
-        "monthly_invites": 2,
+        "collaborators_unmetered": True,
+        "invitations_unmetered": True,
         "viewers_unlimited": True,
         "reviewers_unmetered": True,
         "export_formats": ["pdf"],

@@ -320,7 +320,12 @@ class DatabaseDocumentStore:
                         text(
                             """
                             select coalesce(sum(
-                              cardinality(regexp_split_to_array(trim(sf.content), E'\\s+'))
+                              cardinality(
+                                regexp_split_to_array(
+                                  trim(sf.content),
+                                  '[[:space:]]+'
+                                )
+                              )
                             ), 0)
                             from public.source_fragments sf
                             join public.source_documents sd

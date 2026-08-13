@@ -9,9 +9,24 @@
     "GT-41", "GT-42", "GT-43", "GT-44", "GT-45", "GT-46", "GT-47", "GT-48", "GT-49", "GT-50"
   ],
   "guards": {
-    "GT-01": {"status": "pending", "tests": []},
-    "GT-02": {"status": "pending", "tests": []},
-    "GT-03": {"status": "pending", "tests": []},
+    "GT-01": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/entitlements/test_service.py::test_only_a_signature_verified_checkout_completion_grants_basic"
+      ]
+    },
+    "GT-02": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/tiering/test_policy.py::test_free_and_basic_define_capacity_without_metering_people_or_quality"
+      ]
+    },
+    "GT-03": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/api/test_outcomes_api.py::test_archive_keeps_the_outcome_visible_and_reactivation_restores_it"
+      ]
+    },
     "GT-04": {"status": "pending", "tests": []},
     "GT-05": {"status": "pending", "tests": []},
     "GT-06": {"status": "pending", "tests": []},
@@ -96,7 +111,12 @@
     },
     "GT-28": {"status": "pending", "tests": []},
     "GT-29": {"status": "pending", "tests": []},
-    "GT-30": {"status": "pending", "tests": []},
+    "GT-30": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/integration/test_slice_four_entitlements.py::test_every_intent_branch_is_durable"
+      ]
+    },
     "GT-31": {"status": "pending", "tests": []},
     "GT-32": {"status": "pending", "tests": []},
     "GT-33": {

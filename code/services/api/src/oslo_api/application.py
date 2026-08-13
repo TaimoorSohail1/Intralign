@@ -34,9 +34,6 @@ from oslo_api.tiering.repository import (
     get_workspace_plan,
     record_limit_event,
 )
-from oslo_api.tiering.repository import (
-    set_workspace_plan as persist_workspace_plan,
-)
 
 
 class InvitationMailer(Protocol):
@@ -377,79 +374,6 @@ class DatabaseSliceOneApplication:
                     created_at=existing["created_at"],
                     expires_at=existing["expires_at"],
                 )
-            policy = None
-            reserved_workspace_seats = None
-            if not is_platform_admin:
-                policy = get_workspace_plan(connection, workspace_id)
-                monthly_invites_used = connection.execute(
-                    text(
-                        """
-                        select count(*)
-                        from public.invitations
-                        where workspace_id = :workspace_id
-                          and created_at >= date_trunc('month', now())
-                          and (
-                            status = 'accepted'
-                            or (status = 'pending' and expires_at > now())
-                          )
-                        """
-                    ),
-                    {"workspace_id": workspace_id},
-                ).scalar_one()
-                if monthly_invites_used >= policy.monthly_invitation_limit:
-                    self._record_blocked_limit_event(
-                        workspace_id=workspace_id,
-                        actor_user_id=actor_user_id,
-                        project_id=None,
-                        limit_kind="monthly_invitations",
-                        details={
-                            "plan": policy.code.value,
-                            "limit": policy.monthly_invitation_limit,
-                            "used": int(monthly_invites_used),
-                            "remedies": ["wait_for_next_month", "compare_plans"],
-                        },
-                        idempotency_key=f"invite-allocation:{normalised_email}:blocked",
-                    )
-                    raise InvitationLimitReached(policy)
-                reserved_workspace_seats = connection.execute(
-                    text(
-                        """
-                        select
-                          (
-                            select count(*)
-                            from public.memberships
-                            where workspace_id = :workspace_id
-                          )
-                          +
-                          (
-                            select count(*)
-                            from public.invitations
-                            where workspace_id = :workspace_id
-                              and status = 'pending'
-                              and expires_at > now()
-                          )
-                        """
-                    ),
-                    {"workspace_id": workspace_id},
-                ).scalar_one()
-                decision = policy.decide_collaborator_capacity(
-                    occupied_seats=int(reserved_workspace_seats)
-                )
-                if not decision.allowed:
-                    self._record_blocked_limit_event(
-                        workspace_id=workspace_id,
-                        actor_user_id=actor_user_id,
-                        project_id=None,
-                        limit_kind="collaborator_seats",
-                        details={
-                            "plan": policy.code.value,
-                            "limit": policy.collaborator_seat_limit,
-                            "occupied": int(reserved_workspace_seats),
-                            "remedies": list(decision.remedies),
-                        },
-                        idempotency_key=f"invite-seat:{normalised_email}:blocked",
-                    )
-                    raise CollaboratorSeatLimitReached(policy)
             invitation_memberships = (
                 _PlatformAdminMembershipReader(actor_user_id, workspace_id)
                 if is_platform_admin
@@ -492,22 +416,6 @@ class DatabaseSliceOneApplication:
                     ),
                 },
             )
-            if policy is not None and reserved_workspace_seats is not None:
-                record_limit_event(
-                    connection,
-                    workspace_id=workspace_id,
-                    actor_user_id=actor_user_id,
-                    project_id=None,
-                    limit_kind="collaborator_seats",
-                    outcome="allowed",
-                    details={
-                        "plan": policy.code.value,
-                        "limit": policy.collaborator_seat_limit,
-                        "occupied_before": int(reserved_workspace_seats),
-                    },
-                    idempotency_key=f"invite-seat:{issued.invitation.id}:allowed",
-                )
-
         query = urlencode({"token": issued.token})
         try:
             self._mailer.send_invitation(
@@ -761,6 +669,7 @@ class DatabaseSliceOneApplication:
         workspace_id: UUID,
     ) -> Project:
         project_id = uuid4()
+        blocked_policy: PlanPolicy | None = None
         with self._engine.begin() as connection:
             if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
                 raise InvitePermissionDenied
@@ -779,42 +688,67 @@ class DatabaseSliceOneApplication:
                 ).scalar_one()
             )
             if active_project_count >= policy.active_project_limit:
-                raise ActiveProjectLimitReached(policy)
-            connection.execute(
-                text(
-                    """
-                    insert into public.projects (id, workspace_id, name, status, created_by)
-                    values (:id, :workspace_id, 'Untitled project', 'draft', :created_by)
-                    """
-                ),
-                {"id": project_id, "workspace_id": workspace_id, "created_by": actor_user_id},
-            )
-            connection.execute(
-                text(
-                    """
-                    update public.memberships
-                    set welcome_seen_at = coalesce(welcome_seen_at, now())
-                    where workspace_id = :workspace_id and user_id = :user_id
-                    """
-                ),
-                {"workspace_id": workspace_id, "user_id": actor_user_id},
-            )
-            connection.execute(
-                text(
-                    """
-                    insert into public.audit_events (
-                      workspace_id, actor_user_id, action, subject_type, subject_id
-                    ) values (
-                      :workspace_id, :actor_user_id, 'project.created', 'project', :subject_id
-                    )
-                    """
-                ),
-                {
-                    "workspace_id": workspace_id,
-                    "actor_user_id": actor_user_id,
-                    "subject_id": str(project_id),
-                },
-            )
+                blocked_policy = policy
+                record_limit_event(
+                    connection,
+                    workspace_id=workspace_id,
+                    actor_user_id=actor_user_id,
+                    project_id=None,
+                    limit_kind="active_projects",
+                    outcome="blocked",
+                    details={
+                        "active_count": active_project_count,
+                        "limit": policy.active_project_limit,
+                        "wall_key": "multiPlan",
+                    },
+                    idempotency_key=f"project-capacity:{project_id}",
+                )
+            else:
+                connection.execute(
+                    text(
+                        """
+                        insert into public.projects (
+                          id, workspace_id, name, status, created_by
+                        ) values (
+                          :id, :workspace_id, 'Untitled project', 'draft', :created_by
+                        )
+                        """
+                    ),
+                    {
+                        "id": project_id,
+                        "workspace_id": workspace_id,
+                        "created_by": actor_user_id,
+                    },
+                )
+                connection.execute(
+                    text(
+                        """
+                        update public.memberships
+                        set welcome_seen_at = coalesce(welcome_seen_at, now())
+                        where workspace_id = :workspace_id and user_id = :user_id
+                        """
+                    ),
+                    {"workspace_id": workspace_id, "user_id": actor_user_id},
+                )
+                connection.execute(
+                    text(
+                        """
+                        insert into public.audit_events (
+                          workspace_id, actor_user_id, action, subject_type, subject_id
+                        ) values (
+                          :workspace_id, :actor_user_id, 'project.created',
+                          'project', :subject_id
+                        )
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "actor_user_id": actor_user_id,
+                        "subject_id": str(project_id),
+                    },
+                )
+        if blocked_policy is not None:
+            raise ActiveProjectLimitReached(blocked_policy)
         return Project(
             id=project_id,
             workspace_id=workspace_id,
@@ -1018,58 +952,6 @@ class DatabaseSliceOneApplication:
                 sum(row["archived_at"] is None for row in rows)
                 < policy.active_project_limit
             ),
-        )
-
-    def set_workspace_plan(
-        self,
-        *,
-        actor_user_id: UUID,
-        workspace_id: UUID,
-        plan: str,
-    ) -> WorkspaceSummary:
-        with self._engine.begin() as connection:
-            if (
-                SqlMembershipReader(connection).role_for(workspace_id, actor_user_id)
-                is not MembershipRole.OWNER
-            ):
-                raise InvitePermissionDenied
-            connection.execute(
-                text("select pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
-                {"scope": f"workspace-plan:{workspace_id}"},
-            )
-            previous = get_workspace_plan(connection, workspace_id)
-            selected = persist_workspace_plan(
-                connection,
-                workspace_id=workspace_id,
-                actor_user_id=actor_user_id,
-                plan_code=plan,
-            )
-            connection.execute(
-                text(
-                    """
-                    insert into public.audit_events (
-                      workspace_id, actor_user_id, action, subject_type, subject_id, metadata
-                    ) values (
-                      :workspace_id, :actor_user_id, 'workspace.plan_changed',
-                      'workspace', :subject_id, cast(:metadata as jsonb)
-                    )
-                    """
-                ),
-                {
-                    "workspace_id": workspace_id,
-                    "actor_user_id": actor_user_id,
-                    "subject_id": str(workspace_id),
-                    "metadata": json.dumps(
-                        {
-                            "from": previous.code.value,
-                            "to": selected.code.value,
-                            "simulated": True,
-                        }
-                    ),
-                },
-            )
-        return self.get_workspace_summary(
-            actor_user_id=actor_user_id, workspace_id=workspace_id
         )
 
     def _set_project_archived(

@@ -1176,6 +1176,32 @@ class DatabaseAnalysisStore:
                     "published_at": snapshot.published_at,
                 },
             )
+            primary_outcome = next(
+                (
+                    artifact.summary.strip()
+                    for artifact in snapshot.artifacts
+                    if artifact.artifact_type.value == "intent" and artifact.summary.strip()
+                ),
+                None,
+            )
+            if primary_outcome is not None:
+                connection.execute(
+                    text(
+                        "insert into public.project_outcomes "
+                        "(workspace_id, project_id, title, is_primary, provenance, created_by) "
+                        "select :workspace_id, :project_id, :title, true, 'inferred', "
+                        ":created_by where not exists ("
+                        "  select 1 from public.project_outcomes "
+                        "  where project_id = :project_id and is_primary"
+                        ")"
+                    ),
+                    {
+                        "workspace_id": snapshot.workspace_id,
+                        "project_id": snapshot.project_id,
+                        "title": primary_outcome,
+                        "created_by": run_row["requested_by"],
+                    },
+                )
             for artifact in snapshot.artifacts:
                 artifact_payload = {
                     "title": artifact.title,

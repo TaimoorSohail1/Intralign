@@ -16,6 +16,6 @@ def test_authoritative_r2_contract_is_registered_and_bound() -> None:
     assert report.registered_guard_count == 60
     assert report.surface_count == 58
     assert report.prototype_correction_count == 6
-    assert report.active_guard_count == 18
-    assert report.pending_guard_count == 42
-    assert len(report.active_test_selectors) == 15
+    assert report.active_guard_count == 22
+    assert report.pending_guard_count == 38
+    assert len(report.active_test_selectors) == 19

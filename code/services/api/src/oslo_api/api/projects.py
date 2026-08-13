@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
 from oslo_api.application import ActiveProjectLimitReached, ProjectArchiveDenied
 from oslo_api.invitations import InvitePermissionDenied
+from oslo_api.tiering.policy import get_plan_policy
 
 router = APIRouter(prefix="/v1", tags=["projects"])
 
@@ -58,7 +59,7 @@ class WorkspaceResponse(BaseModel):
     price_usd_monthly: int
     document_limit: int
     word_limit: int
-    collaborator_seat_limit: int
+    collaborator_seat_limit: int | None
     monthly_analysis_limit: int | None
     monthly_analyses_used: int
     can_manage_plan: bool
@@ -121,13 +122,22 @@ def start_first_project(
     except InvitePermissionDenied as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from error
     except ActiveProjectLimitReached as error:
+        basic = get_plan_policy("basic")
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={
-                "code": "ACTIVE_PROJECT_LIMIT_REACHED",
-                "plan": error.plan,
+                "code": "CAPACITY_COMMITMENT_REQUIRED",
+                "wall_key": "multiPlan",
+                "capability": "Create and optimize multiple plans",
+                "tier": "basic",
+                "tier_label": "Basic",
+                "price_usd_monthly": basic.price_usd_monthly,
+                "price_usd_annual": basic.price_usd_annual,
                 "limit": error.active_project_limit,
-                "remedies": list(error.remedies),
+                "free_path": "archive_plan",
+                "checkout_path": (
+                    f"/v1/workspaces/{workspace_id}/billing/checkout-sessions"
+                ),
             },
         ) from error
     return ProjectResponse.model_validate(project)
@@ -158,15 +168,23 @@ def update_workspace_plan(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={"code": "INVALID_PLAN", "supported": ["free", "basic"]},
         )
-    try:
-        summary = context.application.set_workspace_plan(
-            actor_user_id=context.user.id,
-            workspace_id=workspace_id,
-            plan=payload.plan,
+    if payload.plan == "basic":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "CHECKOUT_REQUIRED",
+                "checkout_path": (
+                    f"/v1/workspaces/{workspace_id}/billing/checkout-sessions"
+                ),
+            },
         )
-    except InvitePermissionDenied as error:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN) from error
-    return WorkspaceResponse.model_validate(summary)
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail={
+            "code": "BILLING_PORTAL_REQUIRED",
+            "portal_path": f"/v1/workspaces/{workspace_id}/billing/portal-sessions",
+        },
+    )
 
 
 @router.post(

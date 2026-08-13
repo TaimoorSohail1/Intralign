@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     openai_fast_model: str = "gpt-5.6-luna"
     openai_extended_model: str = "gpt-5.6-terra"
     openai_fallback_model: str | None = None
+    stripe_secret_key: SecretStr | None = None
+    stripe_webhook_secret: SecretStr | None = None
+    stripe_basic_monthly_price_id: str | None = None
+    stripe_basic_annual_price_id: str | None = None
     # Dense structured responses routinely exceed 30 seconds even when the input is
     # correctly bounded. Keep this below the worker's external timeout while allowing
     # each artifact shard enough time to finish once instead of being retried mid-call.

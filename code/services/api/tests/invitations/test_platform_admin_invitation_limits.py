@@ -1,9 +1,7 @@
 from contextlib import contextmanager
 from uuid import UUID
 
-import pytest
-
-from oslo_api.application import DatabaseSliceOneApplication, InvitationLimitReached
+from oslo_api.application import DatabaseSliceOneApplication
 from oslo_api.invitations import InvitationStatus
 
 ADMIN_ID = UUID("018f9f7e-8de2-7000-8000-000000000011")
@@ -43,6 +41,8 @@ class PlatformAdminConnection:
             if "select id," in sql:
                 return FakeResult(None)
             return FakeResult(2)
+        if "select role from public.memberships" in sql:
+            return FakeResult("owner")
         if "from public.workspace_subscriptions" in sql:
             return FakeResult("free")
         if "select name from public.workspaces" in sql:
@@ -90,17 +90,24 @@ def test_platform_admin_bypasses_workspace_invitation_and_seat_limits() -> None:
     )
 
 
-def test_workspace_owner_remains_subject_to_plan_invitation_limits() -> None:
+def test_workspace_owner_invitations_are_not_a_plan_capacity_gate() -> None:
     engine = FakeEngine(is_platform_admin=False)
+    mailer = RecordingMailer()
     application = DatabaseSliceOneApplication(
         engine=engine,  # type: ignore[arg-type]
-        mailer=RecordingMailer(),
+        mailer=mailer,
         web_url="https://oslo.example",
     )
 
-    with pytest.raises(InvitationLimitReached):
-        application.invite_member(
-            actor_user_id=ADMIN_ID,
-            workspace_id=WORKSPACE_ID,
-            email="limited.owner@example.com",
-        )
+    invitation = application.invite_member(
+        actor_user_id=ADMIN_ID,
+        workspace_id=WORKSPACE_ID,
+        email="unmetered.owner@example.com",
+    )
+
+    assert invitation.status is InvitationStatus.PENDING
+    assert mailer.recipients == ["unmetered.owner@example.com"]
+    assert not any(
+        "from public.workspace_subscriptions" in statement
+        for statement in engine.connection.statements
+    )

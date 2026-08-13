@@ -13,44 +13,16 @@ def get_workspace_plan(connection: Connection, workspace_id: UUID) -> PlanPolicy
             """
             select plan_code
             from public.workspace_subscriptions
-            where workspace_id = :workspace_id and status = 'active'
+            where workspace_id = :workspace_id
+              and (
+                status = 'active'
+                or (status = 'past_due' and grace_ends_at > now())
+              )
             """
         ),
         {"workspace_id": workspace_id},
     ).scalar_one_or_none()
     return get_plan_policy(plan_code or PlanCode.FREE)
-
-
-def set_workspace_plan(
-    connection: Connection,
-    *,
-    workspace_id: UUID,
-    actor_user_id: UUID,
-    plan_code: PlanCode | str,
-) -> PlanPolicy:
-    policy = get_plan_policy(plan_code)
-    connection.execute(
-        text(
-            """
-            insert into public.workspace_subscriptions (
-              workspace_id, plan_code, status, changed_by
-            ) values (
-              :workspace_id, :plan_code, 'active', :actor_user_id
-            )
-            on conflict (workspace_id) do update
-            set plan_code = excluded.plan_code,
-                status = 'active',
-                changed_by = excluded.changed_by,
-                updated_at = now()
-            """
-        ),
-        {
-            "workspace_id": workspace_id,
-            "plan_code": policy.code.value,
-            "actor_user_id": actor_user_id,
-        },
-    )
-    return policy
 
 
 def count_monthly_analysis_usage(

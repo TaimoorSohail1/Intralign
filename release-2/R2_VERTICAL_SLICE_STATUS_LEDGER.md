@@ -8,11 +8,11 @@
 
 **Audited implementation commit:** the conventional commit accompanying this ledger update
 
-**Working tree at audit:** A 2026-08-13 live browser and ground-truth rerun reopened Slices 1–3. The journeys and lifecycle mechanics run, but issue-detail parity, structured real-document extraction, evidence-derived issue coverage, and a source-specific OSLO advisor answer remain open. Slices 4–10 were not changed.
+**Working tree at audit:** Slice 4 is implemented and automated-verification green. Completion remains withheld because the repository's contract-traceability gate has no approved entitlement/monetization contract identifier, live Stripe test configuration was unavailable, and the final Outcome-dialog browser rerun was interrupted by local disk exhaustion followed by the in-app browser URL policy. Slices 5–10 were not changed.
 
-**Current owner-authorized work scope:** **Slices 1–3 only**
+**Current owner-authorized work scope:** **Slices 1–4**
 
-**Owner-blocked scope:** **Slices 4–10 until the owner explicitly reopens them**
+**Owner-blocked scope:** **Slices 5–10 until the owner explicitly reopens them**
 
 **Scope authority:** slice requirements remain in `slices/01…10`; this ledger records delivery evidence and does not supersede doctrine, decisions, slice specifications, or `SIGNOFF.md`.
 
@@ -22,14 +22,14 @@
 
 ## 1. Current release-level verdict
 
-**R2 implementation state: SLICES 1–3 IN PROGRESS · SLICES 4–10 OWNER-BLOCKED.**
+**R2 implementation state: SLICES 1–3 IN PROGRESS · SLICE 4 IMPLEMENTED / UNVERIFIED · SLICES 5–10 OWNER-BLOCKED.**
 
 - All **10 slice build designs are signed off** (`SIGNOFF.md`).
-- The current implementation window is restricted to **Slices 1, 2, and 3**. No implementation, UI/UX review, manual regression, functional-test activation, or prototype-parity work may begin for **Slices 4–10** until the owner explicitly changes this ledger.
+- The owner explicitly reopened **Slice 4** for implementation on 2026-08-13. No implementation, UI/UX review, manual regression, functional-test activation, or prototype-parity work may begin for **Slices 5–10** until the owner explicitly changes this ledger.
 - The R2 reference prototype is healthy: headless verification on 2026-08-11 returned **85 checks, 0 failures, 0 page errors**.
-- The Phase 0 guardrail command is healthy: `pnpm test:r2-guardrails` returned **4 passed**.
+- The Phase 0 guardrail command is healthy: `pnpm test:r2-guardrails` returned **4 infrastructure + 21 active-runner tests passed**.
 - The guard registry contains **60 guards**: `GT-01…GT-57` and `GT-A1…GT-A3`.
-- **18 guards are active; 42 are pending.** Slice 1 activates `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, and `GT-20`; Slice 2 activates `GT-09`, `GT-12`, `GT-25`, `GT-26`, `GT-27`, `GT-33`, and `GT-51…GT-56`. Slices 4–10 remain owner-blocked.
+- **22 guards are active; 38 are pending.** Slice 1 activates `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, and `GT-20`; Slice 2 activates `GT-09`, `GT-12`, `GT-25`, `GT-26`, `GT-27`, `GT-33`, and `GT-51…GT-56`; Slice 4 activates `GT-01`, `GT-02`, `GT-03`, and `GT-30`. Slices 5–10 remain owner-blocked.
 - Slice 9's FE↔BE contract currently contains **58 mapped dynamic surfaces**.
 - All **6/6 Phase-A prototype corrections** checked by the gate are present.
 - **Slices 1–3 are reopened by live QA.** The focused rerun passed 78 web tests, 13 API tests, 4 guardrail infrastructure tests, and 17 active guardrail tests, but those automated gates did not catch the live visual and semantic failures recorded below.
@@ -51,8 +51,8 @@ Expected audited output:
 
 ```text
 4 passed
-17 passed
-[R2 guardrails] 60 registered · 18 active · 42 pending · 58 mapped surfaces · 6/6 prototype corrections
+21 passed
+[R2 guardrails] 60 registered · 22 active · 38 pending · 58 mapped surfaces · 6/6 prototype corrections
 ```
 
 The prototype was separately opened headlessly with Chromium and evaluated through `_s10SelfCheck()`:
@@ -98,7 +98,7 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 | **1 · Outcome-Integrity Engine** | **IN PROGRESS · REOPENED BY LIVE QA.** The shell, queue, workspace notice, and advisor rail run; visual and evidence-grounded behavior is not complete. | **FAIL · MAJOR.** Expanded issue review shifts the work column and grows the page instead of using the stable prototype focus layer. | **PARTIAL.** Navigation, toggles, expanders, focus controls, responsive shell, and analysis states work; live advisor evidence response failed. | **PARTIAL.** Focused automated gates pass, but the real-document advisor scenario fails. | **FAIL.** Issue expansion and the source-specific advisor result do not match the prototype/contract. | **PARTIAL.** Active guards are green; missing live-data and layout-shift cases must be added. | Fix issue-detail focus layout and evidence-qualified advisor response; rerun visual and live-document QA. |
 | **2 · Issue Lifecycle & Grounding Acts** | **IN PROGRESS · REOPENED BY LIVE QA.** Confirm, reanalysis, Resolved, Withdraw, proposal Accept/Reject, and advisor controls work. | **FAIL · MAJOR.** Expanded issue is inline/reflowing, not the prototype's stable focus layer. | **PARTIAL PASS.** Lifecycle actions pass; exact UI comparison fails. | **PASS for exercised lifecycle mechanics.** Confirm/Withdraw and proposal decisions completed without error. | **FAIL.** Expanded issue geometry, position, and surrounding-shell behavior differ. | **PARTIAL.** Lifecycle tests pass; zero-layout-shift parity coverage is missing. | Implement stable issue focus presentation and add browser layout-shift regression coverage. |
 | **3 · Reanalysis Engine + Freeze/Unlock** | **IN PROGRESS · REOPENED BY LIVE QA.** First-time and returning animation paths, handoff, and reanalysis completion work; real-document fidelity does not. | **PASS for the exercised onboarding/analysis motion.** | **FAIL for live-data acceptance.** Mixed and clean Atlas uploads completed, but extracted artifacts and issues did not match ground truth. | **PARTIAL.** Run mechanics and focused tests pass; semantic extraction/issue mapping fails. | **PARTIAL.** Kinetic flow matches applicable prototype states; resulting evidence read is not acceptance-complete. | **PARTIAL.** Flow tests pass; Atlas field-by-field and planted-conflict assertions must become active tests. | Fix structured extraction and evidence-derived issue coverage, then rerun the Atlas ground-truth suite. |
-| **4 · Freemium Entitlement & Commitment Gate** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active production tests for this slice.** | Owner must explicitly reopen Slice 4. |
+| **4 · Freemium Entitlement & Commitment Gate** | **IMPLEMENTED · UNVERIFIED.** Capacity-only Free/Basic policy, first-class Outcomes, reversible archive/reactivate, hosted Stripe Checkout and portal contracts, signature-verified webhook grant, durable commitment/intent records, cancellation/grace preservation, and direct-browser-grant refusal are implemented. | **PARTIAL PASS.** The in-app browser verified the second-Plan wall, Free/Basic comparison, $29/$290 interval states, never-metered copy, hosted-billing pending/error state, first analysis, and the Manage Outcomes entry. The final Outcome list/gate rerun was interrupted by local disk exhaustion; after recovery the browser URL policy blocked reloading the local tab. | **PARTIAL PASS.** The real Free plan wall and safe unconfigured-billing failure were exercised. A live Stripe test Checkout and signed webhook were not run because no Stripe test keys, webhook secret, or Price IDs were configured. | **PASS for local and provider-boundary automation.** API 351 passed; web 25 files/158 passed; lint, Ruff, Next production build, TypeScript, migrations, diff, invariants, observability, and 4 infrastructure + 21 active guard tests pass. Contract gate remains red because its approved-ID list contains no entitlement/monetization contract. | **PARTIAL.** Applicable gate copy, choices, prices, capacity semantics, and failure state match the signed Slice 4 design. Provider-hosted pages and the final Outcome browser sequence remain unverified. | **Active/passing:** `GT-01`, `GT-02`, `GT-03`, `GT-30`, plus checkout signature/idempotency, no-direct-grant, Outcome persistence/archive/reactivate, every-branch intent, grace/cancellation, and UI choice tests. | Owner must supply/approve an entitlement contract mapping for Gate 2 and Stripe test configuration; then run hosted Checkout → signed webhook → entitlement grant and repeat the final Outcome browser regression. Do not start Slice 5. |
 | **5 · Multi-Outcome Read & Deferred Disclosure** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active production tests for this slice.** | Owner must explicitly reopen Slice 5. |
 | **6 · Collaboration, Reviewer Roll-up & Share** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 6. |
 | **7 · Structured Data Import, Provenance & Validation** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 7. |
@@ -132,9 +132,10 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 | 0 | Slice 9 Phase 0 contract and guard skeleton | **Already established and green; now owner-blocked from further advancement.** |
 | 1 | Slices 1 + 3 | **IMPLEMENTED AND BROWSER-VERIFIED.** The shared spoken screen-reader audit remains deferred until Slice 2 is otherwise complete. |
 | 2 | Slice 2 | **IMPLEMENTED AND BROWSER-VERIFIED AT `dd69e69`.** Only the owner-deferred combined spoken screen-reader gate remains. |
-| 3 | Slices 4–10 | **OWNER-BLOCKED.** Do not start implementation, review, testing, or parity work until the owner explicitly reopens these slices. |
+| 3 | Slice 4 | **IN PROGRESS · OWNER REOPENED.** Execute one public-behavior RED→GREEN cycle at a time. |
+| 4 | Slices 5–10 | **OWNER-BLOCKED.** Do not start implementation, review, testing, or parity work until the owner explicitly reopens these slices. |
 
-**Immediate next work:** run the owner-deferred combined spoken screen-reader audit for Slices 1–3. Do not advance Slices 4–10.
+**Immediate next work:** close Slice 4's external verification gates without advancing Slices 5–10: approved contract mapping, configured Stripe test-mode Checkout/webhook, and a fresh in-app-browser Outcome archive/reactivate/capacity run. The previously recorded Slices 1–3 follow-ups remain separate work.
 
 ---
 
@@ -151,7 +152,7 @@ For every implementation or verification change:
 7. Never mark **Identical to prototype = Yes** from visual similarity alone. Check behavior, copy, state transitions, permissions, async/failure states, and responsive treatment.
 8. If a slice requirement conflicts with doctrine, a ratified decision, or another slice, stop and escalate under Framework 001; do not resolve it in this ledger.
 9. A slice may be marked **COMPLETE** only when all five requested gates—UI/UX review, manual regression, functional testing, prototype parity, and test cases—are evidenced as passing or explicitly owner-waived.
-10. **Owner scope lock:** Slices 4–10 are blocked. Only an explicit owner instruction may change them from `OWNER-BLOCKED` to an active status.
+10. **Owner scope lock:** Slices 5–10 are blocked. Only an explicit owner instruction may change them from `OWNER-BLOCKED` to an active status.
 
 ### Required completion evidence per slice
 
@@ -450,3 +451,27 @@ _This is an operational delivery ledger created at the owner's direction. Produc
 **Verification:** full web regression **24 files / 156 tests passed**; focused follow-up regression **4 files / 71 tests passed**; R2 guardrails **4 infrastructure + 17 active tests passed** with 6/6 prototype corrections; ESLint passed; Next.js production build and TypeScript passed; live browser checks passed for sidebar containment, workspace-notice reflow, visible prototype playback controls, and returning-client watch mode. This follow-up closes the listed UI defects only; previously recorded real-document semantic extraction and source-specific advisor-quality items remain separate open gates. Slices 4–10 remain owner-blocked.
 
 _This is an operational delivery ledger created at the owner's direction. Product and governance authority remain with the owner; this ledger reports evidence and must not be used to ratify or redefine scope._
+
+---
+
+## 29. Slice 4 owner reopening and implementation acquisition — 2026-08-13
+
+**Acquisition:** the owner explicitly directed implementation of Slice 4 after reviewing its flow, scheduler steps, and implementation plan. Slice 4 is therefore reopened as `IN PROGRESS`; Slices 5–10 remain `OWNER-BLOCKED`, and the R2 scheduler remains paused during active implementation.
+
+**Accepted implementation direction:** the Free capacity applies to one active Plan and one active Outcome; Basic is $29 monthly or $290 annually with three active Plans and no marketed Outcome-count limit; checkout is real and hosted; only a signature-verified provider webhook may grant the entitlement; cancellation and payment failure preserve data; Outcome archival is reversible; records, reviewers, Viewers, manual file export, and judgment quality are never capacity-gated.
+
+**Execution gate:** implement one observable public behavior at a time using RED → GREEN → REFACTOR. Do not infer or implement Slice 5 multi-outcome reading or deferred disclosure as part of this acquisition.
+
+---
+
+## 30. Slice 4 implementation and verification evidence — 2026-08-13
+
+**Implementation delivered:** Free now includes one active Plan, one active Outcome, and an approximately 50k extracted-word envelope; Basic is $29 monthly / $290 annually, includes three active Plans, multiple active Outcomes, and the same judgment quality. Collaborators, reviewers, Viewers, the record, manual file export, and judgment quality are not monetized. A first analysis persists its inferred primary Outcome, and confirm/refine promotes that first-class record to declared provenance. Outcome archive/reactivate is reversible, preserves the record, and enforces the active slot under a workspace lock.
+
+**Billing safety:** the browser cannot set a paid tier directly. The backend creates provider-hosted Stripe subscription Checkout and customer-portal sessions from server-owned Price IDs and metadata. A pending Checkout grants nothing. Only a Stripe-signature-verified, paid Basic `checkout.session.completed` event that matches a server-created session writes one idempotent CommitmentLog and grants Basic. Subscription events preserve existing work through payment grace and cancellation; cancelled over-limit work is grandfathered and no new capacity is granted. Every commitment/free-path/decline/keep-both choice is durably recorded.
+
+**Fresh automated evidence:** `uv run pytest tests` passed **351 tests**; `pnpm --filter @oslo/web test` passed **25 files / 158 tests**; `pnpm lint:web`, `uv run ruff check src tests`, `pnpm build:web`, `git diff --check`, local migration listing, epistemic-invariant gate, and observability gate pass. `pnpm test:r2-guardrails` passed **4 infrastructure + 21 active-runner tests**, with **22 active / 38 pending** guards and `GT-01`, `GT-02`, `GT-03`, and `GT-30` active for Slice 4. The production build includes the new billing, intent, and Outcome routes.
+
+**Manual browser evidence:** a real Free workspace showed the second-Plan wall and the full capacity-only comparison: Free one Plan / one Outcome / ~50k words, Basic $29 monthly or $290 annually, no per-seat price, and the explicit never-limited list. The annual toggle and server-authoritative pending state worked; with no local Stripe configuration, the UI returned the truthful `Billing is not configured in this environment` failure without changing entitlement. A real first analysis completed and exposed the Manage Outcomes dialog. During the final Outcome-list request, Turbopack exhausted the C: drive and panicked; the authenticated API itself returned 200 with the persisted primary Outcome. Dependency/build caches were pruned, the server was restored on port 3002, and no source or user data was removed. The in-app browser then blocked the required localhost reload under its URL policy, so no replacement browser was used and the final visual sequence remains unverified.
+
+**Open gates:** Gate 2 contract traceability fails because `ci/gate_contract.py` has no approved entitlement/monetization contract identifier; selecting an unrelated cognition contract or using the Phase-I infrastructure bypass would be false evidence. Live Stripe test-mode Checkout and signed-webhook verification also require owner-provided environment configuration. These gaps keep Slice 4 at `IMPLEMENTED · UNVERIFIED`; they do not authorize Slice 5.

@@ -98,10 +98,10 @@ export function UsageLimitsModal({
       progress: Math.min(activeProjects / activeProjectLimit, 1),
     },
     {
-      label: "Owner seats",
-      badge: "",
-      detail: "Every workspace member is an Owner. Nobody is ever removed.",
-      value: `${members} of ${workspace.collaborator_seat_limit}`,
+      label: "Workspace members",
+      badge: "Never capacity-gated",
+      detail: "People, reviewers and Viewers are not a plan limit.",
+      value: `${members}`,
     },
     {
       label: "Documents · History",
@@ -151,7 +151,7 @@ export function UsageLimitsModal({
           </div>
           {updateError ? <p className="form-error" role="alert">{updateError}</p> : null}
           <p className="usage-modal-label">Never limited, on any plan</p>
-          <p className="usage-never-limited">Documents · History · asking for a read · every recommendation · editing by hand · “Update now”.</p>
+          <p className="usage-never-limited">The record · History · reviewers · Viewers · manual file export · judgment quality.</p>
         </div>
       </section>
     </div>

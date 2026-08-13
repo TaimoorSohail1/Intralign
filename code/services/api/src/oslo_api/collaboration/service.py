@@ -110,31 +110,24 @@ class DatabaseCollaborationService:
                     {"project_id": project_id},
                 ).mappings()
             ]
-            monthly_invites_used = connection.execute(
+            plan_code = connection.execute(
                 text(
                     """
-                    select count(*)
-                    from public.invitations
+                    select plan_code
+                    from public.workspace_subscriptions
                     where workspace_id = :workspace_id
-                      and created_at >= date_trunc('month', now())
-                      and (
-                        status = 'accepted'
-                        or (status = 'pending' and expires_at > now())
-                      )
                     """
                 ),
                 {"workspace_id": workspace_id},
-            ).scalar_one()
+            ).scalar_one_or_none()
         return {
             "workspace_id": str(workspace_id),
             "project_id": str(project_id),
             "actor_role": role,
             "plan": {
-                "name": "Free",
-                "collaborator_seats": 3,
-                "collaborator_seats_used": len(participants),
-                "monthly_invites": 2,
-                "monthly_invites_used": monthly_invites_used,
+                "name": "Basic" if plan_code == "basic" else "Free",
+                "collaborators_unmetered": True,
+                "invitations_unmetered": True,
                 "viewers_unlimited": True,
                 "reviewers_unmetered": True,
                 "export_formats": ["pdf"],

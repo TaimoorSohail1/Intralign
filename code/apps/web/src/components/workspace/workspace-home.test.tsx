@@ -178,8 +178,8 @@ describe("WorkspaceHome", () => {
       updated_at: `2026-07-${String(10 + index).padStart(2, "0")}T10:00:00Z`,
     }));
     vi.mocked(fetch).mockResolvedValue(
-      new Response(JSON.stringify({ id: "project-nine" }), {
-        status: 201,
+      new Response(JSON.stringify({ detail: { wall_key: "multiPlan" } }), {
+        status: 422,
         headers: { "content-type": "application/json" },
       }),
     );
@@ -194,14 +194,22 @@ describe("WorkspaceHome", () => {
     expect(newProject).toBeEnabled();
     fireEvent.click(newProject);
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "The Free plan includes 1 active project. Archive one or compare plans.",
-    );
-    expect(screen.getByRole("dialog", { name: "Your plan" })).toBeInTheDocument();
-    expect(fetch).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "The Free plan includes 1 active project. Archive one or compare plans.",
+      );
+      expect(screen.getByRole("dialog", { name: "Your plan" })).toBeInTheDocument();
+      expect(fetch).toHaveBeenCalledWith("/api/projects/new", { method: "POST" });
+    });
   });
 
   it("explains the limit when the project switcher requests a new project", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ detail: { wall_key: "multiPlan" } }), {
+        status: 422,
+        headers: { "content-type": "application/json" },
+      }),
+    );
     render(
       <WorkspaceHome
         displayName="Taimoor"
@@ -214,7 +222,7 @@ describe("WorkspaceHome", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "The Free plan includes 1 active project. Archive one or compare plans.",
     );
-    expect(fetch).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledWith("/api/projects/new", { method: "POST" });
   });
 
   it("restores an archived project while another project is active", async () => {

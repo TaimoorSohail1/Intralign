@@ -854,7 +854,7 @@ export interface WorkspaceSummary {
   price_usd_monthly: number;
   document_limit: number;
   word_limit: number;
-  collaborator_seat_limit: number;
+  collaborator_seat_limit: number | null;
   monthly_analysis_limit: number | null;
   monthly_analyses_used: number;
   can_manage_plan: boolean;
@@ -884,10 +884,8 @@ export interface CollaborationState {
   actor_role: "owner";
   plan: {
     name: string;
-    collaborator_seats: number;
-    collaborator_seats_used: number;
-    monthly_invites: number;
-    monthly_invites_used?: number;
+    collaborators_unmetered: boolean;
+    invitations_unmetered: boolean;
     viewers_unlimited: boolean;
     reviewers_unmetered: boolean;
     export_formats: string[];
@@ -1104,16 +1102,111 @@ export function deliverProjectReport(input: {
   });
 }
 
-export function setWorkspacePlan(input: {
+export interface HostedBillingSession {
+  id: string;
+  url: string;
+}
+
+export interface ProjectOutcomeSummary {
+  id: string;
+  workspace_id: string;
+  project_id: string;
+  title: string;
+  status: "active" | "archived";
+  is_primary: boolean;
+  provenance: "declared" | "inferred";
+  created_at: string;
+  archived_at: string | null;
+}
+
+export function createBasicCheckout(input: {
   accessToken: string;
   workspaceId: string;
-  plan: WorkspaceSummary["plan"];
-}): Promise<WorkspaceSummary> {
-  return apiRequest(`/v1/workspaces/${input.workspaceId}/plan`, {
-    method: "PUT",
+  interval: "monthly" | "annual";
+  wallKey: "multiOutcome" | "multiPlan" | "envelope" | "schedule";
+}): Promise<HostedBillingSession> {
+  return apiRequest(`/v1/workspaces/${input.workspaceId}/billing/checkout-sessions`, {
+    method: "POST",
     headers: { authorization: `Bearer ${input.accessToken}` },
-    body: JSON.stringify({ plan: input.plan }),
+    body: JSON.stringify({ interval: input.interval, wall_key: input.wallKey }),
   });
+}
+
+export function createBillingPortal(input: {
+  accessToken: string;
+  workspaceId: string;
+}): Promise<HostedBillingSession> {
+  return apiRequest(`/v1/workspaces/${input.workspaceId}/billing/portal-sessions`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+  });
+}
+
+export function recordCapacityIntent(input: {
+  accessToken: string;
+  workspaceId: string;
+  wallKey: "multiOutcome" | "multiPlan" | "envelope" | "schedule";
+  chosenPath: "committed" | "free_path" | "declined" | "keep_both";
+  fullOptionSet: string[];
+  context: Record<string, unknown>;
+}): Promise<void> {
+  return apiRequest(`/v1/workspaces/${input.workspaceId}/intent-signals`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+    body: JSON.stringify({
+      wall_key: input.wallKey,
+      chosen_path: input.chosenPath,
+      full_option_set: input.fullOptionSet,
+      context: input.context,
+    }),
+  });
+}
+
+export function listProjectOutcomes(input: {
+  accessToken: string;
+  workspaceId: string;
+  projectId: string;
+}): Promise<ProjectOutcomeSummary[]> {
+  return apiRequest(
+    `/v1/workspaces/${input.workspaceId}/projects/${input.projectId}/outcomes`,
+    {
+      method: "GET",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+    },
+  );
+}
+
+export function createProjectOutcome(input: {
+  accessToken: string;
+  workspaceId: string;
+  projectId: string;
+  title: string;
+}): Promise<ProjectOutcomeSummary> {
+  return apiRequest(
+    `/v1/workspaces/${input.workspaceId}/projects/${input.projectId}/outcomes`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+      body: JSON.stringify({ title: input.title, provenance: "declared" }),
+    },
+  );
+}
+
+export function setOutcomeArchived(input: {
+  accessToken: string;
+  workspaceId: string;
+  outcomeId: string;
+  archived: boolean;
+}): Promise<ProjectOutcomeSummary> {
+  return apiRequest(
+    `/v1/workspaces/${input.workspaceId}/outcomes/${input.outcomeId}:${
+      input.archived ? "archive" : "reactivate"
+    }`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+    },
+  );
 }
 
 export function setProjectArchived(input: {

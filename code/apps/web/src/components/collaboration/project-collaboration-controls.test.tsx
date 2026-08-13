@@ -7,10 +7,8 @@ const collaboration = {
   actor_role: "owner",
   plan: {
     name: "Free",
-    collaborator_seats: 3,
-    collaborator_seats_used: 1,
-    monthly_invites: 2,
-    monthly_invites_used: 0,
+    collaborators_unmetered: true,
+    invitations_unmetered: true,
     viewers_unlimited: true,
     reviewers_unmetered: true,
   },
@@ -42,7 +40,7 @@ describe("ProjectCollaborationControls", () => {
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
 
     expect(await screen.findByText("People on this project")).toBeInTheDocument();
-    expect(screen.getByText(/1 of 3 filled/)).toBeInTheDocument();
+    expect(screen.getByText("Collaboration and invitations are never metered.")).toBeInTheDocument();
 
     vi.mocked(fetch)
       .mockResolvedValueOnce(
@@ -151,7 +149,7 @@ describe("ProjectCollaborationControls", () => {
     render(<ProjectCollaborationControls projectId="project-1" />);
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
 
-    expect(await screen.findByText(/2 of 2 left/)).toBeInTheDocument();
+    expect(await screen.findByText("Collaboration and invitations are never metered.")).toBeInTheDocument();
     vi.mocked(fetch)
       .mockResolvedValueOnce(
         jsonResponse(
@@ -168,7 +166,6 @@ describe("ProjectCollaborationControls", () => {
       .mockResolvedValueOnce(
         jsonResponse({
           ...collaboration,
-          plan: { ...collaboration.plan, monthly_invites_used: 1 },
           invitations: [
             {
               id: "invitation-1",
@@ -187,7 +184,7 @@ describe("ProjectCollaborationControls", () => {
     fireEvent.click(screen.getByRole("button", { name: "Invite" }));
 
     expect(await screen.findByText("Invitation sent to amina@example.com.")).toBeInTheDocument();
-    expect(await screen.findByText(/1 of 2 left/)).toBeInTheDocument();
+    expect(screen.getByText("Collaboration and invitations are never metered.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Collaborator" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Viewer" })).not.toBeInTheDocument();
     expect(fetch).toHaveBeenNthCalledWith(

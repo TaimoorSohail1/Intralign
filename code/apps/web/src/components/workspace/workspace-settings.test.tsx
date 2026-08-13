@@ -209,7 +209,8 @@ describe("WorkspaceSettings", () => {
 
     expect(screen.getByRole("heading", { name: "Access & invites" })).toBeInTheDocument();
     expect(screen.getByText("GA")).toBeInTheDocument();
-    expect(screen.getAllByText("Retired at GA")).toHaveLength(3);
+    expect(screen.getAllByText("Not capacity-gated")).toHaveLength(2);
+    expect(screen.getByText(/Invitations and membership do not change/)).toBeInTheDocument();
     expect(
       screen.getAllByRole("link", { name: /Manage invitations/ }).every(
         (link) => link.getAttribute("href") === "/admin/invitations",
@@ -218,16 +219,18 @@ describe("WorkspaceSettings", () => {
 
     expect(screen.getByRole("heading", { name: /Membership/ })).toBeInTheDocument();
     expect(screen.getByText("2 members")).toBeInTheDocument();
-    expect(screen.getAllByText("2 of 3 filled")).toHaveLength(2);
+    expect(screen.getByText("2 active")).toBeInTheDocument();
+    expect(screen.getByText("2 active · no plan cap")).toBeInTheDocument();
 
     expect(screen.getByRole("heading", { name: /Subscription/ })).toBeInTheDocument();
     expect(screen.getByText("1 of 1 active project")).toBeInTheDocument();
-    expect(screen.getByText("3 analyses used this month")).toBeInTheDocument();
-    expect(screen.getByText("No silent overspend")).toBeInTheDocument();
+    expect(screen.getByText("Uncapped on every plan")).toBeInTheDocument();
+    expect(screen.getByText("~50k Free · ~100k Basic")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Free vs Basic" })).toBeInTheDocument();
 
     expect(screen.getByRole("heading", { name: /Billing/ })).toBeInTheDocument();
-    expect(screen.getAllByText("Not built in this release")).toHaveLength(2);
+    expect(screen.getByText("$29 / month · $290 / year")).toBeInTheDocument();
+    expect(screen.getByText("Flat · never per seat")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Integrations/ })).toBeInTheDocument();
     expect(screen.getByText("Arrives after this release")).toBeInTheDocument();
   });

@@ -19,19 +19,22 @@ class PlanPolicy:
     code: PlanCode
     label: str
     price_usd_monthly: int
+    price_usd_annual: int
     judgment_profile: str
     document_limit: int
     word_limit: int
-    collaborator_seat_limit: int
-    monthly_invitation_limit: int
+    collaborator_seat_limit: int | None
+    monthly_invitation_limit: int | None
     monthly_analysis_limit: int | None
     active_project_limit: int
+    active_outcome_limit: int | None
+    never_metered_exemptions: tuple[str, ...]
     chat_is_metered: bool = False
 
     def decide_document_capacity(
         self, *, document_count: int, word_count: int
     ) -> CapacityDecision:
-        if document_count <= self.document_limit and word_count <= self.word_limit:
+        if word_count <= self.word_limit:
             return CapacityDecision(allowed=True)
         return CapacityDecision(
             allowed=False,
@@ -39,12 +42,7 @@ class PlanPolicy:
         )
 
     def decide_collaborator_capacity(self, *, occupied_seats: int) -> CapacityDecision:
-        if occupied_seats < self.collaborator_seat_limit:
-            return CapacityDecision(allowed=True)
-        return CapacityDecision(
-            allowed=False,
-            remedies=("compare_plans",),
-        )
+        return CapacityDecision(allowed=True)
 
 
 _POLICIES = {
@@ -52,25 +50,43 @@ _POLICIES = {
         code=PlanCode.FREE,
         label="Free",
         price_usd_monthly=0,
+        price_usd_annual=0,
         judgment_profile="oslo-governed-v1",
-        document_limit=20,
+        document_limit=100,
         word_limit=50_000,
-        collaborator_seat_limit=3,
-        monthly_invitation_limit=2,
+        collaborator_seat_limit=None,
+        monthly_invitation_limit=None,
         monthly_analysis_limit=None,
         active_project_limit=1,
+        active_outcome_limit=1,
+        never_metered_exemptions=(
+            "record",
+            "reviewer_loop",
+            "crr",
+            "viewers",
+            "judgment_quality",
+        ),
     ),
     PlanCode.BASIC: PlanPolicy(
         code=PlanCode.BASIC,
         label="Basic",
-        price_usd_monthly=12,
+        price_usd_monthly=29,
+        price_usd_annual=290,
         judgment_profile="oslo-governed-v1",
-        document_limit=40,
+        document_limit=100,
         word_limit=100_000,
-        collaborator_seat_limit=10,
-        monthly_invitation_limit=5,
+        collaborator_seat_limit=None,
+        monthly_invitation_limit=None,
         monthly_analysis_limit=None,
         active_project_limit=3,
+        active_outcome_limit=None,
+        never_metered_exemptions=(
+            "record",
+            "reviewer_loop",
+            "crr",
+            "viewers",
+            "judgment_quality",
+        ),
     ),
 }
 

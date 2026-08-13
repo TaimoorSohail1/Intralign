@@ -24,6 +24,55 @@ SETTINGS = Settings()  # type: ignore[call-arg]
 WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
 
 
+def test_intake_capacity_is_content_metered_not_file_count_metered(tmp_path) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        owner_id = connection.execute(
+            text("select id from auth.users where email = 'admin@oslo.local'")
+        ).scalar_one()
+        connection.execute(
+            text(
+                "insert into public.projects (id, workspace_id, name, status, created_by) "
+                "values (:id, :workspace_id, 'Content envelope', 'draft', :owner_id)"
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        store = DatabaseDocumentStore(engine=engine, object_root=tmp_path)
+        for index in range(10):
+            uploaded = store.ingest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                submitted_by=owner_id,
+                file_name=f"tiny-{index}.txt",
+                declared_content_type="text/plain",
+                content=f"tiny evidence {index}".encode(),
+                document_limit=100,
+                word_limit=50,
+            )
+            assert uploaded.status == "parsed"
+
+        with pytest.raises(DocumentRejected, match="PLAN_WORD_LIMIT_REACHED"):
+            store.ingest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                submitted_by=owner_id,
+                file_name="over-envelope.txt",
+                declared_content_type="text/plain",
+                content=("additional evidence " * 11).encode(),
+                document_limit=100,
+                word_limit=50,
+            )
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+        engine.dispose()
+
+
 def test_uploaded_document_is_stored_and_fragmented_for_analysis(tmp_path) -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()

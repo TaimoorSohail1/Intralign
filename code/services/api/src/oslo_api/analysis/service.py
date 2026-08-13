@@ -2405,7 +2405,46 @@ class DatabaseSliceTwoApplication:
         else:
             raise ValueError("OUTCOME_ACTION_INVALID")
 
+        self._declare_primary_outcome(
+            workspace_id=workspace_id,
+            project_id=project_id,
+            actor_user_id=actor_user_id,
+            title=current_outcome,
+        )
         return {"action": action, "outcome": current_outcome, "analysis_run": run}
+
+    def _declare_primary_outcome(
+        self,
+        *,
+        workspace_id: UUID,
+        project_id: UUID,
+        actor_user_id: UUID,
+        title: str,
+    ) -> None:
+        with self._engine.begin() as connection:
+            updated = connection.execute(
+                text(
+                    "update public.project_outcomes "
+                    "set title = :title, provenance = 'declared', updated_at = now() "
+                    "where project_id = :project_id and is_primary"
+                ),
+                {"project_id": project_id, "title": title},
+            )
+            if updated.rowcount == 0:
+                connection.execute(
+                    text(
+                        "insert into public.project_outcomes "
+                        "(workspace_id, project_id, title, is_primary, provenance, created_by) "
+                        "values (:workspace_id, :project_id, :title, true, 'declared', "
+                        ":created_by)"
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                        "title": title,
+                        "created_by": actor_user_id,
+                    },
+                )
 
     def _batched_reanalysis_run(
         self,

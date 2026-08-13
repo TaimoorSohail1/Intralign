@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi.testclient import TestClient
 
+from oslo_api.application import ActiveProjectLimitReached
 from oslo_api.main import create_app
 from oslo_api.slice_one import (
     AuthenticatedUser,
@@ -11,6 +12,7 @@ from oslo_api.slice_one import (
     WorkspaceProject,
     WorkspaceSummary,
 )
+from oslo_api.tiering.policy import get_plan_policy
 
 USER_ID = UUID("018f9f7e-8de2-7000-8000-000000000011")
 WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
@@ -23,6 +25,7 @@ class RecordingWorkspaceApplication:
         self.archived: list[tuple[UUID, UUID, UUID]] = []
         self.restored: list[tuple[UUID, UUID, UUID]] = []
         self.read_keys: list[str] = []
+        self.plan_changes: list[str] = []
         self.preferences = WorkspacePreferences(
             theme="dark",
             analysis_notifications=True,
@@ -76,6 +79,21 @@ class RecordingWorkspaceApplication:
                     read=False,
                 )
             ],
+        )
+
+    def start_first_project(
+        self, *, actor_user_id: UUID, workspace_id: UUID
+    ) -> None:
+        assert actor_user_id == USER_ID
+        assert workspace_id == WORKSPACE_ID
+        raise ActiveProjectLimitReached(get_plan_policy("free"))
+
+    def set_workspace_plan(
+        self, *, actor_user_id: UUID, workspace_id: UUID, plan: str
+    ) -> WorkspaceSummary:
+        self.plan_changes.append(plan)
+        return self.get_workspace_summary(
+            actor_user_id=actor_user_id, workspace_id=workspace_id
         )
 
     def archive_project(
@@ -150,6 +168,45 @@ def test_workspace_summary_serializes_projects_and_activity() -> None:
     assert payload["collaborator_seats_used"] == 1
     assert payload["projects"][0]["confidence_index"] == 62
     assert payload["notifications"][0]["key"] == "analysis:run-1"
+
+
+def test_second_plan_returns_a_named_commitment_gate() -> None:
+    application = RecordingWorkspaceApplication()
+
+    response = TestClient(create_app(slice_one=application)).post(
+        f"/v1/workspaces/{WORKSPACE_ID}/projects", headers=HEADERS
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == {
+        "code": "CAPACITY_COMMITMENT_REQUIRED",
+        "wall_key": "multiPlan",
+        "capability": "Create and optimize multiple plans",
+        "tier": "basic",
+        "tier_label": "Basic",
+        "price_usd_monthly": 29,
+        "price_usd_annual": 290,
+        "limit": 1,
+        "free_path": "archive_plan",
+        "checkout_path": f"/v1/workspaces/{WORKSPACE_ID}/billing/checkout-sessions",
+    }
+
+
+def test_browser_cannot_grant_basic_by_updating_the_plan_directly() -> None:
+    application = RecordingWorkspaceApplication()
+
+    response = TestClient(create_app(slice_one=application)).put(
+        f"/v1/workspaces/{WORKSPACE_ID}/plan",
+        headers=HEADERS,
+        json={"plan": "basic"},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == {
+        "code": "CHECKOUT_REQUIRED",
+        "checkout_path": f"/v1/workspaces/{WORKSPACE_ID}/billing/checkout-sessions",
+    }
+    assert application.plan_changes == []
 
 
 def test_archive_and_notification_reads_are_scoped_to_actor_and_workspace() -> None:

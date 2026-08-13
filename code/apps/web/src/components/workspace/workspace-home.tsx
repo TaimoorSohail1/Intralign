@@ -66,7 +66,6 @@ export function WorkspaceHome({
   }, [activeSorted, projectQuery]);
   const activeVisible = activeFiltered.slice(0, visibleCount);
   const activeProjectLimit = workspace.active_project_limit ?? (workspace.plan === "free" ? 1 : 3);
-  const canCreateProject = workspace.can_create_project ?? active.length < activeProjectLimit;
   const isReturningClient = workspace.projects.some(
     (project) => project.analysis_status !== "not_analyzed",
   );
@@ -80,14 +79,14 @@ export function WorkspaceHome({
 
   const createProject = async () => {
     setError(null);
-    if (!canCreateProject) {
-      setError(activeProjectLimitMessage);
-      setPlansOpen(true);
-      return;
-    }
     const response = await fetch("/api/projects/new", { method: "POST" });
     if (!response.ok) {
-      setError("The project could not be created. Please try again.");
+      if (response.status === 422) {
+        setError(activeProjectLimitMessage);
+        setPlansOpen(true);
+      } else {
+        setError("The project could not be created. Please try again.");
+      }
       return;
     }
     const project = await response.json();
@@ -102,20 +101,15 @@ export function WorkspaceHome({
 
     newProjectHandled.current = true;
     let cancelled = false;
-    if (!canCreateProject) {
-      queueMicrotask(() => {
-        if (cancelled) return;
-        setError(activeProjectLimitMessage);
-        setPlansOpen(true);
-      });
-      return () => {
-        cancelled = true;
-      };
-    }
     void fetch("/api/projects/new", { method: "POST" }).then(async (response) => {
       if (cancelled) return;
       if (!response.ok) {
-        setError("The project could not be created. Please try again.");
+        if (response.status === 422) {
+          setError(activeProjectLimitMessage);
+          setPlansOpen(true);
+        } else {
+          setError("The project could not be created. Please try again.");
+        }
         return;
       }
       const project = await response.json();
@@ -124,7 +118,7 @@ export function WorkspaceHome({
     return () => {
       cancelled = true;
     };
-  }, [activeProjectLimitMessage, canCreateProject, intakeHref, openNewProject, router]);
+  }, [activeProjectLimitMessage, intakeHref, openNewProject, router]);
 
   const setArchived = async (
     projectId: string,

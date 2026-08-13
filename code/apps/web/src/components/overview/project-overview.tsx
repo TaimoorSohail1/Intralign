@@ -40,6 +40,7 @@ import type {
 import { ArtifactWorkspace } from "@/components/artifacts/artifact-workspace";
 import { HistoryWorkspace } from "@/components/history/history-workspace";
 import { InferenceMap } from "@/components/inference/inference-map";
+import { OutcomeCapacityControl } from "@/components/outcomes/outcome-capacity-control";
 import { ReportWorkspace } from "@/components/reports/report-workspace";
 import { ProjectWorkspaceControls } from "@/components/workspace/project-workspace-controls";
 import { analysisFailureCopy } from "@/lib/analysis-errors";
@@ -1074,18 +1075,21 @@ export function ProjectOverview({
       </header>
 
       {initialView === "overview" && outcomeDefinition ? (
-        <button
-          aria-label={`Outcome: ${outcomeDefinition}`}
-          className="r2-outcome-anchor"
-          onClick={() => router.push(`/projects/${snapshot.project_id}/artifacts/intent`)}
-          type="button"
-        >
-          <span aria-hidden="true">◎</span>
-          <small>Outcome</small>
-          <strong>{outcomeDefinition}</strong>
-          <em>{outcomeArtifact?.evidence_refs.length ? "✓ grounded" : "OSLO inference"}</em>
-          <CaretRight aria-hidden="true" size={13} />
-        </button>
+        <div className="r2-outcome-capacity-row">
+          <button
+            aria-label={`Outcome: ${outcomeDefinition}`}
+            className="r2-outcome-anchor"
+            onClick={() => router.push(`/projects/${snapshot.project_id}/artifacts/intent`)}
+            type="button"
+          >
+            <span aria-hidden="true">◎</span>
+            <small>Outcome</small>
+            <strong>{outcomeDefinition}</strong>
+            <em>{outcomeArtifact?.evidence_refs.length ? "✓ grounded" : "OSLO inference"}</em>
+            <CaretRight aria-hidden="true" size={13} />
+          </button>
+          <OutcomeCapacityControl projectId={snapshot.project_id} />
+        </div>
       ) : null}
 
       {confidenceBreakdownOpen ? (

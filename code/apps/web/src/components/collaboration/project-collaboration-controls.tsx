@@ -58,10 +58,8 @@ interface CollaborationState {
   actor_role: "owner";
   plan: {
     name: string;
-    collaborator_seats: number;
-    collaborator_seats_used: number;
-    monthly_invites: number;
-    monthly_invites_used?: number;
+    collaborators_unmetered: boolean;
+    invitations_unmetered: boolean;
     viewers_unlimited: boolean;
     reviewers_unmetered: boolean;
     export_formats?: string[];
@@ -366,9 +364,6 @@ export function ProjectCollaborationControls({
     window.setTimeout(() => setCopied(false), 1600);
   }
 
-  const inviteLimit = state?.plan.monthly_invites ?? 0;
-  const inviteUsed = state?.plan.monthly_invites_used ?? 0;
-  const inviteRemaining = Math.max(inviteLimit - inviteUsed, 0);
   const isBasic = state?.plan.name.toLowerCase() === "basic";
   const sections = readoutSections(overview, audience);
 
@@ -434,13 +429,9 @@ export function ProjectCollaborationControls({
 
               {mode === "share" && state ? (
                 <div className="prototype-share-body">
-                  <div className="collaboration-limit-box is-phase">
-                    <span>Phase limit — invites (supply)</span>
-                    <p><strong>{inviteRemaining} of {inviteLimit} left</strong> this month on {state.plan.name}. Resets monthly and does not accumulate.</p>
-                  </div>
                   <div className="collaboration-limit-box is-tier">
-                    <span>Tier limit — workspace owner seats</span>
-                    <p><strong>{state.plan.collaborator_seats} owner seats</strong> on {state.plan.name}, including you. {state.plan.collaborator_seats_used} of {state.plan.collaborator_seats} filled.</p>
+                    <span>Included on {state.plan.name}</span>
+                    <p><strong>Collaboration and invitations are never metered.</strong> Invite people when judgment needs more perspectives.</p>
                   </div>
                   <div className="collaboration-review-free">
                     <strong>Asking for a read is free — no invite, no seat.</strong>
@@ -464,7 +455,7 @@ export function ProjectCollaborationControls({
                   <section className="prototype-share-section">
                     <p className="collaboration-label">Workspace role</p>
                     <div className="prototype-role-table">
-                      <RoleRow label="Owner" seat detail="Every workspace member can change the plan, share it, and export it." />
+                      <RoleRow label="Owner" detail="Every workspace member can change the plan, share it, and export it." />
                     </div>
                   </section>
 
@@ -475,7 +466,7 @@ export function ProjectCollaborationControls({
                         <div className="prototype-person" key={participant.id}>
                           <span className="collaboration-avatar">{initials(participant.display_name) || "OS"}</span>
                           <span><strong>{participant.display_name}</strong><small>{participant.email ?? participant.role}</small></span>
-                          <span className="seat-badge">seat</span>
+                          <span className="seat-badge no-seat">unmetered</span>
                           <span className="collaboration-role">Owner</span>
                         </div>
                       ))}
@@ -605,8 +596,8 @@ function ExportComposer({
   );
 }
 
-function RoleRow({ label, detail, seat = false }: { label: string; detail: string; seat?: boolean }) {
-  return <div><strong>{label}</strong><span className={seat ? "seat-badge" : "seat-badge no-seat"}>{seat ? "takes a seat" : "no seat"}</span><p>{detail}</p></div>;
+function RoleRow({ label, detail }: { label: string; detail: string }) {
+  return <div><strong>{label}</strong><span className="seat-badge no-seat">unmetered</span><p>{detail}</p></div>;
 }
 
 function Heading({ icon, title, detail }: { icon: ReactNode; title: string; detail: string }) {

@@ -14,7 +14,7 @@ const workspace: WorkspaceSummary = {
   price_usd_monthly: 0,
   document_limit: 20,
   word_limit: 50_000,
-  collaborator_seat_limit: 3,
+  collaborator_seat_limit: null,
   monthly_analysis_limit: null,
   monthly_analyses_used: 2,
   can_manage_plan: true,
@@ -28,31 +28,28 @@ describe("PlanComparisonModal", () => {
     vi.unstubAllGlobals();
   });
 
-  it("explains equal judgment and activates Basic without a charge", async () => {
-    const updated = {
-      ...workspace,
-      plan: "basic" as const,
-      plan_label: "Basic",
-      price_usd_monthly: 12,
-      document_limit: 40,
-      word_limit: 100_000,
-      collaborator_seat_limit: 10,
-    };
-    const onWorkspaceChange = vi.fn();
+  it("explains equal judgment and starts real hosted Basic checkout", async () => {
+    const onCheckoutRedirect = vi.fn();
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify(updated), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({
+            id: "cs_test_123",
+            url: "https://checkout.stripe.com/c/pay/cs_test_123",
+          }),
+          {
+            status: 201,
+            headers: { "content-type": "application/json" },
+          },
+        ),
       ),
     );
 
     render(
       <PlanComparisonModal
         onClose={vi.fn()}
-        onWorkspaceChange={onWorkspaceChange}
+        onCheckoutRedirect={onCheckoutRedirect}
         open
         workspace={workspace}
       />,
@@ -61,19 +58,24 @@ describe("PlanComparisonModal", () => {
     expect(screen.getByText("Every plan gets the same read.")).toBeInTheDocument();
     expect(screen.getByText("1 active project")).toBeInTheDocument();
     expect(screen.getByText("3 active projects")).toBeInTheDocument();
-    expect(screen.getAllByText(/no card, no charge/i)).toHaveLength(2);
+    expect(screen.getByText("1 active outcome")).toBeInTheDocument();
+    expect(screen.getByText("Multiple active outcomes")).toBeInTheDocument();
+    expect(screen.queryByText(/preview-only/i)).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Upgrade to Basic — $12/mo." }));
+    fireEvent.click(screen.getByRole("button", { name: "Upgrade to Basic — $29/mo" }));
 
-    await waitFor(() => expect(onWorkspaceChange).toHaveBeenCalledWith(updated));
+    await waitFor(() =>
+      expect(onCheckoutRedirect).toHaveBeenCalledWith(
+        "https://checkout.stripe.com/c/pay/cs_test_123",
+      ),
+    );
     expect(fetch).toHaveBeenCalledWith(
-      "/api/workspace/plan",
+      "/api/workspace/billing/checkout",
       expect.objectContaining({
-        method: "PUT",
-        body: JSON.stringify({ plan: "basic" }),
+        method: "POST",
+        body: JSON.stringify({ interval: "monthly", wall_key: "multiPlan" }),
       }),
     );
-    expect(await screen.findByText(/No card was charged/)).toBeInTheDocument();
   });
 
 });
