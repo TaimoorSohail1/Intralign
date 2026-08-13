@@ -196,7 +196,7 @@ export function ProjectWorkspaceControls({
           type="button"
         >
           <FolderOpen aria-hidden="true" className="project-switcher-icon" size={15} />
-          <span>{current?.name ?? projectName ?? "Project"}</span>
+          <span>{projectName ?? current?.name ?? "Project"}</span>
           <CaretDown aria-hidden="true" className="project-switcher-caret" size={13} />
         </button>
         {open ? (
@@ -235,7 +235,10 @@ export function ProjectWorkspaceControls({
           </div>
         ) : null}
       </div>
-      <ProjectCollaborationControls projectId={projectId} projectName={current?.name ?? "this project"} />
+      <ProjectCollaborationControls
+        projectId={projectId}
+        projectName={projectName ?? current?.name ?? "this project"}
+      />
       {planPortalId
         ? planPortalTarget
           ? createPortal(planControl, planPortalTarget)

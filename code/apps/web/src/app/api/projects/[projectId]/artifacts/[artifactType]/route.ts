@@ -1,5 +1,6 @@
 import {
   getProjectArtifact,
+  OsloApiError,
   updateProjectArtifact,
 } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
@@ -17,8 +18,11 @@ export async function GET(
     return Response.json(
       await getProjectArtifact(session.accessToken, projectId, artifactType),
     );
-  } catch {
-    return Response.json({ message: "Artifact not found" }, { status: 404 });
+  } catch (error) {
+    if (error instanceof OsloApiError) {
+      return Response.json({ message: error.message }, { status: error.status });
+    }
+    return Response.json({ message: "Artifact service unavailable" }, { status: 502 });
   }
 }
 

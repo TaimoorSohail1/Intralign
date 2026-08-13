@@ -83,6 +83,16 @@ class ClaimProvenance(StrEnum):
     CONFIRMED_BY_USER = "confirmed_by_user"
 
 
+def normalize_evidence_state(state: str) -> str:
+    """Translate persisted provenance labels into the artifact evidence-state contract."""
+
+    return {
+        ClaimProvenance.SOURCE_GROUNDED.value: "confirmed",
+        ClaimProvenance.OSLO_INFERRED.value: "inferred",
+        ClaimProvenance.CONFIRMED_BY_USER.value: "confirmed",
+    }.get(state, state if state in {"confirmed", "inferred", "conflicting"} else "unknown")
+
+
 @dataclass(frozen=True, slots=True)
 class AnalysisRunRequest:
     workspace_id: UUID

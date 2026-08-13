@@ -23,6 +23,7 @@ from oslo_api.analysis.advisor import (
     build_project_advisor,
 )
 from oslo_api.analysis.documents import MAX_DOCUMENT_BYTES, DocumentRejected
+from oslo_api.analysis.models import normalize_evidence_state
 from oslo_api.analysis.provenance import build_project_provenance
 from oslo_api.analysis.understanding import with_integrity
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
@@ -800,10 +801,23 @@ def _artifact_workspace_response(
         )
         for citation in artifact.get("evidence_citations", [])
     }
+    content = {
+        **artifact["content"],
+        "sections": [
+            {
+                **section,
+                "row_states": [
+                    normalize_evidence_state(state)
+                    for state in section.get("row_states", [])
+                ],
+            }
+            for section in artifact["content"].get("sections", [])
+        ],
+    }
     return ArtifactWorkspaceResponse(
         artifact_type=artifact["artifact_type"],
         title=artifact["title"],
-        content=ArtifactContentPayload.model_validate(artifact["content"]),
+        content=ArtifactContentPayload.model_validate(content),
         version=artifact["version"],
         provenance=artifact["provenance"],
         reliability=artifact["reliability"],

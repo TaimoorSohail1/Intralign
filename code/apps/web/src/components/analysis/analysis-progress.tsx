@@ -18,10 +18,201 @@ const workflow = [
   ["publish", "Your read is ready.", "Preparing your first outcome decision"],
 ] as const;
 
+const returningStages = [
+  {
+    title: "Reading your inputs…",
+    description: "Opening your brief and any attachments…",
+    trace: "read inputs",
+    result: "ok",
+  },
+  {
+    title: "Drafting your plan documents…",
+    description: "Building the working documents that make up your plan…",
+    trace: "drafted plan",
+    result: "documents",
+  },
+  {
+    title: "Separating evidence from inference…",
+    description: "Marking what you stated as your evidence…",
+    trace: "separated evidence from inference",
+    result: "tagged",
+  },
+  {
+    title: "Mapping what your outcome rests on…",
+    description: "Linking program, venue, sponsors and logistics to your outcome…",
+    trace: "mapped what your outcome rests on",
+    result: "linked",
+  },
+  {
+    title: "Noting your open questions…",
+    description: "Collecting the open questions in your brief…",
+    trace: "noted your open questions",
+    result: "flagged",
+  },
+  {
+    title: "Assessing your plan…",
+    description: "Checking clarity, alignment and feasibility…",
+    trace: "assessed Clarity · Alignment · Feasibility",
+    result: "",
+  },
+  {
+    title: "Pulling your read together…",
+    description: "Bringing it into one clear read of where you stand…",
+    trace: "pulled your read together",
+    result: "first read",
+  },
+  {
+    title: "Your strategic read is ready.",
+    description: "Preparing your initial read…",
+    trace: "surfaced issues + clarifications",
+    result: "initial read complete",
+  },
+] as const;
+
+const returningStageByPhase: Record<string, number> = {
+  submit_intake: 1,
+  validate_scope: 1,
+  ingest_parse: 2,
+  perceive: 3,
+  retrieve_evidence: 4,
+  construct_artifacts: 4,
+  checkpoint: 5,
+  evaluate_advise: 6,
+  validate_result: 7,
+  publish: 8,
+};
+
+const returningStageDurations = [2_000, 4_800, 2_100, 2_100, 2_100, 2_100, 2_100, 1_200] as const;
+
+function buildRingSegments(count: number) {
+  const center = 84;
+  const radius = 79;
+  const gap = count > 10 ? 6 : 9;
+  const segment = 360 / count;
+  return Array.from({ length: count }, (_, index) => {
+    const start = ((index * segment) - 90 + gap / 2) * Math.PI / 180;
+    const end = (((index + 1) * segment) - 90 - gap / 2) * Math.PI / 180;
+    const x0 = center + radius * Math.cos(start);
+    const y0 = center + radius * Math.sin(start);
+    const x1 = center + radius * Math.cos(end);
+    const y1 = center + radius * Math.sin(end);
+    const largeArc = segment - gap > 180 ? 1 : 0;
+    return `M${x0.toFixed(1)} ${y0.toFixed(1)} A${radius} ${radius} 0 ${largeArc} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+  });
+}
+
+const ringSegments = buildRingSegments(returningStages.length);
+
+function ReturningAnalysisLoader({
+  artifactCount,
+  stage,
+}: {
+  artifactCount: number;
+  stage: number;
+}) {
+  const active = returningStages[stage - 1];
+  return (
+    <section className="r2-returning-loader" aria-label="Analysis progress">
+      <div className="r2-returning-scanner" aria-hidden="true">
+        <svg className="r2-returning-ring" viewBox="0 0 168 168">
+          {ringSegments.map((path, index) => (
+            <path
+              className={
+                stage === returningStages.length || index < stage - 1
+                  ? "is-complete"
+                  : index === stage - 1
+                    ? "is-active"
+                    : ""
+              }
+              d={path}
+              key={path}
+            />
+          ))}
+        </svg>
+        <span className="r2-returning-core" />
+      </div>
+      <p className="r2-returning-pill"><span />Analyzing…</p>
+      <h1>{active.title}</h1>
+      <p className="r2-returning-description">{active.description}</p>
+      <p className="r2-returning-stage">Stage {stage} of 8</p>
+      <ol className="r2-returning-trace">
+        {returningStages.slice(0, stage).map((item, index) => {
+          const result = index === 1
+            ? `${artifactCount || 7} documents`
+            : item.result;
+          return (
+            <li key={item.trace}>
+              <span>{item.trace}</span>
+              {result ? <><i>·</i><strong>{result}</strong></> : null}
+            </li>
+          );
+        })}
+      </ol>
+      <p className="r2-returning-expectation">Preliminary Outcome Analysis · up to about a minute</p>
+    </section>
+  );
+}
+
 type OutcomeDecision = {
   projectTitle: string;
   outcome: string;
 };
+
+type OutcomeOverview = {
+  project_title?: string | null;
+  summary?: string | null;
+  artifacts?: Array<{ artifact_type?: string; summary?: string | null }>;
+};
+
+type IntentArtifact = {
+  content?: {
+    sections?: Array<{
+      heading?: string | null;
+      body?: string | null;
+      bullets?: string[];
+    }>;
+  };
+};
+
+const extractionSummary = /\b(?:extracted|derived|assembled) from\b|^initial (?:structured|evidence-qualified) intent\b/i;
+
+function firstSentence(value: string) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  const sentence = normalized.match(/^.+?[.!?](?:\s|$)/)?.[0]?.trim();
+  return sentence && sentence.length >= 20 ? sentence : normalized;
+}
+
+export function selectOutcomeCandidate(
+  overview: OutcomeOverview,
+  intentArtifact?: IntentArtifact | null,
+) {
+  const sections = intentArtifact?.content?.sections ?? [];
+  const preferredSections = [
+    ...sections.filter((section) =>
+      /outcome|executive summary|intent|objective/i.test(section.heading ?? ""),
+    ),
+    ...sections.filter((section) =>
+      !/outcome|executive summary|intent|objective/i.test(section.heading ?? ""),
+    ),
+  ];
+  const sourceCandidate = preferredSections
+    .flatMap((section) => [section.body ?? "", ...(section.bullets ?? [])])
+    .map((candidate) => candidate.replace(/\s+/g, " ").trim())
+    .find((candidate) => candidate.length >= 20 && !extractionSummary.test(candidate));
+  if (sourceCandidate) return firstSentence(sourceCandidate);
+
+  const intentSummary = overview.artifacts?.find(
+    (artifact) => artifact.artifact_type === "intent",
+  )?.summary?.trim();
+  if (intentSummary && !extractionSummary.test(intentSummary)) return intentSummary;
+  if (overview.summary?.trim() && !extractionSummary.test(overview.summary)) {
+    return overview.summary.trim();
+  }
+  if (overview.project_title?.trim()) {
+    return `Deliver ${overview.project_title.trim()} according to the submitted plan.`;
+  }
+  return "Deliver the outcome described in the submitted project information.";
+}
 
 export function AnalysisProgress({
   mode = "guided",
@@ -44,18 +235,24 @@ export function AnalysisProgress({
   const [decision, setDecision] = useState<OutcomeDecision | null>(null);
   const [arcReady, setArcReady] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [visibleWatchStage, setVisibleWatchStage] = useState(1);
   const failureCopy = failed ? analysisFailureCopy(failed) : null;
   const activeIndex = Math.max(0, workflow.findIndex(([id]) => id === phase));
 
   const loadDecision = useCallback(async () => {
-    const response = await fetch(`/api/projects/${projectId}/overview`, { cache: "no-store" });
-    if (!response.ok) {
+    const [overviewResponse, intentResponse] = await Promise.all([
+      fetch(`/api/projects/${projectId}/overview`, { cache: "no-store" }),
+      fetch(`/api/projects/${projectId}/artifacts/intent`, { cache: "no-store" }),
+    ]);
+    if (!overviewResponse.ok) {
       setFailed("ANALYSIS_RESULT_UNAVAILABLE");
       return;
     }
-    const overview = await response.json();
-    const intent = overview.artifacts?.find((artifact: { artifact_type?: string }) => artifact.artifact_type === "intent");
-    const outcome = intent?.summary || overview.summary || overview.project_title || "Your project outcome";
+    const overview = await overviewResponse.json() as OutcomeOverview;
+    const intentArtifact = intentResponse.ok
+      ? await intentResponse.json() as IntentArtifact
+      : null;
+    const outcome = selectOutcomeCandidate(overview, intentArtifact);
     decisionOutcomeRef.current = outcome;
     setDecision({ projectTitle: overview.project_title || "Your project", outcome });
   }, [projectId]);
@@ -111,7 +308,20 @@ export function AnalysisProgress({
     };
   }, [loadDecision, projectId, runId, syncVersion]);
 
-  const stage = useMemo(() => Math.max(1, Math.min(8, Math.ceil(((activeIndex + 1) / workflow.length) * 8))), [activeIndex]);
+  const actualWatchStage = returningStageByPhase[phase] ?? 1;
+
+  useEffect(() => {
+    if (mode !== "watch" || visibleWatchStage >= actualWatchStage) return;
+    const timer = window.setTimeout(
+      () => setVisibleWatchStage((current) => Math.min(current + 1, actualWatchStage)),
+      returningStageDurations[visibleWatchStage - 1],
+    );
+    return () => window.clearTimeout(timer);
+  }, [actualWatchStage, mode, visibleWatchStage]);
+
+  const stage = mode === "watch"
+    ? visibleWatchStage
+    : Math.max(1, Math.min(8, Math.ceil(((activeIndex + 1) / workflow.length) * 8)));
 
   const arcEvents = useMemo(() => {
     const events: string[] = [];
@@ -145,6 +355,7 @@ export function AnalysisProgress({
 
   const retry = async () => {
     setFailed(null);
+    if (mode === "watch") setVisibleWatchStage(1);
     const response = await fetch(`/api/analysis-runs/${runId}/retry`, { method: "POST" });
     if (!response.ok) {
       setFailed("ANALYSIS_RETRY_FAILED");
@@ -181,10 +392,13 @@ export function AnalysisProgress({
   }, [mode, projectId, router]);
 
   useEffect(() => {
-    if (mode !== "watch" || !decision) return;
-    const handoff = window.setTimeout(() => void actOnOutcome("confirm"), 100);
+    if (mode !== "watch" || !decision || stage < returningStages.length) return;
+    const handoff = window.setTimeout(
+      () => void actOnOutcome("confirm"),
+      returningStageDurations[returningStageDurations.length - 1],
+    );
     return () => window.clearTimeout(handoff);
-  }, [actOnOutcome, decision, mode]);
+  }, [actOnOutcome, decision, mode, stage]);
 
   useEffect(() => {
     const onArcMessage = (event: MessageEvent) => {
@@ -204,23 +418,27 @@ export function AnalysisProgress({
   }, [actOnOutcome]);
 
   return (
-    <main aria-busy={!decision && !failed} className="r2-analysis-page">
-      <iframe
-        className="r2-analysis-prototype-frame"
-        data-oarc-complete={decision ? "true" : "false"}
-        data-oarc-elapsed={String(elapsed)}
-        data-oarc-events={arcEvents.join(",")}
-        data-oarc-outcome={decision?.outcome ?? ""}
-        data-oarc-progress={String(decision ? 100 : ((activeIndex + 1) / workflow.length) * 100)}
-        data-oarc-project-title={decision?.projectTitle ?? ""}
-        onLoad={() => {
-          setArcReady(true);
-          window.setTimeout(syncArc, 0);
-        }}
-        ref={arcRef}
-        src={`/r2/onboarding-arc.html?embed=1&live=1&mode=${mode}`}
-        title="OSLO analysis and outcome confirmation"
-      />
+    <main aria-busy={!failed && (!decision || (mode === "watch" && stage < returningStages.length))} className="r2-analysis-page">
+      {mode === "guided" ? (
+        <iframe
+          className="r2-analysis-prototype-frame"
+          data-oarc-complete={decision ? "true" : "false"}
+          data-oarc-elapsed={String(elapsed)}
+          data-oarc-events={arcEvents.join(",")}
+          data-oarc-outcome={decision?.outcome ?? ""}
+          data-oarc-progress={String(decision ? 100 : ((activeIndex + 1) / workflow.length) * 100)}
+          data-oarc-project-title={decision?.projectTitle ?? ""}
+          onLoad={() => {
+            setArcReady(true);
+            window.setTimeout(syncArc, 0);
+          }}
+          ref={arcRef}
+          src="/r2/onboarding-arc.html?embed=1&live=1&mode=guided"
+          title="OSLO analysis and outcome confirmation"
+        />
+      ) : (
+        <ReturningAnalysisLoader artifactCount={completedArtifacts.length} stage={stage} />
+      )}
 
       {failed ? (
         <section className="r2-analysis-failure-shell" aria-live="assertive">
@@ -234,9 +452,9 @@ export function AnalysisProgress({
         </section>
       ) : null}
       <p className="sr-only" role="status">
-        {decision
+        {decision && (mode !== "watch" || stage === returningStages.length)
           ? "Analysis complete. Confirm, refine, or defer the inferred outcome."
-          : `${workflow[activeIndex]?.[1] ?? "Preparing your read…"} Stage ${stage} of 8. ${Math.max(completedArtifacts.length, completed.length)} analysis steps complete.`}
+          : `${mode === "watch" ? returningStages[stage - 1].title : workflow[activeIndex]?.[1] ?? "Preparing your read…"} Stage ${stage} of 8. ${Math.max(completedArtifacts.length, completed.length)} analysis steps complete.`}
       </p>
     </main>
   );

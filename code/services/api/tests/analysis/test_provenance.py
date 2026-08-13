@@ -46,6 +46,33 @@ def test_provenance_counts_rows_from_evidence_contract_not_ui_text() -> None:
     assert result["structure"]["untraceable_numbers"] == 0
 
 
+def test_provenance_counts_legacy_source_grounded_rows_as_grounded() -> None:
+    reference = "document:charter:page:1"
+    artifacts = (
+        Artifact(
+            artifact_type=ArtifactType.INTENT,
+            title="Intent",
+            summary="Launch the portal.",
+            reliability="High",
+            evidence_refs=(reference,),
+            sections=(
+                ArtifactSection(
+                    heading="Objectives",
+                    columns=("ID", "Objective"),
+                    rows=(("OBJ-01", "Launch the portal"),),
+                    row_evidence_refs=((reference,),),
+                    row_states=("source_grounded",),
+                ),
+            ),
+        ),
+    )
+
+    result = build_project_provenance(artifacts=artifacts, issues=())
+
+    assert result["grounded_claims"] == 1
+    assert result["inferred_claims"] == 0
+
+
 def test_provenance_links_load_bearing_assumptions_to_governed_issues() -> None:
     artifacts = (
         Artifact(

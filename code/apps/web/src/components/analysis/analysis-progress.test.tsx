@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AnalysisProgress } from "./analysis-progress";
@@ -67,6 +67,7 @@ describe("AnalysisProgress", () => {
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -160,6 +161,55 @@ describe("AnalysisProgress", () => {
       "Ship the migration without customer interruption.",
     );
     expect(frame()).toHaveAttribute("data-oarc-events", expect.stringContaining("outcome"));
+  });
+
+  it("uses the source-backed intent statement instead of extraction metadata", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes("/overview")) {
+          return Response.json({
+            ...completedOverview(),
+            summary: "Initial structured intent extracted from Executive summary.",
+            artifacts: [
+              {
+                artifact_type: "intent",
+                summary: "Initial structured intent extracted from Executive summary.",
+              },
+            ],
+            project_title: "Atlas B2B Commerce Launch",
+          });
+        }
+        if (url.includes("/artifacts/intent")) {
+          return Response.json({
+            content: {
+              sections: [
+                {
+                  heading: "Executive summary",
+                  body: "Atlas Retail Group will launch a self-service B2B commerce portal for 420 wholesale customers in the United Kingdom and Ireland. The portal will support contract pricing and order placement.",
+                  bullets: [],
+                },
+              ],
+            },
+          });
+        }
+        return Response.json({
+          status: "completed",
+          phase: "publish",
+          completed_phases: ["publish"],
+        });
+      }),
+    );
+
+    render(<AnalysisProgress mode="guided" projectId="project-1" runId="run-1" />);
+
+    await waitFor(() =>
+      expect(frame()).toHaveAttribute(
+        "data-oarc-outcome",
+        "Atlas Retail Group will launch a self-service B2B commerce portal for 420 wholesale customers in the United Kingdom and Ireland.",
+      ),
+    );
   });
 
   it("synchronizes after the embedded document loads even if its ready handshake raced", async () => {
@@ -279,7 +329,8 @@ describe("AnalysisProgress", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
-  it("uses the returning watch-it-work mode without replaying the guided arc", async () => {
+  it("reveals real returning-client phases at the prototype cadence", async () => {
+    vi.useFakeTimers();
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -289,10 +340,36 @@ describe("AnalysisProgress", () => {
 
     render(<AnalysisProgress mode="watch" projectId="project-1" runId="run-1" />);
 
-    expect(frame()).toHaveAttribute("src", "/r2/onboarding-arc.html?embed=1&live=1&mode=watch");
+    expect(screen.queryByTitle("OSLO analysis and outcome confirmation")).not.toBeInTheDocument();
+    await act(async () => { await Promise.resolve(); });
+    expect(screen.getByRole("heading", { name: "Reading your inputs…" })).toBeInTheDocument();
+    expect(screen.getByText("Stage 1 of 8")).toBeInTheDocument();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
+    expect(screen.getByRole("heading", { name: "Drafting your plan documents…" })).toBeInTheDocument();
+    expect(screen.getByText("Stage 2 of 8")).toBeInTheDocument();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(4_800); });
+    expect(screen.getByRole("heading", { name: "Separating evidence from inference…" }))
+      .toBeInTheDocument();
+    expect(screen.getByText("Marking what you stated as your evidence…")).toBeInTheDocument();
+    expect(screen.getByText("Stage 3 of 8")).toBeInTheDocument();
+    expect(screen.getByText("read inputs")).toBeInTheDocument();
+    expect(screen.getByText("drafted plan")).toBeInTheDocument();
+    expect(screen.getByText("Preliminary Outcome Analysis · up to about a minute"))
+      .toBeInTheDocument();
+
+    await act(async () => {
+      FakeEventSource.current?.emit("analysis.phase_started", { phase: "retrieve_evidence" });
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_100); });
+    expect(screen.getByRole("heading", { name: "Mapping what your outcome rests on…" }))
+      .toBeInTheDocument();
+    expect(screen.getByText("Stage 4 of 8")).toBeInTheDocument();
   });
 
   it("hands a completed returning-client read back to Overview without waiting for a first-time decision", async () => {
+    vi.useFakeTimers();
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.includes("/outcome-actions") && init?.method === "POST") {
@@ -305,8 +382,18 @@ describe("AnalysisProgress", () => {
 
     render(<AnalysisProgress mode="watch" projectId="project-1" runId="run-1" />);
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/projects/project-1/overview"), {
-      timeout: 2_000,
-    });
+    await act(async () => { await Promise.resolve(); });
+    expect(replace).not.toHaveBeenCalled();
+    for (const duration of [2_000, 4_800, 2_100, 2_100, 2_100, 2_100, 2_100]) {
+      await act(async () => { await vi.advanceTimersByTimeAsync(duration); });
+    }
+    expect(screen.getByText("Stage 8 of 8")).toBeInTheDocument();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_200); });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/project-1/outcome-actions",
+      expect.objectContaining({ method: "POST" }),
+    );
+    await act(async () => { await vi.advanceTimersByTimeAsync(850); });
+    expect(replace).toHaveBeenCalledWith("/projects/project-1/overview");
   });
 });

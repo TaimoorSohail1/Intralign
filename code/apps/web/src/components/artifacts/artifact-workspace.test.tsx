@@ -179,6 +179,45 @@ describe("ArtifactWorkspace", () => {
     expect(screen.getAllByText("Delivery baseline is unresolved")).toHaveLength(1);
   });
 
+  it("shows a recoverable error instead of loading forever when an artifact request fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          Response.json({ message: "Artifact service unavailable" }, { status: 503 }),
+        )
+        .mockResolvedValueOnce(Response.json(artifact)),
+    );
+
+    render(
+      <ArtifactWorkspace
+        analysisRunning={false}
+        artifactType="schedule"
+        onAnalysisStarted={vi.fn()}
+        onAskOslo={vi.fn()}
+        onOpenIssue={vi.fn()}
+        projectId="project-001"
+      />,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Artifact could not be loaded",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByRole("heading", { name: "Schedule" })).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it("keeps proposals itemized and records the decision from the artifact surface", async () => {
     const onProposalDecision = vi.fn();
     const proposal = {

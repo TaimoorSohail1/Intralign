@@ -1,29 +1,12 @@
 "use client";
 
-import {
-  Archive,
-  ArrowCounterClockwise,
-  ArrowRight,
-  Bell,
-  FolderOpen,
-  Gear,
-  MagnifyingGlass,
-  Plus,
-  Sparkle,
-} from "@phosphor-icons/react";
+import { Archive, ArrowCounterClockwise, ArrowLeft, ArrowRight, Plus } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { PlanComparisonModal } from "@/components/workspace/plan-comparison-modal";
 import type { WorkspaceSummary } from "@/lib/server/oslo-api";
-
-const workspaceDateFormatter = new Intl.DateTimeFormat("en-GB", {
-  day: "2-digit",
-  month: "short",
-  timeZone: "UTC",
-  year: "numeric",
-});
 
 export function WorkspaceHome({
   initial,
@@ -36,73 +19,43 @@ export function WorkspaceHome({
 }) {
   const router = useRouter();
   const [workspace, setWorkspace] = useState(initial);
-  const [showArchived, setShowArchived] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [plansOpen, setPlansOpen] = useState(false);
-  const [projectQuery, setProjectQuery] = useState("");
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [creatingProject, setCreatingProject] = useState(false);
   const newProjectHandled = useRef(false);
+  const projectCreationPending = useRef(false);
 
   const active = useMemo(
-    () => workspace.projects.filter((project) => !project.archived),
+    () => workspace.projects
+      .filter((project) => !project.archived)
+      .sort((left, right) => Date.parse(right.updated_at) - Date.parse(left.updated_at)),
     [workspace.projects],
   );
   const archived = useMemo(
     () => workspace.projects.filter((project) => project.archived),
     [workspace.projects],
   );
-  const activeSorted = useMemo(
-    () => [...active].sort(
-      (left, right) => Date.parse(right.updated_at) - Date.parse(left.updated_at),
-    ),
-    [active],
-  );
-  const activeFiltered = useMemo(() => {
-    const query = projectQuery.trim().toLocaleLowerCase();
-    return query
-      ? activeSorted.filter((project) => project.name.toLocaleLowerCase().includes(query))
-      : activeSorted;
-  }, [activeSorted, projectQuery]);
-  const activeVisible = activeFiltered.slice(0, visibleCount);
+  const currentProject = active[0] ?? null;
+  const recentProjects = active.slice(1);
   const activeProjectLimit = workspace.active_project_limit ?? (workspace.plan === "free" ? 1 : 3);
   const isReturningClient = workspace.projects.some(
     (project) => project.analysis_status !== "not_analyzed",
   );
   const intakeHref = useCallback(
-    (projectId: string) =>
-      `/intake?project=${projectId}${isReturningClient ? "&returning=1" : ""}`,
+    (projectId: string) => `/intake?project=${projectId}${isReturningClient ? "&returning=1" : ""}`,
     [isReturningClient],
   );
   const activeProjectLimitMessage =
     `The ${workspace.plan_label} plan includes ${activeProjectLimit} active project${activeProjectLimit === 1 ? "" : "s"}. Archive one or compare plans.`;
 
-  const createProject = async () => {
+  const createProject = useCallback(async () => {
+    if (projectCreationPending.current) return;
+    projectCreationPending.current = true;
+    setCreatingProject(true);
     setError(null);
-    const response = await fetch("/api/projects/new", { method: "POST" });
-    if (!response.ok) {
-      if (response.status === 422) {
-        setError(activeProjectLimitMessage);
-        setPlansOpen(true);
-      } else {
-        setError("The project could not be created. Please try again.");
-      }
-      return;
-    }
-    const project = await response.json();
-    router.push(intakeHref(project.id));
-  };
-
-  useEffect(() => {
-    if (
-      !openNewProject
-      || newProjectHandled.current
-    ) return;
-
-    newProjectHandled.current = true;
-    let cancelled = false;
-    void fetch("/api/projects/new", { method: "POST" }).then(async (response) => {
-      if (cancelled) return;
+    try {
+      const response = await fetch("/api/projects/new", { method: "POST" });
       if (!response.ok) {
         if (response.status === 422) {
           setError(activeProjectLimitMessage);
@@ -110,20 +63,27 @@ export function WorkspaceHome({
         } else {
           setError("The project could not be created. Please try again.");
         }
+        projectCreationPending.current = false;
+        setCreatingProject(false);
         return;
       }
       const project = await response.json();
       router.push(intakeHref(project.id));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [activeProjectLimitMessage, intakeHref, openNewProject, router]);
+    } catch {
+      setError("The project could not be created. Please try again.");
+      projectCreationPending.current = false;
+      setCreatingProject(false);
+    }
+  }, [activeProjectLimitMessage, intakeHref, router]);
 
-  const setArchived = async (
-    projectId: string,
-    next: boolean,
-  ) => {
+  useEffect(() => {
+    if (!openNewProject || newProjectHandled.current) return;
+    newProjectHandled.current = true;
+    window.history.replaceState(window.history.state, "", "/workspace");
+    void createProject();
+  }, [createProject, openNewProject]);
+
+  const setArchived = async (projectId: string, next: boolean) => {
     setPendingId(projectId);
     setError(null);
     const response = await fetch(
@@ -139,216 +99,118 @@ export function WorkspaceHome({
       const projects = current.projects.map((project) =>
         project.id === projectId ? { ...project, archived: next } : project,
       );
-      const activeProjectCount = projects.filter((project) => !project.archived).length;
       return {
         ...current,
         projects,
-        can_create_project: activeProjectCount < activeProjectLimit,
+        can_create_project: projects.filter((project) => !project.archived).length < activeProjectLimit,
       };
     });
     setPendingId(null);
-    return true;
   };
 
+  const projectHref = (project: WorkspaceSummary["projects"][number]) =>
+    project.analysis_status === "not_analyzed"
+      ? intakeHref(project.id)
+      : `/projects/${project.id}/overview`;
+
   return (
-    <main className="workspace-home-shell">
-      <header className="workspace-home-header">
-        <Link className="workspace-home-brand" href="/workspace">
-          <span aria-hidden="true">I</span>
-          <strong>Intralign</strong>
-        </Link>
-        <div className="workspace-home-actions">
-          <Link aria-label="Notifications" href="/workspace#activity">
-            <Bell size={18} />
-          </Link>
-          <Link aria-label="Settings" href="/settings">
-            <Gear size={18} />
-          </Link>
-          <span className="workspace-avatar" title={displayName}>
-            {displayName.slice(0, 1).toUpperCase()}
-          </span>
-        </div>
-      </header>
-
-      <section className="workspace-home-content">
-        <div className="workspace-home-title">
-          <div>
-            <p>Workspace</p>
-            <h1>{workspace.name}</h1>
-            <span>Open a project or start a new strategic read.</span>
-          </div>
-          <div className="workspace-create-control">
-            <small>{active.length} active · {activeProjectLimit} included</small>
-            <button
-              className="workspace-primary-action"
-              onClick={createProject}
-              type="button"
-            >
-              <Plus size={16} weight="bold" />
-              New project
-            </button>
-          </div>
-        </div>
-
-        <section className="workspace-plan-strip" aria-label="Workspace plan">
-          <div className="workspace-plan-summary">
-            <Sparkle size={18} />
-            <div>
-              <strong>{workspace.plan_label} plan</strong>
-              <span>{activeProjectLimit} active project{activeProjectLimit === 1 ? "" : "s"}</span>
-            </div>
-          </div>
-          <button onClick={() => setPlansOpen(true)} type="button">
-            Compare plans <ArrowRight size={14} />
+    <main aria-label={`${displayName}'s plans`} className="r2-plans-shell">
+      <section className="r2-plans-content">
+        <header className="r2-plans-heading">
+          <button
+            className="r2-plans-back"
+            onClick={() => router.push(currentProject ? projectHref(currentProject) : "/welcome")}
+            type="button"
+          >
+            <ArrowLeft aria-hidden="true" size={13} /> Back
           </button>
-        </section>
-
-        <aside className="workspace-score-note">
-          <span>i</span>
-          <p>
-            <strong>Each project keeps its own evidence-qualified read.</strong>
-            No computed scores across projects — OSLO assesses each project on its own inputs and reliability.
-            There is no portfolio score, average, or ranking.
-          </p>
-        </aside>
+          <h1>Plans</h1>
+          <p>your workspace — the plans you’re steering</p>
+        </header>
 
         {error ? <p className="workspace-error" role="alert">{error}</p> : null}
 
-        <div className="workspace-section-heading">
-          <div>
-            <h2>Active projects</h2>
-            <span>{active.length}</span>
-          </div>
-          <label className="workspace-project-search">
-            <MagnifyingGlass aria-hidden="true" size={15} />
-            <span className="sr-only">Search active projects</span>
-            <input
-              onChange={(event) => {
-                setProjectQuery(event.target.value);
-                setVisibleCount(12);
-              }}
-              placeholder="Search projects"
-              type="search"
-              value={projectQuery}
-            />
-          </label>
-        </div>
-
-        <div className={`workspace-project-grid ${activeVisible.length === 1 ? "is-single" : ""}`}>
-          {activeVisible.map((project) => (
-            <article className="workspace-project-card" key={project.id}>
-              <div className="workspace-project-card-top">
-                <span className={`workspace-state workspace-state-${project.analysis_status}`}>
-                  {project.analysis_status.replace("_", " ")}
-                </span>
+        <p className="r2-plans-label">Your plan</p>
+        <div className="r2-plans-primary-grid">
+          {currentProject ? (
+            <article className="r2-current-plan">
+              <header>
+                <h2>{currentProject.name}</h2>
+                <span>{currentProject.analysis_status.replaceAll("_", " ")} · plan</span>
+              </header>
+              <p className="r2-plan-integrity">
+                <i aria-hidden="true" /> Outcome Integrity
+                <strong>{currentProject.confidence_band ?? "Not read"}</strong>
+                <span>· gated by its weakest pillar</span>
+              </p>
+              <p className="r2-plan-updated">
+                {currentProject.analysis_status === "not_analyzed" ? "Ready for intake" : "Analyzed"} · {currentProject.open_issues} open issues · {currentProject.artifact_count} artifacts
+              </p>
+              <dl>
+                <div><dt>Outcome Integrity</dt><dd>{currentProject.confidence_band ?? "Not read"}</dd></div>
+                <div><dt>Reliability</dt><dd>{currentProject.reliability}</dd></div>
+                <div><dt>Open issues</dt><dd>{currentProject.open_issues}</dd></div>
+                <div><dt>Plan artifacts</dt><dd>{currentProject.artifact_count}</dd></div>
+              </dl>
+              <footer>
+                <div><span>Owned</span><span>★ Pinned</span></div>
                 {workspace.role === "owner" ? (
                   <button
-                    aria-label={`Archive ${project.name}`}
-                    disabled={pendingId === project.id}
-                    onClick={() => setArchived(project.id, true)}
+                    aria-label={`Archive ${currentProject.name}`}
+                    disabled={pendingId === currentProject.id}
+                    onClick={() => void setArchived(currentProject.id, true)}
+                    title="Archive plan"
                     type="button"
-                  >
-                    <Archive size={16} />
+                  ><Archive size={14} /></button>
+                ) : null}
+                <Link href={projectHref(currentProject)}>Open now <ArrowRight size={14} /></Link>
+              </footer>
+            </article>
+          ) : (
+            <button className="r2-current-plan is-empty" disabled={creatingProject} onClick={() => void createProject()} type="button">
+              <Plus size={19} /><strong>Create your first plan</strong><span>Drop in a document with context.</span>
+            </button>
+          )}
+
+          <button aria-label="New project" className="r2-new-plan" disabled={creatingProject} onClick={() => void createProject()} type="button">
+            <Plus aria-hidden="true" size={19} />
+            <strong>New plan</strong>
+            <span>Drop any document with context — OSLO maps it.</span>
+          </button>
+        </div>
+
+        <section className="r2-plans-list" aria-labelledby="recent-plans">
+          <h2 id="recent-plans">Recent</h2>
+          {recentProjects.length ? recentProjects.map((project) => (
+            <article key={project.id}>
+              <Link href={projectHref(project)}>
+                <strong>{project.name}</strong>
+                <span>{project.analysis_status.replaceAll("_", " ")} · integrity {project.confidence_band ?? "not read"}</span>
+                <em>switch →</em>
+              </Link>
+            </article>
+          )) : <p>No other recent plans.</p>}
+        </section>
+
+        <section className="r2-plans-list is-archived" aria-labelledby="archived-plans">
+          <h2 id="archived-plans">Archived ({archived.length})</h2>
+          {archived.length ? archived.map((project) => (
+            <article key={project.id}>
+              <div>
+                <strong>{project.name}</strong><span>Read-only · retained safely</span>
+                {workspace.role === "owner" ? (
+                  <button disabled={pendingId === project.id} onClick={() => void setArchived(project.id, false)} type="button">
+                    <ArrowCounterClockwise size={14} /> Restore
                   </button>
                 ) : null}
               </div>
-              <div className="workspace-project-identity">
-                <span>{activeVisible.length === 1 ? "Your project" : "Project"}</span>
-                <h3>{project.name}</h3>
-                <p>
-                  {project.confidence_band
-                    ? `${project.confidence_band} understanding · ${project.reliability} reliability`
-                    : "Ready for project intake"}
-                </p>
-              </div>
-              <dl>
-                <div><dt>Issues</dt><dd>{project.open_issues} open</dd></div>
-                <div><dt>Artifacts</dt><dd>{project.artifact_count} / 7</dd></div>
-                <div>
-                  <dt>Updated</dt>
-                  <dd>{workspaceDateFormatter.format(new Date(project.updated_at))}</dd>
-                </div>
-              </dl>
-              <Link href={
-                project.analysis_status === "not_analyzed"
-                  ? intakeHref(project.id)
-                  : `/projects/${project.id}/overview`
-              }>
-                Open project <ArrowRight size={15} />
-              </Link>
             </article>
-          ))}
-          {active.length === 0 ? (
-            <button className="workspace-empty-card" onClick={createProject} type="button">
-              <FolderOpen size={28} />
-              <strong>Create your first project</strong>
-              <span>Describe a plan or upload evidence to begin.</span>
-            </button>
-          ) : null}
-        </div>
-        {activeFiltered.length === 0 && active.length > 0 ? (
-          <div className="workspace-no-results">
-            <MagnifyingGlass size={22} />
-            <strong>No matching projects</strong>
-            <span>Try a different project name.</span>
-          </div>
-        ) : null}
-        {activeVisible.length < activeFiltered.length ? (
-          <div className="workspace-load-more">
-            <span>Showing {activeVisible.length} of {activeFiltered.length} projects</span>
-            <button onClick={() => setVisibleCount((count) => count + 12)} type="button">
-              Show more
-            </button>
-          </div>
-        ) : null}
-
-        <section className="workspace-archived">
-          <button
-            aria-expanded={showArchived}
-            onClick={() => setShowArchived((current) => !current)}
-            type="button"
-          >
-            <Archive size={16} />
-            Archived projects
-            <span>{archived.length}</span>
-          </button>
-          {showArchived ? (
-            <div>
-              {archived.length ? archived.map((project) => (
-                <article key={project.id}>
-                  <div><strong>{project.name}</strong><span>Read-only · retained safely</span></div>
-                  {workspace.role === "owner" ? (
-                    <button
-                      disabled={pendingId === project.id}
-                      onClick={() => setArchived(project.id, false)}
-                      type="button"
-                    >
-                      <ArrowCounterClockwise size={15} /> Restore
-                    </button>
-                  ) : null}
-                </article>
-              )) : <p>No archived projects.</p>}
-            </div>
-          ) : null}
+          )) : <p>No archived plans.</p>}
         </section>
 
-        <section className="workspace-activity" id="activity">
-          <div className="workspace-section-heading">
-            <div><h2>Recent activity</h2></div>
-            <p>Project-aware, non-mutating updates.</p>
-          </div>
-          {workspace.notifications.slice(0, 5).map((notification) => (
-            <Link href={`/projects/${notification.project_id}/history`} key={notification.key}>
-              <span className={`workspace-activity-dot ${notification.status === "failed" ? "is-failed" : ""}`} />
-              <div>
-                <strong>{notification.project_name}</strong>
-                <span>{notification.title}</span>
-              </div>
-              <ArrowRight size={15} />
-            </Link>
-          ))}
-          {!workspace.notifications.length ? <p>No analysis activity yet.</p> : null}
-        </section>
+        <aside className="r2-portfolio-note">
+          <strong>No portfolio score across plans.</strong> OSLO assesses each plan on its own inputs and grounding — there is no average, ranking, or roll-up score.
+        </aside>
       </section>
 
       <PlanComparisonModal

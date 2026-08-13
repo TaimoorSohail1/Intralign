@@ -88,12 +88,10 @@ describe("WorkspaceHome", () => {
     );
     render(<WorkspaceHome displayName="Taimoor" initial={workspace} />);
 
-    expect(screen.getByRole("heading", { name: "OSLO Alpha" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Plans" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Active transformation" })).toBeInTheDocument();
-    expect(screen.getByText("26 Jul 2026")).toBeInTheDocument();
-    expect(screen.getByText("Extended Analysis complete")).toBeInTheDocument();
-    expect(screen.getByText(/There is no portfolio score, average, or ranking/)).toBeInTheDocument();
-    expect(screen.getByText("1 active project")).toBeInTheDocument();
+    expect(screen.getByText(/No portfolio score across plans/)).toBeInTheDocument();
+    expect(screen.getByText("New plan")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "New project" }));
 
@@ -102,6 +100,14 @@ describe("WorkspaceHome", () => {
       expect(push).toHaveBeenCalledWith("/intake?project=project-new&returning=1");
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("returns from Plans to the current project instead of linking to Plans again", () => {
+    render(<WorkspaceHome displayName="Taimoor" initial={workspace} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+
+    expect(push).toHaveBeenCalledWith("/projects/project-1/overview");
   });
 
   it("archives without deleting and exposes the retained project", async () => {
@@ -117,7 +123,6 @@ describe("WorkspaceHome", () => {
       );
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /Archived projects/ }));
     expect(screen.getAllByText("Read-only · retained safely")).toHaveLength(2);
   });
 
@@ -139,7 +144,7 @@ describe("WorkspaceHome", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Archive Active transformation" }));
     await waitFor(() => {
-      expect(screen.getByText("Create your first project")).toBeInTheDocument();
+      expect(screen.getByText("Create your first plan")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "New project" }));
@@ -225,11 +230,35 @@ describe("WorkspaceHome", () => {
     expect(fetch).toHaveBeenCalledWith("/api/projects/new", { method: "POST" });
   });
 
+  it("creates only one project when New plan is clicked repeatedly while the request is pending", async () => {
+    let resolveRequest: ((response: Response) => void) | undefined;
+    vi.mocked(fetch).mockImplementation(() => new Promise<Response>((resolve) => {
+      resolveRequest = resolve;
+    }));
+
+    render(<WorkspaceHome displayName="Taimoor" initial={workspace} />);
+    const newProject = screen.getByRole("button", { name: "New project" });
+
+    fireEvent.click(newProject);
+    fireEvent.click(newProject);
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(newProject).toBeDisabled();
+
+    resolveRequest?.(new Response(JSON.stringify({ id: "project-new" }), {
+      status: 201,
+      headers: { "content-type": "application/json" },
+    }));
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith("/intake?project=project-new&returning=1");
+    });
+  });
+
   it("restores an archived project while another project is active", async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 204 }));
 
     render(<WorkspaceHome displayName="Taimoor" initial={workspace} />);
-    fireEvent.click(screen.getByRole("button", { name: /Archived projects/ }));
     fireEvent.click(screen.getByRole("button", { name: "Restore" }));
 
     await waitFor(() => {

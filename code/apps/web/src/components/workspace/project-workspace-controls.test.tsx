@@ -87,6 +87,21 @@ describe("ProjectWorkspaceControls", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
+  it("keeps the analyzed snapshot title ahead of a stale uploaded filename", async () => {
+    render(
+      <ProjectWorkspaceControls
+        projectId="project-1"
+        projectName="Atlas B2B Commerce Launch"
+      />,
+    );
+
+    expect(await screen.findByRole("button", {
+      name: "Atlas B2B Commerce Launch",
+    })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Transformation" }))
+      .not.toBeInTheDocument();
+  });
+
   it("shows durable notifications and marks them read", async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(

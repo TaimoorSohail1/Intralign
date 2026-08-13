@@ -28,7 +28,7 @@ from oslo_api.analysis.document_store import DatabaseDocumentStore
 from oslo_api.analysis.harness import AgentHarness
 from oslo_api.analysis.history import append_history_event, list_project_history
 from oslo_api.analysis.job_queue import DatabaseAnalysisJobQueue
-from oslo_api.analysis.models import EvidenceFragment
+from oslo_api.analysis.models import EvidenceFragment, normalize_evidence_state
 from oslo_api.analysis.object_storage import LocalObjectStorage, SupabaseObjectStorage
 from oslo_api.analysis.openai_harness import OpenAIAgentHarness
 from oslo_api.analysis.persistence import DatabaseAnalysisStore
@@ -1867,7 +1867,9 @@ class DatabaseSliceTwoApplication:
                     "row_evidence_refs": [
                         list(references) for references in section.row_evidence_refs
                     ],
-                    "row_states": list(section.row_states),
+                    "row_states": [
+                        normalize_evidence_state(state) for state in section.row_states
+                    ],
                     "row_provenance": ["from_oslo" for _ in section.rows],
                 }
                 for section in artifact.sections

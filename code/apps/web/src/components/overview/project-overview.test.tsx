@@ -452,7 +452,7 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    expect(screen.getByText("OSLO · AI-first R2 prototype")).toBeInTheDocument();
+    expect(screen.queryByText("OSLO · AI-first R2 prototype")).not.toBeInTheDocument();
     expect(screen.getByText("Sample")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Workspace open" })).toBeInTheDocument();
     const workspaceSlot = container.querySelector(".r2-workspace-open-slot");
@@ -461,10 +461,7 @@ describe("ProjectOverview", () => {
     expect(screen.queryByRole("region", { name: "Workspace open" })).not.toBeInTheDocument();
     expect(container.querySelector(".r2-workspace-open-slot")).not.toBeInTheDocument();
     expect(screen.getAllByText(/Outcome integrity/i)).not.toHaveLength(0);
-    expect(screen.getByRole("link", { name: "Timeline" })).toHaveAttribute(
-      "href",
-      "/projects/project-001/history",
-    );
+    expect(screen.queryByRole("link", { name: "Timeline" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Answer the first" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Project summary" })).toHaveAttribute(
       "aria-expanded",
@@ -570,8 +567,8 @@ describe("ProjectOverview", () => {
         .map((link) => link.textContent?.trim()),
     ).toEqual(["Intent", "Scope", "Requirements", "Constraints"]);
 
-    fireEvent.click(screen.getByRole("button", { name: "Show Viability detail" }));
-    expect(screen.getByRole("region", { name: "Viability detail" })).toBeVisible();
+    fireEvent.click(screen.getByText("Why a maturity read, not a probability?"));
+    expect(screen.getByText(snapshot.assessment.confidence_explanation)).toBeVisible();
 
     const queue = screen.getByRole("region", {
       name: "Exposure-ranked issue queue",
@@ -886,7 +883,7 @@ describe("ProjectOverview", () => {
     });
   });
 
-  it("starts with the compact prototype read and expands it on demand", () => {
+  it("starts with the full prototype read and collapses it on demand", () => {
     const { container } = render(
       <ProjectOverview
         displayName="Alex"
@@ -897,18 +894,20 @@ describe("ProjectOverview", () => {
 
     const shell = container.querySelector("main");
     expect(shell).toHaveClass("is-r2-slice-one");
-    expect(shell).not.toHaveClass("r2-integrity-expanded");
+    expect(shell).toHaveClass("r2-integrity-expanded");
 
     const toggle = screen.getByRole("button", {
-      name: "Expand Outcome Integrity",
+      name: "Collapse Outcome Integrity",
     });
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
 
     fireEvent.click(toggle);
 
-    expect(shell).toHaveClass("r2-integrity-expanded");
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(toggle).toHaveAccessibleName("Collapse Outcome Integrity");
+    expect(shell).not.toHaveClass("r2-integrity-expanded");
+    expect(screen.getByRole("button", { name: "Expand Outcome Integrity" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
   });
 
   it("matches the R2 Slice 1 shell taxonomy and evidence-qualified advisor read", () => {
@@ -1043,8 +1042,8 @@ describe("ProjectOverview", () => {
     expect(within(integrityTrigger).getByText("Viability Solid")).toBeInTheDocument();
     expect(within(integrityTrigger).getByText("Grounding Developing")).toBeInTheDocument();
     expect(within(integrityTrigger).getByText("Adaptability Solid")).toBeInTheDocument();
-    expect(screen.getByText("as of this analysis")).toBeInTheDocument();
-    expect(screen.getByText("live tracking begins at execution")).toBeInTheDocument();
+    expect(screen.getAllByText("as of this analysis").length).toBeGreaterThan(0);
+    expect(screen.getByText(/live tracking begins at execution/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Viability Solid/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Grounding Developing/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Adaptability Solid/i })).toBeInTheDocument();
@@ -1070,8 +1069,9 @@ describe("ProjectOverview", () => {
       "/projects/project-001/history",
     );
     expect(screen.getAllByText("Developing").length).toBeGreaterThan(0);
-    expect(screen.getByText("Weakest pillar gates the read")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Show Viability detail" })).toBeInTheDocument();
+    expect(screen.getByText("Why a maturity read, not a probability?")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Show Viability detail" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Timeline" })).not.toBeInTheDocument();
   });
 
   it("exposes navigation, project content, and advisor as independent regions", () => {
@@ -1114,11 +1114,11 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    expect(screen.getByText("Fragile")).toBeInTheDocument();
+    expect(screen.getAllByText("Fragile").length).toBeGreaterThan(0);
     expect(screen.getByText("Weak")).toBeInTheDocument();
     expect(screen.getAllByText("Developing").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Solid").length).toBeGreaterThan(0);
-    expect(screen.getByText("Sound")).toBeInTheDocument();
+    expect(screen.getAllByText("Sound").length).toBeGreaterThan(0);
     expect(screen.queryByText("/100")).not.toBeInTheDocument();
   });
 
@@ -1215,7 +1215,7 @@ describe("ProjectOverview", () => {
     expect(trigger).toHaveFocus();
   });
 
-  it("explains the deterministic Viability basis without another advisor call", () => {
+  it("explains the deterministic maturity basis without another advisor call", () => {
     const fetcher = vi.fn();
     vi.stubGlobal("fetch", fetcher);
     render(
@@ -1226,9 +1226,8 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Show Viability detail" }));
+    fireEvent.click(screen.getByText("Why a maturity read, not a probability?"));
 
-    expect(screen.getByRole("region", { name: "Viability detail" })).toBeInTheDocument();
     expect(screen.getByText(snapshot.assessment.confidence_explanation)).toBeInTheDocument();
     expect(screen.getByText("Clarity")).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledTimes(1);
@@ -1285,6 +1284,30 @@ describe("ProjectOverview", () => {
     });
   });
 
+  it("restores focus to the recreated issue row when Escape closes inline review", async () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+    const issueButton = screen.getByRole("button", {
+      name: /Migration ownership is unresolved/i,
+    });
+    issueButton.focus();
+    fireEvent.click(issueButton);
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("region", { name: "Issue details" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", {
+        name: /Migration ownership is unresolved/i,
+      })).toHaveFocus();
+    });
+  });
+
   it("restores the prototype advisor beside an inline issue when it was collapsed", () => {
     render(
       <ProjectOverview
@@ -1334,6 +1357,8 @@ describe("ProjectOverview", () => {
       expect(screen.getByText("You confirmed your outcome")).toBeInTheDocument();
       expect(screen.getByRole("region", { name: "Issue details" })).toBeInTheDocument();
     });
+    expect(screen.queryByText("Your workspace is open.")).not.toBeInTheDocument();
+    expect(screen.getByText("One call down - you confirmed your outcome.")).toBeInTheDocument();
     expect(screen.queryByLabelText("OSLO project advisor")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Ask OSLO$/i })).toHaveClass(
       "advisor-floating",

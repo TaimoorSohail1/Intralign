@@ -3,7 +3,13 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from oslo_api.analysis.models import ARTIFACT_TYPES, Artifact, ArtifactType, Issue
+from oslo_api.analysis.models import (
+    ARTIFACT_TYPES,
+    Artifact,
+    ArtifactType,
+    Issue,
+    normalize_evidence_state,
+)
 
 _OWNER_LANGUAGE = re.compile(
     r"\b(owner|ownership|accountable|responsib(?:le|ility)|approver)\b",
@@ -52,7 +58,7 @@ def _claim_counts(artifact: Artifact | None) -> tuple[int, int]:
         if section.rows:
             for index, _row in enumerate(section.rows):
                 state = (
-                    section.row_states[index]
+                    normalize_evidence_state(section.row_states[index])
                     if index < len(section.row_states)
                     else "unknown"
                 )

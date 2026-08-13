@@ -183,11 +183,14 @@ export function ProjectOverview({
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [advisorOpen, setAdvisorOpen] = useState(true);
   const [advisorWide, setAdvisorWide] = useState(false);
-  const [workspaceNoticeOpen, setWorkspaceNoticeOpen] = useState(true);
+  const [workspaceNoticeOpen, setWorkspaceNoticeOpen] = useState(
+    !initial.first_run?.freeze_on,
+  );
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const [confidenceDetailsOpen, setConfidenceDetailsOpen] = useState(false);
   const [confidenceBreakdownOpen, setConfidenceBreakdownOpen] = useState(false);
-  const [r2IntegrityExpanded, setR2IntegrityExpanded] = useState(false);
+  const [r2IntegrityExpanded, setR2IntegrityExpanded] = useState(
+    initialView === "overview" && !initial.first_run?.freeze_on,
+  );
   const [searchOpen, setSearchOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
@@ -226,6 +229,7 @@ export function ProjectOverview({
   const advisorInFlight = useRef(false);
   const advisorStateBeforeIssue = useRef(true);
   const firstRunIssueOpened = useRef(false);
+  const previousFirstRunFreeze = useRef(Boolean(initial.first_run?.freeze_on));
   const issueTrigger = useRef<HTMLElement | null>(null);
   const integrityTrigger = useRef<HTMLButtonElement | null>(null);
   const mainScrollRegion = useRef<HTMLElement | null>(null);
@@ -275,9 +279,9 @@ export function ProjectOverview({
   const clarificationIssue = rankedIssues.find((issue) => Boolean(issue.clarification));
   const criticalCount = openIssues.filter((issue) => issue.severity === "Critical").length;
   const clarificationCount = openIssues.filter((issue) => Boolean(issue.clarification)).length;
-  const limitingDimension = snapshot.assessment.limiting_dimension;
   const provenance = useMemo(() => buildProjectProvenance(snapshot), [snapshot]);
   const integrity = snapshot.assessment.integrity;
+  const groundingPillar = integrity.decomposition.find((pillar) => pillar.key === "Grounding");
   const integrityBandIndex = Math.max(0, integrityBands.indexOf(integrity.level));
   const hasFirstValue = snapshot.artifacts.length > 0;
   const outcomeArtifact = snapshot.artifacts.find(
@@ -307,6 +311,14 @@ export function ProjectOverview({
     setAdvisorOpen(false);
     setSelectedIssue(rankedIssues[0]);
   }, [initialView, rankedIssues, snapshot.first_run]);
+
+  useEffect(() => {
+    const freezeOn = Boolean(snapshot.first_run?.freeze_on);
+    if (previousFirstRunFreeze.current && !freezeOn) {
+      setWorkspaceNoticeOpen(true);
+    }
+    previousFirstRunFreeze.current = freezeOn;
+  }, [snapshot.first_run?.freeze_on]);
 
   useEffect(() => {
     if (!initialHistory) return;
@@ -453,9 +465,16 @@ export function ProjectOverview({
     if (!selectedIssue) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        const returnFocus = issueTrigger.current;
+        const returnIssueId = selectedIssue.id;
         setSelectedIssue(null);
         setAdvisorOpen(advisorStateBeforeIssue.current);
-        window.setTimeout(() => issueTrigger.current?.focus(), 0);
+        window.setTimeout(() => {
+          const queueButton = document.querySelector<HTMLElement>(
+            `[data-issue-id="${CSS.escape(returnIssueId)}"]`,
+          );
+          (queueButton ?? returnFocus)?.focus();
+        }, 0);
         return;
       }
       if (event.key === "Tab" && initialView !== "overview") {
@@ -968,12 +987,6 @@ export function ProjectOverview({
         orientation ? "is-touring" : ""
       }`}
     >
-      {initialView === "overview" ? (
-        <div className="r2-prototype-banner">
-          <strong>OSLO · AI-first R2 prototype</strong>
-          <span><b>Official</b> One walkable shell: the read is home · artifacts + execution plan in the center · reasoning + chat on the right · Issues / History / Reports / Map / ⌘K as doors. Wired to the honest weakest-gates model.</span>
-        </div>
-      ) : null}
       <header className="project-header">
         <Link className="project-toolbar-brand" href="/workspace">
           <Image
@@ -1036,14 +1049,13 @@ export function ProjectOverview({
           <small>as of this analysis</small>
         </button>
         <div className="project-actions">
-          {initialView === "overview" ? (
+          {initialView === "overview" && !r2IntegrityExpanded ? (
             <button
               aria-controls="r2-integrity-summary"
-              aria-expanded={r2IntegrityExpanded}
-              aria-label={`${r2IntegrityExpanded ? "Collapse" : "Expand"} Outcome Integrity`}
-              className="r2-integrity-toggle"
-              onClick={() => setR2IntegrityExpanded((current) => !current)}
-              title={`${r2IntegrityExpanded ? "Collapse" : "Expand"} the read`}
+              aria-expanded="false"
+              aria-label="Expand Outcome Integrity"
+              className="r2-integrity-toggle is-compact"
+              onClick={() => setR2IntegrityExpanded(true)}
               type="button"
             >
               <CaretDown aria-hidden="true" size={13} />
@@ -1061,6 +1073,9 @@ export function ProjectOverview({
           >
             <MagnifyingGlass aria-hidden="true" size={16} />
           </button>
+          {initialView === "overview" ? (
+            <OutcomeCapacityControl projectId={snapshot.project_id} />
+          ) : null}
           {!panelVisible ? (
             <button
               className="advisor-reopen"
@@ -1085,10 +1100,9 @@ export function ProjectOverview({
             <span aria-hidden="true">◎</span>
             <small>Outcome</small>
             <strong>{outcomeDefinition}</strong>
-            <em>{outcomeArtifact?.evidence_refs.length ? "✓ grounded" : "OSLO inference"}</em>
+            <em>{outcomeArtifact?.evidence_refs.length ? "✓ yours" : "OSLO inference"}</em>
             <CaretRight aria-hidden="true" size={13} />
           </button>
-          <OutcomeCapacityControl projectId={snapshot.project_id} />
         </div>
       ) : null}
 
@@ -1396,55 +1410,84 @@ export function ProjectOverview({
                 className="confidence-read integrity-read"
                 id="r2-integrity-summary"
               >
-                <div className="confidence-topline">
-                  <p className="eyebrow">Outcome integrity</p>
-                  <span className={`snapshot-badge ${isProvisional ? "" : "is-current"}`}>
-                    {snapshot.state.replace("_", "-")}
-                  </span>
-                </div>
-                <div
-                  aria-label={`Outcome Integrity ${integrity.level}, limited by ${integrity.limiting_pillar}`}
-                  className="confidence-ramp"
-                  role="img"
-                >
-                  {integrityBands.map((band, index) => (
-                    <span
-                      className={index === integrityBandIndex ? "is-current" : ""}
-                      key={band}
-                    >
-                      <i />
-                      <small>{band}</small>
+                <div className="r2-integrity-copy">
+                  <div className="confidence-topline">
+                    <p className="eyebrow">Outcome integrity</p>
+                    <span className={`snapshot-badge ${isProvisional ? "" : "is-current"}`}>
+                      {snapshot.state.replace("_", "-")}
                     </span>
-                  ))}
-                </div>
-                <div className="confidence-prototype-hero">
-                  <div>
+                  </div>
+                  <div className="confidence-prototype-hero">
                     <strong>{integrity.level}</strong>
-                    <p>limited by <b>{integrity.limiting_pillar}</b></p>
+                    <div className="r2-integrity-limit-row">
+                      <p>
+                        limited by <b>{integrity.limiting_pillar}</b> — a composite is only as sound as its weakest pillar
+                      </p>
+                      <button
+                        aria-controls="r2-integrity-summary"
+                        aria-expanded={r2IntegrityExpanded}
+                        aria-label="Collapse Outcome Integrity"
+                        className="r2-integrity-toggle"
+                        onClick={() => setR2IntegrityExpanded(false)}
+                        type="button"
+                      >
+                        Collapse <CaretDown aria-hidden="true" size={11} />
+                      </button>
+                    </div>
+                    <p className="r2-grounding-read">
+                      {groundingPillar?.band === "Sound"
+                        ? "load-bearing details rest on your evidence, not OSLO’s inferences"
+                        : "load-bearing details still rest on OSLO’s inferences, not your evidence"}
+                    </p>
                   </div>
-                  <div className="confidence-limiter">
-                    <p>Moment-in-time maturity read</p>
-                    <strong className="integrity-tracking">live tracking begins at execution</strong>
-                    <button
-                      onClick={() => {
-                        setAdvisorOpen(true);
-                        void askQuestion("Explain the current Outcome Integrity");
-                      }}
-                      type="button"
+                  {snapshot.assessment.false_confidence ? (
+                    <div className="false-confidence-warning" role="alert">
+                      <Info aria-hidden="true" size={15} />
+                      This read sits high on thin evidence. Confirm the supporting assumptions before relying on it.
+                    </div>
+                  ) : null}
+                  <div className="r2-maturity-row">
+                    <span>Fragile</span>
+                    <div
+                      aria-label={`Outcome Integrity ${integrity.level}, limited by ${integrity.limiting_pillar}`}
+                      className="confidence-ramp"
+                      role="img"
                     >
-                      <Sparkle aria-hidden="true" size={12} weight="fill" />
-                      Ask OSLO why
-                    </button>
+                      {integrityBands.map((band, index) => (
+                        <span className={index === integrityBandIndex ? "is-current" : ""} key={band}>
+                          <i />
+                          <small>{band}</small>
+                        </span>
+                      ))}
+                    </div>
+                    <span>Sound</span>
+                    <small><b>as of this analysis</b> · live tracking begins at execution</small>
                   </div>
+                  <details className="confidence-method">
+                    <summary>Why a maturity read, not a probability?</summary>
+                    <div className="r2-maturity-explanation">
+                      <p>{snapshot.assessment.confidence_explanation}</p>
+                      <div className="dimension-bars">
+                        {dimensions.map((name) => {
+                          const value = snapshot.assessment[name];
+                          const limiting = name === snapshot.assessment.limiting_dimension;
+                          const valueIndex = Math.max(0, confidenceBands.indexOf(value as (typeof confidenceBands)[number]));
+                          return (
+                            <div className={limiting ? "is-limiting" : ""} key={name}>
+                              <span>{artifactLabel(name)}</span>
+                              <div aria-label={`${artifactLabel(name)}: ${value}`} className="dimension-ramp" role="img">
+                                {confidenceBands.map((band, index) => (
+                                  <i className={index <= valueIndex ? "is-filled" : ""} key={band} />
+                                ))}
+                              </div>
+                              <strong>{value}</strong>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </details>
                 </div>
-                {snapshot.assessment.false_confidence ? (
-                  <div className="false-confidence-warning" role="alert">
-                    <Info aria-hidden="true" size={15} />
-                    This read sits high on thin evidence. Confirm the supporting
-                    assumptions before relying on it.
-                  </div>
-                ) : null}
-                <div className="confidence-divider" />
                 <div className="integrity-pillars">
                   {integrity.decomposition.map((pillar) => (
                     <button
@@ -1466,7 +1509,10 @@ export function ProjectOverview({
                       type="button"
                     >
                       <span>
-                        <strong>{pillar.key}</strong>
+                        <strong>
+                          {pillar.key}
+                          {pillar.key === integrity.limiting_pillar ? <em>Floor</em> : null}
+                        </strong>
                         <b>{pillar.band}</b>
                       </span>
                       <i aria-hidden="true"><b style={{ width: `${pillar.basis * 100}%` }} /></i>
@@ -1475,59 +1521,6 @@ export function ProjectOverview({
                     </button>
                   ))}
                 </div>
-                <div className="confidence-footer">
-                  <span>Weakest pillar gates the read</span>
-                  <div>
-                    <button
-                      aria-expanded={confidenceDetailsOpen}
-                      aria-label="Show Viability detail"
-                      onClick={() => setConfidenceDetailsOpen((current) => !current)}
-                      type="button"
-                    >
-                      Viability detail <CaretDown aria-hidden="true" size={11} />
-                    </button>
-                    <Link
-                      aria-label="Timeline"
-                      href={`/projects/${snapshot.project_id}/history`}
-                      onClick={rememberOverviewPosition}
-                    >
-                      Timeline <ArrowRight aria-hidden="true" size={12} />
-                    </Link>
-                    <Link href={`/projects/${snapshot.project_id}/attention`}>
-                      Attention map <ArrowRight aria-hidden="true" size={12} />
-                    </Link>
-                  </div>
-                </div>
-                {confidenceDetailsOpen ? (
-                  <section className="confidence-method" aria-label="Viability detail">
-                    <p>{snapshot.assessment.confidence_explanation}</p>
-                    <div className="dimension-bars">
-                      {dimensions.map((name) => {
-                        const value = snapshot.assessment[name];
-                        const limiting = name === limitingDimension;
-                        const valueIndex = Math.max(
-                          0,
-                          confidenceBands.indexOf(value as (typeof confidenceBands)[number]),
-                        );
-                        return (
-                          <div className={limiting ? "is-limiting" : ""} key={name}>
-                            <span>{artifactLabel(name)}</span>
-                            <div
-                              aria-label={`${artifactLabel(name)}: ${value}`}
-                              className="dimension-ramp"
-                              role="img"
-                            >
-                              {confidenceBands.map((band, index) => (
-                                <i className={index <= valueIndex ? "is-filled" : ""} key={band} />
-                              ))}
-                            </div>
-                            <strong>{value}</strong>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ) : null}
               </section>
 
               <section className={`start-here ${

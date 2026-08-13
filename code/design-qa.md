@@ -1,5 +1,44 @@
 # Design QA
 
+## 2026-08-13 — R2 four-slice stable release candidate
+
+### Source and implementation evidence
+
+- Source visual truth: `C:/Users/Hp/AppData/Local/Temp/codex-clipboard-4fd0cce9-1fd9-4dbb-b48b-a97d0cd4cb8f.png` and the signed `release-2/oslo-prototype-r2.html` flow.
+- Corrected Slice 1 masthead: `reports/r2-final-live-qa-2026-08-13/01-slice-1-prototype-header.png`.
+- Slice 2 staged loader: `reports/r2-final-live-qa-2026-08-13/09-slice-2-staged-loader.png`.
+- Slice 3 overview and artifact workspace: `02-slice-3-overview-full.png` and `04-slice-3-intent-workspace.png`.
+- Slice 4 attention map: `05-slice-4-attention-map.png`.
+- Workspace New plan response: `06-workspace-new-plan-response.png`.
+- Comparison state: desktop, 1280 × 720 CSS-pixel viewport, device scale unchanged. The focused masthead comparison used the same expanded state and a 1280 × 204 implementation crop against the 1230 × 205 source capture.
+
+### Findings and corrections
+
+- P1 masthead mismatch fixed: the live Outcome row, limiting-pillar explanation, Collapse control, Fragile-to-Sound maturity sequence, and maturity disclosure now follow the prototype hierarchy.
+- P1 card-density mismatch fixed: Viability, Grounding, and Adaptability have independent card boundaries and the prototype spacing; the limiting pillar carries the FLOOR treatment.
+- P1 obsolete controls removed: `Viability detail`, `Timeline`, and `Attention map` no longer appear in the integrity masthead footer.
+- P1 workspace creation defect fixed: New plan now uses one single-flight request, disables while pending, handles errors, and cannot create duplicate projects from repeated clicks or `?new=1` reprocessing.
+- Dynamic project names, issue counts, pillar values, artifacts, and advisor content remain driven by the real uploaded document and analysis result rather than copied prototype fixtures.
+- Post-fix full-view and focused comparisons found no remaining actionable P0, P1, or P2 mismatch in the requested surfaces.
+
+### Interaction and data verification
+
+- Slice 1: integrity masthead, Collapse/Expand, maturity disclosure, issue queue, and Manage Outcomes passed.
+- Slice 2: intake, real file upload, eight-stage returning-client analysis loader, and persisted analysis passed.
+- Slice 3: Overview, workspace navigation, and Intent artifact workspace passed.
+- Slice 4: Attention Map rendered the live Clarity, Alignment, and Feasibility matrix correctly.
+- Workspace: New plan created exactly one project during the allowed-capacity test; the QA project was archived and the original project restored. At the plan limit, one correct limit dialog appears and the button recovers.
+- Browser QA found no app-breaking console error. Development-only framework warnings did not affect navigation or data flow.
+
+### Regression gate
+
+- Web: 26 files / 168 tests passed.
+- API: 354 tests passed. Six ingestion tests initially encountered a Windows long-temp-path artifact; the identical suite passed from a short system temp path.
+- R2 guardrails: 4 infrastructure tests and 21 active tests passed; 6/6 prototype corrections remain mapped.
+- ESLint and Ruff: passed.
+- TypeScript and Next.js production build: passed.
+
+final result: passed
 ## 2026-08-13 — R2 workspace-banner alignment
 
 ### Source and implementation evidence
@@ -511,5 +550,61 @@ Settings now follows the Prototype 10 navigation and content model for Access & 
 - ESLint: passed
 - TypeScript and Next.js production build: passed
 - `git diff --check`: passed
+
+final result: passed
+
+## 2026-08-13 — R2 loader, Plans, integrity and workspace parity
+
+### Source and implementation evidence
+
+- Official local R2 prototype: `http://127.0.0.1:8765/oslo-prototype-r2.html`
+- User-supplied loader, Plans, first-run, Manage Outcomes, and workspace screenshots
+- Implementation evidence: `reports/r2-ui-parity-2026-08-13/`
+
+### Checks
+
+- Returning-client loader uses the prototype's segmented scanner, eight honest stages, live progress trace, and timing expectation.
+- Plans matches the prototype's primary plan/new plan grid, compact recent and archived rows, and portfolio note.
+- Full workspace preserves the header, left navigation, center worklist, and right advisor shell.
+- Expanded integrity detail ends at `412px`; the workspace starts at `412px`, so the two regions do not overlap.
+- Manage Outcomes stays inside the header action cluster and exposes the prototype tooltip.
+- Browser console: no runtime errors.
+- Web verification: 25 files and 158 tests passed; production build and TypeScript compilation passed.
+
+### Evidence files
+
+- `reports/r2-ui-parity-2026-08-13/plans-workspace.png`
+- `reports/r2-ui-parity-2026-08-13/returning-analysis-loader.png`
+- `reports/r2-ui-parity-2026-08-13/full-workspace.png`
+- `reports/r2-ui-parity-2026-08-13/manage-outcomes-header.png`
+- `reports/r2-ui-parity-2026-08-13/integrity-expanded-no-overlap.png`
+- `reports/r2-ui-parity-2026-08-13/prototype-reference.png`
+
+### Final result
+
+passed
+
+## 2026-08-13 — existing-client upload, staged loader, and Plans navigation
+
+### Source and implementation evidence
+
+- Source loader: `C:/Users/Hp/AppData/Local/Temp/codex-clipboard-5d4b98d8-d4b3-44db-b642-79852350316a.png` and `release-2/oslo-prototype-r2.html`.
+- Same-state comparison: `reports/r2-ui-parity-2026-08-13/14-loader-stage-8-comparison.png`.
+- Functional evidence: `11-existing-client-file-attached.png`, `15-fresh-integrity-result.png`, `16-plans-back-button.png`, and `17-back-destination-overview.png`.
+- Comparison viewport: 1238 × 1007 pixels, loader stage 8 of 8.
+
+### Findings and fixes
+
+- P1: Plans Back linked to `/workspace`, so it navigated to the page already open. It now returns to the active project Overview, with `/welcome` as the no-project fallback.
+- P1: the document proxy flattened an upstream missing-project 404 into 422, preventing stale-project recovery. It now preserves the status and `PROJECT_NOT_FOUND` code; intake uses the replacement-project recovery flow and reports an actionable plan-limit message when replacement is unavailable.
+- P1: fast local analysis skipped the visible prototype sequence. The returning-client loader now uses the prototype's segmented scanner, eight stage texts, trace details, and dwell cadence while remaining bounded by real backend progress.
+- The upload was exercised against an existing project. The file attached, an Initial and Extended run completed, and persisted evidence changed Grounding from 12/12 to 20/20 while Viability remained Sound and Adaptability remained Fragile. This confirms the pillars are recalculated from the new evidence rather than copied or randomly delayed.
+- No remaining P0, P1, or P2 issue was found in this focused flow.
+
+### Regression verification
+
+- Web unit/integration suite: 25 files, 161 tests passed.
+- Analysis API suite: 59 tests passed.
+- ESLint, TypeScript/Next production build, and `git diff --check`: passed.
 
 final result: passed

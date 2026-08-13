@@ -3,7 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 
 import { BrandLockup } from "@/components/brand/brand-lockup";
-import { startProjectAnalysis } from "@/lib/client/start-project-analysis";
+import { startProjectAnalysisWithRecovery } from "@/lib/client/start-project-analysis";
 
 interface IntakeExperienceProps {
   displayName: string;
@@ -129,13 +129,13 @@ export function IntakeExperience({
       setSubmitting(true);
       setError("");
       try {
-        const result = await startProjectAnalysis({
+        const result = await startProjectAnalysisWithRecovery({
           projectId,
           description,
           files,
         });
         navigate(
-          `/projects/${projectId}/analysis/${result.run_id}${returningClient ? "?returning=1" : ""}`,
+          `/projects/${result.projectId}/analysis/${result.run.run_id}${returningClient ? "?returning=1" : ""}`,
         );
         return;
       } catch (cause) {

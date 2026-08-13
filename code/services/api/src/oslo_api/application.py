@@ -799,7 +799,12 @@ class DatabaseSliceOneApplication:
                 connection.execute(
                     text(
                         """
-                        select p.id, p.name, p.status, p.archived_at, p.updated_at,
+                        select p.id,
+                               coalesce(
+                                 nullif(latest.snapshot_json ->> 'project_title', ''),
+                                 p.name
+                               ) as name,
+                               p.status, p.archived_at, p.updated_at,
                                latest.snapshot_state,
                                (latest.snapshot_json -> 'assessment' ->> 'confidence_index')::int
                                  as confidence_index,
@@ -882,7 +887,10 @@ class DatabaseSliceOneApplication:
                         select
                           activity.key,
                           activity.project_id,
-                          project.name as project_name,
+                          coalesce(
+                            nullif(latest.snapshot_json ->> 'project_title', ''),
+                            project.name
+                          ) as project_name,
                           activity.kind,
                           activity.status,
                           activity.title,
@@ -890,6 +898,13 @@ class DatabaseSliceOneApplication:
                           reads.notification_key is not null as read
                         from deduplicated_activity activity
                         join public.projects project on project.id = activity.project_id
+                        left join lateral (
+                          select snapshot.snapshot_json
+                          from public.assessment_snapshots snapshot
+                          where snapshot.project_id = project.id
+                          order by snapshot.published_at desc
+                          limit 1
+                        ) latest on true
                         left join public.workspace_notification_reads reads
                           on reads.workspace_id = :workspace_id
                          and reads.user_id = :actor_user_id

@@ -208,6 +208,7 @@ export function ArtifactWorkspace({
     "loading" | "saved" | "editing" | "saving" | "stale" | "reanalyzing" | "error"
   >("loading");
   const [error, setError] = useState<string | null>(null);
+  const [loadRevision, setLoadRevision] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [issueIndex, setIssueIndex] = useState(0);
@@ -246,7 +247,7 @@ export function ArtifactWorkspace({
     return () => {
       cancelled = true;
     };
-  }, [artifactType, projectId]);
+  }, [artifactType, loadRevision, projectId]);
 
   useEffect(() => {
     if (analysisRunning) {
@@ -379,6 +380,25 @@ export function ArtifactWorkspace({
     setFutureDepth(futureRef.current.length);
     setContent(nextContent);
     stageContent(nextContent);
+  }
+
+  if (status === "error" && (!artifact || !content)) {
+    return (
+      <section className="artifact-workspace artifact-loading is-error" role="alert">
+        <p>{error ?? `${label(artifactType)} could not be loaded.`}</p>
+        <button
+          className="button"
+          onClick={() => {
+            setError(null);
+            setStatus("loading");
+            setLoadRevision((current) => current + 1);
+          }}
+          type="button"
+        >
+          Try again
+        </button>
+      </section>
+    );
   }
 
   if (status === "loading" || !artifact || !content) {

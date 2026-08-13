@@ -388,7 +388,10 @@ export async function uploadDocument(input: {
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.detail ?? "Document could not be processed");
+    const message =
+      (typeof body?.detail === "string" ? body.detail : body?.detail?.message) ??
+      "Document could not be processed";
+    throw new OsloApiError(message, response.status, body?.detail);
   }
   return response.json() as Promise<UploadedDocumentSummary>;
 }

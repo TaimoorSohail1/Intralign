@@ -1,10 +1,15 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { startProjectAnalysisWithRecovery } from "@/lib/client/start-project-analysis";
+
 import { IntakeExperience } from "./intake-experience";
 
 vi.mock("@/lib/client/start-project-analysis", () => ({
-  startProjectAnalysis: vi.fn(async () => ({ run_id: "run-returning" })),
+  startProjectAnalysisWithRecovery: vi.fn(async ({ projectId }: { projectId: string }) => ({
+    projectId,
+    run: { run_id: "run-returning" },
+  })),
 }));
 
 afterEach(cleanup);
@@ -29,6 +34,38 @@ describe("IntakeExperience", () => {
     await vi.waitFor(() => {
       expect(navigate).toHaveBeenCalledWith(
         "/projects/project-2/analysis/run-returning?returning=1",
+      );
+    });
+  });
+
+  it("continues with a replacement project when a stale intake project is recovered", async () => {
+    vi.mocked(startProjectAnalysisWithRecovery).mockResolvedValueOnce({
+      projectId: "project-replacement",
+      run: {
+        run_id: "run-replacement",
+        project_id: "project-replacement",
+        kind: "initial",
+        status: "queued",
+      },
+    });
+    const navigate = vi.fn();
+    render(
+      <IntakeExperience
+        displayName="Alex"
+        navigate={navigate}
+        projectId="project-stale"
+        returningClient
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Attach documents"), {
+      target: { files: [new File(["plan"], "plan.md", { type: "text/markdown" })] },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Get my analysis/ }));
+
+    await vi.waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(
+        "/projects/project-replacement/analysis/run-replacement?returning=1",
       );
     });
   });

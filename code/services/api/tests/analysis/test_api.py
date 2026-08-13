@@ -1308,6 +1308,47 @@ def test_artifact_workspace_loads_and_autosave_starts_reanalysis() -> None:
     assert saved.json()["analysis_run"]["kind"] == "extended"
 
 
+def test_artifact_workspace_reads_source_grounded_rows_from_structured_extraction() -> None:
+    class SourceGroundedArtifactSliceTwo(RecordingSliceTwo):
+        def get_artifact(self, **kwargs):
+            artifact = super().get_artifact(**kwargs)
+            artifact["content"] = {
+                "sections": [
+                    {
+                        "heading": "Objectives",
+                        "body": "",
+                        "bullets": [],
+                        "columns": ["ID", "Objective"],
+                        "rows": [["OBJ-01", "Launch the portal"]],
+                        "row_states": ["source_grounded"],
+                        "row_evidence_refs": [["document:charter:page:1"]],
+                    }
+                ]
+            }
+            return artifact
+
+    slice_two = SourceGroundedArtifactSliceTwo()
+    slice_two.start_analysis(
+        actor_user_id=USER_ID,
+        project_id=PROJECT_ID,
+        description="A grounded launch objective.",
+        source_names=(),
+        source_document_ids=(),
+        kind=RunKind.INITIAL,
+        key="source-grounded-artifact-seed",
+    )
+    slice_two.complete_latest()
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
+
+    response = client.get(
+        f"/v1/projects/{PROJECT_ID}/artifacts/intent",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["content"]["sections"][0]["row_states"] == ["confirmed"]
+
+
 def test_artifact_workspace_returns_readable_issue_evidence() -> None:
     slice_two = RecordingSliceTwo()
     slice_two.start_analysis(

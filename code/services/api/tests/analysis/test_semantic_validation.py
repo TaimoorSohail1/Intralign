@@ -491,6 +491,29 @@ def test_cited_derived_rows_remain_inferred_until_source_states_them_directly() 
     assert normalized[0].sections[0].row_states == ("inferred",)
 
 
+def test_source_grounded_rows_are_normalized_for_the_artifact_contract() -> None:
+    artifact = Artifact(
+        artifact_type=ArtifactType.INTENT,
+        title="Intent",
+        summary="A source-grounded outcome.",
+        reliability="High",
+        evidence_refs=("document:charter:page:1",),
+        sections=(
+            ArtifactSection(
+                heading="Objectives",
+                columns=("ID", "Objective"),
+                rows=(("OBJ-01", "Launch the portal"),),
+                row_evidence_refs=(("document:charter:page:1",),),
+                row_states=("source_grounded",),
+            ),
+        ),
+    )
+
+    normalized = normalize_artifact_provenance((artifact,))
+
+    assert normalized[0].sections[0].row_states == ("confirmed",)
+
+
 def test_structured_artifact_conflicts_are_never_lost_by_evaluation() -> None:
     reference = "document:plan:page:7:fragment:8"
     artifact = Artifact(

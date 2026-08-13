@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArrowCounterClockwise, Plus, X } from "@phosphor-icons/react";
+import { Archive, ArrowCounterClockwise, CaretUp, Plus, X } from "@phosphor-icons/react";
 import { FormEvent, useState } from "react";
 
 import type { ProjectOutcomeSummary } from "@/lib/server/oslo-api";
@@ -142,8 +142,9 @@ export function OutcomeCapacityControl({ projectId }: { projectId: string }) {
 
   return (
     <>
-      <button className="outcome-manage-trigger" onClick={() => void openDialog()} type="button">
-        Manage Outcomes
+      <button aria-label="Manage Outcomes" className="outcome-manage-trigger" onClick={() => void openDialog()} type="button">
+        <CaretUp aria-hidden="true" size={14} weight="bold" />
+        <span role="tooltip">Manage Outcomes</span>
       </button>
       {open ? (
         <div className="outcome-dialog-backdrop">

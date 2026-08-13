@@ -14,6 +14,7 @@ from oslo_api.analysis.models import (
     EvidenceFragment,
     EvidenceGraph,
     Issue,
+    normalize_evidence_state,
 )
 
 _MONTHS = {
@@ -54,7 +55,7 @@ def normalize_artifact_provenance(
     for artifact in artifacts:
         sections = []
         for section in artifact.sections:
-            states = list(section.row_states)
+            states = [normalize_evidence_state(state) for state in section.row_states]
             if section.rows and len(states) < len(section.rows):
                 states.extend("unknown" for _ in range(len(section.rows) - len(states)))
             sections.append(replace(section, row_states=tuple(states)))

@@ -161,6 +161,11 @@ export async function startProjectAnalysisWithRecovery(
     unknown
   >;
   if (!projectResponse.ok) {
+    if (projectResponse.status === 422) {
+      throw new Error(
+        "This plan is no longer available. Return to Plans and start a new plan; archive an active plan first if you are at your plan limit.",
+      );
+    }
     throw new Error(
       typeof projectPayload.message === "string"
         ? projectPayload.message

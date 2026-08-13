@@ -190,7 +190,7 @@ def _artifact_section(
         rows=rows,
         evidence_refs=section_refs,
         row_evidence_refs=row_refs,
-        row_states=tuple("source_grounded" for _ in rows),
+        row_states=tuple("confirmed" for _ in rows),
     )
 
 

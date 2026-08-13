@@ -153,4 +153,26 @@ describe("startProjectAnalysis", () => {
       }),
     ).rejects.toThrow(/replacement project could not be created/i);
   });
+
+  it("explains how to recover when a stale project cannot be replaced at the plan limit", async () => {
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === "/api/projects/new") {
+        return new Response(JSON.stringify({ message: "OSLO API request failed" }), {
+          status: 422,
+        });
+      }
+      return new Response(JSON.stringify({ code: "PROJECT_NOT_FOUND" }), {
+        status: 404,
+      });
+    });
+
+    await expect(
+      startProjectAnalysisWithRecovery({
+        projectId,
+        description: "",
+        files: [new File(["pdf"], "plan.pdf")],
+        fetcher,
+      }),
+    ).rejects.toThrow(/Return to Plans.*archive an active plan/i);
+  });
 });
