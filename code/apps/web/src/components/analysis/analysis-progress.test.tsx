@@ -376,7 +376,11 @@ describe("AnalysisProgress", () => {
         return Response.json({ action: "confirm", outcome: completedOverview().summary });
       }
       if (url.includes("/overview")) return Response.json(completedOverview());
-      return Response.json({ status: "completed", phase: "publish", completed_phases: ["publish"] });
+      return Response.json({
+        status: "completed",
+        phase: "extended_transition",
+        completed_phases: ["publish", "extended_transition"],
+      });
     });
     vi.stubGlobal("fetch", fetchMock);
 

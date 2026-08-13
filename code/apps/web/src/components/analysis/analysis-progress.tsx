@@ -308,7 +308,11 @@ export function AnalysisProgress({
     };
   }, [loadDecision, projectId, runId, syncVersion]);
 
-  const actualWatchStage = returningStageByPhase[phase] ?? 1;
+  // Completed runs can end on a post-publication phase (for example
+  // `extended_transition`) that is intentionally outside the visible loader
+  // vocabulary. Once the result is available, always finish the eight-stage
+  // cadence instead of falling back to Stage 1.
+  const actualWatchStage = decision ? returningStages.length : returningStageByPhase[phase] ?? 1;
 
   useEffect(() => {
     if (mode !== "watch" || visibleWatchStage >= actualWatchStage) return;
