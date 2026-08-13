@@ -72,9 +72,6 @@ jobs:
             exit 1
           fi
 
-      - name: Gate 2b — R2 doctrine-guardrail contract
-        run: pnpm test:r2-guardrails
-
       - name: Start local Supabase
         run: pnpm supabase start
 
@@ -87,6 +84,9 @@ jobs:
 
       - name: Seed local platform
         run: pnpm seed:local
+
+      - name: Gate 2b — R2 doctrine-guardrail contract
+        run: pnpm test:r2-guardrails
 
       - name: Gate 3 — API and web quality
         run: |
