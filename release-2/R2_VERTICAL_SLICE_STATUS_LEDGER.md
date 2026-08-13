@@ -8,7 +8,7 @@
 
 **Audited implementation commit:** the conventional commit accompanying this ledger update
 
-**Working tree at audit:** Phases 2–6 are complete for Slices 1–3, including first-time and returning-client journeys, prototype motion, real-document extraction, reanalysis, issue/proposal lifecycle withdrawal, full regression, and final prototype re-comparison. Slices 4–10 were not changed.
+**Working tree at audit:** A 2026-08-13 live browser and ground-truth rerun reopened Slices 1–3. The journeys and lifecycle mechanics run, but issue-detail parity, structured real-document extraction, evidence-derived issue coverage, and a source-specific OSLO advisor answer remain open. Slices 4–10 were not changed.
 
 **Current owner-authorized work scope:** **Slices 1–3 only**
 
@@ -22,7 +22,7 @@
 
 ## 1. Current release-level verdict
 
-**R2 implementation state: SLICES 1–3 COMPLETE · SLICES 4–10 OWNER-BLOCKED.**
+**R2 implementation state: SLICES 1–3 IN PROGRESS · SLICES 4–10 OWNER-BLOCKED.**
 
 - All **10 slice build designs are signed off** (`SIGNOFF.md`).
 - The current implementation window is restricted to **Slices 1, 2, and 3**. No implementation, UI/UX review, manual regression, functional-test activation, or prototype-parity work may begin for **Slices 4–10** until the owner explicitly changes this ledger.
@@ -32,10 +32,11 @@
 - **18 guards are active; 42 are pending.** Slice 1 activates `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, and `GT-20`; Slice 2 activates `GT-09`, `GT-12`, `GT-25`, `GT-26`, `GT-27`, `GT-33`, and `GT-51…GT-56`. Slices 4–10 remain owner-blocked.
 - Slice 9's FE↔BE contract currently contains **58 mapped dynamic surfaces**.
 - All **6/6 Phase-A prototype corrections** checked by the gate are present.
-- **Slices 1–3 are COMPLETE.** The final run passed 152 web tests, 319 API tests, 4 guardrail infrastructure tests, 17 active guardrail tests, both linters, and the Next.js production build.
-- First-time activation/intake uses the prototype's real guided animation and outcome handoff. Returning clients receive the same intake UI without replaying the guided first-time arc.
-- The Issues shell, workspace notice, OSLO advisor, OSLO Proposes group, lifecycle trays, open/close/toggle behavior, and responsive layout have no actionable P0/P1/P2 production-prototype mismatch. Live content remains backend-driven.
-- Real DOCX, PDF, and XLSX sources were uploaded and verified field by field. Reanalysis completed, updated grounding/evidence counts, and moved the answered issue to Resolved.
+- **Slices 1–3 are reopened by live QA.** The focused rerun passed 78 web tests, 13 API tests, 4 guardrail infrastructure tests, and 17 active guardrail tests, but those automated gates did not catch the live visual and semantic failures recorded below.
+- First-time activation/intake and the guided animation work. Returning clients receive the same intake surface without replaying the first-time story and complete the returning analysis path.
+- The Issues shell and lifecycle controls work, but expanded issue review reflows the page instead of using the prototype's stable focus layer.
+- Real DOCX, PDF, and XLSX sources upload and reanalysis completes, but field-by-field comparison against the Atlas ground truth found missing structure, missed conflicts/gaps, and generic issue output.
+- The OSLO advisor UI works, but a source-specific £45,000 evidence question returned the generic highest-priority issue response.
 - A final live regression found and fixed accepted-proposal withdrawal: Accept → Resolved → Withdraw now reopens cleanly with an append-only lifecycle attestation.
 - The owner explicitly requested that NVDA be stopped. The spoken NVDA session was therefore not restarted; keyboard, focus, ARIA, reduced-motion, and responsive accessibility checks pass and the spoken session is recorded as owner-excluded, not an open delivery blocker.
 
@@ -94,9 +95,9 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 
 | Slice | Current delivery status | UI/UX review | Manual regression | Functional testing | Identical to prototype | Test cases | Next required action / dependency |
 |---|---|---|---|---|---|---|---|
-| **1 · Outcome-Integrity Engine** | **COMPLETE.** Three-pillar read, weakest-gate queue, R2 shell, workspace notice, inline issue experience, advisor, failure/retry, and responsive behavior are delivered. | **PASS.** No actionable P0/P1/P2 mismatch. | **PASS.** Happy/error/retry, toggles, focus, responsive, reduced-motion, and adjacent flows pass. Spoken NVDA was owner-excluded after the explicit stop request. | **PASS.** Included in 152 web and 319 API tests plus lint/build/guardrails. | **PASS for applicable production states.** Dynamic project data remains truthful. | **PASS.** AC/guard coverage active and green. | None. Preserve regression coverage while later slices remain blocked. |
-| **2 · Issue Lifecycle & Grounding Acts** | **COMPLETE.** Confirm/answer/flag/fix/ground/route/withdraw, reviewer response, itemized proposals, lifecycle trays, history, and reanalysis-only closure pass. | **PASS.** Queue, expanded issue, proposals, trays, motion, and governed advisor match. | **PASS.** Live Accept → Resolved → Withdraw and route/withdraw/proposal controls pass. | **PASS.** Final proposal-withdrawal regression is covered by database integration tests. | **PASS for applicable production states and motion.** | **PASS.** AC-1…AC-11, DL-211, and active guard twins pass. | None. Keep Slices 4–10 blocked. |
-| **3 · Reanalysis Engine + Freeze/Unlock** | **COMPLETE.** First-time guided arc, returning-client watch mode, outcome decision, stale/Undo, reanalysis, retry, handoff, and persistence pass. | **PASS.** The production build uses the prototype's actual kinetic engine. | **PASS.** New-user, existing-client, real-upload, and reanalysis journeys pass. | **PASS.** Event sync, iframe late-ready recovery, live run handoff, and formula extraction pass. | **PASS for applicable production states.** Prototype-only controls labeled “not shipped” are correctly excluded. | **PASS.** Guided/returning, confirm/refine/defer, recovery, and parity tests pass. | None. Keep Slices 4–10 blocked. |
+| **1 · Outcome-Integrity Engine** | **IN PROGRESS · REOPENED BY LIVE QA.** The shell, queue, workspace notice, and advisor rail run; visual and evidence-grounded behavior is not complete. | **FAIL · MAJOR.** Expanded issue review shifts the work column and grows the page instead of using the stable prototype focus layer. | **PARTIAL.** Navigation, toggles, expanders, focus controls, responsive shell, and analysis states work; live advisor evidence response failed. | **PARTIAL.** Focused automated gates pass, but the real-document advisor scenario fails. | **FAIL.** Issue expansion and the source-specific advisor result do not match the prototype/contract. | **PARTIAL.** Active guards are green; missing live-data and layout-shift cases must be added. | Fix issue-detail focus layout and evidence-qualified advisor response; rerun visual and live-document QA. |
+| **2 · Issue Lifecycle & Grounding Acts** | **IN PROGRESS · REOPENED BY LIVE QA.** Confirm, reanalysis, Resolved, Withdraw, proposal Accept/Reject, and advisor controls work. | **FAIL · MAJOR.** Expanded issue is inline/reflowing, not the prototype's stable focus layer. | **PARTIAL PASS.** Lifecycle actions pass; exact UI comparison fails. | **PASS for exercised lifecycle mechanics.** Confirm/Withdraw and proposal decisions completed without error. | **FAIL.** Expanded issue geometry, position, and surrounding-shell behavior differ. | **PARTIAL.** Lifecycle tests pass; zero-layout-shift parity coverage is missing. | Implement stable issue focus presentation and add browser layout-shift regression coverage. |
+| **3 · Reanalysis Engine + Freeze/Unlock** | **IN PROGRESS · REOPENED BY LIVE QA.** First-time and returning animation paths, handoff, and reanalysis completion work; real-document fidelity does not. | **PASS for the exercised onboarding/analysis motion.** | **FAIL for live-data acceptance.** Mixed and clean Atlas uploads completed, but extracted artifacts and issues did not match ground truth. | **PARTIAL.** Run mechanics and focused tests pass; semantic extraction/issue mapping fails. | **PARTIAL.** Kinetic flow matches applicable prototype states; resulting evidence read is not acceptance-complete. | **PARTIAL.** Flow tests pass; Atlas field-by-field and planted-conflict assertions must become active tests. | Fix structured extraction and evidence-derived issue coverage, then rerun the Atlas ground-truth suite. |
 | **4 · Freemium Entitlement & Commitment Gate** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active production tests for this slice.** | Owner must explicitly reopen Slice 4. |
 | **5 · Multi-Outcome Read & Deferred Disclosure** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active production tests for this slice.** | Owner must explicitly reopen Slice 5. |
 | **6 · Collaboration, Reviewer Roll-up & Share** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 6. |
@@ -105,7 +106,7 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 | **9 · R2 Contract Consolidation** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 9. |
 | **10 · Product Grill Shell & Operational Closure** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 10. |
 
-**Final evidence:** `../code/reports/r2-phases-2-6-qa-2026-08-13/FINAL_REPORT.md` and `../code/reports/r2-phases-2-6-qa-2026-08-13/evidence/issues-prototype-vs-app.png`.
+**Latest evidence:** `../code/reports/r2-full-flow-rerun-2026-08-13/FINAL_REPORT.md` and `../code/reports/r2-full-flow-rerun-2026-08-13/screenshots/12-expanded-issue-app-vs-prototype.png`. This rerun supersedes the earlier complete verdict in `../code/reports/r2-phases-2-6-qa-2026-08-13/FINAL_REPORT.md`.
 
 ### Historical detailed rows (superseded by the current table above)
 
