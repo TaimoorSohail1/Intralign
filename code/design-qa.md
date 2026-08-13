@@ -96,6 +96,35 @@ final result: partial pass
 
 **Passed for the implemented Slice 1 header, workspace-open notice, exposure-ranked queue, inline issue read, and persistent OSLO advisor.**
 
+## R2 Slices 1-3 exact-prototype remediation — 13 August 2026
+
+The final approved-browser pass closes every UI defect raised for onboarding controls, first-grounding-act focus, lifecycle tray reopening, sidebar actions, inline issue review, returning-client analysis motion, and compact masthead pillar colors.
+
+### Combined evidence
+
+- `code/reports/r2-exact-parity-2026-08-13/screenshots/comparison-returning-animation.png`
+- `code/reports/r2-exact-parity-2026-08-13/screenshots/comparison-first-run-focus.png`
+- `code/reports/r2-exact-parity-2026-08-13/screenshots/comparison-workspace-open.png`
+- `code/reports/r2-exact-parity-2026-08-13/screenshots/comparison-inline-issue.png`
+
+### Browser evidence
+
+- Quick Tour and Feedback are inside the sidebar and open functional named dialogs.
+- Resolved and OSLO Proposes close and reopen with correct `aria-expanded`, `aria-hidden`, and display state.
+- Issue click creates an inline `Issue details` region with zero dialogs; close removes it without changing `window.scrollY`.
+- First-run focus shows the recorded outcome, one-call-down lock, Start here prompt, inline issue, background blur, and collapsed OSLO rail.
+- Returning-client analysis uses the prototype-derived two-circle kinetic scene, reading feed, Replay intro, and bottom controls without the first-time gate.
+- Viability, Grounding, and Adaptability use their prototype blue, green, and magenta masthead states.
+
+### Regression evidence
+
+- Web: 24 files / 154 tests passed.
+- API: 323 tests passed.
+- R2 guardrails: 4 infrastructure and 17 active tests passed; 6/6 prototype corrections.
+- ESLint, Ruff, TypeScript, Next.js production build, and diff check passed.
+
+No actionable P0, P1, or P2 mismatch remains. Live issue names, counts, and analysis events remain backend-driven instead of being replaced by prototype fixtures.
+
 final result: passed
 
 ### Source and implementation evidence

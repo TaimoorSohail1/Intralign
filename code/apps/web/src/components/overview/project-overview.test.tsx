@@ -683,6 +683,8 @@ describe("ProjectOverview", () => {
     fireEvent.click(within(resolvedRegion).getByRole("button", { name: /Resolved/i }));
     expect(resolvedBody).toBeInTheDocument();
     expect(resolvedBody).toHaveAttribute("aria-hidden", "true");
+    fireEvent.click(within(resolvedRegion).getByRole("button", { name: /Resolved/i }));
+    expect(resolvedBody).toHaveAttribute("aria-hidden", "false");
   });
 
   it("keeps the inline clarification behind the prototype recommendation disclosure", () => {
@@ -848,7 +850,10 @@ describe("ProjectOverview", () => {
       evidenceRef: "document:plan:page:1:fragment:0",
     });
 
-    const foldedProposal = screen.getAllByRole("region", { name: "OSLO proposes" }).at(-1)!;
+    const issueDetail = screen.getByRole("region", { name: "Issue details" });
+    const foldedProposal = screen
+      .getAllByRole("region", { name: "OSLO proposes" })
+      .find((region) => !issueDetail.contains(region))!;
     fireEvent.click(within(foldedProposal).getByRole("button", { name: "Accept Name a delivery fallback" }));
     await waitFor(() => expect(fetcher).toHaveBeenCalledWith(
       "/api/projects/project-001/proposals/proposal-1/decisions",
@@ -1247,13 +1252,72 @@ describe("ProjectOverview", () => {
     fireEvent.click(issueButton);
 
     expect(screen.getByLabelText("OSLO project advisor")).toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: "Issue details" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Issue details" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Close issue" }));
 
     await waitFor(() => {
       expect(screen.getByLabelText("OSLO project advisor")).toBeInTheDocument();
-      expect(issueButton).toHaveFocus();
+      expect(
+        screen.getByRole("button", {
+          name: /Migration ownership is unresolved/i,
+        }),
+      ).toHaveFocus();
     });
+  });
+
+  it("restores the prototype advisor beside an inline issue when it was collapsed", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide the OSLO panel" }));
+    expect(screen.queryByLabelText("OSLO project advisor")).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Migration ownership is unresolved/i,
+      }),
+    );
+
+    expect(screen.getByRole("region", { name: "Issue details" })).toBeInTheDocument();
+    expect(screen.getByLabelText("OSLO project advisor")).toBeInTheDocument();
+  });
+
+  it("matches the first-run focus handoff after the outcome is confirmed", async () => {
+    const firstRunSnapshot = {
+      ...snapshot,
+      first_run: {
+        first_run: true,
+        onboarded: false,
+        grounding_act_count: 1,
+        unlock_threshold: 2,
+        ever_unlocked: false,
+        freeze_on: true,
+      },
+    };
+    const { container } = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={firstRunSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector(".project-shell")).toHaveClass(
+        "is-first-run-frozen",
+      );
+      expect(screen.getByText("You confirmed your outcome")).toBeInTheDocument();
+      expect(screen.getByRole("region", { name: "Issue details" })).toBeInTheDocument();
+    });
+    expect(screen.queryByLabelText("OSLO project advisor")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Ask OSLO$/i })).toHaveClass(
+      "advisor-floating",
+    );
   });
 
   it("offers the prototype governed and wider advisor controls", () => {
@@ -1268,7 +1332,7 @@ describe("ProjectOverview", () => {
     expect(screen.getByRole("button", { name: "Narrow OSLO panel" })).toBeInTheDocument();
   });
 
-  it("expands an Overview issue inline without replacing the ranked queue", () => {
+  it("opens an Overview issue inline in the ranked queue without a popup", () => {
     const scrollIntoView = vi.fn();
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
@@ -1289,12 +1353,17 @@ describe("ProjectOverview", () => {
 
     fireEvent.click(issueButton);
 
-    const detail = screen.getByRole("dialog", { name: "Issue details" });
+    const detail = screen.getByRole("region", { name: "Issue details" });
+    expect(detail.closest(".r2-issue-focus-layer")).toBeNull();
     expect(queue).toContainElement(detail);
     expect(detail).toHaveClass("is-inline");
     expect(detail).not.toHaveAttribute("aria-modal");
-    expect(issueButton).toHaveAttribute("aria-expanded", "true");
-    expect(issueButton).toHaveAttribute("aria-controls", "issue-detail-ISS-001");
+    expect(issueButton).not.toBeInTheDocument();
+    expect(
+      within(queue).queryByRole("button", {
+        name: /Migration ownership is unresolved/i,
+      }),
+    ).not.toBeInTheDocument();
     expect(within(detail).getByText("Affects")).toBeInTheDocument();
     expect(within(detail).getByText("Holds up")).toBeInTheDocument();
     expect(screen.getByText("Your work — most important first")).toBeInTheDocument();
@@ -1445,7 +1514,7 @@ describe("ProjectOverview", () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("dialog", { name: "Issue details" })).toHaveAttribute(
+      expect(screen.getByRole("region", { name: "Issue details" })).toHaveAttribute(
         "aria-describedby",
         "issue-analysis-pending-status",
       );
@@ -1499,7 +1568,7 @@ describe("ProjectOverview", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole("dialog", { name: "Issue details" })).toHaveAttribute(
+      expect(screen.getByRole("region", { name: "Issue details" })).toHaveAttribute(
         "aria-describedby",
         "issue-analysis-pending-status",
       );

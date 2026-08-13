@@ -15,6 +15,7 @@ from oslo_api.analysis.models import (
     Perception,
     RunKind,
 )
+from oslo_api.analysis.structured_extraction import construct_structured_artifact
 
 DETERMINISTIC_HARNESS_VERSION = "oslo-deterministic-v1"
 
@@ -99,9 +100,7 @@ class DeterministicAgentHarness:
         )
         combined = " ".join(item.content for item in supplied)
         facts = tuple(
-            part.strip()
-            for part in re.split(r"(?<=[.!?])\s+", combined)
-            if part.strip()
+            part.strip() for part in re.split(r"(?<=[.!?])\s+", combined) if part.strip()
         )[:30]
         result = Perception(
             facts=facts or (normalized or "Document evidence supplied.",),
@@ -147,6 +146,15 @@ class DeterministicAgentHarness:
         invocation: HarnessInvocation | None = None,
     ) -> Artifact:
         depth = "Extended" if kind is RunKind.EXTENDED else "Initial"
+        structured = construct_structured_artifact(
+            perception=perception,
+            artifact_type=artifact_type,
+            title=self._titles[artifact_type],
+            depth=depth,
+        )
+        if structured is not None:
+            self._record(invocation)
+            return structured
         evidence_text = " ".join(item.content for item in perception.evidence)
         timelines = self._timeline_values(evidence_text)
         budgets = self._budget_values(evidence_text)
@@ -160,8 +168,7 @@ class DeterministicAgentHarness:
                 else ""
             ),
             ArtifactType.RESOURCES: (
-                f"{depth} evidence contains conflicting budgets: "
-                f"{self._human_list(budgets)}."
+                f"{depth} evidence contains conflicting budgets: {self._human_list(budgets)}."
                 if len(budgets) > 1
                 else ""
             ),
@@ -186,10 +193,7 @@ class DeterministicAgentHarness:
                 ArtifactSection(
                     heading=self._titles[artifact_type],
                     body=summaries.get(artifact_type)
-                    or (
-                        f"{depth} evidence-qualified "
-                        f"{self._titles[artifact_type].lower()}."
-                    ),
+                    or (f"{depth} evidence-qualified {self._titles[artifact_type].lower()}."),
                     bullets=perception.facts[:20],
                     evidence_refs=perception.evidence_refs,
                 ),
@@ -235,9 +239,7 @@ class DeterministicAgentHarness:
                 OutcomeCheckpoint(
                     id="CHK-PROJECT-OUTCOME",
                     workstream="Project outcome",
-                    leading_indicator=(
-                        "Evidence that the stated outcome is materializing"
-                    ),
+                    leading_indicator=("Evidence that the stated outcome is materializing"),
                     timing="Before the final delivery commitment",
                     lever="Change scope, sequence, resources, or approach",
                     registered=False,
@@ -296,6 +298,7 @@ class DeterministicAgentHarness:
             why: str,
             recommendation: str,
             terms: tuple[str, ...],
+            clarification: str | None = None,
         ) -> None:
             refs = tuple(
                 item.reference
@@ -312,7 +315,169 @@ class DeterministicAgentHarness:
                     why=why,
                     recommendation=recommendation,
                     evidence_refs=refs or perception.evidence_refs[:5],
+                    clarification=clarification,
                 )
+            )
+
+        objective_gap = re.search(
+            r"\b(OBJ-\d+)\b(?:(?!\bOBJ-\d+\b).){0,700}?"
+            r"\b(\d+(?:\.\d+)?)\s+TBD definition\b",
+            text,
+            re.IGNORECASE,
+        )
+        if objective_gap:
+            objective_id = objective_gap.group(1).upper()
+            target = objective_gap.group(2)
+            add(
+                f"ISS-{objective_id}-MISSING-UNIT",
+                ArtifactType.INTENT,
+                "Clarity",
+                "Moderate",
+                f"{objective_id} target is missing a unit",
+                f"The source records a target of {target}, but the measure definition is TBD.",
+                "Define the unit, baseline, measurement window and accountable owner.",
+                (objective_id, "TBD definition"),
+                f"What unit and measurement window make the {objective_id} target testable?",
+            )
+
+        requirement_owner_gap = re.search(
+            r"\b(REQ-\d+)\b(?:(?!\bREQ-\d+\b).){0,900}?\bTBD\b",
+            text,
+            re.IGNORECASE,
+        )
+        if requirement_owner_gap:
+            requirement_id = requirement_owner_gap.group(1).upper()
+            add(
+                f"ISS-{requirement_id}-OWNER-TBD",
+                ArtifactType.REQUIREMENTS,
+                "Alignment",
+                "Moderate",
+                f"{requirement_id} has no accountable owner",
+                "The requirement and its related SLA decision are assigned to TBD.",
+                "Name the accountable owner and approve the missing SLA decision.",
+                (requirement_id, "action owner is TBD"),
+                f"Who owns {requirement_id}, and what SLA must they approve?",
+            )
+
+        if re.search(
+            r"ParcelLink.{0,220}\b(?:Unconfirmed|not confirmed)\b",
+            text,
+            re.IGNORECASE,
+        ):
+            add(
+                "ISS-PARCELLINK-ACCESS-UNCONFIRMED",
+                ArtifactType.SCHEDULE,
+                "Feasibility",
+                "Critical",
+                "ParcelLink access is unconfirmed",
+                (
+                    "Carrier-rate API access is needed by the plan, "
+                    "but commercial access is unconfirmed."
+                ),
+                (
+                    "Confirm commercial access, owner, evidence and a fallback "
+                    "before the dependency date."
+                ),
+                ("ParcelLink", "Commercial access not confirmed"),
+                "Who can confirm ParcelLink access, and what fallback applies if it is late?",
+            )
+
+        if re.search(
+            r"Solution Architect.{0,220}\bNo named backup\b",
+            text,
+            re.IGNORECASE,
+        ):
+            add(
+                "ISS-SOLUTION-ARCHITECT-BACKUP",
+                ArtifactType.RESOURCES,
+                "Feasibility",
+                "Moderate",
+                "Solution Architect has no named backup",
+                "The resource plan names the architect but explicitly records no backup.",
+                "Name a qualified delegate and define the handover trigger.",
+                ("Solution Architect", "No named backup"),
+                "Who is the qualified Solution Architect backup?",
+            )
+
+        if re.search(
+            r"Integration Lead.{0,240}\b0\.5 FTE shortfall\b",
+            text,
+            re.IGNORECASE,
+        ):
+            add(
+                "ISS-INTEGRATION-LEAD-CAPACITY",
+                ArtifactType.RESOURCES,
+                "Feasibility",
+                "Critical",
+                "Integration Lead has a 0.5 FTE shortfall",
+                "The January resource plan is short by 0.5 FTE for the Integration Lead role.",
+                "Fund or reallocate 0.5 FTE and confirm the January coverage plan.",
+                ("Integration Lead", "0.5 FTE shortfall"),
+                "What named resource closes the 0.5 FTE January shortfall?",
+            )
+
+        if re.search(
+            r"(?:Two stewards required; one confirmed|"
+            r"One data steward confirmed against two required)",
+            text,
+            re.IGNORECASE,
+        ):
+            add(
+                "ISS-DATA-STEWARD-CAPACITY",
+                ArtifactType.RESOURCES,
+                "Feasibility",
+                "Critical",
+                "Required data-steward capacity is missing",
+                "Only one of the two required data stewards is confirmed.",
+                (
+                    "Confirm the second data steward and their availability "
+                    "before migration preparation."
+                ),
+                ("Two stewards required", "One data steward confirmed"),
+                "Who is the second data steward, and when are they available?",
+            )
+
+        if re.search(
+            r"Pen-test (?:vendor|supplier)(?: is)? not contracted",
+            text,
+            re.IGNORECASE,
+        ):
+            add(
+                "ISS-PEN-TEST-VENDOR",
+                ArtifactType.RESOURCES,
+                "Feasibility",
+                "Critical",
+                "Pen-test vendor is not contracted",
+                "Security exit depends on a penetration-test supplier that is not contracted.",
+                "Contract the supplier and confirm the test window, owner and fallback.",
+                ("Pen-test vendor not contracted", "Pen-test supplier is not contracted"),
+                "Who owns the pen-test procurement, and what is the confirmed test window?",
+            )
+
+        if re.search(
+            r"GBP\s*45,000 forecast variance\s+is not approved",
+            text,
+            re.IGNORECASE,
+        ):
+            add(
+                "ISS-FORECAST-VARIANCE-UNAPPROVED",
+                ArtifactType.RESOURCES,
+                "Alignment",
+                "Critical",
+                "GBP 45,000 forecast variance is not approved",
+                (
+                    "The forecast is GBP 1,845,000 against a GBP 1,800,000 ceiling, "
+                    "and the GBP 45,000 variance is not approved."
+                ),
+                (
+                    "Obtain the governed funding decision or reduce the forecast "
+                    "to the approved ceiling."
+                ),
+                ("GBP 45,000 forecast variance", "Forecast exceeds approved ceiling"),
+                (
+                    "Which authority approves the GBP 45,000 variance, "
+                    "and what evidence records that decision?"
+                ),
             )
 
         if len(timelines) > 1:

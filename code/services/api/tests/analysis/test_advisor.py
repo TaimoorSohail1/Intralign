@@ -16,6 +16,7 @@ from oslo_api.analysis.advisor import (
     OpenAIProjectAdvisor,
     ProjectAdvisorError,
 )
+from oslo_api.analysis.models import EvidenceFragment
 
 WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
 PROJECT_ID = UUID("018f9f7e-8de2-7000-8000-000000000020")
@@ -68,6 +69,47 @@ def completed_snapshot():
             description="The project has an unresolved critical dependency.",
             source_names=(),
             idempotency_key="advisor-snapshot-001",
+        )
+    )
+    assert result.snapshot is not None
+    return result.snapshot
+
+
+def atlas_budget_snapshot():
+    evidence = (
+        EvidenceFragment(
+            reference="atlas:charter:page:1",
+            source_name="01_executive_charter_and_benefits.pdf",
+            location="Page 1",
+            content=(
+                "The approved funding ceiling is GBP 1,800,000, including GBP 120,000 "
+                "management contingency."
+            ),
+        ),
+        EvidenceFragment(
+            reference="atlas:raid:page:1",
+            source_name="05_raid_status_change_decisions.pdf",
+            location="Page 1",
+            content=(
+                "Forecast at completion is GBP 1,845,000 against the approved GBP "
+                "1,800,000 ceiling. The GBP 45,000 forecast variance is not approved. "
+                "DEC-03 Approve GBP 45,000 funding action Steering Committee 03 Sep 2026 Pending."
+            ),
+        ),
+    )
+    result = AnalysisWorkflow(
+        store=InMemoryAnalysisStore(),
+        harness=DeterministicAgentHarness(),
+    ).run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.EXTENDED,
+            description="",
+            source_names=tuple(item.source_name or "" for item in evidence),
+            user_evidence=evidence,
+            idempotency_key="advisor-atlas-budget-001",
         )
     )
     assert result.snapshot is not None
@@ -130,3 +172,19 @@ def test_grounded_fallback_answers_from_the_current_snapshot() -> None:
     assert reply.answer
     assert "current read" in reply.answer.lower()
     assert reply.follow_up_questions
+
+
+def test_grounded_fallback_cites_source_evidence_and_next_budget_verification() -> None:
+    reply = GroundedProjectAdvisor().answer(
+        snapshot=atlas_budget_snapshot(),
+        question=(
+            "Which source evidence supports the GBP 45,000 budget conflict, "
+            "and what should I verify next?"
+        ),
+    )
+
+    assert "GBP 45,000" in reply.answer
+    assert "01_executive_charter_and_benefits.pdf" in reply.answer
+    assert "05_raid_status_change_decisions.pdf" in reply.answer
+    assert "Steering Committee" in reply.answer
+    assert "not approved" in reply.answer

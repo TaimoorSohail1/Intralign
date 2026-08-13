@@ -16,3 +16,7 @@ tools/.last_ship.log
 # product-grill prototypes are self-contained HTML; workers must not vendor deps here
 90_research/oslo-product-grill/**/node_modules/
 90_research/oslo-product-grill/**/package-lock.json
+
+# Local QA preview logs (screenshots and reports remain tracked)
+code/reports/**/api-dev*.log
+code/reports/**/web-dev*.log

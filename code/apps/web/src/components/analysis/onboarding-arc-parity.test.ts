@@ -51,17 +51,23 @@ describe("R2 onboarding arc prototype parity", () => {
     expect(shipped).toContain("event.origin!==window.location.origin");
     expect(shipped).toContain("{oarc:'decision'");
     expect(shipped).toContain("d.oarc==='decision-result'");
-    expect(shipped).toContain("html.embed .dev{display:none}");
+    expect(shipped).not.toContain("html.embed .dev{display:none}");
     expect(shipped).toContain("oarcHandoff('confirm', OARC_OUTCOME)");
     expect(shipped).toContain("if(typeof OARC_FRAME_SYNC!=='undefined') OARC_FRAME_SYNC=''");
     expect(shipped).toContain("prefers-reduced-motion:reduce");
   });
 
-  it("keeps the production skip and replay control while hiding developer controls", async () => {
+  it("keeps every prototype playback control visible in the embedded production flow", async () => {
     const shipped = await readFile(shippedPath, "utf8");
     expect(shipped).toContain("OARC_MODE");
     expect(shipped).not.toContain("html.embed .modebtn{display:none!important}");
-    expect(shipped).toContain("html.embed .dev{display:none}");
+    expect(shipped).not.toContain("html.embed .dev{display:none}");
+    expect(shipped).toContain("setEntry('first')");
+    expect(shipped).toContain("setEntry('return')");
+    expect(shipped).toContain("setPass(60000)");
+    expect(shipped).toContain("setPass(15000)");
+    expect(shipped).toContain("toggleGates()");
+    expect(shipped).toContain("onclick=\"restart()\"");
     expect(shipped).toContain("'Skip the intro →':'↺ Replay intro'");
   });
 });

@@ -424,3 +424,17 @@ Reviewer / date:
 **Final gates:** web `24 files / 152 tests`, API `319 passed`, guardrail infrastructure `4 passed`, active guardrails `17 passed`, Ruff, ESLint, and the Next.js production build pass. Slices 1–3 are **COMPLETE**. Slices 4–10 remain **OWNER-BLOCKED** and were not advanced.
 
 _This is an operational delivery ledger created at the owner's direction. Product and governance authority remain with the owner; this ledger reports evidence and must not be used to ratify or redefine scope._
+
+---
+
+## 27. Exact UI parity remediation and final evidence — 2026-08-13
+
+**Slices 1-3 status:** implementation, functional regression, UI/UX review, manual browser regression, prototype comparison, and automated test coverage are **COMPLETE** for the requested R2 scope. The previously owner-deferred combined spoken screen-reader session remains recorded as a separate non-visual accessibility follow-up; it does not reopen the completed UI remediation.
+
+**Final corrections:** production now includes the onboarding prototype-control strip, source-derived first/returning animation states, prototype first-grounding-act blur/focus, recorded outcome and one-call-down lock, functional Resolved and OSLO Proposes close/reopen, Quick Tour and Feedback inside the sidebar, inline non-modal issue review with adjacent OSLO advisor, stable issue close with no scroll jump, and blue/green/magenta masthead pillar states.
+
+**Final browser evidence:** Quick Tour and Feedback opened named dialogs; Resolved and OSLO Proposes moved `aria-expanded` true → false → true and returned their bodies to `aria-hidden=false` / `display:block`; issue opening created one inline `Issue details` region and zero dialogs; issue close preserved `window.scrollY` (`0` before and after). Physically combined prototype/application evidence is stored at `../code/reports/r2-exact-parity-2026-08-13/`.
+
+**Final gates:** web **24 files / 154 tests passed**; API **323 tests passed**; R2 guardrails **4 infrastructure + 17 active tests passed** with 18 active guards and 6/6 prototype corrections; ESLint, Ruff, TypeScript, Next.js production build, and diff check passed. A Windows-only UTF-8 subprocess-decoding defect in the rendered Slice 2 guard was corrected and the guard rerun passed.
+
+**Remaining work:** no requested P0/P1/P2 UI or functional defect remains. Live issue text, counts, recommendation copy, and analysis events intentionally remain backend-driven instead of copying prototype fixtures. Slices 4-10 remain **OWNER-BLOCKED**.

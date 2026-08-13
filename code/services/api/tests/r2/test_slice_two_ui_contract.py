@@ -33,7 +33,9 @@ def test_slice_two_renders_itemized_cross_surface_owner_work_without_blank_state
         capture_output=True,
         check=False,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=120,
     )
 
-    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert completed.returncode == 0, (completed.stdout or "") + (completed.stderr or "")
