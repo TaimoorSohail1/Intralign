@@ -32,6 +32,7 @@
 
 ### Regression gate
 
+- Approved-contract traceability: `IC-WA-001`, `IC-WA-00R`, `IC-WB-EVAL`, and `IC-WE-DISCLOSE`.
 - Web: 26 files / 168 tests passed.
 - API: 354 tests passed. Six ingestion tests initially encountered a Windows long-temp-path artifact; the identical suite passed from a short system temp path.
 - R2 guardrails: 4 infrastructure tests and 21 active tests passed; 6/6 prototype corrections remain mapped.
