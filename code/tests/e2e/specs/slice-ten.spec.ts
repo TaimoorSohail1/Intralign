@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 
 test.setTimeout(240_000);
 
@@ -9,14 +9,6 @@ async function dismissOrientation(page: import("@playwright/test").Page) {
   await orientation.getByRole("button", { name: "Skip", exact: true }).click();
   await expect(orientation).toBeHidden();
 }
-
-test.afterEach(async ({ page }) => {
-  if (page.isClosed()) return;
-  await page.request.put("/api/workspace/plan", {
-    data: { plan: "basic" },
-    failOnStatusCode: false,
-  });
-});
 
 async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/login");
@@ -30,10 +22,6 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
   page,
 }, testInfo) => {
   await signIn(page);
-  await page.request.put("/api/workspace/plan", {
-    data: { plan: "basic" },
-    failOnStatusCode: true,
-  });
   await page.goto("/workspace");
 
   await expect(page.getByRole("heading", { name: "OSLO Product Grill" })).toBeVisible();

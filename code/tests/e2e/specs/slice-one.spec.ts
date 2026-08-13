@@ -1,4 +1,5 @@
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
+import { expect, test } from "../fixtures";
 
 async function signInAsOwner(page: import("@playwright/test").Page) {
   await page.goto("/login");
