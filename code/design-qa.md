@@ -1,5 +1,29 @@
 # Design QA
 
+## 2026-08-13 — R2 workspace-banner alignment
+
+### Source and implementation evidence
+
+- Source visual truth: `C:/Users/Hp/AppData/Local/Temp/codex-clipboard-2885223a-b349-4b9a-ba10-42d65519a01c.png`
+- Implementation screenshot: `C:/Users/Hp/Documents/ChatGPT/oslo-knowledge/code/reports/r2-parity-followup-2026-08-13/screenshots/09-workspace-banner-aligned.png`
+- Viewport: 1280 × 720 CSS pixels; browser capture density unchanged.
+- State: desktop Issues overview, OSLO rail closed so the shared 820px issue column is visible.
+
+### Comparison and findings
+
+- Full-view comparison found the banner width was correct but its automatic horizontal margins centered it in a 900px parent, shifting it 40px right of the issue, proposal, and resolved cards.
+- Focused bounding-box verification after the fix measured the workspace banner, first issue, proposals, and resolved tray at the identical left edge (`x = 318`) and identical width (`820px`).
+- Typography, colors, radii, shadows, icons, and copy were unchanged because the requested defect was alignment-only.
+- No remaining P0, P1, or P2 finding exists for this focused correction.
+
+### Iteration history
+
+- P2: workspace banner shifted 40px right in the wide desktop layout.
+- Fix: removed automatic horizontal centering and anchored the banner to the shared content-column start.
+- Post-fix evidence: `09-workspace-banner-aligned.png` and live equal-edge measurements above.
+
+final result: passed
+
 ## 2026-08-12 — R2 Slice 3 implementation review
 
 ### Current result
