@@ -46,8 +46,8 @@ describe("startFirstProject", () => {
   it("completes onboarding and opens the workspace when its project limit is full", async () => {
     const { OsloApiError } = await import("@/lib/server/oslo-api");
     startProject.mockRejectedValue(
-      new OsloApiError("Project limit reached", 409, {
-        code: "ACTIVE_PROJECT_LIMIT_REACHED",
+      new OsloApiError("Project limit reached", 422, {
+        code: "CAPACITY_COMMITMENT_REQUIRED",
       }),
     );
     const { startFirstProject } = await import("./actions");

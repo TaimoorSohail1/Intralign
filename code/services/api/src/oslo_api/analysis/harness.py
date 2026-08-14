@@ -71,7 +71,9 @@ class DeterministicAgentHarness:
 
     _titles = {
         ArtifactType.INTENT: "Intent",
-        ArtifactType.CONTEXT: "Context",
+        # ``context`` remains the persisted enum for backwards compatibility,
+        # but Release 2 presents this artifact as the user's explicit constraints.
+        ArtifactType.CONTEXT: "Constraints",
         ArtifactType.SCOPE: "Scope",
         ArtifactType.REQUIREMENTS: "Requirements",
         ArtifactType.WORK_BREAKDOWN: "Work breakdown",
@@ -155,6 +157,14 @@ class DeterministicAgentHarness:
         if structured is not None:
             self._record(invocation)
             return structured
+        if artifact_type is ArtifactType.WORK_BREAKDOWN:
+            fallback_work_breakdown = self._fallback_work_breakdown(
+                perception=perception,
+                depth=depth,
+            )
+            if fallback_work_breakdown is not None:
+                self._record(invocation)
+                return fallback_work_breakdown
         evidence_text = " ".join(item.content for item in perception.evidence)
         timelines = self._timeline_values(evidence_text)
         budgets = self._budget_values(evidence_text)
@@ -277,6 +287,103 @@ class DeterministicAgentHarness:
         if len(values) < 2:
             return values[0] if values else ""
         return ", ".join(values[:-1]) + f" and {values[-1]}"
+
+    @staticmethod
+    def _fallback_work_breakdown(
+        *,
+        perception: Perception,
+        depth: str,
+    ) -> Artifact | None:
+        """Retain a source-stated plan list as a real three-level WBS.
+
+        The deterministic harness must not promote analysis-history prose into work.
+        This adapter only expands an explicit ``plan X: verb A, B and C`` statement;
+        if that source grammar is absent the normal evidence-qualified fallback remains.
+        """
+
+        audit_prefix = re.compile(
+            r"^(?:(?:schedule|resources|intent|scope|requirements|constraints|"
+            r"work breakdown) artifact changes confirmed by the user:|"
+            r"section:|issue:|question:|answer:)",
+            re.IGNORECASE,
+        )
+        candidate = next(
+            (
+                fact.strip().lstrip("-• ")
+                for fact in perception.facts
+                if ":" in fact and not audit_prefix.search(fact.strip().lstrip("-• "))
+            ),
+            None,
+        )
+        if candidate is None:
+            return None
+
+        package_name, detail = (part.strip() for part in candidate.split(":", 1))
+        fragments = tuple(
+            part.strip().rstrip(".;")
+            for part in re.split(r"\s*,\s*|\s+and\s+", detail, flags=re.IGNORECASE)
+            if part.strip().rstrip(".;")
+        )
+        if len(fragments) < 2:
+            return None
+        first = re.match(r"^([a-z]+)\s+(.+)$", fragments[0], re.IGNORECASE)
+        if first is None:
+            return None
+
+        verb = first.group(1).lower()
+        task_fragments = (first.group(2), *fragments[1:])
+
+        def sentence_case(value: str) -> str:
+            normalized = value.strip().rstrip(".;")
+            return normalized[:1].upper() + normalized[1:] if normalized else normalized
+
+        deliverable = sentence_case(
+            re.sub(
+                r"^(?:plan|deliver|run|build|create|implement)\s+(?:an?\s+|the\s+)?",
+                "",
+                package_name,
+                flags=re.IGNORECASE,
+            )
+        )
+        repeated_verb = re.compile(
+            rf"^{re.escape(verb)}\s+",
+            flags=re.IGNORECASE,
+        )
+        tasks = tuple(
+            sentence_case(f"{verb} {repeated_verb.sub('', fragment)}")
+            for fragment in task_fragments
+        )
+        if not deliverable or not all(tasks):
+            return None
+
+        evidence_refs = tuple(
+            item.reference
+            for item in perception.evidence
+            if package_name.casefold() in item.content.casefold()
+        ) or perception.evidence_refs[:1]
+        rows = (("1.0", sentence_case(package_name)),) + tuple(
+            (f"1.{index}", task) for index, task in enumerate(tasks, start=1)
+        )
+        section = ArtifactSection(
+            heading=deliverable,
+            columns=("WBS", "Item"),
+            rows=rows,
+            evidence_refs=evidence_refs,
+            row_evidence_refs=tuple(evidence_refs for _ in rows),
+            row_states=tuple("confirmed" for _ in rows),
+        )
+        return Artifact(
+            artifact_type=ArtifactType.WORK_BREAKDOWN,
+            title="Work breakdown",
+            summary=(
+                f"{depth} evidence-qualified work breakdown retained as "
+                "deliverable, work package and tasks."
+            ),
+            reliability="Moderate",
+            evidence_refs=evidence_refs,
+            basis="source_grounded",
+            sections=(section,),
+        )
 
     def _evidence_issues(
         self,

@@ -22,6 +22,7 @@ describe("OutcomeCapacityControl", () => {
   });
 
   it("keeps an archived Outcome visible and allows reactivation", async () => {
+    const onOutcomesChange = vi.fn();
     vi.stubGlobal(
       "fetch",
       vi.fn()
@@ -31,10 +32,16 @@ describe("OutcomeCapacityControl", () => {
         ),
     );
 
-    render(<OutcomeCapacityControl projectId="project-1" />);
+    render(
+      <OutcomeCapacityControl
+        onOutcomesChange={onOutcomesChange}
+        projectId="project-1"
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Manage Outcomes" }));
 
     expect(await screen.findByText("Improve successful delivery")).toBeInTheDocument();
+    expect(onOutcomesChange).toHaveBeenCalledWith([outcome]);
     fireEvent.click(screen.getByRole("button", { name: "Archive Improve successful delivery" }));
 
     await waitFor(() =>

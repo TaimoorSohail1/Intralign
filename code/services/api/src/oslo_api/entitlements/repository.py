@@ -181,8 +181,10 @@ class SqlEntitlementRepository:
             policy = self._workspace_policy(connection, workspace_id)
             active_count = connection.execute(
                 text(
-                    "select count(*) from public.project_outcomes "
-                    "where workspace_id = :workspace_id and status = 'active'"
+                    "select count(*) from public.project_outcomes outcome "
+                    "join public.projects project on project.id = outcome.project_id "
+                    "where outcome.workspace_id = :workspace_id "
+                    "and outcome.status = 'active' and project.archived_at is null"
                 ),
                 {"workspace_id": workspace_id},
             ).scalar_one()
@@ -320,8 +322,10 @@ class SqlEntitlementRepository:
             policy = self._workspace_policy(connection, workspace_id)
             active_count = connection.execute(
                 text(
-                    "select count(*) from public.project_outcomes "
-                    "where workspace_id = :workspace_id and status = 'active'"
+                    "select count(*) from public.project_outcomes outcome "
+                    "join public.projects project on project.id = outcome.project_id "
+                    "where outcome.workspace_id = :workspace_id "
+                    "and outcome.status = 'active' and project.archived_at is null"
                 ),
                 {"workspace_id": workspace_id},
             ).scalar_one()

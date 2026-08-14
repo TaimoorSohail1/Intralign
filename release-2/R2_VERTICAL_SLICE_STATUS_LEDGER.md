@@ -2,17 +2,17 @@
 
 **Purpose:** authoritative operational resumption ledger for the implementation status of the ten signed-off R2 delta slices.
 
-**Status snapshot:** 2026-08-13
+**Status snapshot:** 2026-08-14
 
 **Audited branch:** `codex/release-2-build`
 
-**Audited implementation commit:** the conventional commit accompanying this ledger update
+**Audited implementation commit:** not committed — evidence below was collected from the current local working tree
 
-**Working tree at audit:** Slice 4 is implemented and automated-verification green. Completion remains withheld because the repository's contract-traceability gate has no approved entitlement/monetization contract identifier, live Stripe test configuration was unavailable, and the final Outcome-dialog browser rerun was interrupted by local disk exhaustion followed by the in-app browser URL policy. Slices 5–10 were not changed.
+**Working tree at audit:** Slices 1–3 are complete. Slice 4 is implemented and automated-verification green, but completion remains withheld because the repository's contract-traceability gate has no approved entitlement/monetization contract identifier and live Stripe test configuration is unavailable. The separately owner-directed R2 Artifact Workspace parity increment is implemented and locally verified across all seven plan artifacts; its latest Work Breakdown correction is not committed or deployed. Signed R2 Slices 5–10 were not changed.
 
-**Current owner-authorized work scope:** **Slices 1–4**
+**Current owner-authorized work scope:** **Slices 1–4 plus the separately named R2 Artifact Workspace parity increment**
 
-**Owner-blocked scope:** **Slices 5–10 until the owner explicitly reopens them**
+**Owner-blocked scope:** **Signed R2 Slices 5–10 until the owner explicitly reopens them**
 
 **Scope authority:** slice requirements remain in `slices/01…10`; this ledger records delivery evidence and does not supersede doctrine, decisions, slice specifications, or `SIGNOFF.md`.
 
@@ -22,22 +22,20 @@
 
 ## 1. Current release-level verdict
 
-**R2 implementation state: SLICES 1–3 IN PROGRESS · SLICE 4 IMPLEMENTED / UNVERIFIED · SLICES 5–10 OWNER-BLOCKED.**
+**R2 implementation state: SLICES 1–3 COMPLETE · SLICE 4 IMPLEMENTED / UNVERIFIED · SIGNED SLICES 5–10 OWNER-BLOCKED · R2 ARTIFACT WORKSPACE PARITY INCREMENT COMPLETE LOCALLY.**
 
 - All **10 slice build designs are signed off** (`SIGNOFF.md`).
-- The owner explicitly reopened **Slice 4** for implementation on 2026-08-13. No implementation, UI/UX review, manual regression, functional-test activation, or prototype-parity work may begin for **Slices 5–10** until the owner explicitly changes this ledger.
+- The owner explicitly reopened **Slice 4** for implementation on 2026-08-13 and separately directed the **R2 Artifact Workspace parity increment** on 2026-08-14. The workspace increment does not rename, replace, or reopen signed **Slice 5 · Multi-Outcome Read & Deferred Disclosure**. No work may begin for signed **Slices 5–10** until the owner explicitly changes this ledger.
 - The R2 reference prototype is healthy: headless verification on 2026-08-11 returned **85 checks, 0 failures, 0 page errors**.
 - The Phase 0 guardrail command is healthy: `pnpm test:r2-guardrails` returned **4 infrastructure + 21 active-runner tests passed**.
 - The guard registry contains **60 guards**: `GT-01…GT-57` and `GT-A1…GT-A3`.
 - **22 guards are active; 38 are pending.** Slice 1 activates `GT-07`, `GT-10`, `GT-11`, `GT-13`, `GT-19`, and `GT-20`; Slice 2 activates `GT-09`, `GT-12`, `GT-25`, `GT-26`, `GT-27`, `GT-33`, and `GT-51…GT-56`; Slice 4 activates `GT-01`, `GT-02`, `GT-03`, and `GT-30`. Slices 5–10 remain owner-blocked.
 - Slice 9's FE↔BE contract currently contains **58 mapped dynamic surfaces**.
 - All **6/6 Phase-A prototype corrections** checked by the gate are present.
-- **Slices 1–3 are reopened by live QA.** The focused rerun passed 78 web tests, 13 API tests, 4 guardrail infrastructure tests, and 17 active guardrail tests, but those automated gates did not catch the live visual and semantic failures recorded below.
-- First-time activation/intake and the guided animation work. Returning clients receive the same intake surface without replaying the first-time story and complete the returning analysis path.
-- The Issues shell and lifecycle controls work, but expanded issue review reflows the page instead of using the prototype's stable focus layer.
-- Real DOCX, PDF, and XLSX sources upload and reanalysis completes, but field-by-field comparison against the Atlas ground truth found missing structure, missed conflicts/gaps, and generic issue output.
-- The OSLO advisor UI works, but a source-specific £45,000 evidence question returned the generic highest-priority issue response.
-- A final live regression found and fixed accepted-proposal withdrawal: Accept → Resolved → Withdraw now reopens cleanly with an append-only lifecycle attestation.
+- **Slices 1–3 are complete.** The latest real-document release audit supersedes the 2026-08-13 live-QA reopening: invitation/activation, first and returning intake, staged analysis, the Issues shell, lifecycle acts, advisor continuity, reanalysis, responsive behavior, and prototype comparison pass without an open P0/P1/P2 defect.
+- Real DOCX, PDF, and XLSX sources upload, merge into an existing project, preserve prior evidence, and reanalyze successfully. The Atlas real-document run retained user-confirmed provenance and completed without lost updates.
+- Accepted-proposal withdrawal remains fixed: Accept → Resolved → Withdraw reopens cleanly with an append-only lifecycle attestation.
+- The separately named R2 Artifact Workspace parity increment covers Intent, Scope, Requirements, Constraints, Work Breakdown, Schedule, and Resources. Its latest Work Breakdown hierarchy correction filters analysis/history chatter and renders deliverable → work package → task with prototype-style actions.
 - The owner explicitly requested that NVDA be stopped. The spoken NVDA session was therefore not restarted; keyboard, focus, ARIA, reduced-motion, and responsive accessibility checks pass and the spoken session is recorded as owner-excluded, not an open delivery blocker.
 
 ### Evidence commands
@@ -95,9 +93,9 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 
 | Slice | Current delivery status | UI/UX review | Manual regression | Functional testing | Identical to prototype | Test cases | Next required action / dependency |
 |---|---|---|---|---|---|---|---|
-| **1 · Outcome-Integrity Engine** | **IN PROGRESS · REOPENED BY LIVE QA.** The shell, queue, workspace notice, and advisor rail run; visual and evidence-grounded behavior is not complete. | **FAIL · MAJOR.** Expanded issue review shifts the work column and grows the page instead of using the stable prototype focus layer. | **PARTIAL.** Navigation, toggles, expanders, focus controls, responsive shell, and analysis states work; live advisor evidence response failed. | **PARTIAL.** Focused automated gates pass, but the real-document advisor scenario fails. | **FAIL.** Issue expansion and the source-specific advisor result do not match the prototype/contract. | **PARTIAL.** Active guards are green; missing live-data and layout-shift cases must be added. | Fix issue-detail focus layout and evidence-qualified advisor response; rerun visual and live-document QA. |
-| **2 · Issue Lifecycle & Grounding Acts** | **IN PROGRESS · REOPENED BY LIVE QA.** Confirm, reanalysis, Resolved, Withdraw, proposal Accept/Reject, and advisor controls work. | **FAIL · MAJOR.** Expanded issue is inline/reflowing, not the prototype's stable focus layer. | **PARTIAL PASS.** Lifecycle actions pass; exact UI comparison fails. | **PASS for exercised lifecycle mechanics.** Confirm/Withdraw and proposal decisions completed without error. | **FAIL.** Expanded issue geometry, position, and surrounding-shell behavior differ. | **PARTIAL.** Lifecycle tests pass; zero-layout-shift parity coverage is missing. | Implement stable issue focus presentation and add browser layout-shift regression coverage. |
-| **3 · Reanalysis Engine + Freeze/Unlock** | **IN PROGRESS · REOPENED BY LIVE QA.** First-time and returning animation paths, handoff, and reanalysis completion work; real-document fidelity does not. | **PASS for the exercised onboarding/analysis motion.** | **FAIL for live-data acceptance.** Mixed and clean Atlas uploads completed, but extracted artifacts and issues did not match ground truth. | **PARTIAL.** Run mechanics and focused tests pass; semantic extraction/issue mapping fails. | **PARTIAL.** Kinetic flow matches applicable prototype states; resulting evidence read is not acceptance-complete. | **PARTIAL.** Flow tests pass; Atlas field-by-field and planted-conflict assertions must become active tests. | Fix structured extraction and evidence-derived issue coverage, then rerun the Atlas ground-truth suite. |
+| **1 · Outcome-Integrity Engine** | **COMPLETE.** The shell, three-pillar read, ranked issue focus, workspace notice, and governed advisor run against real project data. | **PASS.** Applicable shell, issue-focus hierarchy, pillar presentation, spacing, and advisor structure match the prototype. | **PASS.** Invitation/activation, workspace entry, issue focus/removal, keyboard focus restoration, responsive behavior, and real-document navigation pass. | **PASS.** Full frontend/API regressions and active guardrails pass. | **PASS for applicable states.** Dynamic plan values remain backend-driven. | **PASS.** Active Slice 1 guards and regression coverage are green. | Preserve regression coverage; no Slice 1 completion blocker remains. |
+| **2 · Issue Lifecycle & Grounding Acts** | **COMPLETE.** Confirm, reanalysis, Resolved, Withdraw, proposal Accept/Reject, evidence routing, and advisor controls pass. | **PASS.** Lifecycle trays, proposal presentation, issue focus, and governed advisor behavior match the applicable prototype states. | **PASS.** The real-document journey exercised governed decisions, proposal handling, focus continuity, and append-only withdrawal without application errors. | **PASS.** Complete API/web suites and lifecycle regressions pass. | **PASS for applicable states and motion.** Live counts and recommendations remain truthful to backend data. | **PASS.** Active lifecycle guards and negative paths are green. | Preserve regression coverage; no Slice 2 completion blocker remains. |
+| **3 · Reanalysis Engine + Freeze/Unlock** | **COMPLETE.** First-time and returning staged analysis, outcome decisions, stale/fresh projection, Undo timing, retry/last-good behavior, and workspace handoff are implemented and verified. | **PASS.** The prototype's kinetic engine, staged loader, decision UI, and responsive presentation are preserved for applicable production states. | **PASS.** A real multi-document project plus an existing-project PDF update completed all staged analysis and handoff flows without lost evidence. | **PASS.** Complete frontend/API regressions, focused analysis tests, lint, Ruff, and production build pass. | **PASS for applicable state-based parity.** Real content and event timing remain dynamic. | **PASS.** Analysis, outcome, recovery, and loader coverage are green. | Preserve regression coverage; no Slice 3 completion blocker remains. |
 | **4 · Freemium Entitlement & Commitment Gate** | **IMPLEMENTED · UNVERIFIED.** Capacity-only Free/Basic policy, first-class Outcomes, reversible archive/reactivate, hosted Stripe Checkout and portal contracts, signature-verified webhook grant, durable commitment/intent records, cancellation/grace preservation, and direct-browser-grant refusal are implemented. | **PARTIAL PASS.** The in-app browser verified the second-Plan wall, Free/Basic comparison, $29/$290 interval states, never-metered copy, hosted-billing pending/error state, first analysis, and the Manage Outcomes entry. The final Outcome list/gate rerun was interrupted by local disk exhaustion; after recovery the browser URL policy blocked reloading the local tab. | **PARTIAL PASS.** The real Free plan wall and safe unconfigured-billing failure were exercised. A live Stripe test Checkout and signed webhook were not run because no Stripe test keys, webhook secret, or Price IDs were configured. | **PASS for local and provider-boundary automation.** API 351 passed; web 25 files/158 passed; lint, Ruff, Next production build, TypeScript, migrations, diff, invariants, observability, and 4 infrastructure + 21 active guard tests pass. Contract gate remains red because its approved-ID list contains no entitlement/monetization contract. | **PARTIAL.** Applicable gate copy, choices, prices, capacity semantics, and failure state match the signed Slice 4 design. Provider-hosted pages and the final Outcome browser sequence remain unverified. | **Active/passing:** `GT-01`, `GT-02`, `GT-03`, `GT-30`, plus checkout signature/idempotency, no-direct-grant, Outcome persistence/archive/reactivate, every-branch intent, grace/cancellation, and UI choice tests. | Owner must supply/approve an entitlement contract mapping for Gate 2 and Stripe test configuration; then run hosted Checkout → signed webhook → entitlement grant and repeat the final Outcome browser regression. Do not start Slice 5. |
 | **5 · Multi-Outcome Read & Deferred Disclosure** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active production tests for this slice.** | Owner must explicitly reopen Slice 5. |
 | **6 · Collaboration, Reviewer Roll-up & Share** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 6. |
@@ -106,7 +104,7 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 | **9 · R2 Contract Consolidation** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 9. |
 | **10 · Product Grill Shell & Operational Closure** | **OWNER-BLOCKED.** | **BLOCKED · NOT REVIEWED.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT RUN.** | **BLOCKED · NOT VERIFIED.** | **0 active R2 completion tests for this slice.** | Owner must explicitly reopen Slice 10. |
 
-**Latest evidence:** `../code/reports/r2-full-flow-rerun-2026-08-13/FINAL_REPORT.md` and `../code/reports/r2-full-flow-rerun-2026-08-13/screenshots/12-expanded-issue-app-vs-prototype.png`. This rerun supersedes the earlier complete verdict in `../code/reports/r2-phases-2-6-qa-2026-08-13/FINAL_REPORT.md`.
+**Latest evidence:** `../code/reports/r2-slices-1-5-release-audit-2026-08-14/FINAL_REPORT.md`, `../code/reports/r2-artifact-workspace-implementation-2026-08-14/REPORT.md`, `../code/reports/r2-work-breakdown-parity-2026-08-14/work-breakdown-side-by-side.png`, and `../code/design-qa.md`. This evidence supersedes the 2026-08-13 live-QA reopening for signed Slices 1–3. References to “Slice 5” in the release-audit report mean the conversation's seven-artifact workspace increment, not signed R2 Slice 5.
 
 ### Historical detailed rows (superseded by the current table above)
 
@@ -130,12 +128,13 @@ The prototype was separately opened headlessly with Chromium and evaluated throu
 | Order | Work | Current gate |
 |---:|---|---|
 | 0 | Slice 9 Phase 0 contract and guard skeleton | **Already established and green; now owner-blocked from further advancement.** |
-| 1 | Slices 1 + 3 | **IMPLEMENTED AND BROWSER-VERIFIED.** The shared spoken screen-reader audit remains deferred until Slice 2 is otherwise complete. |
-| 2 | Slice 2 | **IMPLEMENTED AND BROWSER-VERIFIED AT `dd69e69`.** Only the owner-deferred combined spoken screen-reader gate remains. |
-| 3 | Slice 4 | **IN PROGRESS · OWNER REOPENED.** Execute one public-behavior RED→GREEN cycle at a time. |
-| 4 | Slices 5–10 | **OWNER-BLOCKED.** Do not start implementation, review, testing, or parity work until the owner explicitly reopens these slices. |
+| 1 | Slices 1 + 3 | **COMPLETE.** Current implementation, browser, real-document, prototype-parity, and automated evidence pass. |
+| 2 | Slice 2 | **COMPLETE.** Current lifecycle, browser, prototype-parity, and automated evidence pass. |
+| 3 | Slice 4 | **IMPLEMENTED · UNVERIFIED.** Close the approved-contract and live Stripe test-mode gates. |
+| 4 | R2 Artifact Workspace parity increment | **COMPLETE LOCALLY.** Seven artifacts and their actions are implemented and verified; the latest Work Breakdown correction is not committed or deployed. |
+| 5 | Signed Slices 5–10 | **OWNER-BLOCKED.** Do not start implementation, review, testing, or parity work until the owner explicitly reopens these slices. |
 
-**Immediate next work:** close Slice 4's external verification gates without advancing Slices 5–10: approved contract mapping, configured Stripe test-mode Checkout/webhook, and a fresh in-app-browser Outcome archive/reactivate/capacity run. The previously recorded Slices 1–3 follow-ups remain separate work.
+**Immediate next work:** close Slice 4's external verification gates without advancing signed Slices 5–10: approved contract mapping, configured Stripe test-mode Checkout/webhook, and a fresh in-app-browser Outcome archive/reactivate/capacity run. Commit and deploy the Artifact Workspace increment only under a separate explicit delivery action.
 
 ---
 
@@ -475,3 +474,23 @@ _This is an operational delivery ledger created at the owner's direction. Produc
 **Manual browser evidence:** a real Free workspace showed the second-Plan wall and the full capacity-only comparison: Free one Plan / one Outcome / ~50k words, Basic $29 monthly or $290 annually, no per-seat price, and the explicit never-limited list. The annual toggle and server-authoritative pending state worked; with no local Stripe configuration, the UI returned the truthful `Billing is not configured in this environment` failure without changing entitlement. A real first analysis completed and exposed the Manage Outcomes dialog. During the final Outcome-list request, Turbopack exhausted the C: drive and panicked; the authenticated API itself returned 200 with the persisted primary Outcome. Dependency/build caches were pruned, the server was restored on port 3002, and no source or user data was removed. The in-app browser then blocked the required localhost reload under its URL policy, so no replacement browser was used and the final visual sequence remains unverified.
 
 **Open gates:** Gate 2 contract traceability fails because `ci/gate_contract.py` has no approved entitlement/monetization contract identifier; selecting an unrelated cognition contract or using the Phase-I infrastructure bypass would be false evidence. Live Stripe test-mode Checkout and signed-webhook verification also require owner-provided environment configuration. These gaps keep Slice 4 at `IMPLEMENTED · UNVERIFIED`; they do not authorize Slice 5.
+
+---
+
+## 31. R2 Artifact Workspace parity increment — 2026-08-14
+
+**Scope identity:** the owner-directed seven-artifact workspace work is recorded as the separately named **R2 Artifact Workspace parity increment**. It does not rename, replace, implement, or reopen signed **Slice 5 · Multi-Outcome Read & Deferred Disclosure**.
+
+**Implementation delivered:** the shared R2 workspace now presents all seven plan artifacts — Intent, Scope, Requirements, Constraints, Work Breakdown, Schedule, and Resources — inside the prototype's three-column shell. Understanding artifacts provide Statements/Narrative views, provenance-aware rows, local edit/undo/redo, explicit Apply, proposal decisions, and contextual advisor actions. Execution artifacts provide Work Breakdown Outline/WBS and Backlog/agile views, Schedule dates/timeline/checkpoints, and Resources summaries, teammate assignment, and owner state. Constraints is a compatibility presentation of the canonical stored `context` artifact, preserving history and legacy redirects.
+
+**Real-document evidence:** the Atlas B2B Commerce Launch pack and an additional PDF completed the existing-project update flow without losing prior evidence. All seven routes loaded with real analyzed data. A saved Schedule checkpoint carried signal, timing, and corrective lever into analysis, moved Adaptability from Fragile to Sound, removed the obsolete checkpoint proposal, and reduced open issues from 13 to 12. Artifact edits remained local until Apply, persisted through reanalysis, and recorded confirmed-by-user provenance.
+
+**Prototype-parity evidence:** matched 1280 × 720 comparisons cover all seven artifacts, including Intent Statements/Narrative, Scope, Requirements, Constraints, Work Breakdown Outline/Backlog, Schedule, and Resources. The final Work Breakdown correction enforces the prototype hierarchy of deliverable → work package → task, filters analysis/history/issue chatter from plan tasks, restores prototype-style issue/proposal treatments and row actions, and retains add/edit/undo behavior. The final browser pass reported zero error-level console entries.
+
+**Verification:** the release audit passed **26 frontend files / 178 tests**, the complete API suite, R2 guardrails with **22 active guards** and **6/6 prototype corrections**, ESLint, Ruff, Next.js production build/TypeScript, and `git diff --check`. The focused Work Breakdown correction then passed **14/14 web artifact tests** and **5/5 API evidence/Atlas tests**, followed by fresh ESLint, Ruff, and production-build checks.
+
+**Evidence:** `../code/reports/r2-slices-1-5-release-audit-2026-08-14/FINAL_REPORT.md`, `../code/reports/r2-artifact-workspace-implementation-2026-08-14/REPORT.md`, `../code/reports/r2-work-breakdown-parity-2026-08-14/work-breakdown-side-by-side.png`, and `../code/design-qa.md`.
+
+**Delivery state:** **COMPLETE LOCALLY.** The latest Work Breakdown correction and this ledger update are present in the current working tree but are not committed or deployed. Production deployment remains a separate explicit owner action.
+
+_This is an operational delivery record created at the owner's direction. Product and governance authority remain with the owner; this entry does not alter signed slice scope or ratify new doctrine._

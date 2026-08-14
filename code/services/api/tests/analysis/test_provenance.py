@@ -191,6 +191,48 @@ def test_provenance_links_assumptions_to_cross_artifact_findings_using_evidence(
     assert result["structure"]["unconfirmed_dependencies"] == 1
 
 
+def test_provenance_does_not_link_unrelated_claims_that_share_a_page() -> None:
+    reference = "document:atlas-resources:page:2:fragment:0"
+    artifacts = (
+        Artifact(
+            artifact_type=ArtifactType.RESOURCES,
+            title="Resources",
+            summary="Delivery assumptions",
+            reliability="Moderate",
+            evidence_refs=(reference,),
+            assumptions=(
+                ArtifactAssumption(
+                    id="A-03",
+                    statement=(
+                        "At least 80% of eligible customers will adopt self-service by "
+                        "31 Mar 2027."
+                    ),
+                    state="source_grounded",
+                    load_bearing=True,
+                    evidence_refs=(reference,),
+                ),
+            ),
+        ),
+    )
+    issues = (
+        Issue(
+            id="ISS-ERP-DATE",
+            artifact_type=ArtifactType.SCHEDULE,
+            dimension="Feasibility",
+            severity="Critical",
+            title="ERP pricing API date is internally inconsistent",
+            why="The required integration date conflicts with the supplier commitment.",
+            recommendation="Approve one controlled delivery date.",
+            evidence_refs=(reference,),
+        ),
+    )
+
+    result = build_project_provenance(artifacts=artifacts, issues=issues)
+
+    assert result["assumptions"][0]["issue_id"] is None
+    assert result["assumptions"][0]["issue_title"] is None
+
+
 def test_provenance_deduplicates_the_same_project_assumption_across_artifacts() -> None:
     reference = "document:plan:page:3:fragment:1"
     repeated = "The incumbent supplier will extend the support agreement."

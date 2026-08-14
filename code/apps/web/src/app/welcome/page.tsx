@@ -4,6 +4,7 @@ import { EntryShell } from "@/components/layout/entry-shell";
 import { readSession } from "@/lib/server/session";
 
 import { startFirstProject } from "./actions";
+import { WelcomeSubmitButton } from "./welcome-submit";
 
 export default async function WelcomePage() {
   const session = await readSession();
@@ -21,9 +22,7 @@ export default async function WelcomePage() {
           You stay in control at every step.
         </p>
         <form action={startFirstProject}>
-          <button className="button button-primary" type="submit">
-            Start your first outcome <span aria-hidden="true">→</span>
-          </button>
+          <WelcomeSubmitButton />
         </form>
       </section>
     </EntryShell>

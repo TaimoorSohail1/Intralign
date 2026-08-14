@@ -370,11 +370,8 @@ describe("AnalysisProgress", () => {
 
   it("hands a completed returning-client read back to Overview without waiting for a first-time decision", async () => {
     vi.useFakeTimers();
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
-      if (url.includes("/outcome-actions") && init?.method === "POST") {
-        return Response.json({ action: "confirm", outcome: completedOverview().summary });
-      }
       if (url.includes("/overview")) return Response.json(completedOverview());
       return Response.json({
         status: "completed",
@@ -393,11 +390,10 @@ describe("AnalysisProgress", () => {
     }
     expect(screen.getByText("Stage 8 of 8")).toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(1_200); });
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/projects/project-1/outcome-actions",
-      expect.objectContaining({ method: "POST" }),
+      expect.anything(),
     );
-    await act(async () => { await vi.advanceTimersByTimeAsync(850); });
     expect(replace).toHaveBeenCalledWith("/projects/project-1/overview");
   });
 });

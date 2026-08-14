@@ -5,6 +5,27 @@ import {
 } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
 
+function persistedArtifactType(artifactType: string) {
+  return artifactType === "constraints" ? "context" : artifactType;
+}
+
+function presentArtifact(
+  artifact: Awaited<ReturnType<typeof getProjectArtifact>>,
+  artifactType: string,
+) {
+  if (artifactType !== "constraints") return artifact;
+  return {
+    ...artifact,
+    artifact_type: "constraints",
+    title: "Constraints",
+    issues: artifact.issues.map((issue) => ({
+      ...issue,
+      artifact_type:
+        issue.artifact_type === "context" ? "constraints" : issue.artifact_type,
+    })),
+  };
+}
+
 export async function GET(
   _request: Request,
   context: RouteContext<"/api/projects/[projectId]/artifacts/[artifactType]">,
@@ -15,9 +36,12 @@ export async function GET(
   }
   const { projectId, artifactType } = await context.params;
   try {
-    return Response.json(
-      await getProjectArtifact(session.accessToken, projectId, artifactType),
+    const artifact = await getProjectArtifact(
+      session.accessToken,
+      projectId,
+      persistedArtifactType(artifactType),
     );
+    return Response.json(presentArtifact(artifact, artifactType));
   } catch (error) {
     if (error instanceof OsloApiError) {
       return Response.json({ message: error.message }, { status: error.status });
@@ -48,12 +72,12 @@ export async function PATCH(
     const artifact = await updateProjectArtifact({
       accessToken: session.accessToken,
       projectId,
-      artifactType,
+      artifactType: persistedArtifactType(artifactType),
       content: payload.content,
       expectedVersion: payload.expectedVersion,
       idempotencyKey: payload.idempotencyKey,
     });
-    return Response.json(artifact, { status: 202 });
+    return Response.json(presentArtifact(artifact, artifactType), { status: 202 });
   } catch (error) {
     const conflict =
       error instanceof Error && error.message.includes("ARTIFACT_VERSION_CONFLICT");

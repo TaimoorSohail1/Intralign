@@ -2,6 +2,7 @@ interface StartProjectAnalysisInput {
   projectId: string;
   description: string;
   files: File[];
+  kind?: "initial" | "extended";
   fetcher?: typeof fetch;
 }
 
@@ -61,6 +62,7 @@ export async function startProjectAnalysis({
   projectId,
   description,
   files,
+  kind = "initial",
   fetcher = fetch,
 }: StartProjectAnalysisInput): Promise<AnalysisRun> {
   const uploadResults = await Promise.allSettled(
@@ -120,6 +122,7 @@ export async function startProjectAnalysis({
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
+      kind,
       description,
       sourceNames: uploaded.map((document) => document.file_name),
       sourceDocumentIds: uploaded.map((document) => document.document_id),
@@ -182,6 +185,7 @@ export async function startProjectAnalysisWithRecovery(
   const run = await startProjectAnalysis({
     ...input,
     projectId: replacementProjectId,
+    kind: "initial",
     fetcher,
   });
   return { projectId: replacementProjectId, run };

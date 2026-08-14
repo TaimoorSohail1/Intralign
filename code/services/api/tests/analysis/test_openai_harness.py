@@ -13,6 +13,7 @@ from oslo_api.analysis import (
 )
 from oslo_api.analysis.harness import AgentHarnessError
 from oslo_api.analysis.models import (
+    ArtifactType,
     ClaimKind,
     EvidenceClaim,
     HarnessInvocation,
@@ -468,6 +469,16 @@ def test_initial_perceive_has_room_for_a_complete_bounded_contract() -> None:
     )
 
     assert client.responses.requests[0]["max_output_tokens"] == 6_000
+
+
+def test_context_construct_contract_matches_the_user_facing_constraints_artifact() -> None:
+    contract = OpenAIAgentHarness._artifact_contract(ArtifactType.CONTEXT)
+    keywords = OpenAIAgentHarness._artifact_keywords(ArtifactType.CONTEXT)
+
+    assert "explicit hard limits" in contract
+    assert "title this artifact Constraints" in contract
+    assert "stakeholder" not in contract
+    assert "stakeholder" not in keywords
 
 
 def test_initial_construct_and_evaluate_have_complete_bounded_contracts() -> None:

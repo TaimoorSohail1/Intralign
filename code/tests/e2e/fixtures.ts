@@ -3,6 +3,7 @@ import path from "node:path";
 import { expect, test as base } from "@playwright/test";
 
 function resetE2EFixtures() {
+  if (process.env.PLAYWRIGHT_SKIP_E2E_RESET === "1") return;
   // Every browser test mutates the shared synthetic workspace, so rebuild the
   // fixture before each test instead of leaking state between slices/devices.
   const repositoryRoot = path.resolve(__dirname, "../..");

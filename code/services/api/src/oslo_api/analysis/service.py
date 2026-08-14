@@ -109,8 +109,39 @@ class DatabaseSliceTwoApplication:
         source_document_ids: tuple[UUID, ...],
         kind: RunKind,
         key: str,
+        provisional: bool = False,
     ) -> AnalysisRun:
         workspace_id = self._workspace_for_project(actor_user_id, project_id)
+        parent_run = None
+        if kind is RunKind.EXTENDED:
+            snapshot = self._store.current_snapshot(project_id)
+            if snapshot is None:
+                raise SliceTwoNotFound
+            parent_run = self._store.get_run(snapshot.analysis_run_id)
+            if parent_run is None:
+                raise SliceTwoNotFound
+
+            prior = parent_run.request
+            documents = list(zip(prior.source_document_ids, prior.source_names, strict=False))
+            known_document_ids = {document_id for document_id, _name in documents}
+            documents.extend(
+                (document_id, source_name)
+                for document_id, source_name in zip(
+                    source_document_ids,
+                    source_names,
+                    strict=False,
+                )
+                if document_id not in known_document_ids
+            )
+            source_document_ids = tuple(document_id for document_id, _name in documents)
+            source_names = tuple(source_name for _document_id, source_name in documents)
+            descriptions = [
+                value
+                for value in (prior.description.strip(), description.strip())
+                if value
+            ]
+            description = "\n\n".join(dict.fromkeys(descriptions))
+
         self._validate_documents(
             workspace_id=workspace_id,
             project_id=project_id,
@@ -124,8 +155,11 @@ class DatabaseSliceTwoApplication:
             description=description,
             source_names=source_names,
             source_document_ids=source_document_ids,
+            user_evidence=parent_run.request.user_evidence if parent_run else (),
             idempotency_key=key,
+            parent_run_id=parent_run.id if parent_run else None,
             consumes_analysis_allowance=True,
+            provisional=provisional and kind is RunKind.INITIAL,
         )
         run = self._store.create_run(request)
         if run.status is AnalysisRunStatus.QUEUED:

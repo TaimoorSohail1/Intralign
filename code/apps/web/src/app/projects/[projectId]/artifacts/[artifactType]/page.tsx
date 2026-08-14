@@ -8,9 +8,9 @@ import { readSession } from "@/lib/server/session";
 
 const artifactTypes = new Set([
   "intent",
-  "context",
   "scope",
   "requirements",
+  "constraints",
   "work_breakdown",
   "schedule",
   "resources",
@@ -24,6 +24,9 @@ export default async function ArtifactPage({
   const session = await readSession();
   if (!session.accessToken) redirect("/login");
   const { projectId, artifactType } = await params;
+  if (artifactType === "context") {
+    redirect(`/projects/${projectId}/artifacts/constraints`);
+  }
   if (!artifactTypes.has(artifactType)) notFound();
   let snapshot;
   let proposals: IssueProposalSummary[] = [];

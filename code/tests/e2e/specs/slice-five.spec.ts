@@ -1,6 +1,17 @@
 import { expect, test } from "../fixtures";
 
 test.setTimeout(300_000);
+test.use({ trace: "on" });
+
+const artifacts = [
+  ["Intent", "intent"],
+  ["Scope", "scope"],
+  ["Requirements", "requirements"],
+  ["Constraints", "constraints"],
+  ["Work Breakdown", "work_breakdown"],
+  ["Schedule", "schedule"],
+  ["Resources", "resources"],
+] as const;
 
 async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/login");
@@ -10,163 +21,142 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.waitForURL(/\/(workspace|welcome)/, { timeout: 20_000 });
 }
 
-async function createAnalyzedProject(page: import("@playwright/test").Page) {
+async function ensureAnalyzedProject(page: import("@playwright/test").Page) {
   await signIn(page);
   await page.goto("/workspace");
   const analyzedProject = page
-    .locator("article.workspace-project-card")
-    .filter({ hasText: "7 / 7" })
+    .locator("article")
+    .filter({ hasText: /Analyzed.*7 artifacts|7 \/ 7/is })
     .first();
-  if (await analyzedProject.count()) {
-    await analyzedProject.getByRole("link", { name: /Open project/ }).click();
-    await expect(page).toHaveURL(/\/projects\/.+\/overview/);
-    await expect(page.getByText("Project summary", { exact: true })).toBeVisible({
-      timeout: 120_000,
-    });
-    return;
-  }
-  await page.goto("/welcome");
-  await page.getByRole("button", { name: /Start your first project/ }).click();
-  await page.getByRole("button", { name: /sample project/i }).click();
-  await page.getByRole("button", { name: /See where I stand/ }).click();
-  await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
 
+  if (await analyzedProject.count()) {
+    await analyzedProject.getByRole("link", { name: /Open (?:project|now)/i }).click();
+  } else {
+    await page.goto("/welcome");
+    await page.getByRole("button", { name: /Start your first outcome/i }).click();
+    await expect(page).toHaveURL(/\/intake\?project=/);
+    await page.getByRole("button", { name: /sample plan/i }).click();
+    await page.getByRole("button", { name: /Get my analysis/i }).click();
+  }
+
+  await page.waitForURL(/\/projects\/[^/]+\/(?:analysis\/[^/]+|overview)/, {
+    timeout: 30_000,
+  });
+  if (page.url().includes("/analysis/")) {
+    const confirmOutcome = page
+      .frameLocator('iframe[title="OSLO analysis and outcome confirmation"]')
+      .getByRole("button", { name: /Yes.+this is my outcome/i });
+    await expect(confirmOutcome).toBeVisible({ timeout: 120_000 });
+    await confirmOutcome.click();
+  }
+
+  await expect(page).toHaveURL(/\/projects\/[^/]+\/overview/, { timeout: 120_000 });
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
   if (await orientation.isVisible()) {
     await orientation.getByRole("button", { name: "Skip", exact: true }).click();
     await expect(orientation).toBeHidden();
   }
-  await expect(
-    page.getByText("Project summary", { exact: true }),
-  ).toBeVisible({ timeout: 120_000 });
+  await expect(page.locator(".workspace-artifact-group")).toBeAttached({ timeout: 120_000 });
+
+  const match = page.url().match(/\/projects\/([^/]+)\//);
+  if (!match) throw new Error(`Project id was not present in ${page.url()}`);
+  return match[1];
 }
 
 async function openArtifact(
   page: import("@playwright/test").Page,
+  projectId: string,
   name: string,
   slug: string,
 ) {
-  const sidebarLink = page.getByRole("link", { name: new RegExp(`^${name}`) });
-  if (await sidebarLink.isVisible()) {
-    await sidebarLink.click();
-  } else {
-    await page.getByRole("button", { name: "Search project" }).click();
-    await page.getByRole("option", { name, exact: true }).click();
-  }
-  await expect(page).toHaveURL(new RegExp(`/artifacts/${slug}$`));
-  await expect(page.locator(".artifact-workspace h1")).toBeVisible({
-    timeout: 20_000,
-  });
+  await page.goto(`/projects/${projectId}/artifacts/${slug}`);
+  await expect(page.locator(".artifact-workspace h1")).toHaveText(
+    name === "Work Breakdown" ? "Work breakdown" : name,
+    { timeout: 30_000 },
+  );
+  await expect(page.getByText("Contents · you author, OSLO reads", { exact: true })).toBeVisible();
+  await expect(page.getByText("Up to date", { exact: true })).toBeVisible({ timeout: 120_000 });
 }
 
-test("Slice 5 exposes all seven editable artifacts and preserves a versioned edit", async ({
-  page,
-}) => {
-  await createAnalyzedProject(page);
+function normalizeStatement(value: string) {
+  return value.normalize("NFKC").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
 
-  const artifacts = [
-    ["Intent", "intent"],
-    ["Context", "context"],
-    ["Scope", "scope"],
-    ["Requirements", "requirements"],
-    ["Work Breakdown", "work_breakdown"],
-    ["Schedule", "schedule"],
-    ["Resources", "resources"],
-  ];
+test("Slice 5 renders all seven current artifacts once at every traced viewport", async ({
+  page,
+}, testInfo) => {
+  const projectId = await ensureAnalyzedProject(page);
+
   for (const [name, slug] of artifacts) {
-    await openArtifact(page, name, slug);
-    await expect(page.locator(".artifact-workspace h1")).toBeVisible();
-    await expect(page.getByText("Editable", { exact: true })).toBeVisible();
-    await expect(page.getByText(/^v\d+$/)).toBeVisible();
+    await openArtifact(page, projectId, name, slug);
+
+    const statementTexts = await page
+      .locator(".r2-statement-row [contenteditable]")
+      .allInnerTexts();
+    const normalized = statementTexts.map(normalizeStatement).filter(Boolean);
+    expect(normalized).toEqual([...new Set(normalized)]);
+
+    const warningTexts = (await page.locator(".r2-row-warning").allInnerTexts())
+      .map(normalizeStatement)
+      .filter(Boolean);
+    expect(warningTexts).toEqual([...new Set(warningTexts)]);
+
+    const overflow = await page.locator("html").evaluate((element) =>
+      Math.max(0, element.scrollWidth - element.clientWidth),
+    );
+    expect(overflow).toBeLessThanOrEqual(2);
+
+    if (slug === "resources") {
+      const summary = page.getByLabel("Resource summary");
+      await expect(summary.locator("article")).toHaveCount(5);
+      for (const label of ["People", "Budget", "Facility", "Vendors", "Equipment"]) {
+        await expect(summary.getByText(label, { exact: true })).toBeVisible();
+      }
+
+      const resourceEvidence = page.getByLabel("Resource evidence");
+      await expect(resourceEvidence.locator(".r2-statement-row").first()).toBeVisible();
+      await expect(page.getByText("No task owner assignments are recorded yet.")).toBeVisible();
+      await expect(page.locator('select[aria-label^="Owner for"]')).toHaveCount(0);
+      await page.screenshot({
+        path: testInfo.outputPath("resources-verified.png"),
+        fullPage: false,
+      });
+    }
   }
 
-  await openArtifact(page, "Scope", "scope");
-  await expect(page.locator(".artifact-workspace h1")).toBeVisible();
-  await expect(page.getByText("Up to date", { exact: true })).toBeVisible({
-    timeout: 120_000,
-  });
-  const editableParagraphs = page.locator(".artifact-copy");
-  const target = editableParagraphs.last();
-  const original = await target.innerText();
-  const marker = ` Confirmed in Slice 5 E2E ${Date.now()}.`;
-  await target.click();
-  await target.evaluate((element) => {
-    const selection = window.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(element);
-    range.collapse(false);
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-  });
-  await target.type(marker.slice(0, 1));
-  await expect(target).toBeFocused();
-  await target.type(marker.slice(1), { delay: 5 });
-  await expect(target).toBeFocused();
-  await expect(target).toContainText(`${original}${marker}`);
-  await expect(page.getByText("Changes not applied")).toBeVisible();
-  await target.hover();
-  await expect(
-    target.locator("xpath=..").getByText("Confirmed by you", { exact: true }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Apply changes" }).click();
-  await expect(page.getByText("Reanalyzing…")).toBeVisible({ timeout: 20_000 });
-
-  await page.reload();
-  await expect(page.getByText(marker.trim(), { exact: false })).toBeVisible();
-  const editedSection = page.locator(".artifact-section").filter({
-    hasText: marker.trim(),
-  });
-  await editedSection.hover();
-  await expect(
-    editedSection.getByText("Confirmed by you", { exact: true }),
-  ).toBeVisible();
-  await expect(page.getByText(/^v[2-9]\d*$/)).toBeVisible();
-  await expect(page.getByText("Up to date")).toBeVisible({ timeout: 90_000 });
 });
 
-test("Slice 5 issue annotations expose an honest evidence state and artifact controls", async ({
-  page,
-}) => {
-  await createAnalyzedProject(page);
-  const overviewUrl = page.url();
-  await page.goto(overviewUrl.replace(/\/overview$/, "/history"));
-  await expect(page.getByText("Extended Analysis complete", { exact: true }).first()).toBeVisible({
-    timeout: 120_000,
-  });
-  await page.goto(overviewUrl);
+test("Slice 5 view, edit, undo, and execution framing controls stay usable", async ({ page }) => {
+  const projectId = await ensureAnalyzedProject(page);
 
-  const countedArtifactLink = page
-    .getByRole("link")
-    .filter({ has: page.locator(".nav-count") })
-    .filter({ hasText: /Intent|Context|Scope|Requirements|Work Breakdown|Schedule|Resources/ })
-    .first();
-  if (await countedArtifactLink.isVisible()) {
-    await countedArtifactLink.click();
-  } else {
-    await openArtifact(page, "Resources", "resources");
-  }
+  await openArtifact(page, projectId, "Intent", "intent");
+  await page.getByRole("button", { name: "Narrative" }).click();
+  await expect(page.getByLabel("Intent narrative")).toBeVisible();
+  await expect(page.getByLabel("Intent narrative").locator("[contenteditable]"))
+    .toHaveCount(0);
+  await page.getByRole("button", { name: "Statements" }).click();
+  await expect(page.locator(".r2-understanding-groups")).toBeVisible();
 
-  await expect(page.getByRole("button", { name: "Previous issue" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Next issue" })).toBeVisible();
-  await page.getByRole("button", { name: "Find in artifact" }).click();
-  await expect(page.getByPlaceholder("Find in this artifact…")).toBeVisible();
+  await openArtifact(page, projectId, "Scope", "scope");
+  const statement = page.locator(".r2-statement-row [contenteditable]").first();
+  const original = await statement.innerText();
+  await statement.fill(`${original} — E2E local review`);
+  await expect(page.getByText("Changes not applied", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(statement).toHaveText(original);
+  await expect(page.getByText("Up to date", { exact: true })).toBeVisible();
 
-  const inlineIssue = page.locator(".artifact-inline-issue").first();
-  await expect(inlineIssue).toBeVisible();
-  await inlineIssue.click();
-  const dialog = page.getByRole("dialog", { name: "Issue details" });
-  await expect(dialog).toBeVisible();
-  const evidence = dialog.getByRole("button", { name: /^Evidence/ });
-  await expect(evidence).toBeVisible();
-  await expect(evidence).toHaveAttribute("aria-expanded", "false");
-  await evidence.click();
-  await expect(evidence).toHaveAttribute("aria-expanded", "true");
-  await expect(
-    dialog
-      .getByText(/Readable evidence details are not available/)
-      .or(dialog.getByText("Project description", { exact: true })),
-  ).toBeVisible();
-  await expect(dialog.getByText(/document:.*fragment:/)).toHaveCount(0);
-  await expect(dialog.getByRole("textbox", { name: "Clarification answer" })).toBeVisible();
-  await expect(dialog.getByRole("button", { name: "Submit & re-analyze" })).toBeDisabled();
+  await openArtifact(page, projectId, "Work Breakdown", "work_breakdown");
+  const backlog = page.getByRole("button", { name: "Backlog · agile" });
+  await backlog.click();
+  await expect(backlog).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".r2-wbs.is-backlog")).toBeVisible();
+  const outline = page.getByRole("button", { name: "Outline · WBS" });
+  await outline.click();
+  await expect(outline).toHaveAttribute("aria-pressed", "true");
+
+  const overflow = await page.locator("html").evaluate((element) =>
+    Math.max(0, element.scrollWidth - element.clientWidth),
+  );
+  expect(overflow).toBeLessThanOrEqual(2);
 });

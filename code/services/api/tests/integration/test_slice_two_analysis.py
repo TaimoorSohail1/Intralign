@@ -19,7 +19,7 @@ from oslo_api.analysis import (
 from oslo_api.analysis.document_store import DatabaseDocumentStore
 from oslo_api.analysis.history import list_project_history
 from oslo_api.analysis.object_storage import LocalObjectStorage
-from oslo_api.analysis.persistence import DatabaseAnalysisStore
+from oslo_api.analysis.persistence import DatabaseAnalysisStore, _primary_outcome_title
 from oslo_api.analysis.service import DatabaseSliceTwoApplication
 from oslo_api.collaboration.service import CollaborationError, DatabaseCollaborationService
 from oslo_api.identity import SupabaseIdentityProvider
@@ -229,11 +229,7 @@ def test_clarification_is_durable_and_addressed_before_reanalysis_completes(
             )
         )
         assert baseline.snapshot is not None
-        inferred_outcome = next(
-            artifact.summary
-            for artifact in baseline.snapshot.artifacts
-            if artifact.artifact_type.value == "intent"
-        )
+        inferred_outcome = _primary_outcome_title(baseline.snapshot.artifacts)
         with engine.connect() as connection:
             stored_outcome = connection.execute(
                 text(

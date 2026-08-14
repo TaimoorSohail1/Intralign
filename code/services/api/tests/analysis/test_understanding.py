@@ -2,6 +2,7 @@ from dataclasses import replace
 from datetime import UTC, datetime
 from uuid import uuid4
 
+from oslo_api.analysis.integrity import OutcomeCheckpoint
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     Artifact,
@@ -109,7 +110,6 @@ def test_inference_threatens_grounding_without_cross_contaminating_viability() -
             ),
         ),
     )
-
     assessment = enrich_assessment(
         assessment=_assessment(),
         artifacts=tuple(artifacts),
@@ -125,6 +125,84 @@ def test_inference_threatens_grounding_without_cross_contaminating_viability() -
     assert pillars["Grounding"].basis == 0.75
     assert pillars["Grounding"].band == "Weak"
     assert any(issue.id == "ISS-FC-INTENT" for issue in assessment.issues)
+
+
+def test_user_confirmed_schedule_checkpoint_is_registered_from_artifact_evidence() -> None:
+    checkpoint = OutcomeCheckpoint(
+        id="launch-outcome",
+        workstream="Launch outcome",
+        leading_indicator="trial conversion and retained usage",
+        timing="before launch approval",
+        lever="change scope, sequence, resources, or approach",
+        registered=False,
+        evidence_refs=(),
+    )
+    evidence = EvidenceFragment(
+        reference="user:artifact:schedule:version:3",
+        content=(
+            "Schedule artifact changes confirmed by the user:\n"
+            "Outcome checkpoint — read trial conversion and retained usage; "
+            "before launch approval; if it drifts, change scope, sequence, "
+            "resources, or approach."
+        ),
+        source_name="User-confirmed Schedule edit",
+        location="Artifact version 3",
+    )
+
+    result = enrich_assessment(
+        assessment=replace(_assessment(), outcome_checkpoints=(checkpoint,)),
+        artifacts=_artifacts(),
+        kind=RunKind.EXTENDED,
+        previous_snapshot=None,
+        description="Re-read the saved plan.",
+        user_evidence=(evidence,),
+    )
+
+    assert result.outcome_checkpoints[0].registered is True
+    assert result.outcome_checkpoints[0].evidence_refs == (evidence.reference,)
+    adaptability = next(
+        pillar for pillar in result.integrity.decomposition if pillar.key == "Adaptability"
+    )
+    assert adaptability.band == "Sound"
+    assert not any(issue.id.startswith("ISS-CP-") for issue in result.issues)
+
+
+def test_accepted_schedule_checkpoint_proposal_is_registered_from_artifact_evidence() -> None:
+    checkpoint = OutcomeCheckpoint(
+        id="launch-outcome",
+        workstream="Launch outcome",
+        leading_indicator="placeholder",
+        timing="placeholder",
+        lever="placeholder",
+        registered=False,
+        evidence_refs=(),
+    )
+    evidence = EvidenceFragment(
+        reference="user:artifact:schedule:version:4",
+        content=(
+            "Schedule artifact changes confirmed by the user:\n"
+            "Add checkpoint: read Evidence that the stated outcome is materializing; "
+            "Before the final delivery commitment; if it drifts, "
+            "Change scope, sequence, resources, or approach."
+        ),
+        source_name="Accepted OSLO proposal in Schedule",
+        location="Artifact version 4",
+    )
+
+    result = enrich_assessment(
+        assessment=replace(_assessment(), outcome_checkpoints=(checkpoint,)),
+        artifacts=_artifacts(),
+        kind=RunKind.EXTENDED,
+        previous_snapshot=None,
+        description="Re-read the accepted checkpoint proposal.",
+        user_evidence=(evidence,),
+    )
+
+    assert result.outcome_checkpoints[0].registered is True
+    assert result.outcome_checkpoints[0].leading_indicator == (
+        "Evidence that the stated outcome is materializing"
+    )
+    assert result.outcome_checkpoints[0].evidence_refs == (evidence.reference,)
 
 
 def test_grounding_uses_the_evidence_projection_when_assumptions_are_absent() -> None:

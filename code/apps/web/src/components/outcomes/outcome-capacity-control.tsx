@@ -1,13 +1,19 @@
 "use client";
 
-import { Archive, ArrowCounterClockwise, CaretUp, Plus, X } from "@phosphor-icons/react";
+import { Archive, ArrowCounterClockwise, Plus, Target, X } from "@phosphor-icons/react";
 import { FormEvent, useState } from "react";
 
 import type { ProjectOutcomeSummary } from "@/lib/server/oslo-api";
 
 const gateOptions = ["archive_to_switch", "upgrade_basic", "not_now"];
 
-export function OutcomeCapacityControl({ projectId }: { projectId: string }) {
+export function OutcomeCapacityControl({
+  projectId,
+  onOutcomesChange,
+}: {
+  projectId: string;
+  onOutcomesChange?: (outcomes: ProjectOutcomeSummary[]) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -26,6 +32,7 @@ export function OutcomeCapacityControl({ projectId }: { projectId: string }) {
     const payload = await response.json().catch(() => null);
     if (response.ok && Array.isArray(payload)) {
       setOutcomes(payload);
+      onOutcomesChange?.(payload);
     } else {
       setError(payload?.message ?? "Outcomes could not be loaded.");
     }
@@ -44,7 +51,11 @@ export function OutcomeCapacityControl({ projectId }: { projectId: string }) {
     });
     const payload = await response.json().catch(() => null);
     if (response.ok) {
-      setOutcomes((current) => [...current, payload as ProjectOutcomeSummary]);
+      setOutcomes((current) => {
+        const next = [...current, payload as ProjectOutcomeSummary];
+        onOutcomesChange?.(next);
+        return next;
+      });
       setTitle("");
     } else if (response.status === 422) {
       setGate(true);
@@ -76,9 +87,13 @@ export function OutcomeCapacityControl({ projectId }: { projectId: string }) {
     });
     const payload = await response.json().catch(() => null);
     if (response.ok) {
-      setOutcomes((current) =>
-        current.map((item) => (item.id === outcome.id ? payload : item)),
-      );
+      setOutcomes((current) => {
+        const next = current.map((item) =>
+          item.id === outcome.id ? payload as ProjectOutcomeSummary : item,
+        );
+        onOutcomesChange?.(next);
+        return next;
+      });
       setGate(false);
     } else {
       if (response.status === 422) setGate(true);
@@ -143,7 +158,7 @@ export function OutcomeCapacityControl({ projectId }: { projectId: string }) {
   return (
     <>
       <button aria-label="Manage Outcomes" className="outcome-manage-trigger" onClick={() => void openDialog()} type="button">
-        <CaretUp aria-hidden="true" size={14} weight="bold" />
+        <Target aria-hidden="true" size={15} weight="bold" />
         <span role="tooltip">Manage Outcomes</span>
       </button>
       {open ? (

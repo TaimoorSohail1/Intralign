@@ -398,11 +398,11 @@ export function AnalysisProgress({
   useEffect(() => {
     if (mode !== "watch" || !decision || stage < returningStages.length) return;
     const handoff = window.setTimeout(
-      () => void actOnOutcome("confirm"),
+      () => router.replace(`/projects/${projectId}/overview`),
       returningStageDurations[returningStageDurations.length - 1],
     );
     return () => window.clearTimeout(handoff);
-  }, [actOnOutcome, decision, mode, stage]);
+  }, [decision, mode, projectId, router, stage]);
 
   useEffect(() => {
     const onArcMessage = (event: MessageEvent) => {

@@ -290,6 +290,51 @@ def test_free_outcome_archive_is_reversible_and_reactivation_respects_the_slot(
     assert blocked_gate_count == 2
 
 
+def test_outcome_in_an_archived_project_does_not_consume_the_free_active_slot(
+    entitlement_repository,
+) -> None:
+    repository, owner_id, engine = entitlement_repository
+    archived_outcome = repository.create_outcome(
+        actor_user_id=owner_id,
+        workspace_id=WORKSPACE_ID,
+        project_id=PROJECT_ID,
+        title="Retained outcome",
+        provenance=OutcomeProvenance.DECLARED,
+    )
+    next_project_id = UUID("018f9f7e-8de2-7000-8000-000000000096")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "update public.projects set archived_at = now() "
+                "where id = :project_id"
+            ),
+            {"project_id": PROJECT_ID},
+        )
+        connection.execute(
+            text(
+                "insert into public.projects "
+                "(id, workspace_id, name, status, created_by) values "
+                "(:project_id, :workspace_id, 'Next plan', 'active', :owner_id)"
+            ),
+            {
+                "project_id": next_project_id,
+                "workspace_id": WORKSPACE_ID,
+                "owner_id": owner_id,
+            },
+        )
+
+    next_outcome = repository.create_outcome(
+        actor_user_id=owner_id,
+        workspace_id=WORKSPACE_ID,
+        project_id=next_project_id,
+        title="Current outcome",
+        provenance=OutcomeProvenance.DECLARED,
+    )
+
+    assert archived_outcome.status is OutcomeStatus.ACTIVE
+    assert next_outcome.status is OutcomeStatus.ACTIVE
+
+
 def test_every_intent_branch_is_durable(entitlement_repository) -> None:
     repository, owner_id, engine = entitlement_repository
 

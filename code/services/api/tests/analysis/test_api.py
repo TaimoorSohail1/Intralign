@@ -54,6 +54,7 @@ class RecordingSliceTwo:
         source_document_ids,
         kind,
         key,
+        provisional=False,
     ):
         assert actor_user_id == USER_ID
         assert project_id == PROJECT_ID
@@ -66,6 +67,7 @@ class RecordingSliceTwo:
             source_names=source_names,
             source_document_ids=source_document_ids,
             idempotency_key=key,
+            provisional=provisional,
         )
         self.started.append(request)
         return self.store.create_run(request)
@@ -521,6 +523,7 @@ def test_authenticated_user_starts_analysis_idempotently() -> None:
     }
     payload = {
         "kind": "initial",
+        "provisional": True,
         "description": "Launch the new customer portal.",
         "source_names": [],
     }
@@ -541,6 +544,7 @@ def test_authenticated_user_starts_analysis_idempotently() -> None:
     assert first.json()["run_id"] == second.json()["run_id"]
     assert first.json()["status"] == "queued"
     assert slice_two.started[0].kind is RunKind.INITIAL
+    assert slice_two.started[0].provisional is True
 
 
 def test_analysis_run_keeps_uploaded_document_ids() -> None:

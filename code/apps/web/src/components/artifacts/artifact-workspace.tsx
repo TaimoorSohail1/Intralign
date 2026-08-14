@@ -3,16 +3,21 @@
 import {
   ArrowCounterClockwise,
   ArrowRight,
+  Buildings,
   CaretDown,
   CaretLeft,
   CaretRight,
   CaretUp,
   Check,
+  CurrencyDollar,
   DotsSixVertical,
+  Gear,
+  Handshake,
   MagnifyingGlass,
   Minus,
   Plus,
   Sparkle,
+  Users,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import {
@@ -31,15 +36,24 @@ import type {
   OverviewSnapshot,
 } from "@/lib/server/oslo-api";
 
+import { R2ArtifactContent, R2Narrative } from "./r2-artifact-content";
+
 const artifactOrder = [
   "intent",
-  "context",
   "scope",
   "requirements",
+  "constraints",
   "work_breakdown",
   "schedule",
   "resources",
 ] as const;
+
+const understandingArtifacts = new Set([
+  "intent",
+  "scope",
+  "requirements",
+  "constraints",
+]);
 
 type Issue = OverviewSnapshot["assessment"]["issues"][number];
 type ClaimProvenance = NonNullable<ArtifactSection["provenance"]>;
@@ -60,11 +74,94 @@ function nextEditorId(prefix: string) {
   return `${prefix}-${editorIdSequence}`;
 }
 
+function isLegacyWorkBreakdownAuditText(value: string) {
+  return /^(?:schedule|resources|intent|scope|requirements|constraints|work breakdown) artifact changes confirmed by the user:|^(?:section|issue|question|answer):/i.test(
+    value.trim().replace(/^[-•]\s*/, ""),
+  );
+}
+
+function sentenceCase(value: string) {
+  const normalized = value.trim().replace(/[.;]+$/, "");
+  return normalized ? normalized[0].toUpperCase() + normalized.slice(1) : normalized;
+}
+
+function legacyWorkBreakdownTree(value: string) {
+  const normalized = value.trim().replace(/^[-•]\s*/, "").replace(/[.;]+$/, "");
+  const separator = normalized.indexOf(":");
+  if (separator < 1) return null;
+  const packageName = normalized.slice(0, separator).trim();
+  const detail = normalized.slice(separator + 1).trim();
+  const fragments = detail
+    .split(/\s*,\s*|\s+and\s+/i)
+    .map((fragment) => fragment.trim())
+    .filter(Boolean);
+  if (fragments.length < 2) return null;
+
+  const first = fragments[0].match(/^([a-z]+)\s+(.+)$/i);
+  if (!first) return null;
+  const verb = first[1].toLowerCase();
+  const tasks = [first[2], ...fragments.slice(1)].map((fragment) =>
+    sentenceCase(`${verb} ${fragment.replace(new RegExp(`^${verb}\\s+`, "i"), "")}`),
+  );
+  const deliverable = sentenceCase(
+    packageName.replace(
+      /^(?:plan|deliver|run|build|create|implement)\s+(?:an?\s+|the\s+)?/i,
+      "",
+    ),
+  );
+  if (!deliverable || !tasks.length) return null;
+  return { deliverable, packageName: sentenceCase(packageName), tasks };
+}
+
+function normalizeLegacyWorkBreakdown(
+  content: ArtifactWorkspaceSummary["content"],
+) {
+  if (content.sections.some((section) => section.rows.length)) return content;
+
+  const sections = content.sections.flatMap((section, sectionIndex) => {
+    const isLegacyFallback =
+      /^(?:work breakdown|workstreams)$/i.test(section.heading.trim()) &&
+      /evidence-qualified work breakdown/i.test(section.body);
+    if (!isLegacyFallback) return [section];
+
+    const trees = section.bullets
+      .filter((bullet) => !isLegacyWorkBreakdownAuditText(bullet))
+      .map(legacyWorkBreakdownTree)
+      .filter((tree): tree is NonNullable<typeof tree> => tree !== null);
+    if (!trees.length) return [section];
+
+    return trees.map((tree, treeIndex) => {
+      const rows = [
+        ["1.0", tree.packageName],
+        ...tree.tasks.map((task, taskIndex) => [`1.${taskIndex + 1}`, task]),
+      ];
+      return {
+        ...section,
+        id: section.id ?? `legacy-wbs-${sectionIndex + 1}-${treeIndex + 1}`,
+        heading: tree.deliverable,
+        body: "",
+        bullets: [],
+        columns: ["WBS", "Item"],
+        rows,
+        row_evidence_refs: rows.map(() => [...(section.evidence_refs ?? [])]),
+        row_states: rows.map(() => "confirmed" as const),
+        row_provenance: rows.map(() => "confirmed_by_user" as const),
+        provenance: "confirmed_by_user" as const,
+      };
+    });
+  });
+  return { ...content, sections };
+}
+
 function ensureEditorIds(
   content: ArtifactWorkspaceSummary["content"],
   artifactType: string,
 ) {
-  const normalized = cloneContent(content);
+  const normalized = cloneContent(
+    artifactType === "work_breakdown"
+      ? normalizeLegacyWorkBreakdown(content)
+      : content,
+  );
   normalized.sections = normalized.sections.map((section, sectionIndex) => {
     const sectionId =
       section.id ?? nextEditorId(`${artifactType}-section-${sectionIndex + 1}`);
@@ -97,12 +194,6 @@ function hasEmptySection(content: ArtifactWorkspaceSummary["content"]) {
   );
 }
 
-function provenanceLabel(provenance: ArtifactWorkspaceSummary["provenance"]) {
-  if (provenance === "confirmed_by_user") return "Confirmed by you";
-  if (provenance === "mixed") return "Contains your edits";
-  return "From OSLO";
-}
-
 function claimProvenanceLabel(
   provenance: ClaimProvenance | undefined,
   artifactProvenance: ArtifactWorkspaceSummary["provenance"],
@@ -130,6 +221,185 @@ function rowProvenanceValues(
   return section.rows.map(
     (_, index) => section.row_provenance?.[index] ?? legacyFallback,
   );
+}
+
+function artifactCategory(artifactType: string) {
+  return understandingArtifacts.has(artifactType) ? "Understanding" : "Execution";
+}
+
+function artifactRead(
+  artifact: ArtifactWorkspaceSummary,
+  executionView: "outline" | "backlog",
+) {
+  if (artifact.artifact_type === "work_breakdown") {
+    if (executionView === "backlog") {
+      return "Your plan as a backlog — epics and stories. The same tasks, agile-framed.";
+    }
+    return "Decomposes the outcome into deliverables, work packages, and tasks — add, rename, confirm, or remove tasks here.";
+  }
+  const openIssues = artifact.issues.filter((issue) => issue.status !== "resolved");
+  if (openIssues.length) {
+    return `${openIssues.length} open ${openIssues.length === 1 ? "question remains" : "questions remain"} in this ${artifact.title.toLowerCase()} read.`;
+  }
+  return `${artifact.title} is clear in the current read.`;
+}
+
+function executionIntro(
+  artifactType: string,
+  executionView: "outline" | "backlog",
+) {
+  if (artifactType === "work_breakdown") {
+    if (executionView === "backlog") {
+      return "Your plan as a backlog — epics from deliverables, stories from work packages. Same tasks, agile-framed; schedule stories on Schedule.";
+    }
+    return "Deliverable → work package → task. Click any name to rename; add or remove at every level; confirm OSLO's inferences.";
+  }
+  if (artifactType === "schedule") {
+    return "Set the dates the plan actually contains. Missing dates stay visibly unscheduled.";
+  }
+  return "People and non-human dependencies stay linked to the plan evidence that defines them.";
+}
+
+function checkpointStatement(proposal: IssueProposalSummary | undefined) {
+  if (!proposal) return null;
+  const proposedRead = proposal.title.replace(/^Add checkpoint:\s*read\s*/i, "").trim();
+  if (!proposedRead || proposedRead === proposal.title.trim()) return null;
+  return `Outcome checkpoint — read ${proposedRead}`;
+}
+
+function resourceValues(content: ArtifactWorkspaceSummary["content"]) {
+  return content.sections.flatMap((section) => [
+    section.heading,
+    section.body,
+    ...section.bullets,
+    ...section.rows.flat(),
+  ]).filter(Boolean);
+}
+
+function conciseResourceEvidence(value: string, maximum = 136) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maximum) return normalized;
+  return `${normalized.slice(0, maximum - 1).trimEnd()}\u2026`;
+}
+
+function resourceSummaryDetail(
+  content: ArtifactWorkspaceSummary["content"],
+  key: string,
+  hint: string,
+) {
+  if (key === "people") {
+    const peopleSection = content.sections.find(
+      (section) =>
+        /resource plan|people|team|staff/i.test(section.heading) &&
+        section.rows.length > 0,
+    );
+    if (peopleSection) {
+      const count = peopleSection.rows.length;
+      return `${count} resource ${count === 1 ? "entry" : "entries"} in ${peopleSection.heading}`;
+    }
+  }
+
+  if (key === "vendors") {
+    const vendorRows = content.sections
+      .filter((section) =>
+        /resource plan|vendor|supplier|partner|contractor/i.test(section.heading),
+      )
+      .flatMap((section) =>
+        section.rows.filter((row) =>
+          /vendor|supplier|partner|contractor/i.test(row.slice(0, 2).join(" ")),
+        ),
+      );
+    if (vendorRows.length) {
+      const labels = vendorRows
+        .map((row) => [row[1], row[0]].filter(Boolean).join(" \u00b7 "))
+        .slice(0, 2);
+      return conciseResourceEvidence(labels.join("; "));
+    }
+  }
+
+  const matcher = new RegExp(hint, "i");
+  const rowEvidence = content.sections
+    .flatMap((section) => section.rows.flat())
+    .find((value) => matcher.test(value));
+  if (rowEvidence) return conciseResourceEvidence(rowEvidence);
+
+  const detail = resourceValues(content).find((value) => matcher.test(value));
+  return detail ? conciseResourceEvidence(detail) : undefined;
+}
+
+function ResourceSummaryCards({
+  content,
+}: {
+  content: ArtifactWorkspaceSummary["content"];
+}) {
+  const definitions = [
+    { key: "people", label: "People", hint: "owner|people|team|staff" },
+    { key: "budget", label: "Budget", hint: "budget|cost|fund|revenue" },
+    { key: "facility", label: "Facility", hint: "venue|facility|room|site" },
+    { key: "vendors", label: "Vendors", hint: "vendor|supplier|catering" },
+    { key: "equipment", label: "Equipment", hint: "equipment|wi-fi|wifi|av|hardware" },
+  ];
+  return (
+    <div aria-label="Resource summary" className="resource-summary-cards">
+      {definitions.map((definition) => {
+        const detail = resourceSummaryDetail(
+          content,
+          definition.key,
+          definition.hint,
+        );
+        const Icon = definition.key === "people"
+          ? Users
+          : definition.key === "budget"
+            ? CurrencyDollar
+            : definition.key === "facility"
+              ? Buildings
+              : definition.key === "vendors"
+                ? Handshake
+                : Gear;
+        return (
+          <article key={definition.key}>
+            <Icon aria-hidden="true" size={18} />
+            <div>
+              <strong>{definition.label}</strong>
+              <small>{detail ?? "No explicit evidence in this artifact"}</small>
+            </div>
+            <span>{detail ? "linked" : "open"}</span>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function parsedDates(values: string[]) {
+  return values
+    .map((value) => Date.parse(value))
+    .filter((value) => Number.isFinite(value));
+}
+
+function scheduleBarStyle(section: ArtifactSection, row: string[]) {
+  const domain = parsedDates(section.rows.flat());
+  const dates = parsedDates(row);
+  if (!domain.length || !dates.length) return null;
+  const minimum = Math.min(...domain);
+  const maximum = Math.max(...domain);
+  const span = Math.max(maximum - minimum, 24 * 60 * 60 * 1000);
+  const start = Math.min(...dates);
+  const end = Math.max(...dates);
+  const left = ((start - minimum) / span) * 72;
+  const width = Math.max(12, ((Math.max(end - start, span * 0.12)) / span) * 72);
+  return {
+    left: `${Math.min(76, left)}%`,
+    width: `${Math.min(88 - left, width)}%`,
+  };
+}
+
+function workBreakdownDepth(row: string[]) {
+  const code = row.find((cell) => /^\d+(?:\.\d+)+$/.test(cell.trim()));
+  if (!code) return 0;
+  const parts = code.split(".");
+  if (parts.length >= 3) return 2;
+  return parts.at(-1) === "0" ? 0 : 1;
 }
 
 function StableEditableText({
@@ -188,6 +458,7 @@ export function ArtifactWorkspace({
   onAskOslo,
   onOpenIssue,
   onProposalDecision,
+  proposalError,
   proposalPending,
   proposals = [],
   analysisRunning,
@@ -198,6 +469,7 @@ export function ArtifactWorkspace({
   onAskOslo: (question: string) => void;
   onOpenIssue: (issue: Issue, target: HTMLElement) => void;
   onProposalDecision?: (proposal: IssueProposalSummary, accepted: boolean) => void;
+  proposalError?: string | null;
   proposalPending?: string | null;
   proposals?: IssueProposalSummary[];
   analysisRunning: boolean;
@@ -212,6 +484,8 @@ export function ArtifactWorkspace({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [issueIndex, setIssueIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<"statements" | "narrative">("statements");
+  const [executionView, setExecutionView] = useState<"outline" | "backlog">("outline");
   const [historyDepth, setHistoryDepth] = useState(0);
   const [futureDepth, setFutureDepth] = useState(0);
   const historyRef = useRef<ArtifactWorkspaceSummary["content"][]>([]);
@@ -280,6 +554,16 @@ export function ArtifactWorkspace({
       ? artifactOrder[currentIndex + 1]
       : null;
   const displayStatus = analysisRunning ? "reanalyzing" : status;
+  const isUnderstanding = understandingArtifacts.has(artifactType);
+  const proposedCheckpoint = artifactType === "schedule"
+    ? proposals.find((proposal) => /^Add checkpoint:\s*read\s+/i.test(proposal.title))
+    : undefined;
+  const proposedCheckpointStatement = checkpointStatement(proposedCheckpoint);
+  const hasConfirmedScheduleCheckpoint = artifactType === "schedule" && Boolean(
+    content?.sections.some((section) => section.rows.some(
+      (row) => /^Outcome checkpoint\s*[—-]\s*read\s+/i.test(row[0] ?? ""),
+    )),
+  );
 
   const matches = useMemo(() => {
     if (!content || !searchQuery.trim()) return 0;
@@ -430,12 +714,55 @@ export function ArtifactWorkspace({
     <section className="artifact-workspace">
       <header className="artifact-editor-header">
         <div className="artifact-title-row">
+          <span className="artifact-category-chip">{artifactCategory(artifactType)}</span>
           <h1>{artifact.title}</h1>
-          <span className="editable-chip">Editable</span>
-          <span className="artifact-provenance">
-            {provenanceLabel(
-              sameContent(content, artifact.content) ? artifact.provenance : "mixed",
-            )}
+          <span className={`artifact-read-state ${issues.length ? "is-weak" : "is-clear"}`}>
+            {issues.length ? "weak" : "clear"}
+          </span>
+          {isUnderstanding ? (
+            <div aria-label="Artifact view" className="artifact-view-toggle" role="group">
+              <button
+                aria-pressed={viewMode === "statements"}
+                onClick={() => setViewMode("statements")}
+                type="button"
+              >
+                Statements
+              </button>
+              <button
+                aria-pressed={viewMode === "narrative"}
+                onClick={() => setViewMode("narrative")}
+                type="button"
+              >
+                Narrative
+              </button>
+            </div>
+          ) : artifactType === "work_breakdown" ? (
+            <div aria-label="Work breakdown framing" className="artifact-view-toggle" role="group">
+              <button
+                aria-pressed={executionView === "outline"}
+                onClick={() => setExecutionView("outline")}
+                type="button"
+              >
+                Outline · WBS
+              </button>
+              <button
+                aria-pressed={executionView === "backlog"}
+                onClick={() => setExecutionView("backlog")}
+                type="button"
+              >
+                Backlog · agile
+              </button>
+            </div>
+          ) : null}
+        </div>
+        <p className="artifact-oslo-read">
+          <strong>OSLO&apos;s read:</strong> {artifactRead(artifact, executionView)}
+        </p>
+        <div className="artifact-content-heading">
+          <strong>Contents · you author, OSLO reads</strong>
+          <span>
+            <i className="is-yours" /> yours
+            <i className="is-inferred" /> OSLO-inferred
           </span>
         </div>
         <div className="artifact-editor-toolbar">
@@ -603,36 +930,130 @@ export function ArtifactWorkspace({
         ) : null}
       </header>
 
-      <div
-        className={`artifact-editor-body ${
-          artifact.provenance !== "from_oslo" ? "is-confirmed" : ""
-        }`}
-      >
-        {content.sections.map((section, sectionIndex) => (
-          <ArtifactSectionEditor
-            activeIssue={sectionIndex === issueSectionIndex ? activeIssue : null}
+      {!isUnderstanding ? (
+        <p className="artifact-execution-intro">
+          {executionIntro(artifactType, executionView)}
+        </p>
+      ) : null}
+      {artifactType === "resources" ? (
+        <ResourceSummaryCards content={content} />
+      ) : null}
+
+      {isUnderstanding && viewMode === "narrative" ? (
+        <R2Narrative
+          artifactProvenance={artifact.provenance}
+          artifactType={artifactType}
+          content={content}
+        />
+      ) : (
+        <div
+          className={`artifact-editor-body r2-artifact-editor-body is-${artifactType} is-${executionView} ${
+            artifact.provenance !== "from_oslo" ? "is-confirmed" : ""
+          }`}
+        >
+          <R2ArtifactContent
+            activeIssue={activeIssue}
             artifactProvenance={artifact.provenance}
             artifactType={artifactType}
-            key={section.id ?? `${artifactType}-${sectionIndex}`}
-            onChange={(nextSection) =>
+            content={content}
+            executionView={executionView}
+            issueSectionIndex={issueSectionIndex}
+            onChangeContent={updateContent}
+            onOpenIssue={onOpenIssue}
+          />
+        </div>
+      )}
+      {!isUnderstanding && artifactType !== "resources" && (
+        artifactType !== "schedule" ||
+        (proposedCheckpointStatement && !hasConfirmedScheduleCheckpoint)
+      ) ? (
+        <div className="artifact-execution-actions">
+          <button
+            onClick={() =>
               updateContent((draft) => {
-                draft.sections[sectionIndex] = nextSection;
+                if (artifactType === "work_breakdown") {
+                  const id = nextEditorId("work-breakdown-section");
+                  draft.sections.push({
+                    id,
+                    heading: "New deliverable",
+                    body: "",
+                    bullets: [],
+                    columns: ["WBS", "Item"],
+                    rows: [["1.0", "New work package"]],
+                    row_ids: [nextEditorId(`${id}-row`)],
+                    row_evidence_refs: [[]],
+                    row_states: ["confirmed"],
+                    row_provenance: ["confirmed_by_user"],
+                    provenance: "confirmed_by_user",
+                  });
+                  return;
+                }
+                const section = draft.sections[0];
+                if (!section) return;
+                const existingRowProvenance = rowProvenanceValues(
+                  section,
+                  artifact.provenance,
+                );
+                const row = section.columns.map(() => "");
+                row[0] = artifactType === "schedule"
+                  ? proposedCheckpointStatement ?? ""
+                  : artifactType === "resources"
+                    ? "New teammate"
+                    : "New deliverable";
+                if (artifactType === "resources" && row.length > 2) row[2] = "Unassigned";
+                const placeholderIndex = artifactType === "schedule"
+                  ? section.rows.findIndex(
+                      (candidate) => candidate[0]?.trim() === "New outcome checkpoint",
+                    )
+                  : -1;
+                if (placeholderIndex >= 0) {
+                  section.rows[placeholderIndex] = row;
+                  const rowProvenance = [...existingRowProvenance];
+                  rowProvenance[placeholderIndex] = "confirmed_by_user";
+                  section.row_provenance = rowProvenance;
+                  section.row_states = section.rows.map((_, index) =>
+                    index === placeholderIndex
+                      ? "confirmed"
+                      : section.row_states?.[index] ?? "unknown",
+                  );
+                  section.provenance = "confirmed_by_user";
+                  return;
+                }
+                section.rows.push(row);
+                section.row_ids = [
+                  ...(section.row_ids ?? []),
+                  nextEditorId(`${section.id ?? artifactType}-row`),
+                ];
+                section.row_evidence_refs = [...(section.row_evidence_refs ?? []), []];
+                section.row_states = [...(section.row_states ?? []), "confirmed"];
+                section.row_provenance = [
+                  ...existingRowProvenance,
+                  "confirmed_by_user",
+                ];
+                section.provenance = "confirmed_by_user";
               })
             }
-            onOpenIssue={onOpenIssue}
-            section={section}
-          />
-        ))}
-      </div>
+            type="button"
+          >
+            <Plus size={13} />
+            {artifactType === "schedule"
+              ? "Add outcome checkpoint"
+              : artifactType === "resources"
+                ? "Add teammate"
+                : "Add deliverable"}
+          </button>
+        </div>
+      ) : null}
       {proposals.length && onProposalDecision ? (
         <section aria-label="OSLO proposes in this artifact" className="artifact-proposals">
           <header>
             <span aria-hidden="true">◆</span>
             <div>
-              <strong>OSLO proposes</strong>
+              <strong>OSLO proposes — nothing enters your plan until you accept</strong>
               <small>{proposals.length} item{proposals.length === 1 ? "" : "s"} for this document · you decide</small>
             </div>
           </header>
+          {proposalError ? <p role="alert">{proposalError}</p> : null}
           {proposals.map((proposal) => (
             <article key={proposal.id}>
               <span aria-hidden="true">◆</span>
@@ -642,27 +1063,39 @@ export function ArtifactWorkspace({
               </div>
               <div>
                 <button
-                  aria-label={`Accept ${proposal.title} in ${label(artifactType)}`}
+                  aria-label={`Add ${proposal.title} to plan in ${label(artifactType)}`}
                   disabled={proposalPending === proposal.id}
                   onClick={() => onProposalDecision(proposal, true)}
                   type="button"
-                >{proposalPending === proposal.id ? "Saving…" : "Accept"}</button>
+                >{proposalPending === proposal.id ? "Saving…" : "Add to plan"}</button>
                 <button
-                  aria-label={`Reject ${proposal.title} in ${label(artifactType)}`}
+                  aria-label={`Dismiss ${proposal.title} in ${label(artifactType)}`}
                   disabled={proposalPending === proposal.id}
                   onClick={() => onProposalDecision(proposal, false)}
                   type="button"
-                >Reject</button>
+                >Dismiss</button>
               </div>
             </article>
           ))}
         </section>
       ) : null}
+      <nav aria-label="Artifact sequence" className="artifact-sequence-nav">
+        {previous ? (
+          <Link href={`/projects/${projectId}/artifacts/${previous}`}>
+            <CaretLeft size={14} /> {label(previous)}
+          </Link>
+        ) : <span />}
+        {next ? (
+          <Link href={`/projects/${projectId}/artifacts/${next}`}>
+            {label(next)} <CaretRight size={14} />
+          </Link>
+        ) : <span />}
+      </nav>
     </section>
   );
 }
 
-function ArtifactSectionEditor({
+export function ArtifactSectionEditor({
   activeIssue,
   artifactProvenance,
   artifactType,
@@ -678,6 +1111,8 @@ function ArtifactSectionEditor({
   section: ArtifactSection;
 }) {
   const issueHere = activeIssue?.artifact_type === artifactType ? activeIssue : null;
+  const hasStructuredUnderstandingRows =
+    understandingArtifacts.has(artifactType) && section.rows.length > 0;
 
   return (
     <section className="artifact-section">
@@ -699,7 +1134,8 @@ function ArtifactSectionEditor({
         {claimProvenanceLabel(section.provenance, artifactProvenance)}
       </span>
       {section.heading ? <h2>{section.heading}</h2> : null}
-      {section.body || (!section.bullets.length && !section.rows.length) ? (
+      {!hasStructuredUnderstandingRows &&
+      (section.body || (!section.bullets.length && !section.rows.length)) ? (
         <StableEditableText
           as="p"
           className={
@@ -717,7 +1153,7 @@ function ArtifactSectionEditor({
           value={section.body}
         />
       ) : null}
-      {section.bullets.length ? (
+      {!hasStructuredUnderstandingRows && section.bullets.length ? (
         <ul className="artifact-bullets">
           {section.bullets.map((bullet, bulletIndex) => (
             <StableEditableText
@@ -819,11 +1255,19 @@ function ArtifactSectionEditor({
                     </span>
                   </th>
                 ))}
+                {artifactType === "schedule" ? (
+                  <th className="artifact-timeline-heading">Timeline</th>
+                ) : null}
               </tr>
             </thead>
             <tbody>
               {section.rows.map((row, rowIndex) => (
                 <tr
+                  className={
+                    artifactType === "work_breakdown"
+                      ? `is-wbs-depth-${workBreakdownDepth(row)}`
+                      : undefined
+                  }
                   key={
                     section.row_ids?.[rowIndex] ??
                     `${section.id ?? artifactType}-row-${rowIndex}`
@@ -1003,6 +1447,29 @@ function ArtifactSectionEditor({
                       value={cell}
                     />
                   ))}
+                  {artifactType === "schedule" ? (
+                    <td className="artifact-schedule-bar">
+                      {scheduleBarStyle(section, row) ? (
+                        <span style={scheduleBarStyle(section, row) ?? undefined} />
+                      ) : (
+                        <button
+                          onClick={(event) => {
+                            const dateColumn = Math.max(
+                              0,
+                              section.columns.findIndex((column) => /date|start/i.test(column)),
+                            );
+                            const cells = event.currentTarget
+                              .closest("tr")
+                              ?.querySelectorAll<HTMLElement>("td[contenteditable='true']");
+                            cells?.[dateColumn]?.focus();
+                          }}
+                          type="button"
+                        >
+                          Set date →
+                        </button>
+                      )}
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

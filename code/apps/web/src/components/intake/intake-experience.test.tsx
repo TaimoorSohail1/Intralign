@@ -12,7 +12,10 @@ vi.mock("@/lib/client/start-project-analysis", () => ({
   })),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 describe("IntakeExperience", () => {
   it("preserves returning-client mode when handing an existing client to analysis", async () => {
@@ -32,8 +35,33 @@ describe("IntakeExperience", () => {
     fireEvent.click(screen.getByRole("button", { name: /Get my analysis/ }));
 
     await vi.waitFor(() => {
+      expect(startProjectAnalysisWithRecovery).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: "initial", projectId: "project-2" }),
+      );
       expect(navigate).toHaveBeenCalledWith(
         "/projects/project-2/analysis/run-returning?returning=1",
+      );
+    });
+  });
+
+  it("extends the current read only when the project already has an analysis", async () => {
+    render(
+      <IntakeExperience
+        analysisKind="extended"
+        displayName="Alex"
+        projectId="project-2"
+        returningClient
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Describe your project"), {
+      target: { value: "Add steering committee evidence" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Get my analysis/ }));
+
+    await vi.waitFor(() => {
+      expect(startProjectAnalysisWithRecovery).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: "extended", projectId: "project-2" }),
       );
     });
   });
@@ -131,6 +159,33 @@ describe("IntakeExperience", () => {
     expect(screen.getByText("brief.docx")).toBeInTheDocument();
     expect(screen.getByText("review.pptx")).toBeInTheDocument();
     expect(screen.getByText("budget.xlsx")).toBeInTheDocument();
+  });
+
+  it("adds later document selections without replacing files already attached", () => {
+    render(<IntakeExperience displayName="Alex" />);
+
+    const picker = screen.getByLabelText("Attach documents");
+    fireEvent.change(picker, {
+      target: {
+        files: [
+          new File(["charter"], "01-charter.pdf", { type: "application/pdf" }),
+          new File(["scope"], "02-scope.pdf", { type: "application/pdf" }),
+        ],
+      },
+    });
+    fireEvent.change(picker, {
+      target: {
+        files: [
+          new File(["schedule"], "03-schedule.pdf", { type: "application/pdf" }),
+          new File(["charter"], "01-charter.pdf", { type: "application/pdf" }),
+        ],
+      },
+    });
+
+    expect(screen.getByText("01-charter.pdf")).toBeInTheDocument();
+    expect(screen.getByText("02-scope.pdf")).toBeInTheDocument();
+    expect(screen.getByText("03-schedule.pdf")).toBeInTheDocument();
+    expect(screen.getAllByText("01-charter.pdf")).toHaveLength(1);
   });
 
   it("explains unsupported files and keeps them out of the analysis", () => {

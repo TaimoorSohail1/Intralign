@@ -15,13 +15,17 @@ export async function startFirstProject() {
       workspaceId: session.workspaceId,
     });
   } catch (error) {
-    if (
+    const capacityCode =
       error instanceof OsloApiError &&
-      error.status === 409 &&
       typeof error.detail === "object" &&
       error.detail !== null &&
-      "code" in error.detail &&
-      error.detail.code === "ACTIVE_PROJECT_LIMIT_REACHED"
+      "code" in error.detail
+        ? error.detail.code
+        : null;
+    if (
+      error instanceof OsloApiError &&
+      ((error.status === 409 && capacityCode === "ACTIVE_PROJECT_LIMIT_REACHED") ||
+        (error.status === 422 && capacityCode === "CAPACITY_COMMITMENT_REQUIRED"))
     ) {
       await completeWelcome({
         accessToken: session.accessToken,

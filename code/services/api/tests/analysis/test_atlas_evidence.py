@@ -56,7 +56,7 @@ def test_atlas_documents_construct_distinct_structured_artifacts() -> None:
 
     expected_rows = {
         ArtifactType.INTENT: {"Objectives and success measures": 5},
-        ArtifactType.CONTEXT: {"Stakeholder register": 7, "Governance forums": 4},
+        ArtifactType.CONTEXT: {"Constraints and principles": 5},
         ArtifactType.SCOPE: {"Included deliverables": 6, "Explicit exclusions": 5},
         ArtifactType.REQUIREMENTS: {
             "Functional requirements": 8,
@@ -64,7 +64,13 @@ def test_atlas_documents_construct_distinct_structured_artifacts() -> None:
         },
         ArtifactType.WORK_BREAKDOWN: {"Work breakdown": 9},
         ArtifactType.SCHEDULE: {"Integrated milestones": 9, "Critical dependencies": 4},
-        ArtifactType.RESOURCES: {"Resource plan": 8, "RACI": 7},
+        ArtifactType.RESOURCES: {
+            "Resource plan": 8,
+            "RACI": 7,
+            "Risks and issues": 5,
+            "Explicit assumptions": 4,
+            "Dependency and decision log": 5,
+        },
     }
     for artifact_type, sections in expected_rows.items():
         artifact = artifacts[artifact_type]
@@ -74,11 +80,74 @@ def test_atlas_documents_construct_distinct_structured_artifacts() -> None:
             assert len(indexed[heading].rows) == count
             assert all(indexed[heading].row_evidence_refs)
 
-    assert len(artifacts[ArtifactType.CONTEXT].assumptions) == 4
+    constraints = artifacts[ArtifactType.CONTEXT]
+    assert constraints.title == "Constraints"
+    assert not constraints.assumptions
+    assert {section.heading for section in constraints.sections} == {
+        "Constraints and principles"
+    }
     assert all(
         artifact.project_title == "Atlas B2B Commerce Launch" for artifact in artifacts.values()
     )
     assert len({artifact.summary for artifact in artifacts.values()}) == 7
+    assert {item.id for item in artifacts[ArtifactType.RESOURCES].assumptions} == {
+        "A-01",
+        "A-02",
+        "A-03",
+        "A-04",
+    }
+    resource_plan = next(
+        section
+        for section in artifacts[ArtifactType.RESOURCES].sections
+        if section.heading == "Resource plan"
+    )
+    assert resource_plan.columns == (
+        "Role",
+        "Named resource",
+        "Allocation",
+        "Period",
+        "Backup / gap",
+    )
+    assert resource_plan.rows == (
+        ("Programme Manager", "Priya Nair", "1.0 FTE", "Aug 2026-Jun 2027", "Owen Price"),
+        ("Product Owner", "Nora Evans", "0.8 FTE", "Aug 2026-Jun 2027", "Liam Brooks"),
+        (
+            "Solution Architect",
+            "Daniel Webb",
+            "0.6 FTE",
+            "Aug 2026-Mar 2027",
+            "No named backup",
+        ),
+        (
+            "Integration Lead",
+            "Ibrahim Shah",
+            "1.0 FTE",
+            "Oct 2026-Mar 2027",
+            "0.5 FTE shortfall in Jan",
+        ),
+        (
+            "Data Lead",
+            "Hannah Cole",
+            "0.8 FTE",
+            "Sep 2026-Apr 2027",
+            "Two stewards required; one confirmed",
+        ),
+        ("Quality Lead", "Owen Price", "1.0 FTE", "Jan-May 2027", "Contract tester from Feb"),
+        (
+            "Security Lead",
+            "Rachel Cole",
+            "0.3 FTE",
+            "Aug 2026-May 2027",
+            "Pen-test vendor not contracted",
+        ),
+        (
+            "Implementation partner",
+            "TradeHub Ltd",
+            "6.0 FTE",
+            "Sep 2026-May 2027",
+            "Contracted",
+        ),
+    )
 
     conflicts = {
         artifact_type: {conflict.field: conflict.values for conflict in artifact.conflicts}

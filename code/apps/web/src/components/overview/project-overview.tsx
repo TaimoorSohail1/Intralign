@@ -3,6 +3,7 @@
 import {
   ArrowRight,
   ArrowSquareOut,
+  ArrowsSplit,
   CaretDown,
   CaretRight,
   CaretUp,
@@ -22,6 +23,7 @@ import {
   Question,
   SignOut,
   Sparkle,
+  Target,
   X,
 } from "@phosphor-icons/react";
 import Image from "next/image";
@@ -36,6 +38,7 @@ import type {
   IssueProposalSummary,
   OverviewSnapshot,
   ProjectHistory,
+  ProjectOutcomeSummary,
 } from "@/lib/server/oslo-api";
 import { ArtifactWorkspace } from "@/components/artifacts/artifact-workspace";
 import { HistoryWorkspace } from "@/components/history/history-workspace";
@@ -59,14 +62,14 @@ export { intralignLogo };
 
 const artifactOrder = [
   "intent",
-  "context",
   "scope",
   "requirements",
+  "constraints",
   "work_breakdown",
   "schedule",
   "resources",
 ] as const;
-const r2UnderstandingOrder = ["intent", "scope", "requirements", "context"] as const;
+const r2UnderstandingOrder = ["intent", "scope", "requirements", "constraints"] as const;
 const initialAdvisorQuestions = [
   "What should I do next?",
   "Why is Feasibility where it is?",
@@ -151,6 +154,69 @@ function artifactLabel(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function persistedArtifactType(value: string) {
+  return value === "constraints" ? "context" : value;
+}
+
+function artifactSidebarStatus({
+  artifactType,
+  issues,
+  proposals,
+  snapshot,
+}: {
+  artifactType: string;
+  issues: Issue[];
+  proposals: IssueProposalSummary[];
+  snapshot: OverviewSnapshot;
+}) {
+  const persistedType = persistedArtifactType(artifactType);
+  const artifact = snapshot.artifacts.find(
+    (candidate) => candidate.artifact_type === persistedType,
+  );
+  const inferred = artifact?.content?.sections.reduce((total, section) => {
+    const sectionClaims =
+      section.provenance === "from_oslo" && !section.rows.some((row) => row.some((cell) => cell.trim()))
+        ? Number(Boolean(section.body.trim())) + section.bullets.filter(Boolean).length
+        : 0;
+    const rowClaims = section.rows.reduce(
+      (count, _row, index) =>
+        count +
+        Number(
+          section.row_states?.[index] === "inferred" ||
+            (section.row_states?.[index] !== "confirmed" &&
+              section.row_provenance?.[index] === "from_oslo"),
+        ),
+      0,
+    );
+    return total + sectionClaims + rowClaims;
+  }, 0);
+  return {
+    inferred: inferred ?? issues.filter((issue) => issue.artifact_type === persistedType).length,
+    issues: issues.filter((issue) => issue.artifact_type === persistedType).length,
+    proposals: proposals.filter((proposal) => proposal.artifact_type === persistedType).length,
+  };
+}
+
+function ArtifactSidebarIndicators({
+  execution,
+  status,
+}: {
+  execution?: boolean;
+  status: ReturnType<typeof artifactSidebarStatus>;
+}) {
+  const openCount = execution ? status.issues : status.inferred;
+  return (
+    <span
+      aria-hidden="true"
+      className="r2-artifact-indicators"
+      title={`${status.proposals} proposals, ${openCount} open`}
+    >
+      {status.proposals ? <span className="is-proposal">◆{status.proposals}</span> : null}
+      {openCount ? <span className="is-open">{openCount}</span> : <span className="is-clear" />}
+    </span>
+  );
+}
+
 function issueResolutionMap(issues: Issue[]) {
   return Object.fromEntries(
     issues
@@ -167,6 +233,7 @@ export function ProjectOverview({
   initialHistory,
   initialIssueFilters = defaultIssueFilters,
   initialProposals = [],
+  initialOutcome = null,
 }: {
   initial: OverviewSnapshot;
   displayName: string;
@@ -175,9 +242,11 @@ export function ProjectOverview({
   initialHistory?: ProjectHistory;
   initialIssueFilters?: IssueFilters;
   initialProposals?: IssueProposalSummary[];
+  initialOutcome?: ProjectOutcomeSummary | null;
 }) {
   const router = useRouter();
   const [snapshot, setSnapshot] = useState(initial);
+  const [activeOutcome, setActiveOutcome] = useState(initialOutcome);
   const [orientation, setOrientation] = useState(false);
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
@@ -254,6 +323,11 @@ export function ProjectOverview({
         .sort(issueSort),
     [snapshot.assessment.issues],
   );
+  const artifactAdvisorIssues = isArtifactView(initialView)
+    ? openIssues.filter(
+        (issue) => issue.artifact_type === persistedArtifactType(initialView),
+      )
+    : openIssues;
   const rankedIssues = useMemo(
     () => openIssues.filter((issue) => issue.status === "open"),
     [openIssues],
@@ -272,9 +346,22 @@ export function ProjectOverview({
     () => snapshot.assessment.issues.filter((issue) => issue.status === "resolved"),
     [snapshot.assessment.issues],
   );
+  const settledIssueCount = Math.max(
+    snapshot.assessment.resolved_issue_count,
+    resolvedIssues.length,
+  );
+  const activeIssueIds = useMemo(
+    () => new Set(openIssues.map((issue) => issue.id)),
+    [openIssues],
+  );
   const undecidedProposals = useMemo(
-    () => proposals.filter((proposal) => !proposal.accepted && !proposal.rejected),
-    [proposals],
+    () => proposals.filter(
+      (proposal) =>
+        !proposal.accepted &&
+        !proposal.rejected &&
+        activeIssueIds.has(proposal.issue_id),
+    ),
+    [activeIssueIds, proposals],
   );
   const clarificationIssue = rankedIssues.find((issue) => Boolean(issue.clarification));
   const criticalCount = openIssues.filter((issue) => issue.severity === "Critical").length;
@@ -290,6 +377,7 @@ export function ProjectOverview({
   const outcomeDefinition = outcomeArtifact?.summary ?? null;
   const projectTitle = snapshot.project_title?.trim() || "Project";
   const overviewScrollKey = `oslo:overview-scroll:${snapshot.project_id}`;
+  const workspaceNoticeKey = `oslo:workspace-open:${snapshot.project_id}`;
 
   useEffect(() => {
     const firstRun = snapshot.first_run;
@@ -473,7 +561,10 @@ export function ProjectOverview({
           const queueButton = document.querySelector<HTMLElement>(
             `[data-issue-id="${CSS.escape(returnIssueId)}"]`,
           );
-          (queueButton ?? returnFocus)?.focus();
+          const nextQueueButton = document.querySelector<HTMLElement>(
+            '[aria-label="Exposure-ranked issue queue"] [data-issue-id]',
+          );
+          (queueButton ?? (returnFocus?.isConnected ? returnFocus : null) ?? nextQueueButton)?.focus();
         }, 0);
         return;
       }
@@ -501,6 +592,18 @@ export function ProjectOverview({
   }, [initialView, selectedIssue]);
 
   useEffect(() => {
+    if (!selectedIssue) return;
+    const revealIssue = window.requestAnimationFrame(() => {
+      const panel = document.getElementById(`issue-detail-${selectedIssue.id}`);
+      if (typeof panel?.scrollIntoView === "function") {
+        panel.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+      panel?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(revealIssue);
+  }, [selectedIssue]);
+
+  useEffect(() => {
     if (initialView !== "overview") return;
     const savedPosition = window.sessionStorage.getItem(overviewScrollKey);
     if (!savedPosition) return;
@@ -521,6 +624,12 @@ export function ProjectOverview({
       window.clearTimeout(hydrationRetry);
     };
   }, [initialView, overviewScrollKey]);
+
+  useEffect(() => {
+    if (window.localStorage.getItem(workspaceNoticeKey) !== "dismissed") return;
+    const restore = window.setTimeout(() => setWorkspaceNoticeOpen(false), 0);
+    return () => window.clearTimeout(restore);
+  }, [workspaceNoticeKey]);
 
   const dismissOrientation = async () => {
     localStorage.setItem("oslo_orientation_seen", "true");
@@ -548,7 +657,10 @@ export function ProjectOverview({
       const queueButton = returnIssueId
         ? document.querySelector<HTMLElement>(`[data-issue-id="${CSS.escape(returnIssueId)}"]`)
         : null;
-      (queueButton ?? returnFocus)?.focus();
+      const nextQueueButton = document.querySelector<HTMLElement>(
+        '[aria-label="Exposure-ranked issue queue"] [data-issue-id]',
+      );
+      (queueButton ?? (returnFocus?.isConnected ? returnFocus : null) ?? nextQueueButton)?.focus();
     }, 0);
   };
   const closeIntegrityBreakdown = () => {
@@ -635,6 +747,11 @@ export function ProjectOverview({
   const submitQuestion = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     void askQuestion(question);
+  };
+
+  const dismissWorkspaceNotice = () => {
+    window.localStorage.setItem(workspaceNoticeKey, "dismissed");
+    setWorkspaceNoticeOpen(false);
   };
 
   const showQueuedReadChange = (run: {
@@ -981,7 +1098,11 @@ export function ProjectOverview({
   return (
     <main
       className={`project-shell ${initialView === "overview" ? "is-r2-slice-one" : ""} ${
-        initialView === "overview" && r2IntegrityExpanded ? "r2-integrity-expanded" : ""
+        isArtifactView(initialView) ? "is-r2-artifact-workspace" : ""
+      } ${
+        (initialView === "overview" || isArtifactView(initialView)) && r2IntegrityExpanded
+          ? "r2-integrity-expanded"
+          : ""
       } ${initialView === "overview" && snapshot.first_run?.freeze_on ? "is-first-run-frozen" : ""
       } ${selectedIssue ? "has-issue" : ""} ${
         orientation ? "is-touring" : ""
@@ -995,7 +1116,7 @@ export function ProjectOverview({
             priority
             src={intralignLogo}
             unoptimized
-            width={116}
+            width={112}
           />
         </Link>
         <ProjectWorkspaceControls
@@ -1003,9 +1124,10 @@ export function ProjectOverview({
           projectId={snapshot.project_id}
           projectName={projectTitle}
         />
-        {initialView === "overview" ? <span className="r2-sample-badge">Sample</span> : null}
         <div className={`project-context ${initialView === "overview" ? "is-overview" : ""}`}>
-          {initialView === "overview" ? null : <strong>{projectTitle}</strong>}
+          {initialView === "overview" || isArtifactView(initialView) ? null : (
+            <strong>{projectTitle}</strong>
+          )}
           <span aria-hidden="true">›</span>
           <em>
             {initialView === "overview"
@@ -1049,13 +1171,14 @@ export function ProjectOverview({
           <small>as of this analysis</small>
         </button>
         <div className="project-actions">
-          {initialView === "overview" && !r2IntegrityExpanded ? (
+          {isArtifactView(initialView) ||
+          (initialView === "overview" && !r2IntegrityExpanded) ? (
             <button
               aria-controls="r2-integrity-summary"
-              aria-expanded="false"
-              aria-label="Expand Outcome Integrity"
+              aria-expanded={r2IntegrityExpanded}
+              aria-label={`${r2IntegrityExpanded ? "Collapse" : "Expand"} Outcome Integrity`}
               className="r2-integrity-toggle is-compact"
-              onClick={() => setR2IntegrityExpanded(true)}
+              onClick={() => setR2IntegrityExpanded((current) => !current)}
               type="button"
             >
               <CaretDown aria-hidden="true" size={13} />
@@ -1073,8 +1196,19 @@ export function ProjectOverview({
           >
             <MagnifyingGlass aria-hidden="true" size={16} />
           </button>
-          {initialView === "overview" ? (
-            <OutcomeCapacityControl projectId={snapshot.project_id} />
+          {initialView === "overview" || isArtifactView(initialView) ? (
+            <OutcomeCapacityControl
+              onOutcomesChange={(outcomes) =>
+                setActiveOutcome(
+                  outcomes.find(
+                    (outcome) => outcome.status === "active" && outcome.is_primary,
+                  ) ??
+                    outcomes.find((outcome) => outcome.status === "active") ??
+                    null,
+                )
+              }
+              projectId={snapshot.project_id}
+            />
           ) : null}
           {!panelVisible ? (
             <button
@@ -1089,21 +1223,84 @@ export function ProjectOverview({
         </div>
       </header>
 
-      {initialView === "overview" && outcomeDefinition ? (
+      {(initialView === "overview" || (isArtifactView(initialView) && r2IntegrityExpanded)) &&
+      (activeOutcome?.title ?? outcomeDefinition) ? (
         <div className="r2-outcome-capacity-row">
           <button
-            aria-label={`Outcome: ${outcomeDefinition}`}
+            aria-label={`Outcome: ${activeOutcome?.title ?? outcomeDefinition}`}
             className="r2-outcome-anchor"
             onClick={() => router.push(`/projects/${snapshot.project_id}/artifacts/intent`)}
             type="button"
           >
             <span aria-hidden="true">◎</span>
             <small>Outcome</small>
-            <strong>{outcomeDefinition}</strong>
-            <em>{outcomeArtifact?.evidence_refs.length ? "✓ yours" : "OSLO inference"}</em>
+            <strong>{activeOutcome?.title ?? outcomeDefinition}</strong>
+            <em>{activeOutcome?.provenance === "declared" ? "✓ yours" : "OSLO inference"}</em>
             <CaretRight aria-hidden="true" size={13} />
           </button>
         </div>
+      ) : null}
+
+      {isArtifactView(initialView) && r2IntegrityExpanded ? (
+        <section
+          aria-label="Outcome Integrity summary"
+          className="r2-artifact-integrity"
+          id="r2-integrity-summary"
+        >
+          <div className="r2-artifact-integrity-copy">
+            <span>Outcome integrity</span>
+            <strong>{integrity.level}</strong>
+            <p>
+              limited by <b>{integrity.limiting_pillar}</b> — a composite is only as sound
+              as its weakest pillar
+            </p>
+            <small>
+              {groundingPillar?.band === "Sound"
+                ? "Load-bearing details rest on your evidence, not OSLO’s inferences."
+                : "Load-bearing details still rest on OSLO’s inferences, not your evidence."}
+            </small>
+            <button
+              aria-label="Collapse Outcome Integrity"
+              onClick={() => setR2IntegrityExpanded(false)}
+              type="button"
+            >
+              Collapse <CaretUp aria-hidden="true" size={11} />
+            </button>
+          </div>
+          <div className="integrity-pillars">
+            {integrity.decomposition.map((pillar) => (
+              <button
+                aria-label={`${pillar.key} ${pillar.band}`}
+                className={pillar.key === integrity.limiting_pillar ? "is-limiting" : ""}
+                key={pillar.key}
+                onClick={(event) => {
+                  const issue = openIssues.find(
+                    (candidate) => issuePillar(candidate) === pillar.key,
+                  );
+                  if (issue) {
+                    openIssue(issue, event.currentTarget);
+                    return;
+                  }
+                  router.push(
+                    `/projects/${snapshot.project_id}/issues?pillar=${pillar.key.toLowerCase()}`,
+                  );
+                }}
+                type="button"
+              >
+                <span>
+                  <strong>
+                    {pillar.key}
+                    {pillar.key === integrity.limiting_pillar ? <em>Floor</em> : null}
+                  </strong>
+                  <b>{pillar.band}</b>
+                </span>
+                <i aria-hidden="true"><b style={{ width: `${pillar.basis * 100}%` }} /></i>
+                <small>{pillar.why[0]}</small>
+                <CaretRight aria-hidden="true" size={13} />
+              </button>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       {confidenceBreakdownOpen ? (
@@ -1120,12 +1317,12 @@ export function ProjectOverview({
       >
         <div className="workspace-sidebar-content">
         <p className="workspace-label">
-          {initialView === "overview" ? "Views" : "Project"}
+          {initialView === "overview" || isArtifactView(initialView) ? "Views" : "Project"}
         </p>
         <nav aria-label="Workspace">
-          {initialView === "overview" ? (
+          {initialView === "overview" || isArtifactView(initialView) ? (
             <>
-              <Link aria-current="page" aria-label={`Issues ${openIssues.length}`} className="is-current" href={`/projects/${snapshot.project_id}/overview`}>
+              <Link aria-current={initialView === "overview" ? "page" : undefined} aria-label={`Issues ${openIssues.length}`} className={initialView === "overview" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/overview`}>
                 <ListBullets aria-hidden="true" size={17} />
                 Issues
                 <span className="nav-count">{openIssues.length}</span>
@@ -1171,14 +1368,17 @@ export function ProjectOverview({
           )}
         </nav>
         <p className="workspace-label workspace-artifact-label">
-          {initialView === "overview" ? "Documents" : "Plan artifacts"}
+          Documents
         </p>
         <div className="workspace-artifact-group">
           <span>Understanding</span>
           {r2UnderstandingOrder.map((artifactType) => {
-            const count = openIssues.filter(
-              (issue) => issue.artifact_type === artifactType,
-            ).length;
+            const status = artifactSidebarStatus({
+              artifactType,
+              issues: openIssues,
+              proposals: undecidedProposals,
+              snapshot,
+            });
             return (
               <Link
                 className={initialView === artifactType ? "is-current" : ""}
@@ -1186,18 +1386,19 @@ export function ProjectOverview({
                 key={artifactType}
               >
                 <FileText aria-hidden="true" size={15} />
-                {initialView === "overview" && artifactType === "context"
-                  ? "Constraints"
-                  : artifactLabel(artifactType)}
-                {count ? <span className="nav-count">{count}</span> : null}
+                {artifactLabel(artifactType)}
+                <ArtifactSidebarIndicators status={status} />
               </Link>
             );
           })}
           <span>Execution</span>
           {artifactOrder.slice(4).map((artifactType) => {
-            const count = openIssues.filter(
-              (issue) => issue.artifact_type === artifactType,
-            ).length;
+            const status = artifactSidebarStatus({
+              artifactType,
+              issues: openIssues,
+              proposals: undecidedProposals,
+              snapshot,
+            });
             return (
               <Link
                 className={`${initialView === artifactType ? "is-current" : ""} ${
@@ -1212,11 +1413,11 @@ export function ProjectOverview({
                 {initialView === "overview" && artifactType === "work_breakdown"
                   ? "Work breakdown"
                   : artifactLabel(artifactType)}
-                {count ? <span className="nav-count">{count}</span> : null}
+                <ArtifactSidebarIndicators execution status={status} />
               </Link>
             );
           })}
-          {initialView === "overview" ? (
+          {initialView === "overview" || isArtifactView(initialView) ? (
             <Link href={`/projects/${snapshot.project_id}/reports`}>
               <ArrowSquareOut aria-hidden="true" size={15} />
               Full plan · export
@@ -1235,7 +1436,7 @@ export function ProjectOverview({
             <Sparkle aria-hidden="true" size={15} />
             Take a quick tour
           </button>
-          {initialView === "overview" ? (
+          {initialView === "overview" || isArtifactView(initialView) ? (
             <button
               onClick={() => {
                 setFeedbackSent(false);
@@ -1539,9 +1740,9 @@ export function ProjectOverview({
                     <div>
                       <strong>Your workspace is open.</strong>
                       <p>Your plan documents are on the left and OSLO&apos;s reasoning is on the right — every pillar and open issue travels with them.</p>
-                      <div><small>New to OSLO?</small><button onClick={() => { setTourStep(0); setOrientation(true); }} type="button">Take a 30-second tour →</button><button onClick={() => setWorkspaceNoticeOpen(false)} type="button">No thanks</button></div>
+                      <div><small>New to OSLO?</small><button onClick={() => { setTourStep(0); setOrientation(true); }} type="button">Take a 30-second tour →</button><button onClick={dismissWorkspaceNotice} type="button">No thanks</button></div>
                     </div>
-                      <button aria-label="Dismiss workspace open message" onClick={() => setWorkspaceNoticeOpen(false)} type="button">×</button>
+                      <button aria-label="Dismiss workspace open message" onClick={dismissWorkspaceNotice} type="button">×</button>
                     </section>
                   </div>
                 ) : null}
@@ -1752,7 +1953,7 @@ export function ProjectOverview({
                       <p>Closed</p>
                       <div>
                         <article>
-                          <strong>{snapshot.assessment.resolved_issue_count}</strong>
+                          <strong>{settledIssueCount}</strong>
                           <span>Issues resolved</span>
                         </article>
                         <article>
@@ -1810,7 +2011,43 @@ export function ProjectOverview({
           ) : initialView === "inference" ? (
             <InferenceMap onOpenIssue={openIssue} snapshot={snapshot} />
           ) : isArtifactView(initialView) ? (
-            <ArtifactWorkspace
+            <>
+              {workspaceNoticeOpen ? (
+                <section aria-label="Workspace open" className="r2-artifact-workspace-open">
+                  <Sparkle aria-hidden="true" size={20} weight="fill" />
+                  <div>
+                    <strong>Your workspace is open.</strong>
+                    <p>
+                      Your two calls unlocked the full read. <b>Now live:</b> your plan
+                      documents on the left and <b>OSLO&apos;s reasoning</b> on the right —
+                      every pillar and open issue with them.
+                    </p>
+                    <div>
+                      <small>New to OSLO?</small>
+                      <button
+                        onClick={() => {
+                          setTourStep(0);
+                          setOrientation(true);
+                        }}
+                        type="button"
+                      >
+                        Take a 30-second tour →
+                      </button>
+                      <button onClick={dismissWorkspaceNotice} type="button">
+                        No thanks
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    aria-label="Dismiss workspace open message"
+                    onClick={dismissWorkspaceNotice}
+                    type="button"
+                  >
+                    <X aria-hidden="true" size={14} />
+                  </button>
+                </section>
+              ) : null}
+              <ArtifactWorkspace
               analysisRunning={Boolean(analysisUpdateRunId)}
               artifactType={initialView}
               onAnalysisStarted={setAnalysisUpdateRunId}
@@ -1822,12 +2059,15 @@ export function ProjectOverview({
               onProposalDecision={(proposal, accepted) =>
                 decideProposal(proposal, accepted, "artifact")
               }
+              proposalError={issueActionError}
               proposalPending={proposalActionPending}
               proposals={undecidedProposals.filter(
-                (proposal) => proposal.artifact_type === initialView,
+                (proposal) =>
+                  proposal.artifact_type === persistedArtifactType(initialView),
               )}
               projectId={snapshot.project_id}
-            />
+              />
+            </>
           ) : initialView === "issues" ? (
             <IssuesWorkspace
               initialFilters={initialIssueFilters}
@@ -1861,7 +2101,14 @@ export function ProjectOverview({
             <AdvisorPanel
             advisorError={advisorError}
             advisorPending={advisorPending}
-            advisorQuestions={advisorQuestions}
+            advisorQuestions={isArtifactView(initialView)
+              ? [
+                  "What’s OSLO’s read here?",
+                  `Show me the ${artifactAdvisorIssues.length} open ${artifactAdvisorIssues.length === 1 ? "question" : "questions"}`,
+                  "What should I do here?",
+                ]
+              : advisorQuestions}
+            contextLabel={isArtifactView(initialView) ? artifactLabel(initialView) : null}
             extendedFailed={extendedFailed}
             extendedFailure={extendedFailure}
             extendedRetryError={extendedRetryError}
@@ -1879,9 +2126,9 @@ export function ProjectOverview({
             onWideChange={setAdvisorWide}
             openIssueCount={openIssues.length}
             question={question}
-            resolvedIssueCount={snapshot.assessment.resolved_issue_count}
-            r2Mode={initialView === "overview"}
-            topIssue={openIssues[0] ?? null}
+            resolvedIssueCount={settledIssueCount}
+            r2Mode={initialView === "overview" || isArtifactView(initialView)}
+            topIssue={artifactAdvisorIssues[0] ?? openIssues[0] ?? null}
             wide={advisorWide}
             />
           </div>
@@ -1889,9 +2136,14 @@ export function ProjectOverview({
       </div>
 
       {!panelVisible ? (
-        <button className="advisor-floating" onClick={() => setAdvisorOpen(true)} type="button">
+        <button
+          aria-label="Ask OSLO"
+          className="advisor-floating"
+          onClick={() => setAdvisorOpen(true)}
+          type="button"
+        >
           <Sparkle aria-hidden="true" size={14} weight="fill" />
-          Ask OSLO
+          <span>Ask OSLO</span>
         </button>
       ) : null}
 
@@ -2874,6 +3126,7 @@ function IssuePanel({
   const panel = useRef<HTMLElement>(null);
   const [clarificationOpen, setClarificationOpen] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [whyMattersOpen, setWhyMattersOpen] = useState(false);
   const [proposalsOpen, setProposalsOpen] = useState(true);
   const [otherWaysOpen, setOtherWaysOpen] = useState(false);
   const [routingOpen, setRoutingOpen] = useState(false);
@@ -3022,6 +3275,7 @@ function IssuePanel({
       id={`issue-detail-${issue.id}`}
       ref={panel}
       role={inline ? "region" : "dialog"}
+      tabIndex={-1}
     >
       <div className="issue-panel-heading">
         <div>
@@ -3119,29 +3373,31 @@ function IssuePanel({
           Ask OSLO about this issue
         </button>
       )}
-      <section className="issue-why-matters">
-        <h3>Why this matters</h3>
-        <p>{issue.why}</p>
-      </section>
-      <section className="issue-evidence">
+      <section className="issue-evidence issue-detail-disclosure">
         <button
           aria-controls="issue-evidence-content"
           aria-expanded={evidenceOpen}
           aria-label={`Evidence · ${evidence.length} ${
             evidence.length === 1 ? "source" : "sources"
           }, traceable to inputs`}
-          className="issue-evidence-disclosure"
+          className="issue-evidence-disclosure issue-detail-disclosure-trigger"
           onClick={() => setEvidenceOpen((current) => !current)}
           type="button"
         >
-          <span>Evidence</span>
-          <small>
-            {evidence.length} {evidence.length === 1 ? "source" : "sources"}, traceable to inputs
-          </small>
-          <CaretDown aria-hidden="true" size={14} />
+          <span aria-hidden="true" className="issue-detail-disclosure-icon">
+            <FileText size={17} />
+          </span>
+          <span className="issue-detail-disclosure-copy">
+            <strong>Evidence</strong>
+            <small>What OSLO is basing this on.</small>
+          </span>
+          <CaretRight aria-hidden="true" size={13} />
         </button>
         {evidenceOpen ? (
-          <div className="evidence-list" id="issue-evidence-content">
+          <div className="evidence-list issue-detail-disclosure-content" id="issue-evidence-content">
+            <small className="issue-evidence-count">
+              {evidence.length} {evidence.length === 1 ? "source" : "sources"}, traceable to inputs
+            </small>
             {evidence.map((citation) => (
               <div key={`${citation.source_name}:${citation.location}:${citation.excerpt}`}>
                 <small>
@@ -3159,12 +3415,34 @@ function IssuePanel({
           </div>
         ) : null}
       </section>
-      <section className="issue-what-weakens">
-        <h3>What this weakens</h3>
-        <p>
-          This finding lowers the {issue.dimension.toLowerCase()} read for{" "}
-          {artifactLabel(issue.artifact_type)} until the plan contains verified evidence.
-        </p>
+      <section className="issue-why-matters issue-detail-disclosure">
+        <button
+          aria-controls="issue-why-matters-content"
+          aria-expanded={whyMattersOpen}
+          aria-label="Why it matters"
+          className="issue-detail-disclosure-trigger"
+          onClick={() => setWhyMattersOpen((current) => !current)}
+          type="button"
+        >
+          <span aria-hidden="true" className="issue-detail-disclosure-icon">
+            <Target size={17} />
+          </span>
+          <span className="issue-detail-disclosure-copy">
+            <strong>Why it matters</strong>
+            <small>The impact to your goal and your plan if this isn’t addressed.</small>
+          </span>
+          <CaretRight aria-hidden="true" size={13} />
+        </button>
+        {whyMattersOpen ? (
+          <div className="issue-detail-disclosure-content" id="issue-why-matters-content">
+            <p>{issue.why}</p>
+            <h3>What this weakens</h3>
+            <p>
+              This finding lowers the {issue.dimension.toLowerCase()} read for{" "}
+              {artifactLabel(issue.artifact_type)} until the plan contains verified evidence.
+            </p>
+          </div>
+        ) : null}
       </section>
       {issue.clarification && (!inline || clarificationOpen || analysisRunning) ? (
         <form className="clarification-form" onSubmit={onSubmit}>
@@ -3305,19 +3583,25 @@ function IssuePanel({
         proposals={proposals}
         surface="issue_card"
       />
-      <section className="issue-resolution-paths">
+      <section className="issue-resolution-paths issue-detail-disclosure">
         <button
           aria-expanded={otherWaysOpen}
           aria-label="Other ways to handle this"
-          className="issue-other-ways-disclosure"
+          className="issue-other-ways-disclosure issue-detail-disclosure-trigger"
           onClick={() => setOtherWaysOpen((current) => !current)}
           type="button"
         >
-          <span><strong>Other ways to handle this</strong><small>Alternative approaches and tradeoffs.</small></span>
-          <CaretDown aria-hidden="true" size={14} />
+          <span aria-hidden="true" className="issue-detail-disclosure-icon">
+            <ArrowsSplit size={17} />
+          </span>
+          <span className="issue-detail-disclosure-copy">
+            <strong>Other ways to handle this</strong>
+            <small>Alternative approaches and tradeoffs.</small>
+          </span>
+          <CaretRight aria-hidden="true" size={13} />
         </button>
         {otherWaysOpen ? (
-          <div className="issue-other-ways-content">
+          <div className="issue-other-ways-content issue-detail-disclosure-content">
             <div className="resolution-path">
               <span><ArrowRight aria-hidden="true" size={12} />{issue.recommendation}</span>
               <button
@@ -3468,6 +3752,7 @@ function AdvisorPanel({
   advisorError,
   advisorPending,
   advisorQuestions,
+  contextLabel,
   extendedFailed,
   extendedFailure,
   extendedRetryError,
@@ -3493,6 +3778,7 @@ function AdvisorPanel({
   advisorError: string | null;
   advisorPending: boolean;
   advisorQuestions: string[];
+  contextLabel: string | null;
   extendedFailed: boolean;
   extendedFailure: ReturnType<typeof analysisFailureCopy>;
   extendedRetryError: string | null;
@@ -3543,7 +3829,7 @@ function AdvisorPanel({
         tabIndex={0}
       >
         {r2Mode ? <p className="r2-advisor-session">
-          On your read · <b>{resolvedIssueCount} of {resolvedIssueCount + openIssueCount}</b> settled
+          On {contextLabel ? <strong>{contextLabel}</strong> : "your read"} · <b>{resolvedIssueCount} of {resolvedIssueCount + openIssueCount}</b> settled
           {topIssue ? <> · next biggest exposure: <strong>{topIssue.title}</strong></> : null}
           <span> · toward your outcome →</span>
         </p> : null}

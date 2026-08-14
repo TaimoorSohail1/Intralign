@@ -28,6 +28,55 @@ _BAND_ORDER = {
     "Very High": 4,
 }
 
+_OUTCOME_CHECKPOINT_PATTERN = re.compile(
+    r"^(?:Outcome checkpoint\s*[—-]\s*|Add checkpoint:\s*)read\s+"
+    r"(?P<indicator>[^;\n]+);\s*"
+    r"(?P<timing>[^;\n]+);\s*"
+    r"if it drifts,\s*(?P<lever>[^\n]+?)\.?$",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def _register_confirmed_schedule_checkpoints(
+    assessment: Assessment,
+    user_evidence: tuple[EvidenceFragment, ...],
+) -> Assessment:
+    """Promote explicit user-authored schedule gates into the signed read.
+
+    A saved checkpoint is only complete when the evidence states the signal,
+    timing, and corrective lever.  This deterministic promotion closes the
+    loop between the editable Schedule artifact and Adaptability without
+    weakening the existing checkpoint formula or trusting placeholder rows.
+    """
+
+    schedule_evidence = tuple(
+        evidence
+        for evidence in user_evidence
+        if evidence.reference.startswith("user:artifact:schedule:version:")
+    )
+    if not schedule_evidence or not assessment.outcome_checkpoints:
+        return assessment
+    latest = schedule_evidence[-1]
+    confirmed = tuple(_OUTCOME_CHECKPOINT_PATTERN.finditer(latest.content))
+    if not confirmed:
+        return assessment
+
+    checkpoints = list(assessment.outcome_checkpoints)
+    open_indexes = [
+        index for index, checkpoint in enumerate(checkpoints) if not checkpoint.registered
+    ]
+    for match, checkpoint_index in zip(confirmed, open_indexes, strict=False):
+        checkpoint = checkpoints[checkpoint_index]
+        checkpoints[checkpoint_index] = replace(
+            checkpoint,
+            leading_indicator=match.group("indicator").strip(),
+            timing=match.group("timing").strip(),
+            lever=match.group("lever").strip().rstrip("."),
+            registered=True,
+            evidence_refs=(latest.reference,),
+        )
+    return replace(assessment, outcome_checkpoints=tuple(checkpoints))
+
 
 def _latest_clarification(description: str) -> str | None:
     matches = list(
@@ -52,6 +101,7 @@ def enrich_assessment(
 ) -> Assessment:
     """Derive the Slice 3 console read from validated, persisted analysis output."""
 
+    assessment = _register_confirmed_schedule_checkpoints(assessment, user_evidence)
     basis = _reliability_basis(artifacts)
     reliability = (
         "High"

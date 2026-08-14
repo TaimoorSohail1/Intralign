@@ -336,6 +336,40 @@ def _active_issue_keys(issues: tuple[Issue, ...]) -> set[str]:
     return {issue.id for issue in issues if issue.status != "resolved"}
 
 
+def _primary_outcome_title(artifacts: tuple[Artifact, ...]) -> str | None:
+    """Use the evidence-derived intent statement, not extractor progress copy."""
+
+    intent = next(
+        (artifact for artifact in artifacts if artifact.artifact_type is ArtifactType.INTENT),
+        None,
+    )
+    if intent is None:
+        return None
+
+    preferred_sections = tuple(
+        section
+        for section in intent.sections
+        if re.search(r"executive summary|purpose|outcome|intent", section.heading, re.I)
+    )
+    candidates: list[str] = []
+    for section in preferred_sections:
+        candidates.extend((section.body, *section.bullets))
+        candidates.extend(
+            next((cell for cell in row[1:] if cell.strip()), row[0] if row else "")
+            for row in section.rows
+        )
+    if not candidates:
+        candidates.append(intent.summary)
+
+    for candidate in candidates:
+        normalized = re.sub(r"\s+", " ", candidate).strip()
+        if not normalized:
+            continue
+        sentence = re.split(r"(?<=[.!?])\s+", normalized, maxsplit=1)[0]
+        return sentence if len(sentence) <= 320 else f"{sentence[:317].rstrip()}…"
+    return None
+
+
 class DatabaseAnalysisStore:
     def __init__(self, engine: Engine) -> None:
         self._engine = engine
@@ -1176,15 +1210,19 @@ class DatabaseAnalysisStore:
                     "published_at": snapshot.published_at,
                 },
             )
-            primary_outcome = next(
-                (
-                    artifact.summary.strip()
-                    for artifact in snapshot.artifacts
-                    if artifact.artifact_type.value == "intent" and artifact.summary.strip()
-                ),
-                None,
-            )
+            primary_outcome = _primary_outcome_title(snapshot.artifacts)
             if primary_outcome is not None:
+                connection.execute(
+                    text(
+                        "update public.project_outcomes set title = :title "
+                        "where project_id = :project_id and is_primary "
+                        "and provenance = 'inferred'"
+                    ),
+                    {
+                        "project_id": snapshot.project_id,
+                        "title": primary_outcome,
+                    },
+                )
                 connection.execute(
                     text(
                         "insert into public.project_outcomes "

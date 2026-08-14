@@ -41,6 +41,7 @@ router = APIRouter(prefix="/v1", tags=["analysis"])
 
 class StartAnalysisRequest(BaseModel):
     kind: RunKind = RunKind.INITIAL
+    provisional: bool = False
     description: str = Field(default="", max_length=100_000)
     source_names: list[str] = Field(default_factory=list, max_length=10)
     source_document_ids: list[UUID] = Field(default_factory=list, max_length=10)
@@ -885,7 +886,7 @@ async def upload_document(
             content_type=file.content_type,
             content=content,
         )
-    except SliceTwoPermissionDenied as error:
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
     except DocumentRejected as error:
         raise HTTPException(
@@ -921,6 +922,7 @@ def start_analysis(
             source_document_ids=tuple(payload.source_document_ids),
             kind=payload.kind,
             key=idempotency_key,
+            provisional=payload.provisional,
         )
     except SliceTwoPermissionDenied as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error

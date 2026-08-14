@@ -305,7 +305,7 @@ describe("ProjectOverview", () => {
 
     const panel = screen.getByRole("dialog", { name: "Issue details" });
     expect(panel).toHaveTextContent("Success metric is not measurable");
-    expect(panel).toHaveTextContent("Why this matters");
+    expect(panel).toHaveTextContent("Why it matters");
     expect(panel).toHaveTextContent("Clarification request");
   });
 
@@ -453,7 +453,7 @@ describe("ProjectOverview", () => {
     );
 
     expect(screen.queryByText("OSLO · AI-first R2 prototype")).not.toBeInTheDocument();
-    expect(screen.getByText("Sample")).toBeInTheDocument();
+    expect(screen.queryByText("Sample")).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Workspace open" })).toBeInTheDocument();
     const workspaceSlot = container.querySelector(".r2-workspace-open-slot");
     expect(workspaceSlot).toHaveAttribute("data-state", "open");
@@ -566,6 +566,12 @@ describe("ProjectOverview", () => {
         .slice(0, 4)
         .map((link) => link.textContent?.trim()),
     ).toEqual(["Intent", "Scope", "Requirements", "Constraints"]);
+    expect(
+      screen.getByRole("link", { name: "Constraints" }),
+    ).toHaveAttribute(
+      "href",
+      `/projects/${snapshot.project_id}/artifacts/constraints`,
+    );
 
     fireEvent.click(screen.getByText("Why a maturity read, not a probability?"));
     expect(screen.getByText(snapshot.assessment.confidence_explanation)).toBeVisible();
@@ -954,6 +960,33 @@ describe("ProjectOverview", () => {
     expect(within(advisor).getByText(/Your next move/)).toBeInTheDocument();
   });
 
+  it("labels an inferred primary outcome honestly and uses its managed title", () => {
+    render(
+      <ProjectOverview
+        displayName="Taimoor"
+        initial={snapshot}
+        initialOutcome={{
+          id: "outcome-1",
+          workspace_id: "workspace-1",
+          project_id: snapshot.project_id,
+          title: "Launch Atlas commerce for wholesale customers",
+          status: "active",
+          is_primary: true,
+          provenance: "inferred",
+          created_at: "2026-08-14T00:00:00Z",
+          archived_at: null,
+        }}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const outcome = screen.getByRole("button", {
+      name: /Outcome: Launch Atlas commerce for wholesale customers/i,
+    });
+    expect(within(outcome).getByText("OSLO inference")).toBeInTheDocument();
+    expect(within(outcome).queryByText("✓ yours")).not.toBeInTheDocument();
+  });
+
   it("restores the Overview scroll position after returning from Attention Map", () => {
     vi.useFakeTimers();
     const scrollTo = vi.fn();
@@ -1215,6 +1248,117 @@ describe("ProjectOverview", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("renders artifact pages in the prototype three-column workspace shell", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json({
+          artifact_type: "intent",
+          title: "Intent",
+          content: {
+            sections: [
+              {
+                heading: "Purpose",
+                body: "Deliver the agreed outcome.",
+                bullets: [],
+                columns: [],
+                rows: [],
+              },
+            ],
+          },
+          version: 1,
+          provenance: "from_oslo",
+          reliability: "Moderate",
+          basis: "derived",
+          evidence_refs: [],
+          issues: [],
+          updated_at: "2026-08-14T00:00:00Z",
+        }),
+      ),
+    );
+
+    const { container } = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        initialView="intent"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector("main")).toHaveClass(
+      "is-r2-artifact-workspace",
+    );
+    expect(screen.getByRole("region", { name: "Workspace open" })).toBeVisible();
+    expect(screen.getByRole("complementary", { name: "Project navigation" })).toBeVisible();
+    expect(screen.getByRole("complementary", { name: "OSLO project advisor" })).toBeVisible();
+
+    const integrityToggle = screen.getByRole("button", {
+      name: "Expand Outcome Integrity",
+    });
+    fireEvent.click(integrityToggle);
+
+    const integritySummary = screen.getByRole("region", {
+      name: "Outcome Integrity summary",
+    });
+    expect(integritySummary).toBeVisible();
+    expect(within(integritySummary).getByRole("button", { name: /Viability/i })).toBeVisible();
+    expect(within(integritySummary).getByRole("button", { name: /Grounding/i })).toBeVisible();
+    expect(within(integritySummary).getByRole("button", { name: /Adaptability/i })).toBeVisible();
+    expect(screen.queryByRole("dialog", { name: "Outcomes" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide the OSLO panel" }));
+    expect(container.querySelector(".project-grid")).toHaveClass("is-panel-closed");
+    expect(screen.getByRole("button", { name: "Ask OSLO" })).toHaveClass(
+      "advisor-floating",
+    );
+  });
+
+  it("does not count structured row body and bullet encodings as additional open inferences", () => {
+    const structuredSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      artifacts: [
+        {
+          artifact_type: "intent",
+          title: "Intent",
+          summary: "Measured launch outcomes.",
+          reliability: "High",
+          evidence_refs: ["document:brief:page:1:fragment:0"],
+          basis: "supported",
+          content: {
+            sections: [
+              {
+                heading: "Objectives and success measures",
+                body: "KPI Target Orders 99.7% successful",
+                bullets: ["Orders | 99.7% successful"],
+                columns: ["KPI", "Target"],
+                rows: [["Orders", "99.7% successful"]],
+                provenance: "from_oslo",
+                row_states: ["confirmed"],
+                row_provenance: ["confirmed_by_user"],
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={structuredSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const intentLink = screen.getByRole("link", { name: "Intent" });
+    expect(intentLink.querySelector(".r2-artifact-indicators")).toHaveAttribute(
+      "title",
+      "0 proposals, 0 open",
+    );
+    expect(intentLink.querySelector(".is-open")).toBeNull();
+  });
+
   it("explains the deterministic maturity basis without another advisor call", () => {
     const fetcher = vi.fn();
     vi.stubGlobal("fetch", fetcher);
@@ -1365,6 +1509,65 @@ describe("ProjectOverview", () => {
     );
   });
 
+  it("moves focus to the next ranked issue after the opened issue is confirmed", async () => {
+    const nextIssue = {
+      ...snapshot.assessment.issues[0],
+      id: "ISS-002",
+      severity: "Moderate" as const,
+      title: "Cutover fallback is unresolved",
+    };
+    const firstRunSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      first_run: {
+        first_run: true,
+        onboarded: false,
+        grounding_act_count: 1,
+        unlock_threshold: 2,
+        ever_unlocked: false,
+        freeze_on: true,
+      },
+      assessment: {
+        ...snapshot.assessment,
+        issues: [...snapshot.assessment.issues, nextIssue],
+      },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          issue_id: "ISS-001",
+          status: "addressed",
+          analysis_run: null,
+        }),
+      ),
+    );
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={firstRunSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole("region", { name: "Issue details" })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Cutover fallback is unresolved/i }),
+      ).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Close issue" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Cutover fallback is unresolved/i }),
+      ).toHaveFocus(),
+    );
+  });
+
   it("offers the prototype governed and wider advisor controls", () => {
     const { container } = render(
       <ProjectOverview displayName="Alex" initial={snapshot} logoutAction={vi.fn()} />,
@@ -1377,7 +1580,7 @@ describe("ProjectOverview", () => {
     expect(screen.getByRole("button", { name: "Narrow OSLO panel" })).toBeInTheDocument();
   });
 
-  it("opens an Overview issue inline in the ranked queue without a popup", () => {
+  it("opens an Overview issue inline in the ranked queue without a popup", async () => {
     const scrollIntoView = vi.fn();
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
@@ -1412,7 +1615,10 @@ describe("ProjectOverview", () => {
     expect(within(detail).getByText("Affects")).toBeInTheDocument();
     expect(within(detail).getByText("Holds up")).toBeInTheDocument();
     expect(screen.getByText("Your work — most important first")).toBeInTheDocument();
-    expect(scrollIntoView).not.toHaveBeenCalled();
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "auto",
+      block: "start",
+    }));
 
     if (originalScrollIntoView) {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
@@ -1955,5 +2161,34 @@ describe("ProjectOverview", () => {
 
     expect(screen.getByText("Questions answered")).toBeInTheDocument();
     expect(screen.getByText("Issues resolved")).toBeInTheDocument();
+  });
+
+  it("derives advisor settled counts from the live issue lifecycle", () => {
+    const lifecycleSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      assessment: {
+        ...snapshot.assessment,
+        resolved_issue_count: 0,
+        issues: [
+          snapshot.assessment.issues[0],
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-RESOLVED",
+            status: "resolved",
+            title: "Migration sponsor confirmed",
+          },
+        ],
+      },
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={lifecycleSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByText("1 of 2")).not.toHaveLength(0);
   });
 });

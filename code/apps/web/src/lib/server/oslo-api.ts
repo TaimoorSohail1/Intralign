@@ -353,6 +353,8 @@ export interface ArtifactWorkspaceSummary {
 export function startAnalysis(input: {
   accessToken: string;
   projectId: string;
+  kind: "initial" | "extended";
+  provisional: boolean;
   description: string;
   sourceNames: string[];
   sourceDocumentIds: string[];
@@ -365,7 +367,8 @@ export function startAnalysis(input: {
       "Idempotency-Key": input.idempotencyKey,
     },
     body: JSON.stringify({
-      kind: "initial",
+      kind: input.kind,
+      provisional: input.provisional,
       description: input.description,
       source_names: input.sourceNames,
       source_document_ids: input.sourceDocumentIds,

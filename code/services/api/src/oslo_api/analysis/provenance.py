@@ -139,7 +139,11 @@ def _related_issue(
         # when several issues cite the same page. An explicit assumption ID is exact.
         if mentions_id:
             ranked.append((3, term_coverage, issue))
-        elif shared_evidence and shared_terms:
+        elif (
+            shared_evidence
+            and len(shared_terms) >= (2 if issue.artifact_type == artifact_type else 3)
+            and term_coverage >= 0.5
+        ):
             ranked.append(
                 (
                     2 + int(issue.artifact_type == artifact_type),

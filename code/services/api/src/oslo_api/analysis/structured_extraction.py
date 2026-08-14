@@ -22,12 +22,7 @@ _ARTIFACT_HEADINGS: dict[ArtifactType, tuple[str, ...]] = {
         "Sponsorship and authority",
     ),
     ArtifactType.CONTEXT: (
-        "Stakeholder register",
-        "Governance forums",
-        "Decision authority",
-        "Named accountabilities and backups",
-        "Explicit assumptions",
-        "Dependency and decision log",
+        "Constraints and principles",
     ),
     ArtifactType.SCOPE: (
         "Scope statement",
@@ -50,6 +45,8 @@ _ARTIFACT_HEADINGS: dict[ArtifactType, tuple[str, ...]] = {
         "RACI",
         "Status summary",
         "Risks and issues",
+        "Explicit assumptions",
+        "Dependency and decision log",
     ),
 }
 
@@ -103,7 +100,7 @@ def construct_structured_artifact(
         or perception.evidence_refs
     )
     section_names = ", ".join(section.heading for section in extracted)
-    assumptions = _assumptions(extracted) if artifact_type is ArtifactType.CONTEXT else ()
+    assumptions = _assumptions(extracted)
     conflicts = _conflicts(artifact_type, sources)
     project_title = _project_title(sources)
     return Artifact(
@@ -213,6 +210,8 @@ def _rows(heading: str, body: str) -> tuple[tuple[tuple[str, ...], ...], tuple[s
         return _stakeholder_rows(body), ("Stakeholder evidence", "Influence and stance")
     if heading == "Governance forums":
         return _governance_rows(body), ("Forum evidence", "Cadence")
+    if heading == "Constraints and principles":
+        return _constraint_rows(body), ("Type", "Explicit limit or principle")
     if heading == "Explicit exclusions":
         return _exclusion_rows(body), ("Boundary", "Excluded or deferred")
     if heading == "Integrated milestones":
@@ -220,7 +219,13 @@ def _rows(heading: str, body: str) -> tuple[tuple[tuple[str, ...], ...], tuple[s
     if heading == "Critical dependencies":
         return _dependency_rows(body), ("Dependency evidence", "RAG")
     if heading == "Resource plan":
-        return _resource_rows(body), ("Role evidence", "Allocation")
+        return _resource_rows(body), (
+            "Role",
+            "Named resource",
+            "Allocation",
+            "Period",
+            "Backup / gap",
+        )
     if heading == "RACI":
         return _raci_rows(body), ("Deliverable", "Accountability evidence")
     return (), ()
@@ -274,6 +279,19 @@ def _governance_rows(body: str) -> tuple[tuple[str, ...], ...]:
     return tuple(rows)
 
 
+def _constraint_rows(body: str) -> tuple[tuple[str, ...], ...]:
+    """Preserve each explicitly labelled constraint or governing principle."""
+
+    matches = tuple(re.finditer(r"\b(Constraint|Principle)\b", body, re.IGNORECASE))
+    rows: list[tuple[str, ...]] = []
+    for index, match in enumerate(matches):
+        finish = matches[index + 1].start() if index + 1 < len(matches) else len(body)
+        statement = re.sub(r"\s+", " ", body[match.end() : finish]).strip(" |;,-")
+        if statement:
+            rows.append((match.group(1).title(), statement[:900]))
+    return tuple(rows)
+
+
 def _exclusion_rows(body: str) -> tuple[tuple[str, ...], ...]:
     labels = ("Geography", "Channels", "Platforms", "Commercial", "Analytics")
     matches = tuple(
@@ -318,20 +336,27 @@ def _dependency_rows(body: str) -> tuple[tuple[str, ...], ...]:
 
 
 def _resource_rows(body: str) -> tuple[tuple[str, ...], ...]:
-    matches = tuple(
-        re.finditer(
-            r"\b\d+(?:\.\d+)?\s+FTE\b(?!\s+shortfall)",
-            body,
-            re.IGNORECASE,
-        )
+    table_start = body.lower().find("backup / gap")
+    table = body[table_start + len("backup / gap") :] if table_start >= 0 else body
+    role = r"[A-Z][A-Za-z-]*\s+(?:Manager|Owner|Architect|Lead|Partner)"
+    allocation = r"\d+(?:\.\d+)?\s+FTE"
+    period = r"[A-Z][a-z]{2}(?:\s+\d{4})?-[A-Z][a-z]{2}\s+\d{4}"
+    pattern = re.compile(
+        rf"\b(?P<role>{role})\s+"
+        rf"(?P<resource>.+?)\s+"
+        rf"(?P<allocation>{allocation})\s+"
+        rf"(?P<period>{period})\s+"
+        rf"(?P<gap>.*?)(?=\b{role}\s+.+?\s+{allocation}\b|$)",
+        re.IGNORECASE,
     )
     rows = []
-    cursor = body.lower().find("backup / gap")
-    cursor = cursor + len("backup / gap") if cursor >= 0 else 0
-    for match in matches:
-        lead = re.sub(r"\s+", " ", body[cursor : match.start()]).strip()
-        rows.append((lead[-160:] or f"Role {len(rows) + 1}", match.group(0)))
-        cursor = match.end()
+    for match in pattern.finditer(table):
+        rows.append(
+            tuple(
+                re.sub(r"\s+", " ", match.group(field)).strip()
+                for field in ("role", "resource", "allocation", "period", "gap")
+            )
+        )
     return tuple(rows)
 
 

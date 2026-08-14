@@ -742,7 +742,12 @@ function tickPass(){ function frame(){ var e=Date.now()-t0, p=Math.min(1,e/PASS_
   if(p>=1){ passComplete(); return; } timers.push(setTimeout(frame,120)); } frame(); }
 function passComplete(){ if(passDone) return; passDone=true; analysisComplete=true; $('passFill').style.width='100%'; $('passLab').textContent='Analysis complete'; var pe=$('passEta'); if(pe) pe.style.display='none'; $('passWrap').classList.add('done'); var cbs=doneCbs; doneCbs=[]; cbs.forEach(function(f){ f(); }); }
 
-function toggleMode(){ mode=(mode==='guided')?'watch':'guided'; start(); }
+function toggleMode(){
+  /* In the embedded first-run flow, Skip means reveal the explicit decision.
+     It must never switch to returning-client watch mode, which auto-confirms. */
+  if(OARC_EMBED&&mode==='guided'){ clearTimers(); handOff(); return; }
+  mode=(mode==='guided')?'watch':'guided'; start();
+}
 function setEntry(e){ entry=e; mode=(e==='return')?'watch':'guided'; cls('d-first','act',e==='first'); cls('d-ret','act',e==='return'); start(); }
 function setPass(ms){ PASS_MS=ms; cls('p-60','act',ms===60000); cls('p-15','act',ms===15000); start(); }
 function toggleGates(){ _slowGates=!_slowGates; cls('d-gate','act',_slowGates); var b=$('d-gate'); if(b) b.textContent=_slowGates?'slow · holds':'fast'; start(); }   // demo: slow the fast-pass events so the scene gates HOLD

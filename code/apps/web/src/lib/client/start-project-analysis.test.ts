@@ -48,7 +48,45 @@ describe("startProjectAnalysis", () => {
     expect(requests[0].input).toBe(`/api/projects/${projectId}/documents`);
     expect(requests[0].init?.body).toBeInstanceOf(FormData);
     expect(JSON.parse(String(requests[1].init?.body))).toMatchObject({
+      kind: "initial",
       sourceNames: ["plan.pdf"],
+      sourceDocumentIds: [documentId],
+    });
+  });
+
+  it("starts an extended run when an existing client adds evidence", async () => {
+    const requests: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+    const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      requests.push({ input, init });
+      if (String(input).endsWith("/documents")) {
+        return new Response(
+          JSON.stringify({ document_id: documentId, file_name: "update.pdf" }),
+          { status: 201 },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          run_id: runId,
+          project_id: projectId,
+          kind: "extended",
+          status: "queued",
+        }),
+        { status: 202 },
+      );
+    });
+
+    await startProjectAnalysis({
+      projectId,
+      description: "New delivery evidence",
+      files: [new File(["pdf bytes"], "update.pdf", { type: "application/pdf" })],
+      kind: "extended",
+      fetcher,
+    });
+
+    expect(JSON.parse(String(requests[1].init?.body))).toMatchObject({
+      kind: "extended",
+      description: "New delivery evidence",
+      sourceNames: ["update.pdf"],
       sourceDocumentIds: [documentId],
     });
   });
@@ -91,7 +129,8 @@ describe("startProjectAnalysis", () => {
 
   it("creates one replacement project when a stale intake project is unavailable", async () => {
     const replacementId = "018f9f7e-8de2-7000-8000-000000000021";
-    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+    const analysisBodies: Array<Record<string, unknown>> = [];
+    const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url === `/api/projects/${projectId}/documents`) {
         return new Response(
@@ -108,6 +147,7 @@ describe("startProjectAnalysis", () => {
           { status: 201 },
         );
       }
+      analysisBodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
       return new Response(
         JSON.stringify({
           run_id: runId,
@@ -123,12 +163,22 @@ describe("startProjectAnalysis", () => {
       projectId,
       description: "",
       files: [new File(["pdf"], "plan.pdf")],
+      kind: "extended",
       fetcher,
     });
 
     expect(result.projectId).toBe(replacementId);
     expect(result.run.run_id).toBe(runId);
     expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(analysisBodies).toEqual([
+      {
+        kind: "initial",
+        description: "",
+        sourceNames: ["plan.pdf"],
+        sourceDocumentIds: [documentId],
+        idempotencyKey: expect.any(String),
+      },
+    ]);
   });
 
   it("surfaces a friendly replacement-project creation failure", async () => {

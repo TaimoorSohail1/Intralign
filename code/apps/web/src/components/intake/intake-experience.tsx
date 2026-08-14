@@ -9,6 +9,7 @@ interface IntakeExperienceProps {
   displayName: string;
   projectId?: string;
   returningClient?: boolean;
+  analysisKind?: "initial" | "extended";
   navigate?: (href: string) => void;
   logoutAction?: () => Promise<void>;
 }
@@ -75,6 +76,7 @@ export function IntakeExperience({
   displayName,
   projectId,
   returningClient = false,
+  analysisKind = "initial",
   navigate = navigateWindow,
   logoutAction = noOpLogout,
 }: IntakeExperienceProps) {
@@ -106,8 +108,20 @@ export function IntakeExperience({
       }
       return true;
     });
-    const limited = supported.slice(0, maxFiles);
-    if (supported.length > maxFiles) {
+    const existingKeys = new Set(
+      files.map((file) => `${file.name.toLocaleLowerCase()}:${file.size}`),
+    );
+    const combined = [
+      ...files,
+      ...supported.filter((file) => {
+        const key = `${file.name.toLocaleLowerCase()}:${file.size}`;
+        if (existingKeys.has(key)) return false;
+        existingKeys.add(key);
+        return true;
+      }),
+    ];
+    const limited = combined.slice(0, maxFiles);
+    if (combined.length > maxFiles) {
       errors.push(`Choose no more than ${maxFiles} documents.`);
     }
     let totalBytes = 0;
@@ -133,6 +147,7 @@ export function IntakeExperience({
           projectId,
           description,
           files,
+          kind: analysisKind,
         });
         navigate(
           `/projects/${result.projectId}/analysis/${result.run.run_id}${returningClient ? "?returning=1" : ""}`,

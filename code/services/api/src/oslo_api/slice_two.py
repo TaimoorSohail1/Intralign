@@ -50,6 +50,7 @@ class SliceTwoApplication(Protocol):
         source_document_ids: tuple[UUID, ...],
         kind: RunKind,
         key: str,
+        provisional: bool = False,
     ) -> AnalysisRun: ...
 
     def refresh_analysis(

@@ -72,4 +72,16 @@ describe("R2 onboarding arc prototype parity", () => {
     expect(shipped).toContain("onclick=\"restart()\"");
     expect(shipped).toContain("'Skip the intro →':'↺ Replay intro'");
   });
+
+  it("hands a guided user to the explicit outcome decision instead of auto-confirming it", async () => {
+    const shipped = await readFile(shippedPath, "utf8");
+    const toggleMode = between(shipped, "function toggleMode(){", "function restart(){");
+
+    expect(toggleMode).toContain("mode==='guided'");
+    expect(toggleMode).toContain("OARC_EMBED");
+    expect(toggleMode).toContain("handOff()");
+    expect(toggleMode.indexOf("handOff()")).toBeLessThan(
+      toggleMode.indexOf("mode=(mode==='guided')?'watch':'guided'"),
+    );
+  });
 });

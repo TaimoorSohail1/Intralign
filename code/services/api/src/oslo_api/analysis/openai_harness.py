@@ -33,7 +33,7 @@ _LOGGER = logging.getLogger(__name__)
 
 PROMPT_VERSIONS = {
     "perceive": "oslo-perceive-v5",
-    "construct": "oslo-construct-v5",
+    "construct": "oslo-construct-v6",
     "evaluate": "oslo-evaluate-v10",
 }
 ShortText = Annotated[str, Field(min_length=1, max_length=1_000)]
@@ -316,9 +316,13 @@ class OpenAIAgentHarness:
                 "Build exactly seven complete, structured artifacts in this exact "
                 "order: intent, context, scope, requirements, work_breakdown, "
                 "schedule, resources. Preserve every distinct source row and use "
-                "separate sections for objectives, measures, stakeholders, "
-                "governance, scope, requirements, acceptance criteria, work "
+                "separate sections for objectives, measures, explicit constraints, "
+                "scope, requirements, acceptance criteria, work "
                 "packages, milestones, resources, vendors and RACI assignments. "
+                "The persisted context artifact is the user-facing Constraints artifact: "
+                "include only explicit hard limits, fixed commitments, boundaries and "
+                "governing principles; do not turn stakeholder or governance registers "
+                "into constraints. "
                 "Mark rows confirmed, inferred, conflicting or unknown. Confirmed "
                 "means directly stated. Do not convert features or KPIs into formal "
                 "requirements unless the source explicitly uses obligation language. "
@@ -392,6 +396,10 @@ class OpenAIAgentHarness:
                 f"Build only the {artifact_type.value} artifact as complete structured "
                 f"sections and rows. Required coverage: "
                 f"{self._artifact_contract(artifact_type)}. "
+                "When artifact_type is context, title it Constraints and treat it as the "
+                "user-facing Constraints artifact: exclude general stakeholder, governance, "
+                "risk and dependency registers unless an item itself states an explicit "
+                "hard limit or governing boundary. "
                 "Preserve the most decision-relevant distinct source rows, using no "
                 "more than 8 sections and 80 rows in total. Mark each row confirmed, "
                 "inferred, conflicting or unknown and attach exact row-level evidence. "
@@ -1204,15 +1212,16 @@ class OpenAIAgentHarness:
                 "business case",
             ),
             ArtifactType.CONTEXT: (
-                "stakeholder",
-                "governance",
-                "decision right",
                 "constraint",
-                "forum",
-                "authority",
-                "risk",
-                "mitigation",
-                "dependency",
+                "hard limit",
+                "ceiling",
+                "cap",
+                "fixed",
+                "must",
+                "deadline",
+                "boundary",
+                "principle",
+                "prohibited",
             ),
             ArtifactType.SCOPE: (
                 "scope",
@@ -1268,8 +1277,8 @@ class OpenAIAgentHarness:
                 "purpose, objectives, intended outcomes, benefits, success measures and every KPI"
             ),
             ArtifactType.CONTEXT: (
-                "project profile, stakeholders, governance, decision rights, constraints, "
-                "dependencies, documented risks and mitigations"
+                "only explicit hard limits, fixed commitments, ceilings, deadlines, "
+                "operating boundaries and governing principles; title this artifact Constraints"
             ),
             ArtifactType.SCOPE: (
                 "every inclusion, exclusion, boundary, deliverable and explicitly deferred item"
@@ -1279,7 +1288,12 @@ class OpenAIAgentHarness:
                 "quality target and traceable metric"
             ),
             ArtifactType.WORK_BREAKDOWN: (
-                "every phase, workstream, work package, deliverable, owner and dependency"
+                "every deliverable, work package and task in a strict three-level WBS. "
+                "Use one section per deliverable; the section heading is the deliverable. "
+                "Within each section use columns WBS and Item, a row ending in .0 for each "
+                "work package, then numbered task rows beneath it. Do not place analysis "
+                "history, issue text, questions, answers, schedules or resource notes in "
+                "the WBS unless they explicitly describe work"
             ),
             ArtifactType.SCHEDULE: (
                 "every date, milestone, duration, dependency, alternative timeline and "
