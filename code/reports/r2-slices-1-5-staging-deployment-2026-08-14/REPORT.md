@@ -1,8 +1,11 @@
 # R2 Slices 1–5 staging deployment report
 
-Date: 2026-08-14  
-Branch: `codex/release-2-build`  
-Source commit: `857c23b7ed3f2f71654ae0670119a385aae1054a`  
+Date: 2026-08-14
+
+Branch: `codex/release-2-build`
+
+Source commit: `857c23b7ed3f2f71654ae0670119a385aae1054a`
+
 Deployed `code/` subtree: `36e28248291440196a532e2dfecabb650b73fb1c`
 
 ## Release result
