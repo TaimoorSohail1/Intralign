@@ -18,25 +18,41 @@
 # canon); 90_research = non-canonical. CODEOWNERS enforces REVIEW, not ratification — canonical
 # changes route through Framework 001; only the owner ratifies/supersedes/adopts canon.
 
+# DEV-LEAD ROLE (owner ruling, 2026-08-13): @hamzasohailcodes is the dev-lead approver named by
+# Framework 002 §2/§8c — his approval is what satisfies the Altering gate. Review routing formerly
+# pointed at @mkashifse; those entries were reassigned, NOT his repo access, which is untouched.
+#
 # --- 00_owner — owner only (doctrine, constitution, frameworks, decisions, glossary, TBD) ---
 /00_owner/              @idris-manley
 # Build-governance is owner-ratified policy that binds engineering; eng may PROPOSE, owner RATIFIES:
-/00_owner/build_governance/   @idris-manley @mkashifse
+/00_owner/build_governance/   @idris-manley @hamzasohailcodes
 
 # --- 10_product — product-authoritative (ratified specs; owner ratifies changes) ---
 /10_product/            @idris-manley
 
 # --- 20_handoff — THE SEAM — both signatures required ---
-/20_handoff/            @idris-manley @mkashifse
+/20_handoff/            @idris-manley @hamzasohailcodes
 
 # --- 30_engineering — engineering-authoritative (owner ratifies canon; product reads) ---
-/30_engineering/        @idris-manley @mkashifse
+/30_engineering/        @idris-manley @hamzasohailcodes
 
 # --- product-design — the reference-of-record prototype (the build's source of truth) — owner-gated ---
 /product-design/        @idris-manley
 
+# --- release-N/ — the ACTIVE RELEASE LINE under Framework 002 change control (added 2026-08-13) ---
+# Was UNLISTED, so nothing here requested a review AUTOMATICALLY. Requests were being added by hand
+# on the PR command (#207–#211 carried one) and then lapsed — #212, #213 (altering) and #214 shipped
+# with NO reviewer at all. That is the failure mode a per-command flag has and CODEOWNERS doesn't:
+# a step you must remember is a step that eventually gets skipped, and Framework 002's Altering gate
+# was inert for the two PRs that most needed it. Dev absorbs these refinements while building, so the
+# dev lead is a REQUIRED REVIEWER on the whole line, not only on `altering`.
+# NOTE: covers every release line by convention (release-2, release-3, …) — see RELEASE_LINE_CONVENTION.md.
+/release-2/             @idris-manley @hamzasohailcodes
+/CURRENT_RELEASE                @idris-manley @hamzasohailcodes
+/RELEASE_LINE_CONVENTION.md     @idris-manley @hamzasohailcodes
+
 # --- 90_research — non-canonical ---
-/90_research/           @idris-manley @mkashifse
+/90_research/           @idris-manley @hamzasohailcodes
 
 # --- Root orientation & agent rules — owner only ---
 /CLAUDE.md                      @idris-manley
@@ -48,8 +64,8 @@
 /ZONE_GROUNDING_RULES.md        @idris-manley
 
 # --- CI / infra — owner-controlled, eng lead co-reviews ---
-/tools/                 @idris-manley @mkashifse
-/.github/               @idris-manley @mkashifse
+/tools/                 @idris-manley @hamzasohailcodes
+/.github/               @idris-manley @hamzasohailcodes
 
 # --- code/** — NOT LISTED on purpose: engineering self-merges on green CI (no owner review). ---
 #     (Do not add a catch-all `* @idris-manley` above — it would re-gate code/**.)
