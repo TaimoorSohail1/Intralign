@@ -147,7 +147,7 @@ export function CollaborationGroundingMap({ data }: { data: GroundingMapProjecti
       </div>
 
       <div
-        className="grounding-constellation"
+        className={`grounding-constellation${additionalNodes.length ? " is-dense" : ""}`}
         data-node-density={additionalNodes.length ? "overflow" : "standard"}
         aria-label="Grounding constellation"
       >

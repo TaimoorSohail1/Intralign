@@ -73,6 +73,7 @@ describe("Slice 6 read-only projections", () => {
     expect(screen.getByText("what your plan rests on — grounded vs still OSLO-inferred")).toBeInTheDocument();
     const constellation = screen.getByLabelText("Grounding constellation");
     expect(constellation).toHaveAttribute("data-node-density", "overflow");
+    expect(constellation).toHaveClass("is-dense");
     expect(within(constellation).getAllByRole("link")).toHaveLength(6);
     expect(screen.getByText("5 of 13 load-bearing details grounded")).toBeInTheDocument();
     const additionalDetails = screen.getByLabelText("Additional grounding details");
