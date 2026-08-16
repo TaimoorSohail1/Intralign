@@ -356,7 +356,21 @@ def with_integrity(
         candidate.id: candidate for candidate in assessment.sensitivity_candidates
     }
     if assessment.dependency_graph is not None:
+        graph_node_ids = {node.id for node in assessment.dependency_graph.nodes}
+        graph_edge_keys = {
+            (edge.from_id, edge.to_id) for edge in assessment.dependency_graph.edges
+        }
         for candidate in assessment.sensitivity_candidates:
+            # Sensitivity candidates cross an untrusted model boundary. A candidate
+            # can be schema-valid while still naming a node or edge that does not
+            # exist in the deterministic dependency graph. Such an optional score
+            # must remain unavailable; it must not discard the governed read.
+            if candidate.node_id not in graph_node_ids:
+                continue
+            if candidate.structural_target is StructuralTarget.EDGE and (
+                candidate.edge_key is None or candidate.edge_key not in graph_edge_keys
+            ):
+                continue
             sensitivity_by_id[candidate.id] = evaluate_sensitivity(
                 graph=assessment.dependency_graph,
                 candidate=candidate,

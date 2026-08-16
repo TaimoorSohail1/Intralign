@@ -345,6 +345,51 @@ def test_reanalysis_projects_sensitivity_trace_and_derived_action(monkeypatch) -
     assert projected_issue.sensitivity_state == "shadow"
 
 
+def test_reanalysis_ignores_sensitivity_candidate_for_unknown_edge() -> None:
+    """A malformed optional model candidate cannot block an otherwise valid read."""
+
+    issue = Issue(
+        id="ISS-EDGE",
+        artifact_type=ArtifactType.REQUIREMENTS,
+        dimension="Alignment",
+        severity="Warning",
+        title="Delivery dependency is unclear",
+        why="The stated relationship is not present in the dependency graph.",
+        recommendation="Confirm the dependency between delivery and the outcome.",
+        evidence_refs=("document:plan:page:1:fragment:1",),
+        finding_type=FindingType.UNOWNED.value,
+        finding_basis=FindingBasis.STRUCTURAL.value,
+        structural_target=StructuralTarget.EDGE.value,
+    )
+    candidate = SensitivityCandidate(
+        id=issue.id,
+        node_id="DELIVERY-ON-SITE",
+        edge_key=("DELIVERY-ON-SITE", "UNKNOWN-OUTCOME"),
+        structural_target=StructuralTarget.EDGE,
+        favorable_integrity=0.8,
+        adverse_integrity=0.3,
+        runway_factor=1.0,
+    )
+    assessment = Assessment(
+        confidence_index=50,
+        confidence_band="Moderate",
+        reliability="Moderate",
+        clarity="Moderate",
+        alignment="Moderate",
+        feasibility="Moderate",
+        issues=(issue,),
+        dependency_graph=_dependency_graph(),
+        sensitivity_candidates=(candidate,),
+    )
+
+    projected_issue = with_integrity(assessment, ()).issues[0]
+
+    assert projected_issue.id == issue.id
+    assert projected_issue.sensitivity is None
+    assert projected_issue.sensitivity_trace is None
+    assert projected_issue.sensitivity_state == "unavailable"
+
+
 def test_reanalysis_never_leaves_a_deterministic_finding_unclassified() -> None:
     """GT-37/38: legacy deterministic findings receive explicit tags or escalate."""
 
