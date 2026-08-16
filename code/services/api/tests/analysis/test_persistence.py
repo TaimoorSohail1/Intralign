@@ -18,6 +18,7 @@ from oslo_api.analysis.models import (
 )
 from oslo_api.analysis.persistence import (
     _active_issue_keys,
+    _issue_observation_dimension,
     _primary_outcome_title,
     _snapshot_dict,
     _snapshot_from_dict,
@@ -46,6 +47,26 @@ def test_active_issue_keys_only_counts_the_published_open_read() -> None:
     )
 
     assert _active_issue_keys(issues) == {"ISS-OPEN", "ISS-ADDRESSED"}
+
+
+def test_model_gap_observation_keeps_its_dimension_unclassified() -> None:
+    model_gap = _issue("ISS-MODEL-GAP", "open")
+    model_gap = Issue(
+        id=model_gap.id,
+        artifact_type=model_gap.artifact_type,
+        dimension="",
+        severity=model_gap.severity,
+        title=model_gap.title,
+        why=model_gap.why,
+        recommendation=model_gap.recommendation,
+        evidence_refs=model_gap.evidence_refs,
+        finding_basis="model_gap",
+        classification_state="escalated",
+        unassessed=True,
+    )
+
+    assert _issue_observation_dimension(model_gap) is None
+    assert _issue_observation_dimension(_issue("ISS-CLARITY", "open")) == "Clarity"
 
 
 def test_primary_outcome_uses_the_grounded_intent_instead_of_extractor_status_copy() -> None:

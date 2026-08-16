@@ -390,6 +390,12 @@ def _active_issue_keys(issues: tuple[Issue, ...]) -> set[str]:
     return {issue.id for issue in issues if issue.status != "resolved"}
 
 
+def _issue_observation_dimension(issue: Issue) -> str | None:
+    """Keep model-gap observations unclassified at the persistence boundary."""
+
+    return issue.dimension or None
+
+
 def _primary_outcome_title(artifacts: tuple[Artifact, ...]) -> str | None:
     """Use the evidence-derived intent statement, not extractor progress copy."""
 
@@ -1486,7 +1492,7 @@ class DatabaseAnalysisStore:
                         "issue_id": issue_id,
                         "run_id": run_id,
                         "artifact_type": issue.artifact_type.value,
-                        "dimension": issue.dimension,
+                        "dimension": _issue_observation_dimension(issue),
                         "severity": issue.severity,
                         "status": issue.status,
                         "observation": json.dumps(
