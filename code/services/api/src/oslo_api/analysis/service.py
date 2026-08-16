@@ -278,6 +278,17 @@ class DatabaseSliceTwoApplication:
         run = self.get_run(actor_user_id=actor_user_id, run_id=run_id)
         if run.status is not AnalysisRunStatus.FAILED:
             return run
+        pending_event_ids, pending_evidence = self._recoverable_pending_changes(
+            run.request.project_id
+        )
+        existing_event_ids = set(run.request.consolidated_event_ids)
+        additional_event_ids = tuple(
+            event_id for event_id in pending_event_ids if event_id not in existing_event_ids
+        )
+        existing_references = {item.reference for item in run.request.user_evidence}
+        additional_evidence = tuple(
+            item for item in pending_evidence if item.reference not in existing_references
+        )
         with self._engine.begin() as connection:
             append_history_event(
                 connection,
@@ -293,6 +304,13 @@ class DatabaseSliceTwoApplication:
                 idempotency_key=f"history:analysis-retry:{run.id}",
             )
         self._store.queue_run(run.id)
+        if additional_event_ids or additional_evidence:
+            self._store.merge_queued_run(
+                run.id,
+                evidence=additional_evidence,
+                event_ids=additional_event_ids,
+            )
+        self._attach_changes_to_run(pending_event_ids, run.id)
         self._executor.submit(self._execute, run.id)
         return self._store.get_run(run.id) or run
 
@@ -2358,6 +2376,11 @@ class DatabaseSliceTwoApplication:
             existing = self._store.get_run(existing_run_id)
             if existing is not None:
                 return existing
+        pending_event_ids, pending_evidence = self._recoverable_pending_changes(project_id)
+        merged_evidence = self._merge_evidence(
+            parent_run.request.user_evidence,
+            pending_evidence,
+        )
         run = self._store.create_run(
             AnalysisRunRequest(
                 workspace_id=workspace_id,
@@ -2367,16 +2390,16 @@ class DatabaseSliceTwoApplication:
                 description=parent_run.request.description,
                 source_names=parent_run.request.source_names,
                 source_document_ids=parent_run.request.source_document_ids,
-                user_evidence=parent_run.request.user_evidence,
+                user_evidence=merged_evidence,
                 idempotency_key=f"explicit-reanalysis:{key}",
                 parent_run_id=parent_run.id,
                 consumes_analysis_allowance=False,
                 pass_kind=(AnalysisPassKind.DEEP if deep else AnalysisPassKind.FAST),
                 reanalysis_trigger=ReanalysisTrigger.EXPLICIT,
-                consolidated_event_ids=(event_id,),
+                consolidated_event_ids=pending_event_ids or (event_id,),
             )
         )
-        self._attach_change_to_run(event_id, run.id)
+        self._attach_changes_to_run(pending_event_ids or (event_id,), run.id)
         if run.status is AnalysisRunStatus.QUEUED:
             self._executor.submit(self._execute, run.id)
         return run
@@ -2668,17 +2691,87 @@ class DatabaseSliceTwoApplication:
         return row["id"], row["analysis_run_id"]
 
     def _attach_change_to_run(self, event_id: UUID, run_id: UUID) -> None:
+        self._attach_changes_to_run((event_id,), run_id)
+
+    def _attach_changes_to_run(self, event_ids: tuple[UUID, ...], run_id: UUID) -> None:
+        if not event_ids:
+            return
         with self._engine.begin() as connection:
             connection.execute(
                 text(
                     """
                     update public.reanalysis_change_events
                     set analysis_run_id = :run_id
-                    where id = :event_id and state = 'pending'
+                    where id = any(:event_ids) and state = 'pending'
                     """
                 ),
-                {"event_id": event_id, "run_id": run_id},
+                {"event_ids": list(event_ids), "run_id": run_id},
             )
+
+    def _recoverable_pending_changes(
+        self,
+        project_id: UUID,
+    ) -> tuple[tuple[UUID, ...], tuple[EvidenceFragment, ...]]:
+        """Return pending changes that are not owned by an active analysis run.
+
+        A failed run keeps its change events pending so the last-good read remains
+        visible. An explicit rerun or retry must adopt those events; otherwise the
+        successful replacement read lands while the workspace remains permanently
+        stale and reviewer evidence can be omitted from the resumed request.
+        """
+
+        with self._engine.connect() as connection:
+            rows = (
+                connection.execute(
+                    text(
+                        """
+                        select event.id, event.analysis_run_id
+                        from public.reanalysis_change_events event
+                        left join public.analysis_runs run
+                          on run.id = event.analysis_run_id
+                        where event.project_id = :project_id
+                          and event.state = 'pending'
+                          and (
+                            event.analysis_run_id is null
+                            or run.status = 'failed'
+                          )
+                        order by event.created_at, event.id
+                        """
+                    ),
+                    {"project_id": project_id},
+                )
+                .mappings()
+                .all()
+            )
+        event_ids = tuple(row["id"] for row in rows)
+        evidence: list[EvidenceFragment] = []
+        seen_references: set[str] = set()
+        for failed_run_id in dict.fromkeys(
+            row["analysis_run_id"] for row in rows if row["analysis_run_id"] is not None
+        ):
+            failed_run = self._store.get_run(failed_run_id)
+            if failed_run is None:
+                continue
+            for item in failed_run.request.user_evidence:
+                if item.reference in seen_references:
+                    continue
+                seen_references.add(item.reference)
+                evidence.append(item)
+        return event_ids, tuple(evidence)
+
+    @staticmethod
+    def _merge_evidence(
+        current: tuple[EvidenceFragment, ...],
+        recovered: tuple[EvidenceFragment, ...],
+    ) -> tuple[EvidenceFragment, ...]:
+        merged = list(current)
+        seen_references = {item.reference for item in current}
+        for item in recovered:
+            if item.reference in seen_references:
+                continue
+            seen_references.add(item.reference)
+            merged.append(item)
+        return tuple(merged)
 
     def _submit_batched(self, run_id: UUID) -> None:
         submit_after = getattr(self._executor, "submit_after", None)

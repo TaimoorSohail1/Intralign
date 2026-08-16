@@ -15,6 +15,7 @@ from oslo_api.analysis import (
     AnalysisRunStatus,
     AnalysisWorkflow,
     DeterministicAgentHarness,
+    EvidenceFragment,
     RunKind,
 )
 from oslo_api.analysis.document_store import DatabaseDocumentStore
@@ -409,6 +410,146 @@ def test_rejecting_a_proposal_records_history_against_the_source_read(
                 text("delete from public.projects where id = :id"),
                 {"id": project_id},
             )
+
+
+def test_explicit_reanalysis_recovers_pending_changes_from_failed_runs(
+    tmp_path,
+    workspace_owner_id: UUID,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "insert into public.projects (id, workspace_id, name, status, created_by) "
+                "values (:id, :workspace_id, 'Failed reanalysis recovery', 'draft', :owner_id)"
+            ),
+            {
+                "id": project_id,
+                "workspace_id": WORKSPACE_ID,
+                "owner_id": workspace_owner_id,
+            },
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        baseline = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=workspace_owner_id,
+                kind=RunKind.INITIAL,
+                description="A governed read with reviewer evidence to recover.",
+                source_names=("brief.md",),
+                idempotency_key=f"failed-reanalysis-baseline:{project_id}",
+            )
+        )
+        assert baseline.snapshot is not None
+        parent_run = store.get_run(baseline.run_id)
+        assert parent_run is not None
+        application = DatabaseSliceTwoApplication(
+            engine=engine,
+            store=store,
+            workflow=workflow,
+            executor=NoopExecutor(),  # type: ignore[arg-type]
+            document_store=DatabaseDocumentStore(
+                engine=engine,
+                object_store=LocalObjectStorage(tmp_path),
+            ),
+            extended_delay_seconds=0,
+            reanalysis_debounce_seconds=0,
+        )
+        reviewer_reference = f"user:review:{project_id}"
+        failed_batch = application._batched_reanalysis_run(
+            workspace_id=WORKSPACE_ID,
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            parent_run=parent_run,
+            evidence=(
+                EvidenceFragment(
+                    reference=reviewer_reference,
+                    content="The reviewer confirmed the accountable owner.",
+                    source_name="Reviewer response",
+                    location="External review",
+                ),
+            ),
+            event_key=f"review-recovery:{project_id}",
+            change_kind="route",
+            scope="project",
+            consumes_analysis_allowance=False,
+        )
+        store.fail(
+            failed_batch.id,
+            error_code="EVALUATE_ADVISE_FAILED",
+            phase=AnalysisPhase.EVALUATE_ADVISE,
+        )
+
+        failed_explicit = application.run_reanalysis_now(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            deep=False,
+            key=f"failed-explicit:{project_id}",
+        )
+        store.fail(
+            failed_explicit.id,
+            error_code="PUBLISH_FAILED",
+            phase=AnalysisPhase.PUBLISH,
+        )
+
+        second_reference = f"user:review:second:{project_id}"
+        second_failed_batch = application._batched_reanalysis_run(
+            workspace_id=WORKSPACE_ID,
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            parent_run=parent_run,
+            evidence=(
+                EvidenceFragment(
+                    reference=second_reference,
+                    content="A second reviewer confirmed the delivery fallback.",
+                    source_name="Reviewer response",
+                    location="External review",
+                ),
+            ),
+            event_key=f"review-recovery-second:{project_id}",
+            change_kind="route",
+            scope="project",
+            consumes_analysis_allowance=False,
+        )
+        store.fail(
+            second_failed_batch.id,
+            error_code="CONSTRUCT_ARTIFACTS_FAILED",
+            phase=AnalysisPhase.CONSTRUCT_ARTIFACTS,
+        )
+
+        recovered = application.retry(
+            actor_user_id=workspace_owner_id,
+            run_id=failed_explicit.id,
+        )
+
+        assert recovered.status is AnalysisRunStatus.QUEUED
+        assert {reviewer_reference, second_reference}.issubset(
+            {item.reference for item in recovered.request.user_evidence}
+        )
+        assert len(recovered.request.consolidated_event_ids) == 3
+        with engine.connect() as connection:
+            pending = connection.execute(
+                text(
+                    "select id, analysis_run_id from public.reanalysis_change_events "
+                    "where project_id = :project_id and state = 'pending'"
+                ),
+                {"project_id": project_id},
+            ).mappings().all()
+        assert {row["id"] for row in pending} == set(
+            recovered.request.consolidated_event_ids
+        )
+        assert {row["analysis_run_id"] for row in pending} == {recovered.id}
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+        engine.dispose()
 
 
 def test_accepting_a_build_proposal_creates_a_withdrawable_lifecycle_act(
