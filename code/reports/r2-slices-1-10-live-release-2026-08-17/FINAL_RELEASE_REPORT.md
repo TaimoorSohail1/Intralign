@@ -15,6 +15,15 @@ Five real Atlas project PDFs were analyzed as one client project. The read produ
 - Report and snapshot titles remain anchored to the current project.
 - Same-band analysis movement is described honestly.
 - The prototype-aligned centered shell, fixed advisor, radial map, Settings modal, notifications, walkthrough, and support surfaces remain intact.
+- Dense Grounding Maps now keep the six-node prototype constellation readable and move additional findings into a linked, responsive detail grid.
+
+## Live staging verification
+
+- API release v37 and web release v21 started successfully; API health returned `ready`.
+- Authenticated workspace, Issues, Your Outcome, all seven artifacts, Grounding Map, Reports, History, and the shared header/advisor shell loaded successfully.
+- External review creation, attributed confirmation, governed reanalysis, snapshot creation, snapshot revocation, notifications, History, and discussion-only comments passed in the deployed browser flow.
+- The saved light theme persisted from Settings onto project routes.
+- One live-only dense-map overlap was found, corrected, regression-tested, rebuilt, and included in the final web redeploy.
 
 ## Five-user review
 

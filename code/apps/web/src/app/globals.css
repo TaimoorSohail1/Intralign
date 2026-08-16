@@ -8895,6 +8895,62 @@ button.attention-cell { cursor: pointer; }
 .grounding-orbit-node:focus-visible > i {
   box-shadow: 0 0 0 3px #0c1013, 0 0 0 5px #9fc8f6;
 }
+.grounding-overflow-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 2px 0 18px;
+}
+.grounding-overflow-node {
+  display: grid;
+  min-width: 0;
+  min-height: 58px;
+  grid-template-columns: 20px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid #263039;
+  border-radius: 8px;
+  background: #12161b;
+  color: inherit;
+  text-decoration: none;
+}
+.grounding-overflow-node:hover,
+.grounding-overflow-node:focus-visible {
+  border-color: #4d6174;
+  background: #161c21;
+}
+.grounding-overflow-node:focus-visible {
+  outline: 2px solid #9fc8f6;
+  outline-offset: 2px;
+}
+.grounding-overflow-node > i {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  place-items: center;
+  border: 2px dashed #62707c;
+  border-radius: 50%;
+  background: #12161b;
+  color: #0c130f;
+}
+.grounding-overflow-node.is-grounded > i { border: 0; background: #4fc3a1; }
+.grounding-overflow-node.is-addressed > i { border-style: solid; border-color: #4fc3a1; background: #2f6f5f; }
+.grounding-overflow-node.is-routed > i { border-style: solid; border-color: #7fa0c9; }
+.grounding-overflow-node > span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.grounding-overflow-node strong,
+.grounding-overflow-node small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.grounding-overflow-node strong { color: #e7ecf3; font-size: 11px; }
+.grounding-overflow-node small { color: #7c8794; font-size: 9px; }
+.grounding-overflow-node > svg { color: #9fc8f6; }
 .grounding-map-key {
   display: flex;
   flex-wrap: wrap;
@@ -8976,6 +9032,7 @@ button.attention-cell { cursor: pointer; }
     transform: none;
     text-align: left;
   }
+  .grounding-overflow-grid { grid-template-columns: 1fr; }
 }
 
 :root[data-theme="light"] .workspace-sidebar-footer .project-account > .project-account-menu,
@@ -16676,7 +16733,8 @@ button.attention-cell { cursor: pointer; }
 :root[data-theme="light"] .grounding-map-heading h1,
 :root[data-theme="light"] .grounding-map-progress > strong,
 :root[data-theme="light"] .grounding-plan-hub,
-:root[data-theme="light"] .grounding-orbit-node strong {
+:root[data-theme="light"] .grounding-orbit-node strong,
+:root[data-theme="light"] .grounding-overflow-node strong {
   color: var(--text);
 }
 
@@ -16686,7 +16744,8 @@ button.attention-cell { cursor: pointer; }
   color: var(--subtle);
 }
 
-:root[data-theme="light"] .grounding-orbit-node small {
+:root[data-theme="light"] .grounding-orbit-node small,
+:root[data-theme="light"] .grounding-overflow-node small {
   color: var(--muted);
 }
 
@@ -16698,6 +16757,8 @@ button.attention-cell { cursor: pointer; }
 :root[data-theme="light"] .grounding-map-progress > div span,
 :root[data-theme="light"] .grounding-plan-hub i,
 :root[data-theme="light"] .grounding-orbit-node > i,
+:root[data-theme="light"] .grounding-overflow-node,
+:root[data-theme="light"] .grounding-overflow-node > i,
 :root[data-theme="light"] .grounding-map-key i {
   border-color: var(--border-2);
   background: var(--surface);
@@ -16709,6 +16770,8 @@ button.attention-cell { cursor: pointer; }
 :root[data-theme="light"] .grounding-orbit-node.is-inferred strong { color: var(--muted); }
 :root[data-theme="light"] .grounding-orbit-node:hover strong,
 :root[data-theme="light"] .grounding-orbit-node:focus-visible strong { color: var(--cool); }
+:root[data-theme="light"] .grounding-overflow-node:hover,
+:root[data-theme="light"] .grounding-overflow-node:focus-visible { background: var(--surface-2); }
 :root[data-theme="light"] .grounding-plan-hub i { box-shadow: 0 0 0 13px rgb(63 97 147 / 9%); }
 
 @media (max-width: 560px) {

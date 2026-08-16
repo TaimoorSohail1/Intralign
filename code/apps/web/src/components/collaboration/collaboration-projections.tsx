@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check } from "@phosphor-icons/react";
+import { ArrowRight, Check } from "@phosphor-icons/react";
 import type { CSSProperties } from "react";
 
 import type {
@@ -26,6 +26,8 @@ type GroundingPlacement = CSSProperties & {
   "--node-angle": string;
   "--orbit-radius": string;
 };
+
+const RADIAL_GROUNDING_NODE_LIMIT = 6;
 
 function groundingPlacement(index: number, total: number) {
   const dense = total > 8;
@@ -126,7 +128,8 @@ export function CollaborationRollUp({ data }: { data: CollaborationRollUpProject
 
 export function CollaborationGroundingMap({ data }: { data: GroundingMapProjection }) {
   const total = data.nodes.length;
-  const dense = total > 8;
+  const radialNodes = data.nodes.slice(0, RADIAL_GROUNDING_NODE_LIMIT);
+  const additionalNodes = data.nodes.slice(RADIAL_GROUNDING_NODE_LIMIT);
 
   return (
     <section className="collaboration-projection grounding-map-projection" aria-labelledby="grounding-map-title">
@@ -144,16 +147,16 @@ export function CollaborationGroundingMap({ data }: { data: GroundingMapProjecti
       </div>
 
       <div
-        className={`grounding-constellation ${dense ? "is-dense" : ""}`}
-        data-node-density={dense ? "dense" : "standard"}
+        className="grounding-constellation"
+        data-node-density={additionalNodes.length ? "overflow" : "standard"}
         aria-label="Grounding constellation"
       >
         <div className="grounding-plan-hub" aria-hidden="true">
           <span>Your plan</span>
           <i />
         </div>
-        {data.nodes.map((node, index) => {
-          const placement = groundingPlacement(index, total);
+        {radialNodes.map((node, index) => {
+          const placement = groundingPlacement(index, radialNodes.length);
           return (
             <div className="grounding-orbit" key={node.issue_id} style={placement.style}>
               <span className={`grounding-connector is-${node.state}`} aria-hidden="true" />
@@ -176,6 +179,30 @@ export function CollaborationGroundingMap({ data }: { data: GroundingMapProjecti
           );
         })}
       </div>
+
+      {additionalNodes.length ? (
+        <section className="grounding-overflow-grid" aria-label="Additional grounding details">
+          {additionalNodes.map((node) => (
+            <Link
+              aria-label={`${node.title}. ${stateLabels[node.state]}. Open issue`}
+              className={`grounding-overflow-node is-${node.state}`}
+              href={node.href}
+              key={node.issue_id}
+            >
+              <i aria-hidden="true">
+                {node.state === "grounded" || node.state === "addressed" ? (
+                  <Check size={11} weight="bold" />
+                ) : null}
+              </i>
+              <span>
+                <strong>{node.title}</strong>
+                <small>{node.detail || `${node.pillar} Â· ${node.artifact_type}`}</small>
+              </span>
+              <ArrowRight aria-hidden="true" size={14} />
+            </Link>
+          ))}
+        </section>
+      ) : null}
 
       <div className="grounding-map-key" aria-label="Grounding states">
         {(Object.keys(groundingLegendLabels) as GroundingNodeState[])

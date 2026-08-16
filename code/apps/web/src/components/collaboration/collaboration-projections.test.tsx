@@ -72,11 +72,12 @@ describe("Slice 6 read-only projections", () => {
     expect(screen.getByRole("heading", { name: "Grounding map" })).toBeInTheDocument();
     expect(screen.getByText("what your plan rests on — grounded vs still OSLO-inferred")).toBeInTheDocument();
     const constellation = screen.getByLabelText("Grounding constellation");
-    expect(constellation).toHaveAttribute("data-node-density", "dense");
-    expect(within(constellation).getAllByRole("link")).toHaveLength(13);
+    expect(constellation).toHaveAttribute("data-node-density", "overflow");
+    expect(within(constellation).getAllByRole("link")).toHaveLength(6);
     expect(screen.getByText("5 of 13 load-bearing details grounded")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Additional grounding details")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Load-bearing detail 13/ })).toHaveAttribute(
+    const additionalDetails = screen.getByLabelText("Additional grounding details");
+    expect(within(additionalDetails).getAllByRole("link")).toHaveLength(7);
+    expect(within(additionalDetails).getByRole("link", { name: /Load-bearing detail 13/ })).toHaveAttribute(
       "href",
       "/projects/project-1/issues?issue=issue-13",
     );
