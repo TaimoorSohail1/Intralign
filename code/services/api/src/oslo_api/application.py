@@ -835,7 +835,14 @@ class DatabaseSliceOneApplication:
                               '[]'::jsonb
                             )
                           ) issue
-                          where coalesce(issue ->> 'status', 'open') <> 'resolved'
+                          left join public.issues current_issue
+                            on current_issue.project_id = p.id
+                           and current_issue.stable_key = issue ->> 'id'
+                          where coalesce(
+                            current_issue.current_status::text,
+                            issue ->> 'status',
+                            'open'
+                          ) <> 'resolved'
                         ) issue_counts on true
                         where p.workspace_id = :workspace_id
                         order by p.archived_at nulls first, p.updated_at desc
@@ -865,7 +872,8 @@ class DatabaseSliceOneApplication:
                               when run.kind = 'extended' then 'Extended Analysis completed'
                               else 'Initial Analysis completed'
                             end as title,
-                            coalesce(run.completed_at, run.updated_at) as created_at
+                            coalesce(run.completed_at, run.updated_at) as created_at,
+                            null::text as href
                           from public.analysis_runs run
                           where run.workspace_id = :workspace_id
                             and run.status in ('completed', 'failed')
@@ -878,16 +886,36 @@ class DatabaseSliceOneApplication:
                             'review' as kind,
                             'completed' as status,
                             coalesce(event.payload ->> 'reviewer_name', 'A reviewer')
-                              || ' submitted '
-                              || replace(
-                                coalesce(event.payload ->> 'response_kind', 'feedback'),
-                                '_',
-                                ' '
-                              ) as title,
-                            event.occurred_at as created_at
+                              || case event.payload ->> 'response_kind'
+                                when 'approve' then ' confirmed the requested evidence'
+                                when 'reject' then ' rejected the requested evidence'
+                                when 'comment' then ' commented on the evidence request'
+                                when 'suggest_alternative' then ' suggested an alternative'
+                                else ' submitted reviewer feedback'
+                              end as title,
+                            event.occurred_at as created_at,
+                            '/projects/' || (event.payload ->> 'project_id')
+                              || '/issues?issue=' || (event.payload ->> 'issue_id') as href
                           from public.outbox_events event
                           where event.workspace_id = :workspace_id
                             and event.event_type = 'review.responded'
+
+                          union all
+
+                          select
+                            'mention:' || event.id::text as key,
+                            (event.payload ->> 'project_id')::uuid as project_id,
+                            'mention' as kind,
+                            'completed' as status,
+                            coalesce(event.payload ->> 'actor_name', 'A teammate')
+                              || ' mentioned you' as title,
+                            event.occurred_at as created_at,
+                            '/projects/' || (event.payload ->> 'project_id')
+                              || '/issues?issue=' || (event.payload ->> 'issue_id') as href
+                          from public.outbox_events event
+                          where event.workspace_id = :workspace_id
+                            and event.event_type = 'notify.direct_mention'
+                            and event.payload ->> 'recipient_user_id' = :actor_user_id_text
                         ), deduplicated_activity as (
                           select distinct on (key) *
                           from activity
@@ -904,6 +932,7 @@ class DatabaseSliceOneApplication:
                           activity.status,
                           activity.title,
                           activity.created_at,
+                          activity.href,
                           reads.notification_key is not null as read
                         from deduplicated_activity activity
                         join public.projects project on project.id = activity.project_id
@@ -922,7 +951,11 @@ class DatabaseSliceOneApplication:
                         limit 12
                         """
                     ),
-                    {"workspace_id": workspace_id, "actor_user_id": actor_user_id},
+                    {
+                        "workspace_id": workspace_id,
+                        "actor_user_id": actor_user_id,
+                        "actor_user_id_text": str(actor_user_id),
+                    },
                 )
                 .mappings()
                 .all()
@@ -959,6 +992,7 @@ class DatabaseSliceOneApplication:
                     title=row["title"],
                     created_at=row["created_at"],
                     read=row["read"],
+                    href=row["href"],
                 )
                 for row in notification_rows
             ],
@@ -1061,7 +1095,7 @@ class DatabaseSliceOneApplication:
             if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
                 raise InvitePermissionDenied
             for notification_key in set(keys):
-                if not notification_key.startswith(("analysis:", "review:")):
+                if not notification_key.startswith(("analysis:", "review:", "mention:")):
                     continue
                 connection.execute(
                     text(
@@ -1544,7 +1578,10 @@ class DatabaseSliceOneApplication:
             )
         if membership is None:
             raise InvalidInvitation
-        joined_from_this_invitation = membership["created_at"] >= invitation["created_at"]
+        # Equal timestamps can occur because PostgreSQL's transaction timestamp is
+        # stable for the whole transaction. An existing membership created in the
+        # same timestamp bucket must not be mistaken for one created by this invite.
+        joined_from_this_invitation = membership["created_at"] > invitation["created_at"]
         return ActivationResult(
             user_id=session.user_id,
             email=session.email,

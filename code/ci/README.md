@@ -13,11 +13,14 @@ Slice 9 FE-to-BE Integration Map and the explicit guard registry in
 The current authoritative Slice 9 also defines GT-51…GT-57 and GT-A1…GT-A3;
 they are registered so later additions cannot silently disappear.
 
-- `pending` guards are visible and allowed to remain non-gating while their
-  slice is unbuilt.
-- `active` guards must name real pytest selectors and fail the CI run when the
-  behavior is red.
-- Removing a guard or leaving any Integration Map binding empty fails the gate.
+- `pending` guards are visible, have no executable tests, and must carry an
+  explicit reason. Slice 10 and genuinely unshipped tracks stay honest here.
+- `active` guards must name real pytest selectors and/or Vitest files; either
+  kind fails the CI run when the behavior is red.
+- `ci/r2_surface_contracts.json` binds all 58 human-map rows and all shipped R2
+  routes to real frontend, backend, and test files. Missing or stale paths fail.
+- Removing a guard, losing reverse `SIM:#N` coverage, or leaving any
+  Integration Map binding empty fails the gate.
 
 Run the Phase 0 gate locally from `code/`:
 

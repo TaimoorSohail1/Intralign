@@ -176,27 +176,22 @@ describe("HistoryWorkspace", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "History & timeline" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "History" })).toBeInTheDocument();
+    expect(screen.getByText("append-only — how the read moved")).toBeInTheDocument();
+    expect(screen.getByText("Your read over this session")).toBeInTheDocument();
     expect(screen.getByText("Extended Analysis complete")).toBeInTheDocument();
     expect(screen.getAllByText("Initial Analysis complete")).not.toHaveLength(0);
-    expect(
-      screen.getByRole("button", { name: "Collapse Extended Analysis complete" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Expand Initial Analysis complete" }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /collapse extended/i })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Versions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Analysis" }));
     expect(screen.getByText(/7 plan-artifact versions retained/)).toBeInTheDocument();
     expect(screen.queryByText("6 issues detected")).not.toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Collaboration & invites" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Your decisions" }));
     expect(screen.getByText("Reviewer invited")).toBeInTheDocument();
     expect(screen.queryByText(/7 plan-artifact versions retained/)).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Versions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Analysis" }));
     fireEvent.click(screen.getByRole("button", { name: /view snapshot/i }));
     await waitFor(() =>
       expect(screen.getByRole("dialog", { name: /historical snapshot/i })).toBeInTheDocument(),
@@ -210,10 +205,6 @@ describe("HistoryWorkspace", () => {
       ).not.toBeInTheDocument(),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /ask oslo about extended analysis/i }));
-    expect(onAskOslo).toHaveBeenCalledWith(
-      "run-extended",
-      expect.stringContaining("Extended Analysis"),
-    );
+    expect(onAskOslo).not.toHaveBeenCalled();
   });
 });

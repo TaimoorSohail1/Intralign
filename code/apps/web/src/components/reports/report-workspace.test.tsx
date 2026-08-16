@@ -1,7 +1,7 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { OverviewSnapshot } from "@/lib/server/oslo-api";
+import type { OverviewSnapshot, ProjectHistory } from "@/lib/server/oslo-api";
 
 import { ReportWorkspace } from "./report-workspace";
 
@@ -85,6 +85,92 @@ beforeEach(() => {
   vi.stubGlobal(
     "fetch",
     vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
+      const url = String(_url);
+      if (url.endsWith("/report/asana") && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              id: "handoff-1",
+              state: "completed",
+              total_count: 1,
+              completed_count: 1,
+              safe_error_code: null,
+              destination_gid: "asana-project-1",
+            }),
+            { status: 201, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      if (url.endsWith("/report/asana") && (!init?.method || init.method === "GET")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              configured: false,
+              entitled: false,
+              destination_gid: null,
+              snapshot_id: snapshot.snapshot_id,
+              preview: [],
+              latest: null,
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      if (url.endsWith("/report/schedules") && init?.method === "POST") {
+        const body = JSON.parse(String(init.body));
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              id: "schedule-1",
+              recipient_email: body.recipient_email,
+              recipient_class: body.recipient_class,
+              weekday: body.weekday,
+              local_time: body.local_time,
+              timezone: body.timezone,
+              state: "enabled",
+              next_run_at: "2026-07-28T13:00:00Z",
+              last_run_at: null,
+              last_delivery_id: null,
+              created_at: "2026-07-27T12:00:00Z",
+              updated_at: "2026-07-27T12:00:00Z",
+            }),
+            { status: 201, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      if (url.endsWith("/report/schedules") && (!init?.method || init.method === "GET")) {
+        return Promise.resolve(
+          new Response(JSON.stringify([]), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+        );
+      }
+      if (url.includes("/report/schedules/") && init?.method === "PATCH") {
+        const state = JSON.parse(String(init.body)).state;
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              id: "schedule-1",
+              recipient_email: "scheduled@example.com",
+              recipient_class: "exec-sponsor",
+              weekday: 4,
+              local_time: "13:00:00",
+              timezone: "Asia/Karachi",
+              state,
+              next_run_at: "2026-07-28T13:00:00Z",
+              last_run_at: null,
+              last_delivery_id: null,
+              created_at: "2026-07-27T12:00:00Z",
+              updated_at: "2026-07-27T12:01:00Z",
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      if (url.includes("/report/schedules/") && init?.method === "DELETE") {
+        return Promise.resolve(new Response(null, { status: 204 }));
+      }
       if (init?.method === "POST") {
         return Promise.resolve(
           new Response(
@@ -122,13 +208,228 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  Reflect.deleteProperty(navigator, "clipboard");
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
+function renderAuthored(snapshotValue: OverviewSnapshot = snapshot) {
+  const result = render(<ReportWorkspace snapshot={snapshotValue} />);
+  fireEvent.click(screen.getByRole("button", { name: /Generate a draft/i }));
+  return result;
+}
+
 describe("ReportWorkspace", () => {
-  it("renders all seven report sections in one continuous editable document", () => {
+  it("matches the prototype report entry hierarchy and keeps dismissal durable", async () => {
+    const first = render(<ReportWorkspace snapshot={snapshot} />);
+    expect(screen.getByLabelText("Reports location")).toHaveTextContent("OutcomeReports");
+    expect(screen.getByRole("region", { name: "Reports welcome" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Reports" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Take a 30-second tour →" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Start with Executive Briefing");
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss reports welcome" }));
+    expect(screen.queryByRole("region", { name: "Reports welcome" })).not.toBeInTheDocument();
+    first.unmount();
     render(<ReportWorkspace snapshot={snapshot} />);
+    await waitFor(() => {
+      expect(screen.queryByRole("region", { name: "Reports welcome" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("persists a newly generated draft with its audience, depth and sections", async () => {
+    render(<ReportWorkspace snapshot={snapshot} />);
+    fireEvent.click(screen.getByRole("button", { name: "Team" }));
+    fireEvent.click(screen.getByRole("button", { name: "Summary" }));
+    fireEvent.click(screen.getByRole("button", { name: "Top risks" }));
+    fireEvent.click(screen.getByRole("button", { name: /Generate a draft/i }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        `/api/projects/${snapshot.project_id}/report`,
+        expect.objectContaining({
+          method: "PUT",
+          body: expect.stringContaining('"recipient_class":"team"'),
+        }),
+      );
+      expect(fetch).toHaveBeenCalledWith(
+        `/api/projects/${snapshot.project_id}/report`,
+        expect.objectContaining({
+          body: expect.stringContaining('"composition_depth":"summary"'),
+        }),
+      );
+    });
+  });
+
+  it("presents the four Slice 7 authored and generated reports", () => {
+    renderAuthored();
+
+    expect(screen.getByRole("tablist", { name: "Reports" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Authored Executive Briefing/i })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("tab", { name: /Generated Outcome Readiness/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: /Generated Assumptions & Evidence/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Generated Decision Record/i })).toBeInTheDocument();
+  });
+
+  it("renders Outcome Readiness from the retained analysis without an editor", () => {
+    render(<ReportWorkspace snapshot={snapshot} />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /Generated Outcome Readiness/i }));
+
+    expect(
+      screen.getByRole("heading", { name: /Outcome Readiness · read-only snapshot/i }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Fragile", { selector: "strong" })).not.toHaveLength(0);
+    expect(screen.getByText(/0 of 1 critical details grounded/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Delivery ownership is unresolved", level: 2 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/27 Jul 2026/i)).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Edit readout" })).not.toBeInTheDocument();
+  });
+
+  it("supports Summary and Full depth in the generated evidence register", () => {
+    const withEvidence: OverviewSnapshot = {
+      ...snapshot,
+      provenance: {
+        schema_version: 1,
+        artifacts: [],
+        assumptions: Array.from({ length: 6 }, (_, index) => ({
+          id: `ASM-${index + 1}`,
+          artifact_type: "resources",
+          text: `Evidence detail ${index + 1}`,
+          issue_id: null,
+          issue_title: null,
+          load_bearing: index < 2,
+          state: index === 0 ? "confirmed" : "inferred",
+        })),
+        grounded_claims: 1,
+        inferred_claims: 5,
+        total_claims: 6,
+        load_bearing_inferences: 1,
+        structure: {
+          unconfirmed_dependencies: 0,
+          unowned_parties: 1,
+          untraceable_numbers: 0,
+        },
+        this_week: { user_grounded: 1, oslo_inferred: 5 },
+      },
+    };
+    render(<ReportWorkspace snapshot={withEvidence} />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /Generated Assumptions & Evidence/i }));
+
+    expect(
+      screen.getByRole("heading", { name: /Assumptions & Evidence · read-only snapshot/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Summary" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByText("Evidence detail 6")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Full" }));
+
+    expect(screen.getByText("Evidence detail 6")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Edit readout" })).not.toBeInTheDocument();
+  });
+
+  it("shows visible feedback when a generated report is exported", () => {
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn(() => "blob:generated-report"),
+      revokeObjectURL: vi.fn(),
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    renderAuthored();
+    fireEvent.click(screen.getByRole("tab", { name: /Generated Outcome Readiness/i }));
+
+    expect(screen.getAllByText("Fragile", { selector: "strong" })).not.toHaveLength(0);
+    expect(screen.getByText(/firms as you confirm more/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Export this report" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("TEXT export downloaded");
+  });
+
+  it("attributes retained decisions and keeps open decisions separate", () => {
+    const history: ProjectHistory = {
+      project_id: snapshot.project_id,
+      next_cursor: null,
+      trend: [],
+      groups: [
+        {
+          run_id: snapshot.analysis_run_id,
+          kind: "extended",
+          status: "completed",
+          current: true,
+          occurred_at: snapshot.published_at,
+          confidence_index: 58,
+          confidence_band: "Moderate",
+          confidence_direction: "strengthened",
+          understanding_stage: "expanded",
+          changes: [],
+          events: [
+            {
+              id: 17,
+              category: "decisions",
+              event_type: "issue_resolution_confirmed",
+              summary: "Delivery lead appointed",
+              detail: "The project owner confirmed the accountable lead.",
+              actor_type: "user",
+              artifact_type: "resources",
+              artifact_version: 3,
+              issue_id: "ISS-OLD",
+              occurred_at: "2026-07-26T10:00:00Z",
+            },
+          ],
+        },
+      ],
+    };
+    render(<ReportWorkspace history={history} snapshot={snapshot} />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /Generated Decision Record/i }));
+
+    expect(
+      screen.getByRole("heading", { name: /Decision Record · read-only snapshot/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Delivery lead appointed" })).toBeInTheDocument();
+    expect(screen.getByText(/You · 26 Jul 2026/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Who owns delivery?" })).toBeInTheDocument();
+  });
+
+  it("starts Executive Briefing in the prototype compose state and generates an authored draft", () => {
+    render(<ReportWorkspace snapshot={snapshot} />);
+
+    expect(screen.getByText(/the note that goes out/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /1 Generate/i })).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
+    expect(screen.getByRole("button", { name: "Exec sponsor" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Full" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Integrity" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.queryByRole("textbox", { name: "Edit readout" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Generate a draft/i }));
+
+    expect(screen.getByRole("textbox", { name: "Edit readout" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /2 Author/i })).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
+  });
+
+  it("renders all seven report sections in one continuous editable document", () => {
+    renderAuthored();
 
     expect(screen.getByRole("heading", { name: "Project understanding" })).toBeInTheDocument();
     expect(screen.getAllByRole("textbox")).toHaveLength(1);
@@ -170,7 +471,7 @@ describe("ReportWorkspace", () => {
       },
     };
 
-    render(<ReportWorkspace snapshot={repeated} />);
+    renderAuthored(repeated);
 
     const report = screen.getByRole("textbox", { name: "Edit readout" }).textContent ?? "";
     expect(report.match(/The delivery lead can approve the cutover/g)).toHaveLength(1);
@@ -178,7 +479,7 @@ describe("ReportWorkspace", () => {
   });
 
   it("inserts a paragraph without creating an extra report heading", () => {
-    const { container } = render(<ReportWorkspace snapshot={snapshot} />);
+    const { container } = renderAuthored();
     const editor = screen.getByRole("textbox", { name: "Edit readout" });
     const summaryBody = editor.querySelector(
       '[data-section="summary"] .report-section-body',
@@ -197,26 +498,26 @@ describe("ReportWorkspace", () => {
   });
 
   it("supports section navigation, audience-specific asks, and real send feedback", async () => {
-    render(<ReportWorkspace snapshot={snapshot} />);
+    renderAuthored();
 
     fireEvent.click(screen.getByRole("button", { name: /Sections/i }));
     expect(screen.getByRole("menuitem", { name: /Decisions needed/i })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Report recipient"), {
-      target: { value: "Steering group" },
+      target: { value: "Board" },
     });
     expect(screen.getByRole("textbox", { name: "Edit readout" })).toHaveTextContent(
       "Please resolve the highest-impact open decision",
     );
-    fireEvent.click(screen.getByRole("button", { name: /Send/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Send$/i }));
     expect(screen.getByRole("dialog", { name: "Send readout" })).toHaveTextContent(
-      "Goes to Steering group as a read-only copy",
+      "Goes to Board as a read-only copy",
     );
     fireEvent.click(screen.getByRole("button", { name: "Change recipient" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Recipient email" }), {
       target: { value: "sponsor@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send to the steering group" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send to the board" }));
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent(
         "Report emailed to sponsor@example.com.",
@@ -228,15 +529,26 @@ describe("ReportWorkspace", () => {
     );
   });
 
-  it("shows friendly validation and does not call delivery for an invalid email", () => {
-    render(<ReportWorkspace snapshot={snapshot} />);
+  it("requires an explicit delivery address instead of pre-filling a plausible recipient", () => {
+    renderAuthored();
 
-    fireEvent.click(screen.getByRole("button", { name: /Send/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Send$/i }));
+
+    expect(screen.getByRole("textbox", { name: "Recipient email" })).toHaveValue("");
+    expect(
+      screen.getByRole("button", { name: "Send to the exec sponsor" }),
+    ).toBeDisabled();
+  });
+
+  it("shows friendly validation and does not call delivery for an invalid email", () => {
+    renderAuthored();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Send$/i }));
     fireEvent.click(screen.getByRole("button", { name: "Change recipient" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Recipient email" }), {
       target: { value: "not-an-email" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send to the sponsor" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send to the exec sponsor" }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
       "Enter a valid recipient email address.",
@@ -249,7 +561,7 @@ describe("ReportWorkspace", () => {
 
   it("autosaves sanitized document edits without running analysis", () => {
     vi.useFakeTimers();
-    render(<ReportWorkspace snapshot={snapshot} />);
+    renderAuthored();
 
     const editor = screen.getByRole("textbox", { name: "Edit readout" });
     editor.innerHTML = `${editor.innerHTML}<script>alert('no')</script><p onclick="bad()">Owner confirmed.</p>`;
@@ -276,11 +588,10 @@ describe("ReportWorkspace", () => {
     const click = vi
       .spyOn(HTMLAnchorElement.prototype, "click")
       .mockImplementation(() => undefined);
-    render(<ReportWorkspace snapshot={snapshot} />);
+    renderAuthored();
 
     fireEvent.click(screen.getByRole("button", { name: "Export" }));
-    expect(screen.getByRole("dialog", { name: "Export readout" })).toBeInTheDocument();
-    expect(screen.getByText("Memos")).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Export your plan" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Export as PDF" }));
 
     await waitFor(() => {
@@ -290,6 +601,195 @@ describe("ReportWorkspace", () => {
       );
       expect(click).toHaveBeenCalledOnce();
     });
+  });
+
+  it("offers the real Slice 7 export formats and the Asana Basic fallback", () => {
+    renderAuthored();
+
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Export your plan" });
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Excel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "CSV" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Text" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "PDF package" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy summary" })).toBeInTheDocument();
+    expect(screen.getByText(/Asana/i)).toBeInTheDocument();
+    expect(screen.getByText(/Basic/i)).toBeInTheDocument();
+  });
+
+  it("labels the export with executable plan tasks instead of open issues", async () => {
+    vi.mocked(fetch).mockImplementation((_url: string | URL | Request) => {
+      const url = String(_url);
+      if (url.endsWith("/report/asana")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              configured: false,
+              entitled: false,
+              destination_gid: null,
+              snapshot_id: snapshot.snapshot_id,
+              preview: [
+                { item_key: "task-1", task: "Confirm launch", owner: null, start_on: null, due_on: null, source_date: null, provenance: "document:plan:page:3" },
+                { item_key: "task-2", task: "Publish launch", owner: null, start_on: null, due_on: null, source_date: null, provenance: "document:plan:page:4" },
+              ],
+              latest: null,
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      if (url.endsWith("/report/schedules")) {
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ content: null }), { status: 200 }));
+    });
+    renderAuthored();
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      `/api/projects/${snapshot.project_id}/report/asana`,
+      expect.objectContaining({ cache: "no-store" }),
+    ));
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Export your plan" });
+    expect(within(dialog).getByText(/2 tasks/)).toBeInTheDocument();
+    expect(within(dialog).queryByText(/open tasks/)).not.toBeInTheDocument();
+  });
+
+  it("portals the export dialog to the viewport and closes it with Escape", () => {
+    renderAuthored();
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    const dialog = screen.getByRole("dialog", { name: "Export your plan" });
+    expect(dialog.parentElement?.parentElement).toBe(document.body);
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Export your plan" })).not.toBeInTheDocument();
+  });
+
+  it("copies the current summary and records the export", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    renderAuthored();
+
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy summary" }));
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(snapshot.summary);
+      expect(screen.getByRole("status")).toHaveTextContent("Summary copied");
+      expect(fetch).toHaveBeenCalledWith(
+        `/api/projects/${snapshot.project_id}/report/exports`,
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ format: "copy-summary" }),
+        }),
+      );
+    });
+  });
+
+  it("imports the executable preview through a configured Basic Asana hand-off", async () => {
+    vi.mocked(fetch).mockImplementation((_url: string | URL | Request, init?: RequestInit) => {
+      const url = String(_url);
+      if (url.endsWith("/report/asana") && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              id: "handoff-1",
+              state: "completed",
+              total_count: 1,
+              completed_count: 1,
+              safe_error_code: null,
+              destination_gid: "asana-project-1",
+            }),
+            { status: 201, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      if (url.endsWith("/report/asana")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              configured: true,
+              entitled: true,
+              destination_gid: "asana-project-1",
+              snapshot_id: snapshot.snapshot_id,
+              preview: [
+                {
+                  item_key: "item-1",
+                  task: "Confirm launch",
+                  owner: "Maya",
+                  start_on: null,
+                  due_on: null,
+                  source_date: null,
+                  provenance: "document:plan:page:3",
+                },
+              ],
+              latest: null,
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      if (url.endsWith("/report/schedules")) {
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+      }
+      if (!init?.method || init.method === "GET") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              snapshot_id: snapshot.snapshot_id,
+              content: null,
+              deliveries: [],
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      return Promise.resolve(new Response("{}", { status: 200 }));
+    });
+    renderAuthored();
+
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Import 1 tasks →" })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Import 1 tasks →" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        `/api/projects/${snapshot.project_id}/report/asana`,
+        { method: "POST" },
+      );
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "1 executable plan items imported to Asana",
+      );
+    });
+  });
+
+  it("downloads a real CSV payload from the retained plan", () => {
+    let downloadedAs = "";
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn(() => "blob:plan-export"),
+      revokeObjectURL: vi.fn(),
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+      downloadedAs = this.download;
+    });
+    renderAuthored();
+
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    fireEvent.click(screen.getByRole("button", { name: "CSV" }));
+    fireEvent.click(screen.getByRole("button", { name: "Download the CSV" }));
+
+    expect(URL.createObjectURL).toHaveBeenCalledOnce();
+    expect(downloadedAs).toMatch(/Atlas launch-plan\.csv$|Project understanding-plan\.csv$/);
+    expect(screen.getByRole("status")).toHaveTextContent("CSV export downloaded");
   });
 
   it("hydrates device drafts after mount without changing the server render", async () => {
@@ -302,32 +802,70 @@ describe("ReportWorkspace", () => {
 
     render(<ReportWorkspace snapshot={snapshot} />);
 
-    expect(
-      await screen.findByText("Device draft restored safely."),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /2 Author/i })).toHaveAttribute(
+        "aria-current",
+        "step",
+      );
+      expect(screen.getByText("Device draft restored safely.")).toBeInTheDocument();
+    });
   });
 
-  it("accepts a native date-time input and schedules durable delivery", async () => {
-    render(<ReportWorkspace snapshot={snapshot} />);
+  it("creates a timezone-aware weekly schedule through the Basic contract", async () => {
+    renderAuthored();
 
     fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Recipient email" }), {
       target: { value: "scheduled@example.com" },
     });
-    fireEvent.input(screen.getByLabelText("Delivery time"), {
-      target: { value: "2026-07-28T13:00" },
+    fireEvent.change(screen.getByLabelText("Day"), {
+      target: { value: "4" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Schedule delivery" }));
+    fireEvent.change(screen.getByLabelText("Local time"), {
+      target: { value: "13:00" },
+    });
+    fireEvent.change(screen.getByLabelText("Timezone"), {
+      target: { value: "Asia/Karachi" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Schedule weekly · Basic/i }));
 
     await waitFor(() => {
-      const scheduledFor = new Date("2026-07-28T13:00").toISOString();
       expect(fetch).toHaveBeenCalledWith(
-        `/api/projects/${snapshot.project_id}/report`,
+        `/api/projects/${snapshot.project_id}/report/schedules`,
         expect.objectContaining({
           method: "POST",
-          body: expect.stringContaining(`"scheduled_for":"${scheduledFor}"`),
+          body: expect.stringContaining('"timezone":"Asia/Karachi"'),
         }),
       );
+      expect(screen.getByRole("status")).toHaveTextContent("Weekly delivery scheduled");
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Pause weekly schedule for scheduled@example.com",
+      }),
+    );
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Weekly delivery paused");
+      expect(
+        screen.getByRole("button", {
+          name: "Resume weekly schedule for scheduled@example.com",
+        }),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Remove weekly schedule for scheduled@example.com",
+      }),
+    );
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Weekly delivery removed");
+      expect(
+        screen.queryByRole("button", {
+          name: "Pause weekly schedule for scheduled@example.com",
+        }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -358,14 +896,14 @@ describe("ReportWorkspace", () => {
       );
       },
     );
-    render(<ReportWorkspace snapshot={snapshot} />);
+    renderAuthored();
 
-    fireEvent.click(screen.getByRole("button", { name: /Send/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Send$/i }));
     fireEvent.click(screen.getByRole("button", { name: "Change recipient" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Recipient email" }), {
       target: { value: "sponsor@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send to the sponsor" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send to the exec sponsor" }));
 
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent("email delivery failed");
@@ -409,10 +947,10 @@ describe("ReportWorkspace", () => {
         );
       },
     );
-    render(<ReportWorkspace snapshot={snapshot} />);
+    renderAuthored();
 
     expect(await screen.findByText("Previous analysis")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Send/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Send$/i }));
     expect(screen.getByRole("status")).toHaveTextContent(
       "Refresh the report from the current analysis before sending or scheduling it.",
     );

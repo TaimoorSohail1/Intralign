@@ -25,6 +25,7 @@ from oslo_api.analysis.models import (
     Assessment,
     AssessmentSnapshot,
     EvidenceCitation,
+    EvidenceFragment,
     HarnessInvocation,
     Perception,
     RunKind,
@@ -39,6 +40,12 @@ from oslo_api.analysis.semantic_validation import (
 )
 from oslo_api.analysis.store import AnalysisStore
 from oslo_api.analysis.understanding import enrich_assessment
+
+SAMPLE_PLAN_DESCRIPTION = (
+    "DevNorth 2026 is a one-day developer conference for approximately 450 attendees "
+    "on 18 September. Confirm the venue, programme, Wi-Fi capacity, sponsors, budget, "
+    "schedule and delivery owners."
+)
 
 
 class _GraphState(TypedDict):
@@ -151,10 +158,16 @@ class AnalysisWorkflow:
         elif phase is AnalysisPhase.PERCEIVE:
             self._start(run.id, request, phase)
             invocation = self._harness_invocation(run.id, phase, state)
+            evidence = self._store.evidence_for(request) + request.user_evidence
+            governed_description = self._governed_description(
+                request.description,
+                evidence,
+            )
+            state["governed_description"] = governed_description
             perception = self._harness.perceive(
-                description=request.description,
+                description=governed_description,
                 source_names=request.source_names,
-                evidence=self._store.evidence_for(request) + request.user_evidence,
+                evidence=evidence,
                 kind=harness_kind,
                 invocation=invocation,
             )
@@ -258,7 +271,7 @@ class AnalysisWorkflow:
                 artifacts=state["artifacts"],
                 perception=state["perception"],
                 kind=harness_kind,
-                context=request.description,
+                context=str(state.get("governed_description", request.description)),
                 invocation=invocation,
             )
             state["assessment"] = canonicalize_assessment(
@@ -308,7 +321,7 @@ class AnalysisWorkflow:
                 artifacts=state["artifacts"],
                 kind=request.kind,
                 previous_snapshot=previous_snapshot,
-                description=request.description,
+                description=str(state.get("governed_description", request.description)),
                 user_evidence=request.user_evidence,
             )
             state["assessment"] = assessment
@@ -335,7 +348,7 @@ class AnalysisWorkflow:
                 project_id=request.project_id,
                 state="current" if request.kind is RunKind.EXTENDED else "provisional",
                 summary=self._summary(
-                    description=request.description,
+                    description=str(state.get("governed_description", request.description)),
                     perception=state["perception"],
                     artifacts=state["artifacts"],
                     assessment=assessment,
@@ -357,6 +370,22 @@ class AnalysisWorkflow:
         if phase is AnalysisPhase.EXTENDED_TRANSITION:
             self._store.complete_run(run.id)
         return graph_state
+
+    @staticmethod
+    def _governed_description(
+        description: str,
+        evidence: tuple[EvidenceFragment, ...],
+    ) -> str:
+        """Keep the built-in demo copy out of a real document-backed read."""
+
+        base, separator, clarification = description.partition("\n\nUSER_CLARIFICATION")
+        normalized_base = " ".join(base.split())
+        has_documents = any(
+            item.reference.startswith("document:") for item in evidence
+        )
+        if has_documents and normalized_base == SAMPLE_PLAN_DESCRIPTION:
+            return f"USER_CLARIFICATION{clarification}" if separator else ""
+        return description
 
     @staticmethod
     def _can_fallback_artifact(error: Exception) -> bool:
@@ -592,23 +621,35 @@ class AnalysisWorkflow:
         artifacts: tuple[Artifact, ...],
         assessment: Assessment,
     ) -> str:
+        document_fact = next(
+            (
+                " ".join(fragment.content.split())
+                for fragment in perception.evidence
+                if fragment.reference.startswith("document:")
+                and fragment.content.strip()
+            ),
+            "",
+        )
         visible_description = description.split(
             "\n\nUSER_CLARIFICATION",
             maxsplit=1,
         )[0]
         normalized = " ".join(visible_description.split())
-        if normalized:
-            project_read = normalized[:320].rstrip()
+        evidence_fact = next(
+            (
+                " ".join(fact.split())
+                for fact in perception.facts
+                if fact and fact != "Document evidence supplied."
+            ),
+            "",
+        )
+        # Uploaded documents are the governed source for the current read. A stale
+        # intake prompt must never name a different project in a retained summary.
+        if document_fact and normalized:
+            project_read = document_fact
         else:
-            evidence_fact = next(
-                (
-                    " ".join(fact.split())
-                    for fact in perception.facts
-                    if fact and fact != "Document evidence supplied."
-                ),
-                "",
-            )
-            project_read = evidence_fact[:320].rstrip()
+            project_read = evidence_fact or document_fact or normalized
+        project_read = project_read[:320].rstrip()
 
         project_read = re.sub(
             r"\s*\[?document:[^\]\s]*\]?",

@@ -12,6 +12,12 @@ export default async function SettingsPage() {
     getWorkspace({ accessToken: session.accessToken, workspaceId: session.workspaceId }),
     getWorkspacePreferences({ accessToken: session.accessToken, workspaceId: session.workspaceId }),
   ]);
+  const activeProject = [...workspace.projects]
+    .filter((project) => !project.archived)
+    .sort((left, right) => right.updated_at.localeCompare(left.updated_at))[0];
+  if (activeProject) {
+    redirect(`/projects/${activeProject.id}/overview?settings=profile`);
+  }
   return (
     <WorkspaceSettings
       displayName={session.displayName ?? "Member"}

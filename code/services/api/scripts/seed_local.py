@@ -23,6 +23,24 @@ def supabase_executable(repository_root: Path, *, platform_name: str | None = No
 
 
 def local_status(repository_root: Path) -> dict[str, str]:
+    env_path = repository_root / "services" / "api" / ".env"
+    if env_path.exists():
+        configured: dict[str, str] = {}
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#") or "=" not in stripped:
+                continue
+            key, value = stripped.split("=", 1)
+            configured[key.strip()] = value.strip().strip('"').strip("'")
+        api_url = configured.get("SUPABASE_URL")
+        secret_key = configured.get("SUPABASE_SECRET_KEY")
+        database_url = configured.get("DATABASE_URL")
+        if api_url and secret_key and database_url:
+            return {
+                "API_URL": api_url,
+                "SECRET_KEY": secret_key,
+                "DB_URL": database_url.replace("postgresql+psycopg://", "postgresql://", 1),
+            }
     executable = supabase_executable(repository_root)
     result = subprocess.run(  # noqa: S603
         [str(executable), "status", "-o", "json"],
@@ -30,6 +48,7 @@ def local_status(repository_root: Path) -> dict[str, str]:
         check=True,
         capture_output=True,
         text=True,
+        timeout=30,
     )
     return json.loads(result.stdout)
 

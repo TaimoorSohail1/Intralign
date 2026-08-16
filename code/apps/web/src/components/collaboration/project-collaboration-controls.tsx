@@ -22,7 +22,7 @@ interface Participant {
   id: string;
   display_name: string;
   email?: string | null;
-  role: "owner";
+  role: "owner" | "collaborator" | "viewer";
 }
 
 interface Invitation {
@@ -38,6 +38,10 @@ interface ShareLink {
   url?: string;
   expires_at: string;
   revoked_at?: string | null;
+  recipient_name?: string | null;
+  recipient_email?: string | null;
+  first_viewed_at?: string | null;
+  last_viewed_at?: string | null;
 }
 
 interface ReviewGrant {
@@ -52,10 +56,14 @@ interface ReviewGrant {
   response_kind?: string | null;
   response_body?: string | null;
   analysis_run_id?: string | null;
+  delivery_state?: string;
+  delivery_attempts?: number;
+  delivered_at?: string | null;
+  withdrawn_at?: string | null;
 }
 
 interface CollaborationState {
-  actor_role: "owner";
+  actor_role: "owner" | "collaborator" | "viewer";
   plan: {
     name: string;
     collaborators_unmetered: boolean;
@@ -71,7 +79,8 @@ interface CollaborationState {
 }
 
 interface CreatedAccess {
-  kind: "snapshot" | "review";
+  id: string;
+  kind: "snapshot";
   url: string;
   expires_at: string;
 }
@@ -180,8 +189,8 @@ export function ProjectCollaborationControls({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
-  const [reviewerName, setReviewerName] = useState("");
-  const [reviewerEmail, setReviewerEmail] = useState("");
+  const [snapshotRecipientName, setSnapshotRecipientName] = useState("");
+  const [snapshotRecipientEmail, setSnapshotRecipientEmail] = useState("");
   const [created, setCreated] = useState<CreatedAccess | null>(null);
   const [copied, setCopied] = useState(false);
   const [audience, setAudience] = useState<ExportAudience>("sponsor");
@@ -263,6 +272,10 @@ export function ProjectCollaborationControls({
     () => (state?.reviews ?? []).filter((item) => item.responded_at && item.response_id),
     [state],
   );
+  const pendingInvitationEmails = useMemo(
+    () => new Set(pendingInvitations.map((item) => item.email.toLowerCase())),
+    [pendingInvitations],
+  );
 
   async function runAction(body: Record<string, unknown>) {
     setError("");
@@ -281,43 +294,26 @@ export function ProjectCollaborationControls({
   }
 
   async function createSnapshot() {
-    setBusy("snapshot");
-    const payload = await runAction({ action: "share", reviewerName: "", reviewerEmail: null });
-    if (payload?.url) {
-      setCreated({ kind: "snapshot", url: payload.url, expires_at: payload.expires_at });
-      setSuccess("A view-only snapshot is ready to share.");
-      await loadCollaboration();
-    }
-    setBusy("");
-  }
-
-  async function createReview() {
-    if (!reviewerName.trim()) {
-      setError("Add the reviewer’s name first.");
+    if (!snapshotRecipientName.trim()) {
+      setError("Add the snapshot recipient’s name first.");
       return;
     }
-    setBusy("review");
+    setBusy("snapshot");
     const payload = await runAction({
-      action: "review",
-      reviewerName: reviewerName.trim(),
-      reviewerEmail: reviewerEmail.trim() || null,
+      action: "share",
+      recipientName: snapshotRecipientName.trim(),
+      recipientEmail: snapshotRecipientEmail.trim() || null,
     });
     if (payload?.url) {
-      setCreated({ kind: "review", url: payload.url, expires_at: payload.expires_at });
-      setSuccess("The external review link is ready.");
-      setReviewerName("");
-      setReviewerEmail("");
-      await loadCollaboration();
-    }
-    setBusy("");
-  }
-
-  async function promoteReviewEvidence(review: ReviewGrant) {
-    if (!review.response_id || review.analysis_run_id) return;
-    setBusy(`response-${review.response_id}`);
-    const payload = await runAction({ action: "use_review_evidence", responseId: review.response_id });
-    if (payload?.analysis_run_id) {
-      setSuccess("Reviewer evidence queued for analysis.");
+      setCreated({
+        id: payload.id,
+        kind: "snapshot",
+        url: payload.url,
+        expires_at: payload.expires_at,
+      });
+      setSuccess("A view-only snapshot is ready to share.");
+      setSnapshotRecipientName("");
+      setSnapshotRecipientEmail("");
       await loadCollaboration();
     }
     setBusy("");
@@ -338,10 +334,25 @@ export function ProjectCollaborationControls({
     setBusy("");
   }
 
+  async function sendReviewerInvite(review: ReviewGrant) {
+    if (!review.reviewer_email) return;
+    const key = `review-invite-${review.id}`;
+    setBusy(key);
+    const payload = await runAction({ action: "invite", email: review.reviewer_email });
+    if (payload) {
+      setSuccess(`Invitation sent to ${review.reviewer_email}.`);
+      await loadCollaboration();
+    }
+    setBusy("");
+  }
+
   async function revoke(body: Record<string, unknown>, key: string, message: string) {
     setBusy(key);
     const result = await runAction(body);
     if (result !== undefined) {
+      if (body.action === "revoke_share" && body.linkId === created?.id) {
+        setCreated(null);
+      }
       setSuccess(message);
       await loadCollaboration();
     }
@@ -456,6 +467,7 @@ export function ProjectCollaborationControls({
                     <p className="collaboration-label">Workspace role</p>
                     <div className="prototype-role-table">
                       <RoleRow label="Owner" detail="Every workspace member can change the plan, share it, and export it." />
+                      <RoleRow label="Delegate-PM" detail="Full authenticated read and co-grounding access; enforcement remains display-level in this slice." />
                     </div>
                   </section>
 
@@ -467,7 +479,7 @@ export function ProjectCollaborationControls({
                           <span className="collaboration-avatar">{initials(participant.display_name) || "OS"}</span>
                           <span><strong>{participant.display_name}</strong><small>{participant.email ?? participant.role}</small></span>
                           <span className="seat-badge no-seat">unmetered</span>
-                          <span className="collaboration-role">Owner</span>
+                          <span className="collaboration-role">{participant.role === "owner" ? "Owner" : participant.role === "collaborator" ? "Delegate-PM" : "Viewer"}</span>
                         </div>
                       ))}
                     </div>
@@ -482,15 +494,28 @@ export function ProjectCollaborationControls({
                           {activeShares.map((share) => (
                             <AccessRecord
                               key={share.id}
-                              title={`Snapshot · expires ${readableDate(share.expires_at)}`}
-                              detail="View-only and revocable"
+                              title={`${share.recipient_name ?? "Named recipient"} · expires ${readableDate(share.expires_at)}`}
+                              detail={share.last_viewed_at ? `Viewed · latest ${readableDate(share.last_viewed_at)}` : "Not viewed · view-only and revocable"}
                               actionLabel={busy === `share-${share.id}` ? "Revoking…" : "Revoke"}
                               onAction={() => void revoke({ action: "revoke_share", linkId: share.id }, `share-${share.id}`, "The snapshot link was revoked.")}
                             />
                           ))}
                         </>
                       ) : (
-                        <><p>No link yet. A snapshot link is view-only.</p><button className="collaboration-primary-button" type="button" disabled={busy === "snapshot"} onClick={() => void createSnapshot()}>{busy === "snapshot" ? "Creating…" : "Create a view-only link"}</button></>
+                        <>
+                          <p>No link yet. A snapshot link is view-only and bound to its named recipient.</p>
+                          <div className="prototype-review-fields">
+                            <label>
+                              Snapshot recipient name
+                              <input value={snapshotRecipientName} onChange={(event) => setSnapshotRecipientName(event.target.value)} />
+                            </label>
+                            <label>
+                              Snapshot recipient email <small>optional</small>
+                              <input aria-label="Snapshot recipient email" type="email" value={snapshotRecipientEmail} onChange={(event) => setSnapshotRecipientEmail(event.target.value)} />
+                            </label>
+                          </div>
+                          <button className="collaboration-primary-button" type="button" disabled={busy === "snapshot" || !snapshotRecipientName.trim()} onClick={() => void createSnapshot()}>{busy === "snapshot" ? "Creating…" : "Create a view-only link"}</button>
+                        </>
                       )}
                     </div>
                     <p className="collaboration-fine-print">A share link shows OSLO’s read as it stood when the link was made. If the project moves on, recipients are told they are viewing a previous analysis.</p>
@@ -499,16 +524,14 @@ export function ProjectCollaborationControls({
 
                   <section className="prototype-share-section prototype-review-request">
                     <Heading icon={<ShieldCheck size={18} weight="duotone" />} title="External review request" detail="Free — no workspace seat" />
-                    <div className="prototype-review-fields">
-                      <label>Reviewer name<input value={reviewerName} placeholder="Amina Khan" onChange={(event) => setReviewerName(event.target.value)} /></label>
-                      <label>Reviewer email <small>optional</small><input type="email" value={reviewerEmail} placeholder="amina@company.com" onChange={(event) => setReviewerEmail(event.target.value)} /></label>
-                      <button className="collaboration-secondary-button" disabled={busy === "review"} type="button" onClick={() => void createReview()}>{busy === "review" ? "Creating…" : "Create review link"}</button>
+                    <div className="collaboration-rule-box">
+                      <strong>Start from an issue.</strong> Choose <em>Ask for evidence</em> so OSLO can preview exactly one question and one cited source before creating the scoped link.
                     </div>
                   </section>
 
                   {created ? (
                     <div className="collaboration-created-link" role="status">
-                      <div><strong>{created.kind === "review" ? "External review link" : "View-only snapshot link"}</strong><span>Expires {readableDate(created.expires_at)}</span></div>
+                      <div><strong>View-only snapshot link</strong><span>Expires {readableDate(created.expires_at)}</span></div>
                       <code>{created.url}</code>
                       <div className="collaboration-created-actions">
                         <button type="button" onClick={() => void copyCreated()}>{copied ? <Check size={15} weight="bold" /> : <Copy size={15} weight="bold" />}{copied ? "Copied" : "Copy link"}</button>
@@ -521,14 +544,34 @@ export function ProjectCollaborationControls({
                     <section className="prototype-share-section collaboration-access-records">
                       <p className="collaboration-label">Active access</p>
                       {pendingInvitations.map((invitation) => <AccessRecord key={invitation.id} title={invitation.email} detail={`Pending owner invite · expires ${readableDate(invitation.expires_at)}`} actionLabel={busy === `invite-${invitation.id}` ? "Revoking…" : "Revoke"} onAction={() => void revoke({ action: "revoke_invitation", invitationId: invitation.id }, `invite-${invitation.id}`, "The invitation was revoked.")} />)}
-                      {activeReviews.map((review) => <AccessRecord key={review.id} title={review.reviewer_name} detail={`External review · expires ${readableDate(review.expires_at)}`} actionLabel={busy === `review-${review.id}` ? "Revoking…" : "Revoke"} onAction={() => void revoke({ action: "revoke_review", grantId: review.id }, `review-${review.id}`, "The external review was revoked.")} />)}
+                      {activeReviews.map((review) => <AccessRecord key={review.id} title={review.reviewer_name} detail={`External review · ${humanize(review.delivery_state)} · expires ${readableDate(review.expires_at)}`} actionLabel={busy === `review-${review.id}` ? "Revoking…" : "Revoke"} onAction={() => void revoke({ action: "revoke_review", grantId: review.id }, `review-${review.id}`, "The external review was revoked.")} />)}
                     </section>
                   ) : null}
 
                   {reviewerResponses.length ? (
                     <section className="prototype-share-section collaboration-access-records">
                       <p className="collaboration-label">Reviewer responses</p>
-                      {reviewerResponses.map((review) => <AccessRecord key={review.response_id} title={`${review.reviewer_name} · ${humanize(review.response_kind)}`} detail={review.response_body ?? "Reviewer response received."} actionLabel={review.analysis_run_id ? "Evidence added" : busy === `response-${review.response_id}` ? "Queuing…" : "Use as project evidence"} onAction={review.analysis_run_id ? undefined : () => void promoteReviewEvidence(review)} />)}
+                      {reviewerResponses.map((review) => (
+                        <div className="collaboration-response-record" key={review.response_id}>
+                          <AccessRecord title={`${review.reviewer_name} · ${humanize(review.response_kind)}`} detail={review.response_body ?? "Reviewer response received."} actionLabel={review.analysis_run_id ? "Analysis queued" : "Recorded"} />
+                          {review.reviewer_email && !pendingInvitationEmails.has(review.reviewer_email.toLowerCase()) ? (
+                            <div className="collaboration-invite-draft">
+                              <span>
+                                <strong>Invitation draft — not sent</strong>
+                                <small>OSLO suggests inviting this reviewer into the full read. You decide whether to send.</small>
+                              </span>
+                              <button
+                                aria-label={`Send invitation to ${review.reviewer_name}`}
+                                disabled={busy === `review-invite-${review.id}`}
+                                onClick={() => void sendReviewerInvite(review)}
+                                type="button"
+                              >
+                                {busy === `review-invite-${review.id}` ? "Sending…" : "Send invitation"}
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
                     </section>
                   ) : null}
                 </div>

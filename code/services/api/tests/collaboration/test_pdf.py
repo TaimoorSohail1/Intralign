@@ -4,6 +4,7 @@ from oslo_api.collaboration.pdf import render_report_pdf, render_snapshot_pdf
 def test_snapshot_pdf_contains_all_artifacts_evidence_and_governance_markers() -> None:
     snapshot = {
         "state": "current",
+        "published_at": "2026-08-15T10:30:00Z",
         "summary": "A retained project summary.",
         "artifacts": [
             {
@@ -66,7 +67,9 @@ def test_snapshot_pdf_contains_all_artifacts_evidence_and_governance_markers() -
     assert b"Resolved dependency" not in pdf
     assert b"OSLO Project Readout" in pdf
     assert b"Source documents: 0; plan artifacts: 7" in pdf
+    assert b"Analysis dated: 2026-08-15T10:30:00Z" in pdf
     assert b"It does not update the project or run analysis." in pdf
+    assert b"OSLO advises; you decide." in pdf
 
 
 def test_report_pdf_uses_the_exact_shared_draft_sections() -> None:
@@ -81,10 +84,45 @@ def test_report_pdf_uses_the_exact_shared_draft_sections() -> None:
         ]
     }
 
-    pdf = render_report_pdf("Halcyon", content)
+    pdf = render_report_pdf(
+        "Halcyon",
+        content,
+        analysis_completed_at="2026-08-15T10:30:00Z",
+    )
 
     assert pdf.startswith(b"%PDF-1.4")
     for index in range(1, 8):
         assert f"Section {index}".encode() in pdf
         assert f"Exact paragraph {index}".encode() in pdf
+    assert b"Analysis dated: 2026-08-15T10:30:00Z" in pdf
+    assert b"OSLO advises; you decide." in pdf
+    assert b"does not run analysis" in pdf
     assert b"/Count 1" in pdf
+
+
+def test_snapshot_pdf_anchors_a_stale_summary_to_the_current_project() -> None:
+    snapshot = {
+        "state": "current",
+        "published_at": "2026-08-15T10:30:00Z",
+        "summary": (
+            "DevNorth 2026 is a developer conference. At the expanded stage, "
+            "OSLO mapped the supplied evidence into 7 plan artifacts; "
+            "13 open findings identify the main uncertainty."
+        ),
+        "artifacts": [],
+        "assessment": {
+            "confidence_index": 62,
+            "clarity": "High",
+            "alignment": "Moderate",
+            "feasibility": "Low",
+            "issues": [
+                {"title": "Open dependency", "severity": "Critical", "status": "open"}
+            ],
+        },
+    }
+
+    pdf = render_snapshot_pdf("Atlas launch", snapshot)
+
+    assert b"Atlas launch. At the expanded stage" in pdf
+    assert b"1 open finding" in pdf
+    assert b"DevNorth" not in pdf

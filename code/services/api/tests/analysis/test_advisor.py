@@ -15,6 +15,7 @@ from oslo_api.analysis.advisor import (
     GroundedProjectAdvisor,
     OpenAIProjectAdvisor,
     ProjectAdvisorError,
+    with_current_issue_lifecycle,
 )
 from oslo_api.analysis.models import EvidenceFragment
 
@@ -172,6 +173,43 @@ def test_grounded_fallback_answers_from_the_current_snapshot() -> None:
     assert reply.answer
     assert "current read" in reply.answer.lower()
     assert reply.follow_up_questions
+
+
+def test_grounded_fallback_does_not_recommend_issues_resolved_after_the_snapshot() -> None:
+    snapshot = completed_snapshot()
+    projected = with_current_issue_lifecycle(
+        snapshot,
+        [
+            {"issue_id": issue.id, "status": "resolved"}
+            for issue in snapshot.assessment.issues
+        ],
+    )
+
+    reply = GroundedProjectAdvisor().answer(
+        snapshot=projected,
+        question="Explain the Attention map and what I should address first.",
+    )
+
+    assert "no open issues" in reply.answer.lower()
+    assert reply.follow_up_questions == ()
+
+
+def test_grounded_fallback_explains_the_issue_named_by_the_workspace() -> None:
+    snapshot = atlas_budget_snapshot()
+    selected = next(
+        issue
+        for issue in snapshot.assessment.issues
+        if issue.title == "GBP 45,000 forecast variance is not approved"
+    )
+
+    reply = GroundedProjectAdvisor().answer(
+        snapshot=snapshot,
+        question=f"Explain this issue: {selected.title}",
+    )
+
+    assert selected.title in reply.answer
+    assert selected.recommendation in reply.answer
+    assert reply.follow_up_questions == (selected.clarification,)
 
 
 def test_grounded_fallback_cites_source_evidence_and_next_budget_verification() -> None:

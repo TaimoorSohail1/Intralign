@@ -6,6 +6,7 @@ from enum import StrEnum
 from uuid import UUID, uuid4
 
 from oslo_api.analysis.integrity import Integrity, OutcomeCheckpoint
+from oslo_api.analysis.load_bearing import PlanDependencyGraph, SensitivityCandidate
 
 
 class RunKind(StrEnum):
@@ -253,6 +254,15 @@ class Issue:
     recommendation_from_oslo: bool = True
     load_bearing: bool = True
     exposure_rank: float = 0
+    finding_basis: str = ""
+    structural_target: str = ""
+    primary_act: str = ""
+    also_offered: tuple[str, ...] = ()
+    classification_state: str = "unclassified"
+    sensitivity: float | None = None
+    sensitivity_trace: dict[str, object] | None = None
+    sensitivity_state: str = "unavailable"
+    unassessed: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -287,6 +297,8 @@ class Assessment:
     confirmed_dependency_count: int = 0
     outcome_checkpoints: tuple[OutcomeCheckpoint, ...] = ()
     integrity: Integrity | None = None
+    dependency_graph: PlanDependencyGraph | None = None
+    sensitivity_candidates: tuple[SensitivityCandidate, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

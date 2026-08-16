@@ -212,6 +212,21 @@ describe("IntakeExperience", () => {
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
   });
 
+  it("drops the built-in sample copy when real documents are attached", () => {
+    render(<IntakeExperience displayName="Alex" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /sample plan/i }));
+    fireEvent.change(screen.getByLabelText("Attach documents"), {
+      target: {
+        files: [new File(["project nova"], "project-nova.pdf", { type: "application/pdf" })],
+      },
+    });
+
+    expect(screen.getByLabelText("Describe your project")).toHaveValue("");
+    expect(screen.getByText("project-nova.pdf")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Get my analysis/ })).toBeEnabled();
+  });
+
   it("publishes Overview, shows orientation once and allows replay", async () => {
     vi.useFakeTimers();
     localStorage.clear();

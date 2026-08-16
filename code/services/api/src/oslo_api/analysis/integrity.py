@@ -32,6 +32,9 @@ class Integrity:
     decomposition: tuple[Pillar, Pillar, Pillar]
     posture: str = "moment-in-time"
     tracking: str = "pending-execution"
+    complete: bool = True
+    sound_claim_blocked: bool = False
+    under_review_regions: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

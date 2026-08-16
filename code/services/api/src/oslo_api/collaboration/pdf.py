@@ -1,13 +1,22 @@
 from __future__ import annotations
 
+import re
 from io import BytesIO
 from textwrap import wrap
 
 
-def render_report_pdf(project_name: str, content: dict) -> bytes:
+def render_report_pdf(
+    project_name: str,
+    content: dict,
+    *,
+    analysis_completed_at: object | None = None,
+) -> bytes:
     """Render the exact structured report draft shown in the readout editor."""
 
-    lines = [f"{project_name} - Intralign Project Readout", ""]
+    lines = [f"{project_name} - Intralign Project Readout"]
+    if analysis_completed_at is not None:
+        lines.append(f"Analysis dated: {_iso_timestamp(analysis_completed_at)}")
+    lines.append("")
     for section in content.get("sections", []):
         lines.append(str(section.get("title") or "Section"))
         lines.extend(
@@ -19,13 +28,18 @@ def render_report_pdf(project_name: str, content: dict) -> bytes:
     lines.extend(
         [
             "This export matches the retained report draft and does not run analysis.",
-            "Intralign advises; you decide.",
+            "OSLO advises; you decide.",
         ]
     )
     return _simple_pdf(lines)
 
 
-def render_snapshot_pdf(project_name: str, snapshot: dict) -> bytes:
+def render_snapshot_pdf(
+    project_name: str,
+    snapshot: dict,
+    *,
+    analysis_completed_at: object | None = None,
+) -> bytes:
     """Render a dependency-free, immutable snapshot PDF for Alpha."""
 
     assessment = snapshot.get("assessment") or {}
@@ -54,6 +68,12 @@ def render_snapshot_pdf(project_name: str, snapshot: dict) -> bytes:
     }
     lines = [
         f"{project_name} - OSLO Project Readout",
+        "Analysis dated: "
+        + _iso_timestamp(
+            analysis_completed_at
+            if analysis_completed_at is not None
+            else snapshot.get("published_at", "Not available")
+        ),
         "",
         f"State: {snapshot.get('state', 'current')}",
         f"Confidence: {assessment.get('confidence_index', 'Not available')}/100",
@@ -62,7 +82,11 @@ def render_snapshot_pdf(project_name: str, snapshot: dict) -> bytes:
         f"Feasibility: {assessment.get('feasibility', 'Not available')}",
         "",
         "Summary",
-        str(snapshot.get("summary") or "No summary available."),
+        _current_read_summary(
+            project_name,
+            str(snapshot.get("summary") or "No summary available."),
+            len(issues),
+        ),
         "",
         "What changed",
         "This export reflects the latest retained analysis and artifact revisions.",
@@ -137,6 +161,33 @@ def render_snapshot_pdf(project_name: str, snapshot: dict) -> bytes:
         ]
     )
     return _simple_pdf(lines)
+
+
+def _current_read_summary(project_name: str, summary: str, open_issue_count: int) -> str:
+    open_label = (
+        f"{open_issue_count} open "
+        f"{'finding' if open_issue_count == 1 else 'findings'}"
+    )
+    visible_summary = re.sub(
+        r"\b\d+\s+open\s+(?:findings?|issues?|points?)\b",
+        open_label,
+        summary,
+        flags=re.IGNORECASE,
+    )
+    governed_detail = re.search(
+        r"\bAt the (?:orientation|expanded|validated) stage,.*$",
+        visible_summary,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if project_name.strip() and governed_detail:
+        return f"{project_name.strip()}. {governed_detail.group(0)}"
+    return visible_summary
+
+
+def _iso_timestamp(value: object) -> str:
+    isoformat = getattr(value, "isoformat", None)
+    rendered = isoformat() if callable(isoformat) else str(value)
+    return rendered.replace("+00:00", "Z")
 
 
 def _simple_pdf(lines: list[str]) -> bytes:

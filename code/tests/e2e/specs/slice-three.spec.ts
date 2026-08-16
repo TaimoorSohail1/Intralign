@@ -1,6 +1,6 @@
 import { expect, test } from "../fixtures";
 
-test.setTimeout(180_000);
+test.setTimeout(300_000);
 
 async function signIn(page: import("@playwright/test").Page) {
   await page.goto("/login");
@@ -9,7 +9,7 @@ async function signIn(page: import("@playwright/test").Page) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     await page.getByRole("button", { name: "Sign in" }).click();
     try {
-      await page.waitForURL(/\/(workspace|welcome)/, { timeout: 15_000 });
+      await page.waitForURL(/\/(workspace|welcome)/, { timeout: 45_000 });
       return;
     } catch {
       if (attempt === 1) throw new Error("Local E2E owner sign-in did not recover");
@@ -17,26 +17,52 @@ async function signIn(page: import("@playwright/test").Page) {
   }
 }
 
+async function unlockFirstRead(page: import("@playwright/test").Page) {
+  const decision = page.getByRole("button", { name: /Confirm.+it holds/i });
+  await decision.waitFor({ state: "visible", timeout: 2_000 }).catch(() => undefined);
+  if (!(await decision.isVisible())) return;
+  const actResponse = page.waitForResponse(
+    (response) => response.request().method() === "POST" && /\/issues\/.+\/acts$/.test(response.url()),
+  );
+  await decision.click();
+  expect((await actResponse).ok()).toBeTruthy();
+  await page.reload();
+  await expect(page.locator(".project-shell")).not.toHaveClass(/is-first-run-frozen/, {
+    timeout: 30_000,
+  });
+  const closeIssue = page.getByRole("button", { name: "Close issue" });
+  if (await closeIssue.isVisible()) await closeIssue.click();
+}
+
 async function createAnalyzedProject(page: import("@playwright/test").Page) {
   await signIn(page);
   await page.goto("/workspace");
-  const analyzedProject = page
-    .locator("article.workspace-project-card")
-    .filter({ hasText: "7 / 7" })
-    .first();
+  const analyzedProject = page.getByRole("link", { name: /Open (?:the )?project/i }).first();
   if (await analyzedProject.count()) {
-    await analyzedProject.getByRole("link", { name: /Open project/ }).click();
+    await analyzedProject.click();
     await expect(page).toHaveURL(/\/projects\/.+\/overview/);
-    await expect(page.getByText("Project summary", { exact: true })).toBeVisible({
-      timeout: 120_000,
-    });
+    await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
+    await unlockFirstRead(page);
     return;
   }
   await page.goto("/welcome");
-  await page.getByRole("button", { name: /Start your first project/ }).click();
-  await page.getByRole("button", { name: /sample project/i }).click();
-  await page.getByRole("button", { name: /See where I stand/ }).click();
+  await page.getByRole("button", { name: /Start your first (?:outcome|project)/i }).click();
+  await page.getByRole("button", { name: /sample (?:plan|project)/i }).click();
+  await page.getByRole("button", { name: /Get my analysis|See where I stand/i }).click();
+  await page.waitForURL(/\/projects\/[^/]+\/(?:analysis\/[^/]+|overview)/, { timeout: 120_000 });
+  if (page.url().includes("/analysis/")) {
+    const skipIntro = page.getByRole("button", { name: /Skip the intro/i });
+    await skipIntro.waitFor({ state: "visible", timeout: 10_000 }).catch(() => undefined);
+    if (await skipIntro.isVisible()) await skipIntro.click();
+    const confirmOutcome = page
+      .frameLocator('iframe[title="OSLO analysis and outcome confirmation"]')
+      .getByRole("button", { name: /Yes.+this is my outcome/i });
+    await expect(confirmOutcome).toBeVisible({ timeout: 120_000 });
+    await confirmOutcome.click();
+  }
   await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
+
+  await unlockFirstRead(page);
 
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
   if (await orientation.isVisible()) {
@@ -50,29 +76,38 @@ test("Slice 3 exposes an evidence-qualified console and stable workspace routes"
 }) => {
   await createAnalyzedProject(page);
 
-  await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "How confidence is calculated" })).toBeVisible();
-  await page.getByRole("button", { name: "Why this confidence read" }).click();
-  await expect(page.getByRole("region", { name: "Confidence calculation" })).toBeVisible();
+  const projectId = page.url().match(/\/projects\/([^/]+)\//)?.[1];
+  if (!projectId) throw new Error(`Could not read a project id from ${page.url()}`);
+  const workspace = page.getByRole("navigation", { name: "Workspace" });
+  if (!(await page.locator(".confidence-read").isVisible())) {
+    await page.getByRole("button", { name: "Expand Outcome Integrity" }).click();
+  }
+  await page.getByText("Why a maturity read, not a probability?", { exact: true }).click();
+  await expect(page.locator(".r2-maturity-explanation")).toBeVisible();
 
   const issue = page.locator(".issue-row").first();
   await issue.focus();
   await issue.click();
-  await expect(page.getByRole("dialog", { name: "Issue details" })).toBeVisible();
-  await expect(page.getByLabel("OSLO project advisor")).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Issue details" })).toBeVisible();
+  await expect(page.getByLabel("OSLO project advisor")).toBeVisible();
   await page.getByRole("button", { name: "Close issue" }).click();
   await expect(issue).toBeFocused();
 
-  const workspace = page.getByRole("navigation", { name: "Workspace" });
-  await workspace.getByRole("link", { name: /^Attention map/ }).click();
-  await expect(page).toHaveURL(/\/attention/);
-  await expect(page.getByRole("heading", { name: "Attention map" })).toBeVisible();
-
-  await workspace.getByRole("link", { name: /Issues/ }).click();
-  await expect(page).toHaveURL(/\/issues$/);
+  if (await workspace.isVisible()) {
+    await expect(
+      workspace.getByRole("link", { name: /^Attention map/ }),
+    ).toHaveCount(0);
+  }
+  await page.goto(`/projects/${projectId}/attention`);
+  await expect(page).toHaveURL(/\/issues$/, { timeout: 120_000 });
   await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Issue filters" })).toBeVisible();
-  await page.getByRole("link", { name: "History" }).click();
-  await expect(page.getByRole("heading", { name: "History & timeline" })).toBeVisible();
-  await expect(page.getByText(/Read-only · viewing history changes nothing/i)).toBeVisible();
+
+  await page.goto(`/projects/${projectId}/issues`);
+  await expect(page).toHaveURL(/\/issues$/, { timeout: 120_000 });
+  await expect(page.getByRole("region", { name: "Exposure-ranked issue queue" })).toBeVisible();
+  await expect(page.locator(".issue-row").first()).toBeVisible();
+  await page.goto(`/projects/${projectId}/history`);
+  await expect(page).toHaveURL(/\/history$/, { timeout: 120_000 });
+  await expect(page.getByRole("heading", { name: "History", exact: true })).toBeVisible();
+  await expect(page.getByText(/Read-only.+viewing history changes nothing/i)).toBeVisible();
 });

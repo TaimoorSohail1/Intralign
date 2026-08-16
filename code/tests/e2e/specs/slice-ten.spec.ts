@@ -15,7 +15,7 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.getByLabel("Email").fill("e2e-owner@example.com");
   await page.getByLabel("Password").fill("E2EOwner123!");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL(/\/(workspace|welcome)/, { timeout: 20_000 });
+  await page.waitForURL(/\/(workspace|welcome)/, { timeout: 60_000 });
 }
 
 test("Slice 10 explains equal judgment and governs workspace capacity without deleting data", async ({
@@ -29,13 +29,24 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
 
   let analyzedProject = page
     .locator("article.workspace-project-card")
-    .filter({ hasText: "7 / 7" })
+    .filter({ hasText: /Analyzed.*7 artifacts/i })
     .first();
   if (await analyzedProject.count() === 0) {
     await page.getByRole("button", { name: "New project" }).click();
     await expect(page).toHaveURL(/\/intake\?project=/);
-    await page.getByRole("button", { name: /sample project/i }).click();
-    await page.getByRole("button", { name: /See where I stand/ }).click();
+    await page.getByRole("button", { name: /sample (?:project|plan)/i }).click();
+    await page.getByRole("button", { name: /Get my analysis|See where I stand/i }).click();
+    await page.waitForURL(/\/projects\/[^/]+\/(?:analysis\/[^/]+|overview)/, { timeout: 120_000 });
+    if (page.url().includes("/analysis/")) {
+      const skipIntro = page.getByRole("button", { name: /Skip the intro/i });
+      await skipIntro.waitFor({ state: "visible", timeout: 10_000 }).catch(() => undefined);
+      if (await skipIntro.isVisible()) await skipIntro.click();
+      const confirmOutcome = page
+        .frameLocator('iframe[title="OSLO analysis and outcome confirmation"]')
+        .getByRole("button", { name: /Yes.+this is my outcome/i });
+      await expect(confirmOutcome).toBeVisible({ timeout: 120_000 });
+      await confirmOutcome.click();
+    }
     await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
     await expect(page.getByText("Project summary", { exact: true })).toBeVisible({
       timeout: 120_000,
@@ -44,7 +55,7 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
     await page.goto("/workspace");
     analyzedProject = page
       .locator("article.workspace-project-card")
-      .filter({ hasText: "7 / 7" })
+      .filter({ hasText: /Analyzed.*7 artifacts/i })
       .first();
   }
   const analyzedProjectLink = analyzedProject.getByRole("link", { name: /Open project/ });

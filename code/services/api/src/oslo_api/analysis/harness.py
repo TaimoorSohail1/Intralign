@@ -1,6 +1,7 @@
 import re
 from typing import Protocol
 
+from oslo_api.analysis.load_bearing import deterministic_finding_tags
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     Artifact,
@@ -412,6 +413,11 @@ class DeterministicAgentHarness:
                 for item in perception.evidence
                 if any(term.lower() in item.content.lower() for term in terms)
             )[:5]
+            finding = deterministic_finding_tags(
+                dimension=dimension,
+                title=title,
+                recommendation=recommendation,
+            )
             issues.append(
                 Issue(
                     id=issue_id,
@@ -423,6 +429,9 @@ class DeterministicAgentHarness:
                     recommendation=recommendation,
                     evidence_refs=refs or perception.evidence_refs[:5],
                     clarification=clarification,
+                    finding_type=finding.finding_type,
+                    finding_basis=finding.basis.value,
+                    structural_target=finding.structural_target.value,
                 )
             )
 
@@ -709,6 +718,16 @@ class DeterministicAgentHarness:
 
     @staticmethod
     def _default_issues(perception: Perception) -> tuple[Issue, ...]:
+        capacity = deterministic_finding_tags(
+            dimension="Feasibility",
+            title="Critical delivery capacity is not confirmed",
+            recommendation="Confirm the accountable owner and a tested contingency.",
+        )
+        milestones = deterministic_finding_tags(
+            dimension="Alignment",
+            title="Milestones are not fully reconciled",
+            recommendation="Reconcile the milestone sequence with responsible owners.",
+        )
         return (
             Issue(
                 id="ISS-001",
@@ -720,6 +739,9 @@ class DeterministicAgentHarness:
                 recommendation="Confirm the accountable owner and a tested contingency.",
                 evidence_refs=perception.evidence_refs,
                 clarification="Who owns the critical dependency, and what is the fallback?",
+                finding_type=capacity.finding_type,
+                finding_basis=capacity.basis.value,
+                structural_target=capacity.structural_target.value,
             ),
             Issue(
                 id="ISS-002",
@@ -730,5 +752,8 @@ class DeterministicAgentHarness:
                 why="The schedule lacks evidence that dependent milestones agree.",
                 recommendation="Reconcile the milestone sequence with responsible owners.",
                 evidence_refs=perception.evidence_refs,
+                finding_type=milestones.finding_type,
+                finding_basis=milestones.basis.value,
+                structural_target=milestones.structural_target.value,
             ),
         )

@@ -1,6 +1,7 @@
 from oslo_api.analysis.artifact_edits import (
     artifact_content_hash,
     build_user_edit_evidence,
+    project_work_breakdown_tasks,
 )
 
 
@@ -81,3 +82,36 @@ def test_user_edit_evidence_is_structured_readable_and_has_no_internal_marker() 
     assert "Availability | 99.95%" in evidence.content
     assert "USER_ARTIFACT_EDIT" not in evidence.content
     assert "END_USER_ARTIFACT_EDIT" not in evidence.content
+
+
+def test_shared_task_projection_does_not_put_rows_in_a_narrative_section() -> None:
+    projected = project_work_breakdown_tasks(
+        artifact_type="resources",
+        content={
+            "sections": [
+                {
+                    "heading": "Resource summary",
+                    "body": "The delivery team is not fully staffed.",
+                    "bullets": [],
+                    "columns": [],
+                    "rows": [],
+                }
+            ]
+        },
+        work_breakdown_content={
+            "sections": [
+                {
+                    "heading": "Delivery",
+                    "columns": ["WBS", "Item"],
+                    "rows": [["1.1", "Validate production support handoff"]],
+                    "row_ids": ["work-breakdown-section-1-row-1"],
+                }
+            ]
+        },
+    )
+
+    assert projected["sections"][0]["rows"] == []
+    assert projected["sections"][1]["columns"] == ["Resource", "Role", "Status"]
+    assert projected["sections"][1]["rows"] == [
+        ["Validate production support handoff", "", ""]
+    ]

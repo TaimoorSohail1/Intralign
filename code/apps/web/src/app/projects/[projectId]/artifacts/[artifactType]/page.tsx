@@ -18,12 +18,24 @@ const artifactTypes = new Set([
 
 export default async function ArtifactPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string; artifactType: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const session = await readSession();
   if (!session.accessToken) redirect("/login");
   const { projectId, artifactType } = await params;
+  const query = await searchParams;
+  const focus =
+    query.new === "outcome"
+      ? "new-outcome"
+      : query.review === "held-outcomes"
+        ? "held-outcomes"
+        : typeof query.focus === "string" &&
+            ["primary-outcome", "held-outcomes", "new-outcome"].includes(query.focus)
+          ? (query.focus as "primary-outcome" | "held-outcomes" | "new-outcome")
+          : undefined;
   if (artifactType === "context") {
     redirect(`/projects/${projectId}/artifacts/constraints`);
   }
@@ -43,6 +55,8 @@ export default async function ArtifactPage({
       displayName={session.displayName ?? "Member"}
       initial={snapshot}
       initialProposals={proposals}
+      initialArtifactFocus={artifactType === "intent" ? focus : undefined}
+      returnToOutcome={artifactType === "intent" && query.return === "outcome"}
       initialView={artifactType as "intent"}
       logoutAction={logout}
     />

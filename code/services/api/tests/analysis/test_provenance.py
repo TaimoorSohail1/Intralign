@@ -231,6 +231,8 @@ def test_provenance_does_not_link_unrelated_claims_that_share_a_page() -> None:
 
     assert result["assumptions"][0]["issue_id"] is None
     assert result["assumptions"][0]["issue_title"] is None
+    assert result["assumptions"][0]["state"] == "confirmed"
+    assert result["load_bearing_inferences"] == 0
 
 
 def test_provenance_deduplicates_the_same_project_assumption_across_artifacts() -> None:

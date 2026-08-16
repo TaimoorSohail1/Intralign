@@ -1,30 +1,20 @@
 from __future__ import annotations
 
-import os
-import subprocess
+import json
 from pathlib import Path
 
 
-def test_integrity_surface_uses_maturity_words_without_numeric_forecast() -> None:
+def test_integrity_maturity_guard_runs_as_a_client_test() -> None:
     code_root = Path(__file__).resolve().parents[4]
-    web_root = code_root / "apps" / "web"
-    vitest = web_root / "node_modules" / ".bin" / ("vitest.CMD" if os.name == "nt" else "vitest")
-    assert vitest.exists(), "vitest is required for the active GT-20 rendered UI guard"
-
-    completed = subprocess.run(
-        [
-            str(vitest),
-            "run",
-            "src/components/overview/project-overview.test.tsx",
-            "--testNamePattern",
-            "Slice 1 outcome-integrity|five-step integrity",
-            "--reporter=dot",
-        ],
-        cwd=web_root,
-        capture_output=True,
-        check=False,
-        text=True,
-        timeout=120,
+    registry = json.loads(
+        (code_root / "ci" / "r2_guardrails.json").read_text(encoding="utf-8")
     )
+    guard = registry["guards"]["GT-20"]
 
-    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert guard["status"] == "active"
+    assert guard["client_tests"] == [
+        "apps/web/src/components/overview/project-overview.test.tsx"
+    ]
+    assert (
+        code_root / guard["client_tests"][0]
+    ).is_file(), "GT-20 must execute its rendered maturity-word assertions in the client lane"

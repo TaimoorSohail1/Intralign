@@ -7,6 +7,7 @@ from datetime import date
 from oslo_api.analysis.completeness import audit_completeness
 from oslo_api.analysis.evidence_graph import build_evidence_graph
 from oslo_api.analysis.issue_identity import deduplicate_issues
+from oslo_api.analysis.load_bearing import deterministic_finding_tags
 from oslo_api.analysis.models import (
     Artifact,
     ArtifactType,
@@ -3567,6 +3568,11 @@ def _issue(
     clarification: str,
 ) -> Issue:
     unique_references = tuple(dict.fromkeys(reference for reference in references if reference))
+    finding = deterministic_finding_tags(
+        dimension=dimension,
+        title=title,
+        recommendation=recommendation,
+    )
     return Issue(
         id=issue_id,
         artifact_type=artifact_type,
@@ -3577,6 +3583,9 @@ def _issue(
         recommendation=recommendation,
         evidence_refs=unique_references,
         clarification=clarification,
+        finding_type=finding.finding_type,
+        finding_basis=finding.basis.value,
+        structural_target=finding.structural_target.value,
     )
 
 

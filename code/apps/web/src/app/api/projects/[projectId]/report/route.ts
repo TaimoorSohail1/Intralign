@@ -49,6 +49,10 @@ export async function PUT(
         projectId,
         snapshotId: body.snapshot_id,
         content: body.content,
+        recipientClass: body.recipient_class,
+        compositionDepth: body.composition_depth,
+        included: body.included,
+        revision: body.revision,
       }),
     );
   } catch (error) {

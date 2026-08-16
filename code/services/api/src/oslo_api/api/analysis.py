@@ -21,6 +21,7 @@ from oslo_api.analysis.advisor import (
     ProjectAdvisor,
     ProjectAdvisorError,
     build_project_advisor,
+    with_current_issue_lifecycle,
 )
 from oslo_api.analysis.documents import MAX_DOCUMENT_BYTES, DocumentRejected
 from oslo_api.analysis.models import normalize_evidence_state
@@ -149,6 +150,15 @@ class IssueResponse(BaseModel):
     section: str
     recommendation_from_oslo: bool
     exposure_rank: float
+    finding_basis: str
+    structural_target: str
+    primary_act: str
+    also_offered: list[str]
+    classification_state: str
+    sensitivity: float | None
+    sensitivity_trace: dict[str, object] | None
+    sensitivity_state: str
+    unassessed: bool
 
 
 class ReliabilityBasisResponse(BaseModel):
@@ -170,6 +180,9 @@ class IntegrityResponse(BaseModel):
     decomposition: list[IntegrityPillarResponse]
     posture: Literal["moment-in-time"]
     tracking: Literal["pending-execution"]
+    complete: bool
+    sound_claim_blocked: bool
+    under_review_regions: list[str]
 
 
 class AssessmentResponse(BaseModel):
@@ -445,6 +458,7 @@ class IssueLifecycleActResponse(BaseModel):
     ]
     attestation: IssueAttestationResponse
     analysis_run: AnalysisRunResponse | None = None
+    first_run: FirstRunResponse | None = None
 
 
 class IssueProposalResponse(BaseModel):
@@ -729,6 +743,9 @@ def _overview_response(
                 ],
                 posture=assessment.integrity.posture,  # type: ignore[arg-type]
                 tracking=assessment.integrity.tracking,  # type: ignore[arg-type]
+                complete=assessment.integrity.complete,
+                sound_claim_blocked=assessment.integrity.sound_claim_blocked,
+                under_review_regions=list(assessment.integrity.under_review_regions),
             ),
             issues=[
                 IssueResponse(
@@ -762,6 +779,15 @@ def _overview_response(
                     section=issue.section or issue.artifact_type.value,
                     recommendation_from_oslo=issue.recommendation_from_oslo,
                     exposure_rank=issue.exposure_rank,
+                    finding_basis=issue.finding_basis,
+                    structural_target=issue.structural_target,
+                    primary_act=issue.primary_act,
+                    also_offered=list(issue.also_offered),
+                    classification_state=issue.classification_state,
+                    sensitivity=issue.sensitivity,
+                    sensitivity_trace=issue.sensitivity_trace,
+                    sensitivity_state=issue.sensitivity_state,
+                    unassessed=issue.unassessed,
                 )
                 for issue in assessment.issues
             ],
@@ -858,6 +884,15 @@ def _artifact_workspace_response(
                 section=issue.section or issue.artifact_type.value,
                 recommendation_from_oslo=issue.recommendation_from_oslo,
                 exposure_rank=issue.exposure_rank,
+                finding_basis=issue.finding_basis,
+                structural_target=issue.structural_target,
+                primary_act=issue.primary_act,
+                also_offered=list(issue.also_offered),
+                classification_state=issue.classification_state,
+                sensitivity=issue.sensitivity,
+                sensitivity_trace=issue.sensitivity_trace,
+                sensitivity_state=issue.sensitivity_state,
+                unassessed=issue.unassessed,
             )
             for issue in artifact["issues"]
         ],
@@ -1195,6 +1230,14 @@ def ask_project_advisor(
                 project_id=project_id,
             )
         )
+        if payload.history_run_id is None:
+            snapshot = with_current_issue_lifecycle(
+                snapshot,
+                application.list_issue_actions(
+                    actor_user_id=context.user.id,
+                    project_id=project_id,
+                ),
+            )
         reply = project_advisor(request).answer(
             snapshot=snapshot,
             question=payload.question,
@@ -1415,6 +1458,11 @@ def act_on_project_issue_lifecycle(
         status=result["status"],
         attestation=IssueAttestationResponse.model_validate(result["attestation"]),
         analysis_run=_run_response(run) if run is not None else None,
+        first_run=(
+            FirstRunResponse.model_validate(result["first_run"])
+            if result.get("first_run") is not None
+            else None
+        ),
     )
 
 

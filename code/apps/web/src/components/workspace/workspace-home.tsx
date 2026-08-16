@@ -1,11 +1,12 @@
 "use client";
 
-import { Archive, ArrowCounterClockwise, ArrowLeft, ArrowRight, Plus } from "@phosphor-icons/react";
+import { Archive, ArrowCounterClockwise, ArrowRight, Plus } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { PlanComparisonModal } from "@/components/workspace/plan-comparison-modal";
+import { ProjectCapacityModal } from "@/components/workspace/project-capacity-modal";
 import type { WorkspaceSummary } from "@/lib/server/oslo-api";
 
 export function WorkspaceHome({
@@ -22,19 +23,24 @@ export function WorkspaceHome({
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [plansOpen, setPlansOpen] = useState(false);
+  const [capacityOpen, setCapacityOpen] = useState(false);
   const [creatingProject, setCreatingProject] = useState(false);
   const newProjectHandled = useRef(false);
   const projectCreationPending = useRef(false);
 
-  const active = useMemo(
-    () => workspace.projects
-      .filter((project) => !project.archived)
-      .sort((left, right) => Date.parse(right.updated_at) - Date.parse(left.updated_at)),
+  const projects = useMemo(
+    () => Array.from(new Map(workspace.projects.map((project) => [project.id, project])).values()),
     [workspace.projects],
   );
+  const active = useMemo(
+    () => projects
+      .filter((project) => !project.archived)
+      .sort((left, right) => Date.parse(right.updated_at) - Date.parse(left.updated_at)),
+    [projects],
+  );
   const archived = useMemo(
-    () => workspace.projects.filter((project) => project.archived),
-    [workspace.projects],
+    () => projects.filter((project) => project.archived),
+    [projects],
   );
   const currentProject = active[0] ?? null;
   const recentProjects = active.slice(1);
@@ -59,7 +65,7 @@ export function WorkspaceHome({
       if (!response.ok) {
         if (response.status === 422) {
           setError(activeProjectLimitMessage);
-          setPlansOpen(true);
+          setCapacityOpen(true);
         } else {
           setError("The project could not be created. Please try again.");
         }
@@ -86,26 +92,40 @@ export function WorkspaceHome({
   const setArchived = async (projectId: string, next: boolean) => {
     setPendingId(projectId);
     setError(null);
-    const response = await fetch(
-      `/api/workspace/projects/${projectId}/${next ? "archive" : "restore"}`,
-      { method: "POST" },
-    );
-    if (!response.ok) {
-      setError(`The project could not be ${next ? "archived" : "restored"}.`);
-      setPendingId(null);
-      return;
-    }
-    setWorkspace((current) => {
-      const projects = current.projects.map((project) =>
-        project.id === projectId ? { ...project, archived: next } : project,
+    try {
+      const response = await fetch(
+        `/api/workspace/projects/${projectId}/${next ? "archive" : "restore"}`,
+        { method: "POST" },
       );
-      return {
-        ...current,
-        projects,
-        can_create_project: projects.filter((project) => !project.archived).length < activeProjectLimit,
-      };
-    });
-    setPendingId(null);
+      if (!response.ok) {
+        setError(`The project could not be ${next ? "archived" : "restored"}.`);
+        return false;
+      }
+      setWorkspace((current) => {
+        const projects = current.projects.map((project) =>
+          project.id === projectId ? { ...project, archived: next } : project,
+        );
+        return {
+          ...current,
+          projects,
+          can_create_project: projects.filter((project) => !project.archived).length < activeProjectLimit,
+        };
+      });
+      return true;
+    } catch {
+      setError(`The project could not be ${next ? "archived" : "restored"}.`);
+      return false;
+    } finally {
+      setPendingId(null);
+    }
+  };
+
+  const archiveAndCreate = async () => {
+    if (!currentProject) return;
+    const archivedCurrent = await setArchived(currentProject.id, true);
+    if (!archivedCurrent) return;
+    setCapacityOpen(false);
+    await createProject();
   };
 
   const projectHref = (project: WorkspaceSummary["projects"][number]) =>
@@ -114,23 +134,18 @@ export function WorkspaceHome({
       : `/projects/${project.id}/overview`;
 
   return (
-    <main aria-label={`${displayName}'s plans`} className="r2-plans-shell">
+    <main aria-label={`${displayName}'s workspace`} className="r2-plans-shell">
       <section className="r2-plans-content">
         <header className="r2-plans-heading">
-          <button
-            className="r2-plans-back"
-            onClick={() => router.push(currentProject ? projectHref(currentProject) : "/welcome")}
-            type="button"
-          >
-            <ArrowLeft aria-hidden="true" size={13} /> Back
+          <div><h1>Your project</h1><p>Pick up where understanding stands.</p></div>
+          <button aria-label="New project" disabled={creatingProject} onClick={() => void createProject()} type="button">
+            <Plus aria-hidden="true" size={14} /> New project
           </button>
-          <h1>Plans</h1>
-          <p>your workspace — the plans you’re steering</p>
         </header>
 
-        {error ? <p className="workspace-error" role="alert">{error}</p> : null}
+        {error && !capacityOpen ? <p className="workspace-error" role="alert">{error}</p> : null}
 
-        <p className="r2-plans-label">Your plan</p>
+        <p className="r2-plans-label">Your project</p>
         <div className="r2-plans-primary-grid">
           {currentProject ? (
             <article className="r2-current-plan">
@@ -159,11 +174,11 @@ export function WorkspaceHome({
                     aria-label={`Archive ${currentProject.name}`}
                     disabled={pendingId === currentProject.id}
                     onClick={() => void setArchived(currentProject.id, true)}
-                    title="Archive plan"
+                    title="Archive project"
                     type="button"
                   ><Archive size={14} /></button>
                 ) : null}
-                <Link href={projectHref(currentProject)}>Open now <ArrowRight size={14} /></Link>
+                <Link href={projectHref(currentProject)}>Open the project <ArrowRight size={14} /></Link>
               </footer>
             </article>
           ) : (
@@ -172,11 +187,13 @@ export function WorkspaceHome({
             </button>
           )}
 
-          <button aria-label="New project" className="r2-new-plan" disabled={creatingProject} onClick={() => void createProject()} type="button">
-            <Plus aria-hidden="true" size={19} />
-            <strong>New plan</strong>
-            <span>Drop any document with context — OSLO maps it.</span>
-          </button>
+          {currentProject ? (
+            <button aria-label="Create a new project" className="r2-new-plan" disabled={creatingProject} onClick={() => void createProject()} type="button">
+              <Plus aria-hidden="true" size={19} />
+              <strong>New project</strong>
+              <span>Drop any document with context — OSLO maps it.</span>
+            </button>
+          ) : null}
         </div>
 
         <section className="r2-plans-list" aria-labelledby="recent-plans">
@@ -218,6 +235,18 @@ export function WorkspaceHome({
         onWorkspaceChange={setWorkspace}
         open={plansOpen}
         workspace={workspace}
+      />
+      <ProjectCapacityModal
+        busy={pendingId !== null || creatingProject}
+        currentProjectName={currentProject?.name ?? "your current project"}
+        onArchive={() => void archiveAndCreate()}
+        onClose={() => setCapacityOpen(false)}
+        onComparePlans={() => {
+          setCapacityOpen(false);
+          setPlansOpen(true);
+        }}
+        open={capacityOpen}
+        planLabel={workspace.plan_label}
       />
     </main>
   );

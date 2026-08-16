@@ -15,7 +15,10 @@ def test_authoritative_r2_contract_is_registered_and_bound() -> None:
     assert report.phase0_guard_count == 50
     assert report.registered_guard_count == 60
     assert report.surface_count == 58
+    assert report.machine_surface_count == 58
+    assert report.route_count == 16
     assert report.prototype_correction_count == 6
-    assert report.active_guard_count == 22
-    assert report.pending_guard_count == 38
-    assert len(report.active_test_selectors) == 19
+    assert report.active_guard_count == 53
+    assert report.pending_guard_count == 7
+    assert len(report.active_test_selectors) == 41
+    assert len(report.active_client_test_files) == 4

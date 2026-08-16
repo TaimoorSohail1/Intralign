@@ -20,7 +20,6 @@ import {
   MapTrifold,
   MagnifyingGlass,
   PencilSimple,
-  Question,
   SignOut,
   Sparkle,
   Target,
@@ -30,9 +29,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, RefObject } from "react";
 
 import type {
+  CollaborationRollUpProjection,
+  GroundingMapProjection,
   IssueBasis,
   IssueLifecycleAct,
   IssueProposalSummary,
@@ -41,11 +42,20 @@ import type {
   ProjectOutcomeSummary,
 } from "@/lib/server/oslo-api";
 import { ArtifactWorkspace } from "@/components/artifacts/artifact-workspace";
+import {
+  CollaborationGroundingMap,
+  CollaborationRollUp,
+} from "@/components/collaboration/collaboration-projections";
 import { HistoryWorkspace } from "@/components/history/history-workspace";
 import { InferenceMap } from "@/components/inference/inference-map";
-import { OutcomeCapacityControl } from "@/components/outcomes/outcome-capacity-control";
+import { YourOutcomeDashboard } from "@/components/outcomes/your-outcome-dashboard";
+import type { YourOutcomeProjection } from "@/components/outcomes/your-outcome-projection";
 import { ReportWorkspace } from "@/components/reports/report-workspace";
 import { ProjectWorkspaceControls } from "@/components/workspace/project-workspace-controls";
+import {
+  WorkspaceSettingsDialog,
+  type SettingsSectionId,
+} from "@/components/workspace/workspace-settings";
 import { analysisFailureCopy } from "@/lib/analysis-errors";
 import {
   defaultIssueFilters,
@@ -53,6 +63,7 @@ import {
   type IssueFilters,
 } from "@/lib/issue-filters";
 import { buildProjectProvenance } from "@/lib/project-provenance";
+import { currentReadSummary } from "@/lib/current-read-summary";
 
 const dimensions = ["clarity", "alignment", "feasibility"] as const;
 const confidenceBands = ["Very Low", "Low", "Moderate", "High", "Very High"] as const;
@@ -79,30 +90,50 @@ const initialAdvisorQuestions = [
 ];
 const orientationSteps = [
   {
-    title: "Your strategic read",
-    body: "Outcome Integrity is the maturity of the plan OSLO can currently see. It is the weakest of Viability, Grounding, and Adaptability — never a health score or prediction.",
+    title: "Outcome Integrity",
+    body: "Your read at a glance — the weakest of three pillars gates it. A maturity read of how sound the plan is, never a health score or a forecast.",
   },
   {
-    title: "Your read, always visible",
-    body: "Outcome Integrity and its limiting pillar stay in the top bar. Click it for the three-pillar decomposition and the evidence-qualified basis.",
+    title: "Your outcome",
+    body: "What you’re steering toward. Open it any time for the full definition, its provenance, and any other outcomes.",
   },
   {
-    title: "Where to start",
-    body: "The most consequential open issue, most severe first — OSLO suggests where to begin. Advisory; the call stays yours.",
+    title: "The read",
+    body: "Your plan’s weaknesses, most-exposed first — one layer across all three pillars. Open any issue to settle it right in the read.",
   },
   {
-    title: "The Attention map",
-    body: "Switch to the Attention map to see where the plan needs attention — documents × Clarity/Alignment/Feasibility. Brighter means more attention, not a health score.",
+    title: "Your plan & work",
+    body: "Your understanding artifacts and the execution plan live here — the documents OSLO reads and you author.",
   },
   {
-    title: "Edit a document",
-    body: "Open any of the seven documents and type. Your edits become confirmed evidence; saved changes reanalyse automatically and keep every view up to date.",
-  },
-  {
-    title: "Ask OSLO anything",
-    body: "A persistent advisor — ask about the read, an issue, or what to do next. It reads and explains; nothing changes your plan without you.",
+    title: "OSLO — advisory",
+    body: "OSLO’s reasoning and chat. It advises and acts only on your say-so; every action is recorded as yours.",
   },
 ];
+const feedbackKinds = [
+  { id: "broken", title: "Something’s broken", detail: "a defect — it didn’t work as expected" },
+  { id: "missing", title: "Something’s missing", detail: "an enhancement — it could be better" },
+  { id: "other", title: "Something else", detail: "a question, a reaction, anything" },
+] as const;
+const feedbackImpacts = ["Blocking me", "Slowing me down", "Minor"] as const;
+type FeedbackKind = (typeof feedbackKinds)[number]["id"];
+type FeedbackTicketSummary = {
+  ticket_id: string;
+  title: string;
+  status: string;
+  created_at: string;
+};
+const feedbackSessionStorageKey = "oslo_feedback_session_id";
+
+function currentFeedbackSessionId() {
+  const existing = window.sessionStorage.getItem(feedbackSessionStorageKey);
+  if (existing) return existing;
+  const created =
+    globalThis.crypto?.randomUUID?.() ??
+    `feedback-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  window.sessionStorage.setItem(feedbackSessionStorageKey, created);
+  return created;
+}
 const severityRank: Record<string, number> = {
   Critical: 3,
   Moderate: 2,
@@ -112,8 +143,10 @@ type Issue = OverviewSnapshot["assessment"]["issues"][number];
 type ArtifactView = (typeof artifactOrder)[number];
 type ProjectView =
   | "overview"
-  | "attention"
+  | "outcome"
   | "inference"
+  | "rollup"
+  | "grounding"
   | "issues"
   | "history"
   | "reports"
@@ -123,15 +156,14 @@ function isArtifactView(value: ProjectView): value is ArtifactView {
   return artifactOrder.includes(value as ArtifactView);
 }
 
+function isR2ReadView(value: ProjectView) {
+  return !isArtifactView(value);
+}
+
 interface ChatMessage {
   id: number;
   role: "user" | "advisor";
   text: string;
-}
-
-interface AttentionScope {
-  artifact?: string;
-  dimension?: string;
 }
 
 function issueSort(left: Issue, right: Issue) {
@@ -146,6 +178,12 @@ function issuePillar(issue: Issue) {
   if (issue.id.startsWith("ISS-FC-")) return "Grounding";
   if (issue.id.startsWith("ISS-CP-")) return "Adaptability";
   return "Viability";
+}
+
+function integrityReadLabel(
+  integrity: OverviewSnapshot["assessment"]["integrity"],
+) {
+  return integrity.complete === false ? "Under review" : integrity.level;
 }
 
 function artifactLabel(value: string) {
@@ -234,6 +272,13 @@ export function ProjectOverview({
   initialIssueFilters = defaultIssueFilters,
   initialProposals = [],
   initialOutcome = null,
+  initialOutcomeDashboard,
+  initialRollUp,
+  initialGroundingMap,
+  initialIssueId,
+  compactIssuesLanding = false,
+  initialArtifactFocus,
+  returnToOutcome = false,
 }: {
   initial: OverviewSnapshot;
   displayName: string;
@@ -243,13 +288,23 @@ export function ProjectOverview({
   initialIssueFilters?: IssueFilters;
   initialProposals?: IssueProposalSummary[];
   initialOutcome?: ProjectOutcomeSummary | null;
+  initialOutcomeDashboard?: YourOutcomeProjection;
+  initialRollUp?: CollaborationRollUpProjection;
+  initialGroundingMap?: GroundingMapProjection;
+  initialIssueId?: string;
+  compactIssuesLanding?: boolean;
+  initialArtifactFocus?: "primary-outcome" | "held-outcomes" | "new-outcome";
+  returnToOutcome?: boolean;
 }) {
   const router = useRouter();
+  const replaceRoute = router.replace;
   const [snapshot, setSnapshot] = useState(initial);
-  const [activeOutcome, setActiveOutcome] = useState(initialOutcome);
+  const [activeOutcome] = useState(initialOutcome);
   const [orientation, setOrientation] = useState(false);
   const [tourStep, setTourStep] = useState<number | null>(null);
-  const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+  const [selectedIssue, setSelectedIssue] = useState<Issue | null>(
+    initial.assessment.issues.find((issue) => issue.id === initialIssueId) ?? null,
+  );
   const [advisorOpen, setAdvisorOpen] = useState(true);
   const [advisorWide, setAdvisorWide] = useState(false);
   const [workspaceNoticeOpen, setWorkspaceNoticeOpen] = useState(
@@ -258,12 +313,22 @@ export function ProjectOverview({
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [confidenceBreakdownOpen, setConfidenceBreakdownOpen] = useState(false);
   const [r2IntegrityExpanded, setR2IntegrityExpanded] = useState(
-    initialView === "overview" && !initial.first_run?.freeze_on,
+    initialView === "overview" && !compactIssuesLanding && !initial.first_run?.freeze_on,
   );
   const [searchOpen, setSearchOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<SettingsSectionId>("profile");
+  const [feedbackKind, setFeedbackKind] = useState<FeedbackKind>("broken");
   const [feedbackText, setFeedbackText] = useState("");
-  const [feedbackSent, setFeedbackSent] = useState(false);
+  const [feedbackExpected, setFeedbackExpected] = useState("");
+  const [feedbackImpact, setFeedbackImpact] = useState<(typeof feedbackImpacts)[number]>("Blocking me");
+  const [feedbackTicket, setFeedbackTicket] = useState<FeedbackTicketSummary | null>(null);
+  const [feedbackTickets, setFeedbackTickets] = useState<FeedbackTicketSummary[]>([]);
+  const [feedbackPending, setFeedbackPending] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const [feedbackListPending, setFeedbackListPending] = useState(false);
+  const [feedbackListError, setFeedbackListError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [advisorQuestions, setAdvisorQuestions] = useState(initialAdvisorQuestions);
@@ -301,6 +366,15 @@ export function ProjectOverview({
   const previousFirstRunFreeze = useRef(Boolean(initial.first_run?.freeze_on));
   const issueTrigger = useRef<HTMLElement | null>(null);
   const integrityTrigger = useRef<HTMLButtonElement | null>(null);
+  const accountTrigger = useRef<HTMLElement | null>(null);
+  const accountMenu = useRef<HTMLDetailsElement | null>(null);
+  const feedbackDialog = useRef<HTMLElement | null>(null);
+  const tourLaunchRequested = useRef(false);
+  const tourOutcomeTarget = useRef<HTMLButtonElement | null>(null);
+  const tourReadTarget = useRef<HTMLButtonElement | null>(null);
+  const tourPlanTarget = useRef<HTMLDivElement | null>(null);
+  const tourAdvisorTarget = useRef<HTMLFormElement | null>(null);
+  const tourCard = useRef<HTMLDivElement | null>(null);
   const mainScrollRegion = useRef<HTMLElement | null>(null);
   const messageId = useRef(0);
   const clarificationIdempotency = useRef<{
@@ -322,6 +396,10 @@ export function ProjectOverview({
         .filter((issue) => issue.status !== "resolved")
         .sort(issueSort),
     [snapshot.assessment.issues],
+  );
+  const visibleSummary = useMemo(
+    () => currentReadSummary(snapshot.summary, openIssues.length, snapshot.project_title),
+    [openIssues.length, snapshot.project_title, snapshot.summary],
   );
   const artifactAdvisorIssues = isArtifactView(initialView)
     ? openIssues.filter(
@@ -346,6 +424,55 @@ export function ProjectOverview({
     () => snapshot.assessment.issues.filter((issue) => issue.status === "resolved"),
     [snapshot.assessment.issues],
   );
+  const compactFilterActive = compactIssuesLanding && Boolean(
+    initialIssueFilters.artifact ||
+      initialIssueFilters.dimension ||
+      initialIssueFilters.severity ||
+      initialIssueFilters.status !== "active",
+  );
+  const compactScopedIssues = useMemo(() => {
+    if (!compactFilterActive) return snapshot.assessment.issues;
+    return snapshot.assessment.issues.filter((issue) => {
+      if (
+        initialIssueFilters.artifact &&
+        issue.artifact_type !== initialIssueFilters.artifact
+      ) return false;
+      if (
+        initialIssueFilters.dimension &&
+        issue.dimension.toLowerCase() !== initialIssueFilters.dimension
+      ) return false;
+      if (
+        initialIssueFilters.severity &&
+        issue.severity !== initialIssueFilters.severity
+      ) return false;
+      if (initialIssueFilters.status === "active") return issue.status !== "resolved";
+      if (initialIssueFilters.status === "all") return true;
+      return issue.status === initialIssueFilters.status;
+    });
+  }, [
+    compactFilterActive,
+    initialIssueFilters.artifact,
+    initialIssueFilters.dimension,
+    initialIssueFilters.severity,
+    initialIssueFilters.status,
+    snapshot.assessment.issues,
+  ]);
+  const compactScopedIssueIds = useMemo(
+    () => new Set(compactScopedIssues.map((issue) => issue.id)),
+    [compactScopedIssues],
+  );
+  const displayRankedIssues = compactFilterActive
+    ? rankedIssues.filter((issue) => compactScopedIssueIds.has(issue.id))
+    : rankedIssues;
+  const displayAwaitingEvidenceIssues = compactFilterActive
+    ? awaitingEvidenceIssues.filter((issue) => compactScopedIssueIds.has(issue.id))
+    : awaitingEvidenceIssues;
+  const displayActedIssues = compactFilterActive
+    ? actedIssues.filter((issue) => compactScopedIssueIds.has(issue.id))
+    : actedIssues;
+  const displayResolvedIssues = compactFilterActive
+    ? resolvedIssues.filter((issue) => compactScopedIssueIds.has(issue.id))
+    : resolvedIssues;
   const settledIssueCount = Math.max(
     snapshot.assessment.resolved_issue_count,
     resolvedIssues.length,
@@ -363,6 +490,9 @@ export function ProjectOverview({
     ),
     [activeIssueIds, proposals],
   );
+  const displayUndecidedProposals = compactFilterActive
+    ? undecidedProposals.filter((proposal) => compactScopedIssueIds.has(proposal.issue_id))
+    : undecidedProposals;
   const clarificationIssue = rankedIssues.find((issue) => Boolean(issue.clarification));
   const criticalCount = openIssues.filter((issue) => issue.severity === "Critical").length;
   const clarificationCount = openIssues.filter((issue) => Boolean(issue.clarification)).length;
@@ -409,6 +539,39 @@ export function ProjectOverview({
   }, [snapshot.first_run?.freeze_on]);
 
   useEffect(() => {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("settings")) return;
+    url.searchParams.delete("settings");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    const timer = window.setTimeout(() => {
+      setOrientation(false);
+      setSettingsOpen(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const tourRequested =
+      url.searchParams.has("tour") ||
+      window.sessionStorage.getItem("oslo_pending_tour") === "1";
+    if (!tourRequested || initialView !== "overview") return;
+    tourLaunchRequested.current = true;
+    window.sessionStorage.removeItem("oslo_pending_tour");
+    url.searchParams.delete("tour");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    const timer = window.setTimeout(() => {
+      setSelectedIssue(null);
+      setAdvisorOpen(true);
+      setR2IntegrityExpanded(true);
+      setWorkspaceNoticeOpen(true);
+      setTourStep(0);
+      setOrientation(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [initialView]);
+
+  useEffect(() => {
     if (!initialHistory) return;
     let cancelled = false;
     void fetch(`/api/projects/${snapshot.project_id}/history?category=all`, {
@@ -444,10 +607,14 @@ export function ProjectOverview({
   }, [initialView]);
 
   useEffect(() => {
-    const orientationTimer = window.setTimeout(
-      () => setOrientation(!snapshot.orientation_seen),
-      0,
-    );
+    const orientationTimer = window.setTimeout(() => {
+      if (tourLaunchRequested.current) return;
+      if (!snapshot.orientation_seen && initialView !== "overview") {
+        replaceRoute(`/projects/${snapshot.project_id}/overview?tour=1`);
+        return;
+      }
+      setOrientation(!snapshot.orientation_seen);
+    }, 0);
     if (!isProvisional || extendedFailed) {
       return () => window.clearTimeout(orientationTimer);
     }
@@ -474,7 +641,9 @@ export function ProjectOverview({
     };
   }, [
     extendedFailed,
+    initialView,
     isProvisional,
+    replaceRoute,
     snapshot.orientation_seen,
     snapshot.project_id,
   ]);
@@ -631,12 +800,111 @@ export function ProjectOverview({
     return () => window.clearTimeout(restore);
   }, [workspaceNoticeKey]);
 
+  useEffect(() => {
+    const closeAccountMenu = (event: MouseEvent) => {
+      if (!accountMenu.current?.open || accountMenu.current.contains(event.target as Node)) return;
+      accountMenu.current.removeAttribute("open");
+    };
+    const closeAccountMenuOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || !accountMenu.current?.open) return;
+      accountMenu.current.removeAttribute("open");
+      accountTrigger.current?.focus();
+    };
+    document.addEventListener("mousedown", closeAccountMenu);
+    document.addEventListener("keydown", closeAccountMenuOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeAccountMenu);
+      document.removeEventListener("keydown", closeAccountMenuOnEscape);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!feedbackOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusFrame = window.requestAnimationFrame(() => feedbackDialog.current?.focus());
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFeedbackOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [feedbackOpen]);
+
+  useEffect(() => {
+    if (!orientation) return;
+    const step = tourStep ?? 0;
+    const target = [
+      integrityTrigger.current,
+      tourOutcomeTarget.current,
+      tourReadTarget.current,
+      tourPlanTarget.current,
+      tourAdvisorTarget.current,
+    ][step];
+    const card = tourCard.current;
+    if (!target || !card) return;
+
+    target.scrollIntoView?.({
+      behavior: "auto",
+      block: step < 2 ? "nearest" : "center",
+      inline: "nearest",
+    });
+
+    let secondFrame = 0;
+    const placeCard = () => {
+      const targetRect = target.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const margin = 12;
+      const gap = 14;
+      let left = targetRect.left;
+      let top = targetRect.bottom + gap;
+
+      if (step === 2 || step === 3) {
+        const targetEdge = step === 3
+          ? target.closest(".workspace-sidebar")?.getBoundingClientRect().right ?? targetRect.right
+          : targetRect.right;
+        left = targetEdge + gap;
+        top = targetRect.top;
+        if (left + cardRect.width > window.innerWidth - margin) {
+          left = targetRect.left - cardRect.width - gap;
+        }
+      } else if (step === 4) {
+        left = targetRect.left;
+        top = targetRect.top - cardRect.height - gap;
+      }
+
+      left = Math.max(margin, Math.min(left, window.innerWidth - cardRect.width - margin));
+      top = Math.max(margin, Math.min(top, window.innerHeight - cardRect.height - margin));
+      card.style.left = `${Math.round(left)}px`;
+      card.style.top = `${Math.round(top)}px`;
+      card.style.right = "auto";
+      card.style.bottom = "auto";
+      card.style.transform = "none";
+    };
+
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(placeCard);
+    });
+    window.addEventListener("resize", placeCard);
+    window.addEventListener("scroll", placeCard, true);
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      window.cancelAnimationFrame(secondFrame);
+      window.removeEventListener("resize", placeCard);
+      window.removeEventListener("scroll", placeCard, true);
+    };
+  }, [orientation, tourStep]);
+
   const dismissOrientation = async () => {
     localStorage.setItem("oslo_orientation_seen", "true");
     setSnapshot((current) => ({ ...current, orientation_seen: true }));
     setOrientation(false);
     setTourStep(null);
     await fetch("/api/orientation", { method: "POST" }).catch(() => undefined);
+    router.refresh();
   };
 
   const openIssue = (issue: Issue, trigger?: HTMLElement | null) => {
@@ -690,18 +958,6 @@ export function ProjectOverview({
       },
     }));
     setSelectedIssue((current) => (current ? update(current) : current));
-  };
-
-  const openAttentionScope = (scope: AttentionScope) => {
-    const filters: IssueFilters = {
-      ...defaultIssueFilters,
-      artifact: (scope.artifact as IssueFilters["artifact"]) ?? null,
-      dimension: (scope.dimension as IssueFilters["dimension"]) ?? null,
-    };
-    const query = issueFiltersToSearchParams(filters).toString();
-    router.push(
-      `/projects/${snapshot.project_id}/issues${query ? `?${query}` : ""}`,
-    );
   };
 
   const rememberOverviewPosition = () => {
@@ -962,6 +1218,9 @@ export function ProjectOverview({
         result.status,
         act === "fix" ? options.resolution ?? undefined : undefined,
       );
+      if (result.first_run) {
+        setSnapshot((current) => ({ ...current, first_run: result.first_run }));
+      }
       if (result.analysis_run?.run_id) {
         showQueuedReadChange(result.analysis_run);
         setAnalysisUpdateRunId(result.analysis_run.run_id);
@@ -1064,6 +1323,108 @@ export function ProjectOverview({
 
   const panelVisible = advisorOpen || Boolean(selectedIssue && initialView !== "overview");
   const activeTourStep = tourStep ?? 0;
+  const beginTour = (replay = false) => {
+    if (replay) localStorage.removeItem("oslo_orientation_seen");
+    accountMenu.current?.removeAttribute("open");
+    if (initialView !== "overview") {
+      tourLaunchRequested.current = true;
+      window.sessionStorage.setItem("oslo_pending_tour", "1");
+      router.push(`/projects/${snapshot.project_id}/overview?tour=1`);
+      return;
+    }
+    setSelectedIssue(null);
+    setAdvisorOpen(true);
+    setR2IntegrityExpanded(true);
+    setWorkspaceNoticeOpen(true);
+    mainScrollRegion.current?.scrollTo?.({ top: 0, behavior: "auto" });
+    setTourStep(0);
+    setOrientation(true);
+  };
+  const openFeedback = () => {
+    setFeedbackKind("broken");
+    setFeedbackText("");
+    setFeedbackExpected("");
+    setFeedbackImpact("Blocking me");
+    setFeedbackTicket(null);
+    setFeedbackError(null);
+    setFeedbackOpen(true);
+    const sessionId = currentFeedbackSessionId();
+    setFeedbackListPending(true);
+    setFeedbackListError(null);
+    void fetch(`/api/feedback/tickets?session_id=${encodeURIComponent(sessionId)}`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Filed feedback could not be loaded.");
+        return response.json() as Promise<FeedbackTicketSummary[]>;
+      })
+      .then(setFeedbackTickets)
+      .catch(() => setFeedbackListError("Filed feedback could not be loaded."))
+      .finally(() => setFeedbackListPending(false));
+  };
+  const submitFeedback = async () => {
+    if (!feedbackText.trim() || feedbackPending) return;
+    setFeedbackPending(true);
+    setFeedbackError(null);
+    const total = snapshot.assessment.issues.length;
+    const grounded = snapshot.assessment.issues.filter(
+      (issue) => issue.status === "resolved",
+    ).length;
+    const category =
+      feedbackKind === "broken"
+        ? "defect"
+        : feedbackKind === "missing"
+          ? "enhancement"
+          : "other";
+    const impact =
+      feedbackImpact === "Blocking me"
+        ? "blocking"
+        : feedbackImpact === "Slowing me down"
+          ? "slowing"
+          : "minor";
+    try {
+      const response = await fetch("/api/feedback/tickets", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          session_id: currentFeedbackSessionId(),
+          category,
+          body: feedbackText.trim(),
+          expected: category === "defect" ? feedbackExpected.trim() || null : null,
+          impact: category === "defect" ? impact : null,
+          context: {
+            where: initialView === "overview" ? "Issues" : artifactLabel(initialView),
+            view: initialView,
+            role: "workspace-user",
+            grounded_x: grounded,
+            total_y: total,
+            first_run_flag: Boolean(snapshot.first_run?.freeze_on),
+            ts: new Date().toISOString(),
+          },
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | (FeedbackTicketSummary & { message?: string })
+        | null;
+      if (!response.ok || !payload?.ticket_id) {
+        throw new Error(
+          payload?.message ??
+            "Feedback could not be filed. Your text is still here; try again.",
+        );
+      }
+      setFeedbackTicket(payload);
+      setFeedbackTickets((current) => [
+        payload,
+        ...current.filter((item) => item.ticket_id !== payload.ticket_id),
+      ]);
+    } catch (error) {
+      setFeedbackError(
+        error instanceof Error
+          ? error.message
+          : "Feedback could not be filed. Your text is still here; try again.",
+      );
+    } finally {
+      setFeedbackPending(false);
+    }
+  };
   const issuePanel = selectedIssue ? (
     <IssuePanel
       analysisRunning={Boolean(analysisUpdateRunId)}
@@ -1097,8 +1458,10 @@ export function ProjectOverview({
 
   return (
     <main
-      className={`project-shell ${initialView === "overview" ? "is-r2-slice-one" : ""} ${
+      className={`project-shell ${isR2ReadView(initialView) ? "is-r2-slice-one" : ""} ${
         isArtifactView(initialView) ? "is-r2-artifact-workspace" : ""
+      } ${initialView === "reports" ? "is-r2-reports" : ""} ${
+        initialView === "outcome" ? "is-r2-outcome" : ""
       } ${
         (initialView === "overview" || isArtifactView(initialView)) && r2IntegrityExpanded
           ? "r2-integrity-expanded"
@@ -1108,6 +1471,18 @@ export function ProjectOverview({
         orientation ? "is-touring" : ""
       }`}
     >
+      {initialView === "reports" ? (
+        <div aria-label="Reports product context" className="r2-reports-banner" role="note">
+          <strong>OSLO · AI-first R2</strong>
+          <div>
+            <b>Official</b>
+            <span>
+              One walkable shell: the read is home · artifacts + execution plan in the center ·
+              reasoning + chat on the right · Issues / History / Reports / Map as doors.
+            </span>
+          </div>
+        </div>
+      ) : null}
       <header className="project-header">
         <Link className="project-toolbar-brand" href="/workspace">
           <Image
@@ -1120,32 +1495,38 @@ export function ProjectOverview({
           />
         </Link>
         <ProjectWorkspaceControls
+          onOpenPlanSettings={() => {
+            setSettingsSection("plan");
+            setSettingsOpen(true);
+          }}
           planPortalId="project-sidebar-plan"
           projectId={snapshot.project_id}
           projectName={projectTitle}
         />
         <div className={`project-context ${initialView === "overview" ? "is-overview" : ""}`}>
           {initialView === "overview" || isArtifactView(initialView) ? null : (
-            <strong>{projectTitle}</strong>
+            <strong>{initialView === "outcome" ? "The read" : projectTitle}</strong>
           )}
           <span aria-hidden="true">›</span>
           <em>
             {initialView === "overview"
               ? "Issues"
-              : initialView === "attention"
-                ? "Attention map"
               : initialView === "inference"
                 ? "Inference map"
-              : initialView === "reports"
-                ? "Reports"
-                : artifactLabel(initialView)}
+                : initialView === "grounding"
+                  ? "Grounding map"
+                  : initialView === "reports"
+                    ? "Reports"
+                    : initialView === "outcome"
+                      ? "Your Outcome"
+                      : artifactLabel(initialView)}
           </em>
         </div>
         <button
-          aria-label={`Outcome Integrity ${integrity.level}, limited by ${integrity.limiting_pillar}`}
+          aria-label={`Outcome Integrity ${integrityReadLabel(integrity)}, limited by ${integrity.limiting_pillar}`}
           aria-expanded={confidenceBreakdownOpen}
           className={`project-header-confidence ${
-            orientation && activeTourStep === 1 ? "is-tour-target" : ""
+            orientation && activeTourStep === 0 ? "is-tour-target" : ""
           }`}
           ref={integrityTrigger}
           onClick={() => {
@@ -1156,7 +1537,7 @@ export function ProjectOverview({
         >
           <span className="project-header-confidence-dot" />
           <span>Outcome Integrity</span>
-          <strong>{integrity.level}</strong>
+          <strong>{integrityReadLabel(integrity)}</strong>
           <span aria-hidden="true" className="project-header-pillar-shape">
             {integrity.decomposition.map((pillar) => (
               <span
@@ -1196,20 +1577,6 @@ export function ProjectOverview({
           >
             <MagnifyingGlass aria-hidden="true" size={16} />
           </button>
-          {initialView === "overview" || isArtifactView(initialView) ? (
-            <OutcomeCapacityControl
-              onOutcomesChange={(outcomes) =>
-                setActiveOutcome(
-                  outcomes.find(
-                    (outcome) => outcome.status === "active" && outcome.is_primary,
-                  ) ??
-                    outcomes.find((outcome) => outcome.status === "active") ??
-                    null,
-                )
-              }
-              projectId={snapshot.project_id}
-            />
-          ) : null}
           {!panelVisible ? (
             <button
               className="advisor-reopen"
@@ -1228,8 +1595,9 @@ export function ProjectOverview({
         <div className="r2-outcome-capacity-row">
           <button
             aria-label={`Outcome: ${activeOutcome?.title ?? outcomeDefinition}`}
-            className="r2-outcome-anchor"
-            onClick={() => router.push(`/projects/${snapshot.project_id}/artifacts/intent`)}
+            className={`r2-outcome-anchor ${orientation && activeTourStep === 1 ? "is-tour-target" : ""}`}
+            onClick={() => router.push(`/projects/${snapshot.project_id}/outcome`)}
+            ref={tourOutcomeTarget}
             type="button"
           >
             <span aria-hidden="true">◎</span>
@@ -1249,7 +1617,7 @@ export function ProjectOverview({
         >
           <div className="r2-artifact-integrity-copy">
             <span>Outcome integrity</span>
-            <strong>{integrity.level}</strong>
+            <strong>{integrityReadLabel(integrity)}</strong>
             <p>
               limited by <b>{integrity.limiting_pillar}</b> — a composite is only as sound
               as its weakest pillar
@@ -1317,29 +1685,29 @@ export function ProjectOverview({
       >
         <div className="workspace-sidebar-content">
         <p className="workspace-label">
-          {initialView === "overview" || isArtifactView(initialView) ? "Views" : "Project"}
+          {isR2ReadView(initialView) || isArtifactView(initialView) ? "Views" : "Project"}
         </p>
         <nav aria-label="Workspace">
-          {initialView === "overview" || isArtifactView(initialView) ? (
+          {isR2ReadView(initialView) || isArtifactView(initialView) ? (
             <>
-              <Link aria-current={initialView === "overview" ? "page" : undefined} aria-label={`Issues ${openIssues.length}`} className={initialView === "overview" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/overview`}>
+              <Link aria-current={initialView === "overview" || initialView === "issues" ? "page" : undefined} aria-label={`Issues ${openIssues.length}`} className={initialView === "overview" || initialView === "issues" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/issues`}>
                 <ListBullets aria-hidden="true" size={17} />
                 Issues
                 <span className="nav-count">{openIssues.length}</span>
               </Link>
-              <Link href={`/projects/${snapshot.project_id}/artifacts/intent`}>
+              <Link aria-current={initialView === "outcome" ? "page" : undefined} className={initialView === "outcome" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/outcome`}>
                 <Diamond aria-hidden="true" size={17} />
                 Your Outcome
               </Link>
-              <Link href={`/projects/${snapshot.project_id}/inference`} onClick={rememberOverviewPosition}>
+              <Link aria-current={initialView === "grounding" ? "page" : undefined} className={initialView === "grounding" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/grounding`} onClick={rememberOverviewPosition}>
                 <MapTrifold aria-hidden="true" size={17} />
                 Grounding map
               </Link>
-              <Link href={`/projects/${snapshot.project_id}/reports`}>
+              <Link aria-current={initialView === "reports" ? "page" : undefined} className={initialView === "reports" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/reports`}>
                 <FileText aria-hidden="true" size={17} />
                 Reports
               </Link>
-              <Link href={`/projects/${snapshot.project_id}/history`}>
+              <Link aria-current={initialView === "history" ? "page" : undefined} className={initialView === "history" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/history`}>
                 <ClockCounterClockwise aria-hidden="true" size={17} />
                 History
               </Link>
@@ -1355,9 +1723,6 @@ export function ProjectOverview({
               <Link aria-current={initialView === "history" ? "page" : undefined} className={initialView === "history" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/history`}>
                 <ClockCounterClockwise aria-hidden="true" size={17} /> History
               </Link>
-              <Link aria-current={initialView === "attention" ? "page" : undefined} className={initialView === "attention" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/attention`} onClick={rememberOverviewPosition}>
-                <MapTrifold aria-hidden="true" size={17} /> Attention map
-              </Link>
               <Link aria-current={initialView === "inference" ? "page" : undefined} className={initialView === "inference" ? "is-current" : ""} href={`/projects/${snapshot.project_id}/inference`}>
                 <Diamond aria-hidden="true" size={17} /> Inference map
               </Link>
@@ -1370,7 +1735,10 @@ export function ProjectOverview({
         <p className="workspace-label workspace-artifact-label">
           Documents
         </p>
-        <div className="workspace-artifact-group">
+        <div
+          className={`workspace-artifact-group ${orientation && activeTourStep === 3 ? "is-tour-target" : ""}`}
+          ref={tourPlanTarget}
+        >
           <span>Understanding</span>
           {r2UnderstandingOrder.map((artifactType) => {
             const status = artifactSidebarStatus({
@@ -1401,11 +1769,7 @@ export function ProjectOverview({
             });
             return (
               <Link
-                className={`${initialView === artifactType ? "is-current" : ""} ${
-                  orientation && activeTourStep === 4 && artifactType === "resources"
-                    ? "is-tour-target"
-                    : ""
-                }`}
+                className={initialView === artifactType ? "is-current" : ""}
                 href={`/projects/${snapshot.project_id}/artifacts/${artifactType}`}
                 key={artifactType}
               >
@@ -1427,35 +1791,28 @@ export function ProjectOverview({
         </div>
         <div className="workspace-sidebar-footer">
           <button
-            onClick={() => {
-              setTourStep(0);
-              setOrientation(true);
-            }}
+            onClick={() => beginTour()}
             type="button"
           >
             <Sparkle aria-hidden="true" size={15} />
             Take a quick tour
           </button>
-          {initialView === "overview" || isArtifactView(initialView) ? (
-            <button
-              onClick={() => {
-                setFeedbackSent(false);
-                setFeedbackOpen(true);
-              }}
-              title="Report a defect, an idea, or anything else — straight to the team"
-              type="button"
-            >
-              <PencilSimple aria-hidden="true" size={15} />
-              Feedback
-            </button>
-          ) : null}
+          <button
+            onClick={openFeedback}
+            title="Report a defect, an idea, or anything else — straight to the team"
+            type="button"
+          >
+            <PencilSimple aria-hidden="true" size={15} />
+            Feedback
+          </button>
           <div
             className="project-sidebar-plan-slot"
             id="project-sidebar-plan"
           />
-          <details className="project-account project-sidebar-account">
+          <details className="project-account project-sidebar-account" ref={accountMenu}>
             <summary
               aria-label={`Open account menu for ${displayName}`}
+              ref={accountTrigger}
               role="button"
               title="Account and settings"
             >
@@ -1466,28 +1823,31 @@ export function ProjectOverview({
               </span>
             </summary>
             <div className="project-account-menu">
-              <header>
-                <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
-                <div>
-                  <strong>{displayName}</strong>
-                  <small>Account &amp; workspace</small>
-                </div>
-              </header>
               <button
-                onClick={(event) => {
-                  event.currentTarget.closest("details")?.removeAttribute("open");
-                  setTourStep(0);
-                  setOrientation(true);
+                onClick={() => {
+                  accountMenu.current?.removeAttribute("open");
+                  setSettingsSection("profile");
+                  setSettingsOpen(true);
                 }}
                 type="button"
               >
-                <Question aria-hidden="true" size={16} />
-                How OSLO works
-              </button>
-              <Link href="/settings">
                 <Gear aria-hidden="true" size={16} />
                 Settings
-              </Link>
+              </button>
+              <button
+                onClick={() => beginTour()}
+                type="button"
+              >
+                <Target aria-hidden="true" size={16} />
+                Take a quick tour
+              </button>
+              <button
+                onClick={() => beginTour(true)}
+                type="button"
+              >
+                <ClockCounterClockwise aria-hidden="true" size={16} />
+                Replay walkthrough
+              </button>
               <form action={logoutAction}>
                 <button type="submit">
                   <SignOut aria-hidden="true" size={16} />
@@ -1559,11 +1919,17 @@ export function ProjectOverview({
                 <section className="r2-read-moved" role="status">
                   <Sparkle aria-hidden="true" size={16} weight="fill" />
                   <div>
-                    <strong>Your read moved.</strong>
+                    <strong>
+                      {snapshot.read_moved_notifications[0].previous_band ===
+                      snapshot.read_moved_notifications[0].current_band
+                        ? "Your read was updated."
+                        : "Your read moved."}
+                    </strong>
                     <p>
-                      {snapshot.read_moved_notifications[0].previous_band || "The previous read"}
-                      {" → "}
-                      {snapshot.read_moved_notifications[0].current_band || integrity.level}
+                      {snapshot.read_moved_notifications[0].previous_band ===
+                      snapshot.read_moved_notifications[0].current_band
+                        ? `Outcome Integrity remains ${snapshot.read_moved_notifications[0].current_band || integrity.level}`
+                        : `${snapshot.read_moved_notifications[0].previous_band || "The previous read"} → ${snapshot.read_moved_notifications[0].current_band || integrity.level}`}
                       {snapshot.read_moved_notifications[0].settled_causes[0]
                         ? ` because ${snapshot.read_moved_notifications[0].settled_causes[0]}`
                         : " after your latest grounded change"}.
@@ -1589,11 +1955,34 @@ export function ProjectOverview({
                         <p>One more confirm opens your full workspace. OSLO waits a click away.</p>
                       </div>
                     </section>
-                    <section className="r2-first-run-start" aria-label="Start here">
+                    <button
+                      aria-label={`Start here: settle ${rankedIssues[0]?.title ?? "the top issue"}`}
+                      className="r2-first-run-start"
+                      disabled={!rankedIssues[0]}
+                      onClick={(event) => {
+                        const issue = rankedIssues[0];
+                        if (!issue) return;
+                        issueTrigger.current = event.currentTarget;
+                        advisorStateBeforeIssue.current = false;
+                        setAdvisorOpen(false);
+                        setSelectedIssue(issue);
+                        setClarificationAnswer("");
+                        setClarificationError(null);
+                        window.requestAnimationFrame(() => {
+                          const panel = document.getElementById(`issue-detail-${issue.id}`);
+                          if (typeof panel?.scrollIntoView === "function") {
+                            panel.scrollIntoView({ behavior: "auto", block: "start" });
+                          }
+                          panel?.focus({ preventScroll: true });
+                        });
+                      }}
+                      type="button"
+                    >
                       <span>Start here</span>
                       <strong>Settle &quot;{rankedIssues[0]?.title ?? "the top issue"}&quot;</strong>
                       <small>the most load-bearing detail OSLO still had to guess</small>
-                    </section>
+                      <CaretRight aria-hidden="true" size={14} />
+                    </button>
                   </div>
                 ) : (
                   <section className="r2-first-run-guide" aria-label="First run guidance">
@@ -1619,7 +2008,7 @@ export function ProjectOverview({
                     </span>
                   </div>
                   <div className="confidence-prototype-hero">
-                    <strong>{integrity.level}</strong>
+                    <strong>{integrityReadLabel(integrity)}</strong>
                     <div className="r2-integrity-limit-row">
                       <p>
                         limited by <b>{integrity.limiting_pillar}</b> — a composite is only as sound as its weakest pillar
@@ -1650,7 +2039,7 @@ export function ProjectOverview({
                   <div className="r2-maturity-row">
                     <span>Fragile</span>
                     <div
-                      aria-label={`Outcome Integrity ${integrity.level}, limited by ${integrity.limiting_pillar}`}
+                      aria-label={`Outcome Integrity ${integrityReadLabel(integrity)}, limited by ${integrity.limiting_pillar}`}
                       className="confidence-ramp"
                       role="img"
                     >
@@ -1724,9 +2113,7 @@ export function ProjectOverview({
                 </div>
               </section>
 
-              <section className={`start-here ${
-                orientation && activeTourStep === 2 ? "is-tour-target" : ""
-              }`}>
+              <section className="start-here">
                 {workspaceNoticeOpen ? (
                   <div
                     className="r2-workspace-open-slot"
@@ -1740,7 +2127,7 @@ export function ProjectOverview({
                     <div>
                       <strong>Your workspace is open.</strong>
                       <p>Your plan documents are on the left and OSLO&apos;s reasoning is on the right — every pillar and open issue travels with them.</p>
-                      <div><small>New to OSLO?</small><button onClick={() => { setTourStep(0); setOrientation(true); }} type="button">Take a 30-second tour →</button><button onClick={dismissWorkspaceNotice} type="button">No thanks</button></div>
+                      <div><small>New to OSLO?</small><button onClick={() => beginTour()} type="button">Take a 30-second tour →</button><button onClick={dismissWorkspaceNotice} type="button">No thanks</button></div>
                     </div>
                       <button aria-label="Dismiss workspace open message" onClick={dismissWorkspaceNotice} type="button">×</button>
                     </section>
@@ -1755,7 +2142,7 @@ export function ProjectOverview({
                   className="issue-list"
                   role="region"
                 >
-                  {rankedIssues.map((issue, index) => {
+                  {displayRankedIssues.map((issue, index) => {
                     const isSelected = selectedIssue?.id === issue.id;
                     return (
                       <Fragment key={issue.id}>
@@ -1763,9 +2150,14 @@ export function ProjectOverview({
                           <button
                             aria-controls={`issue-detail-${issue.id}`}
                             aria-expanded={false}
-                            className={`issue-row issue-row-${issue.severity.toLowerCase()}`}
+                            className={`issue-row issue-row-${issue.severity.toLowerCase()} ${
+                              orientation && activeTourStep === 2 && index === 0
+                                ? "is-tour-target"
+                                : ""
+                            }`}
                             data-issue-id={issue.id}
                             onClick={(event) => openIssue(issue, event.currentTarget)}
+                            ref={index === 0 ? tourReadTarget : undefined}
                             type="button"
                           >
                             <span className="r2-issue-rank">{index + 1}</span>
@@ -1786,32 +2178,26 @@ export function ProjectOverview({
                       </Fragment>
                     );
                   })}
-                  {selectedIssue && !rankedIssues.some((issue) => issue.id === selectedIssue.id)
+                  {selectedIssue && !displayRankedIssues.some((issue) => issue.id === selectedIssue.id)
                     ? issuePanel
                     : null}
                 </div>
-                {!rankedIssues.length ? (
+                {!displayRankedIssues.length ? (
                   <section className="r2-cleared-start" aria-label="Start here" role="status">
-                    <strong>✦ Start here</strong>
+                    <strong>{compactFilterActive ? "No issues match this lens." : "✦ Start here"}</strong>
                     <span>
-                      {actedIssues.length
+                      {compactFilterActive
+                        ? "Clear the current filters to return to the full issue queue."
+                        : displayActedIssues.length
                         ? "Finish the acted-on items below; they are not closed until reanalysis verifies them."
-                        : awaitingEvidenceIssues.length
+                        : displayAwaitingEvidenceIssues.length
                           ? "Review the evidence requests below while OSLO keeps their answers attributed."
-                          : undecidedProposals.length
+                          : displayUndecidedProposals.length
                             ? "Decide the itemized OSLO proposals below; each one stays optional until you accept it."
                             : "Your exposure-ranked worklist is clear. Review the settled items below or continue with your plan."}
                     </span>
                   </section>
                 ) : null}
-                <Link
-                  className="attention-map-link"
-                  href={`/projects/${snapshot.project_id}/attention`}
-                  onClick={rememberOverviewPosition}
-                >
-                  See all {openIssues.length} open issues in the Attention map
-                  <ArrowRight aria-hidden="true" size={12} />
-                </Link>
                 {clarificationIssue ? (
                   <div className="clarification-pointer">
                     <Info aria-hidden="true" size={14} />
@@ -1837,11 +2223,11 @@ export function ProjectOverview({
                   onToggle={() => setProposalOpen((current) => !current)}
                   open={proposalOpen}
                   pendingId={proposalActionPending}
-                  proposals={undecidedProposals}
+                  proposals={displayUndecidedProposals}
                   surface="folded_read"
                 />
                 <IssueLifecycleTray
-                  issues={awaitingEvidenceIssues}
+                  issues={displayAwaitingEvidenceIssues}
                   kind="awaiting"
                   label="Awaiting evidence"
                   onAct={actOnIssueLifecycle}
@@ -1850,7 +2236,7 @@ export function ProjectOverview({
                   open={awaitingOpen}
                 />
                 <IssueLifecycleTray
-                  issues={actedIssues}
+                  issues={displayActedIssues}
                   kind="acted"
                   label="Acted on, not yet closed"
                   onAct={actOnIssueLifecycle}
@@ -1859,8 +2245,8 @@ export function ProjectOverview({
                   open={actedOpen}
                 />
                 <IssueLifecycleTray
-                  countLabel={`${resolvedIssues.length} of ${snapshot.assessment.issues.length} settled`}
-                  issues={resolvedIssues}
+                  countLabel={`${displayResolvedIssues.length} of ${compactFilterActive ? compactScopedIssues.length : snapshot.assessment.issues.length} settled`}
+                  issues={displayResolvedIssues}
                   kind="resolved"
                   label="Resolved"
                   onAct={actOnIssueLifecycle}
@@ -1978,36 +2364,31 @@ export function ProjectOverview({
                   type="button"
                 >
                   <strong>Project summary</strong>
-                  <span>{snapshot.summary}</span>
+                  <span>{visibleSummary}</span>
                   <CaretDown
                     aria-hidden="true"
                     className={summaryOpen ? "is-open" : ""}
                     size={13}
                   />
                 </button>
-                {summaryOpen ? <p>{snapshot.summary}</p> : null}
+                {summaryOpen ? <p>{visibleSummary}</p> : null}
               </section>
               </div>
               {initialView !== "overview" ? issuePanel : null}
             </>
-          ) : initialView === "attention" ? (
-            <AttentionView
-              onAskOslo={(scope) => {
-                const focus = [scope.artifact, scope.dimension]
-                  .filter((value): value is string => Boolean(value))
-                  .map(artifactLabel)
-                  .join(" × ");
-                setAdvisorOpen(true);
-                void askQuestion(
-                  focus
-                    ? `Explain why ${focus} needs attention in the current published read.`
-                    : "Explain the Attention map and what I should address first.",
-                );
+          ) : initialView === "outcome" && initialOutcomeDashboard ? (
+            <YourOutcomeDashboard
+              data={initialOutcomeDashboard}
+              onDismissWorkspaceNotice={dismissWorkspaceNotice}
+              onTakeTour={() => {
+                beginTour();
               }}
-              onOpenIssue={openIssue}
-              onOpenScope={openAttentionScope}
-              issues={openIssues}
+              workspaceNoticeOpen={workspaceNoticeOpen}
             />
+          ) : initialView === "rollup" && initialRollUp ? (
+            <CollaborationRollUp data={initialRollUp} />
+          ) : initialView === "grounding" && initialGroundingMap ? (
+            <CollaborationGroundingMap data={initialGroundingMap} />
           ) : initialView === "inference" ? (
             <InferenceMap onOpenIssue={openIssue} snapshot={snapshot} />
           ) : isArtifactView(initialView) ? (
@@ -2025,10 +2406,7 @@ export function ProjectOverview({
                     <div>
                       <small>New to OSLO?</small>
                       <button
-                        onClick={() => {
-                          setTourStep(0);
-                          setOrientation(true);
-                        }}
+                        onClick={() => beginTour()}
                         type="button"
                       >
                         Take a 30-second tour →
@@ -2050,6 +2428,7 @@ export function ProjectOverview({
               <ArtifactWorkspace
               analysisRunning={Boolean(analysisUpdateRunId)}
               artifactType={initialView}
+              initialFocus={initialView === "intent" ? initialArtifactFocus : undefined}
               onAnalysisStarted={setAnalysisUpdateRunId}
               onAskOslo={(prompt) => {
                 setAdvisorOpen(true);
@@ -2066,12 +2445,14 @@ export function ProjectOverview({
                   proposal.artifact_type === persistedArtifactType(initialView),
               )}
               projectId={snapshot.project_id}
+              returnToOutcome={initialView === "intent" && returnToOutcome}
               />
             </>
           ) : initialView === "issues" ? (
             <IssuesWorkspace
               initialFilters={initialIssueFilters}
               issues={snapshot.assessment.issues}
+              limitingPillar={snapshot.assessment.integrity.limiting_pillar}
               onOpenIssue={openIssue}
               projectId={snapshot.project_id}
             />
@@ -2094,9 +2475,7 @@ export function ProjectOverview({
 
         {selectedIssue && initialView !== "overview" ? issuePanel : advisorOpen ? (
           <div
-            className={`project-sidepanel-slot ${
-              orientation && activeTourStep === 5 ? "advisor-tour-target" : ""
-            }`}
+            className="project-sidepanel-slot"
           >
             <AdvisorPanel
             advisorError={advisorError}
@@ -2113,8 +2492,6 @@ export function ProjectOverview({
             extendedFailure={extendedFailure}
             extendedRetryError={extendedRetryError}
             extendedRetrying={extendedRetrying}
-            groundedClaims={provenance.groundedClaims}
-            inferredClaims={provenance.inferredClaims}
             integrity={integrity}
             isProvisional={isProvisional}
             messages={messages}
@@ -2127,8 +2504,9 @@ export function ProjectOverview({
             openIssueCount={openIssues.length}
             question={question}
             resolvedIssueCount={settledIssueCount}
-            r2Mode={initialView === "overview" || isArtifactView(initialView)}
+            r2Mode
             topIssue={artifactAdvisorIssues[0] ?? openIssues[0] ?? null}
+            tourTarget={orientation && activeTourStep === 4 ? tourAdvisorTarget : undefined}
             wide={advisorWide}
             />
           </div>
@@ -2152,21 +2530,34 @@ export function ProjectOverview({
         OSLO advises; you decide — you stay in control at every step.
       </footer>
 
+      <WorkspaceSettingsDialog
+        displayName={displayName}
+        initialSection={settingsSection}
+        onClose={() => {
+          setSettingsOpen(false);
+          window.requestAnimationFrame(() => accountTrigger.current?.focus());
+        }}
+        open={settingsOpen}
+      />
+
       {orientation ? (
-        <section
-          aria-label="How OSLO works"
-          aria-modal="true"
-          className="orientation-overlay"
-          data-step={activeTourStep + 1}
-          role="dialog"
-        >
-          <div className="tour-card">
+        <>
+          <div
+            aria-hidden="true"
+            className="orientation-overlay"
+            data-step={activeTourStep + 1}
+          />
+          <section
+            aria-label="How OSLO works"
+            aria-modal="true"
+            className="tour-card orientation-tour-card"
+            ref={tourCard}
+            role="dialog"
+          >
             <span className="tour-step-label">Step {activeTourStep + 1} of {orientationSteps.length}</span>
             <h2>{orientationSteps[activeTourStep].title}</h2>
             <p>{orientationSteps[activeTourStep].body}</p>
             <div className="tour-actions">
-              <button onClick={() => void dismissOrientation()} type="button">Skip</button>
-              <span aria-hidden="true" />
               {activeTourStep > 0 ? (
                 <button onClick={() => setTourStep(activeTourStep - 1)} type="button">Back</button>
               ) : null}
@@ -2181,11 +2572,16 @@ export function ProjectOverview({
                 }}
                 type="button"
               >
-                {activeTourStep === orientationSteps.length - 1 ? "Done" : "Next"}
+                {activeTourStep === orientationSteps.length - 1 ? (
+                  <>Done <CheckCircle aria-hidden="true" size={14} weight="fill" /></>
+                ) : (
+                  <>Next <ArrowRight aria-hidden="true" size={14} /></>
+                )}
               </button>
+              <button className="tour-skip" onClick={() => void dismissOrientation()} type="button">Skip tour</button>
             </div>
-          </div>
-        </section>
+          </section>
+        </>
       ) : null}
 
       {searchOpen ? (
@@ -2214,35 +2610,127 @@ export function ProjectOverview({
           }}
           role="presentation"
         >
-          <section aria-label="Feedback" aria-modal="true" className="r2-feedback-dialog" role="dialog">
+          <section
+            aria-label="Feedback"
+            aria-modal="true"
+            className="r2-feedback-dialog"
+            ref={feedbackDialog}
+            role="dialog"
+            tabIndex={-1}
+          >
             <header>
-              <div>
-                <span>Feedback</span>
-                <h2>Report feedback</h2>
-              </div>
+              <h2>Feedback</h2>
+              <p>tell us what’s broken or missing — it goes straight to the team</p>
               <button aria-label="Close feedback" onClick={() => setFeedbackOpen(false)} type="button">
                 <X aria-hidden="true" size={18} />
               </button>
             </header>
-            {feedbackSent ? (
-              <p role="status">Filed — your feedback is with the team.</p>
+            {feedbackTicket ? (
+              <div className="r2-feedback-success" role="status">
+                <CheckCircle aria-hidden="true" size={28} weight="fill" />
+                <strong>Filed — your feedback is with the team.</strong>
+                <span className="r2-feedback-ticket-id">{feedbackTicket.ticket_id}</span>
+                <p>Your read, band, and project content were not changed.</p>
+                <div>
+                  <button
+                    className="button"
+                    onClick={() => {
+                      setFeedbackTicket(null);
+                      setFeedbackText("");
+                      setFeedbackExpected("");
+                    }}
+                    type="button"
+                  >
+                    Add another
+                  </button>
+                  <button className="button" onClick={() => setFeedbackOpen(false)} type="button">Close</button>
+                </div>
+                <FeedbackSessionList tickets={feedbackTickets} />
+              </div>
             ) : (
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
-                  if (!feedbackText.trim()) return;
-                  setFeedbackSent(true);
+                  void submitFeedback();
                 }}
               >
-                <label htmlFor="r2-feedback-text">A defect, an idea, or anything else on your mind.</label>
+                <p>Tell us what’s <strong>broken or missing</strong> — it’s filed as a ticket straight to the team. It never changes your read, your band, or your issues.</p>
+                <div className="r2-feedback-title">
+                  <PencilSimple aria-hidden="true" size={16} weight="fill" />
+                  <div><strong>Report feedback</strong><small>A defect, an idea, or anything else on your mind — filed as a ticket to the team.</small></div>
+                </div>
+                <div aria-label="Feedback type" className="r2-feedback-kinds" role="group">
+                  {feedbackKinds.map((kind) => (
+                    <button
+                      aria-pressed={feedbackKind === kind.id}
+                      className={feedbackKind === kind.id ? "is-selected" : ""}
+                      key={kind.id}
+                      onClick={() => {
+                        setFeedbackKind(kind.id);
+                        if (kind.id !== "broken") setFeedbackExpected("");
+                      }}
+                      type="button"
+                    >
+                      <strong>{kind.title}</strong>
+                      <small>{kind.detail}</small>
+                    </button>
+                  ))}
+                </div>
+                <label className="sr-only" htmlFor="r2-feedback-text">What happened?</label>
                 <textarea
                   id="r2-feedback-text"
                   onChange={(event) => setFeedbackText(event.target.value)}
-                  placeholder="Tell us what happened or what is missing…"
+                  placeholder="What happened? (the step you took, and what went wrong)"
                   required
                   value={feedbackText}
                 />
-                <button className="button button-primary" type="submit">Send to the team →</button>
+                {feedbackKind === "broken" ? (
+                  <>
+                    <label className="sr-only" htmlFor="r2-feedback-expected">What did you expect?</label>
+                    <textarea
+                      id="r2-feedback-expected"
+                      onChange={(event) => setFeedbackExpected(event.target.value)}
+                      placeholder="What did you expect to happen instead? (optional)"
+                      value={feedbackExpected}
+                    />
+                    <fieldset className="r2-feedback-impact">
+                      <legend>How much is it getting in your way?</legend>
+                      <div>
+                        {feedbackImpacts.map((impact) => (
+                          <button
+                            aria-pressed={feedbackImpact === impact}
+                            className={feedbackImpact === impact ? "is-selected" : ""}
+                            key={impact}
+                            onClick={() => setFeedbackImpact(impact)}
+                            type="button"
+                          >
+                            {impact}
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+                  </>
+                ) : null}
+                <div className="r2-feedback-context">
+                  <strong>↳ Auto-attached to the ticket, so we can reproduce it:</strong>
+                  <span>{initialView === "overview" ? "Issues" : artifactLabel(initialView)} · workspace user · {snapshot.assessment.issues.filter((issue) => issue.status === "resolved").length}/{snapshot.assessment.issues.length} grounded</span>
+                  <small>nothing from your plan’s content leaves — just this location + state.</small>
+                </div>
+                {feedbackError ? <p className="r2-feedback-error" role="alert">{feedbackError}</p> : null}
+                <button className="button button-primary" disabled={feedbackPending} type="submit">
+                  {feedbackPending
+                    ? "Filing feedback…"
+                    : feedbackError
+                      ? "Try again"
+                      : `${feedbackKind === "broken" ? "File defect" : feedbackKind === "missing" ? "Request enhancement" : "Send feedback"} →`}
+                </button>
+                {feedbackListPending ? <p className="r2-feedback-list-state" role="status">Loading filed feedback…</p> : null}
+                {feedbackListError ? (
+                  <p className="r2-feedback-list-state" role="alert">
+                    {feedbackListError} Close and reopen Feedback to retry.
+                  </p>
+                ) : null}
+                <FeedbackSessionList tickets={feedbackTickets} />
               </form>
             )}
             <small>Feedback is for us — it never moves your read or your band.</small>
@@ -2250,6 +2738,24 @@ export function ProjectOverview({
         </div>
       ) : null}
     </main>
+  );
+}
+
+function FeedbackSessionList({ tickets }: { tickets: FeedbackTicketSummary[] }) {
+  if (!tickets.length) return null;
+  return (
+    <section aria-label="Filed this session" className="r2-feedback-filed">
+      <h3>Filed this session</h3>
+      <ul>
+        {tickets.map((ticket) => (
+          <li key={ticket.ticket_id}>
+            <strong>{ticket.ticket_id}</strong>
+            <span>{ticket.title}</span>
+            <small>{ticket.status}</small>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -2278,7 +2784,7 @@ function IntegrityBreakdown({
       <div className="confidence-breakdown-heading">
         <div>
           <span>Outcome Integrity</span>
-          <strong>{assessment.integrity.level}</strong>
+          <strong>{integrityReadLabel(assessment.integrity)}</strong>
           <em>limited by {assessment.integrity.limiting_pillar}</em>
         </div>
         <button aria-label="Close integrity breakdown" onClick={onClose} ref={closeButton} type="button">
@@ -2328,7 +2834,6 @@ function SearchPalette({
     ["Overview", "overview", "Project workspace"],
     ["Issues", "issues", "Project workspace"],
     ["History", "history", "Project workspace"],
-    ["Attention map", "attention", "Project workspace"],
     ...artifactOrder.map(
       (artifactType) =>
         [
@@ -2436,21 +2941,23 @@ function DeferredWorkspace() {
   );
 }
 
-type IssueGroupMode = "dimension" | "severity" | "artifact";
+type IssueGroupMode = "exposure" | "dimension" | "severity" | "artifact";
 
 function IssuesWorkspace({
   initialFilters,
   issues,
+  limitingPillar,
   onOpenIssue,
   projectId,
 }: {
   initialFilters: IssueFilters;
   issues: Issue[];
+  limitingPillar: string;
   onOpenIssue: (issue: Issue, trigger?: HTMLElement | null) => void;
   projectId: string;
 }) {
   const router = useRouter();
-  const [groupMode, setGroupMode] = useState<IssueGroupMode>("dimension");
+  const [groupMode, setGroupMode] = useState<IssueGroupMode>("exposure");
   const [filters, setFiltersState] = useState<IssueFilters>(initialFilters);
   const {
     artifact: artifactFilter,
@@ -2497,6 +3004,7 @@ function IssuesWorkspace({
   );
 
   const groups = useMemo(() => {
+    if (groupMode === "exposure") return [];
     const grouped = new Map<string, Issue[]>();
     for (const issue of filteredIssues) {
       const key =
@@ -2518,7 +3026,26 @@ function IssuesWorkspace({
     );
   }, [filteredIssues, groupMode]);
 
-  const activeCount = issues.filter((issue) => issue.status !== "resolved").length;
+  const activeIssues = useMemo(
+    () => issues.filter((issue) => issue.status !== "resolved").sort(issueSort),
+    [issues],
+  );
+  const resolvedIssues = useMemo(
+    () => issues.filter((issue) => issue.status === "resolved").sort(issueSort),
+    [issues],
+  );
+  const activeCount = activeIssues.length;
+  const pillarCounts = useMemo(
+    () =>
+      activeIssues.reduce<Record<string, number>>(
+        (counts, issue) => ({
+          ...counts,
+          [issuePillar(issue)]: (counts[issuePillar(issue)] ?? 0) + 1,
+        }),
+        { Viability: 0, Grounding: 0, Adaptability: 0 },
+      ),
+    [activeIssues],
+  );
   const hiddenCount = Math.max(0, statusScopedIssues.length - filteredIssues.length);
   const hasExplicitFilters = Boolean(
     artifactFilter ||
@@ -2531,33 +3058,99 @@ function IssuesWorkspace({
     setFilters(defaultIssueFilters);
   }
 
+  const renderIssueCard = (issue: Issue, settled = false) => (
+    <button
+      aria-label={`${issue.title}, ${issue.severity}, ${artifactLabel(issue.artifact_type)}, ${issue.dimension}, ${artifactLabel(issue.status)}. Open issue`}
+      className={`issue-layer-card issue-workspace-card issue-card-${issue.severity.toLowerCase()} ${
+        issuePillar(issue) === limitingPillar ? "is-gating" : ""
+      } ${settled ? "is-settled" : ""}`}
+      key={issue.id}
+      onClick={(event) => onOpenIssue(issue, event.currentTarget)}
+      type="button"
+    >
+      <span className="issue-layer-tags">
+        <b className={`issue-layer-pillar pillar-${issuePillar(issue).toLowerCase()}`}>
+          {issuePillar(issue)}
+          {issuePillar(issue) === limitingPillar ? " · gating" : ""}
+        </b>
+        <em>{issue.clarification ? "Clarification" : "Finding"}</em>
+        {!settled ? (
+          <i aria-label={`Exposure rank ${issue.exposure_rank ?? 0}`}>
+            {Array.from({ length: 4 }, (_, index) => (
+              <span
+                className={
+                  index < Math.min(4, Math.max(1, issue.exposure_rank ?? 1))
+                    ? "is-on"
+                    : ""
+                }
+                key={index}
+              />
+            ))}
+          </i>
+        ) : null}
+      </span>
+      <span className="issue-layer-title">
+        <b className={`severity severity-${issue.severity.toLowerCase()}`}>
+          {settled ? "✓" : issue.severity}
+        </b>
+        <strong>{issue.title}</strong>
+      </span>
+      <span className="issue-layer-detail">{issue.why}</span>
+      <span className="issue-layer-footer">
+        <small>{artifactLabel(issue.artifact_type)} · {artifactLabel(issue.dimension)}</small>
+        <b>{settled ? "Resolved" : "Open issue →"}</b>
+      </span>
+    </button>
+  );
+
   return (
     <section className="issues-workspace">
       <header className="issues-heading">
         <div>
           <h1>Issues</h1>
-          <p>What needs your attention</p>
+          <p>where the plan is weak — all open issues</p>
         </div>
-        <strong>
+        <strong>{activeCount} open</strong>
+        <span className="sr-only">
           {activeCount} active {activeCount === 1 ? "finding" : "findings"}
-        </strong>
+        </span>
       </header>
 
-      <div aria-label="Issue grouping" className="issue-group-tabs">
-        {(["dimension", "severity", "artifact"] as const).map((mode) => (
-          <button
-            aria-pressed={groupMode === mode}
-            key={mode}
-            onClick={() => setGroupMode(mode)}
-            type="button"
-          >
-            By {mode}
-          </button>
-        ))}
-      </div>
+      <section className="issue-layer-intro" aria-labelledby="issue-layer-title">
+        <h2 id="issue-layer-title">The issue layer</h2>
+        <p>
+          Every weakness across all three pillars — <b>one layer, exposure-ranked</b>.
+          Resolving an issue strengthens its pillar; the read is only as sound as its
+          weakest one, so <b>{limitingPillar}</b> gates it.
+        </p>
+        <div aria-label="Issue layer dimensions" className="issue-layer-dimensions">
+          {["Viability", "Grounding", "Adaptability"].map((pillar) => (
+            <span className={pillar === limitingPillar ? "is-gating" : ""} key={pillar}>
+              {`${pillar} ${pillarCounts[pillar] ?? 0}${
+                pillar === limitingPillar ? " · gating" : ""
+              }`}
+            </span>
+          ))}
+        </div>
+      </section>
 
-      <section aria-label="Issue filters" className="issue-filter-panel">
-        <IssueFilterRow
+      <details className="issue-refine" open={hasExplicitFilters || undefined}>
+        <summary>Refine issue view</summary>
+        <div aria-label="Issue grouping" className="issue-group-tabs">
+          {(["exposure", "dimension", "severity", "artifact"] as const).map((mode) => (
+            <button
+              aria-pressed={groupMode === mode}
+              key={mode}
+              onClick={() => setGroupMode(mode)}
+              type="button"
+            >
+              {mode === "exposure" ? "Exposure ranked" : `By ${mode}`}
+            </button>
+          ))}
+        </div>
+
+        <section aria-label="Issue filters" className="issue-filter-panel">
+          <IssueFilterRow
           active={artifactFilter}
           label="Artifact"
           onChange={(artifact) =>
@@ -2634,7 +3227,8 @@ function IssuesWorkspace({
             </button>
           ))}
         </div>
-      </section>
+        </section>
+      </details>
 
       {hiddenCount ? (
         <div className="issue-filter-summary" role="status">
@@ -2646,38 +3240,16 @@ function IssuesWorkspace({
         </div>
       ) : null}
 
-      {groups.length ? (
+      {filteredIssues.length ? (
         <div className="issue-groups">
-          {groups.map(([group, groupIssues]) => (
-            <section className="issue-group" key={group}>
-              <h2>{group} · {groupIssues.length}</h2>
-              <div>
-                {groupIssues.map((issue) => (
-                  <button
-                    aria-label={`${issue.title}, ${issue.severity}, ${artifactLabel(issue.artifact_type)}, ${issue.dimension}, ${artifactLabel(issue.status)}`}
-                    className={`issue-workspace-card issue-card-${issue.severity.toLowerCase()}`}
-                    key={issue.id}
-                    onClick={(event) => onOpenIssue(issue, event.currentTarget)}
-                    type="button"
-                  >
-                    <i aria-hidden="true" />
-                    <span>
-                      <strong>{issue.title}</strong>
-                      <small>
-                        <b className={`severity severity-${issue.severity.toLowerCase()}`}>
-                          {issue.severity}
-                        </b>
-                        {artifactLabel(issue.artifact_type)} · {issue.dimension}
-                        <em>{artifactLabel(issue.status)}</em>
-                        {issue.clarification ? <mark>Clarification</mark> : null}
-                      </small>
-                    </span>
-                    <CaretRight aria-hidden="true" size={15} />
-                  </button>
-                ))}
-              </div>
-            </section>
-          ))}
+          {groupMode === "exposure"
+            ? filteredIssues.map((issue) => renderIssueCard(issue))
+            : groups.map(([group, groupIssues]) => (
+                <section className="issue-group" key={group}>
+                  <h2>{group} · {groupIssues.length}</h2>
+                  <div>{groupIssues.map((issue) => renderIssueCard(issue))}</div>
+                </section>
+              ))}
         </div>
       ) : (
         <div className="issues-empty" role="status">
@@ -2697,6 +3269,22 @@ function IssuesWorkspace({
           ) : null}
         </div>
       )}
+
+      {statusFilter === "active" &&
+      !artifactFilter &&
+      !dimensionFilter &&
+      !severityFilter &&
+      resolvedIssues.length ? (
+        <section className="issue-settled-layer">
+          <h2>Resolved · {resolvedIssues.length}</h2>
+          <div>{resolvedIssues.map((issue) => renderIssueCard(issue, true))}</div>
+        </section>
+      ) : null}
+
+      <p className="issues-workspace-footnote">
+        Select an issue to open the governed detail, review its evidence, and choose an
+        available action. Viewing or filtering never changes the read.
+      </p>
     </section>
   );
 }
@@ -2734,184 +3322,6 @@ function IssueFilterRow({
         </button>
       ))}
     </div>
-  );
-}
-
-function AttentionView({
-  issues,
-  onAskOslo,
-  onOpenIssue,
-  onOpenScope,
-}: {
-  issues: Issue[];
-  onAskOslo: (scope: AttentionScope) => void;
-  onOpenIssue: (issue: Issue, trigger?: HTMLElement | null) => void;
-  onOpenScope: (scope: AttentionScope, trigger?: HTMLElement | null) => void;
-}) {
-  return (
-    <section className="attention-view">
-      <div className="attention-heading">
-        <div>
-          <div className="attention-title">
-            <h1>Attention map</h1>
-            <span>Where the plan needs work</span>
-          </div>
-          <p>
-            Brighter = more attention — not a health score. Click a cell to
-            investigate.
-          </p>
-        </div>
-        <button className="attention-ask" onClick={() => onAskOslo({})} type="button">
-          <Sparkle aria-hidden="true" size={12} weight="fill" />
-          Ask OSLO about this map
-        </button>
-      </div>
-
-      {issues.length ? (
-        <div className="attention-matrix" role="grid" aria-label="Project attention map">
-          <div className="matrix-corner">
-            <span>Dimension →</span>
-            <span>Section ↓</span>
-          </div>
-          {dimensions.map((dimension) => (
-            <strong className="matrix-column" key={dimension}>
-              {artifactLabel(dimension)}
-            </strong>
-          ))}
-          {artifactOrder.map((artifact, rowIndex) => (
-            <MatrixRow
-              artifact={artifact}
-              issues={issues}
-              key={artifact}
-              onAskOslo={onAskOslo}
-              onOpenIssue={onOpenIssue}
-              onOpenScope={onOpenScope}
-              rowIndex={rowIndex}
-            />
-          ))}
-          <div className="attention-legend">
-            <span>Calm</span>
-            <i className="legend-calm" />
-            <i className="legend-warning" />
-            <i className="legend-moderate" />
-            <i className="legend-critical" />
-            <span>Needs attention</span>
-          </div>
-          <p className="matrix-note">
-            Rows = plan artifacts · columns = Clarity · Alignment · Feasibility.
-          </p>
-        </div>
-      ) : (
-        <div className="attention-all-clear" role="status">
-          <span>
-            <Sparkle aria-hidden="true" size={20} weight="fill" />
-          </span>
-          <div>
-            <h2>Nothing needs your attention right now.</h2>
-            <p>All seven plan artifacts are clear in the current read.</p>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function MatrixRow({
-  artifact,
-  issues,
-  onAskOslo,
-  onOpenIssue,
-  onOpenScope,
-  rowIndex,
-}: {
-  artifact: string;
-  issues: Issue[];
-  onAskOslo: (scope: AttentionScope) => void;
-  onOpenIssue: (issue: Issue, trigger?: HTMLElement | null) => void;
-  onOpenScope: (scope: AttentionScope, trigger?: HTMLElement | null) => void;
-  rowIndex: number;
-}) {
-  const groupBreak = rowIndex === 0 ? "Understanding" : rowIndex === 4 ? "Execution" : null;
-
-  return (
-    <>
-      {groupBreak ? <strong className="matrix-group">{groupBreak}</strong> : null}
-      <button
-        aria-label={`Open ${artifactLabel(artifact)} findings`}
-        className="matrix-row-label matrix-row-button"
-        onClick={(event) => onOpenScope({ artifact }, event.currentTarget)}
-        type="button"
-      >
-        {artifactLabel(artifact)}
-        <CaretRight aria-hidden="true" size={12} />
-      </button>
-      {dimensions.map((dimension) => {
-        const cellIssues = issues
-          .filter(
-            (issue) =>
-              issue.artifact_type === artifact &&
-              issue.dimension.toLowerCase() === dimension,
-          )
-          .sort(issueSort);
-        const highest = cellIssues[0]?.severity.toLowerCase() ?? "calm";
-        const label = `${artifactLabel(artifact)} ${artifactLabel(dimension)}: ${
-          cellIssues.length
-        } issue${cellIssues.length === 1 ? "" : "s"}${
-          cellIssues.length ? `, ${artifactLabel(highest)}` : ""
-        }`;
-
-        const openCell = (target: HTMLElement) => {
-          if (cellIssues.length === 1) {
-            onOpenIssue(cellIssues[0], target);
-          } else {
-            onOpenScope({ artifact, dimension }, target);
-          }
-        };
-
-        return cellIssues.length ? (
-          <div
-            aria-label={label}
-            className={`attention-cell attention-cell-${highest}`}
-            key={dimension}
-            onClick={(event) => openCell(event.currentTarget)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                openCell(event.currentTarget);
-              }
-            }}
-            role="gridcell"
-            tabIndex={0}
-          >
-            <button
-              aria-label={`Ask OSLO about ${artifactLabel(artifact)} ${artifactLabel(
-                dimension,
-              )}`}
-              className="attention-cell-ask"
-              onClick={(event) => {
-                event.stopPropagation();
-                onAskOslo({ artifact, dimension });
-              }}
-              type="button"
-            >
-              <Sparkle aria-hidden="true" size={10} weight="fill" />
-            </button>
-            <strong>{cellIssues.length}</strong>
-            <span>{highest}</span>
-            {cellIssues.length > 1 ? <small>Multiple</small> : null}
-          </div>
-        ) : (
-          <div
-            aria-label={label}
-            className="attention-cell attention-cell-calm"
-            key={dimension}
-            role="gridcell"
-          >
-            <span>·</span>
-          </div>
-        );
-      })}
-    </>
   );
 }
 
@@ -2995,6 +3405,12 @@ function IssueProposalGroup({
   );
 }
 
+function issueAttestationVerb(issue: Issue): string {
+  if (issue.status === "needs_fix") return "Flagged by";
+  if (issue.status === "needs_grounding") return "Answered by";
+  return "Confirmed by";
+}
+
 function IssueLifecycleTray({
   countLabel,
   issues,
@@ -3042,7 +3458,7 @@ function IssueLifecycleTray({
               <div>
                 <strong>{issue.title}</strong>
                 {issue.attested_by ? (
-                  <small>{artifactLabel(issue.basis ?? "documented")} · Confirmed by {issue.attested_by.display_name}</small>
+                  <small>{artifactLabel(issue.basis ?? "documented")} · {issueAttestationVerb(issue)} {issue.attested_by.display_name}</small>
                 ) : null}
               </div>
               <span className={`r2-pillar r2-pillar-${issuePillar(issue).toLowerCase()}`}>
@@ -3124,6 +3540,7 @@ function IssuePanel({
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
+  const reviewComposer = useRef<HTMLElement>(null);
   const [clarificationOpen, setClarificationOpen] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [whyMattersOpen, setWhyMattersOpen] = useState(false);
@@ -3145,29 +3562,34 @@ function IssuePanel({
   const [reviewerEmail, setReviewerEmail] = useState("");
   const [reviewPending, setReviewPending] = useState(false);
   const [reviewLink, setReviewLink] = useState("");
+  const [reviewGrantId, setReviewGrantId] = useState("");
+  const [reviewDeliveryState, setReviewDeliveryState] = useState("");
   const [reviewCopied, setReviewCopied] = useState(false);
+  const [externalComposerOpen, setExternalComposerOpen] = useState(false);
   const evidence = issue.evidence ?? [];
+  const scopedSource = evidence.at(0);
+  const scopedQuestion = issue.clarification?.trim() || issue.title;
+  const scopedSourceRef = issue.evidence_refs.at(0)
+    ?? (scopedSource ? `${scopedSource.source_name} · ${scopedSource.location}` : "");
+  const scopedSourceExcerpt = scopedSource?.excerpt?.trim() ?? "";
+  const externalReviewReady = Boolean(scopedQuestion && scopedSourceRef && scopedSourceExcerpt);
   const effectiveStatus = issue.status;
   const routeIssue = async (reviewer: { id: string; display_name: string; role: string }) => {
+    if (reviewer.role === "external") {
+      setRoutingOpen(false);
+      setExternalComposerOpen(true);
+      setCollaborationError(
+        externalReviewReady
+          ? "Add the external reviewer below. The preview shows their exact scope."
+          : "This issue has no cited source excerpt, so it cannot be sent externally yet.",
+      );
+      requestAnimationFrame(() => reviewComposer.current?.scrollIntoView?.({ block: "nearest" }));
+      return;
+    }
     setReviewPending(true);
     setCollaborationError("");
     try {
-      const response = await fetch(`/api/projects/${projectId}/collaboration`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          action: "review",
-          issueId: issue.id,
-          reviewerName: reviewer.display_name,
-          reviewerEmail: null,
-        }),
-      });
-      const created = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(created.message ?? "Review route could not be created.");
-      await onLifecycleAct("route", {
-        reviewer: { ...reviewer, id: created.id ?? reviewer.id },
-      });
-      setReviewLink(created.url ?? "");
+      await onLifecycleAct("route", { reviewer });
       setRoutingOpen(false);
     } catch (caught) {
       setCollaborationError(
@@ -3238,6 +3660,12 @@ function IssuePanel({
   const createReview = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!reviewerName.trim()) return;
+    if (!externalReviewReady) {
+      setCollaborationError(
+        "This issue needs a cited source excerpt before it can be sent externally.",
+      );
+      return;
+    }
     setReviewPending(true);
     setCollaborationError("");
     setReviewLink("");
@@ -3250,13 +3678,25 @@ function IssuePanel({
           issueId: issue.id,
           reviewerName: reviewerName.trim(),
           reviewerEmail: reviewerEmail.trim() || null,
+          question: scopedQuestion,
+          sourceRef: scopedSourceRef,
+          sourceExcerpt: scopedSourceExcerpt,
         }),
       });
       const created = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(created.message ?? "Review link could not be created.");
       setReviewLink(created.url);
-      setReviewerName("");
-      setReviewerEmail("");
+      setReviewGrantId(created.id);
+      setReviewDeliveryState(created.delivery_state ?? "draft");
+      if (created.delivery_state === "awaiting") {
+        await onLifecycleAct("route", {
+          reviewer: {
+            id: created.id,
+            display_name: reviewerName.trim(),
+            role: "external",
+          },
+        });
+      }
     } catch (caught) {
       setCollaborationError(
         caught instanceof Error ? caught.message : "Review link could not be created.",
@@ -3265,6 +3705,48 @@ function IssuePanel({
       setReviewPending(false);
     }
   };
+
+  const copyReviewLink = async () => {
+    if (!reviewLink || !reviewGrantId) return;
+    setReviewPending(true);
+    setCollaborationError("");
+    try {
+      await navigator.clipboard.writeText(reviewLink);
+      if (reviewDeliveryState !== "awaiting") {
+        const response = await fetch(`/api/projects/${projectId}/collaboration`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            action: "review_delivered",
+            grantId: reviewGrantId,
+          }),
+        });
+        const delivered = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(delivered.message ?? "The review handoff could not be confirmed.");
+        }
+        await onLifecycleAct("route", {
+          reviewer: {
+            id: reviewGrantId,
+            display_name: reviewerName.trim() || "External evidence holder",
+            role: "external",
+          },
+        });
+        setReviewDeliveryState(delivered.delivery_state ?? "awaiting");
+      }
+      setReviewCopied(true);
+    } catch (caught) {
+      setCollaborationError(
+        caught instanceof Error ? caught.message : "The secure review link could not be copied.",
+      );
+    } finally {
+      setReviewPending(false);
+    }
+  };
+
+  const primaryAct = issue.primary_act || (inline ? "verify" : "build");
+  const otherActs = issue.also_offered ?? [];
+  const unassessed = issue.unassessed || issue.classification_state === "escalated";
 
   return (
     <aside
@@ -3313,6 +3795,22 @@ function IssuePanel({
         Dimension · {issue.dimension} &nbsp; Section · {artifactLabel(issue.artifact_type)}
         &nbsp; Type · Finding
       </p>
+      {issue.sensitivity_trace ? (
+        <details className="issue-sensitivity-trace">
+          <summary>Why this is load-bearing</summary>
+          <dl>
+            <div><dt>Counterfactual span</dt><dd>{issue.sensitivity_trace.span.toFixed(2)}</dd></div>
+            <div><dt>Path leverage</dt><dd>{issue.sensitivity_trace.leverage.toFixed(2)}</dd></div>
+            <div><dt>Uncertainty factor</dt><dd>{issue.sensitivity_trace.uncertainty_factor.toFixed(2)}</dd></div>
+            <div><dt>Runway factor</dt><dd>{issue.sensitivity_trace.runway_factor.toFixed(2)}</dd></div>
+            <div><dt>Outcome paths</dt><dd>{issue.sensitivity_trace.paths.length}</dd></div>
+          </dl>
+          <p>
+            This trace compares favorable and adverse plan states. It explains ranking;
+            it does not manufacture evidence or change Grounding.
+          </p>
+        </details>
+      ) : null}
       <div className="issue-lifecycle" aria-label={`Issue status ${effectiveStatus}`}>
         {["open", "addressed", "routed", "needs_fix", "needs_grounding", "resolved"].map((status) => (
           <span className={status === effectiveStatus ? "is-current" : ""} key={status}>
@@ -3373,6 +3871,7 @@ function IssuePanel({
           Ask OSLO about this issue
         </button>
       )}
+
       <section className="issue-evidence issue-detail-disclosure">
         <button
           aria-controls="issue-evidence-content"
@@ -3469,14 +3968,22 @@ function IssuePanel({
         </form>
       ) : null}
       <section className="issue-recommendation">
-        <h3>OSLO recommended</h3>
+        <h3>{unassessed ? "Known unknown" : "OSLO recommended"}</h3>
         <strong>{issue.recommendation}</strong>
         <p>
-          {inline
-            ? "Confirm it and it rests on your evidence instead — that’s grounding, and it’s what lifts your read."
-            : "Applying this fix creates a new user-confirmed artifact version and re-runs the governed analysis. OSLO never marks the issue resolved without that new read."}
+          {unassessed
+            ? "This region is incomplete, not weak. Clarify it so OSLO can assess it without inventing a score."
+            : primaryAct === "verify"
+              ? "Verify or refute it with evidence. Only verification can move Grounding."
+              : primaryAct === "build"
+                ? "Build the missing plan structure and re-run the governed analysis. Building never manufactures grounding."
+                : "Record the tradeoff you are accepting. A decision adds clarity; it does not manufacture certainty."}
         </p>
-        {inline ? (
+        {unassessed ? (
+          <div className="issue-action-row">
+            <button onClick={onAsk} type="button">Help me clarify this</button>
+          </div>
+        ) : primaryAct === "verify" ? (
           <div className="issue-action-row is-lifecycle">
             <button
               aria-label="Confirm — it holds"
@@ -3501,18 +4008,38 @@ function IssuePanel({
             </button>
             <button onClick={() => setRoutingOpen(true)} type="button">→ Ask for evidence →</button>
           </div>
-        ) : (
+        ) : primaryAct === "build" ? (
           <div className="issue-action-row">
             <button
               disabled={pending || analysisRunning}
               onClick={() => void onIssueAction("apply", issue.recommendation)}
               type="button"
             >
-              Apply this fix
+              {issue.primary_act ? "Build this in the plan" : "Apply this fix"}
+            </button>
+            <button onClick={onAsk} type="button">Discuss</button>
+          </div>
+        ) : (
+          <div className="issue-action-row">
+            <button
+              disabled={pending || analysisRunning}
+              onClick={() => void onIssueAction("select", issue.recommendation)}
+              type="button"
+            >
+              Record this decision
             </button>
             <button onClick={onAsk} type="button">Discuss</button>
           </div>
         )}
+        {!unassessed && otherActs.includes("verify") && primaryAct !== "verify" ? (
+          <button
+            className="issue-clarification-disclosure"
+            onClick={() => setRoutingOpen(true)}
+            type="button"
+          >
+            Verify with evidence
+          </button>
+        ) : null}
         {inline && issue.clarification ? (
           <button
             aria-expanded={clarificationOpen}
@@ -3525,7 +4052,7 @@ function IssuePanel({
           </button>
         ) : null}
       </section>
-      {inline && routingOpen ? (
+      {routingOpen ? (
         <section className="issue-route-panel" aria-label="Ask for evidence">
           <h3>⇢ Ask for evidence — who can ground it?</h3>
           <p>
@@ -3682,7 +4209,11 @@ function IssuePanel({
           </button>
         </form>
       </section>
-      <section className="issue-review-share">
+      {!inline || externalComposerOpen ? (
+        <section
+          className={`issue-review-share ${externalComposerOpen ? "is-routing" : ""}`}
+          ref={reviewComposer}
+        >
         <div className="issue-review-share-heading">
           <span className="issue-review-share-icon">
             <Sparkle aria-hidden="true" size={15} weight="fill" />
@@ -3691,6 +4222,18 @@ function IssuePanel({
             <h3>Share for review</h3>
             <p>Invite a reviewer without using a workspace seat or invitation.</p>
           </div>
+        </div>
+        <div className="issue-review-scope-preview" aria-label="External reviewer scope preview">
+          <span>They will see only</span>
+          <strong>{scopedQuestion}</strong>
+          {externalReviewReady ? (
+            <>
+              <p>{scopedSourceExcerpt}</p>
+              <small>{scopedSourceRef}</small>
+            </>
+          ) : (
+            <p>This issue does not yet contain a cited source excerpt.</p>
+          )}
         </div>
         <form className="issue-review-share-form" onSubmit={createReview}>
           <div className="issue-review-fields">
@@ -3717,19 +4260,27 @@ function IssuePanel({
               />
             </label>
           </div>
-          <button disabled={reviewPending || !reviewerName.trim()} type="submit">
+          <button
+            disabled={reviewPending || !reviewerName.trim() || !externalReviewReady}
+            type="submit"
+          >
             <Sparkle aria-hidden="true" size={13} weight="fill" />
             {reviewPending ? "Creating…" : "Create secure review link"}
           </button>
         </form>
         {reviewLink ? (
           <div className="issue-review-link" role="status">
+            <strong>
+              {reviewDeliveryState === "awaiting"
+                ? "Awaiting response"
+                : reviewDeliveryState === "failed"
+                  ? "Email delivery failed — copy the secure link"
+                  : "Draft — copy the link to hand it off"}
+            </strong>
             <code>{reviewLink}</code>
             <button
-              onClick={() => {
-                void navigator.clipboard.writeText(reviewLink);
-                setReviewCopied(true);
-              }}
+              disabled={reviewPending}
+              onClick={() => void copyReviewLink()}
               type="button"
             >
               {reviewCopied ? "Copied" : "Copy link"}
@@ -3739,7 +4290,8 @@ function IssuePanel({
         {collaborationError ? (
           <p className="clarification-error" role="alert">{collaborationError}</p>
         ) : null}
-      </section>
+        </section>
+      ) : null}
       <p className={`issue-history-pointer ${inline ? "is-inline" : ""}`}>
         Status changes and reviewer attestations are retained in project history.
       </p>
@@ -3757,8 +4309,6 @@ function AdvisorPanel({
   extendedFailure,
   extendedRetryError,
   extendedRetrying,
-  groundedClaims,
-  inferredClaims,
   integrity,
   isProvisional,
   messages,
@@ -3773,6 +4323,7 @@ function AdvisorPanel({
   resolvedIssueCount,
   r2Mode,
   topIssue,
+  tourTarget,
   wide,
 }: {
   advisorError: string | null;
@@ -3783,8 +4334,6 @@ function AdvisorPanel({
   extendedFailure: ReturnType<typeof analysisFailureCopy>;
   extendedRetryError: string | null;
   extendedRetrying: boolean;
-  groundedClaims: number;
-  inferredClaims: number;
   integrity: OverviewSnapshot["assessment"]["integrity"];
   isProvisional: boolean;
   messages: ChatMessage[];
@@ -3799,6 +4348,7 @@ function AdvisorPanel({
   resolvedIssueCount: number;
   r2Mode: boolean;
   topIssue: Issue | null;
+  tourTarget?: RefObject<HTMLFormElement | null>;
   wide: boolean;
 }) {
   return (
@@ -3866,7 +4416,7 @@ function AdvisorPanel({
         </section>
         <section className="r2-advisor-basis">
           <p>Reliability basis</p>
-          <span><b>{groundedClaims}</b> load-bearing details grounded · <b>{inferredClaims}</b> still OSLO&apos;s inference. The read is only as strong as what it rests on.</span>
+          <span><b>{resolvedIssueCount}</b> load-bearing details grounded · <b>{openIssueCount}</b> still OSLO&apos;s inference. The read is only as strong as what it rests on.</span>
         </section>
         {topIssue ? (
           <section className="r2-advisor-next">
@@ -3900,7 +4450,11 @@ function AdvisorPanel({
             </button>
           ))}
         </div>
-        <form className="chat-composer" onSubmit={onSubmit}>
+        <form
+          className={tourTarget ? "chat-composer is-tour-target" : "chat-composer"}
+          onSubmit={onSubmit}
+          ref={tourTarget}
+        >
           <textarea
             aria-label="Ask OSLO"
             disabled={advisorPending}

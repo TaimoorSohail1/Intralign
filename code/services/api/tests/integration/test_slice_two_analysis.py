@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 import httpx
 import pytest
 from sqlalchemy import create_engine, text
+from sqlalchemy import event as sqlalchemy_event
 
 from oslo_api.analysis import (
     AnalysisPassKind,
@@ -21,6 +22,7 @@ from oslo_api.analysis.history import list_project_history
 from oslo_api.analysis.object_storage import LocalObjectStorage
 from oslo_api.analysis.persistence import DatabaseAnalysisStore, _primary_outcome_title
 from oslo_api.analysis.service import DatabaseSliceTwoApplication
+from oslo_api.application import DatabaseSliceOneApplication
 from oslo_api.collaboration.service import CollaborationError, DatabaseCollaborationService
 from oslo_api.identity import SupabaseIdentityProvider
 from oslo_api.settings import Settings
@@ -75,6 +77,30 @@ class RecordingReportMailer:
         self.messages.append(payload)
 
 
+class RecordingAsanaGateway:
+    destination_gid = "asana-project-integration"
+
+    def __init__(self) -> None:
+        self.items: list[dict] = []
+
+    def create_task(self, item: dict) -> dict[str, str]:
+        self.items.append(item)
+        index = len(self.items)
+        return {
+            "gid": f"asana-task-{index}",
+            "permalink_url": f"https://app.asana.com/0/1/{index}",
+        }
+
+
+class FailingReviewMailer:
+    def __init__(self) -> None:
+        self.attempts = 0
+
+    def send_report(self, **_payload) -> None:
+        self.attempts += 1
+        raise RuntimeError("REVIEW_EMAIL_PROVIDER_UNAVAILABLE")
+
+
 @pytest.fixture(scope="module")
 def workspace_owner_id() -> Iterator[UUID]:
     """Provide a real workspace Owner without conflating it with the platform Admin."""
@@ -85,8 +111,12 @@ def workspace_owner_id() -> Iterator[UUID]:
             supabase_url=SETTINGS.supabase_url,
             api_key=SETTINGS.supabase_secret_key,
         )
-        email = "slice-two-integration-owner@oslo.local"
-        owner = identity.find_user_by_email(email) or identity.create_user(
+        # Every pytest process owns its identity. The full API suite and the
+        # focused R2 guardrail suite may run at the same time in CI; sharing a
+        # fixed user lets one suite remove the other's workspace membership
+        # during teardown and turns valid behavior into permission failures.
+        email = f"slice-two-integration-owner-{uuid4().hex}@oslo.local"
+        owner = identity.create_user(
             email=email,
             password="SliceTwoIntegrationOwner123!",
             display_name="Slice Two Integration Owner",
@@ -674,6 +704,21 @@ def test_report_draft_and_immediate_delivery_are_durable(workspace_owner_id: UUI
             "http://localhost:3000",
             mailer,
         )
+        with engine.connect() as connection:
+            read_before_report = connection.execute(
+                text(
+                    "select current_analysis_run_id from public.projects "
+                    "where id = :project_id"
+                ),
+                {"project_id": project_id},
+            ).scalar_one()
+            analysis_count_before_report = connection.execute(
+                text(
+                    "select count(*) from public.analysis_runs "
+                    "where project_id = :project_id"
+                ),
+                {"project_id": project_id},
+            ).scalar_one()
 
         service.save_report(
             actor_user_id=owner_id,
@@ -695,6 +740,24 @@ def test_report_draft_and_immediate_delivery_are_durable(workspace_owner_id: UUI
             actor_user_id=owner_id,
             project_id=project_id,
         )
+        with engine.connect() as connection:
+            read_after_report = connection.execute(
+                text(
+                    "select current_analysis_run_id from public.projects "
+                    "where id = :project_id"
+                ),
+                {"project_id": project_id},
+            ).scalar_one()
+            analysis_count_after_report = connection.execute(
+                text(
+                    "select count(*) from public.analysis_runs "
+                    "where project_id = :project_id"
+                ),
+                {"project_id": project_id},
+            ).scalar_one()
+
+        assert read_after_report == read_before_report == result.run_id
+        assert analysis_count_after_report == analysis_count_before_report == 1
 
         newer = AnalysisWorkflow(
             store=DatabaseAnalysisStore(engine),
@@ -773,6 +836,566 @@ def test_report_draft_and_immediate_delivery_are_durable(workspace_owner_id: UUI
                 text("delete from public.projects where id = :id"),
                 {"id": project_id},
             )
+
+
+def test_asana_handoff_is_idempotent_and_exports_only_executable_fields(
+    workspace_owner_id: UUID,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        original_subscription = connection.execute(
+            text(
+                """
+                select plan_code, status from public.workspace_subscriptions
+                where workspace_id = :workspace_id
+                """
+            ),
+            {"workspace_id": WORKSPACE_ID},
+        ).mappings().one()
+        connection.execute(
+            text(
+                """
+                update public.workspace_subscriptions
+                set plan_code = 'basic', status = 'active'
+                where workspace_id = :workspace_id
+                """
+            ),
+            {"workspace_id": WORKSPACE_ID},
+        )
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Asana handoff integration', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": workspace_owner_id},
+        )
+    try:
+        result = AnalysisWorkflow(
+            store=DatabaseAnalysisStore(engine),
+            harness=DeterministicAgentHarness(),
+        ).run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=workspace_owner_id,
+                kind=RunKind.INITIAL,
+                description="A launch plan with work, owners, dates and retained source evidence.",
+                source_names=("delivery-plan.md",),
+                idempotency_key=f"asana-baseline:{project_id}",
+            )
+        )
+        assert result.snapshot is not None
+        gateway = RecordingAsanaGateway()
+        service = DatabaseCollaborationService(
+            engine,
+            "http://localhost:3000",
+            asana_gateway=gateway,
+        )
+
+        preview = service.asana_handoff_state(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+        )
+        first = service.import_asana_handoff(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+        )
+        second = service.import_asana_handoff(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+        )
+
+        assert preview["configured"] is True
+        assert preview["entitled"] is True
+        assert first["state"] == "completed"
+        assert second["state"] == "completed"
+        assert len(gateway.items) == first["total_count"]
+        assert all("assessment" not in item and "summary" not in item for item in gateway.items)
+        with engine.connect() as connection:
+            item_count = connection.execute(
+                text(
+                    """
+                    select count(*) from public.project_asana_handoff_items item
+                    join public.project_asana_handoffs handoff on handoff.id = item.handoff_id
+                    where handoff.project_id = :project_id
+                    """
+                ),
+                {"project_id": project_id},
+            ).scalar_one()
+        assert item_count == first["total_count"]
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+            connection.execute(
+                text(
+                    """
+                    update public.workspace_subscriptions
+                    set plan_code = :plan_code, status = :status
+                    where workspace_id = :workspace_id
+                    """
+                ),
+                {
+                    "plan_code": original_subscription["plan_code"],
+                    "status": original_subscription["status"],
+                    "workspace_id": WORKSPACE_ID,
+                },
+            )
+
+
+def test_scoped_reviewer_confirmation_is_private_attributed_and_queued(
+    tmp_path,
+    workspace_owner_id: UUID,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Scoped reviewer round-trip', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": workspace_owner_id},
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        baseline = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=workspace_owner_id,
+                kind=RunKind.INITIAL,
+                description="A launch plan with an unconfirmed accountable owner.",
+                source_names=("launch-brief.md",),
+                idempotency_key=f"review-baseline:{project_id}",
+            )
+        )
+        assert baseline.snapshot is not None
+        issue = baseline.snapshot.assessment.issues[0]
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    update public.assessment_snapshots
+                    set snapshot_json = jsonb_set(
+                      snapshot_json,
+                      '{project_title}',
+                      to_jsonb(cast('Evidence-backed launch plan' as text))
+                    )
+                    where id = :snapshot_id
+                    """
+                ),
+                {"snapshot_id": baseline.snapshot.id},
+            )
+        review_mailer = FailingReviewMailer()
+        collaboration = DatabaseCollaborationService(
+            engine,
+            "http://localhost:3000",
+            review_mailer=review_mailer,
+        )
+        created_comment = collaboration.add_comment(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            issue_id=issue.id,
+            body="This discussion must stay attributed and must not change grounding.",
+            mentions=[],
+        )
+        assert created_comment["author_name"] == "Slice Two Integration Owner"
+        shared = collaboration.create_snapshot_link(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            recipient_name="Executive sponsor",
+            recipient_email="sponsor@example.com",
+        )
+        share_token = shared["url"].rsplit("/", 1)[-1]
+        frozen_snapshot = collaboration.resolve_snapshot(share_token)
+        assert frozen_snapshot["recipient_name"] == "Executive sponsor"
+        assert frozen_snapshot["project_name"] == "Evidence-backed launch plan"
+        assert frozen_snapshot["snapshot_json"]["summary"].startswith(
+            "Evidence-backed launch plan."
+        )
+        assert "At the orientation stage" in frozen_snapshot["snapshot_json"]["summary"]
+        assert "90 days" in frozen_snapshot["view_audit_disclosure"]
+        stale_grant = collaboration.create_review_grant(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            issue_id=issue.id,
+            reviewer_name="First reviewer",
+            reviewer_email="first@example.com",
+            question="Who is accountable for the launch decision?",
+            source_ref="launch-brief.md#ownership",
+            source_excerpt="The launch owner has not yet been named.",
+        )
+        stale_token = stale_grant["url"].rsplit("/", 1)[-1]
+        grant = collaboration.create_review_grant(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            issue_id=issue.id,
+            reviewer_name="Amina Khan",
+            reviewer_email="amina@example.com",
+            question="Who is accountable for the launch decision?",
+            source_ref="launch-brief.md#ownership",
+            source_excerpt="The launch owner has not yet been named.",
+        )
+        token = grant["url"].rsplit("/", 1)[-1]
+        assert stale_grant["delivery_state"] == "failed"
+        assert stale_grant["delivery_attempts"] == 3
+        assert grant["delivery_state"] == "failed"
+        assert grant["delivery_attempts"] == 3
+        assert review_mailer.attempts == 6
+
+        manual_delivery = collaboration.mark_review_delivered(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            grant_id=UUID(grant["id"]),
+        )
+        assert manual_delivery["delivery_state"] == "awaiting"
+
+        with pytest.raises(CollaborationError) as stale_error:
+            collaboration.resolve_review(stale_token)
+        assert stale_error.value.code == "REVIEW_UNAVAILABLE"
+
+        scoped = collaboration.resolve_review(token)
+        assert set(scoped) == {
+            "id",
+            "reviewer_name",
+            "project_name",
+            "expires_at",
+            "question",
+            "source",
+            "response_kind",
+        }
+        assert scoped["source"] == {
+            "reference": "launch-brief.md#ownership",
+            "excerpt": "The launch owner has not yet been named.",
+        }
+        assert scoped["project_name"] == "Evidence-backed launch plan"
+        with pytest.raises(CollaborationError) as scope_error:
+            collaboration.resolve_snapshot(token)
+        assert scope_error.value.code == "TOKEN_SCOPE_FORBIDDEN"
+        assert scope_error.value.status_code == 403
+
+        response = collaboration.respond_to_review(
+            token=token,
+            kind="approve",
+            body="I am accountable for the launch decision.",
+        )
+        application = DatabaseSliceTwoApplication(
+            engine=engine,
+            store=store,
+            workflow=workflow,
+            executor=NoopExecutor(),  # type: ignore[arg-type]
+            document_store=DatabaseDocumentStore(
+                engine=engine,
+                object_store=LocalObjectStorage(tmp_path),
+            ),
+            extended_delay_seconds=0,
+            reanalysis_debounce_seconds=0,
+        )
+        queued = application.apply_reviewer_attestation(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            issue_id=issue.id,
+            reviewer_name=response["reviewer_name"],
+            response_kind=response["response_kind"],
+            body=response["body"],
+            key=f"review:{response['id']}",
+        )
+        collaboration.link_review_run(response_id=UUID(response["id"]), run_id=queued.id)
+
+        with engine.connect() as connection:
+            stored = connection.execute(
+                text(
+                    """
+                    select r.basis, r.evidence_ref, r.attributed_to,
+                           r.analysis_run_id, i.current_status
+                    from public.project_review_responses r
+                    join public.issues i
+                      on i.project_id = r.project_id
+                     and i.stable_key = r.issue_stable_key
+                    where r.id = :response_id
+                    """
+                ),
+                {"response_id": UUID(response["id"])},
+            ).mappings().one()
+            events = set(
+                connection.execute(
+                    text(
+                        """
+                        select event_type from public.outbox_events
+                        where aggregate_id = :response_id
+                        """
+                    ),
+                    {"response_id": UUID(response["id"])},
+                ).scalars()
+            )
+            stale_state = connection.execute(
+                text(
+                    """
+                    select delivery_state::text, revoked_at, withdrawn_at, token_version
+                    from public.project_review_grants
+                    where reviewer_name = 'First reviewer' and project_id = :project_id
+                    """
+                ),
+                {"project_id": project_id},
+            ).mappings().one()
+            review_history = connection.execute(
+                text(
+                    """
+                    select summary, detail
+                    from public.project_history_events
+                    where project_id = :project_id
+                      and event_type = 'collaboration.reviewer_approve'
+                    order by id desc
+                    limit 1
+                    """
+                ),
+                {"project_id": project_id},
+            ).mappings().one()
+        assert stored["basis"] == "answered"
+        assert stored["evidence_ref"] == "launch-brief.md#ownership"
+        assert stored["attributed_to"]["display_name"] == "Amina Khan"
+        assert stored["analysis_run_id"] == queued.id
+        assert stored["current_status"] == "addressed"
+        assert events == {
+            "review.responded",
+            "notify.routed_response",
+            "invite.drafted",
+        }
+        assert stale_state["delivery_state"] == "withdrawn"
+        assert stale_state["revoked_at"] is not None
+        assert stale_state["withdrawn_at"] is not None
+        assert stale_state["token_version"] == 1
+        assert review_history["summary"] == "Reviewer confirmed"
+        assert review_history["detail"] == (
+            "Amina Khan submitted a confirmation response."
+        )
+        workspace = DatabaseSliceOneApplication(
+            engine=engine,
+            mailer=object(),  # type: ignore[arg-type]
+            web_url="http://127.0.0.1:3002",
+        ).get_workspace_summary(
+            actor_user_id=workspace_owner_id,
+            workspace_id=WORKSPACE_ID,
+        )
+        review_notification = next(
+            item
+            for item in workspace.notifications
+            if item.key == f"review:{response['id']}"
+        )
+        assert review_notification.title == "Amina Khan confirmed the requested evidence"
+        collaboration_state = collaboration.state(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+        )
+        share_state = next(
+            item
+            for item in collaboration_state["share_links"]
+            if item["id"] == shared["id"]
+        )
+        assert share_state["recipient_name"] == "Executive sponsor"
+        assert share_state["first_viewed_at"] is not None
+        assert share_state["last_viewed_at"] is not None
+        with engine.connect() as connection:
+            before_projection_reads = {
+                "attestations": connection.execute(
+                    text("select count(*) from public.issue_attestations where project_id = :id"),
+                    {"id": project_id},
+                ).scalar_one(),
+                "history": connection.execute(
+                    text(
+                        "select count(*) from public.project_history_events "
+                        "where project_id = :id"
+                    ),
+                    {"id": project_id},
+                ).scalar_one(),
+            }
+        projection_writes: list[str] = []
+
+        def reject_projection_write(
+            _connection,
+            _cursor,
+            statement,
+            _parameters,
+            _context,
+            _executemany,
+        ) -> None:
+            normalized = statement.lstrip().lower()
+            if not normalized.startswith(("select", "with")):
+                projection_writes.append(statement)
+                raise AssertionError("Collaboration projections attempted a write")
+
+        sqlalchemy_event.listen(engine, "before_cursor_execute", reject_projection_write)
+        try:
+            roll_up = collaboration.roll_up(
+                actor_user_id=workspace_owner_id,
+                project_id=project_id,
+            )
+            grounding_map = collaboration.grounding_map(
+                actor_user_id=workspace_owner_id,
+                project_id=project_id,
+            )
+        finally:
+            sqlalchemy_event.remove(engine, "before_cursor_execute", reject_projection_write)
+        assert projection_writes == []
+        assert roll_up["integrity"]["limiting_pillar"]
+        assert any(item["issue_id"] == issue.id for item in roll_up["decision_queue"])
+        node = next(item for item in grounding_map["nodes"] if item["issue_id"] == issue.id)
+        assert node["state"] == "addressed"
+        assert node["href"].endswith(f"/issues?issue={issue.id}")
+        with engine.connect() as connection:
+            after_projection_reads = {
+                "attestations": connection.execute(
+                    text("select count(*) from public.issue_attestations where project_id = :id"),
+                    {"id": project_id},
+                ).scalar_one(),
+                "history": connection.execute(
+                    text(
+                        "select count(*) from public.project_history_events "
+                        "where project_id = :id"
+                    ),
+                    {"id": project_id},
+                ).scalar_one(),
+            }
+        assert after_projection_reads == before_projection_reads
+
+        # Land two distinct reviewer responses in sequence. Accepted reviewer
+        # evidence is cumulative: the second Deep Pass must not reopen the issue
+        # grounded by the first response.
+        application._execute(queued.id)
+        first_landed = store.current_snapshot(project_id)
+        assert first_landed is not None
+        second_issue = next(
+            candidate
+            for candidate in first_landed.assessment.issues
+            if candidate.id != issue.id
+        )
+        second_grant = collaboration.create_review_grant(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            issue_id=second_issue.id,
+            reviewer_name="Omar Saleem",
+            reviewer_email=None,
+            question="What evidence confirms this issue is addressed?",
+            source_ref="launch-brief.md#delivery",
+            source_excerpt="The delivery dependency still needs an accountable response.",
+        )
+        second_response = collaboration.respond_to_review(
+            token=second_grant["url"].rsplit("/", 1)[-1],
+            kind="approve",
+            body="I confirm the dependency owner and the recorded fallback.",
+        )
+        second_run = application.apply_reviewer_attestation(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            issue_id=second_issue.id,
+            reviewer_name=second_response["reviewer_name"],
+            response_kind=second_response["response_kind"],
+            body=second_response["body"],
+            key=f"review:{second_response['id']}",
+        )
+        collaboration.link_review_run(
+            response_id=UUID(second_response["id"]),
+            run_id=second_run.id,
+        )
+        application._execute(second_run.id)
+
+        with engine.connect() as connection:
+            cumulative_statuses = dict(
+                connection.execute(
+                    text(
+                        """
+                        select stable_key, current_status::text
+                        from public.issues
+                        where project_id = :project_id
+                          and stable_key in (:first_issue, :second_issue)
+                        """
+                    ),
+                    {
+                        "project_id": project_id,
+                        "first_issue": issue.id,
+                        "second_issue": second_issue.id,
+                    },
+                ).all()
+            )
+            current_history_detail = connection.execute(
+                text(
+                    """
+                    select detail
+                    from public.project_history_events
+                    where project_id = :project_id
+                      and analysis_run_id = :run_id
+                      and event_type = 'issues.reconciled'
+                    """
+                ),
+                {"project_id": project_id, "run_id": second_run.id},
+            ).scalar_one()
+        assert cumulative_statuses == {
+            issue.id: "resolved",
+            second_issue.id: "resolved",
+        }
+        assert "1 resolved" in current_history_detail
+
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    update public.assessment_snapshots
+                    set snapshot_json = jsonb_set(
+                      snapshot_json,
+                      '{summary}',
+                      to_jsonb(cast('The read contains 99 open findings.' as text))
+                    )
+                    where project_id = :project_id
+                      and published_at = (
+                        select max(published_at)
+                        from public.assessment_snapshots
+                        where project_id = :project_id
+                      )
+                    """
+                ),
+                {"project_id": project_id},
+            )
+        post_review_share = collaboration.create_snapshot_link(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            recipient_name="Post-review sponsor",
+            recipient_email=None,
+        )
+        shared_after_reviews = collaboration.resolve_snapshot(
+            post_review_share["url"].rsplit("/", 1)[-1]
+        )
+        shared_statuses = {
+            item["id"]: item.get("status")
+            for item in shared_after_reviews["snapshot_json"]["assessment"]["issues"]
+        }
+        assert "99 open findings" not in shared_after_reviews["snapshot_json"]["summary"]
+        assert shared_statuses[issue.id] == "resolved"
+        assert shared_statuses[second_issue.id] == "resolved"
+
+        collaboration.revoke_share_link(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            link_id=UUID(shared["id"]),
+        )
+        with pytest.raises(CollaborationError) as revoked_share_error:
+            collaboration.resolve_snapshot(share_token)
+        assert revoked_share_error.value.code == "LINK_UNAVAILABLE"
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+        engine.dispose()
 
 
 def test_postgres_analysis_is_checkpointed_and_published_atomically(
@@ -937,6 +1560,132 @@ def test_postgres_analysis_is_checkpointed_and_published_atomically(
             )
 
 
+def test_work_breakdown_tasks_project_into_schedule_and_resources(
+    tmp_path,
+    workspace_owner_id: UUID,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    owner_id = workspace_owner_id
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Shared task projection', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        baseline = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description="A governed delivery plan.",
+                source_names=("brief.md",),
+                idempotency_key=f"shared-task-baseline:{project_id}",
+            )
+        )
+        assert baseline.snapshot is not None
+        application = DatabaseSliceTwoApplication(
+            engine=engine,
+            store=store,
+            workflow=workflow,
+            executor=NoopExecutor(),  # type: ignore[arg-type]
+            document_store=DatabaseDocumentStore(
+                engine=engine,
+                object_store=LocalObjectStorage(tmp_path),
+            ),
+            extended_delay_seconds=0,
+        )
+        work_breakdown = application.get_artifact(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            artifact_type="work_breakdown",
+        )
+        task_id = "work-breakdown-section-1-row-2"
+        content = {
+            "sections": [
+                {
+                    "id": "work-breakdown-section-1",
+                    "heading": "Commerce launch",
+                    "body": "",
+                    "bullets": [],
+                    "columns": ["WBS", "Item"],
+                    "rows": [
+                        ["1.0", "Release readiness"],
+                        ["1.1", "Validate production support handoff"],
+                    ],
+                    "row_ids": ["work-breakdown-section-1-row-1", task_id],
+                    "row_evidence_refs": [[], []],
+                    "row_states": ["confirmed", "confirmed"],
+                    "row_provenance": ["confirmed_by_user", "confirmed_by_user"],
+                    "provenance": "confirmed_by_user",
+                    "evidence_refs": [],
+                }
+            ]
+        }
+        edited, run = application.update_artifact(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            artifact_type="work_breakdown",
+            content=content,
+            expected_version=work_breakdown["version"],
+            key=f"shared-task-add:{project_id}",
+        )
+        assert run is not None
+
+        for artifact_type in ("schedule", "resources"):
+            projected = application.get_artifact(
+                actor_user_id=owner_id,
+                project_id=project_id,
+                artifact_type=artifact_type,
+            )
+            rows = [
+                (row_id, row)
+                for section in projected["content"]["sections"]
+                for row_id, row in zip(section.get("row_ids", []), section["rows"], strict=True)
+            ]
+            matching = [row for row_id, row in rows if row_id == task_id]
+            assert len(matching) == 1
+            assert "Validate production support handoff" in matching[0]
+
+        content["sections"][0]["rows"] = content["sections"][0]["rows"][:1]
+        content["sections"][0]["row_ids"] = content["sections"][0]["row_ids"][:1]
+        content["sections"][0]["row_evidence_refs"] = [[]]
+        content["sections"][0]["row_states"] = ["confirmed"]
+        content["sections"][0]["row_provenance"] = ["confirmed_by_user"]
+        application.update_artifact(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            artifact_type="work_breakdown",
+            content=content,
+            expected_version=edited["version"],
+            key=f"shared-task-remove:{project_id}",
+        )
+        for artifact_type in ("schedule", "resources"):
+            projected = application.get_artifact(
+                actor_user_id=owner_id,
+                project_id=project_id,
+                artifact_type=artifact_type,
+            )
+            assert all(
+                task_id not in section.get("row_ids", [])
+                for section in projected["content"]["sections"]
+            )
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
 def test_new_snapshot_does_not_resolve_issue_rows_without_resolution_evidence(
     workspace_owner_id: UUID,
 ) -> None:
@@ -1011,6 +1760,162 @@ def test_new_snapshot_does_not_resolve_issue_rows_without_resolution_evidence(
             for issue in current_snapshot.assessment.issues
         )
         assert reconciled_summary == f"{current_open_count} issues detected"
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
+def test_new_snapshot_preserves_lifecycle_state_for_a_repeated_issue(
+    workspace_owner_id: UUID,
+) -> None:
+    """Publishing a read must not briefly replace a durable owner decision."""
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    owner_id = workspace_owner_id
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Repeated issue lifecycle', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(
+            store=store,
+            harness=DeterministicAgentHarness(),
+        )
+        request = AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=project_id,
+            requested_by=owner_id,
+            kind=RunKind.INITIAL,
+            description="A delivery plan with an unresolved owner and fallback.",
+            source_names=("brief.md",),
+            idempotency_key=f"integration-repeated-lifecycle:first:{project_id}",
+        )
+        first = workflow.run(request)
+        assert first.status is AnalysisRunStatus.COMPLETED
+        first_snapshot = store.current_snapshot(project_id)
+        assert first_snapshot is not None
+        issue_id = first_snapshot.assessment.issues[0].id
+
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    update public.issues
+                    set current_status = 'resolved', updated_at = now()
+                    where project_id = :project_id and stable_key = :issue_id
+                    """
+                ),
+                {"project_id": project_id, "issue_id": issue_id},
+            )
+
+        second = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.EXTENDED,
+                description=request.description,
+                source_names=request.source_names,
+                idempotency_key=f"integration-repeated-lifecycle:second:{project_id}",
+                parent_run_id=first.run_id,
+            )
+        )
+        assert second.status is AnalysisRunStatus.COMPLETED
+        second_snapshot = store.current_snapshot(project_id)
+        assert second_snapshot is not None
+        assert any(issue.id == issue_id for issue in second_snapshot.assessment.issues)
+
+        with engine.connect() as connection:
+            current_status = connection.execute(
+                text(
+                    """
+                    select current_status from public.issues
+                    where project_id = :project_id and stable_key = :issue_id
+                    """
+                ),
+                {"project_id": project_id, "issue_id": issue_id},
+            ).scalar_one()
+        assert current_status == "resolved"
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
+def test_workspace_summary_projects_current_issue_statuses(
+    workspace_owner_id: UUID,
+) -> None:
+    """PF workspace awareness must agree with the current Issue projection."""
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Workspace issue projection', 'draft', :owner_id)
+                """
+            ),
+            {
+                "id": project_id,
+                "workspace_id": WORKSPACE_ID,
+                "owner_id": workspace_owner_id,
+            },
+        )
+    try:
+        result = AnalysisWorkflow(
+            store=DatabaseAnalysisStore(engine),
+            harness=DeterministicAgentHarness(),
+        ).run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=workspace_owner_id,
+                kind=RunKind.INITIAL,
+                description="A delivery plan with a confirmed owner and fallback.",
+                source_names=("brief.md",),
+                idempotency_key=f"integration-workspace-projection:{project_id}",
+            )
+        )
+        assert result.status is AnalysisRunStatus.COMPLETED
+
+        snapshot = DatabaseAnalysisStore(engine).current_snapshot(project_id)
+        assert snapshot is not None
+        issue_id = snapshot.assessment.issues[0].id
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    update public.issues
+                    set current_status = 'resolved', updated_at = now()
+                    where project_id = :project_id and stable_key = :issue_id
+                    """
+                ),
+                {"project_id": project_id, "issue_id": issue_id},
+            )
+
+        workspace = DatabaseSliceOneApplication(
+            engine=engine,
+            mailer=object(),  # type: ignore[arg-type]
+            web_url="http://127.0.0.1:3002",
+        ).get_workspace_summary(
+            actor_user_id=workspace_owner_id,
+            workspace_id=WORKSPACE_ID,
+        )
+        project = next(item for item in workspace.projects if item.id == project_id)
+        assert project.open_issues == len(snapshot.assessment.issues) - 1
     finally:
         with engine.begin() as connection:
             connection.execute(

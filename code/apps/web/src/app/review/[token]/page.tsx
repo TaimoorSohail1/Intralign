@@ -2,24 +2,16 @@ import { ReviewerResponseForm } from "@/components/collaboration/reviewer-respon
 import { osloApiUrl } from "@/lib/server/oslo-api";
 
 type ReviewPayload = {
+  id: string;
   reviewer_name: string;
   project_name: string;
-  issue_id?: string | null;
   expires_at: string;
-  response_kind?: string | null;
-  snapshot_json: {
-    summary?: string;
-    assessment?: {
-      confidence_band?: string;
-      issues?: Array<{
-        id: string;
-        title: string;
-        severity: string;
-        why: string;
-        recommendation: string;
-      }>;
-    };
+  question: string;
+  source: {
+    reference: string;
+    excerpt: string;
   };
+  response_kind?: string | null;
 };
 
 const reviewDateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -52,8 +44,6 @@ export default async function ReviewPage({
   }
 
   const review = await response.json() as ReviewPayload;
-  const issues = review.snapshot_json.assessment?.issues ?? [];
-  const issue = issues.find((candidate) => candidate.id === review.issue_id) ?? issues[0];
 
   return (
     <main className="public-collaboration-shell">
@@ -69,40 +59,23 @@ export default async function ReviewPage({
             {review.reviewer_name}, you have been invited to provide one traceable response
             without joining the workspace.
           </p>
-          <div
-            aria-label={`Outcome confidence ${
-              review.snapshot_json.assessment?.confidence_band ?? "not available"
-            }`}
-            className="public-confidence-card"
-          >
-            <strong>{review.snapshot_json.assessment?.confidence_band ?? "Current read"}</strong>
-            <span>
-              <b>Outcome confidence</b>
-              <small>Evidence-qualified retained read, not a project score</small>
-            </span>
-          </div>
-          {issue ? (
-            <article className="public-review-issue">
-              <header><span>{issue.severity}</span><small>Issue selected for review</small></header>
-              <h2>{issue.title}</h2>
-              <h3>Why this matters</h3>
-              <p>{issue.why}</p>
-              <h3>OSLO recommended</h3>
-              <p>{issue.recommendation}</p>
-            </article>
-          ) : (
-            <article className="public-review-issue">
-              <h2>Review the retained project read</h2>
-              <p>{review.snapshot_json.summary}</p>
-            </article>
-          )}
+          <article className="public-review-issue">
+            <header><span>Scoped</span><small>One question · one cited source</small></header>
+            <h2>{review.question}</h2>
+            <h3>Cited source</h3>
+            <p>{review.source.excerpt}</p>
+            <small>{review.source.reference}</small>
+          </article>
+          <p className="public-review-scope-note">
+            This link cannot open the project, its artifacts, other issues, members, or history.
+          </p>
           <small className="public-expiry">
             Secure link expires {reviewDateFormatter.format(new Date(review.expires_at))}.
           </small>
         </section>
         <aside className="public-review-response">
           <p className="public-eyebrow">Your attestation</p>
-          <h2>Respond to this project read</h2>
+          <h2>Respond to this question</h2>
           {review.response_kind ? (
             <div className="review-response-success">
               <p>This link has already received a response.</p>

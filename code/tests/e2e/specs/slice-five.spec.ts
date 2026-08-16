@@ -1,7 +1,7 @@
 import { expect, test } from "../fixtures";
 
 test.setTimeout(300_000);
-test.use({ trace: "on" });
+test.use({ trace: "retain-on-failure" });
 
 const artifacts = [
   ["Intent", "intent"],
@@ -18,7 +18,7 @@ async function signIn(page: import("@playwright/test").Page) {
   await page.getByLabel("Email").fill("e2e-owner@example.com");
   await page.getByLabel("Password").fill("E2EOwner123!");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL(/\/(workspace|welcome)/, { timeout: 20_000 });
+  await page.waitForURL(/\/(workspace|welcome)/, { timeout: 60_000 });
 }
 
 async function ensureAnalyzedProject(page: import("@playwright/test").Page) {

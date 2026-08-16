@@ -1,5 +1,5 @@
 import re
-from dataclasses import replace
+from dataclasses import asdict, replace
 
 from oslo_api.analysis.integrity import (
     IntegrityArtifact,
@@ -7,6 +7,20 @@ from oslo_api.analysis.integrity import (
     build_integrity_read,
 )
 from oslo_api.analysis.issue_identity import deduplicate_issues
+from oslo_api.analysis.load_bearing import (
+    CalibrationContext,
+    CalibrationPolicy,
+    FindingBasis,
+    FindingType,
+    SensitivityCandidate,
+    SensitivityRecord,
+    StructuralTarget,
+    calibration_policy_from_environment,
+    classify_finding_or_escalate,
+    deterministic_finding_tags,
+    evaluate_sensitivity,
+    gate_sensitivity,
+)
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     Artifact,
@@ -337,17 +351,62 @@ def with_integrity(
     for issue in read.issues:
         if issue.id not in by_id:
             by_id[issue.id] = _derived_issue(issue, artifacts)
-    ranked = tuple(
-        replace(
-            by_id[issue.id],
-            exposure_rank=float(len(read.issues) - index),
+    sensitivity_by_id: dict[str, SensitivityRecord] = {}
+    candidate_by_id = {
+        candidate.id: candidate for candidate in assessment.sensitivity_candidates
+    }
+    if assessment.dependency_graph is not None:
+        for candidate in assessment.sensitivity_candidates:
+            sensitivity_by_id[candidate.id] = evaluate_sensitivity(
+                graph=assessment.dependency_graph,
+                candidate=candidate,
+            )
+    indexed_issues = tuple(enumerate(read.issues))
+    ordered_issues = tuple(
+        issue
+        for _, issue in sorted(
+            indexed_issues,
+            key=lambda item: (
+                item[1].id in sensitivity_by_id,
+                sensitivity_by_id[item[1].id].sensitivity
+                if item[1].id in sensitivity_by_id
+                else float(len(read.issues) - item[0]),
+            ),
+            reverse=True,
         )
-        for index, issue in enumerate(read.issues)
+    )
+    calibration_policy = calibration_policy_from_environment()
+    ranked = tuple(
+        _with_sensitivity(
+            _with_finding_model(
+                replace(
+                    by_id[issue.id],
+                    exposure_rank=(
+                        sensitivity_by_id[issue.id].exposure_rank
+                        if issue.id in sensitivity_by_id
+                        else float(len(read.issues) - index)
+                    ),
+                )
+            ),
+            record=sensitivity_by_id.get(issue.id),
+            candidate=candidate_by_id.get(issue.id),
+            calibration_policy=calibration_policy,
+        )
+        for index, issue in enumerate(ordered_issues)
+    )
+    under_review_regions = tuple(
+        issue.title for issue in ranked if issue.unassessed and issue.load_bearing
+    )
+    integrity = replace(
+        read.integrity,
+        complete=not under_review_regions,
+        sound_claim_blocked=bool(under_review_regions),
+        under_review_regions=under_review_regions,
     )
     return replace(
         assessment,
         issues=ranked,
-        integrity=read.integrity,
+        integrity=integrity,
         resolved_issue_count=sum(issue.status == "resolved" for issue in ranked),
     )
 
@@ -385,6 +444,14 @@ def _derived_issue(
         ),
         ArtifactType.SCHEDULE,
     )
+    finding_basis = ""
+    structural_target = ""
+    if issue.finding_type == "False Confidence":
+        finding_basis = FindingBasis.INFERENCE.value
+        structural_target = StructuralTarget.TRUTH.value
+    elif issue.finding_type == "Coverage Gap":
+        finding_basis = FindingBasis.STRUCTURAL.value
+        structural_target = StructuralTarget.COVERAGE.value
     return Issue(
         id=issue.id,
         artifact_type=artifact_type,
@@ -399,6 +466,93 @@ def _derived_issue(
         finding_type=issue.finding_type,
         section=issue.section,
         recommendation_from_oslo=issue.recommendation_from_oslo,
+        finding_basis=finding_basis,
+        structural_target=structural_target,
+    )
+
+
+def _with_finding_model(issue: Issue) -> Issue:
+    finding_type = issue.finding_type
+    if finding_type == "False Confidence":
+        finding_type = FindingType.FALSE_CONFIDENCE.value
+    elif finding_type == "Coverage Gap":
+        finding_type = FindingType.COVERAGE_GAP.value
+
+    finding_basis = issue.finding_basis
+    structural_target = issue.structural_target
+    if not finding_type or not finding_basis or not structural_target:
+        tags = deterministic_finding_tags(
+            dimension=issue.dimension,
+            title=issue.title,
+            recommendation=issue.recommendation,
+        )
+        finding_type = tags.finding_type
+        finding_basis = tags.basis.value
+        structural_target = tags.structural_target.value
+
+    resolution = classify_finding_or_escalate(
+        issue_id=issue.id,
+        finding_type=finding_type,
+        basis=finding_basis,
+        structural_target=structural_target,
+    )
+    if resolution.escalate:
+        return replace(
+            issue,
+            finding_type=finding_type,
+            finding_basis=finding_basis,
+            structural_target=structural_target,
+            classification_state="escalated",
+            primary_act="",
+            also_offered=(),
+            unassessed=issue.load_bearing,
+        )
+
+    return replace(
+        issue,
+        dimension=resolution.dimension,
+        dimensions=(resolution.dimension,),
+        finding_type=finding_type,
+        finding_basis=resolution.basis.value,
+        structural_target=resolution.structural_target.value,
+        primary_act=resolution.primary_act.value,
+        also_offered=tuple(act.value for act in resolution.also_offered),
+        classification_state="classified",
+        unassessed=False,
+    )
+
+
+def _with_sensitivity(
+    issue: Issue,
+    *,
+    record: SensitivityRecord | None,
+    candidate: SensitivityCandidate | None,
+    calibration_policy: CalibrationPolicy | None,
+) -> Issue:
+    if record is None:
+        return issue
+
+    calibrated = (
+        calibration_policy is not None
+        and candidate is not None
+        and candidate.stakes is not None
+    )
+    load_bearing = issue.load_bearing
+    if calibrated:
+        decision = gate_sensitivity(
+            sensitivity=record.sensitivity,
+            policy=calibration_policy,
+            context=CalibrationContext(domain=None, stakes=candidate.stakes),
+        )
+        load_bearing = decision.load_bearing
+
+    return replace(
+        issue,
+        load_bearing=load_bearing,
+        exposure_rank=record.exposure_rank,
+        sensitivity=record.sensitivity,
+        sensitivity_trace=asdict(record.trace),
+        sensitivity_state="calibrated" if calibrated else "shadow",
     )
 
 

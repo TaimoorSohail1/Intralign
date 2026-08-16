@@ -373,7 +373,9 @@ describe("ArtifactWorkspace R2 plan artifacts", () => {
     expect(within(row as HTMLElement).getByRole("button", { name: /Confirm/ })).toBeInTheDocument();
     expect(within(row as HTMLElement).getByRole("button", { name: /Edit/ })).toBeInTheDocument();
     expect(within(row as HTMLElement).getByRole("button", { name: /Delete/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: addLabel })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: addLabel }));
+    expect(screen.getByText("New statement")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeEnabled();
   });
 
   it("shows an affected section issue once instead of under every requirement row", async () => {

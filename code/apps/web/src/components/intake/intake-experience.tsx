@@ -41,6 +41,8 @@ const supportedExtensions = new Set([
 const maxFiles = 10;
 const maxFileBytes = 10 * 1024 * 1024;
 const maxTotalBytes = 50 * 1024 * 1024;
+const samplePlanDescription =
+  "DevNorth 2026 is a one-day developer conference for approximately 450 attendees on 18 September. Confirm the venue, programme, Wi-Fi capacity, sponsors, budget, schedule and delivery owners.";
 
 async function noOpLogout() {}
 const navigateWindow = (href: string) => window.location.assign(href);
@@ -108,6 +110,9 @@ export function IntakeExperience({
       }
       return true;
     });
+    if (supported.length > 0 && description.trim() === samplePlanDescription) {
+      setDescription("");
+    }
     const existingKeys = new Set(
       files.map((file) => `${file.name.toLocaleLowerCase()}:${file.size}`),
     );
@@ -210,7 +215,7 @@ export function IntakeExperience({
             <section><h2>Confidence</h2><p>Understanding is forming · qualified by moderate reliability.</p></section>
             <section><h2>Start here</h2><p>Review the highest-impact clarification first.</p></section>
             <section><h2>Progress</h2><p>Initial Analysis complete · Extended Analysis queued.</p></section>
-            <section><h2>More</h2><p>Plan artifacts (7) · Attention Map · Analysis history.</p></section>
+            <section><h2>More</h2><p>Plan artifacts (7) · Grounding map · Analysis history.</p></section>
           </div>
         </section>
         {orientationOpen ? (
@@ -287,7 +292,7 @@ export function IntakeExperience({
       <button
         className="sample-link sample-link-primary"
         disabled={!hydrated}
-        onClick={() => setDescription("DevNorth 2026 is a one-day developer conference for approximately 450 attendees on 18 September. Confirm the venue, programme, Wi-Fi capacity, sponsors, budget, schedule and delivery owners.")}
+        onClick={() => setDescription(samplePlanDescription)}
         type="button"
       >
         New to Intralign? See how it works on a sample plan →

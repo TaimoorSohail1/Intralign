@@ -1161,9 +1161,12 @@ def test_evaluate_quarantines_only_findings_with_unsupported_evidence() -> None:
             {
                 "id": "ISS-SUPPORTED",
                 "artifact_type": "requirements",
-                "dimension": "Clarity",
                 "severity": "Moderate",
-                "finding_type": "clarity",
+                "finding_type": "inference_gap",
+                "finding_basis": "inference",
+                "structural_target": "definition",
+                "graph_node_id": "REQ-THRESHOLD",
+                "extraction_confidence": 0.8,
                 "exception_checked": True,
                 "title": "Supported requirement gap",
                 "why": "The source does not define a measurable threshold.",
@@ -1175,9 +1178,12 @@ def test_evaluate_quarantines_only_findings_with_unsupported_evidence() -> None:
             {
                 "id": "ISS-UNSUPPORTED",
                 "artifact_type": "requirements",
-                "dimension": "Clarity",
                 "severity": "Critical",
-                "finding_type": "absence",
+                "finding_type": "unowned",
+                "finding_basis": "structural",
+                "structural_target": "definition",
+                "graph_node_id": "REQ-UNSUPPORTED",
+                "extraction_confidence": 0.2,
                 "exception_checked": True,
                 "title": "Unsupported requirement gap",
                 "why": "This finding cites evidence that was never supplied.",
@@ -1185,6 +1191,60 @@ def test_evaluate_quarantines_only_findings_with_unsupported_evidence() -> None:
                 "evidence_refs": [invented_ref],
                 "clarification": None,
                 "status": "open",
+            },
+        ],
+        "dependency_nodes": [
+            {
+                "id": "REQ-THRESHOLD",
+                "type": "inference",
+                "label": "Requirement threshold",
+                "provenance": "inferred",
+                "extraction_confidence": 0.8,
+            },
+            {
+                "id": "OUTCOME",
+                "type": "outcome",
+                "label": "Project outcome",
+                "provenance": "accepted",
+                "extraction_confidence": 1.0,
+            },
+            {
+                "id": "REQ-UNSUPPORTED",
+                "type": "inference",
+                "label": "Unsupported requirement",
+                "provenance": "inferred",
+                "extraction_confidence": 0.2,
+            },
+        ],
+        "dependency_edges": [
+            {
+                "from_id": "REQ-THRESHOLD",
+                "to_id": "OUTCOME",
+                "rel": "supports",
+                "weight": 0.8,
+                "extraction_confidence": 0.8,
+            },
+        ],
+        "sensitivity_candidates": [
+            {
+                "id": "ISS-SUPPORTED",
+                "node_id": "REQ-THRESHOLD",
+                "structural_target": "definition",
+                "favorable_integrity": 0.8,
+                "adverse_integrity": 0.2,
+                "runway_factor": 1.1,
+                "stakes": 1.0,
+                "edge_key": None,
+            },
+            {
+                "id": "ISS-UNSUPPORTED",
+                "node_id": "REQ-UNSUPPORTED",
+                "structural_target": "definition",
+                "favorable_integrity": 0.9,
+                "adverse_integrity": 0.1,
+                "runway_factor": 1.3,
+                "stakes": 1.0,
+                "edge_key": None,
             },
         ],
     }
@@ -1209,4 +1269,8 @@ def test_evaluate_quarantines_only_findings_with_unsupported_evidence() -> None:
     )
 
     assert [issue.id for issue in assessment.issues] == ["ISS-SUPPORTED"]
+    assert assessment.dependency_graph is not None
+    assert [candidate.id for candidate in assessment.sensitivity_candidates] == [
+        "ISS-SUPPORTED"
+    ]
     assert len(client.responses.requests) == 1

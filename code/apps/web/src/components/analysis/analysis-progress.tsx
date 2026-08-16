@@ -249,6 +249,16 @@ export function AnalysisProgress({
       return;
     }
     const overview = await overviewResponse.json() as OutcomeOverview;
+    const publishedArtifacts = [
+      ...new Set(
+        (overview.artifacts ?? [])
+          .map((artifact) => artifact.artifact_type?.trim())
+          .filter((artifactType): artifactType is string => Boolean(artifactType)),
+      ),
+    ];
+    if (publishedArtifacts.length > 0) {
+      setCompletedArtifacts(publishedArtifacts);
+    }
     const intentArtifact = intentResponse.ok
       ? await intentResponse.json() as IntentArtifact
       : null;

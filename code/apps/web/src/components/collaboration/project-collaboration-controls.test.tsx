@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ProjectCollaborationControls } from "./project-collaboration-controls";
@@ -46,13 +46,28 @@ describe("ProjectCollaborationControls", () => {
       .mockResolvedValueOnce(
         jsonResponse(
           {
+            id: "share-created",
             url: "http://localhost:3000/share/snapshot-token",
             expires_at: "2026-08-26T00:00:00Z",
           },
           201,
         ),
       )
-      .mockResolvedValueOnce(jsonResponse(collaboration));
+      .mockResolvedValueOnce(jsonResponse({
+        ...collaboration,
+        share_links: [{
+          id: "share-created",
+          expires_at: "2026-08-26T00:00:00Z",
+          revoked_at: null,
+          recipient_name: "Amina Khan",
+        }],
+      }));
+    fireEvent.change(screen.getByLabelText("Snapshot recipient name"), {
+      target: { value: "Amina Khan" },
+    });
+    fireEvent.change(screen.getByLabelText("Snapshot recipient email"), {
+      target: { value: "amina@example.com" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Create a view-only link" }));
 
     expect(
@@ -65,51 +80,29 @@ describe("ProjectCollaborationControls", () => {
         method: "POST",
         body: JSON.stringify({
           action: "share",
-          reviewerName: "",
-          reviewerEmail: null,
+          recipientName: "Amina Khan",
+          recipientEmail: "amina@example.com",
         }),
       }),
     );
+
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse(collaboration));
+    fireEvent.click(screen.getByRole("button", { name: "Revoke" }));
+    expect(await screen.findByText("The snapshot link was revoked.")).toBeInTheDocument();
+    expect(screen.queryByText("View-only snapshot link")).not.toBeInTheDocument();
   });
 
-  it("creates an unmetered external review link with reviewer identity", async () => {
+  it("routes external review creation through an issue-scoped composer", async () => {
     render(<ProjectCollaborationControls projectId="project-1" />);
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
     await screen.findByText("External review request");
 
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(
-        jsonResponse(
-          {
-            url: "http://localhost:3000/review/review-token",
-            expires_at: "2026-08-10T00:00:00Z",
-          },
-          201,
-        ),
-      )
-      .mockResolvedValueOnce(jsonResponse(collaboration));
-    fireEvent.change(screen.getByLabelText("Reviewer name"), {
-      target: { value: "Amina Khan" },
-    });
-    fireEvent.change(screen.getByLabelText(/Reviewer email/), {
-      target: { value: "amina@example.com" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Create review link" }));
-
-    await waitFor(() => {
-      expect(fetch).toHaveBeenNthCalledWith(
-        2,
-        "/api/projects/project-1/collaboration",
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({
-            action: "review",
-            reviewerName: "Amina Khan",
-            reviewerEmail: "amina@example.com",
-          }),
-        }),
-      );
-    });
+    expect(screen.getByText("Start from an issue.")).toBeInTheDocument();
+    expect(screen.getByText(/exactly one question and one cited source/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Reviewer name")).not.toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it("offers the five-section snapshot composer without starting analysis", async () => {
@@ -246,7 +239,7 @@ describe("ProjectCollaborationControls", () => {
     );
   });
 
-  it("lets the project team explicitly promote a reviewer response to evidence", async () => {
+  it("shows that a reviewer verdict has already entered the governed flow", async () => {
     const responded = {
       ...collaboration,
       reviews: [
@@ -269,36 +262,49 @@ describe("ProjectCollaborationControls", () => {
     expect(await screen.findByText("Reviewer responses")).toBeInTheDocument();
     expect(screen.getByText("The steering committee approved the pilot.")).toBeInTheDocument();
 
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(
-        jsonResponse(
-          {
-            response_id: "response-1",
-            analysis_run_id: "run-1",
-            status: "queued",
-          },
-          202,
-        ),
-      )
-      .mockResolvedValueOnce(
-        jsonResponse({
-          ...responded,
-          reviews: [{ ...responded.reviews[0], analysis_run_id: "run-1" }],
-        }),
-      );
-    fireEvent.click(screen.getByRole("button", { name: "Use as project evidence" }));
+    expect(screen.getByText("Recorded")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Use as project evidence" })).not.toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
 
-    expect(await screen.findByText("Reviewer evidence queued for analysis.")).toBeInTheDocument();
+  it("keeps the post-review collaborator invitation as a user-controlled draft", async () => {
+    const responded = {
+      ...collaboration,
+      reviews: [
+        {
+          id: "review-1",
+          reviewer_name: "Amina Khan",
+          reviewer_email: "amina@example.com",
+          expires_at: "2026-08-26T00:00:00Z",
+          responded_at: "2026-07-28T00:00:00Z",
+          response_id: "response-1",
+          response_kind: "approve",
+          response_body: "The steering committee approved the pilot.",
+          analysis_run_id: "run-1",
+        },
+      ],
+    };
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(responded));
+    render(<ProjectCollaborationControls projectId="project-1" />);
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+
+    expect(await screen.findByText("Invitation draft — not sent")).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse({ id: "invitation-1" }, 201))
+      .mockResolvedValueOnce(jsonResponse(collaboration));
+    fireEvent.click(screen.getByRole("button", { name: "Send invitation to Amina Khan" }));
+
+    expect(await screen.findByText("Invitation sent to amina@example.com.")).toBeInTheDocument();
     expect(fetch).toHaveBeenNthCalledWith(
       2,
       "/api/projects/project-1/collaboration",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({
-          action: "use_review_evidence",
-          responseId: "response-1",
-        }),
+        body: JSON.stringify({ action: "invite", email: "amina@example.com" }),
       }),
     );
+
   });
 });

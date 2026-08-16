@@ -255,6 +255,51 @@ def test_document_only_analysis_publishes_a_meaningful_project_summary() -> None
     assert "uncertainty" in result.snapshot.summary.lower()
 
 
+def test_document_evidence_supersedes_a_stale_intake_description_in_summary() -> None:
+    result = AnalysisWorkflow(
+        store=DocumentEvidenceStore(),
+        harness=DeterministicAgentHarness(),
+    ).run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.INITIAL,
+            description="DevNorth 2026 is a one-day developer conference.",
+            source_names=("Project Nova plan.pdf",),
+        )
+    )
+
+    assert result.snapshot is not None
+    assert "Project Nova" in result.snapshot.summary
+    assert "DevNorth" not in result.snapshot.summary
+
+
+def test_real_documents_do_not_inherit_the_builtin_sample_plan() -> None:
+    result = AnalysisWorkflow(
+        store=DocumentEvidenceStore(),
+        harness=DeterministicAgentHarness(),
+    ).run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.INITIAL,
+            description=(
+                "DevNorth 2026 is a one-day developer conference for approximately "
+                "450 attendees on 18 September. Confirm the venue, programme, Wi-Fi "
+                "capacity, sponsors, budget, schedule and delivery owners."
+            ),
+            source_names=("Project Nova plan.pdf",),
+        )
+    )
+
+    assert result.snapshot is not None
+    serialized_artifacts = repr(result.snapshot.artifacts)
+    assert "Project Nova" in serialized_artifacts
+    assert "DevNorth" not in serialized_artifacts
+
+
 def test_project_summary_explains_stage_reliability_and_advisory_boundary() -> None:
     result = AnalysisWorkflow(
         store=DocumentEvidenceStore(),

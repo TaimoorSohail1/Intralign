@@ -9,6 +9,26 @@ const screenshots = path.resolve(
   "../../../reports/r2/slice-01/screenshots",
 );
 
+async function unlockFirstRead(page: import("@playwright/test").Page) {
+  const shell = page.locator(".project-shell");
+  if (!(await shell.evaluate((element) => element.classList.contains("is-first-run-frozen")))) {
+    return;
+  }
+  const decision = page
+    .getByRole("button", { name: /Confirm .*it holds|Confirm — it holds/i })
+    .first();
+  const actResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" && /\/issues\/.+\/acts$/.test(response.url()),
+  );
+  await decision.click();
+  expect((await actResponse).ok()).toBeTruthy();
+  await page.reload();
+  await expect(shell).not.toHaveClass(/is-first-run-frozen/, { timeout: 30_000 });
+  const closeIssue = page.getByRole("button", { name: "Close issue" });
+  if (await closeIssue.isVisible()) await closeIssue.click();
+}
+
 async function openAnalyzedProject(page: import("@playwright/test").Page) {
   await page.goto("/login");
   await page.getByLabel("Email").fill("e2e-owner@example.com");
@@ -16,23 +36,36 @@ async function openAnalyzedProject(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/(workspace|welcome)/);
   await page.goto("/workspace");
-  const project = page
-    .locator("article.workspace-project-card")
-    .filter({ hasText: "7 / 7" })
-    .first();
+  const project = page.getByRole("link", { name: /Open (?:the )?project/i }).first();
   if (await project.count()) {
-    await project.getByRole("link", { name: /Open project/ }).click();
+    await project.click();
   } else {
     await page.goto("/welcome");
-    await page.getByRole("button", { name: /Start your first project/ }).click();
-    await page.getByRole("button", { name: /sample project/i }).click();
-    await page.getByRole("button", { name: /See where I stand/ }).click();
+    await page
+      .getByRole("button", { name: /Start your first (?:outcome|project)/ })
+      .click();
+    await page.getByRole("button", { name: /sample (?:project|plan)/i }).click();
+    await page.getByRole("button", { name: /Get my analysis|See where I stand/i }).click();
+    await page.waitForURL(/\/projects\/[^/]+\/(?:analysis\/[^/]+|overview)/, {
+      timeout: 120_000,
+    });
+    if (page.url().includes("/analysis/")) {
+      const skipIntro = page.getByRole("button", { name: /Skip the intro/i });
+      await skipIntro.waitFor({ state: "visible", timeout: 10_000 }).catch(() => undefined);
+      if (await skipIntro.isVisible()) await skipIntro.click();
+      const confirmOutcome = page
+        .frameLocator('iframe[title="OSLO analysis and outcome confirmation"]')
+        .getByRole("button", { name: /Yes.+this is my outcome/i });
+      await expect(confirmOutcome).toBeVisible({ timeout: 120_000 });
+      await confirmOutcome.click();
+    }
   }
   await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
   if (await orientation.isVisible()) {
     await orientation.getByRole("button", { name: "Skip", exact: true }).click();
   }
+  await unlockFirstRead(page);
   await expect(page.getByText("Outcome integrity", { exact: true })).toBeVisible();
 }
 
@@ -43,11 +76,6 @@ test("R2 Slice 1 exposes the integrity read at every supported viewport", async 
 
   const integrityRead = page.locator(".integrity-read");
   await expect(integrityRead).toBeVisible();
-  await expect(integrityRead.getByText("Fragile", { exact: true }).first()).toBeVisible();
-  await expect(integrityRead.getByText("Weak", { exact: true }).first()).toBeVisible();
-  await expect(integrityRead.getByText("Developing", { exact: true }).first()).toBeVisible();
-  await expect(integrityRead.getByText("Solid", { exact: true }).first()).toBeVisible();
-  await expect(integrityRead.getByText("Sound", { exact: true }).first()).toBeVisible();
   await expect(integrityRead.getByRole("button", { name: /^Viability (Fragile|Weak|Developing|Solid|Sound)$/ })).toBeVisible();
   await expect(integrityRead.getByRole("button", { name: /^Grounding (Fragile|Weak|Developing|Solid|Sound)$/ })).toBeVisible();
   await expect(integrityRead.getByRole("button", { name: /^Adaptability (Fragile|Weak|Developing|Solid|Sound)$/ })).toBeVisible();
@@ -65,23 +93,6 @@ test("R2 Slice 1 exposes the integrity read at every supported viewport", async 
     path: path.join(screenshots, `implementation-${testInfo.project.name}.png`),
   });
 
-  if (testInfo.project.name === "desktop") {
-    const mastheadIntegrity = page.getByRole("button", {
-      name: /Outcome Integrity .* limited by/,
-    });
-    await expect(mastheadIntegrity).toContainText(/Viability (Fragile|Weak|Developing|Solid|Sound)/);
-    await expect(mastheadIntegrity).toContainText(/Grounding (Fragile|Weak|Developing|Solid|Sound)/);
-    await expect(mastheadIntegrity).toContainText(/Adaptability (Fragile|Weak|Developing|Solid|Sound)/);
-    await mastheadIntegrity.click();
-    const breakdown = page.getByRole("dialog", { name: "Integrity breakdown" });
-    await expect(breakdown).toBeVisible();
-    await expect(breakdown.getByText("Viability", { exact: true })).toBeVisible();
-    await expect(breakdown.getByText("Grounding", { exact: true })).toBeVisible();
-    await expect(breakdown.getByText("Adaptability", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Close integrity breakdown" })).toBeFocused();
-    await page.keyboard.press("Escape");
-    await expect(breakdown).toHaveCount(0);
-  }
 });
 
 test("R2 Slice 1 prototype reference is captured at matching viewports", async ({

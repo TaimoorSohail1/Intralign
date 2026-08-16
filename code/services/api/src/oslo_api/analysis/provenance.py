@@ -213,7 +213,7 @@ def build_project_provenance(
                     "issue_id": related.id if related else None,
                     "issue_title": related.title if related else None,
                     "load_bearing": assumption.load_bearing or related is not None,
-                    "state": assumption.state,
+                    "state": normalize_evidence_state(assumption.state),
                 }
             )
     unique_assumptions: dict[str, dict[str, Any]] = {}

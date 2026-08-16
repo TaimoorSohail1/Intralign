@@ -85,6 +85,7 @@ class WorkspaceNotification:
     title: str
     created_at: datetime
     read: bool
+    href: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

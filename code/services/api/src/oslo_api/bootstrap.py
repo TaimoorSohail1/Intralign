@@ -6,6 +6,7 @@ from oslo_api.email import PostmarkInvitationMailer, SmtpInvitationMailer
 from oslo_api.entitlements.repository import SqlEntitlementRepository
 from oslo_api.entitlements.service import EntitlementService
 from oslo_api.entitlements.stripe_gateway import StripeBillingGateway
+from oslo_api.feedback import FeedbackService, SqlFeedbackRepository
 from oslo_api.identity import SupabaseIdentityProvider
 from oslo_api.settings import Settings
 
@@ -70,3 +71,9 @@ def build_slice_four_application() -> EntitlementService:
             else None
         ),
     )
+
+
+def build_feedback_application() -> FeedbackService:
+    settings = Settings()  # type: ignore[call-arg]
+    engine = create_engine(settings.database_url, pool_pre_ping=True)
+    return FeedbackService(repository=SqlFeedbackRepository(engine))

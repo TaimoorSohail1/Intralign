@@ -17,6 +17,7 @@ import {
   Minus,
   Plus,
   Sparkle,
+  Target,
   Users,
 } from "@phosphor-icons/react";
 import Link from "next/link";
@@ -462,6 +463,8 @@ export function ArtifactWorkspace({
   proposalPending,
   proposals = [],
   analysisRunning,
+  initialFocus,
+  returnToOutcome = false,
 }: {
   artifactType: string;
   projectId: string;
@@ -473,6 +476,8 @@ export function ArtifactWorkspace({
   proposalPending?: string | null;
   proposals?: IssueProposalSummary[];
   analysisRunning: boolean;
+  initialFocus?: "primary-outcome" | "held-outcomes" | "new-outcome";
+  returnToOutcome?: boolean;
 }) {
   const [artifact, setArtifact] = useState<ArtifactWorkspaceSummary | null>(null);
   const [content, setContent] = useState<ArtifactWorkspaceSummary["content"] | null>(null);
@@ -491,6 +496,8 @@ export function ArtifactWorkspace({
   const historyRef = useRef<ArtifactWorkspaceSummary["content"][]>([]);
   const futureRef = useRef<ArtifactWorkspaceSummary["content"][]>([]);
   const reanalysisStartedRef = useRef(false);
+  const outcomeFocusAppliedRef = useRef(false);
+  const newOutcomeSeededRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -505,13 +512,40 @@ export function ArtifactWorkspace({
         if (cancelled) return;
         const normalizedContent = ensureEditorIds(loaded.content, artifactType);
         setArtifact({ ...loaded, content: normalizedContent });
-        setContent(cloneContent(normalizedContent));
-        historyRef.current = [];
+        const nextContent = cloneContent(normalizedContent);
+        if (
+          artifactType === "intent" &&
+          initialFocus === "new-outcome" &&
+          !newOutcomeSeededRef.current
+        ) {
+          newOutcomeSeededRef.current = true;
+          let outcomes = nextContent.sections.find((section) => /^outcomes?$/i.test(section.heading.trim()));
+          if (!outcomes) {
+            outcomes = {
+              id: nextEditorId("intent-outcomes"),
+              heading: "Outcomes",
+              body: "",
+              bullets: [],
+              columns: [],
+              rows: [],
+              provenance: "confirmed_by_user",
+            };
+            nextContent.sections.push(outcomes);
+          }
+          outcomes.bullets.push("New outcome");
+          outcomes.provenance = "confirmed_by_user";
+          historyRef.current = [cloneContent(normalizedContent)];
+          setHistoryDepth(1);
+          setStatus("editing");
+        } else {
+          historyRef.current = [];
+          setHistoryDepth(0);
+          setStatus("saved");
+        }
+        setContent(nextContent);
         futureRef.current = [];
-        setHistoryDepth(0);
         setFutureDepth(0);
         setIssueIndex(0);
-        setStatus("saved");
       })
       .catch((loadError) => {
         if (cancelled) return;
@@ -521,7 +555,7 @@ export function ArtifactWorkspace({
     return () => {
       cancelled = true;
     };
-  }, [artifactType, loadRevision, projectId]);
+  }, [artifactType, initialFocus, loadRevision, projectId]);
 
   useEffect(() => {
     if (analysisRunning) {
@@ -644,6 +678,31 @@ export function ArtifactWorkspace({
     stageContent(nextContent);
   }
 
+  useEffect(() => {
+    if (
+      artifactType !== "intent" ||
+      !initialFocus ||
+      outcomeFocusAppliedRef.current ||
+      (status !== "saved" && status !== "editing") ||
+      !content
+    ) return;
+    outcomeFocusAppliedRef.current = true;
+
+    window.requestAnimationFrame(() => {
+      const group = document.querySelector<HTMLElement>(
+        '.r2-artifact-group[data-group-key="outcomes"]',
+      );
+      group?.scrollIntoView({ block: "center", behavior: "smooth" });
+      if (initialFocus === "new-outcome") {
+        const editor = group?.querySelector<HTMLElement>(
+          ".r2-statement-row:last-of-type [contenteditable]",
+        );
+        editor?.focus();
+        if (editor) document.getSelection()?.selectAllChildren(editor);
+      }
+    });
+  }, [artifactType, content, initialFocus, status]);
+
   function undo() {
     if (!content) return;
     const previousContent = historyRef.current.pop();
@@ -712,6 +771,18 @@ export function ArtifactWorkspace({
 
   return (
     <section className="artifact-workspace">
+      {returnToOutcome ? (
+        <aside aria-label="Your Outcome handoff" className="outcome-intent-handoff">
+          <div>
+            <Target aria-hidden="true" size={15} weight="fill" />
+            <span>
+              <strong>{initialFocus === "new-outcome" ? "Declare an outcome" : initialFocus === "held-outcomes" ? "Review outcomes OSLO detected" : "Manage your primary outcome"}</strong>
+              <small>Intent is the editable source. Your Outcome remains a read-only view.</small>
+            </span>
+          </div>
+          <Link href={`/projects/${projectId}/outcome`}>Back to Your Outcome →</Link>
+        </aside>
+      ) : null}
       <header className="artifact-editor-header">
         <div className="artifact-title-row">
           <span className="artifact-category-chip">{artifactCategory(artifactType)}</span>

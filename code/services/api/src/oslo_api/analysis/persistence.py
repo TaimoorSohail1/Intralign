@@ -226,11 +226,39 @@ def _issue_from_dict(data: dict) -> Issue:
         recommendation_from_oslo=data.get("recommendation_from_oslo", True),
         load_bearing=data.get("load_bearing", True),
         exposure_rank=float(data.get("exposure_rank", 0)),
+        finding_basis=data.get("finding_basis", ""),
+        structural_target=data.get("structural_target", ""),
+        primary_act=data.get("primary_act", ""),
+        also_offered=tuple(data.get("also_offered", [])),
+        classification_state=data.get("classification_state", "unclassified"),
+        sensitivity=(
+            float(data["sensitivity"])
+            if data.get("sensitivity") is not None
+            else None
+        ),
+        sensitivity_trace=data.get("sensitivity_trace"),
+        sensitivity_state=data.get("sensitivity_state", "unavailable"),
+        unassessed=bool(data.get("unassessed", False)),
     )
 
 
 def _assessment_from_dict(data: dict) -> Assessment:
+    from oslo_api.analysis.load_bearing import (
+        PlanDependencyGraph,
+        PlanEdge,
+        PlanNode,
+        SensitivityCandidate,
+        StructuralTarget,
+    )
+
     basis = data.get("reliability_basis", {})
+    graph_data = data.get("dependency_graph")
+    dependency_graph = None
+    if graph_data:
+        dependency_graph = PlanDependencyGraph(
+            nodes=tuple(PlanNode(**node) for node in graph_data.get("nodes", [])),
+            edges=tuple(PlanEdge(**edge) for edge in graph_data.get("edges", [])),
+        )
     return Assessment(
         confidence_index=data["confidence_index"],
         confidence_band=data["confidence_band"],
@@ -264,6 +292,29 @@ def _assessment_from_dict(data: dict) -> Assessment:
             for item in data.get("outcome_checkpoints", [])
         ),
         integrity=_integrity_from_dict(data.get("integrity")),
+        dependency_graph=dependency_graph,
+        sensitivity_candidates=tuple(
+            SensitivityCandidate(
+                id=item["id"],
+                node_id=item["node_id"],
+                structural_target=StructuralTarget(item["structural_target"]),
+                favorable_integrity=float(item["favorable_integrity"]),
+                adverse_integrity=float(item["adverse_integrity"]),
+                runway_factor=float(item["runway_factor"]),
+                edge_key=(
+                    (str(item["edge_key"][0]), str(item["edge_key"][1]))
+                    if isinstance(item.get("edge_key"), (list, tuple))
+                    and len(item["edge_key"]) == 2
+                    else None
+                ),
+                stakes=(
+                    float(item["stakes"])
+                    if item.get("stakes") is not None
+                    else None
+                ),
+            )
+            for item in data.get("sensitivity_candidates", [])
+        ),
     )
 
 
@@ -285,6 +336,9 @@ def _integrity_from_dict(data: dict | None) -> Integrity | None:
         decomposition=pillars,  # type: ignore[arg-type]
         posture=data.get("posture", "moment-in-time"),
         tracking=data.get("tracking", "pending-execution"),
+        complete=bool(data.get("complete", True)),
+        sound_claim_blocked=bool(data.get("sound_claim_blocked", False)),
+        under_review_regions=tuple(data.get("under_review_regions", [])),
     )
 
 
@@ -1400,7 +1454,6 @@ class DatabaseAnalysisStore:
                           :workspace_id, :project_id, :stable_key, :status
                         )
                         on conflict (project_id, stable_key) do update set
-                          current_status = excluded.current_status,
                           updated_at = now()
                         returning id
                         """
@@ -1473,7 +1526,7 @@ class DatabaseAnalysisStore:
                         "title": issue.recommendation or f"Address {issue.title}",
                         "rationale": issue.why,
                         "artifact_type": issue.artifact_type.value,
-                        "load_bearing": issue.severity in {"Critical", "Moderate"},
+                        "load_bearing": issue.load_bearing,
                         "run_id": run_id,
                     },
                 )
@@ -1543,7 +1596,22 @@ class DatabaseAnalysisStore:
             # History disagree with Overview and Issues after a fresh reanalysis.
             current_issue_keys = _active_issue_keys(snapshot.assessment.issues)
             opened = sorted(current_issue_keys - previous_issue_keys)
-            resolved = sorted(previous_issue_keys - current_issue_keys)
+            attested_in_run = {
+                str(issue_key)
+                for issue_key in connection.execute(
+                    text(
+                        """
+                        select distinct on (issue_stable_key) issue_stable_key
+                        from public.issue_attestations
+                        where analysis_run_id = :run_id
+                          and act not in ('flag', 'fix', 'withdraw')
+                        order by issue_stable_key, created_at desc
+                        """
+                    ),
+                    {"run_id": run_id},
+                ).scalars()
+            }
+            resolved = sorted((previous_issue_keys - current_issue_keys) | attested_in_run)
             append_history_event(
                 connection,
                 workspace_id=snapshot.workspace_id,

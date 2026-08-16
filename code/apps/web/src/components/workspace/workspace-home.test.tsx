@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { WorkspaceSummary } from "@/lib/server/oslo-api";
@@ -90,10 +90,12 @@ describe("WorkspaceHome", () => {
     );
     render(<WorkspaceHome displayName="Taimoor" initial={workspace} />);
 
-    expect(screen.getByRole("heading", { name: "Plans" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Your project" })).toBeInTheDocument();
+    expect(screen.getByText("Pick up where understanding stands.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Active transformation" })).toBeInTheDocument();
     expect(screen.getByText(/No portfolio score across plans/)).toBeInTheDocument();
-    expect(screen.getByText("New plan")).toBeInTheDocument();
+    expect(screen.getAllByText("New project")).not.toHaveLength(0);
+    expect(screen.getByRole("link", { name: /Open the project/ })).toBeInTheDocument();
     expect(screen.getByText("Weakest pillar")).toBeInTheDocument();
     expect(screen.getByText("Grounding")).toBeInTheDocument();
 
@@ -104,14 +106,6 @@ describe("WorkspaceHome", () => {
       expect(push).toHaveBeenCalledWith("/intake?project=project-new&returning=1");
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
-  it("returns from Plans to the current project instead of linking to Plans again", () => {
-    render(<WorkspaceHome displayName="Taimoor" initial={workspace} />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
-
-    expect(push).toHaveBeenCalledWith("/projects/project-1/overview");
   });
 
   it("archives without deleting and exposes the retained project", async () => {
@@ -204,12 +198,12 @@ describe("WorkspaceHome", () => {
     fireEvent.click(newProject);
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "The Free plan includes 1 active project. Archive one or compare plans.",
-      );
-      expect(screen.getByRole("dialog", { name: "Your plan" })).toBeInTheDocument();
+      expect(screen.getByRole("dialog", { name: "Start another project" })).toBeInTheDocument();
       expect(fetch).toHaveBeenCalledWith("/api/projects/new", { method: "POST" });
     });
+
+    fireEvent.click(screen.getByRole("button", { name: /Upgrade your plan/ }));
+    expect(screen.getByRole("dialog", { name: "Your plan" })).toBeInTheDocument();
   });
 
   it("explains the limit when the project switcher requests a new project", async () => {
@@ -227,11 +221,46 @@ describe("WorkspaceHome", () => {
       />,
     );
 
-    expect(await screen.findByRole("dialog", { name: "Your plan" })).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "The Free plan includes 1 active project. Archive one or compare plans.",
+    expect(await screen.findByRole("dialog", { name: "Start another project" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Start another project" })).toHaveTextContent(
+      "compare plans or archive Active transformation first",
     );
     expect(fetch).toHaveBeenCalledWith("/api/projects/new", { method: "POST" });
+  });
+
+  it("archives the current project from the capacity choice and continues into intake", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ detail: { wall_key: "multiPlan" } }), {
+          status: 422,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: "project-new" }), {
+          status: 201,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+    render(<WorkspaceHome displayName="Taimoor" initial={workspace} />);
+    fireEvent.click(screen.getByRole("button", { name: "New project" }));
+    const capacity = await screen.findByRole("dialog", { name: "Start another project" });
+
+    fireEvent.click(
+      within(capacity).getByRole("button", { name: /Archive Active transformation to free the slot/ }),
+    );
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/workspace/projects/project-1/archive",
+        { method: "POST" },
+      );
+      expect(fetch).toHaveBeenNthCalledWith(3, "/api/projects/new", { method: "POST" });
+      expect(push).toHaveBeenCalledWith("/intake?project=project-new&returning=1");
+    });
   });
 
   it("creates only one project when New plan is clicked repeatedly while the request is pending", async () => {

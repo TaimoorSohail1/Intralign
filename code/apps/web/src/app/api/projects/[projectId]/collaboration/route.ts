@@ -3,6 +3,7 @@ import {
   createShareLink,
   getCollaboration,
   listInvitations,
+  markReviewDelivered,
   promoteReviewResponse,
   revokeInvitation,
   revokeReviewGrant,
@@ -57,7 +58,12 @@ export async function POST(
 
   try {
     if (body.action === "share") {
-      const result = await createShareLink(session.accessToken, projectId);
+      const result = await createShareLink({
+        accessToken: session.accessToken,
+        projectId,
+        recipientName: body.recipientName,
+        recipientEmail: body.recipientEmail ?? null,
+      });
       return Response.json(result, { status: 201 });
     }
     if (body.action === "review") {
@@ -67,6 +73,9 @@ export async function POST(
         issueId: body.issueId ?? null,
         reviewerName: body.reviewerName,
         reviewerEmail: body.reviewerEmail ?? null,
+        question: body.question,
+        sourceRef: body.sourceRef,
+        sourceExcerpt: body.sourceExcerpt,
       });
       return Response.json(result, { status: 201 });
     }
@@ -80,6 +89,14 @@ export async function POST(
         email: body.email,
       });
       return Response.json(result, { status: 201 });
+    }
+    if (body.action === "review_delivered") {
+      const result = await markReviewDelivered({
+        accessToken: session.accessToken,
+        projectId,
+        grantId: body.grantId,
+      });
+      return Response.json(result);
     }
     if (body.action === "revoke_share") {
       await revokeShareLink({

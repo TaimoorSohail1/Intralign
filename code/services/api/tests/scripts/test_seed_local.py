@@ -7,6 +7,7 @@ assert SPEC is not None and SPEC.loader is not None
 SEED_LOCAL = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(SEED_LOCAL)
 supabase_executable = SEED_LOCAL.supabase_executable
+local_status = SEED_LOCAL.local_status
 
 
 class RecordingCursor:
@@ -47,6 +48,35 @@ def test_supabase_executable_uses_posix_shim() -> None:
     executable = supabase_executable(Path("repo"), platform_name="posix")
 
     assert executable == Path("repo/node_modules/.bin/supabase")
+
+
+def test_local_status_uses_the_local_api_environment_without_waiting_for_cli(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    env_file = tmp_path / "services" / "api" / ".env"
+    env_file.parent.mkdir(parents=True)
+    env_file.write_text(
+        "\n".join(
+            (
+                "SUPABASE_URL=http://127.0.0.1:55321",
+                "SUPABASE_SECRET_KEY=local-secret",
+                "DATABASE_URL=postgresql+psycopg://postgres:postgres@127.0.0.1:55322/postgres",
+            )
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        SEED_LOCAL.subprocess,
+        "run",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("CLI called")),
+    )
+
+    assert local_status(tmp_path) == {
+        "API_URL": "http://127.0.0.1:55321",
+        "SECRET_KEY": "local-secret",
+        "DB_URL": "postgresql://postgres:postgres@127.0.0.1:55322/postgres",
+    }
 
 
 def test_seed_registers_the_local_identity_as_platform_admin(monkeypatch) -> None:

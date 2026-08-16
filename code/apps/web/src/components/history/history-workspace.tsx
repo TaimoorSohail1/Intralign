@@ -2,8 +2,6 @@
 
 import {
   ArrowRight,
-  CaretDown,
-  CaretRight,
   ClockCounterClockwise,
   FileText,
   Info,
@@ -14,23 +12,28 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
-  HistoryCategory,
   HistoryEvent,
   HistoryGroup,
   OverviewSnapshot,
   ProjectHistory,
 } from "@/lib/server/oslo-api";
 
-type HistoryFilter = "all" | HistoryCategory;
+type HistoryFilter = "all" | "analysis" | "decisions" | "issues";
 
 const filters: Array<{ label: string; value: HistoryFilter }> = [
   { label: "All", value: "all" },
   { label: "Analysis", value: "analysis" },
-  { label: "Issues", value: "issues" },
-  { label: "Versions", value: "versions" },
   { label: "Your decisions", value: "decisions" },
-  { label: "Collaboration & invites", value: "collaboration" },
+  { label: "Issues", value: "issues" },
 ];
+
+function displayCategory(event: HistoryEvent): Exclude<HistoryFilter, "all"> {
+  if (event.category === "issues") return "issues";
+  if (event.category === "decisions" || event.category === "collaboration") {
+    return "decisions";
+  }
+  return "analysis";
+}
 
 function runTitle(group: HistoryGroup) {
   if (group.status === "failed") {
@@ -62,7 +65,6 @@ function eventIcon(event: HistoryEvent) {
 export function HistoryWorkspace({
   analysisRunId,
   history,
-  onAskOslo,
   projectId,
 }: {
   analysisRunId?: string;
@@ -73,14 +75,6 @@ export function HistoryWorkspace({
   const [filter, setFilter] = useState<HistoryFilter>("all");
   const [groups, setGroups] = useState(history.groups);
   const [nextCursor, setNextCursor] = useState(history.next_cursor);
-  const [expandedRuns, setExpandedRuns] = useState<Set<string>>(
-    () =>
-      new Set(
-        history.groups
-          .filter((group) => group.current)
-          .map((group) => group.run_id),
-      ),
-  );
   const [snapshot, setSnapshot] = useState<OverviewSnapshot | null>(null);
   const [snapshotPending, setSnapshotPending] = useState(false);
   const [snapshotError, setSnapshotError] = useState<string | null>(null);
@@ -101,13 +95,6 @@ export function HistoryWorkspace({
         if (!active || !Array.isArray(latest.groups)) return;
         setGroups(latest.groups);
         setNextCursor(latest.next_cursor);
-        setExpandedRuns((current) => {
-          const next = new Set(current);
-          latest.groups
-            .filter((group) => group.current)
-            .forEach((group) => next.add(group.run_id));
-          return next;
-        });
       } catch {
         // The server-rendered history remains the safe last-good view.
       }
@@ -119,19 +106,36 @@ export function HistoryWorkspace({
     };
   }, [analysisRunId, projectId]);
 
-  const visibleGroups = useMemo(
-    () =>
-      groups
-        .map((group) => ({
-          ...group,
-          events:
-            filter === "all"
-              ? group.events
-              : group.events.filter((event) => event.category === filter),
-        }))
-        .filter((group) => filter === "all" || group.events.length > 0),
-    [filter, groups],
-  );
+  const visibleEvents = useMemo(() => {
+    const entries = groups.flatMap((group) => {
+      const title = runTitle(group);
+      const hasRunEvent = group.events.some((event) => event.summary === title);
+      const runEvent: HistoryEvent = {
+        id: 0,
+        category: "analysis",
+        event_type: `analysis.${group.kind}_${group.status}`,
+        summary: title,
+        detail:
+          group.status === "completed"
+            ? group.current
+              ? "The current read supersedes the prior state."
+              : "A prior read was retained without replacing the current one."
+            : "The last-good read remains current and can be retried.",
+        actor_type: "oslo",
+        artifact_type: null,
+        artifact_version: null,
+        issue_id: null,
+        occurred_at: group.occurred_at,
+      };
+      return (hasRunEvent ? group.events : [runEvent, ...group.events]).map((event) => ({
+        event,
+        runId: group.run_id,
+      }));
+    });
+    return filter === "all"
+      ? entries
+      : entries.filter(({ event }) => displayCategory(event) === filter);
+  }, [filter, groups]);
 
   const openSnapshot = async (runId: string) => {
     setSnapshotPending(true);
@@ -167,40 +171,13 @@ export function HistoryWorkspace({
     }
   };
 
-  const toggleRun = (runId: string) => {
-    setExpandedRuns((current) => {
-      const next = new Set(current);
-      if (next.has(runId)) next.delete(runId);
-      else next.add(runId);
-      return next;
-    });
-  };
-
   return (
     <section className="history-workspace">
       <header className="history-heading">
         <div>
-          <h1>History &amp; timeline</h1>
-          <p>
-            append-only · prior states retained
-            <Info aria-label="History is read-only" size={14} />
-          </p>
+          <h1>History</h1>
+          <p>append-only — how the read moved</p>
         </div>
-        {groups[0] && onAskOslo ? (
-          <button
-            className="history-ask"
-            onClick={() =>
-              onAskOslo(
-                groups[0].run_id,
-                `Explain the ${runTitle(groups[0])} historical read and what changed.`,
-              )
-            }
-            type="button"
-          >
-            <Sparkle aria-hidden="true" size={13} weight="fill" />
-            Ask OSLO
-          </button>
-        ) : null}
       </header>
 
       <HistoryTrend history={history} />
@@ -219,104 +196,42 @@ export function HistoryWorkspace({
           </button>
         ))}
       </div>
-      <div className="history-collaboration-note">
-        <UsersThree aria-hidden="true" size={17} />
-        <p>
-          <strong>Collaboration is retained here.</strong>
-          Comments, review invitations, shared snapshots, exports, and reviewer
-          decisions appear in this read-only timeline.
-        </p>
-      </div>
-
       <div className="history-runs">
-        {visibleGroups.map((group) => {
-          const expanded = expandedRuns.has(group.run_id);
+        {visibleEvents.map(({ event, runId }, index) => {
+          const category = displayCategory(event);
           return (
-            <article className="history-run" key={group.run_id}>
+            <article className="history-card" key={`${runId}-${event.id}-${index}`}>
               <header>
-                <button
-                  aria-expanded={expanded}
-                  aria-label={`${expanded ? "Collapse" : "Expand"} ${runTitle(group)}`}
-                  className="history-run-toggle"
-                  onClick={() => toggleRun(group.run_id)}
-                  type="button"
-                >
-                  {expanded ? (
-                    <CaretDown aria-hidden="true" size={13} />
-                  ) : (
-                    <CaretRight aria-hidden="true" size={13} />
-                  )}
-                  <span className={`history-run-icon history-run-${group.status}`}>
-                    <ClockCounterClockwise aria-hidden="true" size={15} />
-                  </span>
-                  <span>
-                    <strong>{runTitle(group)}</strong>
-                    <small>
-                      Analysis run · {relativeDate(group.occurred_at)}
-                      {group.confidence_band ? ` · ${group.confidence_band} confidence` : ""}
-                    </small>
-                  </span>
-                </button>
-                <div className="history-run-actions">
-                  {onAskOslo ? (
-                    <button
-                      aria-label={`Ask OSLO about ${runTitle(group)}`}
-                      onClick={() =>
-                        onAskOslo(
-                          group.run_id,
-                          `Explain the ${runTitle(group)} historical read and what changed.`,
-                        )
-                      }
-                      type="button"
-                    >
-                      <Sparkle aria-hidden="true" size={12} weight="fill" />
-                      Ask OSLO
-                    </button>
-                  ) : null}
-                  <span className={group.current ? "is-current" : ""}>
-                    {group.current ? "Current" : "History"}
-                  </span>
-                </div>
+                <span className={`history-category is-${category}`}>
+                  {category === "decisions"
+                    ? "Your decisions"
+                    : category === "analysis"
+                      ? "Analysis"
+                      : "Issues"}
+                </span>
+                <time dateTime={event.occurred_at}>{relativeDate(event.occurred_at)}</time>
               </header>
-
-              {expanded ? (
-                <div className="history-run-body">
-                  <div className="history-changes">
-                    <span>What changed</span>
-                    {group.changes.map((change) => (
-                      <em className={`tone-${change.tone}`} key={change.label}>
-                        {change.label}
-                      </em>
-                    ))}
-                  </div>
-                  <div className="history-events">
-                    {group.events.map((event) => (
-                      <div className="history-event" key={event.id}>
-                        <span>{eventIcon(event)}</span>
-                        <div>
-                          <strong>{event.summary}</strong>
-                          {event.detail ? <p>{event.detail}</p> : null}
-                          <small>{event.actor_type === "user" ? "Your decision" : "OSLO record"}</small>
-                        </div>
-                        {event.category === "versions" ? (
-                          <button
-                            aria-label={`View snapshot for ${runTitle(group)}`}
-                            disabled={snapshotPending}
-                            onClick={() => void openSnapshot(group.run_id)}
-                            type="button"
-                          >
-                            View snapshot <ArrowRight aria-hidden="true" size={11} />
-                          </button>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
+              <div>
+                <span className="history-card-icon">{eventIcon(event)}</span>
+                <div>
+                  <strong>{event.summary}</strong>
+                  {event.detail ? <p>{event.detail}</p> : null}
                 </div>
-              ) : null}
+                {event.category === "versions" ? (
+                  <button
+                    aria-label={`View snapshot for ${event.summary}`}
+                    disabled={snapshotPending}
+                    onClick={() => void openSnapshot(runId)}
+                    type="button"
+                  >
+                    View snapshot <ArrowRight aria-hidden="true" size={11} />
+                  </button>
+                ) : null}
+              </div>
             </article>
           );
         })}
-        {!visibleGroups.length ? (
+        {!visibleEvents.length ? (
           <div className="history-empty">
             <ClockCounterClockwise aria-hidden="true" size={22} />
             <strong>No history in this view</strong>
@@ -355,32 +270,30 @@ export function HistoryWorkspace({
 function HistoryTrend({ history }: { history: ProjectHistory }) {
   const points = history.trend;
   if (!points.length) return null;
+  const first = points[0];
+  const current = points.find((point) => point.current) ?? points.at(-1) ?? first;
+  const start = Math.max(3, Math.min(97, first.confidence_index ?? 0));
+  const now = Math.max(3, Math.min(97, current.confidence_index ?? 0));
+  const direction = now > start ? "rising" : now < start ? "eased" : "steady this session";
   return (
-    <section className="history-trend" aria-label="Understanding over runs">
-      <div>
-        <strong>Understanding over runs</strong>
-        <span>rises or falls with the read</span>
+    <section className="history-trend" aria-label="Your read over this session">
+      <div className="history-session-heading">
+        <strong>Your read over this session</strong>
+        <span>it rises or falls only when something real is confirmed — never on a guess</span>
       </div>
-      <div className="history-trend-line" aria-hidden="true">
-        {points.map((point, index) => (
-          <i
-            className={point.current ? "is-current" : ""}
-            key={point.run_id}
-            style={{
-              left: `${points.length === 1 ? 50 : (index / (points.length - 1)) * 100}%`,
-              bottom: `${Math.max(8, Math.min(82, point.confidence_index))}%`,
-            }}
-          />
-        ))}
+      <div className="history-session-track" aria-hidden="true">
+        <span>Start</span>
+        <div>
+          <i style={{ left: `${start}%` }} />
+          <i className="is-current" style={{ left: `${now}%` }} />
+        </div>
+        <span>Now</span>
       </div>
-      <div className="history-trend-labels">
-        {points.map((point, index) => (
-          <div key={point.run_id}>
-            <span>{index === 0 ? "Initial" : index === points.length - 1 ? "Current" : `Run ${index + 1}`}</span>
-            <strong>{point.confidence_band}</strong>
-            <small>{point.cause}</small>
-          </div>
-        ))}
+      <div className="history-session-legend">
+        <span>Understanding <b>{current.confidence_band ?? "Pending"}</b></span>
+        <strong className={direction === "rising" ? "is-rising" : ""}>
+          {direction === "rising" ? "▲" : direction === "eased" ? "▼" : "—"} {direction}
+        </strong>
       </div>
     </section>
   );

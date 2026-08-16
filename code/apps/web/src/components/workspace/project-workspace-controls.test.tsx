@@ -102,33 +102,89 @@ describe("ProjectWorkspaceControls", () => {
       .not.toBeInTheDocument();
   });
 
-  it("shows durable notifications and marks them read", async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify(workspace), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        }),
-      )
-      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+  it("deduplicates repeated project projections by project id", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({
+        ...workspace,
+        projects: [workspace.projects[0], { ...workspace.projects[0] }],
+      }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
 
+    render(<ProjectWorkspaceControls projectId="project-1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Transformation" }));
+
+    expect(screen.getAllByRole("menuitem", { name: /Transformation/ })).toHaveLength(1);
+  });
+
+  it("supports arrow-key navigation and restores focus when Escape closes the switcher", async () => {
+    render(<ProjectWorkspaceControls projectId="project-1" />);
+    const switcher = await screen.findByRole("button", { name: "Transformation" });
+    fireEvent.click(switcher);
+
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowDown" });
+    expect(screen.getByRole("menuitem", { name: /Transformation/ })).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(switcher).toHaveFocus();
+  });
+
+  it("shows durable notifications in the prototype card layout", async () => {
     render(<ProjectWorkspaceControls projectId="project-1" />);
     await waitFor(() => expect(screen.getByLabelText("Notifications")).toHaveTextContent("1"));
 
     fireEvent.click(screen.getByLabelText("Notifications"));
     expect(screen.getByRole("dialog", { name: "Notifications" })).toBeInTheDocument();
+    expect(screen.getByText("What moved — a durable record, not alerts.")).toBeInTheDocument();
+    expect(screen.getByText(/routine changes never interrupt you/)).toBeInTheDocument();
     expect(screen.getByText("Extended Analysis complete")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Mark all read" }));
+    expect(screen.queryByRole("button", { name: "Mark all read" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Awareness only/)).not.toBeInTheDocument();
+  });
 
-    await waitFor(() => {
-      expect(fetch).toHaveBeenLastCalledWith("/api/workspace/notifications/read", {
-        method: "POST",
+  it("makes routed responses and direct mentions salient and actionable", async () => {
+    const awarenessWorkspace: WorkspaceSummary = {
+      ...workspace,
+      notifications: [
+        {
+          ...workspace.notifications[0],
+          key: "review:response-1",
+          kind: "review",
+          title: "Amina submitted approve",
+          href: "/projects/project-1/issues?issue=ISS-001",
+        },
+        {
+          ...workspace.notifications[0],
+          key: "mention:event-1",
+          kind: "mention",
+          title: "Taimoor mentioned you",
+          href: "/projects/project-1/issues?issue=ISS-002",
+        },
+      ],
+    };
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify(awarenessWorkspace), {
+        status: 200,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ keys: ["analysis:run-1"] }),
-      });
-    });
-    expect(screen.getByText("0 unread")).toBeInTheDocument();
-    expect(screen.getByText(/Awareness only/)).toBeInTheDocument();
+      }),
+    );
+
+    render(<ProjectWorkspaceControls projectId="project-1" />);
+    await waitFor(() => expect(screen.getByLabelText("Notifications")).toHaveTextContent("2"));
+    fireEvent.click(screen.getByLabelText("Notifications"));
+
+    expect(screen.getByRole("link", { name: /Amina submitted approve/ })).toHaveAttribute(
+      "href",
+      "/projects/project-1/issues?issue=ISS-001",
+    );
+    expect(screen.getByText(/attributed response received/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Taimoor mentioned you/ })).toHaveAttribute(
+      "href",
+      "/projects/project-1/issues?issue=ISS-002",
+    );
+    expect(screen.getByText(/open the tied issue discussion/)).toBeInTheDocument();
   });
 
   it("shows one unread notification for one event even when the API repeats it", async () => {
@@ -153,7 +209,7 @@ describe("ProjectWorkspaceControls", () => {
     expect(screen.getAllByText("Extended Analysis complete")).toHaveLength(1);
   });
 
-  it("distinguishes notifications from separate unnamed projects", async () => {
+  it("keeps notifications from separate unnamed projects independently actionable", async () => {
     const unnamedWorkspace: WorkspaceSummary = {
       ...workspace,
       notifications: [
@@ -182,8 +238,16 @@ describe("ProjectWorkspaceControls", () => {
     await waitFor(() => expect(screen.getByLabelText("Notifications")).toHaveTextContent("2"));
 
     fireEvent.click(screen.getByLabelText("Notifications"));
-    expect(screen.getByText(/Untitled project · aaaaaaaa/)).toBeInTheDocument();
-    expect(screen.getByText(/Untitled project · bbbbbbbb/)).toBeInTheDocument();
+    const links = screen.getAllByRole("link", { name: /Extended Analysis complete/ });
+    expect(links).toHaveLength(2);
+    expect(links[0]).toHaveAttribute(
+      "href",
+      "/projects/aaaaaaaa-1111-2222-3333-444444444444/history",
+    );
+    expect(links[1]).toHaveAttribute(
+      "href",
+      "/projects/bbbbbbbb-1111-2222-3333-444444444444/history",
+    );
   });
 
   it("bounds a large project list and lets the user search it", async () => {
@@ -249,7 +313,7 @@ describe("ProjectWorkspaceControls", () => {
     expect(screen.getByText("Analysis update 1")).toBeInTheDocument();
     expect(screen.getByText("Analysis update 8")).toBeInTheDocument();
     expect(screen.queryByText("Analysis update 9")).not.toBeInTheDocument();
-    expect(screen.getByText(/Notifications never start analysis/)).toBeInTheDocument();
+    expect(screen.getByText(/Self-acknowledged ones are skipped/)).toBeInTheDocument();
   });
 
   it("places the governed plan control in the project sidebar footer", async () => {
@@ -276,6 +340,36 @@ describe("ProjectWorkspaceControls", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Monthly analyses")).toBeInTheDocument();
     expect(screen.getByText("Active projects")).toBeInTheDocument();
+  });
+
+  it("hands the sidebar plan control to the prototype Settings section when provided", async () => {
+    const onOpenPlanSettings = vi.fn();
+    render(
+      <>
+        <div data-testid="sidebar-plan-settings-slot" id="project-sidebar-plan-settings" />
+        <ProjectWorkspaceControls
+          onOpenPlanSettings={onOpenPlanSettings}
+          planPortalId="project-sidebar-plan-settings"
+          projectId="project-1"
+        />
+      </>,
+    );
+
+    const slot = screen.getByTestId("sidebar-plan-settings-slot");
+    fireEvent.click(await within(slot).findByRole("button", { name: "Free" }));
+
+    expect(onOpenPlanSettings).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("heading", { name: "Usage & limits" })).not.toBeInTheDocument();
+  });
+
+  it("does not present a false plan while workspace awareness is loading", () => {
+    vi.mocked(fetch).mockImplementation(() => new Promise<Response>(() => undefined));
+
+    render(<ProjectWorkspaceControls projectId="project-1" />);
+
+    expect(screen.getByRole("button", { name: "Loading plan" })).toBeDisabled();
+    expect(screen.getByText("Loading workspace")).toBeInTheDocument();
+    expect(screen.queryByText("Free plan")).not.toBeInTheDocument();
   });
 
   it("starts a real refresh when Update now is selected", async () => {

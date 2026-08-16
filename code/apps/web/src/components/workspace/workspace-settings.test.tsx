@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WorkspaceSettings } from "./workspace-settings";
@@ -9,7 +9,7 @@ const initial = {
   failure_notifications: true,
   stale_notifications: true,
   display_name: "Taimoor",
-  role_title: "",
+  role_title: "I run the plan",
   workspace_name: "OSLO Alpha",
   actor_role: "owner" as const,
   mentions_notifications: true,
@@ -31,48 +31,27 @@ const workspace = {
   monthly_analyses_used: 3,
   can_manage_plan: true,
   member_count: 2,
-  projects: [
-    {
-      id: "project-1",
-      name: "Current project",
-      status: "active",
-      archived: false,
-      updated_at: "2026-08-01T00:00:00Z",
-      analysis_status: "completed",
-      confidence_index: 3,
-      confidence_band: "Moderate",
-      reliability: "Moderate",
-      open_issues: 2,
-      artifact_count: 7,
-    },
-  ],
+  collaborator_seats_used: 2,
+  active_project_limit: 1,
+  projects: [{
+    id: "project-1", name: "Current project", status: "active", archived: false,
+    updated_at: "2026-08-01T00:00:00Z", analysis_status: "completed",
+    confidence_index: 3, confidence_band: "Moderate", reliability: "Moderate",
+    open_issues: 2, artifact_count: 7,
+  }],
   notifications: [],
 };
 
+function renderSettings(initialSection: "profile" | "appearance" | "notifications" | "workspace" | "collaboration" | "access" | "membership" | "plan" | "billing" | "integrations" = "profile") {
+  const onClose = vi.fn();
+  render(<WorkspaceSettings displayName="Taimoor" email="taimoor@example.com" initial={initial} initialSection={initialSection} modal onClose={onClose} workspace={workspace} workspaceName="OSLO Alpha" />);
+  return { onClose };
+}
+
 describe("WorkspaceSettings", () => {
   beforeEach(() => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockImplementation((_url: string, init?: RequestInit) =>
-        Promise.resolve(
-          new Response(
-            typeof init?.body === "string" ? init.body : JSON.stringify(initial),
-            {
-              status: 200,
-              headers: { "content-type": "application/json" },
-            },
-          ),
-        ),
-      ),
-    );
-    vi.stubGlobal(
-      "matchMedia",
-      vi.fn().mockReturnValue({
-        matches: false,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      }),
-    );
+    vi.stubGlobal("fetch", vi.fn().mockImplementation((_url: string, init?: RequestInit) => Promise.resolve(new Response(typeof init?.body === "string" ? init.body : JSON.stringify(initial), { status: 200, headers: { "content-type": "application/json" } }))));
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
   });
 
   afterEach(() => {
@@ -83,155 +62,133 @@ describe("WorkspaceSettings", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders all settings sections and persists appearance choices", async () => {
-    render(
-      <WorkspaceSettings
-        displayName="Taimoor"
-        initial={initial}
-        workspaceName="OSLO Alpha"
-      />,
-    );
+  it("matches the prototype modal shell and exposes ten focused sections", () => {
+    const { onClose } = renderSettings();
+    const dialog = screen.getByRole("dialog", { name: "Settings" });
+    expect(within(dialog).getByRole("navigation", { name: "Settings" }).querySelectorAll("button")).toHaveLength(10);
+    expect(within(dialog).getByRole("heading", { name: "Profile" })).toBeInTheDocument();
+    expect(within(dialog).queryByRole("heading", { name: "Appearance" })).not.toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close settings" }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
 
-    expect(screen.getByRole("navigation", { name: "Settings" }).querySelectorAll("a")).toHaveLength(12);
-    expect(screen.getByRole("heading", { name: "Account & workspace" })).toBeInTheDocument();
-    expect(screen.getByRole("searchbox", { name: "Search settings" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Light" }));
-
-    await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
-        "/api/workspace/preferences",
-        expect.objectContaining({
-          method: "PUT",
-          body: expect.stringContaining('"theme":"light"'),
-          keepalive: true,
-        }),
-      );
-    });
-    expect(document.documentElement.dataset.theme).toBe("light");
-    expect(screen.getByRole("button", { name: "Light" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+  it("persists appearance choices and the local theme survives server lag", async () => {
+    localStorage.setItem("oslo-theme", "light");
+    renderSettings("appearance");
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe("light"));
+    expect(screen.getByRole("button", { name: "Light" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/workspace/preferences", expect.objectContaining({ method: "PUT", body: expect.stringContaining('"theme":"dark"'), keepalive: true })));
+    expect(document.documentElement.dataset.theme).toBe("dark");
     expect(screen.getByText("Saved")).toBeInTheDocument();
   });
 
   it("persists notification preferences without starting analysis", async () => {
-    render(
-      <WorkspaceSettings
-        displayName="Taimoor"
-        initial={initial}
-        workspaceName="OSLO Alpha"
-      />,
-    );
-
-    const mentions = screen.getByRole("switch", { name: "Mentions" });
-    expect(mentions).toHaveAttribute("aria-checked", "true");
-    fireEvent.click(mentions);
+    renderSettings("notifications");
+    fireEvent.click(screen.getByRole("switch", { name: "Mentions" }));
+    fireEvent.click(screen.getByRole("switch", { name: "Analysis complete" }));
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
-        "/api/workspace/preferences",
-        expect.objectContaining({
-          body: expect.stringContaining('"mentions_notifications":false'),
-        }),
-      );
-    });
-    fireEvent.click(screen.getByRole("switch", { name: /Analysis complete/ }));
-
-    await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
-        "/api/workspace/preferences",
-        expect.objectContaining({
-          body: expect.stringContaining('"analysis_notifications":false'),
-        }),
-      );
+      expect(fetch).toHaveBeenCalledWith("/api/workspace/preferences", expect.objectContaining({ body: expect.stringContaining('"mentions_notifications":false') }));
+      expect(fetch).toHaveBeenCalledWith("/api/workspace/preferences", expect.objectContaining({ body: expect.stringContaining('"analysis_notifications":false') }));
     });
   });
 
-  it("filters settings and exposes honest account and plan controls", () => {
-    render(
-      <WorkspaceSettings
-        displayName="Taimoor"
-        initial={initial}
-        workspaceName="OSLO Alpha"
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Delete account" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Free vs Basic" })).toBeInTheDocument();
-
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search settings" }), {
-      target: { value: "notifications" },
-    });
-
-    expect(screen.getByRole("heading", { name: "Notifications" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Profile" })).not.toBeInTheDocument();
+  it("persists profile role and workspace identity", async () => {
+    renderSettings();
+    fireEvent.click(screen.getByRole("button", { name: /I own the outcome/ }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/workspace/preferences", expect.objectContaining({ body: expect.stringContaining('"role_title":"I own the outcome"') })));
+    fireEvent.click(screen.getByRole("button", { name: "Workspace" }));
+    const workspaceName = screen.getByRole("textbox", { name: "Workspace name" });
+    fireEvent.change(workspaceName, { target: { value: "OSLO Studio" } });
+    fireEvent.blur(workspaceName);
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/workspace/preferences", expect.objectContaining({ body: expect.stringContaining('"workspace_name":"OSLO Studio"') })));
   });
 
-  it("persists profile fields and renders the sole Owner membership role", async () => {
-    render(
-      <WorkspaceSettings
-        displayName="Taimoor"
-        initial={{ ...initial, actor_role: "owner" }}
-        workspaceName="OSLO Alpha"
-      />,
-    );
-
-    const roleTitle = screen.getByRole("textbox", { name: "Role or title optional" });
-    fireEvent.change(roleTitle, { target: { value: "Programme lead" } });
-    fireEvent.blur(roleTitle);
-
-    await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
-        "/api/workspace/preferences",
-        expect.objectContaining({
-          body: expect.stringContaining('"role_title":"Programme lead"'),
-        }),
-      );
-    });
-    expect(screen.getByText("Owner")).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /Manage invitations/ })).not.toHaveLength(0);
-    expect(
-      screen.getByRole("textbox", { name: /Workspace name/ }),
-    ).toBeEnabled();
-  });
-
-  it("matches the GA access, membership, subscription, and later-version settings contract", () => {
-    render(
-      <WorkspaceSettings
-        displayName="Taimoor"
-        email="taimoor@example.com"
-        initial={initial}
-        workspace={workspace}
-        workspaceName="OSLO Alpha"
-      />,
-    );
-
+  it("keeps access, membership, plan, billing and integrations honest", () => {
+    renderSettings("access");
     expect(screen.getByRole("heading", { name: "Access & invites" })).toBeInTheDocument();
     expect(screen.getByText("GA")).toBeInTheDocument();
-    expect(screen.getAllByText("Not capacity-gated")).toHaveLength(2);
-    expect(screen.getByText(/Invitations and membership do not change/)).toBeInTheDocument();
-    expect(
-      screen.getAllByRole("link", { name: /Manage invitations/ }).every(
-        (link) => link.getAttribute("href") === "/admin/invitations",
-      ),
-    ).toBe(true);
+    expect(screen.getByRole("button", { name: /Manage invitations/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Manage invitations/ })).not.toBeInTheDocument();
 
-    expect(screen.getByRole("heading", { name: /Membership/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Membership/ }));
     expect(screen.getByText("2 members")).toBeInTheDocument();
     expect(screen.getByText("2 active")).toBeInTheDocument();
-    expect(screen.getByText("2 active · no plan cap")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Manage access & invitations/ }));
+    expect(screen.getByRole("heading", { name: "Access & invites" })).toBeInTheDocument();
 
-    expect(screen.getByRole("heading", { name: /Subscription/ })).toBeInTheDocument();
-    expect(screen.getByText("1 of 1 active project")).toBeInTheDocument();
-    expect(screen.getByText("Uncapped on every plan")).toBeInTheDocument();
-    expect(screen.getByText("~50k Free · ~100k Basic")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Free vs Basic" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Plan & usage" }));
+    expect(screen.getByText("1 in your workspace · 1 active")).toBeInTheDocument();
+    expect(screen.getByText("Generous — fair-use")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Compare Free vs Basic" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Compare Free vs Basic" }));
+    expect(screen.getByRole("dialog", { name: "Your plan" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close plans" }));
+    expect(screen.getByRole("dialog", { name: "Settings" })).toBeInTheDocument();
 
-    expect(screen.getByRole("heading", { name: /Billing/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Billing" }));
     expect(screen.getByText("$29 / month · $290 / year")).toBeInTheDocument();
     expect(screen.getByText("Flat · never per seat")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /Integrations/ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Integrations/ }));
     expect(screen.getByText("Arrives after this release")).toBeInTheDocument();
+  });
+
+  it("manages workspace invitations inside Settings without leaving the project", async () => {
+    const invitations = [{
+      id: "invite-1",
+      email: "pending@example.com",
+      role: "owner",
+      status: "pending",
+      expires_at: "2026-08-30T00:00:00Z",
+    }];
+    vi.mocked(fetch).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/workspace/invitations" && !init?.method) {
+        return Promise.resolve(Response.json(invitations));
+      }
+      if (url === "/api/workspace/invitations" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as { action: string; email?: string };
+        if (body.action === "invite") {
+          return Promise.resolve(Response.json({
+            id: "invite-2",
+            email: body.email,
+            role: "owner",
+            status: "pending",
+            expires_at: "2026-08-30T00:00:00Z",
+          }, { status: 201 }));
+        }
+        return Promise.resolve(new Response(null, { status: 204 }));
+      }
+      return Promise.resolve(Response.json(initial));
+    });
+
+    renderSettings("access");
+    fireEvent.click(screen.getByRole("button", { name: /Manage invitations/ }));
+    expect(await screen.findByRole("heading", { name: "Workspace invitations" })).toBeInTheDocument();
+    expect(screen.getByText("pending@example.com")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Invitation email" }), {
+      target: { value: "new.member@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send invitation" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      "/api/workspace/invitations",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining('"action":"invite"'),
+      }),
+    ));
+    expect(await screen.findByText("Invitation sent to new.member@example.com.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Revoke pending@example.com" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      "/api/workspace/invitations",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining('"action":"revoke"'),
+      }),
+    ));
+    expect(screen.queryByText("pending@example.com")).not.toBeInTheDocument();
   });
 });

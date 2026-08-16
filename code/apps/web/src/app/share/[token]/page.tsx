@@ -3,9 +3,11 @@ import { openSharedIssues, type SharedIssue } from "@/lib/shared-snapshot";
 
 type SharePayload = {
   project_name: string;
+  recipient_name?: string | null;
   snapshot_state: string;
   published_at: string;
   expires_at: string;
+  view_audit_disclosure: string;
   snapshot_json: {
     summary?: string;
     artifacts?: Array<{ artifact_type: string; title: string; summary: string; reliability: string }>;
@@ -53,6 +55,7 @@ export default async function SharedSnapshotPage({
             <p className="public-eyebrow">Retained OSLO snapshot</p>
             <h1>{shared.project_name}</h1>
             <p>{shared.snapshot_json.summary}</p>
+            {shared.recipient_name ? <small>Shared with {shared.recipient_name}</small> : null}
           </div>
           <span className="public-readonly-badge">Read only · {shared.snapshot_state}</span>
         </header>
@@ -86,6 +89,7 @@ export default async function SharedSnapshotPage({
         <footer>
           <p>Published {new Date(shared.published_at).toLocaleString()}</p>
           <p>Expires {new Date(shared.expires_at).toLocaleDateString()}</p>
+          <p>{shared.view_audit_disclosure}</p>
           <strong>OSLO advises; you decide.</strong>
         </footer>
       </section>

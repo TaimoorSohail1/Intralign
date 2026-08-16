@@ -49,12 +49,20 @@ function completedOverview() {
     project_title: "Migration",
     summary: "Ship the migration without customer interruption.",
     artifacts: [
-      {
-        artifact_type: "intent",
-        summary: "Ship the migration without customer interruption.",
-        content: { sections: [] },
-      },
-    ],
+      "intent",
+      "scope",
+      "requirements",
+      "constraints",
+      "work_breakdown",
+      "schedule",
+      "resources",
+    ].map((artifact_type) => ({
+      artifact_type,
+      summary: artifact_type === "intent"
+        ? "Ship the migration without customer interruption."
+        : `${artifact_type} plan`,
+      content: { sections: [] },
+    })),
     assessment: { integrity: { decomposition: [] } },
   };
 }
@@ -384,11 +392,15 @@ describe("AnalysisProgress", () => {
     render(<AnalysisProgress mode="watch" projectId="project-1" runId="run-1" />);
 
     await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      FakeEventSource.current?.emit("analysis.artifact_completed", { artifact_type: "intent" });
+    });
     expect(replace).not.toHaveBeenCalled();
     for (const duration of [2_000, 4_800, 2_100, 2_100, 2_100, 2_100, 2_100]) {
       await act(async () => { await vi.advanceTimersByTimeAsync(duration); });
     }
     expect(screen.getByText("Stage 8 of 8")).toBeInTheDocument();
+    expect(screen.getByText("7 documents")).toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(1_200); });
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/projects/project-1/outcome-actions",

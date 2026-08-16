@@ -23,6 +23,7 @@ from oslo_api.analysis import (
 from oslo_api.analysis.artifact_edits import (
     artifact_content_hash,
     build_user_edit_evidence,
+    project_work_breakdown_tasks,
 )
 from oslo_api.analysis.document_store import DatabaseDocumentStore
 from oslo_api.analysis.harness import AgentHarness
@@ -1142,6 +1143,10 @@ class DatabaseSliceTwoApplication:
                 payload={"basis": basis, "evidence_ref": evidence_ref},
             )
 
+        first_run = self.runtime_state(
+            actor_user_id=actor_user_id,
+            project_id=project_id,
+        )["first_run"]
         return {
             "issue_id": issue_id,
             "act": act,
@@ -1159,6 +1164,7 @@ class DatabaseSliceTwoApplication:
                 ),
             },
             "analysis_run": run,
+            "first_run": first_run,
         }
 
     def list_issue_actions(
@@ -1616,9 +1622,50 @@ class DatabaseSliceTwoApplication:
                     "artifact_type": artifact_type,
                 },
             ).scalar_one_or_none()
+            work_breakdown_draft = None
+            if artifact_type in {"schedule", "resources"}:
+                work_breakdown_draft = (
+                    connection.execute(
+                        text(
+                            """
+                            select content_json
+                            from public.artifact_drafts
+                            where workspace_id = :workspace_id
+                              and project_id = :project_id
+                              and artifact_type = 'work_breakdown'
+                            """
+                        ),
+                        {"workspace_id": workspace_id, "project_id": project_id},
+                    )
+                    .mappings()
+                    .one_or_none()
+                )
         content = (
             dict(draft["content_json"]) if draft is not None else self._artifact_content(artifact)
         )
+        if artifact_type in {"schedule", "resources"}:
+            work_breakdown = next(
+                (
+                    candidate
+                    for candidate in snapshot.artifacts
+                    if candidate.artifact_type.value == "work_breakdown"
+                ),
+                None,
+            )
+            work_breakdown_content = (
+                dict(work_breakdown_draft["content_json"])
+                if work_breakdown_draft is not None
+                else (
+                    self._artifact_content(work_breakdown)
+                    if work_breakdown is not None
+                    else {"sections": []}
+                )
+            )
+            content = project_work_breakdown_tasks(
+                artifact_type=artifact_type,
+                content=content,
+                work_breakdown_content=work_breakdown_content,
+            )
         open_issues = [
             issue
             for issue in snapshot.assessment.issues
@@ -2682,7 +2729,7 @@ class DatabaseSliceTwoApplication:
                       select distinct on (issue_stable_key)
                              issue_stable_key, act
                       from public.issue_attestations
-                      where analysis_run_id = :run_id
+                      where project_id = :project_id
                       order by issue_stable_key, created_at desc
                     )
                     update public.issues issue
@@ -2698,7 +2745,7 @@ class DatabaseSliceTwoApplication:
                       and issue.stable_key = landed.issue_stable_key
                     """
                 ),
-                {"run_id": run.id, "project_id": run.request.project_id},
+                {"project_id": run.request.project_id},
             )
             connection.execute(
                 text(

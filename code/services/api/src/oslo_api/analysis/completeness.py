@@ -4,6 +4,7 @@ import hashlib
 import re
 from dataclasses import dataclass
 
+from oslo_api.analysis.load_bearing import deterministic_finding_tags
 from oslo_api.analysis.models import ArtifactType, EvidenceFragment, Issue
 
 
@@ -298,6 +299,11 @@ def audit_completeness(
         digest = hashlib.sha256(
             f"{rule.id}|{'|'.join(references)}".encode()
         ).hexdigest()[:12].upper()
+        finding = deterministic_finding_tags(
+            dimension=rule.dimension,
+            title=rule.title,
+            recommendation=rule.recommendation,
+        )
         issues.append(
             Issue(
                 id=f"DET-{rule.artifact_type.value.upper()}-MISSING-{digest}",
@@ -309,6 +315,9 @@ def audit_completeness(
                 recommendation=rule.recommendation,
                 evidence_refs=references,
                 clarification=rule.clarification,
+                finding_type=finding.finding_type,
+                finding_basis=finding.basis.value,
+                structural_target=finding.structural_target.value,
             )
         )
     return tuple(issues)

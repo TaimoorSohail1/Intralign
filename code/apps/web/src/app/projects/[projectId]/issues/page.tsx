@@ -17,6 +17,7 @@ export default async function IssuesPage({
   if (!session.accessToken) redirect("/login");
   const { projectId } = await params;
   let snapshot;
+  const query = await searchParams;
   try {
     snapshot = await getOverview(session.accessToken, projectId);
   } catch {
@@ -24,10 +25,12 @@ export default async function IssuesPage({
   }
   return (
     <ProjectOverview
+      compactIssuesLanding
       displayName={session.displayName ?? "Member"}
       initial={snapshot}
-      initialIssueFilters={parseIssueFilters(await searchParams)}
-      initialView="issues"
+      initialIssueFilters={parseIssueFilters(query)}
+      initialIssueId={typeof query.issue === "string" ? query.issue : undefined}
+      initialView="overview"
       logoutAction={logout}
     />
   );

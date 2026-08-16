@@ -16,10 +16,11 @@ import { ProjectOverview } from "./project-overview";
 
 const push = vi.fn();
 const replace = vi.fn();
+const refresh = vi.fn();
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/projects/project-001/issues",
-  useRouter: () => ({ push, replace }),
+  useRouter: () => ({ push, refresh, replace }),
 }));
 
 const snapshot: OverviewSnapshot = {
@@ -130,7 +131,12 @@ beforeEach(() => {
   localStorage.setItem("oslo_orientation_seen", "true");
   sessionStorage.clear();
   push.mockReset();
+  refresh.mockReset();
   replace.mockReset();
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText: vi.fn().mockResolvedValue(undefined) },
+  });
 });
 
 afterEach(() => {
@@ -140,6 +146,91 @@ afterEach(() => {
 });
 
 describe("ProjectOverview", () => {
+  it("renders the Slice 10 primary affordance from the derived finding model", () => {
+    const classifiedSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      assessment: {
+        ...snapshot.assessment,
+        issues: [
+          {
+            ...snapshot.assessment.issues[0],
+            finding_basis: "structural",
+            structural_target: "achievability",
+            primary_act: "build",
+            also_offered: ["verify"],
+            classification_state: "classified",
+            sensitivity: 0.42,
+            sensitivity_state: "shadow",
+            sensitivity_trace: {
+              paths: [["dependency", "outcome"]],
+              span_true: 0.8,
+              span_false: 0.4,
+              span: 0.4,
+              leverage: 0.7,
+              uncertainty_factor: 1.25,
+              runway_factor: 1.2,
+              edge_key: null,
+              outcome_reachability: ["outcome"],
+            },
+          },
+        ],
+      },
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={classifiedSnapshot}
+        initialView="issues"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
+    );
+
+    expect(screen.getByRole("button", { name: "Build this in the plan" })).toBeInTheDocument();
+    expect(screen.getByText("Verify with evidence")).toBeInTheDocument();
+    expect(screen.getByText("Why this is load-bearing")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Verify with evidence"));
+    expect(screen.getByRole("region", { name: "Ask for evidence" })).toBeInTheDocument();
+  });
+
+  it("does not claim the integrity band moved when a grounded update keeps the same band", () => {
+    const unchangedBandSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      read_moved_notifications: [
+        {
+          id: "notification-unchanged",
+          analysis_run_id: snapshot.analysis_run_id,
+          pillar_deltas: [],
+          settled_causes: [],
+          previous_band: "Developing",
+          current_band: "Developing",
+          delivery_kind: "durable",
+          seen_at: null,
+          expires_at: null,
+          created_at: snapshot.published_at,
+        },
+      ],
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={unchangedBandSnapshot}
+        initialView="overview"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Your read was updated.")).toBeInTheDocument();
+    expect(screen.getByText(/Outcome Integrity remains Developing/)).toBeInTheDocument();
+    expect(screen.queryByText("Your read moved.")).not.toBeInTheDocument();
+  });
+
   it("keeps the last good read visible while stale and offers an immediate reanalysis", async () => {
     const staleSnapshot: OverviewSnapshot = {
       ...snapshot,
@@ -225,7 +316,7 @@ describe("ProjectOverview", () => {
     expect(screen.queryByText("Your read is safely out of date.")).not.toBeInTheDocument();
   });
 
-  it("renders the Slice 6 Issues workspace with live grouping and filters", () => {
+  it("renders the prototype issue layer with exposure ranking and optional filters", () => {
     render(
       <ProjectOverview
         displayName="Alex"
@@ -236,13 +327,20 @@ describe("ProjectOverview", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Issues" })).toBeInTheDocument();
-    expect(screen.getByText("3 active findings")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "The issue layer" })).toBeInTheDocument();
+    expect(screen.getByText(/one layer, exposure-ranked/i)).toBeInTheDocument();
+    expect(screen.getByText("3 open")).toBeInTheDocument();
+    expect(screen.getByText(/Grounding 0 · gating/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Refine issue view"));
     expect(screen.getByRole("button", { name: "By dimension" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(screen.getByRole("button", { name: "Exposure ranked" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByRole("heading", { name: "Feasibility · 2" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Clarity · 1" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "By severity" }));
     expect(screen.getByRole("heading", { name: "Critical · 1" })).toBeInTheDocument();
@@ -251,7 +349,11 @@ describe("ProjectOverview", () => {
     fireEvent.click(screen.getByRole("button", { name: "Resources 2" }));
     expect(screen.getByText("1 finding hidden by the current filters.")).toBeInTheDocument();
     expect(screen.queryByText("Success metric is not measurable")).not.toBeInTheDocument();
-    expect(screen.getByText("Migration ownership is unresolved")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /Migration ownership is unresolved, critical, resources/i,
+      }),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(screen.getByText("Success metric is not measurable")).toBeInTheDocument();
@@ -283,10 +385,13 @@ describe("ProjectOverview", () => {
       />,
     );
 
+    expect(screen.getByText("3 open")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Resolved · 1" })).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Refine issue view"));
     expect(screen.getByRole("button", { name: "Resources 2" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Critical 1" })).toBeInTheDocument();
     expect(screen.queryByText(/hidden by the current filters/i)).not.toBeInTheDocument();
-    expect(screen.queryByText("Old resolved resource issue")).not.toBeInTheDocument();
+    expect(screen.getByText("Old resolved resource issue")).toBeInTheDocument();
   });
 
   it("opens the governed issue panel from an Issues workspace card", () => {
@@ -309,109 +414,6 @@ describe("ProjectOverview", () => {
     expect(panel).toHaveTextContent("Clarification request");
   });
 
-  it("renders the Slice 4 current-snapshot matrix without the superseded field toggle", () => {
-    render(
-      <ProjectOverview
-        displayName="Alex"
-        initial={sliceFourSnapshot}
-        initialView="attention"
-        logoutAction={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByRole("heading", { name: "Attention map" })).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /Brighter = more attention — not a health score\. Click a cell to investigate\./,
-      ),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Dimensions" })).not.toBeInTheDocument();
-    expect(screen.getByRole("grid", { name: "Project attention map" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("gridcell", {
-        name: "Requirements Clarity: 1 issue, Moderate",
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("gridcell", {
-        name: "Resources Feasibility: 2 issues, Critical",
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("gridcell", { name: "Intent Clarity: 0 issues" }),
-    ).not.toHaveAttribute("tabindex");
-  });
-
-  it("opens one finding directly and routes multiple findings to a filtered Issues page", () => {
-    render(
-      <ProjectOverview
-        displayName="Alex"
-        initial={sliceFourSnapshot}
-        initialView="attention"
-        logoutAction={vi.fn()}
-      />,
-    );
-
-    fireEvent.click(
-      screen.getByRole("gridcell", {
-        name: "Requirements Clarity: 1 issue, Moderate",
-      }),
-    );
-    expect(screen.getByRole("dialog", { name: "Issue details" })).toHaveTextContent(
-      "Success metric is not measurable",
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Close issue" }));
-
-    fireEvent.click(
-      screen.getByRole("gridcell", {
-        name: "Resources Feasibility: 2 issues, Critical",
-      }),
-    );
-    expect(push).toHaveBeenCalledWith(
-      "/projects/project-001/issues?artifact=resources&dimension=feasibility",
-    );
-    expect(
-      screen.queryByRole("dialog", { name: "Scoped attention findings" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("routes an artifact row to Issues and keeps the natural all-clear state", () => {
-    const { unmount } = render(
-      <ProjectOverview
-        displayName="Alex"
-        initial={sliceFourSnapshot}
-        initialView="attention"
-        logoutAction={vi.fn()}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Open Resources findings" }));
-    expect(push).toHaveBeenCalledWith(
-      "/projects/project-001/issues?artifact=resources",
-    );
-
-    unmount();
-    render(
-      <ProjectOverview
-        displayName="Alex"
-        initial={{
-          ...snapshot,
-          assessment: {
-            ...snapshot.assessment,
-            issues: snapshot.assessment.issues.map((issue) => ({
-              ...issue,
-              status: "resolved",
-            })),
-          },
-        }}
-        initialView="attention"
-        logoutAction={vi.fn()}
-      />,
-    );
-    expect(screen.getByText("Nothing needs your attention right now.")).toBeInTheDocument();
-    expect(screen.getByText("All seven plan artifacts are clear in the current read.")).toBeInTheDocument();
-  });
-
   it("hydrates Issues filters from the URL contract and keeps filter changes shareable", () => {
     render(
       <ProjectOverview
@@ -428,6 +430,7 @@ describe("ProjectOverview", () => {
       />,
     );
 
+    fireEvent.click(screen.getByText("Refine issue view"));
     expect(screen.getByRole("button", { name: "Resources 2" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -441,6 +444,27 @@ describe("ProjectOverview", () => {
     expect(replace).toHaveBeenCalledWith("/projects/project-001/issues", {
       scroll: false,
     });
+  });
+
+  it("applies deep-link filters to the prototype-style Issues queue", () => {
+    render(
+      <ProjectOverview
+        compactIssuesLanding
+        displayName="Alex"
+        initial={sliceFourSnapshot}
+        initialIssueFilters={{
+          artifact: "requirements",
+          dimension: "clarity",
+          severity: null,
+          status: "active",
+        }}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const queue = screen.getByRole("region", { name: "Exposure-ranked issue queue" });
+    expect(within(queue).getByText("Success metric is not measurable")).toBeInTheDocument();
+    expect(within(queue).queryByText("Migration ownership is unresolved")).not.toBeInTheDocument();
   });
 
   it("renders the golden Overview hierarchy and routes prototype entry points", () => {
@@ -486,8 +510,127 @@ describe("ProjectOverview", () => {
     expect(footer).toBeInTheDocument();
     expect(sidebar).toContainElement(content as HTMLElement);
     expect(sidebar).toContainElement(footer as HTMLElement);
-    expect(screen.getByRole("button", { name: "Take a quick tour" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Feedback" })).toBeVisible();
+    expect(footer?.querySelector(":scope > button:first-of-type")).toHaveTextContent("Take a quick tour");
+    expect(within(footer as HTMLElement).getByRole("button", { name: "Feedback" })).toBeVisible();
+  });
+
+  it("waits for a server ticket before showing feedback as filed", async () => {
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              ticket_id: "ENH-0042",
+              title: "The report audience control did not update.",
+              status: "Filed",
+              created_at: "2026-08-16T09:30:00Z",
+            }),
+            { status: 201, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      return Promise.resolve(
+        new Response("[]", { status: 200, headers: { "content-type": "application/json" } }),
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { container } = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        initialView="reports"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const footer = container.querySelector(".workspace-sidebar-footer");
+    fireEvent.click(within(footer as HTMLElement).getByRole("button", { name: "Feedback" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Feedback" });
+    fireEvent.click(within(dialog).getByRole("button", { name: /Something’s missing/ }));
+    fireEvent.change(within(dialog).getByPlaceholderText(/What happened/), {
+      target: { value: "The report audience control did not update." },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: /Request enhancement/ }));
+
+    expect(within(dialog).getByRole("button", { name: "Filing feedback…" })).toBeDisabled();
+    expect(within(dialog).queryByText(/your feedback is with the team/i)).not.toBeInTheDocument();
+
+    expect(await within(dialog).findByText(/your feedback is with the team/i)).toBeInTheDocument();
+    expect(within(dialog).getByText("ENH-0042")).toBeInTheDocument();
+    expect(within(dialog).getByText(/project content were not changed/i)).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/feedback/tickets",
+      expect.objectContaining({ method: "POST" }),
+    );
+    const postCall = fetchMock.mock.calls.find((call) => call[1]?.method === "POST");
+    const request = JSON.parse(String(postCall?.[1]?.body));
+    expect(request).toMatchObject({
+      category: "enhancement",
+      body: "The report audience control did not update.",
+      expected: null,
+      impact: null,
+      context: {
+        where: "Reports",
+        view: "reports",
+        first_run_flag: false,
+      },
+    });
+    expect(request.context).not.toHaveProperty("project_id");
+  });
+
+  it("shows a retry path when feedback delivery fails and never claims it was filed", async () => {
+    let postCount = 0;
+    const fetchMock = vi.fn().mockImplementation((_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method !== "POST") {
+        return Promise.resolve(
+          new Response("[]", { status: 200, headers: { "content-type": "application/json" } }),
+        );
+      }
+      postCount += 1;
+      if (postCount === 1) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ message: "Feedback could not be filed." }), {
+            status: 503,
+            headers: { "content-type": "application/json" },
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            ticket_id: "DEF-0043",
+            title: "The report did not open.",
+            status: "Filed",
+            created_at: "2026-08-16T09:31:00Z",
+          }),
+          { status: 201, headers: { "content-type": "application/json" } },
+        ),
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { container } = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        initialView="reports"
+        logoutAction={vi.fn()}
+      />,
+    );
+    const footer = container.querySelector(".workspace-sidebar-footer");
+    fireEvent.click(within(footer as HTMLElement).getByRole("button", { name: "Feedback" }));
+    const dialog = screen.getByRole("dialog", { name: "Feedback" });
+    fireEvent.change(within(dialog).getByPlaceholderText(/What happened/), {
+      target: { value: "The report did not open." },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: /File defect/ }));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Feedback could not be filed");
+    expect(within(dialog).queryByText(/your feedback is with the team/i)).not.toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Try again" }));
+
+    expect((await within(dialog).findAllByText("DEF-0043")).length).toBeGreaterThan(0);
+    expect(postCount).toBe(2);
   });
 
   it("keeps the resolved lifecycle tray visible when no issue is settled yet", () => {
@@ -603,6 +746,8 @@ describe("ProjectOverview", () => {
             id: "ISS-FIX",
             title: "Delivery owner needs a fix",
             status: "needs_fix",
+            basis: "answered",
+            attested_by: { id: "reviewer-1", display_name: "Amina", role: "reviewer" },
           },
           {
             ...snapshot.assessment.issues[0],
@@ -658,6 +803,7 @@ describe("ProjectOverview", () => {
     expect(screen.getByRole("region", { name: "Acted on, not yet closed" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Resolved" })).toBeInTheDocument();
     expect(screen.getByText("1 of 5 settled")).toBeInTheDocument();
+    expect(screen.getByText("Answered · Flagged by Amina")).toBeInTheDocument();
 
     const queue = screen.getByRole("region", { name: "Exposure-ranked issue queue" });
     expect(within(queue).getAllByRole("button")).toHaveLength(1);
@@ -749,15 +895,89 @@ describe("ProjectOverview", () => {
     expect(screen.getByRole("region", { name: "Exposure-ranked issue queue" })).toBeEmptyDOMElement();
   });
 
-  it("creates a secure review route before moving an issue to Awaiting evidence", async () => {
-    const fetcher = vi.fn().mockImplementation(async (request: RequestInfo | URL, init?: RequestInit) => {
+  it("routes a collaborator through authenticated issue acts without a bearer link", async () => {
+    const fetcher = vi.fn().mockImplementation(async (request: RequestInfo | URL) => {
       const url = String(request);
-      if (url.endsWith("/collaboration") && init?.method === "POST") {
-        return Response.json({ id: "review-grant-1", url: "http://localhost:3002/review/token" }, { status: 201 });
-      }
       if (url.endsWith("/collaboration")) {
         return Response.json({ comments: [] });
       }
+      if (url.endsWith("/acts")) {
+        return Response.json({
+          issue_id: "ISS-001",
+          act: "route",
+          status: "routed",
+          attestation: null,
+          analysis_run: null,
+          first_run: {
+            first_run: true,
+            onboarded: false,
+            grounding_act_count: 1,
+            unlock_threshold: 2,
+            ever_unlocked: false,
+            freeze_on: true,
+          },
+        }, { status: 202 });
+      }
+      return Response.json({});
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={{
+          ...snapshot,
+          first_run: {
+            first_run: true,
+            onboarded: false,
+            grounding_act_count: 0,
+            unlock_threshold: 2,
+            ever_unlocked: false,
+            freeze_on: true,
+          },
+        }}
+        logoutAction={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Ask for evidence/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Project collaborator/i }));
+
+    await waitFor(() => expect(fetcher.mock.calls.some(
+      ([url, init]) => String(url).endsWith("/acts") && init?.method === "POST",
+    )).toBe(true));
+    const actCall = fetcher.mock.calls.find(
+      ([url, init]) => String(url).endsWith("/acts") && init?.method === "POST",
+    );
+    expect(JSON.parse(String(actCall?.[1]?.body))).toMatchObject({
+      act: "route",
+      reviewer: {
+        display_name: "Project collaborator",
+        role: "collaborator",
+      },
+    });
+    expect(fetcher.mock.calls.some(
+      ([url, init]) => String(url).endsWith("/collaboration") && init?.method === "POST",
+    )).toBe(false);
+    expect(screen.getByText("One call down - you confirmed your outcome.")).toBeInTheDocument();
+  });
+
+  it("creates an external review with exactly one question and cited source", async () => {
+    const fetcher = vi.fn().mockImplementation(async (request: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(request);
+      if (url.endsWith("/collaboration") && init?.method === "POST") {
+        const body = JSON.parse(String(init.body));
+        if (body.action === "review_delivered") {
+          return Response.json({ delivery_state: "awaiting" });
+        }
+        return Response.json({
+          id: "review-grant-1",
+          url: "http://localhost:3002/review/token",
+          expires_at: "2026-08-21T00:00:00Z",
+          delivery_state: "draft",
+        }, { status: 201 });
+      }
+      if (url.endsWith("/collaboration")) return Response.json({ comments: [] });
       if (url.endsWith("/acts")) {
         return Response.json({
           issue_id: "ISS-001",
@@ -771,28 +991,51 @@ describe("ProjectOverview", () => {
     });
     vi.stubGlobal("fetch", fetcher);
 
-    render(
-      <ProjectOverview displayName="Alex" initial={snapshot} logoutAction={vi.fn()} />,
-    );
+    render(<ProjectOverview displayName="Alex" initial={snapshot} logoutAction={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
     fireEvent.click(screen.getByRole("button", { name: /Ask for evidence/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Project collaborator/i }));
+    fireEvent.click(screen.getByRole("button", { name: /External evidence holder/i }));
 
-    await waitFor(() => expect(fetcher).toHaveBeenCalledWith(
-      "/api/projects/project-001/collaboration",
-      expect.objectContaining({ method: "POST" }),
-    ));
+    expect(screen.getByLabelText("External reviewer scope preview")).toHaveTextContent("Who owns migration?");
+    expect(screen.getByLabelText("External reviewer scope preview")).toHaveTextContent(
+      "The accountable migration owner has not been confirmed.",
+    );
+    fireEvent.change(screen.getByLabelText("Reviewer name"), {
+      target: { value: "Amina Khan" },
+    });
+    fireEvent.change(screen.getByLabelText(/Email/), {
+      target: { value: "amina@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Create secure review link/i }));
+
+    await waitFor(() => expect(fetcher.mock.calls.some(
+      ([url, init]) => String(url).endsWith("/collaboration") && init?.method === "POST",
+    )).toBe(true));
     const reviewCall = fetcher.mock.calls.find(
       ([url, init]) => String(url).endsWith("/collaboration") && init?.method === "POST",
     );
-    expect(fetcher.mock.calls.some(([url, init]) => String(url).endsWith("/acts") && init?.method === "POST")).toBe(true);
-    const reviewBody = JSON.parse(String(reviewCall?.[1]?.body));
-    expect(reviewBody).toMatchObject({
+    expect(JSON.parse(String(reviewCall?.[1]?.body))).toEqual({
       action: "review",
       issueId: "ISS-001",
-      reviewerName: "Project collaborator",
+      reviewerName: "Amina Khan",
+      reviewerEmail: "amina@example.com",
+      question: "Who owns migration?",
+      sourceRef: "document:plan:page:1:fragment:0",
+      sourceExcerpt: "The accountable migration owner has not been confirmed.",
     });
-    expect(reviewCall).toBeDefined();
+    expect(fetcher.mock.calls.some(
+      ([url, init]) => String(url).endsWith("/acts") && init?.method === "POST",
+    )).toBe(false);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Copy link" }));
+
+    await waitFor(() => expect(fetcher.mock.calls.some(([url, init]) => {
+      if (!String(url).endsWith("/collaboration") || init?.method !== "POST") return false;
+      return JSON.parse(String(init.body)).action === "review_delivered";
+    })).toBe(true));
+    expect(fetcher.mock.calls.some(
+      ([url, init]) => String(url).endsWith("/acts") && init?.method === "POST",
+    )).toBe(true);
   });
 
   it("records Slice 2 owner acts and proposal decisions from the same prototype surfaces", async () => {
@@ -950,6 +1193,16 @@ describe("ProjectOverview", () => {
       expect.stringContaining("Reports"),
       expect.stringContaining("History"),
     ]);
+    expect(
+      within(workspace).queryByRole("link", { name: "Attention map" }),
+    ).not.toBeInTheDocument();
+    expect(within(workspace).getByRole("link", { name: "Your Outcome" })).toHaveAttribute(
+      "href",
+      "/projects/project-001/outcome",
+    );
+    expect(
+      screen.queryByRole("button", { name: "Manage Outcomes" }),
+    ).not.toBeInTheDocument();
 
     const advisor = screen.getByRole("complementary", {
       name: "OSLO project advisor",
@@ -957,6 +1210,9 @@ describe("ProjectOverview", () => {
     expect(within(advisor).getByText("On your read", { exact: false })).toBeInTheDocument();
     expect(within(advisor).getByText("Reasoning")).toBeInTheDocument();
     expect(within(advisor).getByText("Reliability basis")).toBeInTheDocument();
+    expect(within(advisor).getByText("Reliability basis").closest("section")).toHaveTextContent(
+      "0 load-bearing details grounded · 1 still OSLO's inference",
+    );
     expect(within(advisor).getByText(/Your next move/)).toBeInTheDocument();
   });
 
@@ -987,7 +1243,7 @@ describe("ProjectOverview", () => {
     expect(within(outcome).queryByText("✓ yours")).not.toBeInTheDocument();
   });
 
-  it("restores the Overview scroll position after returning from Attention Map", () => {
+  it("restores the Overview scroll position after returning from Grounding map", () => {
     vi.useFakeTimers();
     const scrollTo = vi.fn();
     const originalScrollTo = Object.getOwnPropertyDescriptor(
@@ -1095,7 +1351,7 @@ describe("ProjectOverview", () => {
     expect(screen.getByRole("navigation", { name: "Workspace" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Issues 1" })).toHaveAttribute(
       "href",
-      "/projects/project-001/overview",
+      "/projects/project-001/issues",
     );
     expect(screen.getByRole("link", { name: "History" })).toHaveAttribute(
       "href",
@@ -1194,7 +1450,49 @@ describe("ProjectOverview", () => {
     ).toBeInTheDocument();
   });
 
-  it("exposes a clear account control and professional account navigation", () => {
+  it("opens the prototype settings modal from the account menu", async () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(async (input: string) => {
+      if (input === "/api/workspace/preferences") {
+        return Response.json({
+          theme: "dark",
+          analysis_notifications: true,
+          failure_notifications: true,
+          stale_notifications: true,
+          display_name: "Alex Morgan",
+          role_title: "I run the plan",
+          workspace_name: "OSLO Alpha",
+          actor_role: "owner",
+          mentions_notifications: true,
+          reply_notifications: true,
+          shared_notifications: true,
+        });
+      }
+      if (input === "/api/workspace") {
+        return Response.json({
+          id: "workspace-1",
+          name: "OSLO Alpha",
+          role: "owner",
+          plan: "free",
+          plan_label: "Free",
+          price_usd_monthly: 0,
+          document_limit: 20,
+          word_limit: 50_000,
+          collaborator_seat_limit: 3,
+          monthly_analysis_limit: 8,
+          monthly_analyses_used: 1,
+          can_manage_plan: true,
+          member_count: 1,
+          projects: [],
+          notifications: [],
+        });
+      }
+      return Response.json({});
+    }));
     render(
       <ProjectOverview
         displayName="Alex Morgan"
@@ -1213,12 +1511,22 @@ describe("ProjectOverview", () => {
 
     fireEvent.click(account);
 
-    expect(within(navigation).getByText("Account & workspace")).toBeInTheDocument();
-    expect(within(navigation).getByRole("link", { name: "Settings" })).toHaveAttribute(
-      "href",
-      "/settings",
-    );
-    expect(within(navigation).getByRole("button", { name: "Log out" })).toBeInTheDocument();
+    const menu = account.closest("details")?.querySelector(".project-account-menu");
+    expect(menu).toBeInTheDocument();
+    expect(within(menu as HTMLElement).getByRole("button", { name: "Settings" })).toBeInTheDocument();
+    expect(within(menu as HTMLElement).getByRole("button", { name: "Take a quick tour" })).toBeInTheDocument();
+    expect(within(menu as HTMLElement).getByRole("button", { name: "Replay walkthrough" })).toBeInTheDocument();
+    expect(within(menu as HTMLElement).getByRole("button", { name: "Log out" })).toBeInTheDocument();
+    expect(within(menu as HTMLElement).queryByText("Account & workspace")).not.toBeInTheDocument();
+    fireEvent.click(within(menu as HTMLElement).getByRole("button", { name: "Settings" }));
+    expect(await screen.findByRole("heading", { name: "Profile" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Settings" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close settings" }));
+    const footer = navigation.querySelector(".workspace-sidebar-footer");
+    const planButton = await within(footer as HTMLElement).findByRole("button", { name: "Free" });
+    fireEvent.click(planButton);
+    expect(await screen.findByRole("heading", { name: "Plan & usage" })).toBeInTheDocument();
   });
 
   it("opens the integrity breakdown from the toolbar", () => {
@@ -1503,6 +1811,17 @@ describe("ProjectOverview", () => {
     });
     expect(screen.queryByText("Your workspace is open.")).not.toBeInTheDocument();
     expect(screen.getByText("One call down - you confirmed your outcome.")).toBeInTheDocument();
+    const startHere = screen.getByRole("button", {
+      name: /Start here: settle .*Migration ownership is unresolved/i,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Close issue" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("region", { name: "Issue details" })).not.toBeInTheDocument(),
+    );
+    fireEvent.click(startHere);
+    await waitFor(() =>
+      expect(screen.getByRole("region", { name: "Issue details" })).toHaveFocus(),
+    );
     expect(screen.queryByLabelText("OSLO project advisor")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Ask OSLO$/i })).toHaveClass(
       "advisor-floating",
@@ -1554,16 +1873,17 @@ describe("ProjectOverview", () => {
       expect(screen.getByRole("region", { name: "Issue details" })).toBeInTheDocument(),
     );
     fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
+    const queue = screen.getByRole("region", { name: "Exposure-ranked issue queue" });
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /Cutover fallback is unresolved/i }),
+        within(queue).getByRole("button", { name: /Cutover fallback is unresolved/i }),
       ).toBeInTheDocument(),
     );
     fireEvent.click(screen.getByRole("button", { name: "Close issue" }));
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /Cutover fallback is unresolved/i }),
+        within(queue).getByRole("button", { name: /Cutover fallback is unresolved/i }),
       ).toHaveFocus(),
     );
   });
@@ -1914,25 +2234,52 @@ describe("ProjectOverview", () => {
     expect(screen.getByText(/full decision history arrives in Slice 7/i)).toBeInTheDocument();
   });
 
-  it("replays and completes the six-step anchored orientation tour", async () => {
-    render(
+  it("replays and completes the prototype-aligned five-step orientation tour", async () => {
+    const { container } = render(
       <ProjectOverview
         displayName="Alex"
         initial={snapshot}
+        initialOutcome={{
+          id: "outcome-1",
+          workspace_id: "workspace-1",
+          project_id: snapshot.project_id,
+          title: "Complete the migration safely",
+          status: "active",
+          is_primary: true,
+          provenance: "declared",
+          created_at: "2026-08-16T00:00:00Z",
+          archived_at: null,
+        }}
         logoutAction={vi.fn()}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Take a quick tour" }));
+    const sidebar = screen.getByRole("complementary", { name: "Project navigation" });
+    const footer = sidebar.querySelector(".workspace-sidebar-footer");
+    fireEvent.click(footer?.querySelector(":scope > button:first-of-type") as HTMLButtonElement);
 
-    expect(screen.getByText("Step 1 of 6")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Your strategic read" })).toBeInTheDocument();
+    expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Outcome Integrity" })).toBeInTheDocument();
+    expect(screen.getByRole("button", {
+      name: "Outcome Integrity Developing, limited by Grounding",
+    })).toHaveClass("is-tour-target");
     expect(screen.queryByRole("button", { name: "Back" })).not.toBeInTheDocument();
-    for (let step = 1; step < 6; step += 1) {
-      fireEvent.click(screen.getByRole("button", { name: "Next" }));
-      expect(screen.getByText(`Step ${step + 1} of 6`)).toBeInTheDocument();
-    }
-    expect(screen.getByRole("heading", { name: "Ask OSLO anything" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Step 2 of 5")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Outcome: Complete the migration safely/i })).toHaveClass("is-tour-target");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Step 3 of 5")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Migration ownership is unresolved/i })).toHaveClass("is-tour-target");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Step 4 of 5")).toBeInTheDocument();
+    expect(container.querySelector(".workspace-artifact-group")).toHaveClass("is-tour-target");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Step 5 of 5")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Ask OSLO" }).closest("form")).toHaveClass("is-tour-target");
+    expect(screen.getByRole("heading", { name: "OSLO — advisory" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
 
@@ -2161,6 +2508,60 @@ describe("ProjectOverview", () => {
 
     expect(screen.getByText("Questions answered")).toBeInTheDocument();
     expect(screen.getByText("Issues resolved")).toBeInTheDocument();
+  });
+
+  it("invalidates prefetched project routes after the orientation is dismissed", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={{ ...snapshot, orientation_seen: false }}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+    vi.useRealTimers();
+    fireEvent.click(screen.getByRole("button", { name: "Skip tour" }));
+
+    await waitFor(() => {
+      expect(refresh).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("opens the tour on the read workspace when launched from another project view", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        initialView="history"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const sidebar = screen.getByRole("complementary", { name: "Project navigation" });
+    const footer = sidebar.querySelector(".workspace-sidebar-footer");
+    fireEvent.click(footer?.querySelector(":scope > button:first-of-type") as HTMLButtonElement);
+
+    expect(push).toHaveBeenCalledWith("/projects/project-001/overview?tour=1");
+    expect(screen.queryByRole("dialog", { name: "How OSLO works" })).not.toBeInTheDocument();
+  });
+
+  it("resumes the requested tour after arriving on the read workspace", async () => {
+    window.history.replaceState({}, "", "/projects/project-001/overview?tour=1");
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText("Step 1 of 5")).toBeInTheDocument();
+    expect(window.location.search).toBe("");
   });
 
   it("derives advisor settled counts from the live issue lifecycle", () => {

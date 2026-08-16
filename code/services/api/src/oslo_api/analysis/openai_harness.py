@@ -11,6 +11,14 @@ from openai import OpenAI
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from oslo_api.analysis.harness import AgentHarnessError
+from oslo_api.analysis.load_bearing import (
+    PlanDependencyGraph,
+    PlanEdge,
+    PlanNode,
+    SensitivityCandidate,
+    StructuralTarget,
+    classify_finding_or_escalate,
+)
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     Artifact,
@@ -135,15 +143,12 @@ class _SingleArtifactOutput(_StrictOutput):
 class _IssueOutput(_StrictOutput):
     id: Annotated[str, Field(min_length=1, max_length=100, pattern=r"^[A-Z0-9_-]+$")]
     artifact_type: ArtifactType
-    dimension: Literal["Clarity", "Alignment", "Feasibility"]
     severity: Literal["Warning", "Moderate", "Critical"]
-    finding_type: Literal[
-        "contradiction",
-        "absence",
-        "feasibility",
-        "traceability",
-        "clarity",
-    ]
+    finding_type: ShortText
+    finding_basis: Literal["inference", "structural", "decision", "model_gap"]
+    structural_target: ShortText
+    graph_node_id: ShortText
+    extraction_confidence: float = Field(ge=0, le=1)
     exception_checked: bool
     title: ShortText
     why: LongText
@@ -151,6 +156,48 @@ class _IssueOutput(_StrictOutput):
     evidence_refs: list[EvidenceReference] = Field(min_length=1, max_length=20)
     clarification: ShortText | None = None
     status: Literal["open", "addressed", "resolved"] = "open"
+
+
+class _PlanNodeOutput(_StrictOutput):
+    id: ShortText
+    type: Literal[
+        "outcome",
+        "deliverable",
+        "workstream",
+        "task",
+        "assumption",
+        "inference",
+        "dependency",
+        "metric",
+    ]
+    label: ShortText
+    provenance: Literal["grounded", "inferred", "proposed", "accepted"]
+    extraction_confidence: float = Field(ge=0, le=1)
+
+
+class _PlanEdgeOutput(_StrictOutput):
+    from_id: ShortText
+    to_id: ShortText
+    rel: Literal["supports", "rests-on", "feeds", "serves"]
+    weight: float = Field(ge=0, le=1)
+    extraction_confidence: float = Field(ge=0, le=1)
+
+
+class _SensitivityCandidateOutput(_StrictOutput):
+    id: Annotated[str, Field(min_length=1, max_length=100, pattern=r"^[A-Z0-9_-]+$")]
+    node_id: ShortText
+    structural_target: Literal[
+        "definition",
+        "edge",
+        "achievability",
+        "truth",
+        "coverage",
+    ]
+    favorable_integrity: float = Field(ge=0, le=1)
+    adverse_integrity: float = Field(ge=0, le=1)
+    runway_factor: float = Field(gt=0)
+    stakes: float = Field(ge=0)
+    edge_key: tuple[ShortText, ShortText] | None = None
 
 
 class _CoverageAuditOutput(_StrictOutput):
@@ -185,6 +232,12 @@ class _AssessmentOutput(_StrictOutput):
     feasibility: RatingBand
     coverage_audit: list[_CoverageAuditOutput] = Field(min_length=7, max_length=7)
     issues: list[_IssueOutput] = Field(max_length=60)
+    dependency_nodes: list[_PlanNodeOutput] = Field(default_factory=list, max_length=240)
+    dependency_edges: list[_PlanEdgeOutput] = Field(default_factory=list, max_length=480)
+    sensitivity_candidates: list[_SensitivityCandidateOutput] = Field(
+        default_factory=list,
+        max_length=60,
+    )
     outcome_checkpoints: list[_OutcomeCheckpointOutput] = Field(
         default_factory=list,
         max_length=40,
@@ -198,6 +251,47 @@ class _AssessmentOutput(_StrictOutput):
         if len(workstreams) != len(set(workstreams)):
             raise ValueError("Each outcome-bearing workstream requires one checkpoint")
         return self
+
+
+def _issue_from_output(item: _IssueOutput) -> Issue:
+    resolution = classify_finding_or_escalate(
+        issue_id=item.id,
+        finding_type=item.finding_type,
+        basis=item.finding_basis,
+        structural_target=item.structural_target,
+    )
+    if resolution.escalate:
+        dimension = ""
+        primary_act = ""
+        also_offered: tuple[str, ...] = ()
+        classification_state = "escalated"
+    else:
+        dimension = resolution.dimension
+        primary_act = resolution.primary_act.value
+        also_offered = tuple(act.value for act in resolution.also_offered)
+        classification_state = "classified"
+
+    return Issue(
+        id=item.id,
+        artifact_type=item.artifact_type,
+        dimension=dimension,
+        severity=item.severity,
+        title=item.title,
+        why=item.why,
+        recommendation=item.recommendation,
+        evidence_refs=tuple(item.evidence_refs),
+        clarification=item.clarification,
+        status=item.status,
+        dimensions=(dimension,) if dimension else (),
+        finding_type=item.finding_type,
+        section=item.artifact_type.value,
+        finding_basis=item.finding_basis,
+        structural_target=item.structural_target,
+        primary_act=primary_act,
+        also_offered=also_offered,
+        classification_state=classification_state,
+        unassessed=resolution.escalate,
+    )
 
 
 class OpenAIAgentHarness:
@@ -645,7 +739,22 @@ class OpenAIAgentHarness:
                 "only when the supplied evidence already contains that checkpoint and cite "
                 "its exact evidence locator; otherwise return a specific From-OSLO proposal "
                 "with registered=false and no fabricated evidence. Delivery milestones that "
-                "do not re-read the outcome are not outcome checkpoints. Do not expose hidden "
+                "do not re-read the outcome are not outcome checkpoints. "
+                "For each issue, emit the Slice 10 finding model: finding_type must be one of "
+                "inference_gap, false_confidence, dependency_may_fail, unowned, no_deadline, "
+                "no_backup, coverage_gap, metric_mismatch, or no_limit_set; finding_basis must "
+                "be inference, structural, decision, or model_gap; structural_target must be "
+                "definition, edge, achievability, truth, or coverage. Dimension and resolution "
+                "are derived downstream, so do not choose them. If the taxonomy has no mapping, "
+                "use finding_basis=model_gap and preserve the novel finding_type rather than "
+                "defaulting it. Build the outcome dependency graph using dependency_nodes and "
+                "dependency_edges: to_id depends on from_id, and every node and edge carries "
+                "extraction_confidence. Include one sensitivity_candidate per issue, linked by "
+                "the same id and graph_node_id, with plausible evidence-bounded favorable and "
+                "adverse integrity endpoints. Alignment candidates must identify edge_key and "
+                "must sit on a path reaching an outcome. Do not invent certainty in graph "
+                "weights or endpoints; lower extraction_confidence when the evidence is weak. "
+                "Do not expose hidden "
                 "reasoning. Every evidence_refs value must be copied exactly from "
                 "allowed_evidence_locators; never reconstruct or alter a locator. "
                 "Return only the required JSON contract."
@@ -673,24 +782,7 @@ class OpenAIAgentHarness:
             clarity=output.clarity,
             alignment=output.alignment,
             feasibility=output.feasibility,
-            issues=tuple(
-                Issue(
-                    id=item.id,
-                    artifact_type=item.artifact_type,
-                    dimension=item.dimension,
-                    severity=item.severity,
-                    title=item.title,
-                    why=item.why,
-                    recommendation=item.recommendation,
-                    evidence_refs=tuple(item.evidence_refs),
-                    clarification=item.clarification,
-                    status=item.status,
-                    dimensions=(item.dimension,),
-                    finding_type=item.finding_type,
-                    section=item.artifact_type.value,
-                )
-                for item in output.issues
-            ),
+            issues=tuple(_issue_from_output(item) for item in output.issues),
             outcome_checkpoints=tuple(
                 OutcomeCheckpoint(
                     id=item.id,
@@ -702,6 +794,45 @@ class OpenAIAgentHarness:
                     evidence_refs=tuple(item.evidence_refs),
                 )
                 for item in output.outcome_checkpoints
+            ),
+            dependency_graph=(
+                PlanDependencyGraph(
+                    nodes=tuple(
+                        PlanNode(
+                            id=item.id,
+                            type=item.type,
+                            label=item.label,
+                            provenance=item.provenance,
+                            extraction_confidence=item.extraction_confidence,
+                        )
+                        for item in output.dependency_nodes
+                    ),
+                    edges=tuple(
+                        PlanEdge(
+                            from_id=item.from_id,
+                            to_id=item.to_id,
+                            rel=item.rel,
+                            weight=item.weight,
+                            extraction_confidence=item.extraction_confidence,
+                        )
+                        for item in output.dependency_edges
+                    ),
+                )
+                if output.dependency_nodes
+                else None
+            ),
+            sensitivity_candidates=tuple(
+                SensitivityCandidate(
+                    id=item.id,
+                    node_id=item.node_id,
+                    structural_target=StructuralTarget(item.structural_target),
+                    favorable_integrity=item.favorable_integrity,
+                    adverse_integrity=item.adverse_integrity,
+                    runway_factor=item.runway_factor,
+                    edge_key=item.edge_key,
+                    stakes=item.stakes,
+                )
+                for item in output.sensitivity_candidates
             ),
         )
 
@@ -826,7 +957,16 @@ class OpenAIAgentHarness:
                 for issue in issues
                 if set(getattr(issue, "evidence_refs", ())).issubset(allowed_refs)
             ]
-            return output.model_copy(update={"issues": supported})
+            update: dict[str, object] = {"issues": supported}
+            sensitivity_candidates = getattr(output, "sensitivity_candidates", None)
+            if isinstance(sensitivity_candidates, list):
+                supported_issue_ids = {issue.id for issue in supported}
+                update["sensitivity_candidates"] = [
+                    candidate
+                    for candidate in sensitivity_candidates
+                    if candidate.id in supported_issue_ids
+                ]
+            return output.model_copy(update=update)
         if isinstance(output, _PerceptionOutput):
             supported_refs = [
                 reference

@@ -1,17 +1,15 @@
 "use client";
 
-import { CheckCircle, ChatCircleText, Lightbulb, XCircle } from "@phosphor-icons/react";
+import { CheckCircle, XCircle } from "@phosphor-icons/react";
 import { FormEvent, useState } from "react";
 
 const responses = [
-  { value: "comment", label: "Comment", Icon: ChatCircleText },
-  { value: "approve", label: "Approve", Icon: CheckCircle },
+  { value: "approve", label: "Confirm", Icon: CheckCircle },
   { value: "reject", label: "Reject", Icon: XCircle },
-  { value: "suggest_alternative", label: "Suggest alternative", Icon: Lightbulb },
 ] as const;
 
 export function ReviewerResponseForm({ token }: { token: string }) {
-  const [kind, setKind] = useState<(typeof responses)[number]["value"]>("comment");
+  const [kind, setKind] = useState<(typeof responses)[number]["value"]>("approve");
   const [body, setBody] = useState("");
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<"success" | "error" | null>(null);
@@ -31,7 +29,7 @@ export function ReviewerResponseForm({ token }: { token: string }) {
       if (!response.ok) throw new Error(payload.message ?? "Your response could not be submitted.");
       setResult("success");
       setMessage(
-        "Your response is recorded. The project team can decide whether to add it as project evidence.",
+        "Your response is recorded as attributed evidence and the project read is updating.",
       );
     } catch (caught) {
       setResult("error");
@@ -80,14 +78,14 @@ export function ReviewerResponseForm({ token }: { token: string }) {
           disabled={pending}
           maxLength={5_000}
           onChange={(event) => setBody(event.target.value)}
-          placeholder="Explain your decision, evidence, or suggested alternative."
+          placeholder="Cite the evidence behind your confirmation or rejection."
           required
           value={body}
         />
       </label>
       <p className="review-response-policy">
-        Your response becomes a traceable reviewer attestation. It never closes an issue
-        automatically.
+        Your response becomes a traceable reviewer attestation. Only the governed
+        reanalysis can change or close the issue.
       </p>
       <button disabled={pending || !body.trim()} type="submit">
         {pending ? "Submitting…" : "Submit review"}

@@ -4,6 +4,7 @@ from oslo_api.analysis.advisor import ProjectAdvisor
 from oslo_api.api.analysis import router as analysis_router
 from oslo_api.api.billing import router as billing_router
 from oslo_api.api.collaboration import router as collaboration_router
+from oslo_api.api.feedback import router as feedback_router
 from oslo_api.api.invitations import router as invitations_router
 from oslo_api.api.outcomes import router as outcomes_router
 from oslo_api.api.projects import router as projects_router
@@ -20,6 +21,7 @@ def create_app(
     project_advisor: ProjectAdvisor | None = None,
     collaboration=None,
     slice_four: SliceFourApplication | None = None,
+    feedback=None,
 ) -> FastAPI:
     app = FastAPI(
         title="OSLO Product Grill API",
@@ -32,6 +34,7 @@ def create_app(
     app.state.project_advisor = project_advisor
     app.state.collaboration = collaboration
     app.state.slice_four = slice_four
+    app.state.feedback = feedback
     app.include_router(invitations_router)
     app.include_router(projects_router)
     app.include_router(session_router)
@@ -39,6 +42,7 @@ def create_app(
     app.include_router(collaboration_router)
     app.include_router(billing_router)
     app.include_router(outcomes_router)
+    app.include_router(feedback_router)
 
     @app.get("/health", tags=["operations"])
     def health() -> dict[str, str]:

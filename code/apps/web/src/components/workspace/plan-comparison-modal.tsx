@@ -114,6 +114,7 @@ export function PlanComparisonModal({
 
   return (
     <div className="plan-modal-backdrop" onMouseDown={(event) => {
+      event.stopPropagation();
       if (event.target === event.currentTarget) onClose();
     }}>
       <section aria-labelledby="plan-modal-title" aria-modal="true" className="plan-modal" role="dialog">

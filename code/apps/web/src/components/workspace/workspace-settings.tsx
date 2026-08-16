@@ -1,44 +1,39 @@
 "use client";
 
 import {
-  ArrowLeft,
-  Bell,
-  Buildings,
   Check,
-  CreditCard,
   Desktop,
   Gear,
-  Key,
-  LinkSimple,
-  MagnifyingGlass,
   Moon,
-  SignOut,
-  SlidersHorizontal,
   Sun,
-  Trash,
-  User,
-  Users,
+  UserPlus,
   X,
 } from "@phosphor-icons/react";
-import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { PlanComparisonModal } from "@/components/workspace/plan-comparison-modal";
-import type { WorkspacePreferences, WorkspaceSummary } from "@/lib/server/oslo-api";
+import type { InvitationSummary, WorkspacePreferences, WorkspaceSummary } from "@/lib/server/oslo-api";
 
 const settingsSections = [
-  { id: "account", label: "Account", group: "You", Icon: User },
-  { id: "profile", label: "Profile", group: "You", Icon: User },
-  { id: "appearance", label: "Appearance", group: "You", Icon: Sun },
-  { id: "notifications", label: "Notifications", group: "You", Icon: Bell },
-  { id: "workspace", label: "Workspace", group: "Workspace", Icon: Buildings },
-  { id: "project-defaults", label: "Project defaults", group: "Workspace", Icon: SlidersHorizontal },
-  { id: "collaboration", label: "Collaboration", group: "Workspace", Icon: Users },
-  { id: "access", label: "Access & invites", group: "Workspace", Icon: Key },
-  { id: "membership", label: "Membership", group: "Workspace", Icon: Users, badge: "View" },
-  { id: "subscription", label: "Subscription", group: "Plan", Icon: CreditCard, badge: "View" },
-  { id: "billing", label: "Billing", group: "Plan", Icon: CreditCard, badge: "View" },
-  { id: "integrations", label: "Integrations", group: "Plan", Icon: LinkSimple, badge: "Later" },
+  { id: "profile", label: "Profile", group: "You" },
+  { id: "appearance", label: "Appearance", group: "You" },
+  { id: "notifications", label: "Notifications", group: "You" },
+  { id: "workspace", label: "Workspace", group: "Workspace" },
+  { id: "collaboration", label: "Collaboration", group: "Workspace" },
+  { id: "access", label: "Access & invites", group: "Workspace" },
+  { id: "membership", label: "Membership", group: "Workspace", badge: "View" },
+  { id: "plan", label: "Plan & usage", group: "Plan" },
+  { id: "billing", label: "Billing", group: "Plan" },
+  { id: "integrations", label: "Integrations", group: "Plan", badge: "Later" },
+] as const;
+
+export type SettingsSectionId = (typeof settingsSections)[number]["id"];
+
+const roleOptions = [
+  ["I run the plan", "Delivery / project PM"],
+  ["I own the outcome", "Business / functional owner"],
+  ["I own it and run it", "Outcome owner + delivery lead"],
+  ["Something else", "Other / not sure"],
 ] as const;
 
 const collaborationNotifications = [
@@ -47,13 +42,87 @@ const collaborationNotifications = [
   ["Shared with me", "when a project is shared with you"],
 ] as const;
 
+export function WorkspaceSettingsDialog({
+  displayName,
+  initialSection = "profile",
+  onClose,
+  open,
+}: {
+  displayName: string;
+  initialSection?: SettingsSectionId;
+  onClose: () => void;
+  open: boolean;
+}) {
+  const [preferences, setPreferences] = useState<WorkspacePreferences | null>(null);
+  const [workspace, setWorkspace] = useState<WorkspaceSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
+
+  useEffect(() => {
+    if (!open) return;
+    const controller = new AbortController();
+    const resetTimer = window.setTimeout(() => setError(null), 0);
+    Promise.all([
+      fetch("/api/workspace/preferences", { signal: controller.signal }),
+      fetch("/api/workspace", { signal: controller.signal }),
+    ])
+      .then(async ([preferencesResponse, workspaceResponse]) => {
+        if (!preferencesResponse.ok || !workspaceResponse.ok) {
+          throw new Error("Settings could not be loaded.");
+        }
+        const [nextPreferences, nextWorkspace] = await Promise.all([
+          preferencesResponse.json() as Promise<WorkspacePreferences>,
+          workspaceResponse.json() as Promise<WorkspaceSummary>,
+        ]);
+        setPreferences(nextPreferences);
+        setWorkspace(nextWorkspace);
+      })
+      .catch((reason: unknown) => {
+        if (controller.signal.aborted) return;
+        setError(reason instanceof Error ? reason.message : "Settings could not be loaded.");
+      });
+    return () => {
+      window.clearTimeout(resetTimer);
+      controller.abort();
+    };
+  }, [open, retry]);
+
+  if (!open) return null;
+  if (!preferences || !workspace) {
+    return (
+      <div className="settings-modal-backdrop" role="presentation">
+        <section aria-label="Settings" aria-modal="true" className="settings-dialog settings-dialog-status" role="dialog">
+          <button aria-label="Close settings" className="settings-dialog-close" onClick={onClose} type="button"><X size={18} /></button>
+          {error ? (
+            <><strong>Settings could not be loaded.</strong><p>{error}</p><button className="settings-primary-button" onClick={() => setRetry((value) => value + 1)} type="button">Try again</button></>
+          ) : <p role="status">Loading settings…</p>}
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <WorkspaceSettings
+      displayName={displayName}
+      initial={preferences}
+      initialSection={initialSection}
+      modal
+      onClose={onClose}
+      workspace={workspace}
+      workspaceName={workspace.name}
+    />
+  );
+}
+
 export function WorkspaceSettings({
   initial,
   workspaceName,
   displayName,
   email,
-  logoutAction,
   workspace,
+  modal = false,
+  onClose,
+  initialSection = "profile",
 }: {
   initial: WorkspacePreferences;
   workspaceName: string;
@@ -61,41 +130,35 @@ export function WorkspaceSettings({
   email?: string;
   logoutAction?: () => Promise<void>;
   workspace?: WorkspaceSummary;
+  modal?: boolean;
+  onClose?: () => void;
+  initialSection?: SettingsSectionId;
 }) {
   const [preferences, setPreferences] = useState(initial);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const saveRevisionRef = useRef(0);
-  const [query, setQuery] = useState("");
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [localDisplayName, setLocalDisplayName] = useState(
-    initial.display_name || displayName,
-  );
-  const [localWorkspaceName, setLocalWorkspaceName] = useState(
-    initial.workspace_name || workspaceName,
-  );
-  const [role, setRole] = useState(initial.role_title);
+  const [localDisplayName, setLocalDisplayName] = useState(initial.display_name || displayName);
+  const [localWorkspaceName, setLocalWorkspaceName] = useState(initial.workspace_name || workspaceName);
+  const [role, setRole] = useState(initial.role_title || roleOptions[0][0]);
   const [workspaceState, setWorkspaceState] = useState(workspace);
   const [plansOpen, setPlansOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<typeof settingsSections[number]["id"]>("account");
-  const [collaborationPreferences, setCollaborationPreferences] = useState<
-    Record<string, boolean>
-  >({
+  const planTransitionRef = useRef(false);
+  const [activeSection, setActiveSection] = useState<SettingsSectionId>(initialSection);
+  const [invitationManagerOpen, setInvitationManagerOpen] = useState(false);
+  const [invitations, setInvitations] = useState<InvitationSummary[]>([]);
+  const [invitationEmail, setInvitationEmail] = useState("");
+  const [invitationBusy, setInvitationBusy] = useState("");
+  const [invitationError, setInvitationError] = useState("");
+  const [invitationNotice, setInvitationNotice] = useState("");
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  const [collaborationPreferences, setCollaborationPreferences] = useState<Record<string, boolean>>({
     Mentions: initial.mentions_notifications,
     Replies: initial.reply_notifications,
     "Shared with me": initial.shared_notifications,
   });
-
-  const normalizedQuery = query.trim().toLowerCase();
-  const visibleSections = useMemo(
-    () => new Set(
-      settingsSections
-        .filter((section) => !normalizedQuery || section.label.toLowerCase().includes(normalizedQuery))
-        .map((section) => section.id),
-    ),
-    [normalizedQuery],
-  );
 
   const save = (next: WorkspacePreferences) => {
     const revision = ++saveRevisionRef.current;
@@ -112,30 +175,28 @@ export function WorkspaceSettings({
           keepalive: true,
         });
         const payload = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(payload?.message ?? "Settings could not be saved.");
-        }
+        if (!response.ok) throw new Error(payload?.message ?? "Settings could not be saved.");
         if (revision !== saveRevisionRef.current) return;
-        const persisted = payload as WorkspacePreferences;
-        setPreferences(persisted);
+        setPreferences(payload as WorkspacePreferences);
         setSaved(true);
       })
-      .catch((error) => {
+      .catch((reason: unknown) => {
         if (revision !== saveRevisionRef.current) return;
-        setSaveError(
-          error instanceof Error ? error.message : "Settings could not be saved.",
-        );
+        setSaveError(reason instanceof Error ? reason.message : "Settings could not be saved.");
       });
     return saveQueueRef.current;
   };
 
   useEffect(() => {
+    const storedTheme = localStorage.getItem("oslo-theme");
+    if ((storedTheme === "dark" || storedTheme === "light" || storedTheme === "system") && storedTheme !== preferences.theme) {
+      const timer = window.setTimeout(() => setPreferences((current) => ({ ...current, theme: storedTheme })), 0);
+      return () => window.clearTimeout(timer);
+    }
     const root = document.documentElement;
     const media = window.matchMedia("(prefers-color-scheme: light)");
     const applyTheme = () => {
-      root.dataset.theme = preferences.theme === "system"
-        ? (media.matches ? "light" : "dark")
-        : preferences.theme;
+      root.dataset.theme = preferences.theme === "system" ? (media.matches ? "light" : "dark") : preferences.theme;
       root.dataset.themePreference = preferences.theme;
     };
     applyTheme();
@@ -145,16 +206,26 @@ export function WorkspaceSettings({
   }, [preferences.theme]);
 
   useEffect(() => {
-    const syncSectionFromHash = () => {
-      const section = window.location.hash.slice(1);
-      if (settingsSections.some(({ id }) => id === section)) {
-        setActiveSection(section as typeof settingsSections[number]["id"]);
-      }
+    if (!modal) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialogRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose?.();
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+      if (!controls.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     };
-    syncSectionFromHash();
-    window.addEventListener("hashchange", syncSectionFromHash);
-    return () => window.removeEventListener("hashchange", syncSectionFromHash);
-  }, []);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [modal, onClose]);
 
   const toggleCollaborationNotification = (title: string) => {
     setCollaborationPreferences((current) => {
@@ -169,343 +240,316 @@ export function WorkspaceSettings({
     });
   };
 
-  const commitLocalIdentity = () => {
-    void save({
-      ...preferences,
-      display_name: localDisplayName.trim() || displayName,
-      role_title: role.trim(),
-      workspace_name: localWorkspaceName.trim() || workspaceName,
-    });
+  const commitIdentity = (overrides: Partial<WorkspacePreferences> = {}) => void save({
+    ...preferences,
+    display_name: localDisplayName.trim() || displayName,
+    role_title: role.trim(),
+    workspace_name: localWorkspaceName.trim() || workspaceName,
+    ...overrides,
+  });
+
+  const selectTheme = (theme: WorkspacePreferences["theme"]) => {
+    localStorage.setItem("oslo-theme", theme);
+    void save({ ...preferences, theme });
   };
 
-  const sectionVisible = (id: typeof settingsSections[number]["id"]) => visibleSections.has(id);
+  const openPlans = () => {
+    if (planTransitionRef.current) return;
+    setPlansOpen(true);
+  };
+
+  const closePlans = () => {
+    planTransitionRef.current = true;
+    setPlansOpen(false);
+    window.setTimeout(() => {
+      planTransitionRef.current = false;
+    }, 250);
+  };
+
+  const loadInvitations = async () => {
+    setInvitationBusy("load");
+    setInvitationError("");
+    try {
+      const response = await fetch("/api/workspace/invitations");
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.message ?? "Invitations could not be loaded.");
+      setInvitations(Array.isArray(payload) ? payload : []);
+    } catch (reason) {
+      setInvitationError(reason instanceof Error ? reason.message : "Invitations could not be loaded.");
+    } finally {
+      setInvitationBusy("");
+    }
+  };
+
+  const showInvitationManager = () => {
+    setActiveSection("access");
+    setInvitationManagerOpen(true);
+    setInvitationNotice("");
+    void loadInvitations();
+  };
+
+  const sendWorkspaceInvitation = async () => {
+    const emailAddress = invitationEmail.trim().toLowerCase();
+    if (!emailAddress) return;
+    setInvitationBusy("invite");
+    setInvitationError("");
+    setInvitationNotice("");
+    try {
+      const response = await fetch("/api/workspace/invitations", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "invite", email: emailAddress }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.message ?? "The invitation could not be sent.");
+      setInvitationEmail("");
+      setInvitationNotice(`Invitation sent to ${emailAddress}.`);
+      await loadInvitations();
+    } catch (reason) {
+      setInvitationError(reason instanceof Error ? reason.message : "The invitation could not be sent.");
+      setInvitationBusy("");
+    }
+  };
+
+  const revokeWorkspaceInvitation = async (invitation: InvitationSummary) => {
+    setInvitationBusy(invitation.id);
+    setInvitationError("");
+    setInvitationNotice("");
+    try {
+      const response = await fetch("/api/workspace/invitations", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "revoke", invitationId: invitation.id }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.message ?? "The invitation could not be revoked.");
+      }
+      setInvitations((current) => current.filter((item) => item.id !== invitation.id));
+      setInvitationNotice(`Invitation revoked for ${invitation.email}.`);
+    } catch (reason) {
+      setInvitationError(reason instanceof Error ? reason.message : "The invitation could not be revoked.");
+    } finally {
+      setInvitationBusy("");
+    }
+  };
+
   const memberCount = workspaceState?.member_count ?? 1;
   const collaboratorSeatsUsed = workspaceState?.collaborator_seats_used ?? memberCount;
   const activeProjects = workspaceState?.projects.filter((project) => !project.archived).length ?? 1;
-  const activeProjectLimit = workspaceState?.plan === "basic" ? 3 : 1;
+  const activeProjectLimit = workspaceState?.active_project_limit ?? (workspaceState?.plan === "basic" ? 3 : 1);
+  const actorRole = workspaceState?.role ?? preferences.actor_role;
 
-  return (
-    <main className="settings-shell">
-      <aside className="settings-sidebar">
-        <Link className="settings-back" href="/workspace"><ArrowLeft size={15} /> Workspace</Link>
-        <nav aria-label="Settings">
-          {["You", "Workspace", "Plan"].map((group) => (
-            <div className="settings-nav-group" key={group}>
-              <p>{group}</p>
-              {settingsSections.filter((section) => section.group === group).map(({ id, label, ...section }) => (
-                <a
-                  aria-current={activeSection === id ? "page" : undefined}
-                  className={activeSection === id ? "is-active" : undefined}
-                  href={`#${id}`}
-                  key={id}
-                  onClick={() => setActiveSection(id)}
-                >
-                  <span>{label}</span>
-                  {"badge" in section ? <small>{section.badge}</small> : null}
-                </a>
-              ))}
-            </div>
-          ))}
-        </nav>
-      </aside>
-
-      <section className="settings-content">
-        <header className="settings-page-heading">
-          <div>
-            <p>Account & workspace</p>
-            <h1>Account & workspace</h1>
-            <span>
-              Your preferences are separate from project analysis and never change your project evidence.
-            </span>
-          </div>
-          {saved ? <em><Check size={14} /> Saved</em> : null}
-        </header>
-        {saveError ? <p className="settings-save-error" role="alert">{saveError}</p> : null}
-
-        <label className="settings-search">
-          <MagnifyingGlass aria-hidden="true" size={17} />
-          <span className="sr-only">Search settings</span>
-          <input
-            aria-label="Search settings"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search settings..."
-            type="search"
-            value={query}
-          />
-          {query ? <button aria-label="Clear search" onClick={() => setQuery("")} type="button"><X size={15} /></button> : null}
-        </label>
-
-        {sectionVisible("account") ? (
-          <article className="settings-section" id="account">
-            <div className="settings-section-heading"><h2>Account</h2><p>Your sign-in and session on this device.</p></div>
-            <div className="settings-card">
-              <div className="settings-row"><span>Email</span><strong>{email ?? `${displayName.toLowerCase().replace(/\s+/g, ".")}@intralign.local`}</strong></div>
-              <div className="settings-row"><span>Stay signed in</span><button aria-pressed="true" className="settings-switch is-on" type="button"><i /></button></div>
-              <div className="settings-row">
-                <span>Your session stays open on this device.</span>
-                {logoutAction ? <form action={logoutAction}><button className="settings-secondary-button" type="submit"><SignOut size={15} /> Sign out</button></form> : <button className="settings-secondary-button" type="button"><SignOut size={15} /> Sign out</button>}
+  const content = (
+    <section className={`settings-dialog is-${activeSection}`} ref={dialogRef} role={modal ? "dialog" : undefined} aria-modal={modal ? "true" : undefined} aria-labelledby="settings-dialog-title" tabIndex={-1}>
+      <header className="settings-dialog-header">
+        <div><h1 id="settings-dialog-title">Settings</h1><span>account · notifications · workspace · collaboration · billing</span></div>
+        {saved ? <em role="status"><Check size={14} /> Saved</em> : null}
+        {modal ? <button aria-label="Close settings" className="settings-dialog-close" onClick={onClose} ref={closeButtonRef} type="button"><X size={18} /></button> : null}
+      </header>
+      <div className="settings-dialog-body">
+        <aside className="settings-sidebar">
+          <nav aria-label="Settings">
+            {["You", "Workspace", "Plan"].map((group) => (
+              <div className="settings-nav-group" key={group}>
+                <p>{group}</p>
+                {settingsSections.filter((section) => section.group === group).map(({ id, label, ...section }) => (
+                  <button aria-current={activeSection === id ? "page" : undefined} className={activeSection === id ? "is-active" : undefined} key={id} onClick={() => setActiveSection(id)} type="button">
+                    <span>{label}</span>{"badge" in section ? <small>{section.badge}</small> : null}
+                  </button>
+                ))}
               </div>
-              <div className="settings-row"><span>Password</span><small>Managed through your invitation and secure sign-in.</small></div>
-              <div className="settings-row"><span>Delete account</span><button className="settings-danger-button" onClick={() => setDeleteOpen(true)} type="button"><Trash size={15} /> Delete account</button></div>
-            </div>
-          </article>
-        ) : null}
+            ))}
+          </nav>
+        </aside>
 
-        {sectionVisible("profile") ? (
-          <article className="settings-section" id="profile">
-            <div className="settings-section-heading"><h2>Profile</h2><p>Your name as it appears across Intralign.</p></div>
+        <div className="settings-content">
+          {saveError ? <p className="settings-save-error" role="alert">{saveError}</p> : null}
+
+          {activeSection === "profile" ? <article className="settings-section" id="profile">
+            <div className="settings-section-heading"><h2>Profile</h2><p>Your name as it shows across OSLO.</p></div>
             <div className="settings-card">
-              <label className="settings-field-row"><span>Display name</span><input onBlur={commitLocalIdentity} onChange={(event) => setLocalDisplayName(event.target.value)} value={localDisplayName} /></label>
-              <label className="settings-field-row"><span>Role or title <small>optional</small></span><input onBlur={commitLocalIdentity} onChange={(event) => setRole(event.target.value)} placeholder="e.g. Programme lead" value={role} /></label>
-              <div className="settings-row"><span>Avatar</span><small>Your initials — {localDisplayName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()}. Picture upload comes later.</small></div>
+              <label className="settings-field-row"><span>Display name</span><input aria-label="Display name" onBlur={() => commitIdentity()} onChange={(event) => setLocalDisplayName(event.target.value)} value={localDisplayName} /></label>
+              <div className="settings-row"><span>Email</span><strong>{email ?? `${displayName.toLowerCase().replace(/\s+/g, ".")}@intralign.local`}</strong></div>
+              <div className="settings-choice-block"><strong>How you work</strong><p>Changes only which first move OSLO puts first — never your read, band, or issues.</p><div className="settings-role-options">{roleOptions.map(([title, detail]) => <button aria-pressed={role === title} className={role === title ? "is-selected" : ""} key={title} onClick={() => { setRole(title); commitIdentity({ role_title: title }); }} type="button"><strong>{title}</strong><small>{detail}</small></button>)}</div></div>
             </div>
-          </article>
-        ) : null}
+          </article> : null}
 
-        {sectionVisible("appearance") ? (
-          <article className="settings-section" id="appearance">
+          {activeSection === "appearance" ? <article className="settings-section" id="appearance">
             <div className="settings-section-heading"><h2>Appearance</h2><p>Theme and accessibility. Dark is the default.</p></div>
             <div className="settings-card">
-              <div className="settings-field-row">
-                <span>Theme</span>
-                <div className="theme-options">
-                  {([
-                    ["dark", "Dark", Moon],
-                    ["light", "Light", Sun],
-                  ] as const).map(([theme, label, Icon]) => (
-                    <button
-                      aria-label={label}
-                      aria-pressed={preferences.theme === theme}
-                      className={preferences.theme === theme ? "is-selected" : ""}
-                      onClick={() => save({ ...preferences, theme })}
-                      type="button"
-                      key={theme}
-                    >
-                      <Icon size={15} /><strong>{label}</strong>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="settings-row"><span>Use device theme</span><button className="settings-secondary-button" onClick={() => save({ ...preferences, theme: "system" })} type="button"><Desktop size={15} /> Match system</button></div>
+              <div className="settings-field-row"><span>Theme</span><div className="theme-options">{([["dark", "Dark", Moon], ["light", "Light", Sun]] as const).map(([theme, label, Icon]) => <button aria-label={label} aria-pressed={preferences.theme === theme} className={preferences.theme === theme ? "is-selected" : ""} key={theme} onClick={() => selectTheme(theme)} type="button"><Icon size={15} /><strong>{label}</strong></button>)}</div></div>
+              <div className="settings-row"><span>Use device theme</span><button className="settings-secondary-button" onClick={() => selectTheme("system")} type="button"><Desktop size={15} /> Match system</button></div>
               <div className="settings-row"><span>Reduced motion</span><small>Honoured — follows your operating system</small></div>
               <div className="settings-row"><span>Focus indicators</span><small>Always visible</small></div>
             </div>
-          </article>
-        ) : null}
+          </article> : null}
 
-        {sectionVisible("notifications") ? (
-          <article className="settings-section" id="notifications">
+          {activeSection === "notifications" ? <article className="settings-section" id="notifications">
             <div className="settings-section-heading"><h2>Notifications</h2><p>Awareness only — notification choices never start analysis.</p></div>
             <div className="settings-card">
-              {collaborationNotifications.map(([title, detail]) => (
-                <div className="settings-row" key={title}>
-                  <span><strong>{title}</strong><small>{detail}</small></span>
-                  <div className="settings-future-control">
-                    <span>{collaborationPreferences[title] ? "On" : "Off"}</span>
-                    <button
-                      aria-checked={collaborationPreferences[title]}
-                      aria-label={title}
-                      className={`settings-switch ${collaborationPreferences[title] ? "is-on" : ""}`}
-                      onClick={() => toggleCollaborationNotification(title)}
-                      role="switch"
-                      type="button"
-                    ><i /></button>
-                  </div>
-                </div>
-              ))}
-              {([
-                ["analysis_notifications", "Analysis complete", "when OSLO finishes reading your project"],
-                ["failure_notifications", "Analysis failed", "when a run could not complete — your last-good read is kept"],
-                ["stale_notifications", "Analysis behind your edits", "when your plan has moved on since OSLO last read it"],
-              ] as const).map(([key, title, detail]) => (
-                <div className="settings-row" key={key}>
-                  <span><strong>{title}</strong><small>{detail}</small></span>
-                  <div className="settings-future-control">
-                    <span>{preferences[key] ? "On" : "Off"}</span>
-                    <button
-                      aria-checked={preferences[key]}
-                      aria-label={title}
-                      className={`settings-switch ${preferences[key] ? "is-on" : ""}`}
-                      onClick={() => save({ ...preferences, [key]: !preferences[key] })}
-                      role="switch"
-                      type="button"
-                    ><i /></button>
-                  </div>
-                </div>
-              ))}
+              {collaborationNotifications.map(([title, detail]) => <SettingsSwitch detail={detail} key={title} label={title} onClick={() => toggleCollaborationNotification(title)} value={collaborationPreferences[title]} />)}
+              {([[
+                "analysis_notifications", "Analysis complete", "when OSLO finishes reading your project",
+              ], ["failure_notifications", "Analysis failed", "when a run could not complete — your last-good read is kept"], ["stale_notifications", "Analysis behind your edits", "when your plan has moved on since OSLO last read it"]] as const).map(([key, title, detail]) => <SettingsSwitch detail={detail} key={key} label={title} onClick={() => void save({ ...preferences, [key]: !preferences[key] })} value={preferences[key]} />)}
             </div>
-          </article>
-        ) : null}
+          </article> : null}
 
-        {sectionVisible("workspace") ? (
-          <article className="settings-section" id="workspace">
+          {activeSection === "workspace" ? <article className="settings-section" id="workspace">
             <div className="settings-section-heading"><h2>Workspace</h2><p>The container your projects live in.</p></div>
             <div className="settings-card">
-              <label className="settings-field-row">
-                <span>Workspace name</span>
-                <input
-                  disabled={preferences.actor_role !== "owner"}
-                  onBlur={commitLocalIdentity}
-                  onChange={(event) => setLocalWorkspaceName(event.target.value)}
-                  value={localWorkspaceName}
-                />
-                {preferences.actor_role !== "owner" ? (
-                  <small>Only a workspace owner can rename the workspace.</small>
-                ) : null}
-              </label>
+              <label className="settings-field-row"><span>Workspace name</span><input aria-label="Workspace name" disabled={preferences.actor_role !== "owner"} onBlur={() => commitIdentity()} onChange={(event) => setLocalWorkspaceName(event.target.value)} value={localWorkspaceName} /></label>
               <div className="settings-row"><span>Workspace icon</span><small>First letter — {localWorkspaceName.slice(0, 1).toUpperCase()}. Picture upload comes later.</small></div>
+              <div className="settings-row"><span>New-project defaults</span><small>None — OSLO reads the project you give it.</small></div>
             </div>
-          </article>
-        ) : null}
+          </article> : null}
 
-        {sectionVisible("project-defaults") ? (
-          <article className="settings-section" id="project-defaults">
-            <div className="settings-section-heading"><h2>Project defaults</h2><p>Applied to new projects. Never used to gate or block anything.</p></div>
-            <div className="settings-card"><div className="settings-row"><span>Default project type</span><small>None — OSLO reads the project you give it</small></div><div className="settings-row"><span>Default workflow</span><small>Classical project management</small></div></div>
-          </article>
-        ) : null}
-
-        {sectionVisible("collaboration") ? (
-          <article className="settings-section" id="collaboration">
+          {activeSection === "collaboration" ? <article className="settings-section" id="collaboration">
             <div className="settings-section-heading"><h2>Collaboration</h2><p>Governed access, review links, comments, and retained snapshots.</p></div>
             <div className="settings-card">
-              <div className="settings-row"><span><strong>Default sharing</strong><small>New projects remain private until you share them.</small></span><strong>Private</strong></div>
-              <div className="settings-row">
-                <span><strong>Workspace members</strong><small>Members, reviewers and Viewers never consume plan capacity.</small></span>
-                <strong>Not capacity-gated</strong>
-              </div>
-              <div className="settings-row"><span><strong>External reviewers</strong><small>Review links do not create membership or use a seat.</small></span><strong>Unlimited</strong></div>
-              <div className="settings-row"><span><strong>Snapshot links</strong><small>Read-only, revocable, and retained for 30 days.</small></span><strong>30 days</strong></div>
-              <div className="settings-row"><span><strong>Review links</strong><small>One attested response; expires after 14 days or issue resolution.</small></span><strong>14 days</strong></div>
-              <div className="settings-row">
-                <span>Workspace invitations</span>
-                {(workspaceState?.role ?? preferences.actor_role) === "owner" ? (
-                  <Link href="/admin/invitations">Manage invitations</Link>
-                ) : (
-                  <small>Managed by workspace owners</small>
-                )}
-              </div>
+              <Fact label="Default sharing" detail="New projects remain private until you share them." value="Private" />
+              <Fact label="Workspace members" detail="Members, reviewers and viewers never consume plan capacity." value="Not capacity-gated" />
+              <Fact label="External reviewers" detail="Review links do not create membership or use a seat." value="Unlimited" />
+              <Fact label="Snapshot links" detail="Read-only, revocable, and retained for 30 days." value="30 days" />
+              <Fact label="Review links" detail="One attested response; expires after 14 days or issue resolution." value="14 days" />
+              {actorRole === "owner" ? <div className="settings-row"><span><strong>Workspace access</strong><small>Invite people and revoke pending invitations without leaving Settings.</small></span><button className="settings-link-button" onClick={showInvitationManager} type="button">Manage invitations →</button></div> : null}
             </div>
-          </article>
-        ) : null}
+          </article> : null}
 
-        {sectionVisible("access") ? (
-          <article className="settings-section" id="access">
-            <div className="settings-section-heading"><h2>Access &amp; invites</h2><p>How many new people you can bring into OSLO.</p></div>
-            <div className="settings-card">
-              <div className="settings-row"><span>Release phase</span><span className="settings-fact-pill">GA</span></div>
-              <div className="settings-row settings-row-start">
-                <span>Invite allocation<small>Spent on a <strong>new</strong> person only.</small></span>
-                <span className="settings-row-value"><strong>Not capacity-gated</strong><small>Neutral abuse controls still apply</small></span>
-              </div>
-              <div className="settings-row"><span>Waitlist</span><span className="settings-fact-pill">Retired at GA</span></div>
-              <div className="settings-row">
-                <span>Invite people</span>
-                {(workspaceState?.role ?? preferences.actor_role) === "owner" ? (
-                  <Link className="settings-primary-link" href="/admin/invitations">Manage invitations →</Link>
-                ) : (
-                  <small>Managed by workspace owners</small>
-                )}
-              </div>
-            </div>
+          {activeSection === "access" ? <article className="settings-section" id="access">
+            <div className="settings-section-heading"><h2>Access &amp; invites</h2><p>How new people enter this workspace.</p></div>
+            <div className="settings-card"><Fact label="Release phase" value="GA" /><Fact label="Invite allocation" detail="Spent on a new person only." value="Not capacity-gated" /><Fact label="Waitlist" value="Retired at GA" /><div className="settings-row"><span>Invite people</span>{actorRole === "owner" ? <button className="settings-primary-button" onClick={showInvitationManager} type="button">Manage invitations →</button> : <small>Managed by workspace owners</small>}</div></div>
             <p className="settings-section-note"><strong>Asking anyone for their read is free — no invite, no seat.</strong></p>
-            <p className="settings-section-note">Invitations and membership do not change with Free or Basic.</p>
-          </article>
-        ) : null}
+            {invitationManagerOpen ? <InvitationManager busy={invitationBusy} email={invitationEmail} error={invitationError} invitations={invitations} notice={invitationNotice} onClose={() => setInvitationManagerOpen(false)} onEmailChange={setInvitationEmail} onReload={() => void loadInvitations()} onRevoke={(invitation) => void revokeWorkspaceInvitation(invitation)} onSend={() => void sendWorkspaceInvitation()} /> : null}
+          </article> : null}
 
-        {sectionVisible("membership") ? (
-          <article className="settings-section" id="membership">
+          {activeSection === "membership" ? <article className="settings-section" id="membership">
             <div className="settings-section-heading"><h2>Membership <small>View</small></h2><p>Who is in this workspace. Nothing here grants or removes access.</p></div>
-            <div className="settings-card">
-              <div className="settings-row">
-                <span><strong>{localDisplayName}</strong><small>{email ?? "Workspace member"}</small></span>
-                <strong>{(workspaceState?.role ?? preferences.actor_role).replace(/^\w/, (letter) => letter.toUpperCase())}</strong>
-              </div>
-              <div className="settings-row">
-                <span>
-                  {`${memberCount} ${memberCount === 1 ? "member" : "members"}`}
-                </span>
-                {(workspaceState?.role ?? preferences.actor_role) === "owner" ? (
-                  <Link href="#collaboration" onClick={() => setActiveSection("collaboration")}>Manage in Collaboration →</Link>
-                ) : (
-                  <small>Owner-managed</small>
-                )}
-              </div>
-              <div className="settings-row settings-row-start">
-                <span>Workspace members<small>People never consume plan capacity.</small></span>
-                <strong>{`${collaboratorSeatsUsed} active`}</strong>
+            <div className="settings-card"><div className="settings-row"><span><strong>{localDisplayName}</strong><small>{email ?? "Workspace member"}</small></span><strong>{actorRole.replace(/^\w/, (letter) => letter.toUpperCase())}</strong></div><div className="settings-row"><span>{memberCount} {memberCount === 1 ? "member" : "members"}</span>{actorRole === "owner" ? <button className="settings-link-button" onClick={showInvitationManager} type="button">Manage access &amp; invitations →</button> : <small>Owner-managed</small>}</div><Fact label="Workspace members" detail="People never consume plan capacity." value={`${collaboratorSeatsUsed} active`} /></div>
+          </article> : null}
+
+          {activeSection === "plan" ? <article className="settings-section settings-plan-section" id="plan">
+            <div className="settings-section-heading">
+              <h2>Plan &amp; usage</h2>
+              <p>Where you stand today — your plan, what you’re using, and what more would add. The unit of value is the <strong>outcome</strong>; OSLO never meters the quality of your read.</p>
+            </div>
+            <div className="settings-plan-current">
+              <span>{workspaceState?.plan_label ?? "Free"}</span>
+              <strong>You&apos;re on the {workspaceState?.plan_label ?? "Free"} plan — the full-quality read on one outcome, your whole record kept and unmetered.</strong>
+            </div>
+
+            <h3>What you&apos;re using</h3>
+            <div className="settings-card settings-plan-usage">
+              <PlanUsageFact detail="The Free plan optimizes your primary outcome. Declaring more is free — the rest are recorded but don’t drive the read until optimized." label="Outcomes" value="1 optimized · 1 declared" />
+              <PlanUsageFact detail="The Free plan works one plan at a time — switch whenever; the others are kept, never deleted." label="Plans" value={`${activeProjects} in your workspace · ${Math.min(activeProjects, activeProjectLimit)} active`} />
+              <PlanUsageFact detail="Never metered — attach as much as your plan needs." label="Documents" value="Unlimited" />
+              <PlanUsageFact detail="A fair-use ceiling, not a product limit. The unit that matters is the outcome, not analysis count." label="Analyses" value="Generous — fair-use" />
+              <PlanUsageFact detail="Never expires, never truncated." label="History" value="Full" />
+              <PlanUsageFact detail="Sharing and asking for a read never consume a seat." label="Collaboration" value="Viewers &amp; reviewers free" />
+            </div>
+
+            <h3>What Basic adds</h3>
+            <div className="settings-card settings-plan-additions">
+              <PlanAddition title="Optimize all your outcomes">OSLO steering your plan toward every outcome at once — not just your primary</PlanAddition>
+              <PlanAddition title="Run more than one plan">Working several plans in your workspace at the same time</PlanAddition>
+              <PlanAddition title="Read a larger corpus">A bigger intake — more and larger files</PlanAddition>
+              <PlanAddition title="Send on a schedule">A recurring weekly send that re-reads for currency before it goes</PlanAddition>
+              <PlanAddition title="Push your plan to Asana">A one-way push so you can view it there</PlanAddition>
+              <div className="settings-plan-compare">
+                <span>Need more capacity?</span>
+                <button className="settings-primary-button" onClick={openPlans} type="button">Compare Free vs Basic</button>
               </div>
             </div>
-          </article>
-        ) : null}
+          </article> : null}
 
-        {sectionVisible("subscription") ? (
-          <article className="settings-section" id="subscription">
-            <div className="settings-section-heading"><h2>Subscription <small>View</small></h2><p>Your plan, what you’re using, and what Basic adds.</p></div>
-            <div className="settings-card">
-              <div className="settings-row"><span>Plan</span><strong>{workspaceState?.plan_label ?? "Free"}</strong></div>
-              <div className="settings-row settings-row-start"><span>Active projects<small>Free <strong>1</strong> · Basic <strong>3</strong>.</small></span><strong>{activeProjects <= activeProjectLimit ? `${activeProjects} of ${activeProjectLimit} active ${activeProjects === 1 ? "project" : "projects"}` : `${activeProjects} active projects · ${activeProjectLimit} included`}</strong></div>
-              {activeProjects > activeProjectLimit ? <div className="settings-cap-note">Existing projects remain available. The limit only gates adding another project.</div> : null}
-              <div className="settings-row settings-row-start"><span>Active outcomes<small>Free <strong>1</strong> · Basic supports multiple.</small></span><strong>Capacity only</strong></div>
-              <div className="settings-row settings-row-start"><span>Workspace members<small>People never consume plan capacity.</small></span><strong>{`${collaboratorSeatsUsed} active · no plan cap`}</strong></div>
-              <div className="settings-row settings-row-start"><span>Analysis and chat<small>Never metered as a monthly allowance.</small></span><span className="settings-fact-pill">Uncapped on every plan</span></div>
-              <div className="settings-row"><span>Manual file export</span><strong>Available on every plan</strong></div>
-              <div className="settings-row settings-row-start"><span>Intake envelope<small>Measured by extracted words, not file count.</small></span><span className="settings-fact-pill">~50k Free · ~100k Basic</span></div>
-              <div className="settings-row settings-row-start"><span>History<small><strong>Never expires, never truncated.</strong></small></span><span className="settings-fact-pill">Full History on every plan</span></div>
-              <div className="settings-row"><span>Link revocation &amp; purpose-scoped expiry</span><span className="settings-fact-pill">On every plan</span></div>
-              <div className="settings-row"><span>Review requests and reviewer grants</span><span className="settings-fact-pill">Unlimited on every plan</span></div>
-              <div className="settings-row"><span>Compare the plans</span><button className="settings-primary-button" onClick={() => setPlansOpen(true)} type="button">Free vs Basic</button></div>
-            </div>
-            <p className="settings-section-note"><strong>Free gives you the whole read.</strong> Basic adds capacity and scope.</p>
-            <p className="settings-section-note"><strong>What is capacity-gated:</strong> active Plans, active Outcomes, and the extracted-word intake envelope.</p>
-          </article>
-        ) : null}
-
-        {sectionVisible("billing") ? (
-          <article className="settings-section" id="billing">
+          {activeSection === "billing" ? <article className="settings-section" id="billing">
             <div className="settings-section-heading"><h2>Billing</h2><p>Secure checkout, invoices and cancellation are hosted by Stripe.</p></div>
-            <div className="settings-card">
-              <div className="settings-row"><span>Price of Basic</span><strong>$29 / month · $290 / year</strong></div>
-              <div className="settings-row"><span>Workspace price</span><strong>Flat · never per seat</strong></div>
-              <div className="settings-row"><span>Payment method, invoices and cancellation</span><button className="settings-primary-button" onClick={() => setPlansOpen(true)} type="button">{workspaceState?.plan === "basic" ? "Manage secure billing" : "View Basic"}</button></div>
-            </div>
+            <div className="settings-card"><Fact label="Price of Basic" value="$29 / month · $290 / year" /><Fact label="Workspace price" value="Flat · never per seat" /><div className="settings-row"><span>Payment method, invoices and cancellation</span><button className="settings-primary-button" onClick={openPlans} type="button">{workspaceState?.plan === "basic" ? "Manage secure billing" : "View Basic"}</button></div></div>
             <p className="settings-section-note">Basic activates only after Stripe sends a verified payment event. Cancellation preserves every record.</p>
-          </article>
-        ) : null}
+          </article> : null}
 
-        {sectionVisible("integrations") ? (
-          <article className="settings-section" id="integrations">
+          {activeSection === "integrations" ? <article className="settings-section" id="integrations">
             <div className="settings-section-heading"><h2>Integrations <small>Later</small></h2><p>Connecting other tools. Not built yet.</p></div>
-            <div className="settings-card">
-              <div className="settings-row"><span>Connected tools</span><small>None</small></div>
-              <div className="settings-row"><span>Connecting a tool</span><span className="settings-later-pill"><Gear size={13} /> Arrives after this release</span></div>
-            </div>
-            <p className="settings-section-note">Bring documents to OSLO today. Direct connections come later.</p>
-          </article>
-        ) : null}
-
-        {!visibleSections.size ? <div className="settings-empty"><MagnifyingGlass size={23} /><strong>No settings found</strong><button onClick={() => setQuery("")} type="button">Clear search</button></div> : null}
-      </section>
-
-      {workspaceState ? (
-        <PlanComparisonModal
-          onClose={() => setPlansOpen(false)}
-          onWorkspaceChange={setWorkspaceState}
-          open={plansOpen}
-          workspace={workspaceState}
-        />
-      ) : null}
-
-      {deleteOpen ? (
-        <div className="workspace-modal-backdrop">
-          <section aria-labelledby="delete-account-title" aria-modal="true" role="dialog">
-            <span className="workspace-modal-icon is-danger"><Trash size={20} /></span>
-            <h2 id="delete-account-title">Delete account?</h2>
-            <p>Account deletion is not enabled in Alpha. Contact your workspace owner if you need access removed.</p>
-            <div className="workspace-modal-actions"><button onClick={() => setDeleteOpen(false)} type="button">Keep account</button></div>
-          </section>
+            <div className="settings-card"><div className="settings-row"><span>Connected tools</span><small>None</small></div><div className="settings-row"><span>Connecting a tool</span><span className="settings-later-pill"><Gear size={13} /> Arrives after this release</span></div></div>
+          </article> : null}
         </div>
-      ) : null}
-    </main>
+      </div>
+      {workspaceState ? <PlanComparisonModal onClose={closePlans} onWorkspaceChange={setWorkspaceState} open={plansOpen} workspace={workspaceState} /> : null}
+    </section>
+  );
+
+  if (!modal) return <main className="settings-standalone">{content}</main>;
+  return <div className="settings-modal-backdrop" onMouseDown={(event) => { if (!plansOpen && !planTransitionRef.current && event.currentTarget === event.target) onClose?.(); }} role="presentation">{content}</div>;
+}
+
+function SettingsSwitch({ detail, label, onClick, value }: { detail: string; label: string; onClick: () => void; value: boolean }) {
+  return <div className="settings-row"><span><strong>{label}</strong><small>{detail}</small></span><div className="settings-future-control"><span>{value ? "On" : "Off"}</span><button aria-checked={value} aria-label={label} className={`settings-switch ${value ? "is-on" : ""}`} onClick={onClick} role="switch" type="button"><i /></button></div></div>;
+}
+
+function Fact({ detail, label, value }: { detail?: string; label: string; value: string }) {
+  return <div className="settings-row settings-row-start"><span><strong>{label}</strong>{detail ? <small>{detail}</small> : null}</span><strong>{value}</strong></div>;
+}
+
+function PlanUsageFact({ detail, label, value }: { detail: string; label: string; value: string }) {
+  return <div className="settings-plan-row"><span><strong>{label}</strong><small>{detail}</small></span><b>{value}</b></div>;
+}
+
+function PlanAddition({ children, title }: { children: string; title: string }) {
+  return <div className="settings-plan-addition"><span aria-hidden="true"><Check size={13} /></span><div><strong>{title}</strong><small>{children}</small></div></div>;
+}
+
+function InvitationManager({
+  busy,
+  email,
+  error,
+  invitations,
+  notice,
+  onClose,
+  onEmailChange,
+  onReload,
+  onRevoke,
+  onSend,
+}: {
+  busy: string;
+  email: string;
+  error: string;
+  invitations: InvitationSummary[];
+  notice: string;
+  onClose: () => void;
+  onEmailChange: (email: string) => void;
+  onReload: () => void;
+  onRevoke: (invitation: InvitationSummary) => void;
+  onSend: () => void;
+}) {
+  const pendingInvitations = invitations.filter((invitation) => invitation.status === "pending");
+
+  return (
+    <section aria-labelledby="workspace-invitations-title" className="settings-invitation-manager">
+      <header>
+        <span>
+          <UserPlus aria-hidden="true" size={18} />
+          <span><h3 id="workspace-invitations-title">Workspace invitations</h3><small>Invite workspace members without leaving this project.</small></span>
+        </span>
+        <button aria-label="Close invitation manager" className="settings-dialog-close" onClick={onClose} type="button"><X size={16} /></button>
+      </header>
+      <form onSubmit={(event) => { event.preventDefault(); onSend(); }}>
+        <label htmlFor="workspace-invitation-email">Email address</label>
+        <div>
+          <input aria-label="Invitation email" autoComplete="email" id="workspace-invitation-email" name="email" onChange={(event) => onEmailChange(event.target.value)} placeholder="name@company.com" type="email" value={email} />
+          <button className="settings-primary-button" disabled={busy === "invite" || !email.trim()} type="submit">{busy === "invite" ? "Sending\u2026" : "Send invitation"}</button>
+        </div>
+      </form>
+      {error ? <div className="settings-invitation-message is-error" role="alert"><span>{error}</span><button onClick={onReload} type="button">Try again</button></div> : null}
+      {notice ? <p className="settings-invitation-message is-success" role="status"><Check size={14} /> {notice}</p> : null}
+      <div className="settings-invitation-list" aria-live="polite">
+        <div className="settings-invitation-list-heading"><strong>Pending</strong><span>{pendingInvitations.length}</span></div>
+        {busy === "load" ? <p role="status">Loading invitations\u2026</p> : pendingInvitations.length ? pendingInvitations.map((invitation) => (
+          <article key={invitation.id}>
+            <span><strong>{invitation.email}</strong><small>Expires {new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(invitation.expires_at))}</small></span>
+            <button aria-label={`Revoke ${invitation.email}`} disabled={busy === invitation.id} onClick={() => onRevoke(invitation)} type="button">{busy === invitation.id ? "Revoking\u2026" : "Revoke"}</button>
+          </article>
+        )) : <p>No pending invitations.</p>}
+      </div>
+    </section>
   );
 }

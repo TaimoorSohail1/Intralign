@@ -21,9 +21,9 @@ describe("ReviewerResponseForm", () => {
     vi.unstubAllGlobals();
   });
 
-  it("records an attested response without starting analysis", async () => {
+  it("submits one confirmation and explains the governed reanalysis", async () => {
     render(<ReviewerResponseForm token="review token" />);
-    fireEvent.click(screen.getByLabelText("Suggest alternative"));
+    fireEvent.click(screen.getByLabelText("Confirm"));
     fireEvent.change(screen.getByLabelText("Reviewer note"), {
       target: { value: "Sequence the pilot before the global rollout." },
     });
@@ -35,7 +35,7 @@ describe("ReviewerResponseForm", () => {
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify({
-            kind: "suggest_alternative",
+            kind: "approve",
             body: "Sequence the pilot before the global rollout.",
           }),
         }),
@@ -43,9 +43,18 @@ describe("ReviewerResponseForm", () => {
     });
     expect(screen.getByRole("heading", { name: "Thank you for the review" })).toBeInTheDocument();
     expect(
-      screen.getByText(/project team can decide whether to add it as project evidence/i),
+      screen.getByText(/recorded as attributed evidence and the project read is updating/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/No account or workspace seat was created/)).toBeInTheDocument();
+  });
+
+  it("offers only confirm or reject verdicts", () => {
+    render(<ReviewerResponseForm token="review token" />);
+
+    expect(screen.getByLabelText("Confirm")).toBeInTheDocument();
+    expect(screen.getByLabelText("Reject")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Comment")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Suggest alternative")).not.toBeInTheDocument();
   });
 
   it("surfaces a failed review submission without losing the form", async () => {

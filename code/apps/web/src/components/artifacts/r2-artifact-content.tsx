@@ -258,6 +258,52 @@ function addEntryToGroup(
     };
     draft.sections.push(section);
   }
+
+  if (section.columns.length || section.rows.length) {
+    const priorRowCount = section.rows.length;
+    const priorProvenance = section.provenance ?? "from_oslo";
+    const textCellIndex = Math.max(
+      0,
+      section.columns.findIndex((column) =>
+        /statement|description|requirement|constraint|title|name/i.test(column),
+      ),
+    );
+    const row = section.columns.map(() => "");
+    while (row.length <= textCellIndex) row.push("");
+    row[textCellIndex] = "New statement";
+    section.rows.push(row);
+    section.row_ids = [
+      ...(section.row_ids ?? Array.from(
+        { length: priorRowCount },
+        (_, index) => `${section.id ?? "section"}-row-${index}`,
+      )),
+      `row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    ];
+    section.row_evidence_refs = [
+      ...(section.row_evidence_refs ?? Array.from(
+        { length: priorRowCount },
+        () => [],
+      )),
+      [],
+    ];
+    section.row_states = [
+      ...(section.row_states ?? Array.from(
+        { length: priorRowCount },
+        () => "unknown" as const,
+      )),
+      "confirmed",
+    ];
+    section.row_provenance = [
+      ...(section.row_provenance ?? Array.from(
+        { length: priorRowCount },
+        () => priorProvenance,
+      )),
+      "confirmed_by_user",
+    ];
+    section.provenance = "confirmed_by_user";
+    return;
+  }
+
   section.bullets.push("New statement");
   section.provenance = "confirmed_by_user";
 }
@@ -444,7 +490,7 @@ function GroupedUnderstanding({
               "i",
             );
         return (
-          <section className="r2-artifact-group" key={group.key}>
+          <section className="r2-artifact-group" data-group-key={group.key} key={group.key}>
             <header>
               <strong>{group.label}</strong>
               <span>{entries.length}</span>

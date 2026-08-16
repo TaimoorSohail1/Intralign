@@ -56,9 +56,17 @@ export async function apiRequest<T>(path: string, init: RequestInit): Promise<T>
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
+    const validationIssue = Array.isArray(body?.detail) ? body.detail[0] : null;
+    const validationField = Array.isArray(validationIssue?.loc)
+      ? validationIssue.loc.at(-1)
+      : null;
+    const validationMessage = validationIssue?.msg
+      ? `${validationField ? `${String(validationField).replaceAll("_", " ")}: ` : ""}${validationIssue.msg}`
+      : null;
     const message =
       body?.detail?.message ??
       (typeof body?.detail === "string" ? body.detail : null) ??
+      validationMessage ??
       "OSLO API request failed";
     throw new OsloApiError(message, response.status, body?.detail);
   }
@@ -138,6 +146,9 @@ export interface OverviewSnapshot {
       }>;
       posture: "moment-in-time";
       tracking: "pending-execution";
+      complete?: boolean;
+      sound_claim_blocked?: boolean;
+      under_review_regions?: string[];
     };
     issues: Array<{
       id: string;
@@ -166,6 +177,25 @@ export interface OverviewSnapshot {
       section?: string;
       recommendation_from_oslo?: boolean;
       exposure_rank?: number;
+      finding_basis?: "inference" | "structural" | "decision" | "model_gap" | "";
+      structural_target?: "definition" | "edge" | "achievability" | "truth" | "coverage" | "";
+      primary_act?: "verify" | "build" | "decide" | "";
+      also_offered?: Array<"verify" | "build" | "decide">;
+      classification_state?: "classified" | "escalated" | "unclassified";
+      sensitivity?: number | null;
+      sensitivity_trace?: {
+        paths: string[][];
+        span_true: number;
+        span_false: number;
+        span: number;
+        leverage: number;
+        uncertainty_factor: number;
+        runway_factor: number;
+        edge_key?: [string, string] | null;
+        outcome_reachability: string[];
+      } | null;
+      sensitivity_state?: "calibrated" | "shadow" | "unavailable";
+      unassessed?: boolean;
     }>;
   };
   provenance?: {
@@ -845,11 +875,12 @@ export interface WorkspaceNotificationSummary {
   key: string;
   project_id: string;
   project_name: string;
-  kind: "initial" | "extended";
+  kind: "initial" | "extended" | "review" | "mention";
   status: "completed" | "failed";
   title: string;
   created_at: string;
   read: boolean;
+  href?: string | null;
 }
 
 export interface WorkspaceSummary {
@@ -888,7 +919,7 @@ export interface WorkspacePreferences {
 }
 
 export interface CollaborationState {
-  actor_role: "owner";
+  actor_role: "owner" | "collaborator" | "viewer";
   plan: {
     name: string;
     collaborators_unmetered: boolean;
@@ -897,7 +928,11 @@ export interface CollaborationState {
     reviewers_unmetered: boolean;
     export_formats: string[];
   };
-  participants: Array<{ id: string; display_name: string; role: "owner" }>;
+  participants: Array<{
+    id: string;
+    display_name: string;
+    role: "owner" | "collaborator" | "viewer";
+  }>;
   invitations?: InvitationSummary[];
   comments: Array<{
     id: string;
@@ -920,13 +955,81 @@ export interface CollaborationState {
     response_body?: string | null;
     responded_at?: string | null;
     analysis_run_id?: string | null;
+    delivery_state: "draft" | "sending" | "delivered" | "failed" | "awaiting" | "answered" | "withdrawn";
+    delivery_attempts: number;
+    delivered_at?: string | null;
+    withdrawn_at?: string | null;
+    question?: string | null;
+    source_ref?: string | null;
+    source_excerpt?: string | null;
   }>;
   share_links: Array<{
     id: string;
     expires_at: string;
     revoked_at?: string | null;
     created_at: string;
+    recipient_name: string;
+    recipient_email?: string | null;
+    first_viewed_at?: string | null;
+    last_viewed_at?: string | null;
   }>;
+}
+
+export type GroundingNodeState = "grounded" | "addressed" | "routed" | "inferred";
+
+export interface GroundingMapProjection {
+  project_id: string;
+  actor_role: string;
+  counts: Record<GroundingNodeState, number>;
+  nodes: Array<{
+    issue_id: string;
+    title: string;
+    detail?: string;
+    artifact_type: string;
+    pillar: string;
+    state: GroundingNodeState;
+    exposure_rank: number;
+    href: string;
+  }>;
+}
+
+export interface CollaborationRollUpProjection {
+  project_id: string;
+  actor_role: string;
+  integrity: OverviewSnapshot["assessment"]["integrity"];
+  trend: "strengthened" | "weakened" | "unchanged";
+  decision_queue: GroundingMapProjection["nodes"];
+  reviewers: Array<{
+    id: string;
+    issue_id?: string | null;
+    reviewer_name: string;
+    delivery_state: string;
+    expires_at: string;
+    responded_at?: string | null;
+    response_kind?: string | null;
+    analysis_run_id?: string | null;
+  }>;
+  who_is_grounding_what: Array<{
+    reviewer_name: string;
+    issue_id: string;
+    state: string;
+    href: string;
+  }>;
+  rests_on: Record<GroundingNodeState, number>;
+}
+
+export function getCollaborationRollUp(accessToken: string, projectId: string) {
+  return apiRequest<CollaborationRollUpProjection>(
+    `/v1/projects/${projectId}/collaboration/roll-up`,
+    { method: "GET", headers: { authorization: `Bearer ${accessToken}` } },
+  );
+}
+
+export function getCollaborationGroundingMap(accessToken: string, projectId: string) {
+  return apiRequest<GroundingMapProjection>(
+    `/v1/projects/${projectId}/collaboration/grounding-map`,
+    { method: "GET", headers: { authorization: `Bearer ${accessToken}` } },
+  );
 }
 
 export function getCollaboration(accessToken: string, projectId: string) {
@@ -936,29 +1039,54 @@ export function getCollaboration(accessToken: string, projectId: string) {
   });
 }
 
-export function createShareLink(accessToken: string, projectId: string) {
+export function createShareLink(input: {
+  accessToken: string;
+  projectId: string;
+  recipientName: string;
+  recipientEmail?: string | null;
+}) {
   return apiRequest<{ id: string; url: string; expires_at: string }>(
-    `/v1/projects/${projectId}/share-links`,
-    { method: "POST", headers: { authorization: `Bearer ${accessToken}` } },
+    `/v1/projects/${input.projectId}/share-links`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+      body: JSON.stringify({
+        recipient_name: input.recipientName,
+        recipient_email: input.recipientEmail || null,
+      }),
+    },
   );
 }
 
 export function createReviewGrant(input: {
   accessToken: string;
   projectId: string;
-  issueId?: string | null;
+  issueId: string;
   reviewerName: string;
   reviewerEmail?: string | null;
+  question: string;
+  sourceRef: string;
+  sourceExcerpt: string;
 }) {
-  return apiRequest<{ id: string; url: string; expires_at: string }>(
+  return apiRequest<{
+    id: string;
+    url: string;
+    expires_at: string;
+    delivery_state: "draft" | "awaiting" | "failed";
+    delivery_attempts: number;
+    delivered_at?: string | null;
+  }>(
     `/v1/projects/${input.projectId}/review-grants`,
     {
       method: "POST",
       headers: { authorization: `Bearer ${input.accessToken}` },
       body: JSON.stringify({
-        issue_id: input.issueId ?? null,
+        issue_id: input.issueId,
         reviewer_name: input.reviewerName,
         reviewer_email: input.reviewerEmail || null,
+        question: input.question,
+        source_ref: input.sourceRef,
+        source_excerpt: input.sourceExcerpt,
       }),
     },
   );
@@ -1035,6 +1163,47 @@ export type ReportContent = {
   sections: Array<{ id: string; title: string; body: string[] }>;
 };
 
+export type ReportSchedule = {
+  id: string;
+  recipient_email: string;
+  recipient_class: "exec-sponsor" | "team" | "board";
+  weekday: number;
+  local_time: string;
+  timezone: string;
+  state: "enabled" | "paused";
+  next_run_at: string;
+  last_run_at: string | null;
+  last_delivery_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AsanaHandoffState = {
+  configured: boolean;
+  entitled: boolean;
+  destination_gid: string | null;
+  snapshot_id: string;
+  preview: Array<{
+    item_key: string;
+    task: string;
+    owner: string | null;
+    start_on: string | null;
+    due_on: string | null;
+    source_date: string | null;
+    provenance: string;
+  }>;
+  latest: null | {
+    id: string;
+    state: "running" | "partial" | "completed" | "failed";
+    total_count: number;
+    completed_count: number;
+    safe_error_code: string | null;
+    destination_gid: string;
+    created_at: string;
+    updated_at: string;
+  };
+};
+
 export function getProjectReport(accessToken: string, projectId: string) {
   return apiRequest<{
     project_id: string;
@@ -1042,6 +1211,12 @@ export function getProjectReport(accessToken: string, projectId: string) {
     snapshot_id: string;
     content: ReportContent | null;
     updated_at: string | null;
+    recipient_class: "exec-sponsor" | "team" | "board";
+    composition_depth: "summary" | "full";
+    included: Record<string, boolean>;
+    revision: number;
+    source_analysis_run_id: string | null;
+    read_signature: string | null;
     deliveries: Array<{
       id: string;
       recipient_email: string;
@@ -1052,6 +1227,13 @@ export function getProjectReport(accessToken: string, projectId: string) {
       error_code: string | null;
       currency_state: "current" | "previous_analysis";
       previous_analysis_confirmed: boolean;
+      report_version: number;
+      source_analysis_run_id: string;
+      analysis_completed_at: string;
+      read_signature: string;
+      content_checksum: string;
+      disclaimer_version: string;
+      content?: ReportContent;
     }>;
   }>(`/v1/projects/${projectId}/report`, {
     method: "GET",
@@ -1064,6 +1246,10 @@ export function saveProjectReport(input: {
   projectId: string;
   snapshotId: string;
   content: ReportContent;
+  recipientClass?: "exec-sponsor" | "team" | "board";
+  compositionDepth?: "summary" | "full";
+  included?: Record<string, boolean>;
+  revision?: number;
 }) {
   return apiRequest(`/v1/projects/${input.projectId}/report`, {
     method: "PUT",
@@ -1071,6 +1257,10 @@ export function saveProjectReport(input: {
     body: JSON.stringify({
       snapshot_id: input.snapshotId,
       content: input.content,
+      recipient_class: input.recipientClass ?? "exec-sponsor",
+      composition_depth: input.compositionDepth ?? "full",
+      included: input.included ?? {},
+      revision: input.revision ?? 1,
     }),
   });
 }
@@ -1112,6 +1302,123 @@ export function deliverProjectReport(input: {
 export interface HostedBillingSession {
   id: string;
   url: string;
+}
+
+export function getProjectReportSchedules(input: {
+  accessToken: string;
+  projectId: string;
+}): Promise<ReportSchedule[]> {
+  return apiRequest(`/v1/projects/${input.projectId}/report/schedules`, {
+    method: "GET",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+  });
+}
+
+export function createProjectReportSchedule(input: {
+  accessToken: string;
+  projectId: string;
+  recipientEmail: string;
+  recipientClass: "exec-sponsor" | "team" | "board";
+  weekday: number;
+  localTime: string;
+  timezone: string;
+}): Promise<ReportSchedule> {
+  return apiRequest(`/v1/projects/${input.projectId}/report/schedules`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+    body: JSON.stringify({
+      recipient_email: input.recipientEmail,
+      recipient_class: input.recipientClass,
+      weekday: input.weekday,
+      local_time: input.localTime,
+      timezone: input.timezone,
+    }),
+  });
+}
+
+export function updateProjectReportSchedule(input: {
+  accessToken: string;
+  projectId: string;
+  scheduleId: string;
+  state: "enabled" | "paused";
+}): Promise<ReportSchedule> {
+  return apiRequest(
+    `/v1/projects/${input.projectId}/report/schedules/${input.scheduleId}`,
+    {
+      method: "PATCH",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+      body: JSON.stringify({ state: input.state }),
+    },
+  );
+}
+
+export function deleteProjectReportSchedule(input: {
+  accessToken: string;
+  projectId: string;
+  scheduleId: string;
+}): Promise<void> {
+  return apiRequest(
+    `/v1/projects/${input.projectId}/report/schedules/${input.scheduleId}`,
+    {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+    },
+  );
+}
+
+export function recordProjectReportExport(input: {
+  accessToken: string;
+  projectId: string;
+  format: "pdf" | "excel" | "csv" | "text" | "copy-summary" | "asana";
+  contentChecksum?: string | null;
+}) {
+  return apiRequest(`/v1/projects/${input.projectId}/report/exports`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+    body: JSON.stringify({
+      format: input.format,
+      content_checksum: input.contentChecksum ?? null,
+    }),
+  });
+}
+
+export function getProjectAsanaHandoff(input: {
+  accessToken: string;
+  projectId: string;
+}): Promise<AsanaHandoffState> {
+  return apiRequest(`/v1/projects/${input.projectId}/report/asana`, {
+    method: "GET",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+  });
+}
+
+export function importProjectToAsana(input: {
+  accessToken: string;
+  projectId: string;
+}) {
+  return apiRequest<NonNullable<AsanaHandoffState["latest"]>>(
+    `/v1/projects/${input.projectId}/report/asana`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+    },
+  );
+}
+
+export function markReviewDelivered(input: {
+  accessToken: string;
+  projectId: string;
+  grantId: string;
+}) {
+  return apiRequest<{
+    id: string;
+    delivery_state: "awaiting" | "answered" | "withdrawn";
+    delivery_attempts: number;
+    delivered_at: string;
+  }>(`/v1/projects/${input.projectId}/review-grants/${input.grantId}/deliveries/manual`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+  });
 }
 
 export interface ProjectOutcomeSummary {
@@ -1277,4 +1584,54 @@ export function updateWorkspacePreferences(input: {
     headers: { authorization: `Bearer ${input.accessToken}` },
     body: JSON.stringify(preferences),
   });
+}
+
+export interface FeedbackTicketSummary {
+  ticket_id: string;
+  title: string;
+  status: string;
+  created_at: string;
+}
+
+export interface FeedbackTicketInput {
+  session_id: string;
+  category: "defect" | "enhancement" | "other";
+  body: string;
+  expected: string | null;
+  impact: "blocking" | "slowing" | "minor" | null;
+  context: {
+    where: string;
+    view: string;
+    role: string;
+    grounded_x: number;
+    total_y: number;
+    first_run_flag: boolean;
+    ts: string;
+  };
+}
+
+export function fileFeedbackTicket(input: {
+  accessToken: string;
+  workspaceId: string;
+  ticket: FeedbackTicketInput;
+}): Promise<FeedbackTicketSummary> {
+  return apiRequest(`/v1/workspaces/${input.workspaceId}/feedback/tickets`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${input.accessToken}` },
+    body: JSON.stringify(input.ticket),
+  });
+}
+
+export function listFeedbackTickets(input: {
+  accessToken: string;
+  workspaceId: string;
+  sessionId: string;
+}): Promise<FeedbackTicketSummary[]> {
+  return apiRequest(
+    `/v1/workspaces/${input.workspaceId}/feedback/tickets?session_id=${encodeURIComponent(input.sessionId)}`,
+    {
+      method: "GET",
+      headers: { authorization: `Bearer ${input.accessToken}` },
+    },
+  );
 }

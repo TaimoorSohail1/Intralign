@@ -1165,10 +1165,15 @@ def test_overview_exposes_the_evidence_qualified_understanding_console() -> None
         issue for issue in assessment["issues"] if issue["id"].startswith("ISS-CP-")
     )
     assert checkpoint_issue["pillar"] == "Adaptability"
-    assert checkpoint_issue["finding_type"] == "Coverage Gap"
+    assert checkpoint_issue["finding_type"] == "coverage_gap"
     assert checkpoint_issue["section"] == "Schedule"
     assert checkpoint_issue["recommendation_from_oslo"] is True
     assert checkpoint_issue["exposure_rank"] > 0
+    assert checkpoint_issue["finding_basis"] == "structural"
+    assert checkpoint_issue["structural_target"] == "coverage"
+    assert checkpoint_issue["primary_act"] == "build"
+    assert checkpoint_issue["also_offered"] == []
+    assert checkpoint_issue["classification_state"] == "classified"
     provenance = response.json()["provenance"]
     assert provenance["schema_version"] == 1
     assert len(provenance["artifacts"]) == 7

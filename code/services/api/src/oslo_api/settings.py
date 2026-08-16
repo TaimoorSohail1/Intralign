@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     stripe_webhook_secret: SecretStr | None = None
     stripe_basic_monthly_price_id: str | None = None
     stripe_basic_annual_price_id: str | None = None
+    asana_access_token: SecretStr | None = None
+    asana_project_gid: str | None = None
     # Dense structured responses routinely exceed 30 seconds even when the input is
     # correctly bounded. Keep this below the worker's external timeout while allowing
     # each artifact shard enough time to finish once instead of being retried mid-call.

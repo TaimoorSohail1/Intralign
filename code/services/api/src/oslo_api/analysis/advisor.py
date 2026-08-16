@@ -1,6 +1,7 @@
 import json
 import re
-from dataclasses import dataclass
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, replace
 from typing import Annotated, Any, Protocol
 
 from openai import OpenAI
@@ -27,6 +28,38 @@ class ProjectAdvisor(Protocol):
 
 class ProjectAdvisorError(RuntimeError):
     pass
+
+
+def with_current_issue_lifecycle(
+    snapshot: AssessmentSnapshot,
+    issue_actions: Iterable[Mapping[str, Any]],
+) -> AssessmentSnapshot:
+    """Project durable issue status onto the immutable analysis snapshot.
+
+    Assessment snapshots retain what the analysis found at publication time. The
+    advisor answers about the *current* read, so reviewer and owner lifecycle
+    decisions must be layered onto those findings before either the deterministic
+    or model-backed advisor sees them.
+    """
+
+    status_by_issue = {
+        str(action["issue_id"]): str(action["status"])
+        for action in issue_actions
+        if action.get("issue_id") and action.get("status")
+    }
+    if not status_by_issue:
+        return snapshot
+
+    issues = tuple(
+        replace(issue, status=status_by_issue.get(issue.id, issue.status))
+        for issue in snapshot.assessment.issues
+    )
+    assessment = replace(
+        snapshot.assessment,
+        issues=issues,
+        resolved_issue_count=sum(issue.status == "resolved" for issue in issues),
+    )
+    return replace(snapshot, assessment=assessment)
 
 
 class _AdvisorOutput(BaseModel):
@@ -64,6 +97,14 @@ class GroundedProjectAdvisor:
         open_issues.sort(key=lambda issue: severity_order.get(issue.severity, 3))
         top = open_issues[0] if open_issues else None
         normalized = " ".join(question.lower().split())
+        selected_issue = next(
+            (
+                issue
+                for issue in open_issues
+                if " ".join(issue.title.lower().split()) in normalized
+            ),
+            None,
+        )
         wants_evidence = any(
             term in normalized
             for term in (
@@ -78,7 +119,12 @@ class GroundedProjectAdvisor:
             )
         )
 
-        if wants_evidence:
+        if selected_issue is not None and normalized.startswith("explain this issue:"):
+            answer = (
+                f"{selected_issue.title}. {selected_issue.why} "
+                f"Recommended next move: {selected_issue.recommendation}"
+            )
+        elif wants_evidence:
             evidence_reply = self._evidence_reply(
                 snapshot=snapshot,
                 question=question,
@@ -118,7 +164,12 @@ class GroundedProjectAdvisor:
                 "The current read has no open issues. Review the seven artifacts and latest "
                 "History snapshot before making a decision."
             )
-        follow_up = (top.clarification,) if top is not None and top.clarification else ()
+        follow_up_issue = selected_issue or top
+        follow_up = (
+            (follow_up_issue.clarification,)
+            if follow_up_issue is not None and follow_up_issue.clarification
+            else ()
+        )
         return AdvisorReply(answer=answer, follow_up_questions=follow_up)
 
     @staticmethod

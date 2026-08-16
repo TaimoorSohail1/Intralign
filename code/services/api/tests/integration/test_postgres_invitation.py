@@ -326,13 +326,13 @@ def test_existing_member_acceptance_is_idempotent_and_does_not_downgrade_role() 
         owner_id = connection.execute(
             text("select id from auth.users where email = 'admin@oslo.local'")
         ).scalar_one()
-        previous_welcome_seen_at = connection.execute(
+        previous_membership = connection.execute(
             text(
-                "select welcome_seen_at from public.memberships "
+                "select welcome_seen_at, created_at from public.memberships "
                 "where workspace_id = :workspace_id and user_id = :user_id"
             ),
             {"workspace_id": WORKSPACE_ID, "user_id": owner_id},
-        ).scalar_one()
+        ).mappings().one()
         connection.execute(
             text(
                 "update public.memberships set welcome_seen_at = null "
@@ -356,6 +356,20 @@ def test_existing_member_acceptance_is_idempotent_and_does_not_downgrade_role() 
             email=email,
             password="OsloLocalAdmin123!",
         )
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "update public.memberships set created_at = ("
+                    "select created_at from public.invitations "
+                    "where email = :email and status = 'accepted'"
+                    ") where workspace_id = :workspace_id and user_id = :user_id"
+                ),
+                {
+                    "email": email,
+                    "workspace_id": WORKSPACE_ID,
+                    "user_id": owner_id,
+                },
+            )
         repeated_activation = application.accept_invitation_for_existing_user(
             token=raw_token,
             email=email,
@@ -381,11 +395,13 @@ def test_existing_member_acceptance_is_idempotent_and_does_not_downgrade_role() 
         with engine.begin() as connection:
             connection.execute(
                 text(
-                    "update public.memberships set welcome_seen_at = :welcome_seen_at "
+                    "update public.memberships "
+                    "set welcome_seen_at = :welcome_seen_at, created_at = :created_at "
                     "where workspace_id = :workspace_id and user_id = :user_id"
                 ),
                 {
-                    "welcome_seen_at": previous_welcome_seen_at,
+                    "welcome_seen_at": previous_membership["welcome_seen_at"],
+                    "created_at": previous_membership["created_at"],
                     "workspace_id": WORKSPACE_ID,
                     "user_id": owner_id,
                 },
