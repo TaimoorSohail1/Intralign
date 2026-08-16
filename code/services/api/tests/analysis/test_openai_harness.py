@@ -1234,7 +1234,7 @@ def test_evaluate_quarantines_only_findings_with_unsupported_evidence() -> None:
                 "adverse_integrity": 0.2,
                 "runway_factor": 1.1,
                 "stakes": 1.0,
-                "edge_key": None,
+                "edge_key": ["REQ-THRESHOLD", "OUTCOME"],
             },
             {
                 "id": "ISS-UNSUPPORTED",
@@ -1273,4 +1273,20 @@ def test_evaluate_quarantines_only_findings_with_unsupported_evidence() -> None:
     assert [candidate.id for candidate in assessment.sensitivity_candidates] == [
         "ISS-SUPPORTED"
     ]
+    assert assessment.sensitivity_candidates[0].edge_key == (
+        "REQ-THRESHOLD",
+        "OUTCOME",
+    )
     assert len(client.responses.requests) == 1
+
+
+def test_assessment_schema_uses_provider_compatible_edge_key_array() -> None:
+    from oslo_api.analysis.openai_harness import _AssessmentOutput
+
+    schema = _AssessmentOutput.model_json_schema()
+    edge_key = schema["$defs"]["_SensitivityCandidateOutput"]["properties"]["edge_key"]
+    array_schema = next(item for item in edge_key["anyOf"] if item.get("type") == "array")
+
+    assert array_schema["minItems"] == 2
+    assert array_schema["maxItems"] == 2
+    assert array_schema["items"]

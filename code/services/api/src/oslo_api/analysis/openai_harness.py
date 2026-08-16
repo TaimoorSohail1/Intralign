@@ -197,7 +197,12 @@ class _SensitivityCandidateOutput(_StrictOutput):
     adverse_integrity: float = Field(ge=0, le=1)
     runway_factor: float = Field(gt=0)
     stakes: float = Field(ge=0)
-    edge_key: tuple[ShortText, ShortText] | None = None
+    # OpenAI structured outputs require every array schema to declare ``items``.
+    # Pydantic represents a fixed tuple with ``prefixItems`` only, which the
+    # provider rejects as an invalid response schema.  Keep the two-item
+    # contract with a bounded list at the provider boundary and restore the
+    # domain tuple below.
+    edge_key: Annotated[list[ShortText], Field(min_length=2, max_length=2)] | None = None
 
 
 class _CoverageAuditOutput(_StrictOutput):
@@ -829,7 +834,7 @@ class OpenAIAgentHarness:
                     favorable_integrity=item.favorable_integrity,
                     adverse_integrity=item.adverse_integrity,
                     runway_factor=item.runway_factor,
-                    edge_key=item.edge_key,
+                    edge_key=tuple(item.edge_key) if item.edge_key is not None else None,
                     stakes=item.stakes,
                 )
                 for item in output.sensitivity_candidates
