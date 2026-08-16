@@ -19,11 +19,11 @@ Five real Atlas project PDFs were analyzed as one client project. The read produ
 
 ## Live staging verification
 
-- API release v37 and web release v21 started successfully; API health returned `ready`.
+- API release v37 and final web release v23 started successfully; API health returned `ready`.
 - Authenticated workspace, Issues, Your Outcome, all seven artifacts, Grounding Map, Reports, History, and the shared header/advisor shell loaded successfully.
 - External review creation, attributed confirmation, governed reanalysis, snapshot creation, snapshot revocation, notifications, History, and discussion-only comments passed in the deployed browser flow.
 - The saved light theme persisted from Settings onto project routes.
-- One live-only dense-map overlap was found, corrected, regression-tested, rebuilt, and included in the final web redeploy.
+- One live-only dense-map overlap was found, corrected, regression-tested, rebuilt, and included in the final web redeploy. The final 1280px dark-theme review confirmed six readable radial nodes, a linked overflow detail grid, intact issue navigation, and no clipped edge labels.
 
 ## Five-user review
 
