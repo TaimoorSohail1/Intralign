@@ -14937,14 +14937,11 @@ button.attention-cell { cursor: pointer; }
     margin-inline: auto;
   }
 
-  .is-r2-slice-one .r2-first-run-focus-copy {
-    width: min(820px, 100%);
-    margin-inline: auto;
-  }
-
+  .is-r2-slice-one .r2-first-run-focus-copy,
   .is-r2-slice-one .project-main > .r2-first-run-guide {
     width: min(820px, 100%);
-    margin-inline: auto;
+    margin-left: max(0px, calc((100% - 900px) / 2));
+    margin-right: auto;
   }
 
   .is-r2-slice-one .overview-stack.has-first-value .start-here,
