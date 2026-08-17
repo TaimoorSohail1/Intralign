@@ -2843,6 +2843,26 @@ class DatabaseSliceTwoApplication:
             connection.execute(
                 text(
                     """
+                    with landed_actions as (
+                      select distinct issue_stable_key
+                      from public.issue_actions
+                      where project_id = :project_id
+                        and analysis_run_id = :run_id
+                        and action_type in ('apply', 'custom')
+                    )
+                    update public.issues issue
+                    set current_status = 'needs_grounding', updated_at = now()
+                    from landed_actions
+                    where issue.project_id = :project_id
+                      and issue.stable_key = landed_actions.issue_stable_key
+                      and issue.current_status = 'addressed'
+                    """
+                ),
+                {"project_id": run.request.project_id, "run_id": run.id},
+            )
+            connection.execute(
+                text(
+                    """
                     with run_findings as (
                       select distinct proposal.issue_stable_key
                       from public.issue_proposals proposal

@@ -1,4 +1,8 @@
-from oslo_api.collaboration.pdf import render_report_pdf, render_snapshot_pdf
+from oslo_api.collaboration.pdf import (
+    render_full_plan_pdf,
+    render_report_pdf,
+    render_snapshot_pdf,
+)
 
 
 def test_snapshot_pdf_contains_all_artifacts_evidence_and_governance_markers() -> None:
@@ -70,6 +74,107 @@ def test_snapshot_pdf_contains_all_artifacts_evidence_and_governance_markers() -
     assert b"Analysis dated: 2026-08-15T10:30:00Z" in pdf
     assert b"It does not update the project or run analysis." in pdf
     assert b"OSLO advises; you decide." in pdf
+
+
+def test_full_plan_pdf_joins_governed_tasks_by_retained_row_identity() -> None:
+    snapshot = {
+        "artifacts": [
+            {
+                "artifact_type": "work_breakdown",
+                "content": {
+                    "sections": [
+                        {
+                            "columns": ["WBS", "Item"],
+                            "rows": [
+                                ["1.0", "Commerce platform"],
+                                ["1.1", "Checkout"],
+                                ["1.1.1", "Implement payment gateway"],
+                                ["1.1.2", "Test payment recovery"],
+                            ],
+                            "row_ids": ["delivery-1", "package-1", "task-1", "task-2"],
+                            "row_provenance": [
+                                "confirmed_by_user",
+                                "confirmed_by_user",
+                                "confirmed_by_user",
+                                "from_oslo",
+                            ],
+                        }
+                    ]
+                },
+            },
+            {
+                "artifact_type": "schedule",
+                "content": {
+                    "sections": [
+                        {
+                            "columns": ["Task", "Start", "End"],
+                            "rows": [
+                                ["Implement payment gateway", "2026-09-01", "2026-09-12"],
+                                ["Test payment recovery", "", ""],
+                            ],
+                            "row_ids": ["task-1", "task-2"],
+                        }
+                    ]
+                },
+            },
+            {
+                "artifact_type": "resources",
+                "content": {
+                    "sections": [
+                        {
+                            "columns": ["Task", "Owner"],
+                            "rows": [["Implement payment gateway", "Dana"]],
+                            "row_ids": ["task-1"],
+                        }
+                    ]
+                },
+            },
+        ]
+    }
+
+    pdf = render_full_plan_pdf(
+        "Atlas launch",
+        snapshot,
+        analysis_completed_at="2026-08-17T08:30:00Z",
+    )
+
+    assert pdf.startswith(b"%PDF-1.4")
+    assert b"Atlas launch - Full plan" in pdf
+    assert b"Implement payment gateway | Checkout | Commerce platform | Dana" in pdf
+    assert b"2026-09-01 - 2026-09-12" in pdf
+    assert b"yours" in pdf
+    assert b"Test payment recovery | Checkout | Commerce platform | - unowned" in pdf
+    assert b"unscheduled" in pdf
+    assert b"inferred" in pdf
+    assert b"Read-only: exporting does not run analysis." in pdf
+
+
+def test_full_plan_pdf_keeps_a_terminal_work_package_without_child_tasks() -> None:
+    snapshot = {
+        "artifacts": [
+            {
+                "artifact_type": "work_breakdown",
+                "content": {
+                    "sections": [
+                        {
+                            "heading": "Delivery",
+                            "columns": ["WBS", "Item"],
+                            "rows": [["1.0", "Launch commerce platform"]],
+                            "row_ids": ["delivery-1"],
+                            "row_provenance": ["confirmed_by_user"],
+                        }
+                    ]
+                },
+            }
+        ]
+    }
+
+    pdf = render_full_plan_pdf("Atlas launch", snapshot)
+
+    assert b"Launch commerce platform" in pdf
+    assert b"Delivery" in pdf
+    assert b"- unowned" in pdf
+    assert b"unscheduled" in pdf
 
 
 def test_report_pdf_uses_the_exact_shared_draft_sections() -> None:

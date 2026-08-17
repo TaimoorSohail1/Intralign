@@ -16,6 +16,7 @@ export async function POST(
         projectId,
         format: body.format,
         contentChecksum: body.content_checksum,
+        surface: body.surface,
       }),
       { status: 201 },
     );

@@ -7,6 +7,7 @@ import {
   CaretRight,
   Check,
   Clock,
+  CopySimple,
   DownloadSimple,
   EnvelopeSimple,
   LinkSimple,
@@ -886,6 +887,35 @@ export function ReportWorkspace({
     });
   };
 
+  const copyAuthoredReport = async () => {
+    const reportText = (
+      editorRef.current?.innerText ?? editorRef.current?.textContent ?? ""
+    ).trim() || projection.summary;
+    try {
+      await navigator.clipboard.writeText(reportText);
+      setNotice("Report copied to the clipboard.");
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = reportText;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.append(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      setNotice(
+        copied
+          ? "Report copied to the clipboard."
+          : "Copy failed. Select the report and try again.",
+      );
+    }
+    void fetch(`/api/projects/${snapshot.project_id}/report/exports`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ format: "copy-authored-report" }),
+    });
+  };
+
   const importToAsana = async () => {
     if (!asanaState?.entitled) {
       setNotice("Asana hand-off requires Basic. Manual exports remain free.");
@@ -1720,6 +1750,22 @@ export function ReportWorkspace({
           </span>
         </footer>
       </article>
+      <div aria-label="Authored report actions" className="briefing-author-footer-actions">
+        <div>
+          <button onClick={() => setSendOpen(true)} type="button">
+            <EnvelopeSimple aria-hidden="true" size={13} /> Send as a memo
+          </button>
+          <button onClick={() => void copyAuthoredReport()} type="button">
+            <CopySimple aria-hidden="true" size={13} /> Copy
+          </button>
+          <button onClick={() => void generateDraft()} type="button">
+            <ArrowCounterClockwise aria-hidden="true" size={13} /> Regenerate from the read
+          </button>
+        </div>
+        <p>
+          Sending freezes a dated memo copy. Your authored report stays living and continues to track the read.
+        </p>
+      </div>
       </>
       )}
       </>

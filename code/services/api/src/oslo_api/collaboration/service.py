@@ -72,6 +72,60 @@ def _freeze_public_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     return frozen
 
 
+def _with_current_full_plan_artifacts(
+    snapshot: dict[str, Any], artifact_records: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Overlay the authored execution artifacts onto a retained analysis snapshot."""
+
+    projected = json.loads(json.dumps(snapshot))
+    current = {
+        str(record["artifact_type"]): record
+        for record in artifact_records
+        if record.get("artifact_type")
+    }
+    artifacts = projected.setdefault("artifacts", [])
+    for artifact in artifacts:
+        record = current.pop(str(artifact.get("artifact_type")), None)
+        if record is None:
+            continue
+        _apply_current_artifact(artifact, record)
+    for record in current.values():
+        artifact: dict[str, Any] = {"artifact_type": str(record["artifact_type"])}
+        _apply_current_artifact(artifact, record)
+        artifacts.append(artifact)
+    return projected
+
+
+def _apply_current_artifact(
+    artifact: dict[str, Any], record: dict[str, Any]
+) -> None:
+    artifact.update(
+        {
+            "title": str(record.get("title") or artifact.get("title") or "Plan artifact"),
+            "summary": str(record.get("summary") or artifact.get("summary") or ""),
+            "reliability": str(
+                record.get("reliability") or artifact.get("reliability") or "unknown"
+            ),
+            "basis": str(record.get("basis") or artifact.get("basis") or ""),
+            "evidence_refs": list(
+                record.get("evidence_refs") or artifact.get("evidence_refs") or []
+            ),
+            "content": dict(
+                record.get("draft_content")
+                or record.get("content_json")
+                or artifact.get("content")
+                or {"sections": []}
+            ),
+            "assumptions": list(
+                record.get("assumptions_json") or artifact.get("assumptions") or []
+            ),
+            "conflicts": list(
+                record.get("conflicts_json") or artifact.get("conflicts") or []
+            ),
+        }
+    )
+
+
 class DatabaseCollaborationService:
     """Tenant-scoped collaboration boundary for R2 Slice 6.
 
@@ -1488,21 +1542,31 @@ class DatabaseCollaborationService:
                 idempotency_key=f"collaboration:review:{grant_id}:revoked",
             )
 
-    def record_export(self, *, actor_user_id: UUID, project_id: UUID) -> dict:
-        workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+    def record_export(
+        self,
+        *,
+        actor_user_id: UUID,
+        project_id: UUID,
+        surface: str = "snapshot",
+    ) -> dict:
+        workspace_id, _role = self._project_access(actor_user_id, project_id)
         with self._engine.begin() as connection:
             row = (
                 connection.execute(
                     text(
                         """
-                        select p.name as project_name, s.id as snapshot_id, s.snapshot_json,
+                        select p.name as project_name, s.id as snapshot_id,
+                               s.analysis_run_id, s.snapshot_json,
                                s.snapshot_state, s.published_at
                         from public.projects p
                         join lateral (
-                          select id, snapshot_json, snapshot_state, published_at
+                          select id, analysis_run_id, snapshot_json,
+                                 snapshot_state, published_at
                           from public.assessment_snapshots
-                          where project_id = p.id order by published_at desc limit 1
+                          where project_id = p.id
+                          order by (analysis_run_id = p.current_analysis_run_id) desc,
+                                   published_at desc
+                          limit 1
                         ) s on true
                         where p.id = :project_id
                         """
@@ -1514,6 +1578,37 @@ class DatabaseCollaborationService:
             )
             if row is None:
                 raise CollaborationError("NO_SNAPSHOT", "Analyze the project before exporting", 409)
+            export_snapshot = dict(row)
+            if surface == "full_plan":
+                artifact_records = [
+                    dict(record)
+                    for record in connection.execute(
+                        text(
+                            """
+                            select version.artifact_type::text as artifact_type,
+                                   version.title, version.summary,
+                                   version.reliability, version.basis,
+                                   version.evidence_refs, version.content_json,
+                                   version.assumptions_json, version.conflicts_json,
+                                   draft.content_json as draft_content,
+                                   draft.provenance as draft_provenance
+                            from public.artifact_versions version
+                            left join public.artifact_drafts draft
+                              on draft.workspace_id = version.workspace_id
+                             and draft.project_id = version.project_id
+                             and draft.artifact_type = version.artifact_type
+                            where version.analysis_run_id = :analysis_run_id
+                              and version.artifact_type in (
+                                'work_breakdown', 'schedule', 'resources'
+                              )
+                            """
+                        ),
+                        {"analysis_run_id": row["analysis_run_id"]},
+                    ).mappings()
+                ]
+                export_snapshot["snapshot_json"] = _with_current_full_plan_artifacts(
+                    dict(row["snapshot_json"]), artifact_records
+                )
             export_id = connection.execute(
                 text(
                     """
@@ -1535,13 +1630,29 @@ class DatabaseCollaborationService:
                 workspace_id=workspace_id,
                 project_id=project_id,
                 actor_user_id=actor_user_id,
-                event_type="collaboration.snapshot_exported",
-                summary="Project snapshot exported",
-                detail="A governed PDF export was generated from the current snapshot.",
-                payload={"export_id": str(export_id), "format": "pdf"},
+                event_type=(
+                    "full_plan.exported"
+                    if surface == "full_plan"
+                    else "collaboration.snapshot_exported"
+                ),
+                summary=(
+                    "Full plan exported"
+                    if surface == "full_plan"
+                    else "Project snapshot exported"
+                ),
+                detail=(
+                    "The retained execution plan was exported without running analysis."
+                    if surface == "full_plan"
+                    else "A governed PDF export was generated from the current snapshot."
+                ),
+                payload={
+                    "export_id": str(export_id),
+                    "format": "pdf",
+                    "surface": surface,
+                },
                 idempotency_key=f"collaboration:export:{export_id}",
             )
-        return dict(row)
+        return export_snapshot
 
     @staticmethod
     def _next_weekly_run(
@@ -1837,9 +1948,9 @@ class DatabaseCollaborationService:
         project_id: UUID,
         export_format: str,
         content_checksum: str | None = None,
+        surface: str = "report",
     ) -> dict:
-        workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+        workspace_id, _role = self._project_access(actor_user_id, project_id)
         with self._engine.begin() as connection:
             snapshot = connection.execute(
                 text(
@@ -1891,12 +2002,21 @@ class DatabaseCollaborationService:
                 project_id=project_id,
                 actor_user_id=actor_user_id,
                 event_type="export.done",
-                summary=f"{export_format.upper()} export completed",
-                detail="A current, governed project projection was exported.",
+                summary=(
+                    f"Full plan {export_format.upper()} export completed"
+                    if surface == "full_plan"
+                    else f"{export_format.upper()} export completed"
+                ),
+                detail=(
+                    "The retained execution plan was exported without running analysis."
+                    if surface == "full_plan"
+                    else "A current, governed project projection was exported."
+                ),
                 payload={
                     "export_id": row["id"],
                     "format": export_format,
                     "read_signature": row["read_signature"],
+                    "surface": surface,
                 },
                 idempotency_key=f"history:report-export:{row['id']}",
             )

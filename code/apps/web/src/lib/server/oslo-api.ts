@@ -1371,6 +1371,7 @@ export function recordProjectReportExport(input: {
   projectId: string;
   format: "pdf" | "excel" | "csv" | "text" | "copy-summary" | "asana";
   contentChecksum?: string | null;
+  surface?: "report" | "full_plan";
 }) {
   return apiRequest(`/v1/projects/${input.projectId}/report/exports`, {
     method: "POST",
@@ -1378,6 +1379,7 @@ export function recordProjectReportExport(input: {
     body: JSON.stringify({
       format: input.format,
       content_checksum: input.contentChecksum ?? null,
+      surface: input.surface ?? "report",
     }),
   });
 }

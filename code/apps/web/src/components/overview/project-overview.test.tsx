@@ -190,12 +190,41 @@ describe("ProjectOverview", () => {
       screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
     );
 
-    expect(screen.getByRole("button", { name: "Build this in the plan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply this fix →" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Other options/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Write my own →" })).toBeInTheDocument();
     expect(screen.getByText("Verify with evidence")).toBeInTheDocument();
     expect(screen.getByText("Why this is load-bearing")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Verify with evidence"));
     expect(screen.getByRole("region", { name: "Ask for evidence" })).toBeInTheDocument();
+  });
+
+  it("renders the prototype trade-off actions for decision findings", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={{
+          ...snapshot,
+          assessment: {
+            ...snapshot.assessment,
+            issues: [{
+              ...snapshot.assessment.issues[0],
+              primary_act: "decide",
+              also_offered: ["verify"],
+              recommendation: "Bound the sponsor trade-off.",
+            }],
+          },
+        }}
+        initialView="issues"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
+
+    expect(screen.getByRole("button", { name: "Draw the line →" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Accept on the record →" })).toBeInTheDocument();
   });
 
   it("does not claim the integrity band moved when a grounded update keeps the same band", () => {
@@ -2122,6 +2151,12 @@ describe("ProjectOverview", () => {
       expect(screen.getByText("Waiting for reanalysis")).toBeInTheDocument();
       expect(screen.getByText("Your read is safely out of date.")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Undo last change" })).toBeInTheDocument();
+      expect(screen.getByRole("status", { name: "Issue action recorded" })).toHaveTextContent(
+        "Migration ownership is unresolved",
+      );
+      expect(screen.getByRole("status", { name: "Issue action recorded" })).toHaveTextContent(
+        "Settling to resolved",
+      );
     });
   });
 
@@ -2150,7 +2185,7 @@ describe("ProjectOverview", () => {
     fireEvent.change(screen.getByLabelText("Clarification answer"), {
       target: { value: "Priya owns migration; the legacy import is the fallback." },
     });
-    const submit = screen.getByRole("button", { name: "Submit & re-analyze" });
+    const submit = screen.getByRole("button", { name: "Submit answer →" });
     fireEvent.click(submit);
     fireEvent.click(submit);
 

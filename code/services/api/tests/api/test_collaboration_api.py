@@ -190,6 +190,33 @@ class RecordingCollaboration:
             "status": "completed",
         }
 
+    def record_export(self, **payload):
+        self.snapshot_export = payload
+        return {
+            "project_name": "Atlas launch",
+            "published_at": datetime(2026, 8, 17, tzinfo=UTC),
+            "snapshot_json": {
+                "artifacts": [
+                    {
+                        "artifact_type": "work_breakdown",
+                        "content": {
+                            "sections": [
+                                {
+                                    "columns": ["WBS", "Item"],
+                                    "rows": [["1.0", "Launch"], ["1.1", "Ship release"]],
+                                    "row_ids": ["deliverable-1", "task-1"],
+                                    "row_provenance": [
+                                        "confirmed_by_user",
+                                        "confirmed_by_user",
+                                    ],
+                                }
+                            ]
+                        },
+                    }
+                ]
+            },
+        }
+
     def asana_handoff_state(self, *, actor_user_id, project_id):
         assert (actor_user_id, project_id) == (USER_ID, PROJECT_ID)
         return {
@@ -380,12 +407,27 @@ def test_report_export_is_recorded_without_storing_the_file() -> None:
     response = client_for(collaboration).post(
         f"/v1/projects/{PROJECT_ID}/report/exports",
         headers={"Authorization": "Bearer valid-access-token"},
-        json={"format": "csv", "content_checksum": "abc123"},
+        json={"format": "csv", "content_checksum": "abc123", "surface": "full_plan"},
     )
 
     assert response.status_code == 201
     assert response.json() == {"id": "export-1", "format": "csv", "status": "completed"}
     assert collaboration.report_export["content_checksum"] == "abc123"
+    assert collaboration.report_export["surface"] == "full_plan"
+
+
+def test_full_plan_pdf_is_a_dedicated_read_only_export() -> None:
+    collaboration = RecordingCollaboration()
+    response = client_for(collaboration).get(
+        f"/v1/projects/{PROJECT_ID}/full-plan/export/pdf",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.content.startswith(b"%PDF-1.4")
+    assert b"Atlas launch - Full plan" in response.content
+    assert collaboration.snapshot_export["surface"] == "full_plan"
 
 
 def test_asana_handoff_has_preview_and_idempotent_import_contracts() -> None:

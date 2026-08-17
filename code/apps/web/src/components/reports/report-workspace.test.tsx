@@ -276,6 +276,25 @@ describe("ReportWorkspace", () => {
     expect(screen.getByRole("tab", { name: /Generated Decision Record/i })).toBeInTheDocument();
   });
 
+  it("keeps the prototype memo, copy and regenerate actions at the end of the authored report", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    renderAuthored();
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
+    expect(screen.getByRole("status")).toHaveTextContent("Report copied to the clipboard");
+
+    fireEvent.click(screen.getByRole("button", { name: "Regenerate from the read" }));
+    expect(screen.getByRole("status")).toHaveTextContent(/Draft (generated|regenerated)/);
+
+    fireEvent.click(screen.getByRole("button", { name: "Send as a memo" }));
+    expect(screen.getByRole("dialog", { name: "Send readout" })).toBeInTheDocument();
+  });
+
   it("renders Outcome Readiness from the retained analysis without an editor", () => {
     render(<ReportWorkspace snapshot={snapshot} />);
 

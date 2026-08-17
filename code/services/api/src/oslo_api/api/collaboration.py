@@ -12,7 +12,11 @@ from sqlalchemy import create_engine
 
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
 from oslo_api.collaboration.asana import HttpAsanaGateway
-from oslo_api.collaboration.pdf import render_report_pdf, render_snapshot_pdf
+from oslo_api.collaboration.pdf import (
+    render_full_plan_pdf,
+    render_report_pdf,
+    render_snapshot_pdf,
+)
 from oslo_api.collaboration.service import CollaborationError, DatabaseCollaborationService
 from oslo_api.email import PostmarkReportMailer, SmtpReportMailer
 from oslo_api.settings import Settings
@@ -156,6 +160,7 @@ class ReportScheduleStateRequest(BaseModel):
 class ReportExportRecordRequest(BaseModel):
     format: Literal["pdf", "excel", "csv", "text", "copy-summary", "asana"]
     content_checksum: str | None = Field(default=None, max_length=128)
+    surface: Literal["report", "full_plan"] = "report"
 
 
 def download_disposition(project_name: str, suffix: str) -> str:
@@ -459,6 +464,7 @@ def record_report_export(
             project_id=project_id,
             export_format=payload.format,
             content_checksum=payload.content_checksum,
+            surface=payload.surface,
         )
     )
 
@@ -533,6 +539,34 @@ def export_project(
     )
 
 
+@router.get("/projects/{project_id}/full-plan/export/pdf")
+def export_full_plan(
+    project_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    service: Annotated[DatabaseCollaborationService, Depends(collaboration_service)],
+) -> Response:
+    snapshot = guarded(
+        lambda: service.record_export(
+            actor_user_id=context.user.id,
+            project_id=project_id,
+            surface="full_plan",
+        )
+    )
+    pdf = render_full_plan_pdf(
+        snapshot["project_name"],
+        snapshot["snapshot_json"],
+        analysis_completed_at=snapshot["published_at"],
+    )
+    return Response(
+        pdf,
+        media_type="application/pdf",
+        headers={
+            "content-disposition": download_disposition(
+                snapshot["project_name"],
+                "full-plan",
+            )
+        },
+    )
 @router.get("/public/share/{token}")
 def public_snapshot(
     token: str,

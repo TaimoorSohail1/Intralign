@@ -333,6 +333,79 @@ def test_clarification_is_durable_and_addressed_before_reanalysis_completes(
             )
 
 
+def test_applied_issue_moves_to_needs_grounding_after_reanalysis_lands(
+    tmp_path,
+    workspace_owner_id: UUID,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    owner_id = workspace_owner_id
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Issue action landing', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        baseline = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description="A delivery plan with an unresolved dependency owner.",
+                source_names=("brief.md",),
+                idempotency_key=f"issue-action-landing-baseline:{project_id}",
+            )
+        )
+        assert baseline.snapshot is not None
+        issue = baseline.snapshot.assessment.issues[0]
+        application = DatabaseSliceTwoApplication(
+            engine=engine,
+            store=store,
+            workflow=workflow,
+            executor=NoopExecutor(),  # type: ignore[arg-type]
+            document_store=DatabaseDocumentStore(
+                engine=engine,
+                object_store=LocalObjectStorage(tmp_path),
+            ),
+            extended_delay_seconds=0,
+        )
+
+        acted = application.act_on_issue(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            issue_id=issue.id,
+            action="apply",
+            resolution="Assign Priya as the dependency owner and record the fallback.",
+            key=f"issue-action-landing:{project_id}",
+        )
+        assert acted["status"] == "addressed"
+        assert acted["analysis_run"] is not None
+
+        application._execute(acted["analysis_run"].id)
+
+        landed = application.list_issue_actions(
+            actor_user_id=owner_id,
+            project_id=project_id,
+        )
+        applied = next(item for item in landed if item["issue_id"] == issue.id)
+        assert applied["status"] == "needs_grounding"
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+        engine.dispose()
+
+
 def test_rejecting_a_proposal_records_history_against_the_source_read(
     tmp_path,
     workspace_owner_id: UUID,

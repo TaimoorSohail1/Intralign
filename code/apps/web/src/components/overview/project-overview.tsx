@@ -42,6 +42,7 @@ import type {
   ProjectOutcomeSummary,
 } from "@/lib/server/oslo-api";
 import { ArtifactWorkspace } from "@/components/artifacts/artifact-workspace";
+import { FullPlanWorkspace } from "@/components/execution/full-plan-workspace";
 import {
   CollaborationGroundingMap,
   CollaborationRollUp,
@@ -150,6 +151,7 @@ type ProjectView =
   | "issues"
   | "history"
   | "reports"
+  | "full_plan"
   | ArtifactView;
 
 function isArtifactView(value: ProjectView): value is ArtifactView {
@@ -179,6 +181,12 @@ function issuePillar(issue: Issue) {
   if (issue.id.startsWith("ISS-CP-")) return "Adaptability";
   return "Viability";
 }
+
+type IssueActionFeedback = {
+  title: string;
+  detail: string;
+  target: string;
+};
 
 function integrityReadLabel(
   integrity: OverviewSnapshot["assessment"]["integrity"],
@@ -313,7 +321,8 @@ export function ProjectOverview({
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [confidenceBreakdownOpen, setConfidenceBreakdownOpen] = useState(false);
   const [r2IntegrityExpanded, setR2IntegrityExpanded] = useState(
-    initialView === "overview" && !compactIssuesLanding && !initial.first_run?.freeze_on,
+    (initialView === "overview" && !compactIssuesLanding && !initial.first_run?.freeze_on) ||
+      initialView === "full_plan",
   );
   const [searchOpen, setSearchOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -344,6 +353,7 @@ export function ProjectOverview({
   const [clarificationError, setClarificationError] = useState<string | null>(null);
   const [issueActionPending, setIssueActionPending] = useState(false);
   const [issueActionError, setIssueActionError] = useState<string | null>(null);
+  const [issueActionFeedback, setIssueActionFeedback] = useState<IssueActionFeedback | null>(null);
   const [proposals, setProposals] = useState(initialProposals);
   const [proposalActionPending, setProposalActionPending] = useState<string | null>(null);
   const [proposalOpen, setProposalOpen] = useState(true);
@@ -691,6 +701,7 @@ export function ProjectOverview({
           }
           setExtendedRetrying(false);
           setAnalysisUpdateRunId(null);
+          setIssueActionFeedback(null);
           setClarificationError(
             `${analysisFailureCopy(run.error_code).title}. Your answer is saved and the current read is unchanged.`,
           );
@@ -701,6 +712,12 @@ export function ProjectOverview({
     }, 2500);
     return () => window.clearInterval(timer);
   }, [analysisUpdateRunId, snapshot.project_id]);
+
+  useEffect(() => {
+    if (!issueActionFeedback || analysisUpdateRunId) return;
+    const timer = window.setTimeout(() => setIssueActionFeedback(null), 8000);
+    return () => window.clearTimeout(timer);
+  }, [analysisUpdateRunId, issueActionFeedback]);
 
   useEffect(() => {
     const handleProjectShortcut = (event: KeyboardEvent) => {
@@ -1034,6 +1051,14 @@ export function ProjectOverview({
     }));
   };
 
+  const showIssueActionRecorded = (
+    issue: Issue,
+    target: string,
+    detail = "Your decision was recorded. OSLO will re-read to reflect it.",
+  ) => {
+    setIssueActionFeedback({ title: issue.title, detail, target });
+  };
+
   const retryExtendedAnalysis = async () => {
     if (!extendedRun || extendedRetrying) return;
     setExtendedRetryError(null);
@@ -1080,6 +1105,11 @@ export function ProjectOverview({
         throw new Error(result.message || "Your answer could not be saved.");
       }
       updateIssueLifecycle(selectedIssue.id, "addressed");
+      showIssueActionRecorded(
+        selectedIssue,
+        "Re-analyzing your answer",
+        "Your answer is now evidence in your words. OSLO will re-read all three pillars to reflect it.",
+      );
       showQueuedReadChange(result);
       setAnalysisUpdateRunId(result.run_id);
     } catch (error) {
@@ -1133,6 +1163,15 @@ export function ProjectOverview({
         selectedIssue.id,
         "addressed",
         result.selected_resolution,
+      );
+      showIssueActionRecorded(
+        selectedIssue,
+        action === "apply" || action === "custom"
+          ? "Settling to needs grounding"
+          : "Settling to resolved",
+        action === "apply" || action === "custom"
+          ? "OSLO drafted the fix into your plan. OSLO will re-read to reflect it."
+          : "Your decision is on the record. OSLO will re-read to reflect it.",
       );
       if (result.analysis_run?.run_id) {
         showQueuedReadChange(result.analysis_run);
@@ -1218,6 +1257,23 @@ export function ProjectOverview({
         result.status,
         act === "fix" ? options.resolution ?? undefined : undefined,
       );
+      showIssueActionRecorded(
+        issue,
+        act === "route"
+          ? "Awaiting evidence"
+          : act === "fix"
+            ? "Settling to needs grounding"
+            : act === "withdraw"
+              ? "Returning to open"
+              : act === "flag"
+                ? "Settling to needs fix"
+                : "Settling to resolved",
+        act === "route"
+          ? "The evidence request is recorded and attributed. The read will move only when evidence arrives."
+          : act === "fix"
+            ? "OSLO drafted the fix into your plan. OSLO will re-read to reflect it."
+            : "Your governed action was recorded. OSLO will re-read all three pillars to reflect it.",
+      );
       if (result.first_run) {
         setSnapshot((current) => ({ ...current, first_run: result.first_run }));
       }
@@ -1264,6 +1320,18 @@ export function ProjectOverview({
       setProposals((current) =>
         current.map((item) => item.id === proposal.id ? result.proposal : item),
       );
+      if (accepted) {
+        const issue = snapshot.assessment.issues.find(
+          (candidate) => candidate.id === proposal.issue_id,
+        );
+        if (issue) {
+          showIssueActionRecorded(
+            issue,
+            "Settling to needs grounding",
+            "The accepted proposal was drafted into your plan. OSLO will re-read to reflect it.",
+          );
+        }
+      }
       if (result.analysis_run?.run_id) {
         showQueuedReadChange(result.analysis_run);
         setAnalysisUpdateRunId(result.analysis_run.run_id);
@@ -1461,6 +1529,7 @@ export function ProjectOverview({
       aria-label="Outcome Integrity summary"
       className="confidence-read integrity-read"
       id="r2-integrity-summary"
+      key={snapshot.analysis_run_id}
     >
       <div className="r2-integrity-copy">
         <div className="confidence-topline">
@@ -1484,7 +1553,7 @@ export function ProjectOverview({
               onClick={() => setR2IntegrityExpanded(false)}
               type="button"
             >
-              Collapse <CaretDown aria-hidden="true" size={11} />
+              Collapse <CaretUp aria-hidden="true" size={11} />
             </button>
           </div>
           <p className="r2-grounding-read">
@@ -1590,6 +1659,8 @@ export function ProjectOverview({
       className={`project-shell ${isR2ReadView(initialView) ? "is-r2-slice-one" : ""} ${
         isArtifactView(initialView) ? "is-r2-artifact-workspace" : ""
       } ${initialView === "reports" ? "is-r2-reports" : ""} ${
+        initialView === "full_plan" ? "is-r2-full-plan" : ""
+      } ${
         initialView === "outcome" ? "is-r2-outcome" : ""
       } ${
         r2IntegrityExpanded ? "r2-integrity-expanded" : ""
@@ -1602,7 +1673,7 @@ export function ProjectOverview({
         orientation ? "is-touring" : ""
       }`}
     >
-      {initialView === "reports" ? (
+      {initialView === "reports" || initialView === "full_plan" ? (
         <div aria-label="Reports product context" className="r2-reports-banner" role="note">
           <strong>OSLO · AI-first R2</strong>
           <div>
@@ -1648,6 +1719,8 @@ export function ProjectOverview({
                   ? "Grounding map"
                   : initialView === "reports"
                     ? "Reports"
+                    : initialView === "full_plan"
+                      ? "Full plan · export"
                     : initialView === "outcome"
                       ? "Your Outcome"
                       : artifactLabel(initialView)}
@@ -1721,7 +1794,7 @@ export function ProjectOverview({
         </div>
       </header>
 
-      {(initialView === "overview" || (isArtifactView(initialView) && r2IntegrityExpanded)) &&
+      {(initialView === "overview" || initialView === "full_plan" || (isArtifactView(initialView) && r2IntegrityExpanded)) &&
       (activeOutcome?.title ?? outcomeDefinition) ? (
         <div className="r2-outcome-capacity-row">
           <button
@@ -1916,8 +1989,12 @@ export function ProjectOverview({
               </Link>
             );
           })}
-          {initialView === "overview" || isArtifactView(initialView) ? (
-            <Link href={`/projects/${snapshot.project_id}/reports`}>
+          {initialView === "overview" || initialView === "full_plan" || isArtifactView(initialView) ? (
+            <Link
+              aria-current={initialView === "full_plan" ? "page" : undefined}
+              className={initialView === "full_plan" ? "is-current" : ""}
+              href={`/projects/${snapshot.project_id}/full-plan`}
+            >
               <ArrowSquareOut aria-hidden="true" size={15} />
               Full plan · export
             </Link>
@@ -2002,6 +2079,21 @@ export function ProjectOverview({
           ref={mainScrollRegion}
           tabIndex={0}
         >
+          {issueActionFeedback ? (
+            <section
+              aria-label="Issue action recorded"
+              className="r2-action-feedback"
+              role="status"
+            >
+              <CheckCircle aria-hidden="true" size={32} weight="duotone" />
+              <div>
+                <small>Recorded</small>
+                <strong>{issueActionFeedback.title}</strong>
+                <p>{issueActionFeedback.detail}</p>
+              </div>
+              <span>{issueActionFeedback.target}</span>
+            </section>
+          ) : null}
           {initialView === "overview" ? (
             <>
               {snapshot.freshness && snapshot.freshness.state !== "fresh" ? (
@@ -2487,6 +2579,8 @@ export function ProjectOverview({
             />
           ) : initialView === "reports" ? (
             <ReportWorkspace history={projectHistory} snapshot={snapshot} />
+          ) : initialView === "full_plan" ? (
+            <FullPlanWorkspace proposals={undecidedProposals} snapshot={snapshot} />
           ) : (
             <DeferredWorkspace />
           )}
@@ -3568,6 +3662,7 @@ function IssuePanel({
   const [routingOpen, setRoutingOpen] = useState(false);
   const [discussionVisible, setDiscussionVisible] = useState(false);
   const [customResolution, setCustomResolution] = useState("");
+  const [customResolutionOpen, setCustomResolutionOpen] = useState(false);
   const [comments, setComments] = useState<Array<{
     id: string;
     body: string;
@@ -3666,6 +3761,7 @@ function IssuePanel({
       const created = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(created.message ?? "Comment could not be added.");
       setComments((current) => [...current, created]);
+      setDiscussionVisible(true);
       setCommentBody("");
     } catch (caught) {
       setCollaborationError(
@@ -3964,7 +4060,7 @@ function IssuePanel({
       </section>
       {issue.clarification && (!inline || clarificationOpen || analysisRunning) ? (
         <form className="clarification-form" onSubmit={onSubmit}>
-          <h3>Clarification request</h3>
+          <h3><span className="sr-only">Clarification request. </span>◆ Answer OSLO&apos;s question</h3>
           <strong>{issue.clarification}</strong>
           <textarea
             aria-label="Clarification answer"
@@ -3975,14 +4071,24 @@ function IssuePanel({
             value={answer}
           />
           <div>
-            <p>OSLO asks; you answer; you decide. Answering re-runs analysis.</p>
+            <p>
+              Your answer updates the read and grounds this detail — recorded as your
+              evidence, in your words.
+            </p>
             <button
               disabled={!answer.trim() || pending || analysisRunning}
               type="submit"
             >
-              {analysisRunning ? "Re-analyzing…" : pending ? "Saving…" : "Submit & re-analyze"}
+              {analysisRunning ? "Re-analyzing…" : pending ? "Saving…" : "Submit answer →"}
             </button>
           </div>
+          <button
+            className="clarification-cancel"
+            onClick={() => setClarificationOpen(false)}
+            type="button"
+          >
+            Cancel
+          </button>
           {error ? <p className="clarification-error" role="alert">{error}</p> : null}
         </form>
       ) : null}
@@ -4028,26 +4134,40 @@ function IssuePanel({
             <button onClick={() => setRoutingOpen(true)} type="button">→ Ask for evidence →</button>
           </div>
         ) : primaryAct === "build" ? (
-          <div className="issue-action-row">
+          <div className="issue-action-row is-build">
             <button
               disabled={pending || analysisRunning}
               onClick={() => void onIssueAction("apply", issue.recommendation)}
               type="button"
             >
-              {issue.primary_act ? "Build this in the plan" : "Apply this fix"}
+              Apply this fix →
             </button>
-            <button onClick={onAsk} type="button">Discuss</button>
+            <button onClick={() => setOtherWaysOpen((current) => !current)} type="button">
+              Other options ({Math.max(2, otherActs.length)})
+            </button>
+            <button onClick={() => setCustomResolutionOpen(true)} type="button">
+              Write my own →
+            </button>
           </div>
         ) : (
-          <div className="issue-action-row">
+          <div className="issue-action-row is-decision">
             <button
               disabled={pending || analysisRunning}
               onClick={() => void onIssueAction("select", issue.recommendation)}
               type="button"
             >
-              Record this decision
+              Draw the line →
             </button>
-            <button onClick={onAsk} type="button">Discuss</button>
+            <button
+              disabled={pending || analysisRunning}
+              onClick={() => void onIssueAction(
+                "select",
+                `Accepted on the record: ${issue.recommendation}`,
+              )}
+              type="button"
+            >
+              Accept on the record →
+            </button>
           </div>
         )}
         {!unassessed && otherActs.includes("verify") && primaryAct !== "verify" ? (
@@ -4130,22 +4250,24 @@ function IssuePanel({
         surface="issue_card"
       />
       <section className="issue-resolution-paths issue-detail-disclosure">
-        <button
-          aria-expanded={otherWaysOpen}
-          aria-label="Other ways to handle this"
-          className="issue-other-ways-disclosure issue-detail-disclosure-trigger"
-          onClick={() => setOtherWaysOpen((current) => !current)}
-          type="button"
-        >
-          <span aria-hidden="true" className="issue-detail-disclosure-icon">
-            <ArrowsSplit size={17} />
-          </span>
-          <span className="issue-detail-disclosure-copy">
-            <strong>Other ways to handle this</strong>
-            <small>Alternative approaches and tradeoffs.</small>
-          </span>
-          <CaretRight aria-hidden="true" size={13} />
-        </button>
+        {primaryAct !== "build" ? (
+          <button
+            aria-expanded={otherWaysOpen}
+            aria-label="Other ways to handle this"
+            className="issue-other-ways-disclosure issue-detail-disclosure-trigger"
+            onClick={() => setOtherWaysOpen((current) => !current)}
+            type="button"
+          >
+            <span aria-hidden="true" className="issue-detail-disclosure-icon">
+              <ArrowsSplit size={17} />
+            </span>
+            <span className="issue-detail-disclosure-copy">
+              <strong>Other ways to handle this</strong>
+              <small>Alternative approaches and tradeoffs.</small>
+            </span>
+            <CaretRight aria-hidden="true" size={13} />
+          </button>
+        ) : null}
         {otherWaysOpen ? (
           <div className="issue-other-ways-content issue-detail-disclosure-content">
             <div className="resolution-path">
@@ -4174,37 +4296,46 @@ function IssuePanel({
           <p>{selectedResolution}</p>
         </section>
       ) : null}
-      <section className="custom-resolution">
-        <h3>Write my own fix in {artifactLabel(issue.artifact_type)}</h3>
-        <textarea
-          aria-label="Custom resolution"
-          disabled={pending || analysisRunning}
-          maxLength={5_000}
-          onChange={(event) => setCustomResolution(event.target.value)}
-          placeholder="Describe the confirmed change to add to this artifact."
-          value={customResolution}
-        />
-        <button
-          disabled={!customResolution.trim() || pending || analysisRunning}
-          onClick={() => void onIssueAction("custom", customResolution)}
-          type="button"
-        >
-          Apply custom fix
-        </button>
-      </section>
+      {customResolutionOpen ? (
+        <section className="custom-resolution">
+          <h3>Write my own fix in {artifactLabel(issue.artifact_type)}</h3>
+          <textarea
+            aria-label="Custom resolution"
+            autoFocus
+            disabled={pending || analysisRunning}
+            maxLength={5_000}
+            onChange={(event) => setCustomResolution(event.target.value)}
+            placeholder="Describe the confirmed change to add to this artifact."
+            value={customResolution}
+          />
+          <div>
+            <button
+              disabled={!customResolution.trim() || pending || analysisRunning}
+              onClick={() => void onIssueAction("custom", customResolution)}
+              type="button"
+            >
+              Apply custom fix →
+            </button>
+            <button onClick={() => setCustomResolutionOpen(false)} type="button">Cancel</button>
+          </div>
+        </section>
+      ) : null}
       <section className={`issue-collaboration ${discussionVisible ? "is-visible" : ""}`}>
         <div className="issue-collaboration-heading">
           <div>
-            <h3>Discussion</h3>
-            <p>Append-only project comments. Mention teammates with @name.</p>
+            <h3>Discussion · on {issue.title}</h3>
+            <p>Anchored here · append-only</p>
           </div>
           <span>{comments.length}</span>
         </div>
         <div className="issue-comment-thread">
           {comments.map((comment) => (
             <article key={comment.id}>
+              <span aria-hidden="true" className="issue-comment-avatar">
+                {(comment.author_name || "You").slice(0, 1).toUpperCase()}
+              </span>
               <header>
-                <strong>{comment.author_name}</strong>
+                <strong>{comment.author_name || "You"}</strong>
                 <time dateTime={comment.created_at}>
                   {new Date(comment.created_at).toLocaleString()}
                 </time>
@@ -4212,7 +4343,7 @@ function IssuePanel({
               <p>{comment.body}</p>
             </article>
           ))}
-          {!comments.length ? <p className="issue-comment-empty">No comments yet.</p> : null}
+          {!comments.length ? <p className="issue-comment-empty">Start the discussion here.</p> : null}
         </div>
         <form className="issue-comment-form" onSubmit={submitComment}>
           <textarea
@@ -4220,13 +4351,24 @@ function IssuePanel({
             disabled={commentPending}
             maxLength={5_000}
             onChange={(event) => setCommentBody(event.target.value)}
-            placeholder="Add a comment or mention @teammate…"
+            placeholder="Reply… @mention a teammate"
             value={commentBody}
           />
+          <div className="issue-mention-shortcuts" aria-label="Mention shortcuts">
+            <button onClick={() => setCommentBody((value) => `${value}@Priya `)} type="button">@Priya</button>
+            <button onClick={() => setCommentBody((value) => `${value}@Dana `)} type="button">@Dana</button>
+            <button onClick={() => setCommentBody((value) => `${value}@team `)} type="button">@team</button>
+          </div>
+          <p><strong>Comments never change the read</strong> — only grounding does.</p>
           <button disabled={commentPending || !commentBody.trim()} type="submit">
-            {commentPending ? "Adding…" : "Add comment"}
+            {commentPending ? "Adding…" : "Comment"}
           </button>
         </form>
+        {discussionVisible ? (
+          <button className="issue-discussion-close" onClick={() => setDiscussionVisible(false)} type="button">
+            Close discussion
+          </button>
+        ) : null}
       </section>
       {!inline || externalComposerOpen ? (
         <section
