@@ -8,7 +8,9 @@ export function ThemeInitializer() {
     const media = window.matchMedia("(prefers-color-scheme: light)");
 
     const applyTheme = () => {
-      const preference = localStorage.getItem("oslo-theme") ?? "system";
+      const storedPreference = localStorage.getItem("oslo-theme");
+      const preference = storedPreference ?? "dark";
+      if (!storedPreference) localStorage.setItem("oslo-theme", preference);
       root.dataset.themePreference = preference;
       root.dataset.theme = preference === "system"
         ? (media.matches ? "light" : "dark")
