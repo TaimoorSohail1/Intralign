@@ -412,3 +412,35 @@ Date: 2026-08-17
 - No actionable P0, P1, or P2 visual, interaction, responsive, data-projection, or accessibility defect remains in the tested release scope.
 
 Result: passed
+
+---
+
+# Design QA — first-run onboarding alignment release
+
+Date: 2026-08-17
+
+## Source and verified state
+
+- Source screenshot: `reports/r2-onboarding-alignment-live-2026-08-17/before-misaligned-source.png` (1610 × 1213, including browser chrome).
+- Implementation screenshot: `reports/r2-onboarding-alignment-live-2026-08-17/implementation-aligned-1280x720.png` (1280 × 720 fixed in-app browser viewport).
+- Focused visual comparison: `reports/r2-onboarding-alignment-live-2026-08-17/before-after-focused-comparison.png`.
+- State reproduced: first-run project, outcome confirmed, one call remaining, primary issue expanded.
+- Both captures exercise the wide-desktop layout. Exact outer viewport dimensions differ because the current in-app browser viewport is fixed, so the alignment was additionally verified with direct DOM geometry.
+
+## Alignment result
+
+- First-run guidance group: left `318px`, right `1138px`, width `820px`.
+- Ranked issue panel: left `318px`, right `1138px`, width `820px`.
+- Horizontal edge delta: `0px`.
+- Horizontal page overflow: `0px`.
+- The guidance group now uses the same 900px shell origin and 820px content width as the ranked issue queue.
+
+## Release verification
+
+- Focused onboarding parity test: passed.
+- Web suite: 32 files / 235 tests passed.
+- ESLint, TypeScript, and the Next.js production build: passed.
+- Staging web release: `v24`; the deployed CSS asset contains the corrected shell-relative alignment rule.
+- No actionable P0, P1, or P2 visual, responsive, functional, or accessibility defect remains in this correction.
+
+final result: passed
