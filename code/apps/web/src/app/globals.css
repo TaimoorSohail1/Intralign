@@ -17764,3 +17764,35 @@ button.attention-cell { cursor: pointer; }
     transform: translate(-50%, -50%) !important;
   }
 }
+
+/* Shared read masthead: expanded integrity starts immediately below the route header
+   when that route does not render the overview-only outcome anchor. */
+@media (min-width: 901px) {
+  .project-shell.is-r2-slice-one.r2-integrity-without-outcome-anchor .integrity-read {
+    top: 46px;
+  }
+
+  .project-shell.is-r2-slice-one.r2-integrity-without-outcome-anchor.r2-integrity-expanded .project-grid,
+  .project-shell.is-r2-slice-one.r2-integrity-without-outcome-anchor.r2-integrity-expanded .project-grid.is-panel-closed {
+    height: calc(100dvh - 170px);
+    margin-top: 124px;
+  }
+
+  .project-shell.is-r2-slice-one.r2-integrity-without-outcome-anchor.r2-integrity-expanded .workspace-sidebar {
+    top: 170px;
+  }
+
+  .project-shell.is-r2-reports.r2-integrity-without-outcome-anchor .integrity-read {
+    top: 85px;
+  }
+
+  .project-shell.is-r2-reports.r2-integrity-without-outcome-anchor.r2-integrity-expanded .project-grid,
+  .project-shell.is-r2-reports.r2-integrity-without-outcome-anchor.r2-integrity-expanded .project-grid.is-panel-closed {
+    height: calc(100dvh - 209px);
+    margin-top: 124px;
+  }
+
+  .project-shell.is-r2-reports.r2-integrity-without-outcome-anchor.r2-integrity-expanded .workspace-sidebar {
+    top: 209px;
+  }
+}

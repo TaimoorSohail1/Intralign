@@ -1456,6 +1456,135 @@ export function ProjectOverview({
     />
   ) : null;
 
+  const integritySummary = (
+    <section
+      aria-label="Outcome Integrity summary"
+      className="confidence-read integrity-read"
+      id="r2-integrity-summary"
+    >
+      <div className="r2-integrity-copy">
+        <div className="confidence-topline">
+          <p className="eyebrow">Outcome integrity</p>
+          <span className={`snapshot-badge ${isProvisional ? "" : "is-current"}`}>
+            {snapshot.state.replace("_", "-")}
+          </span>
+        </div>
+        <div className="confidence-prototype-hero">
+          <strong>{integrityReadLabel(integrity)}</strong>
+          <div className="r2-integrity-limit-row">
+            <p>
+              limited by <b>{integrity.limiting_pillar}</b> — a composite is only as sound
+              as its weakest pillar
+            </p>
+            <button
+              aria-controls="r2-integrity-summary"
+              aria-expanded={r2IntegrityExpanded}
+              aria-label="Collapse Outcome Integrity"
+              className="r2-integrity-toggle"
+              onClick={() => setR2IntegrityExpanded(false)}
+              type="button"
+            >
+              Collapse <CaretDown aria-hidden="true" size={11} />
+            </button>
+          </div>
+          <p className="r2-grounding-read">
+            {groundingPillar?.band === "Sound"
+              ? "load-bearing details rest on your evidence, not OSLO’s inferences"
+              : "load-bearing details still rest on OSLO’s inferences, not your evidence"}
+          </p>
+        </div>
+        {snapshot.assessment.false_confidence ? (
+          <div className="false-confidence-warning" role="alert">
+            <Info aria-hidden="true" size={15} />
+            This read sits high on thin evidence. Confirm the supporting assumptions before
+            relying on it.
+          </div>
+        ) : null}
+        <div className="r2-maturity-row">
+          <span>Fragile</span>
+          <div
+            aria-label={`Outcome Integrity ${integrityReadLabel(integrity)}, limited by ${integrity.limiting_pillar}`}
+            className="confidence-ramp"
+            role="img"
+          >
+            {integrityBands.map((band, index) => (
+              <span className={index === integrityBandIndex ? "is-current" : ""} key={band}>
+                <i />
+                <small>{band}</small>
+              </span>
+            ))}
+          </div>
+          <span>Sound</span>
+          <small><b>as of this analysis</b> · live tracking begins at execution</small>
+        </div>
+        <details className="confidence-method">
+          <summary>Why a maturity read, not a probability?</summary>
+          <div className="r2-maturity-explanation">
+            <p>{snapshot.assessment.confidence_explanation}</p>
+            <div className="dimension-bars">
+              {dimensions.map((name) => {
+                const value = snapshot.assessment[name];
+                const limiting = name === snapshot.assessment.limiting_dimension;
+                const valueIndex = Math.max(
+                  0,
+                  confidenceBands.indexOf(value as (typeof confidenceBands)[number]),
+                );
+                return (
+                  <div className={limiting ? "is-limiting" : ""} key={name}>
+                    <span>{artifactLabel(name)}</span>
+                    <div
+                      aria-label={`${artifactLabel(name)}: ${value}`}
+                      className="dimension-ramp"
+                      role="img"
+                    >
+                      {confidenceBands.map((band, index) => (
+                        <i className={index <= valueIndex ? "is-filled" : ""} key={band} />
+                      ))}
+                    </div>
+                    <strong>{value}</strong>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </details>
+      </div>
+      <div className="integrity-pillars">
+        {integrity.decomposition.map((pillar) => (
+          <button
+            aria-label={`${pillar.key} ${pillar.band}`}
+            className={pillar.key === integrity.limiting_pillar ? "is-limiting" : ""}
+            key={pillar.key}
+            onClick={(event) => {
+              const issue = openIssues.find(
+                (candidate) => issuePillar(candidate) === pillar.key,
+              );
+              if (issue) {
+                openIssue(issue, event.currentTarget);
+                return;
+              }
+              router.push(
+                `/projects/${snapshot.project_id}/issues?pillar=${pillar.key.toLowerCase()}`,
+              );
+            }}
+            type="button"
+          >
+            <span>
+              <strong>
+                {pillar.key}
+                {pillar.key === integrity.limiting_pillar ? <em>Floor</em> : null}
+              </strong>
+              <b>{pillar.band}</b>
+            </span>
+            <i aria-hidden="true"><b style={{ width: `${pillar.basis * 100}%` }} /></i>
+            <small>{pillar.why[0]}</small>
+            <CaretRight aria-hidden="true" size={13} />
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+
   return (
     <main
       className={`project-shell ${isR2ReadView(initialView) ? "is-r2-slice-one" : ""} ${
@@ -1463,8 +1592,10 @@ export function ProjectOverview({
       } ${initialView === "reports" ? "is-r2-reports" : ""} ${
         initialView === "outcome" ? "is-r2-outcome" : ""
       } ${
-        (initialView === "overview" || isArtifactView(initialView)) && r2IntegrityExpanded
-          ? "r2-integrity-expanded"
+        r2IntegrityExpanded ? "r2-integrity-expanded" : ""
+      } ${
+        isR2ReadView(initialView) && initialView !== "overview"
+          ? "r2-integrity-without-outcome-anchor"
           : ""
       } ${initialView === "overview" && snapshot.first_run?.freeze_on ? "is-first-run-frozen" : ""
       } ${selectedIssue ? "has-issue" : ""} ${
@@ -1552,8 +1683,8 @@ export function ProjectOverview({
           <small>as of this analysis</small>
         </button>
         <div className="project-actions">
-          {isArtifactView(initialView) ||
-          (initialView === "overview" && !r2IntegrityExpanded) ? (
+          {(isR2ReadView(initialView) && !r2IntegrityExpanded) ||
+          isArtifactView(initialView) ? (
             <button
               aria-controls="r2-integrity-summary"
               aria-expanded={r2IntegrityExpanded}
@@ -1670,6 +1801,10 @@ export function ProjectOverview({
           </div>
         </section>
       ) : null}
+
+      {isR2ReadView(initialView) && initialView !== "overview" && r2IntegrityExpanded
+        ? integritySummary
+        : null}
 
       {confidenceBreakdownOpen ? (
         <IntegrityBreakdown
@@ -1995,123 +2130,7 @@ export function ProjectOverview({
                 )
               ) : null}
               <div className={`overview-stack ${hasFirstValue ? "has-first-value" : ""}`}>
-              <section
-                aria-label="Outcome Integrity summary"
-                className="confidence-read integrity-read"
-                id="r2-integrity-summary"
-              >
-                <div className="r2-integrity-copy">
-                  <div className="confidence-topline">
-                    <p className="eyebrow">Outcome integrity</p>
-                    <span className={`snapshot-badge ${isProvisional ? "" : "is-current"}`}>
-                      {snapshot.state.replace("_", "-")}
-                    </span>
-                  </div>
-                  <div className="confidence-prototype-hero">
-                    <strong>{integrityReadLabel(integrity)}</strong>
-                    <div className="r2-integrity-limit-row">
-                      <p>
-                        limited by <b>{integrity.limiting_pillar}</b> — a composite is only as sound as its weakest pillar
-                      </p>
-                      <button
-                        aria-controls="r2-integrity-summary"
-                        aria-expanded={r2IntegrityExpanded}
-                        aria-label="Collapse Outcome Integrity"
-                        className="r2-integrity-toggle"
-                        onClick={() => setR2IntegrityExpanded(false)}
-                        type="button"
-                      >
-                        Collapse <CaretDown aria-hidden="true" size={11} />
-                      </button>
-                    </div>
-                    <p className="r2-grounding-read">
-                      {groundingPillar?.band === "Sound"
-                        ? "load-bearing details rest on your evidence, not OSLO’s inferences"
-                        : "load-bearing details still rest on OSLO’s inferences, not your evidence"}
-                    </p>
-                  </div>
-                  {snapshot.assessment.false_confidence ? (
-                    <div className="false-confidence-warning" role="alert">
-                      <Info aria-hidden="true" size={15} />
-                      This read sits high on thin evidence. Confirm the supporting assumptions before relying on it.
-                    </div>
-                  ) : null}
-                  <div className="r2-maturity-row">
-                    <span>Fragile</span>
-                    <div
-                      aria-label={`Outcome Integrity ${integrityReadLabel(integrity)}, limited by ${integrity.limiting_pillar}`}
-                      className="confidence-ramp"
-                      role="img"
-                    >
-                      {integrityBands.map((band, index) => (
-                        <span className={index === integrityBandIndex ? "is-current" : ""} key={band}>
-                          <i />
-                          <small>{band}</small>
-                        </span>
-                      ))}
-                    </div>
-                    <span>Sound</span>
-                    <small><b>as of this analysis</b> · live tracking begins at execution</small>
-                  </div>
-                  <details className="confidence-method">
-                    <summary>Why a maturity read, not a probability?</summary>
-                    <div className="r2-maturity-explanation">
-                      <p>{snapshot.assessment.confidence_explanation}</p>
-                      <div className="dimension-bars">
-                        {dimensions.map((name) => {
-                          const value = snapshot.assessment[name];
-                          const limiting = name === snapshot.assessment.limiting_dimension;
-                          const valueIndex = Math.max(0, confidenceBands.indexOf(value as (typeof confidenceBands)[number]));
-                          return (
-                            <div className={limiting ? "is-limiting" : ""} key={name}>
-                              <span>{artifactLabel(name)}</span>
-                              <div aria-label={`${artifactLabel(name)}: ${value}`} className="dimension-ramp" role="img">
-                                {confidenceBands.map((band, index) => (
-                                  <i className={index <= valueIndex ? "is-filled" : ""} key={band} />
-                                ))}
-                              </div>
-                              <strong>{value}</strong>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </details>
-                </div>
-                <div className="integrity-pillars">
-                  {integrity.decomposition.map((pillar) => (
-                    <button
-                      aria-label={`${pillar.key} ${pillar.band}`}
-                      className={pillar.key === integrity.limiting_pillar ? "is-limiting" : ""}
-                      key={pillar.key}
-                      onClick={(event) => {
-                        const issue = openIssues.find(
-                          (candidate) => issuePillar(candidate) === pillar.key,
-                        );
-                        if (issue) {
-                          openIssue(issue, event.currentTarget);
-                          return;
-                        }
-                        router.push(
-                          `/projects/${snapshot.project_id}/issues?pillar=${pillar.key.toLowerCase()}`,
-                        );
-                      }}
-                      type="button"
-                    >
-                      <span>
-                        <strong>
-                          {pillar.key}
-                          {pillar.key === integrity.limiting_pillar ? <em>Floor</em> : null}
-                        </strong>
-                        <b>{pillar.band}</b>
-                      </span>
-                      <i aria-hidden="true"><b style={{ width: `${pillar.basis * 100}%` }} /></i>
-                      <small>{pillar.why[0]}</small>
-                      <CaretRight aria-hidden="true" size={13} />
-                    </button>
-                  ))}
-                </div>
-              </section>
+              {r2IntegrityExpanded ? integritySummary : null}
 
               <section className="start-here">
                 {workspaceNoticeOpen ? (

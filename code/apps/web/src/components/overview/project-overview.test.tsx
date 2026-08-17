@@ -1622,6 +1622,35 @@ describe("ProjectOverview", () => {
     );
   });
 
+  it.each(["outcome", "inference", "rollup", "grounding", "history", "reports"] as const)(
+    "keeps the Outcome Integrity expander available on the %s section",
+    (initialView) => {
+      const { container } = render(
+        <ProjectOverview
+          displayName="Alex"
+          initial={snapshot}
+          initialView={initialView}
+          logoutAction={vi.fn()}
+        />,
+      );
+
+      const integrityToggle = screen.getByRole("button", {
+        name: "Expand Outcome Integrity",
+      });
+      expect(integrityToggle).toBeVisible();
+
+      fireEvent.click(integrityToggle);
+
+      expect(container.querySelector("main")).toHaveClass("r2-integrity-expanded");
+      expect(
+        screen.getByRole("region", { name: "Outcome Integrity summary" }),
+      ).toBeVisible();
+      expect(
+        screen.getByRole("button", { name: "Collapse Outcome Integrity" }),
+      ).toBeVisible();
+    },
+  );
+
   it("does not count structured row body and bullet encodings as additional open inferences", () => {
     const structuredSnapshot: OverviewSnapshot = {
       ...snapshot,
