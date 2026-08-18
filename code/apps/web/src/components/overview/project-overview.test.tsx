@@ -1725,7 +1725,7 @@ describe("ProjectOverview", () => {
     expect(intentLink.querySelector(".is-open")).toBeNull();
   });
 
-  it("explains the deterministic maturity basis without another advisor call", () => {
+  it("explains the deterministic maturity basis without another advisor call", async () => {
     const fetcher = vi.fn();
     vi.stubGlobal("fetch", fetcher);
     render(
@@ -1736,12 +1736,23 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Why a maturity read, not a probability?"));
+    const disclosureSummary = screen.getByText("Why a maturity read, not a probability?");
+    const disclosure = disclosureSummary.closest("details");
+    fireEvent.click(disclosureSummary);
 
     expect(screen.getByText(snapshot.assessment.confidence_explanation)).toBeInTheDocument();
-    expect(screen.getByText("Clarity")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("main")).toHaveClass("r2-integrity-detail-open");
+    });
+    expect(disclosure).toHaveAttribute("open");
+    expect(within(disclosure as HTMLElement).queryByText("Clarity")).not.toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher).toHaveBeenCalledWith("/api/workspace", { cache: "no-store" });
+
+    fireEvent.click(disclosureSummary);
+    await waitFor(() => {
+      expect(screen.getByRole("main")).not.toHaveClass("r2-integrity-detail-open");
+    });
   });
 
   it("warns when a high confidence score rests on low-reliability evidence", () => {

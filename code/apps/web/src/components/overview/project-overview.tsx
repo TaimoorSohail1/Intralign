@@ -67,7 +67,6 @@ import { buildProjectProvenance } from "@/lib/project-provenance";
 import { currentReadSummary } from "@/lib/current-read-summary";
 
 const dimensions = ["clarity", "alignment", "feasibility"] as const;
-const confidenceBands = ["Very Low", "Low", "Moderate", "High", "Very High"] as const;
 const integrityBands = ["Fragile", "Weak", "Developing", "Solid", "Sound"] as const;
 const intralignLogo = "/intralign-logo.webp";
 export { intralignLogo };
@@ -324,6 +323,7 @@ export function ProjectOverview({
     (initialView === "overview" && !compactIssuesLanding && !initial.first_run?.freeze_on) ||
       initialView === "full_plan",
   );
+  const [r2IntegrityDetailOpen, setR2IntegrityDetailOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -1550,7 +1550,10 @@ export function ProjectOverview({
               aria-expanded={r2IntegrityExpanded}
               aria-label="Collapse Outcome Integrity"
               className="r2-integrity-toggle"
-              onClick={() => setR2IntegrityExpanded(false)}
+              onClick={() => {
+                setR2IntegrityDetailOpen(false);
+                setR2IntegrityExpanded(false);
+              }}
               type="button"
             >
               Collapse <CaretUp aria-hidden="true" size={11} />
@@ -1586,35 +1589,13 @@ export function ProjectOverview({
           <span>Sound</span>
           <small><b>as of this analysis</b> · live tracking begins at execution</small>
         </div>
-        <details className="confidence-method">
+        <details
+          className="confidence-method"
+          onToggle={(event) => setR2IntegrityDetailOpen(event.currentTarget.open)}
+        >
           <summary>Why a maturity read, not a probability?</summary>
           <div className="r2-maturity-explanation">
             <p>{snapshot.assessment.confidence_explanation}</p>
-            <div className="dimension-bars">
-              {dimensions.map((name) => {
-                const value = snapshot.assessment[name];
-                const limiting = name === snapshot.assessment.limiting_dimension;
-                const valueIndex = Math.max(
-                  0,
-                  confidenceBands.indexOf(value as (typeof confidenceBands)[number]),
-                );
-                return (
-                  <div className={limiting ? "is-limiting" : ""} key={name}>
-                    <span>{artifactLabel(name)}</span>
-                    <div
-                      aria-label={`${artifactLabel(name)}: ${value}`}
-                      className="dimension-ramp"
-                      role="img"
-                    >
-                      {confidenceBands.map((band, index) => (
-                        <i className={index <= valueIndex ? "is-filled" : ""} key={band} />
-                      ))}
-                    </div>
-                    <strong>{value}</strong>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </details>
       </div>
@@ -1664,6 +1645,8 @@ export function ProjectOverview({
         initialView === "outcome" ? "is-r2-outcome" : ""
       } ${
         r2IntegrityExpanded ? "r2-integrity-expanded" : ""
+      } ${
+        r2IntegrityDetailOpen ? "r2-integrity-detail-open" : ""
       } ${
         isR2ReadView(initialView) && initialView !== "overview"
           ? "r2-integrity-without-outcome-anchor"
