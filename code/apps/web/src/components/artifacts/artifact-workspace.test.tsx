@@ -161,7 +161,7 @@ describe("ArtifactWorkspace R2 plan artifacts", () => {
     expect(document.querySelector(".r2-schedule-row")).toHaveClass("is-yours");
   });
 
-  it("keeps schedule edits local until Apply changes and preserves real row data", async () => {
+  it("keeps schedule edits local until Save changes and preserves real row data", async () => {
     const onAnalysisStarted = vi.fn();
     const saved = { ...scheduleArtifact, version: 2, analysis_run: { run_id: "run-edit-001" } };
     vi.stubGlobal(
@@ -186,12 +186,37 @@ describe("ArtifactWorkspace R2 plan artifacts", () => {
     expect(screen.getByText("Changes not applied")).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole("button", { name: "Apply changes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
     const request = vi.mocked(fetch).mock.calls[1][1];
     const payload = JSON.parse(String(request?.body));
     expect(payload.content.sections[0].rows[1][3]).toBe("2026-08-22");
     expect(onAnalysisStarted).toHaveBeenCalledWith("run-edit-001");
+  });
+
+  it("cancels local artifact edits without saving or starting reanalysis", async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce(Response.json(scheduleArtifact));
+    vi.stubGlobal("fetch", fetcher);
+    render(
+      <ArtifactWorkspace
+        analysisRunning={false}
+        artifactType="schedule"
+        onAnalysisStarted={vi.fn()}
+        onAskOslo={vi.fn()}
+        onOpenIssue={vi.fn()}
+        projectId="project-001"
+      />,
+    );
+    const end = await screen.findByLabelText("End date for Steering review");
+    expect(end).toHaveValue("");
+    fireEvent.change(end, { target: { value: "2026-08-22" } });
+    expect(end).toHaveValue("2026-08-22");
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel changes" }));
+
+    expect(screen.getByLabelText("End date for Steering review")).toHaveValue("");
+    expect(screen.queryByText("Changes not applied")).not.toBeInTheDocument();
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
   it("shows a recoverable error when the artifact request fails", async () => {
@@ -375,7 +400,7 @@ describe("ArtifactWorkspace R2 plan artifacts", () => {
     expect(within(row as HTMLElement).getByRole("button", { name: /Delete/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: addLabel }));
     expect(screen.getByText("New statement")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Apply changes" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
   });
 
   it("shows an affected section issue once instead of under every requirement row", async () => {

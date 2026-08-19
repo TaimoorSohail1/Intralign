@@ -423,7 +423,7 @@ describe("ProjectOverview", () => {
     expect(screen.getByText("Old resolved resource issue")).toBeInTheDocument();
   });
 
-  it("opens the governed issue panel from an Issues workspace card", () => {
+  it("opens clarification only after the user explicitly asks OSLO", () => {
     render(
       <ProjectOverview
         displayName="Alex"
@@ -440,6 +440,9 @@ describe("ProjectOverview", () => {
     const panel = screen.getByRole("dialog", { name: "Issue details" });
     expect(panel).toHaveTextContent("Success metric is not measurable");
     expect(panel).toHaveTextContent("Why it matters");
+    expect(panel).not.toHaveTextContent("Clarification request");
+
+    fireEvent.click(within(panel).getByRole("button", { name: "Let OSLO ask you a question" }));
     expect(panel).toHaveTextContent("Clarification request");
   });
 
@@ -1145,10 +1148,11 @@ describe("ProjectOverview", () => {
       evidenceRef: "document:plan:page:1:fragment:0",
     });
 
-    const issueDetail = screen.getByRole("region", { name: "Issue details" });
-    const foldedProposal = screen
-      .getAllByRole("region", { name: "OSLO proposes" })
-      .find((region) => !issueDetail.contains(region))!;
+    await waitFor(() => {
+      expect(screen.queryByRole("region", { name: "Issue details" })).not.toBeInTheDocument();
+      expect(screen.getByRole("status", { name: "Issue action recorded" })).toBeInTheDocument();
+    });
+    const foldedProposal = screen.getByRole("region", { name: "OSLO proposes" });
     fireEvent.click(within(foldedProposal).getByRole("button", { name: "Accept Name a delivery fallback" }));
     await waitFor(() => expect(fetcher).toHaveBeenCalledWith(
       "/api/projects/project-001/proposals/proposal-1/decisions",
@@ -1829,7 +1833,7 @@ describe("ProjectOverview", () => {
     });
   });
 
-  it("restores the prototype advisor beside an inline issue when it was collapsed", () => {
+  it("keeps the prototype advisor collapsed while an issue panel is open", () => {
     render(
       <ProjectOverview
         displayName="Alex"
@@ -1848,7 +1852,10 @@ describe("ProjectOverview", () => {
     );
 
     expect(screen.getByRole("region", { name: "Issue details" })).toBeInTheDocument();
-    expect(screen.getByLabelText("OSLO project advisor")).toBeInTheDocument();
+    expect(screen.queryByLabelText("OSLO project advisor")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ask OSLO" })).toHaveClass(
+      "advisor-floating",
+    );
   });
 
   it("matches the first-run focus handoff after the outcome is confirmed", async () => {
@@ -1895,6 +1902,35 @@ describe("ProjectOverview", () => {
     expect(screen.getByRole("button", { name: /^Ask OSLO$/i })).toHaveClass(
       "advisor-floating",
     );
+  });
+
+  it("treats the first-run outcome confirmation as transient feedback", async () => {
+    vi.useFakeTimers();
+    window.sessionStorage.removeItem("r2-first-run-recorded:project-001");
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={{
+          ...snapshot,
+          first_run: {
+            first_run: true,
+            onboarded: false,
+            grounding_act_count: 1,
+            unlock_threshold: 2,
+            ever_unlocked: false,
+            freeze_on: true,
+          },
+        }}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    await act(async () => Promise.resolve());
+    expect(screen.getByText("You confirmed your outcome")).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(2300));
+
+    expect(screen.queryByText("You confirmed your outcome")).not.toBeInTheDocument();
+    expect(screen.getByText("One call down - you confirmed your outcome.")).toBeInTheDocument();
   });
 
   it("moves focus to the next ranked issue after the opened issue is confirmed", async () => {
@@ -1948,12 +1984,8 @@ describe("ProjectOverview", () => {
         within(queue).getByRole("button", { name: /Cutover fallback is unresolved/i }),
       ).toBeInTheDocument(),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Close issue" }));
-
     await waitFor(() =>
-      expect(
-        within(queue).getByRole("button", { name: /Cutover fallback is unresolved/i }),
-      ).toHaveFocus(),
+      expect(screen.queryByRole("region", { name: "Issue details" })).not.toBeInTheDocument(),
     );
   });
 
@@ -2075,10 +2107,10 @@ describe("ProjectOverview", () => {
     fireEvent.click(screen.getByRole("button", { name: "Other ways to handle this" }));
     fireEvent.click(screen.getByRole("button", { name: "Select this path" }));
 
-    const confirmation = (await screen.findByText("Confirmed by you")).closest("section");
-    expect(confirmation).not.toBeNull();
-    expect(within(confirmation!).getByText("Confirm an accountable owner.")).toBeInTheDocument();
-    expect(screen.getByLabelText("Issue status addressed")).toBeInTheDocument();
+    const confirmation = await screen.findByRole("status", { name: "Issue action recorded" });
+    expect(confirmation).toHaveTextContent("Migration ownership is unresolved");
+    expect(confirmation).toHaveTextContent("Settling to resolved");
+    expect(screen.queryByRole("region", { name: "Issue details" })).not.toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith(
       "/api/projects/project-001/issues/ISS-001/actions",
       expect.objectContaining({ method: "POST" }),
@@ -2154,14 +2186,8 @@ describe("ProjectOverview", () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("region", { name: "Issue details" })).toHaveAttribute(
-        "aria-describedby",
-        "issue-analysis-pending-status",
-      );
-      expect(screen.getByLabelText("Issue status addressed")).toBeInTheDocument();
-      expect(screen.getByText("Waiting for reanalysis")).toBeInTheDocument();
-      expect(screen.getByText("Your read is safely out of date.")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Undo last change" })).toBeInTheDocument();
+      expect(screen.queryByRole("region", { name: "Issue details" })).not.toBeInTheDocument();
+      expect(screen.queryByText("Your read is safely out of date.")).not.toBeInTheDocument();
       expect(screen.getByRole("status", { name: "Issue action recorded" })).toHaveTextContent(
         "Migration ownership is unresolved",
       );
@@ -2214,15 +2240,11 @@ describe("ProjectOverview", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole("region", { name: "Issue details" })).toHaveAttribute(
-        "aria-describedby",
-        "issue-analysis-pending-status",
+      expect(screen.queryByRole("region", { name: "Issue details" })).not.toBeInTheDocument();
+      expect(screen.getByRole("status", { name: "Issue action recorded" })).toHaveTextContent(
+        "Migration ownership is unresolved",
       );
-      expect(screen.getByText("Re-analyzing…")).toBeInTheDocument();
-      expect(screen.getByText("Saved · Analysis pending")).toBeInTheDocument();
-      expect(screen.getByLabelText("Issue status addressed")).toBeInTheDocument();
-      expect(screen.getByText("Your read is safely out of date.")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Undo last change" })).toBeInTheDocument();
+      expect(screen.queryByText("Your read is safely out of date.")).not.toBeInTheDocument();
     });
   });
 
@@ -2605,6 +2627,41 @@ describe("ProjectOverview", () => {
     await waitFor(() => {
       expect(refresh).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it("clears recorded action feedback while reanalysis continues", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        issue_id: "ISS-001",
+        act: "confirm",
+        status: "addressed",
+        analysis_run: {
+          run_id: "run-apply-001",
+          project_id: "project-001",
+          kind: "extended",
+          status: "queued",
+          consolidated_event_ids: ["event-apply-001"],
+        },
+      }),
+    }));
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
+
+    await act(async () => Promise.resolve());
+    expect(screen.getByRole("status", { name: "Issue action recorded" })).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(2700));
+
+    expect(screen.queryByRole("status", { name: "Issue action recorded" })).not.toBeInTheDocument();
+    expect(screen.getByText("Your read is safely out of date.")).toBeInTheDocument();
   });
 
   it("opens the tour on the read workspace when launched from another project view", () => {

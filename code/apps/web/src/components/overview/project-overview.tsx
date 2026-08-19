@@ -7,7 +7,6 @@ import {
   CaretDown,
   CaretRight,
   CaretUp,
-  ChatTeardropDots,
   CheckCircle,
   ClockCounterClockwise,
   Diamond,
@@ -312,7 +311,9 @@ export function ProjectOverview({
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(
     initial.assessment.issues.find((issue) => issue.id === initialIssueId) ?? null,
   );
-  const [advisorOpen, setAdvisorOpen] = useState(true);
+  const [advisorOpen, setAdvisorOpen] = useState(
+    () => !initial.first_run?.freeze_on,
+  );
   const [advisorWide, setAdvisorWide] = useState(false);
   const [workspaceNoticeOpen, setWorkspaceNoticeOpen] = useState(
     !initial.first_run?.freeze_on,
@@ -354,6 +355,7 @@ export function ProjectOverview({
   const [issueActionPending, setIssueActionPending] = useState(false);
   const [issueActionError, setIssueActionError] = useState<string | null>(null);
   const [issueActionFeedback, setIssueActionFeedback] = useState<IssueActionFeedback | null>(null);
+  const [showFirstRunRecorded, setShowFirstRunRecorded] = useState(false);
   const [proposals, setProposals] = useState(initialProposals);
   const [proposalActionPending, setProposalActionPending] = useState<string | null>(null);
   const [proposalOpen, setProposalOpen] = useState(true);
@@ -371,7 +373,7 @@ export function ProjectOverview({
       : null;
   });
   const advisorInFlight = useRef(false);
-  const advisorStateBeforeIssue = useRef(true);
+  const advisorStateBeforeIssue = useRef(!initial.first_run?.freeze_on);
   const firstRunIssueOpened = useRef(false);
   const previousFirstRunFreeze = useRef(Boolean(initial.first_run?.freeze_on));
   const issueTrigger = useRef<HTMLElement | null>(null);
@@ -525,6 +527,10 @@ export function ProjectOverview({
       firstRunIssueOpened.current = false;
       return;
     }
+    if (initialView === "overview") {
+      advisorStateBeforeIssue.current = false;
+      setAdvisorOpen(false);
+    }
     if (
       initialView !== "overview" ||
       firstRun.grounding_act_count < 1 ||
@@ -534,9 +540,7 @@ export function ProjectOverview({
       return;
     }
     firstRunIssueOpened.current = true;
-    advisorStateBeforeIssue.current = false;
     issueTrigger.current = null;
-    setAdvisorOpen(false);
     setSelectedIssue(rankedIssues[0]);
   }, [initialView, rankedIssues, snapshot.first_run]);
 
@@ -714,10 +718,54 @@ export function ProjectOverview({
   }, [analysisUpdateRunId, snapshot.project_id]);
 
   useEffect(() => {
-    if (!issueActionFeedback || analysisUpdateRunId) return;
-    const timer = window.setTimeout(() => setIssueActionFeedback(null), 8000);
+    if (!issueActionFeedback) return;
+    const revealFeedback = () => {
+      const region = mainScrollRegion.current;
+      if (!region) return;
+      if (typeof region.scrollTo === "function") {
+        region.scrollTo({ behavior: "auto", top: 0 });
+        return;
+      }
+      region.scrollTop = 0;
+    };
+    revealFeedback();
+    const frame = window.requestAnimationFrame(revealFeedback);
+    const timer = window.setTimeout(() => setIssueActionFeedback(null), 2600);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
+  }, [issueActionFeedback]);
+
+  useEffect(() => {
+    if (!snapshot.first_run?.freeze_on || snapshot.first_run.grounding_act_count < 1) {
+      setShowFirstRunRecorded(false);
+      return;
+    }
+    const storageKey = `r2-first-run-recorded:${snapshot.project_id}`;
+    const storedValue = window.sessionStorage.getItem(storageKey);
+    if (storedValue === "done") {
+      setShowFirstRunRecorded(false);
+      return;
+    }
+    const now = Date.now();
+    const storedDeadline = Number(storedValue);
+    if (storedValue && Number.isFinite(storedDeadline) && storedDeadline <= now) {
+      window.sessionStorage.setItem(storageKey, "done");
+      setShowFirstRunRecorded(false);
+      return;
+    }
+    const deadline = Number.isFinite(storedDeadline) && storedDeadline > now
+      ? storedDeadline
+      : now + 2200;
+    window.sessionStorage.setItem(storageKey, String(deadline));
+    setShowFirstRunRecorded(true);
+    const timer = window.setTimeout(() => {
+      window.sessionStorage.setItem(storageKey, "done");
+      setShowFirstRunRecorded(false);
+    }, Math.max(0, deadline - now));
     return () => window.clearTimeout(timer);
-  }, [analysisUpdateRunId, issueActionFeedback]);
+  }, [snapshot.first_run?.freeze_on, snapshot.first_run?.grounding_act_count, snapshot.project_id]);
 
   useEffect(() => {
     const handleProjectShortcut = (event: KeyboardEvent) => {
@@ -927,7 +975,6 @@ export function ProjectOverview({
   const openIssue = (issue: Issue, trigger?: HTMLElement | null) => {
     advisorStateBeforeIssue.current = advisorOpen;
     issueTrigger.current = trigger ?? (document.activeElement as HTMLElement | null);
-    setAdvisorOpen(initialView === "overview");
     setSelectedIssue(issue);
     setClarificationAnswer("");
     setClarificationError(null);
@@ -947,6 +994,14 @@ export function ProjectOverview({
       );
       (queueButton ?? (returnFocus?.isConnected ? returnFocus : null) ?? nextQueueButton)?.focus();
     }, 0);
+  };
+
+  const closeIssueAfterGovernedAction = (issueId: string) => {
+    if (selectedIssue?.id !== issueId) return;
+    setSelectedIssue(null);
+    setClarificationAnswer("");
+    setClarificationError(null);
+    setAdvisorOpen(advisorStateBeforeIssue.current);
   };
   const closeIntegrityBreakdown = () => {
     setConfidenceBreakdownOpen(false);
@@ -1112,6 +1167,7 @@ export function ProjectOverview({
       );
       showQueuedReadChange(result);
       setAnalysisUpdateRunId(result.run_id);
+      closeIssueAfterGovernedAction(selectedIssue.id);
     } catch (error) {
       setClarificationError(
         error instanceof Error
@@ -1128,8 +1184,9 @@ export function ProjectOverview({
     resolution: string,
   ) => {
     if (!selectedIssue || !resolution.trim() || issueActionPending) return;
+    const actedIssue = selectedIssue;
     const normalizedResolution = resolution.trim();
-    const signature = `${selectedIssue.id}:${action}:${normalizedResolution}`;
+    const signature = `${actedIssue.id}:${action}:${normalizedResolution}`;
     if (issueActionIdempotency.current?.signature !== signature) {
       issueActionIdempotency.current = {
         signature,
@@ -1140,7 +1197,7 @@ export function ProjectOverview({
     setIssueActionError(null);
     try {
       const response = await fetch(
-        `/api/projects/${snapshot.project_id}/issues/${encodeURIComponent(selectedIssue.id)}/actions`,
+        `/api/projects/${snapshot.project_id}/issues/${encodeURIComponent(actedIssue.id)}/actions`,
         {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -1157,15 +1214,15 @@ export function ProjectOverview({
       }
       setSelectedResolutions((current) => ({
         ...current,
-        [selectedIssue.id]: result.selected_resolution,
+        [actedIssue.id]: result.selected_resolution,
       }));
       updateIssueLifecycle(
-        selectedIssue.id,
+        actedIssue.id,
         "addressed",
         result.selected_resolution,
       );
       showIssueActionRecorded(
-        selectedIssue,
+        actedIssue,
         action === "apply" || action === "custom"
           ? "Settling to needs grounding"
           : "Settling to resolved",
@@ -1177,6 +1234,7 @@ export function ProjectOverview({
         showQueuedReadChange(result.analysis_run);
         setAnalysisUpdateRunId(result.analysis_run.run_id);
       }
+      closeIssueAfterGovernedAction(actedIssue.id);
     } catch (error) {
       setIssueActionError(
         error instanceof Error
@@ -1280,6 +1338,9 @@ export function ProjectOverview({
       if (result.analysis_run?.run_id) {
         showQueuedReadChange(result.analysis_run);
         setAnalysisUpdateRunId(result.analysis_run.run_id);
+      }
+      if (act !== "route") {
+        closeIssueAfterGovernedAction(issue.id);
       }
     } catch (error) {
       setIssueActionError(
@@ -1389,7 +1450,9 @@ export function ProjectOverview({
     }
   };
 
-  const panelVisible = advisorOpen || Boolean(selectedIssue && initialView !== "overview");
+  const issueSidepanelVisible = Boolean(selectedIssue && initialView !== "overview");
+  const advisorVisible = advisorOpen && !issueSidepanelVisible;
+  const panelVisible = advisorVisible || issueSidepanelVisible;
   const activeTourStep = tourStep ?? 0;
   const beginTour = (replay = false) => {
     if (replay) localStorage.removeItem("oslo_orientation_seen");
@@ -1764,16 +1827,6 @@ export function ProjectOverview({
           >
             <MagnifyingGlass aria-hidden="true" size={16} />
           </button>
-          {!panelVisible ? (
-            <button
-              className="advisor-reopen"
-              onClick={() => setAdvisorOpen(true)}
-              type="button"
-            >
-              <ChatTeardropDots aria-hidden="true" size={15} />
-              OSLO
-            </button>
-          ) : null}
         </div>
       </header>
 
@@ -2079,7 +2132,10 @@ export function ProjectOverview({
           ) : null}
           {initialView === "overview" ? (
             <>
-              {snapshot.freshness && snapshot.freshness.state !== "fresh" ? (
+              {!snapshot.first_run?.freeze_on &&
+              !issueActionFeedback &&
+              snapshot.freshness &&
+              snapshot.freshness.state !== "fresh" ? (
                 <section
                   aria-label="Read freshness"
                   className={`r2-read-freshness is-${snapshot.freshness?.state}`}
@@ -2150,14 +2206,16 @@ export function ProjectOverview({
               {snapshot.first_run?.freeze_on ? (
                 snapshot.first_run.grounding_act_count > 0 ? (
                   <div className="r2-first-run-focus-copy">
-                    <section className="r2-first-run-recorded" role="status">
-                      <CheckCircle aria-hidden="true" size={34} weight="duotone" />
-                      <div>
-                        <small>Recorded</small>
-                        <strong>You confirmed your outcome</strong>
-                        <p>The read now rests on your goal, not OSLO&apos;s guess. OSLO will re-read to reflect it.</p>
-                      </div>
-                    </section>
+                    {showFirstRunRecorded ? (
+                      <section className="r2-first-run-recorded" role="status">
+                        <CheckCircle aria-hidden="true" size={34} weight="duotone" />
+                        <div>
+                          <small>Recorded</small>
+                          <strong>You confirmed your outcome</strong>
+                          <p>The read now rests on your goal, not OSLO&apos;s guess. OSLO will re-read to reflect it.</p>
+                        </div>
+                      </section>
+                    ) : null}
                     <section className="r2-first-run-guide is-one-call" aria-label="First run guidance">
                       <LockSimple aria-hidden="true" size={16} weight="duotone" />
                       <div>
@@ -2569,7 +2627,7 @@ export function ProjectOverview({
           )}
         </section>
 
-        {selectedIssue && initialView !== "overview" ? issuePanel : advisorOpen ? (
+        {issueSidepanelVisible ? issuePanel : advisorVisible ? (
           <div
             className="project-sidepanel-slot"
           >
@@ -2609,11 +2667,14 @@ export function ProjectOverview({
         ) : null}
       </div>
 
-      {!panelVisible ? (
+      {!advisorVisible ? (
         <button
           aria-label="Ask OSLO"
           className="advisor-floating"
-          onClick={() => setAdvisorOpen(true)}
+          onClick={() => {
+            if (issueSidepanelVisible) setSelectedIssue(null);
+            setAdvisorOpen(true);
+          }}
           type="button"
         >
           <Sparkle aria-hidden="true" size={14} weight="fill" />
@@ -4041,7 +4102,7 @@ function IssuePanel({
           </div>
         ) : null}
       </section>
-      {issue.clarification && (!inline || clarificationOpen || analysisRunning) ? (
+      {issue.clarification && clarificationOpen ? (
         <form className="clarification-form" onSubmit={onSubmit}>
           <h3><span className="sr-only">Clarification request. </span>◆ Answer OSLO&apos;s question</h3>
           <strong>{issue.clarification}</strong>
@@ -4162,7 +4223,7 @@ function IssuePanel({
             Verify with evidence
           </button>
         ) : null}
-        {inline && issue.clarification ? (
+        {issue.clarification ? (
           <button
             aria-expanded={clarificationOpen}
             aria-label="Let OSLO ask you a question"

@@ -3319,6 +3319,12 @@ button.attention-cell { cursor: pointer; }
 .artifact-save-state.is-stale,
 .artifact-save-state.is-reanalyzing { color: #d6aa4a; }
 .artifact-save-state.is-error { color: #ef7772; }
+.artifact-change-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.artifact-cancel-button,
 .artifact-apply-button {
   min-height: 28px;
   padding: 0 10px;
@@ -3330,6 +3336,15 @@ button.attention-cell { cursor: pointer; }
   font-size: 8px;
   font-weight: 700;
   cursor: pointer;
+}
+.artifact-cancel-button {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--muted);
+}
+.artifact-cancel-button:hover {
+  border-color: var(--muted);
+  color: var(--text);
 }
 .artifact-apply-button:hover {
   border-color: var(--primary);
@@ -18579,5 +18594,13 @@ button.attention-cell { cursor: pointer; }
 @media (max-width: 900px) {
   .project-shell.is-r2-slice-one .r2-maturity-row .confidence-ramp {
     padding: 0;
+  }
+}
+
+/* The collapsed OSLO state is a rail, not an empty sidebar column. Keep this
+   final so it wins over the shared Slice 1 desktop grid declarations above. */
+@media (min-width: 901px) {
+  .project-shell.is-r2-slice-one .project-grid.is-panel-closed {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -622,7 +622,7 @@ export function ArtifactWorkspace({
       return;
     }
     if (hasEmptySection(content)) {
-      setError("Complete or remove empty sections before applying changes");
+      setError("Complete or remove empty sections before saving changes");
       setStatus("editing");
       return;
     }
@@ -676,6 +676,17 @@ export function ArtifactWorkspace({
     mutator(nextContent);
     setContent(nextContent);
     stageContent(nextContent);
+  }
+
+  function cancelChanges() {
+    if (!artifact) return;
+    setContent(cloneContent(artifact.content));
+    historyRef.current = [];
+    futureRef.current = [];
+    setHistoryDepth(0);
+    setFutureDepth(0);
+    setError(null);
+    setStatus("saved");
   }
 
   useEffect(() => {
@@ -957,14 +968,23 @@ export function ArtifactWorkspace({
                   : "Up to date"}
           </span>
           {displayStatus === "editing" || displayStatus === "error" ? (
-            <button
-              className="artifact-apply-button"
-              disabled={hasEmptySection(content)}
-              onClick={() => void applyChanges()}
-              type="button"
-            >
-              Apply changes
-            </button>
+            <div className="artifact-change-actions">
+              <button
+                className="artifact-cancel-button"
+                onClick={cancelChanges}
+                type="button"
+              >
+                Cancel changes
+              </button>
+              <button
+                className="artifact-apply-button"
+                disabled={hasEmptySection(content)}
+                onClick={() => void applyChanges()}
+                type="button"
+              >
+                Save changes
+              </button>
+            </div>
           ) : null}
         </div>
         {displayStatus === "editing" ||
@@ -972,7 +992,7 @@ export function ArtifactWorkspace({
         displayStatus === "stale" ? (
           <p className={`artifact-state-hint is-${displayStatus}`}>
             {displayStatus === "editing"
-              ? "Changes stay local until you apply them. Undoing back to the current version starts no analysis."
+              ? "Changes stay local until you save them. Undoing back to the current version starts no analysis."
               : displayStatus === "saving"
                 ? "Saving one governed artifact revision and preparing one re-analysis."
                 : "Your change is saved as project evidence. The current read remains available while OSLO re-analyzes it."}
