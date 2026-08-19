@@ -27,8 +27,16 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import type { FormEvent, RefObject } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import type { FormEvent, RefObject, SetStateAction } from "react";
 
 import type {
   CollaborationRollUpProjection,
@@ -269,6 +277,31 @@ function issueResolutionMap(issues: Issue[]) {
   );
 }
 
+function useProjectAdvisorState(projectId: string, initialOpen: boolean) {
+  const storageKey = `oslo:advisor-open:${projectId}`;
+  const [open, setOpenState] = useState(initialOpen);
+
+  useLayoutEffect(() => {
+    const stored = window.sessionStorage.getItem(storageKey);
+    const nextOpen = initialOpen && stored !== "false";
+    setOpenState(nextOpen);
+    window.sessionStorage.setItem(storageKey, String(nextOpen));
+  }, [initialOpen, storageKey]);
+
+  const setOpen = useCallback(
+    (value: SetStateAction<boolean>) => {
+      setOpenState((current) => {
+        const nextOpen = typeof value === "function" ? value(current) : value;
+        window.sessionStorage.setItem(storageKey, String(nextOpen));
+        return nextOpen;
+      });
+    },
+    [storageKey],
+  );
+
+  return [open, setOpen] as const;
+}
+
 export function ProjectOverview({
   initial,
   displayName,
@@ -311,8 +344,9 @@ export function ProjectOverview({
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(
     initial.assessment.issues.find((issue) => issue.id === initialIssueId) ?? null,
   );
-  const [advisorOpen, setAdvisorOpen] = useState(
-    () => !initial.first_run?.freeze_on,
+  const [advisorOpen, setAdvisorOpen] = useProjectAdvisorState(
+    initial.project_id,
+    !initial.first_run?.freeze_on,
   );
   const [advisorWide, setAdvisorWide] = useState(false);
   const [workspaceNoticeOpen, setWorkspaceNoticeOpen] = useState(

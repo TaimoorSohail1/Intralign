@@ -1655,6 +1655,36 @@ describe("ProjectOverview", () => {
     );
   });
 
+  it("keeps OSLO collapsed when navigating between project sections", () => {
+    const overview = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        initialView="overview"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide the OSLO panel" }));
+    expect(sessionStorage.getItem("oslo:advisor-open:project-001")).toBe("false");
+    overview.unmount();
+
+    const history = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        initialView="history"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(history.container.querySelector(".project-grid")).toHaveClass("is-panel-closed");
+    expect(screen.queryByLabelText("OSLO project advisor")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ask OSLO" })).toHaveClass(
+      "advisor-floating",
+    );
+  });
+
   it.each(["outcome", "inference", "rollup", "grounding", "history", "reports"] as const)(
     "keeps the Outcome Integrity expander available on the %s section",
     (initialView) => {
