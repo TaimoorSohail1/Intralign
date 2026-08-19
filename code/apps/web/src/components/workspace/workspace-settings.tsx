@@ -42,6 +42,46 @@ const collaborationNotifications = [
   ["Shared with me", "when a project is shared with you"],
 ] as const;
 
+const transientSettingsStatuses = new Set([408, 425, 429]);
+
+function waitForSettingsRetry(signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      signal.removeEventListener("abort", abort);
+      resolve();
+    }, 160);
+    const abort = () => {
+      window.clearTimeout(timer);
+      reject(new DOMException("The settings request was aborted.", "AbortError"));
+    };
+    signal.addEventListener("abort", abort, { once: true });
+  });
+}
+
+async function loadSettingsResource<T>(url: string, signal: AbortSignal): Promise<T> {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let response: Response;
+    try {
+      response = await fetch(url, { signal });
+    } catch (reason) {
+      if (signal.aborted || attempt === 1) throw reason;
+      await waitForSettingsRetry(signal);
+      continue;
+    }
+
+    if (response.ok) return response.json() as Promise<T>;
+
+    const payload = await response.json().catch(() => null);
+    const transient = response.status >= 500 || transientSettingsStatuses.has(response.status);
+    if (transient && attempt === 0) {
+      await waitForSettingsRetry(signal);
+      continue;
+    }
+    throw new Error(payload?.message ?? "Settings could not be loaded.");
+  }
+  throw new Error("Settings could not be loaded.");
+}
+
 export function WorkspaceSettingsDialog({
   displayName,
   initialSection = "profile",
@@ -61,28 +101,24 @@ export function WorkspaceSettingsDialog({
   useEffect(() => {
     if (!open) return;
     const controller = new AbortController();
-    const resetTimer = window.setTimeout(() => setError(null), 0);
-    Promise.all([
-      fetch("/api/workspace/preferences", { signal: controller.signal }),
-      fetch("/api/workspace", { signal: controller.signal }),
-    ])
-      .then(async ([preferencesResponse, workspaceResponse]) => {
-        if (!preferencesResponse.ok || !workspaceResponse.ok) {
-          throw new Error("Settings could not be loaded.");
-        }
-        const [nextPreferences, nextWorkspace] = await Promise.all([
-          preferencesResponse.json() as Promise<WorkspacePreferences>,
-          workspaceResponse.json() as Promise<WorkspaceSummary>,
-        ]);
-        setPreferences(nextPreferences);
-        setWorkspace(nextWorkspace);
-      })
-      .catch((reason: unknown) => {
-        if (controller.signal.aborted) return;
-        setError(reason instanceof Error ? reason.message : "Settings could not be loaded.");
-      });
+    const loadTimer = window.setTimeout(() => {
+      setError(null);
+      void Promise.all([
+        loadSettingsResource<WorkspacePreferences>("/api/workspace/preferences", controller.signal),
+        loadSettingsResource<WorkspaceSummary>("/api/workspace", controller.signal),
+      ])
+        .then(([nextPreferences, nextWorkspace]) => {
+          if (controller.signal.aborted) return;
+          setPreferences(nextPreferences);
+          setWorkspace(nextWorkspace);
+        })
+        .catch((reason: unknown) => {
+          if (controller.signal.aborted) return;
+          setError(reason instanceof Error ? reason.message : "Settings could not be loaded.");
+        });
+    }, 0);
     return () => {
-      window.clearTimeout(resetTimer);
+      window.clearTimeout(loadTimer);
       controller.abort();
     };
   }, [open, retry]);
@@ -94,7 +130,7 @@ export function WorkspaceSettingsDialog({
         <section aria-label="Settings" aria-modal="true" className="settings-dialog settings-dialog-status" role="dialog">
           <button aria-label="Close settings" className="settings-dialog-close" onClick={onClose} type="button"><X size={18} /></button>
           {error ? (
-            <><strong>Settings could not be loaded.</strong><p>{error}</p><button className="settings-primary-button" onClick={() => setRetry((value) => value + 1)} type="button">Try again</button></>
+            <><strong>Settings could not be loaded.</strong><p>{error}</p><button className="settings-primary-button" onClick={() => { setError(null); setRetry((value) => value + 1); }} type="button">Try again</button></>
           ) : <p role="status">Loading settings…</p>}
         </section>
       </div>

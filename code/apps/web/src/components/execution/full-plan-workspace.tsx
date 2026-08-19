@@ -1,6 +1,6 @@
 "use client";
 
-import { DownloadSimple, FileText, X } from "@phosphor-icons/react";
+import { DownloadSimple, FileText, Sparkle, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -53,6 +53,7 @@ export function FullPlanWorkspace({
   const [exportOpen, setExportOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf");
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(true);
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -150,6 +151,42 @@ export function FullPlanWorkspace({
 
   return (
     <section className="full-plan-workspace" aria-labelledby="full-plan-heading">
+      <nav aria-label="Full plan breadcrumb" className="full-plan-breadcrumb">
+        <span>Outcome</span>
+        <b aria-hidden="true">›</b>
+        <span>Execution</span>
+        <b aria-hidden="true">›</b>
+        <strong>Full plan · export</strong>
+      </nav>
+
+      {statusOpen ? (
+        <aside aria-label="Full plan status" className="full-plan-status" role="note">
+          <Sparkle aria-hidden="true" size={18} weight="fill" />
+          <div>
+            <strong>
+              {snapshot.assessment.integrity.limiting_pillar} is the current gate.
+            </strong>
+            <p>
+              Outcome Integrity is {snapshot.assessment.integrity.level}. This read-only
+              view follows the latest completed analysis and combines the governed plan
+              for export.
+            </p>
+            <div>
+              <span>{snapshot.assessment.integrity.limiting_pillar.toUpperCase()} GATES</span>
+              <b aria-hidden="true">→</b>
+              <span>FULL PLAN FOLLOWS THE READ</span>
+            </div>
+          </div>
+          <button
+            aria-label="Dismiss Full Plan status"
+            onClick={() => setStatusOpen(false)}
+            type="button"
+          >
+            <X aria-hidden="true" size={14} />
+          </button>
+        </aside>
+      ) : null}
+
       <header className="full-plan-heading">
         <span>Execution</span>
         <h1 id="full-plan-heading">Full plan · export</h1>

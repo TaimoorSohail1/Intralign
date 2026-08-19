@@ -23,15 +23,18 @@ export default async function FullPlanPage({
   let snapshot;
   let proposals: IssueProposalSummary[] = [];
   try {
-    const [overview, currentArtifacts, currentProposals] = await Promise.all([
-      getOverview(accessToken, projectId),
-      Promise.all(
+    const overview = await getOverview(accessToken, projectId);
+    const [artifactResults, currentProposals] = await Promise.all([
+      Promise.allSettled(
         ["work_breakdown", "schedule", "resources"].map((artifactType) =>
           getProjectArtifact(accessToken, projectId, artifactType),
         ),
       ),
-      getProjectIssueProposals({ accessToken, projectId }),
+      getProjectIssueProposals({ accessToken, projectId }).catch(() => []),
     ]);
+    const currentArtifacts = artifactResults.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : [],
+    );
     snapshot = withCurrentFullPlanArtifacts(overview, currentArtifacts);
     proposals = currentProposals;
   } catch {

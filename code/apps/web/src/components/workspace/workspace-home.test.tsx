@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -6,6 +9,7 @@ import type { WorkspaceSummary } from "@/lib/server/oslo-api";
 import { WorkspaceHome } from "./workspace-home";
 
 const push = vi.fn();
+const workspaceStyles = readFileSync(resolve(process.cwd(), "src/app/globals.css"), "utf8");
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
@@ -108,6 +112,14 @@ describe("WorkspaceHome", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("uses the prototype dark surface for the active-project capacity modal", () => {
+    const modalStyles = workspaceStyles.match(/\.project-capacity-modal\s*\{(?<body>[^}]*)\}/)?.groups?.body;
+
+    expect(modalStyles).toContain("background: #171c21");
+    expect(modalStyles).toContain("color: #e8ecef");
+    expect(modalStyles).not.toContain("#f7f7f5");
+  });
+
   it("archives without deleting and exposes the retained project", async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 204 }));
     render(<WorkspaceHome displayName="Taimoor" initial={workspace} />);
@@ -198,7 +210,7 @@ describe("WorkspaceHome", () => {
     fireEvent.click(newProject);
 
     await waitFor(() => {
-      expect(screen.getByRole("dialog", { name: "Start another project" })).toBeInTheDocument();
+      expect(screen.getByRole("dialog", { name: "Run more than one plan" })).toBeInTheDocument();
       expect(fetch).toHaveBeenCalledWith("/api/projects/new", { method: "POST" });
     });
 
@@ -221,9 +233,9 @@ describe("WorkspaceHome", () => {
       />,
     );
 
-    expect(await screen.findByRole("dialog", { name: "Start another project" })).toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: "Start another project" })).toHaveTextContent(
-      "compare plans or archive Active transformation first",
+    expect(await screen.findByRole("dialog", { name: "Run more than one plan" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Run more than one plan" })).toHaveTextContent(
+      "Working several plans in your workspace",
     );
     expect(fetch).toHaveBeenCalledWith("/api/projects/new", { method: "POST" });
   });
@@ -246,7 +258,7 @@ describe("WorkspaceHome", () => {
 
     render(<WorkspaceHome displayName="Taimoor" initial={workspace} />);
     fireEvent.click(screen.getByRole("button", { name: "New project" }));
-    const capacity = await screen.findByRole("dialog", { name: "Start another project" });
+    const capacity = await screen.findByRole("dialog", { name: "Run more than one plan" });
 
     fireEvent.click(
       within(capacity).getByRole("button", { name: /Archive Active transformation to free the slot/ }),

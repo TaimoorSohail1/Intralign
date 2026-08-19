@@ -35,6 +35,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import type { FormEvent, RefObject, SetStateAction } from "react";
 
@@ -279,24 +280,36 @@ function issueResolutionMap(issues: Issue[]) {
 
 function useProjectAdvisorState(projectId: string, initialOpen: boolean) {
   const storageKey = `oslo:advisor-open:${projectId}`;
-  const [open, setOpenState] = useState(initialOpen);
-
-  useLayoutEffect(() => {
+  const readOpen = useCallback(() => {
     const stored = window.sessionStorage.getItem(storageKey);
-    const nextOpen = initialOpen && stored !== "false";
-    setOpenState(nextOpen);
-    window.sessionStorage.setItem(storageKey, String(nextOpen));
+    return stored === null ? initialOpen : stored !== "false";
   }, [initialOpen, storageKey]);
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      const handleAdvisorState = (event: Event) => {
+        if (event instanceof CustomEvent && event.detail === storageKey) onStoreChange();
+      };
+      const handleStorage = (event: StorageEvent) => {
+        if (event.key === storageKey) onStoreChange();
+      };
+      window.addEventListener("oslo:advisor-state", handleAdvisorState);
+      window.addEventListener("storage", handleStorage);
+      return () => {
+        window.removeEventListener("oslo:advisor-state", handleAdvisorState);
+        window.removeEventListener("storage", handleStorage);
+      };
+    },
+    [storageKey],
+  );
+  const open = useSyncExternalStore(subscribe, readOpen, () => initialOpen);
 
   const setOpen = useCallback(
     (value: SetStateAction<boolean>) => {
-      setOpenState((current) => {
-        const nextOpen = typeof value === "function" ? value(current) : value;
-        window.sessionStorage.setItem(storageKey, String(nextOpen));
-        return nextOpen;
-      });
+      const nextOpen = typeof value === "function" ? value(readOpen()) : value;
+      window.sessionStorage.setItem(storageKey, String(nextOpen));
+      window.dispatchEvent(new CustomEvent("oslo:advisor-state", { detail: storageKey }));
     },
-    [storageKey],
+    [readOpen, storageKey],
   );
 
   return [open, setOpen] as const;
@@ -355,10 +368,11 @@ export function ProjectOverview({
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [confidenceBreakdownOpen, setConfidenceBreakdownOpen] = useState(false);
   const [r2IntegrityExpanded, setR2IntegrityExpanded] = useState(
-    (initialView === "overview" && !compactIssuesLanding && !initial.first_run?.freeze_on) ||
-      initialView === "full_plan",
+    initialView === "overview" && !compactIssuesLanding && !initial.first_run?.freeze_on,
   );
   const [r2IntegrityDetailOpen, setR2IntegrityDetailOpen] = useState(false);
+  const r2Shell = useRef<HTMLElement>(null);
+  const r2IntegrityHeader = useRef<HTMLElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -466,6 +480,12 @@ export function ProjectOverview({
     ),
     [openIssues],
   );
+  const firstRunTargetIssue =
+    rankedIssues[0] ??
+    actedIssues.find((issue) => issue.status === "needs_grounding") ??
+    actedIssues.find((issue) => issue.primary_act === "verify") ??
+    actedIssues[0] ??
+    null;
   const resolvedIssues = useMemo(
     () => snapshot.assessment.issues.filter((issue) => issue.status === "resolved"),
     [snapshot.assessment.issues],
@@ -569,14 +589,14 @@ export function ProjectOverview({
       initialView !== "overview" ||
       firstRun.grounding_act_count < 1 ||
       firstRunIssueOpened.current ||
-      !rankedIssues[0]
+      !firstRunTargetIssue
     ) {
       return;
     }
     firstRunIssueOpened.current = true;
     issueTrigger.current = null;
-    setSelectedIssue(rankedIssues[0]);
-  }, [initialView, rankedIssues, snapshot.first_run]);
+    setSelectedIssue(firstRunTargetIssue);
+  }, [firstRunTargetIssue, initialView, setAdvisorOpen, snapshot.first_run]);
 
   useEffect(() => {
     const freezeOn = Boolean(snapshot.first_run?.freeze_on);
@@ -617,7 +637,7 @@ export function ProjectOverview({
       setOrientation(true);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [initialView]);
+  }, [initialView, setAdvisorOpen]);
 
   useEffect(() => {
     if (!initialHistory) return;
@@ -652,7 +672,29 @@ export function ProjectOverview({
     keepMainConsoleAvailable(compact);
     compact.addEventListener("change", keepMainConsoleAvailable);
     return () => compact.removeEventListener("change", keepMainConsoleAvailable);
-  }, [initialView]);
+  }, [initialView, setAdvisorOpen]);
+
+  useLayoutEffect(() => {
+    const shell = r2Shell.current;
+    if (!shell) return;
+    if (!r2IntegrityExpanded || isArtifactView(initialView)) {
+      shell.style.setProperty("--r2-integrity-height", "124px");
+      return;
+    }
+
+    const header = r2IntegrityHeader.current;
+    if (!header) return;
+    const syncHeight = () => {
+      const nextHeight = Math.max(124, Math.ceil(header.getBoundingClientRect().height));
+      shell.style.setProperty("--r2-integrity-height", `${nextHeight}px`);
+    };
+
+    syncHeight();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(syncHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, [initialView, r2IntegrityDetailOpen, r2IntegrityExpanded, snapshot.analysis_run_id]);
 
   useEffect(() => {
     const orientationTimer = window.setTimeout(() => {
@@ -772,33 +814,48 @@ export function ProjectOverview({
   }, [issueActionFeedback]);
 
   useEffect(() => {
+    let cancelled = false;
+    const updateRecordedVisibility = (visible: boolean) => {
+      void Promise.resolve().then(() => {
+        if (!cancelled) setShowFirstRunRecorded(visible);
+      });
+    };
     if (!snapshot.first_run?.freeze_on || snapshot.first_run.grounding_act_count < 1) {
-      setShowFirstRunRecorded(false);
-      return;
+      updateRecordedVisibility(false);
+      return () => {
+        cancelled = true;
+      };
     }
     const storageKey = `r2-first-run-recorded:${snapshot.project_id}`;
     const storedValue = window.sessionStorage.getItem(storageKey);
     if (storedValue === "done") {
-      setShowFirstRunRecorded(false);
-      return;
+      updateRecordedVisibility(false);
+      return () => {
+        cancelled = true;
+      };
     }
     const now = Date.now();
     const storedDeadline = Number(storedValue);
     if (storedValue && Number.isFinite(storedDeadline) && storedDeadline <= now) {
       window.sessionStorage.setItem(storageKey, "done");
-      setShowFirstRunRecorded(false);
-      return;
+      updateRecordedVisibility(false);
+      return () => {
+        cancelled = true;
+      };
     }
     const deadline = Number.isFinite(storedDeadline) && storedDeadline > now
       ? storedDeadline
       : now + 2200;
     window.sessionStorage.setItem(storageKey, String(deadline));
-    setShowFirstRunRecorded(true);
+    updateRecordedVisibility(true);
     const timer = window.setTimeout(() => {
       window.sessionStorage.setItem(storageKey, "done");
       setShowFirstRunRecorded(false);
     }, Math.max(0, deadline - now));
-    return () => window.clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [snapshot.first_run?.freeze_on, snapshot.first_run?.grounding_act_count, snapshot.project_id]);
 
   useEffect(() => {
@@ -857,7 +914,7 @@ export function ProjectOverview({
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [initialView, selectedIssue]);
+  }, [initialView, selectedIssue, setAdvisorOpen]);
 
   useEffect(() => {
     if (!selectedIssue) return;
@@ -1595,6 +1652,7 @@ export function ProjectOverview({
       analysisRunning={Boolean(analysisUpdateRunId)}
       answer={clarificationAnswer}
       error={clarificationError ?? issueActionError}
+      firstRunFocus={initialView === "overview" && Boolean(snapshot.first_run?.freeze_on)}
       inline={initialView === "overview"}
       issue={selectedIssue}
       key={selectedIssue.id}
@@ -1627,6 +1685,7 @@ export function ProjectOverview({
       className="confidence-read integrity-read"
       id="r2-integrity-summary"
       key={snapshot.analysis_run_id}
+      ref={r2IntegrityHeader}
     >
       <div className="r2-integrity-copy">
         <div className="confidence-topline">
@@ -1736,7 +1795,7 @@ export function ProjectOverview({
     <main
       className={`project-shell ${isR2ReadView(initialView) ? "is-r2-slice-one" : ""} ${
         isArtifactView(initialView) ? "is-r2-artifact-workspace" : ""
-      } ${initialView === "reports" ? "is-r2-reports" : ""} ${
+      } ${initialView === "reports" || initialView === "full_plan" ? "is-r2-reports" : ""} ${
         initialView === "full_plan" ? "is-r2-full-plan" : ""
       } ${
         initialView === "outcome" ? "is-r2-outcome" : ""
@@ -1752,6 +1811,7 @@ export function ProjectOverview({
       } ${selectedIssue ? "has-issue" : ""} ${
         orientation ? "is-touring" : ""
       }`}
+      ref={r2Shell}
     >
       {initialView === "reports" || initialView === "full_plan" ? (
         <div aria-label="Reports product context" className="r2-reports-banner" role="note">
@@ -1864,7 +1924,7 @@ export function ProjectOverview({
         </div>
       </header>
 
-      {(initialView === "overview" || initialView === "full_plan" || (isArtifactView(initialView) && r2IntegrityExpanded)) &&
+      {(initialView === "overview" || (isArtifactView(initialView) && r2IntegrityExpanded)) &&
       (activeOutcome?.title ?? outcomeDefinition) ? (
         <div className="r2-outcome-capacity-row">
           <button
@@ -2258,11 +2318,11 @@ export function ProjectOverview({
                       </div>
                     </section>
                     <button
-                      aria-label={`Start here: settle ${rankedIssues[0]?.title ?? "the top issue"}`}
+                      aria-label={`Start here: settle ${firstRunTargetIssue?.title ?? "the top issue"}`}
                       className="r2-first-run-start"
-                      disabled={!rankedIssues[0]}
+                      disabled={!firstRunTargetIssue}
                       onClick={(event) => {
-                        const issue = rankedIssues[0];
+                        const issue = firstRunTargetIssue;
                         if (!issue) return;
                         issueTrigger.current = event.currentTarget;
                         advisorStateBeforeIssue.current = false;
@@ -2281,7 +2341,7 @@ export function ProjectOverview({
                       type="button"
                     >
                       <span>Start here</span>
-                      <strong>Settle &quot;{rankedIssues[0]?.title ?? "the top issue"}&quot;</strong>
+                      <strong>Settle &quot;{firstRunTargetIssue?.title ?? "the top issue"}&quot;</strong>
                       <small>the most load-bearing detail OSLO still had to guess</small>
                       <CaretRight aria-hidden="true" size={14} />
                     </button>
@@ -3690,6 +3750,7 @@ function IssuePanel({
   analysisRunning,
   answer,
   error,
+  firstRunFocus,
   inline,
   issue,
   projectId,
@@ -3708,6 +3769,7 @@ function IssuePanel({
   analysisRunning: boolean;
   answer: string;
   error: string | null;
+  firstRunFocus: boolean;
   inline: boolean;
   issue: Issue;
   projectId: string;
@@ -3939,6 +4001,8 @@ function IssuePanel({
 
   const primaryAct = issue.primary_act || (inline ? "verify" : "build");
   const otherActs = issue.also_offered ?? [];
+  const foregroundFirstRunVerification = firstRunFocus && otherActs.includes("verify");
+  const presentedPrimaryAct = foregroundFirstRunVerification ? "verify" : primaryAct;
   const unassessed = issue.unassessed || issue.classification_state === "escalated";
 
   return (
@@ -4176,9 +4240,9 @@ function IssuePanel({
         <p>
           {unassessed
             ? "This region is incomplete, not weak. Clarify it so OSLO can assess it without inventing a score."
-            : primaryAct === "verify"
+            : presentedPrimaryAct === "verify"
               ? "Verify or refute it with evidence. Only verification can move Grounding."
-              : primaryAct === "build"
+              : presentedPrimaryAct === "build"
                 ? "Build the missing plan structure and re-run the governed analysis. Building never manufactures grounding."
                 : "Record the tradeoff you are accepting. A decision adds clarity; it does not manufacture certainty."}
         </p>
@@ -4186,7 +4250,7 @@ function IssuePanel({
           <div className="issue-action-row">
             <button onClick={onAsk} type="button">Help me clarify this</button>
           </div>
-        ) : primaryAct === "verify" ? (
+        ) : presentedPrimaryAct === "verify" ? (
           <div className="issue-action-row is-lifecycle">
             <button
               aria-label="Confirm — it holds"
@@ -4211,7 +4275,7 @@ function IssuePanel({
             </button>
             <button onClick={() => setRoutingOpen(true)} type="button">→ Ask for evidence →</button>
           </div>
-        ) : primaryAct === "build" ? (
+        ) : presentedPrimaryAct === "build" ? (
           <div className="issue-action-row is-build">
             <button
               disabled={pending || analysisRunning}
@@ -4248,7 +4312,7 @@ function IssuePanel({
             </button>
           </div>
         )}
-        {!unassessed && otherActs.includes("verify") && primaryAct !== "verify" ? (
+        {!unassessed && otherActs.includes("verify") && presentedPrimaryAct !== "verify" ? (
           <button
             className="issue-clarification-disclosure"
             onClick={() => setRoutingOpen(true)}

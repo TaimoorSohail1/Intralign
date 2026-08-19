@@ -1685,7 +1685,7 @@ describe("ProjectOverview", () => {
     );
   });
 
-  it.each(["outcome", "inference", "rollup", "grounding", "history", "reports"] as const)(
+  it.each(["outcome", "inference", "rollup", "grounding", "history", "reports", "full_plan"] as const)(
     "keeps the Outcome Integrity expander available on the %s section",
     (initialView) => {
       const { container } = render(
@@ -1701,6 +1701,16 @@ describe("ProjectOverview", () => {
         name: "Expand Outcome Integrity",
       });
       expect(integrityToggle).toBeVisible();
+
+      if (initialView === "full_plan") {
+        expect(container.querySelector("main")).toHaveClass(
+          "is-r2-reports",
+          "is-r2-full-plan",
+        );
+        expect(
+          screen.queryByRole("button", { name: /^Outcome:/ }),
+        ).not.toBeInTheDocument();
+      }
 
       fireEvent.click(integrityToggle);
 
@@ -1932,6 +1942,81 @@ describe("ProjectOverview", () => {
     expect(screen.getByRole("button", { name: /^Ask OSLO$/i })).toHaveClass(
       "advisor-floating",
     );
+  });
+
+  it("opens the next actionable grounding issue when first-run onboarding has no untouched issue", async () => {
+    const firstRunSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      first_run: {
+        first_run: true,
+        onboarded: false,
+        grounding_act_count: 1,
+        unlock_threshold: 2,
+        ever_unlocked: false,
+        freeze_on: true,
+      },
+      assessment: {
+        ...snapshot.assessment,
+        issues: snapshot.assessment.issues.map((issue) => ({
+          ...issue,
+          status: "needs_grounding" as const,
+          primary_act: "verify" as const,
+        })),
+      },
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={firstRunSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("region", { name: "Issue details" })).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: "Confirm — it holds" })).toBeVisible();
+    expect(screen.getByRole("button", {
+      name: /Start here: settle .*Migration ownership is unresolved/i,
+    })).toBeEnabled();
+  });
+
+  it("foregrounds verification during frozen first-run onboarding when it is an allowed alternative", async () => {
+    const firstRunSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      first_run: {
+        first_run: true,
+        onboarded: false,
+        grounding_act_count: 1,
+        unlock_threshold: 2,
+        ever_unlocked: false,
+        freeze_on: true,
+      },
+      assessment: {
+        ...snapshot.assessment,
+        issues: snapshot.assessment.issues.map((issue) => ({
+          ...issue,
+          primary_act: "build" as const,
+          also_offered: ["verify" as const],
+          classification_state: "classified" as const,
+        })),
+      },
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={firstRunSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("region", { name: "Issue details" })).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: "Confirm — it holds" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Apply this fix →" })).not.toBeInTheDocument();
   });
 
   it("treats the first-run outcome confirmation as transient feedback", async () => {

@@ -1,5 +1,6 @@
 import {
   getWorkspacePreferences,
+  OsloApiError,
   updateWorkspacePreferences,
   type WorkspacePreferences,
 } from "@/lib/server/oslo-api";
@@ -18,9 +19,15 @@ export async function GET() {
       }),
     );
   } catch (error) {
+    if (error instanceof OsloApiError) {
+      return Response.json(
+        { message: error.status >= 500 ? "Settings are temporarily unavailable." : error.message },
+        { status: error.status },
+      );
+    }
     return Response.json(
-      { message: error instanceof Error ? error.message : "Settings are unavailable." },
-      { status: 400 },
+      { message: "Settings are temporarily unavailable." },
+      { status: 502 },
     );
   }
 }

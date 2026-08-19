@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { WorkspaceSettings } from "./workspace-settings";
+import { WorkspaceSettings, WorkspaceSettingsDialog } from "./workspace-settings";
 
 const initial = {
   theme: "dark" as const,
@@ -70,6 +70,35 @@ describe("WorkspaceSettings", () => {
     expect(within(dialog).queryByRole("heading", { name: "Appearance" })).not.toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole("button", { name: "Close settings" }));
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("recovers automatically when one settings request fails transiently", async () => {
+    let preferenceAttempts = 0;
+    vi.mocked(fetch).mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/api/workspace/preferences") {
+        preferenceAttempts += 1;
+        return Promise.resolve(
+          preferenceAttempts === 1
+            ? Response.json({ message: "Settings are temporarily unavailable." }, { status: 502 })
+            : Response.json(initial),
+        );
+      }
+      if (url === "/api/workspace") return Promise.resolve(Response.json(workspace));
+      return Promise.resolve(Response.json({ message: "Not found" }, { status: 404 }));
+    });
+
+    render(
+      <WorkspaceSettingsDialog
+        displayName="Taimoor"
+        onClose={vi.fn()}
+        open
+      />,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Profile" })).toBeInTheDocument();
+    expect(preferenceAttempts).toBe(2);
+    expect(screen.queryByText("Settings could not be loaded.")).not.toBeInTheDocument();
   });
 
   it("persists appearance choices and the local theme survives server lag", async () => {

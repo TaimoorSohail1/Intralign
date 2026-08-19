@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArrowRight, Diamond, X } from "@phosphor-icons/react";
+import { Archive, ArrowRight, LockSimple, X } from "@phosphor-icons/react";
 import { useEffect, useRef } from "react";
 
 export function ProjectCapacityModal({
@@ -40,26 +40,33 @@ export function ProjectCapacityModal({
     }}>
       <section aria-labelledby="project-capacity-title" aria-modal="true" className="project-capacity-modal" role="dialog">
         <header>
-          <span>{planLabel} plan · active-project capacity</span>
+          <span className="project-capacity-title">
+            <LockSimple aria-hidden="true" size={15} weight="fill" />
+            <strong id="project-capacity-title">Run more than one plan</strong>
+          </span>
+          <span className="project-capacity-price">Basic · <b>$29/mo</b><small>or $290/yr · 2 months free</small></span>
           <button aria-label="Close capacity choice" onClick={onClose} ref={closeRef} type="button"><X size={17} /></button>
         </header>
-        <h2 id="project-capacity-title">Start another project</h2>
         <p>
-          You’re on the {planLabel} plan. To start another project, compare plans or archive {currentProjectName} first. Nothing here changes your plan without your decision.
+          Working several plans in your workspace at the same time is a <strong>Basic</strong> capability.
+        </p>
+        <p className="project-capacity-assurance">
+          This gates <strong>capacity</strong>, never the <strong>quality</strong> of your read — the accuracy bar and your record stay the same on every plan.
         </p>
         <div className="project-capacity-choices">
-          <button onClick={onComparePlans} type="button">
-            <Diamond aria-hidden="true" size={17} weight="fill" />
-            <span><strong>Upgrade your plan</strong><small>See plans and what additional active-project capacity includes.</small></span>
+          <button aria-label="Upgrade your plan" className="is-primary" onClick={onComparePlans} type="button">
+            <span><strong>Unlock Basic — compare plans</strong></span>
             <ArrowRight aria-hidden="true" size={15} />
           </button>
-          <button disabled={busy} onClick={onArchive} type="button">
+          <button aria-label={`Archive ${currentProjectName} to free the slot`} className="is-link" disabled={busy} onClick={onArchive} type="button">
             <Archive aria-hidden="true" size={17} />
-            <span><strong>Archive {currentProjectName} to free the slot</strong><small>Non-destructive — History, issues and the latest assessment are retained and restorable.</small></span>
-            <ArrowRight aria-hidden="true" size={15} />
+            <span><strong>Archive {currentProjectName} to switch (free)</strong></span>
           </button>
         </div>
-        <footer><button onClick={onClose} type="button">Not now</button></footer>
+        <footer>
+          <button onClick={onClose} type="button">Not now</button>
+          <p>You’re on the {planLabel} plan. Archiving is non-destructive: History, issues and the latest assessment remain restorable.</p>
+        </footer>
       </section>
     </div>
   );

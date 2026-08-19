@@ -138,6 +138,12 @@ describe("FullPlanWorkspace", () => {
   it("renders the prototype table with explicit incomplete and proposed states", () => {
     render(<FullPlanWorkspace proposals={[proposal]} snapshot={snapshot} />);
 
+    expect(
+      screen.getByRole("navigation", { name: "Full plan breadcrumb" }),
+    ).toHaveTextContent("Outcome›Execution›Full plan · export");
+    expect(
+      screen.getByRole("note", { name: "Full plan status" }),
+    ).toHaveTextContent("Grounding is the current gate");
     expect(screen.getByRole("heading", { name: "Full plan · export" })).toBeInTheDocument();
     const table = screen.getByRole("table", { name: "Full execution plan" });
     expect(within(table).getByText("Implement payment gateway")).toBeInTheDocument();
