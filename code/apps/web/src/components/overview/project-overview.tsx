@@ -2119,16 +2119,14 @@ export function ProjectOverview({
               </Link>
             );
           })}
-          {initialView === "overview" || initialView === "full_plan" || isArtifactView(initialView) ? (
-            <Link
-              aria-current={initialView === "full_plan" ? "page" : undefined}
-              className={initialView === "full_plan" ? "is-current" : ""}
-              href={`/projects/${snapshot.project_id}/full-plan`}
-            >
-              <ArrowSquareOut aria-hidden="true" size={15} />
-              Full plan · export
-            </Link>
-          ) : null}
+          <Link
+            aria-current={initialView === "full_plan" ? "page" : undefined}
+            className={initialView === "full_plan" ? "is-current" : ""}
+            href={`/projects/${snapshot.project_id}/full-plan`}
+          >
+            <ArrowSquareOut aria-hidden="true" size={15} />
+            Full plan · export
+          </Link>
         </div>
         </div>
         <div className="workspace-sidebar-footer">
@@ -2212,7 +2210,7 @@ export function ProjectOverview({
           {issueActionFeedback ? (
             <section
               aria-label="Issue action recorded"
-              className="r2-action-feedback"
+              className="r2-action-feedback r2-overview-notice"
               role="status"
             >
               <CheckCircle aria-hidden="true" size={32} weight="duotone" />
@@ -2232,7 +2230,7 @@ export function ProjectOverview({
               snapshot.freshness.state !== "fresh" ? (
                 <section
                   aria-label="Read freshness"
-                  className={`r2-read-freshness is-${snapshot.freshness?.state}`}
+                  className={`r2-read-freshness r2-overview-notice is-${snapshot.freshness?.state}`}
                 >
                   <div>
                     <strong>
@@ -2276,7 +2274,7 @@ export function ProjectOverview({
                 <p className="r2-reanalysis-feedback" role="status">{reanalysisFeedback}</p>
               ) : null}
               {snapshot.read_moved_notifications?.[0] && !snapshot.first_run?.freeze_on ? (
-                <section className="r2-read-moved" role="status">
+                <section className="r2-read-moved r2-overview-notice" role="status">
                   <Sparkle aria-hidden="true" size={16} weight="fill" />
                   <div>
                     <strong>
@@ -2301,7 +2299,7 @@ export function ProjectOverview({
                 snapshot.first_run.grounding_act_count > 0 ? (
                   <div className="r2-first-run-focus-copy">
                     {showFirstRunRecorded ? (
-                      <section className="r2-first-run-recorded" role="status">
+                      <section className="r2-first-run-recorded r2-overview-notice" role="status">
                         <CheckCircle aria-hidden="true" size={34} weight="duotone" />
                         <div>
                           <small>Recorded</small>
@@ -2367,7 +2365,7 @@ export function ProjectOverview({
                   >
                     <section
                       aria-label="Workspace open"
-                      className="r2-workspace-open"
+                      className="r2-workspace-open r2-overview-notice"
                     >
                     <span aria-hidden="true">✦</span>
                     <div>

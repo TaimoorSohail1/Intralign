@@ -1155,12 +1155,14 @@ export function ArtifactWorkspace({
               <div>
                 <button
                   aria-label={`Add ${proposal.title} to plan in ${label(artifactType)}`}
+                  className="artifact-proposal-accept"
                   disabled={proposalPending === proposal.id}
                   onClick={() => onProposalDecision(proposal, true)}
                   type="button"
                 >{proposalPending === proposal.id ? "Saving…" : "Add to plan"}</button>
                 <button
                   aria-label={`Dismiss ${proposal.title} in ${label(artifactType)}`}
+                  className="artifact-proposal-reject"
                   disabled={proposalPending === proposal.id}
                   onClick={() => onProposalDecision(proposal, false)}
                   type="button"

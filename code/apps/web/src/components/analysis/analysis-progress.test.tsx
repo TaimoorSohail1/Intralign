@@ -364,6 +364,8 @@ describe("AnalysisProgress", () => {
     expect(screen.getByText("Stage 3 of 8")).toBeInTheDocument();
     expect(screen.getByText("read inputs")).toBeInTheDocument();
     expect(screen.getByText("drafted plan")).toBeInTheDocument();
+    expect(screen.getByText("ok")).toHaveClass("is-complete-status");
+    expect(screen.getByText("7 documents")).toHaveClass("is-complete-status");
     expect(screen.getByText("Preliminary Outcome Analysis · up to about a minute"))
       .toBeInTheDocument();
 

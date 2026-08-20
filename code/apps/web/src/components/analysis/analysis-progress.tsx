@@ -143,7 +143,7 @@ function ReturningAnalysisLoader({
           return (
             <li key={item.trace}>
               <span>{item.trace}</span>
-              {result ? <><i>·</i><strong>{result}</strong></> : null}
+              {result ? <><i>·</i><strong className="is-complete-status">{result}</strong></> : null}
             </li>
           );
         })}

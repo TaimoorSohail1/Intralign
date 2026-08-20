@@ -1701,6 +1701,9 @@ describe("ProjectOverview", () => {
         name: "Expand Outcome Integrity",
       });
       expect(integrityToggle).toBeVisible();
+      expect(
+        screen.getByRole("link", { name: "Full plan · export" }),
+      ).toHaveAttribute("href", "/projects/project-001/full-plan");
 
       if (initialView === "full_plan") {
         expect(container.querySelector("main")).toHaveClass(
@@ -1723,6 +1726,40 @@ describe("ProjectOverview", () => {
       ).toBeVisible();
     },
   );
+
+  it("uses one aligned notice width contract across Overview status banners", () => {
+    const noticeSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      freshness: {
+        state: "stale",
+        pending_count: 1,
+        latest_pending_event_id: null,
+        active_run_id: null,
+      },
+      read_moved_notifications: [
+        {
+          id: "moved-001",
+          previous_band: "Moderate",
+          current_band: "Moderate",
+          settled_causes: [],
+        },
+      ],
+    };
+
+    const { container } = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={noticeSnapshot}
+        initialView="overview"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelectorAll(".r2-overview-notice")).toHaveLength(3);
+    expect(screen.getByRole("region", { name: "Workspace open" })).toHaveClass(
+      "r2-overview-notice",
+    );
+  });
 
   it("does not count structured row body and bullet encodings as additional open inferences", () => {
     const structuredSnapshot: OverviewSnapshot = {

@@ -14,6 +14,7 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 
 import type {
@@ -344,36 +345,96 @@ function EditableStatement({
   task?: boolean;
 }) {
   const valueRef = useRef<HTMLSpanElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
   useLayoutEffect(() => {
-    if (valueRef.current && document.activeElement !== valueRef.current) {
+    if (task && valueRef.current && document.activeElement !== valueRef.current) {
       valueRef.current.textContent = entry.text;
     }
-  }, [entry.text]);
+    if (editing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editing, entry.text, task]);
 
-  const handleInput = (event: FormEvent<HTMLSpanElement>) => {
+  const handleTaskInput = (event: FormEvent<HTMLSpanElement>) => {
     onUpdate(event.currentTarget.textContent ?? "");
   };
-  const handleKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
+  const handleTaskKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
     if (event.key === "Enter") {
       event.preventDefault();
       event.currentTarget.blur();
     }
   };
+  const beginEdit = () => {
+    setDraft(entry.text);
+    setEditing(true);
+  };
+  const cancelEdit = () => {
+    setDraft("");
+    setEditing(false);
+  };
+  const saveEdit = () => {
+    const next = draft.trim();
+    if (!next) return;
+    if (next !== entry.text) onUpdate(next);
+    setEditing(false);
+  };
+  const handleEditorKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      saveEdit();
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cancelEdit();
+    }
+  };
 
   return (
     <div
-      className={`r2-statement-row ${entry.inferred ? "is-inferred" : "is-yours"}`}
+      className={`r2-statement-row ${entry.inferred ? "is-inferred" : "is-yours"} ${editing ? "is-editing" : ""}`}
       data-entry-id={entry.id}
     >
       <i aria-label={entry.inferred ? "OSLO inferred" : "Yours"} />
       <div>
-        <span
-          contentEditable
-          onInput={handleInput}
-          onKeyDown={handleKeyDown}
-          ref={valueRef}
-          suppressContentEditableWarning
-        />
+        {task ? (
+          <span
+            contentEditable
+            onInput={handleTaskInput}
+            onKeyDown={handleTaskKeyDown}
+            ref={valueRef}
+            suppressContentEditableWarning
+          />
+        ) : editing ? (
+          <div className="r2-inline-editor">
+            <input
+              aria-label={`Edit ${entry.text}`}
+              onChange={(event) => setDraft(event.currentTarget.value)}
+              onKeyDown={handleEditorKeyDown}
+              ref={inputRef}
+              value={draft}
+            />
+            <div>
+              <button
+                aria-label="Save statement edit"
+                className="r2-inline-save"
+                disabled={!draft.trim()}
+                onClick={saveEdit}
+                type="button"
+              >Save</button>
+              <button
+                aria-label="Cancel statement edit"
+                className="r2-inline-cancel"
+                onClick={cancelEdit}
+                type="button"
+              >Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <span className="r2-statement-text">{entry.text}</span>
+        )}
         {!task && entry.meta.length ? <small>{entry.meta.join(" · ")}</small> : null}
       </div>
       {issue ? (
@@ -385,7 +446,7 @@ function EditableStatement({
           <Warning size={12} /> {issue.title}
         </button>
       ) : null}
-      <div className="r2-row-actions">
+      {!editing ? <div className="r2-row-actions">
         {entry.inferred ? (
           <button
             aria-label={`Confirm ${entry.text}`}
@@ -399,10 +460,7 @@ function EditableStatement({
         {!task ? (
           <button
             aria-label={`Edit ${entry.text}`}
-            onClick={() => {
-              valueRef.current?.focus();
-              document.getSelection()?.selectAllChildren(valueRef.current as Node);
-            }}
+            onClick={beginEdit}
             title="Edit"
             type="button"
           >
@@ -417,7 +475,7 @@ function EditableStatement({
         >
           {task ? <X size={13} /> : <Trash size={13} />}
         </button>
-      </div>
+      </div> : null}
     </div>
   );
 }

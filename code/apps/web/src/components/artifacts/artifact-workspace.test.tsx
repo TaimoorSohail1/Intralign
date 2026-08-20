@@ -247,18 +247,51 @@ describe("ArtifactWorkspace R2 plan artifacts", () => {
     renderArtifact({ onProposalDecision, proposals: [proposal] });
     const region = await screen.findByRole("region", { name: "OSLO proposes in this artifact" });
     expect(region).toHaveTextContent("nothing enters your plan until you accept");
-    fireEvent.click(
-      within(region).getByRole("button", {
-        name: "Add Add the approved delivery baseline to plan in Schedule",
-      }),
-    );
+    const addButton = within(region).getByRole("button", {
+      name: "Add Add the approved delivery baseline to plan in Schedule",
+    });
+    const dismissButton = within(region).getByRole("button", {
+      name: "Dismiss Add the approved delivery baseline in Schedule",
+    });
+    expect(addButton).toHaveClass("artifact-proposal-accept");
+    expect(dismissButton).toHaveClass("artifact-proposal-reject");
+    fireEvent.click(addButton);
     expect(onProposalDecision).toHaveBeenCalledWith(proposal, true);
-    fireEvent.click(
-      within(region).getByRole("button", {
-        name: "Dismiss Add the approved delivery baseline in Schedule",
-      }),
-    );
+    fireEvent.click(dismissButton);
     expect(onProposalDecision).toHaveBeenCalledWith(proposal, false);
+  });
+
+  it("uses the prototype inline Edit, Save, and Cancel controls for statements", async () => {
+    const requirements = artifactFor("requirements", [
+      {
+        heading: "Requirements",
+        body: "",
+        bullets: ["Venue supports 450 attendees."],
+        columns: [],
+        rows: [],
+        provenance: "confirmed_by_user",
+      },
+    ]);
+    renderArtifact({ artifact: requirements, artifactType: "requirements" });
+    await screen.findByRole("heading", { name: "Requirements" });
+
+    const original = "Venue supports 450 attendees.";
+    fireEvent.click(screen.getByRole("button", { name: `Edit ${original}` }));
+    const editor = screen.getByRole("textbox", { name: `Edit ${original}` });
+    expect(editor).toHaveValue(original);
+    fireEvent.change(editor, { target: { value: "Venue supports 500 attendees." } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel statement edit" }));
+    expect(screen.getByText(original)).toBeInTheDocument();
+    expect(screen.queryByText("Changes not applied")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: `Edit ${original}` }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: `Edit ${original}` }),
+      { target: { value: "Venue supports 500 attendees." } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save statement edit" }));
+    expect(screen.getByText("Venue supports 500 attendees.")).toBeInTheDocument();
+    expect(screen.getByText("Changes not applied")).toBeInTheDocument();
   });
 
   it("renders Intent with the five prototype groups and confirms inferred rows", async () => {
