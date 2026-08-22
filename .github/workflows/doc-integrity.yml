@@ -8,9 +8,26 @@ name: Doc Integrity (KIA2-1)
 
 on:
   push:
-    branches: [main]
+    branches: [main]          # push-to-main only: a different event from the PR run below.
+  # GATE-REACHES-RELEASE-LINES
+  #
+  # ⚠️ That token is load-bearing, not decoration. TWO register rows read this file for it, with
+  # OPPOSITE polarity, so they can never drift apart: RB-107 is DUE while it is absent, and RB-106's
+  # hold on the six correctives lifts when it is present. Deleting the line re-opens both. It is a
+  # DECLARATION that the scope defect below is fixed — the SKIP-OK shape RB-095 ratified, where a
+  # claim about a gate must live in the gate rather than in a note about it.
+  #
+  # Caught before landing: the first cut of this fix did not carry the token at all, which would have
+  # left RB-107 due forever after its own fix merged — a dead trigger created by the change that
+  # closes it, RB-108's class and the second time this exact shape has appeared on this line.
+  #
+  # ⚠️ RB-107 — `branches: [main]` USED TO BE HERE TOO, and it matches the PR's BASE. So this gate ran
+  # on no PR into a release line. Measured 2026-08-17 and re-measured 2026-08-18 on the live PRs:
+  #   #220 (base main)                        -> "All checks have passed", 1 successful check
+  #   #221 (base r2/altering-dl218-band-floor) -> NO CHECKS REPORTED, and "not required to merge"
+  # #221 carries four ratified decision records. Removing the filter is the fix; it is deliberately
+  # NOT replaced with an allowlist of base prefixes, because the next prefix would escape silently.
   pull_request:
-    branches: [main]
   workflow_dispatch: {}
 
 jobs:
@@ -25,3 +42,121 @@ jobs:
         run: python3 tools/doc_integrity_check.py
         # To also fail on warnings once the warning backlog is cleared (KIA2-2),
         # change to:  python3 tools/doc_integrity_check.py --strict
+
+      # DL-220 enforcement: every decision record must carry a `## Graduation ripple`
+      # section, and the graduation index must be the generated roll-up of those
+      # sections. A hand-maintained index drifted within hours of DL-220 being
+      # ratified (audit 2026-08-13b, G1) — this makes the property enforced rather
+      # than asserted.
+      #
+      # ⚠️ FIXED 2026-08-16 (@HamzaSohailCodes, PR #216 review — blocking finding 1).
+      # This step resolved the generator from CURRENT_RELEASE (release-2.1), but the
+      # generator is DELIVERY-scoped and lives on DELIVERY_RELEASE (release-2). It
+      # therefore found nothing, printed "skipping", and PASSED — while running the
+      # intended generator reported `STALE — the index does not match the records`.
+      # A gate that passes by not running is worse than no gate: it reports a
+      # property nobody is checking.
+      #
+      # The scope rule was already written in RELEASE_LINE_CONVENTION and applied to
+      # the TOOL on 2026-08-14; it was never applied to this WORKFLOW. Described in
+      # one place, enforced in neither.
+      #
+      # Two changes: resolve through DELIVERY_RELEASE first (falling back to
+      # CURRENT_RELEASE), and FAIL when no generator is found. "Not found" is now a
+      # broken gate, not a quiet pass.
+      - name: Graduation index is generated, not hand-maintained (DL-220)
+        run: |
+          # ── RB-107 line resolution (see tools/resolve_release_line.sh). Read the EXIT CODE.
+          set +e
+          LINE="$(bash tools/resolve_release_line.sh delivery)"; RC=$?
+          set -e
+          if [ "$RC" -eq 3 ]; then
+            echo "SKIP-OK: this ref carries no release line, so the graduation index does not apply (rule: RELEASE_LINE_CONVENTION.md — line-scoped checks resolve from the line pointer)."
+            exit 0
+          fi
+          if [ "$RC" -ne 0 ]; then
+            echo "::error::could not resolve the release line on this ref — see the message above."
+            echo "::error::An unresolvable pointer is a broken gate, never a skip."
+            exit 1
+          fi
+          echo "resolved release line: $LINE"
+          if [ ! -f "$LINE/tools/build_graduation_index.py" ]; then
+            echo "::error::no graduation-index generator at '$LINE/tools/build_graduation_index.py'."
+            echo "::error::The line RESOLVED but its generator is absent — a broken gate, not a skip."
+            echo "::error::See PR #216 review, blocking finding 1: this step must never pass by skipping."
+            exit 1
+          fi
+          echo "graduation index resolved through: $LINE"
+          # ⚠️ 2026-08-17 — DEV-LEAD RULING (@HamzaSohailCodes, PR #217), owner concurring:
+          #   "The R2 graduation-index issue should not gate the R2.1 dev handoff … The issue must
+          #    remain visible; the check should not be weakened or made to pass by deleting index content."
+          #
+          # The checker below is UNCHANGED and is ALWAYS RUN. Its full output is always printed. What
+          # graduation_gate.py decides is whether a FAILING result BLOCKS this PR — the same
+          # report-vs-block split the queued-work register adopted the same morning (RB-097).
+          #
+          # This is NOT a skip. A skip-and-pass is the defect the dev lead found in #216 and that this
+          # repo removed from three workflows on 2026-08-16 (RB-093, RB-095). The gate blocks on push to
+          # main, on any delivery-line PR, and whenever the tracking row RB-094 is missing, closed, or
+          # past its due date — so the exemption cannot become permanent and cannot survive the issue
+          # being quietly dropped. Visibility is enforced mechanically, not promised.
+          if [ ! -f tools/graduation_gate.py ]; then
+            echo "::error::no tools/graduation_gate.py — a missing gate must never pass by skipping."
+            exit 1
+          fi
+          set +e
+          (cd "$LINE" && python3 tools/build_graduation_index.py --check)
+          CHECK_RC=$?
+          set -e
+          if [ $CHECK_RC -eq 0 ]; then
+            python3 tools/graduation_gate.py
+          else
+            python3 tools/graduation_gate.py --check-failed
+          fi
+
+      # RB-058 R1: the build must conform to the declared resolution model. DECLARED gaps pass and
+      # are printed; UNDECLARED gaps fail. That asymmetry is the point — a checker that could only
+      # say "conforms" would have passed adaptability in silence.
+      - name: Resolution model conformance (RB-058)
+        run: |
+          # ⚠️ 2026-08-16: this had the same shape as the graduation-index defect (@HamzaSohailCodes, #216).
+          # It passes today only because the checker happens to sit on the current line — rename the file or
+          # move the pointer and it would print "skipping" and go green, silently. A missing checker is a
+          # BROKEN GATE, not a non-applicable one. Skipping because the check does not apply to this input is
+          # legitimate and must cite its rule (see altering-base-guard, which cites F002 §8c-i); skipping
+          # because the check is absent is a failure.
+          # ⚠️ 2026-08-18, CAUGHT BY THIS GATE ON PR #226's OWN FIRST RUN: the RB-107 fix routed the
+          # graduation step through the resolver and MISSED THIS STEP — the measurement table that shaped
+          # the fix listed it, and the fix skipped it anyway. On main (no line pointer) `$LINE` was empty,
+          # the checker path read '/tools/resolution_conformance.py', and this step FAILED — correctly,
+          # because refusing to skip on a missing checker is exactly what the 2026-08-16 hardening built.
+          # The gate caught the incomplete fix to the gate. Now routed through the ONE resolver like its
+          # siblings: no line -> SKIP-OK citing the rule; line resolved but checker absent -> FAIL.
+          set +e
+          LINE="$(bash tools/resolve_release_line.sh current)"; RC=$?
+          set -e
+          if [ "$RC" -eq 3 ]; then
+            echo "SKIP-OK: this ref carries no release line, so resolution conformance does not apply (rule: RELEASE_LINE_CONVENTION.md — line-scoped checks resolve from the line pointer)."
+            exit 0
+          fi
+          if [ "$RC" -ne 0 ]; then
+            echo "::error::could not resolve the release line on this ref — see the message above."
+            echo "::error::An unresolvable pointer is a broken gate, never a skip."
+            exit 1
+          fi
+          if [ ! -f "$LINE/tools/resolution_conformance.py" ]; then
+            echo "::error::no resolution conformance checker at '$LINE/tools/resolution_conformance.py'."
+            echo "::error::The line RESOLVED but its checker is absent — a broken gate, not a skip."
+            exit 1
+          fi
+          python3 "$LINE/tools/resolution_conformance.py"
+
+      # ── No governance tool may name a release line it did not resolve. Repo-scoped, so no line resolution
+      # and no skip branch at all: it applies to every ref that carries tooling.
+      - name: No tool hardcodes a release line
+        run: |
+          if [ ! -f tools/no_hardcoded_release_line.py ]; then
+            echo "::error::no tools/no_hardcoded_release_line.py — a missing checker must never pass by skipping."
+            exit 1
+          fi
+          python3 tools/no_hardcoded_release_line.py

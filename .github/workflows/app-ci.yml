@@ -16,20 +16,16 @@
 name: app-ci
 
 on:
+  # RB-056: this job must always report on a PR so it can become a required check.
+  # Applicability is decided inside the job; GitHub's `paths` filter would omit the
+  # status entirely on docs-only PRs.
   pull_request:
-    branches: [main]
-    paths: ["code/**", ".github/workflows/app-ci.yml"]
   push:
     branches: [main]
-    paths: ["code/**", ".github/workflows/app-ci.yml"]
 
 permissions:
   contents: read
   pull-requests: read # gitleaks-action (gate 6) lists PR commits on pull_request events
-
-defaults:
-  run:
-    working-directory: code
 
 jobs:
   app-ci:
@@ -39,22 +35,88 @@ jobs:
         with:
           fetch-depth: 0 # gitleaks (gate 6) scans commit history
 
+      # An always-reporting required check must distinguish a docs-only PR from a
+      # failed app build. The full suite applies only to application-code changes;
+      # a workflow-only edit must not turn unrelated existing app debt into a red
+      # required check.
+      - name: Determine app-ci applicability (RB-056)
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          app_ci_applies() {
+            has_app_tree="$1"
+            changed_paths="$2"
+            [ "$has_app_tree" = "true" ] && printf '%s\n' "$changed_paths" | grep -Eq '^code/'
+          }
+
+          # RED proofs: the required status must not rubber-stamp docs-only work,
+          # and must still select the full gate for an application-code change.
+          if app_ci_applies true '00_owner/framework.md'; then
+            echo "::error::RB-056 self-test failed: docs-only input selected app CI."
+            exit 1
+          fi
+          if ! app_ci_applies true 'code/backend/example.py'; then
+            echo "::error::RB-056 self-test failed: application-code input skipped app CI."
+            exit 1
+          fi
+          if app_ci_applies false 'code/backend/example.py'; then
+            echo "::error::RB-056 self-test failed: a ref without an app tree selected app CI."
+            exit 1
+          fi
+          echo "RB-056 self-test OK: docs skip; application code runs; absent app tree skips."
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            BASE_SHA="$PR_BASE_SHA"
+          else
+            BASE_SHA="$PUSH_BEFORE_SHA"
+          fi
+
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            CHANGED="$(git show --format= --name-only HEAD)"
+          else
+            CHANGED="$(git diff --name-only "$BASE_SHA" HEAD)"
+          fi
+
+          if [ ! -d code ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "reason=no application tree on this ref" >> "$GITHUB_OUTPUT"
+          elif app_ci_applies true "$CHANGED"; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "reason=application code changed" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "reason=no application code change" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: SKIP-OK — app-ci does not apply to this change (RB-056)
+        if: steps.scope.outputs.run != 'true'
+        run: |
+          echo "SKIP-OK: ${{ steps.scope.outputs.reason }}. The app-ci status is reported deliberately; no application build is applicable."
+
       - uses: actions/setup-python@v5
+        if: steps.scope.outputs.run == 'true'
         with:
           python-version: "3.12"
 
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.run == 'true'
         with:
           node-version: "20"
 
       # --- Gate 1: Build (ratified stack) ---
       - name: "Gate 1 — build backend (pip install + ruff)"
+        if: steps.scope.outputs.run == 'true'
+        working-directory: code
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
           ruff check .
 
       - name: "Gate 1 — build frontend (npm ci + tsc/vite)"
+        if: steps.scope.outputs.run == 'true'
         working-directory: code/frontend
         run: |
           npm ci
@@ -66,7 +128,8 @@ jobs:
       # via env (never interpolated into the shell). Push events to main carry
       # no PR context: the gate already ran on the PR; merge is gate-7 protected.
       - name: "Gate 2 — contract-traceability"
-        if: github.event_name == 'pull_request'
+        if: steps.scope.outputs.run == 'true' && github.event_name == 'pull_request'
+        working-directory: code
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
@@ -77,15 +140,21 @@ jobs:
       # pytest exits 5 on zero collected tests and 4 on a missing path — both
       # non-zero. A suite without negatives is invalid (QA Governance).
       - name: "Gate 3 — positive suite"
+        if: steps.scope.outputs.run == 'true'
+        working-directory: code
         run: python -m pytest tests/positive
 
       - name: "Gate 3 — negative suite"
+        if: steps.scope.outputs.run == 'true'
+        working-directory: code
         run: python -m pytest tests/negative
 
       # --- Gate 4: Epistemic-invariant gate (HARD GATE, Critical) ---
       # Forbidden-token scan (allowlist: ci/invariant_allowlist.txt), no
       # backend/**/authority dir, canonical-table migration linter (DL-043).
       - name: "Gate 4 — epistemic-invariant gate"
+        if: steps.scope.outputs.run == 'true'
+        working-directory: code
         run: python -m ci.gate_invariants
 
       # --- Gate 5: Observability (REAL — DTM-0006, OBS-WA-00R) ---
@@ -97,21 +166,27 @@ jobs:
       # the pure tamper-detection axes always run — an empty/missing suite
       # fails via pytest exit 4/5).
       - name: "Gate 5 — observability (governed-output events + two-axis replay)"
+        if: steps.scope.outputs.run == 'true'
+        working-directory: code
         run: |
           python -m ci.gate_observability
           python -m pytest tests/replay
 
       # --- Gate 6: Security (secret-scan + dependency audits; findings FAIL) ---
       - name: "Gate 6 — secret scan (gitleaks)"
+        if: steps.scope.outputs.run == 'true'
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Gate 6 — pip-audit (production deps)"
+        if: steps.scope.outputs.run == 'true'
+        working-directory: code
         # Audits [project.dependencies] from pyproject.toml (production scope).
         run: pipx run pip-audit .
 
       - name: "Gate 6 — npm audit (production deps, high+)"
+        if: steps.scope.outputs.run == 'true'
         working-directory: code/frontend
         run: npm audit --omit=dev --audit-level=high
 

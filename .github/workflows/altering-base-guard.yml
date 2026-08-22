@@ -1,0 +1,63 @@
+name: Altering PR base guard (F002 §8c-i)
+
+# Framework 002 §8c-i (ratified 2026-08-14): an `altering` PR's base must be the line's
+# integration branch (`main`) — never another PR's head.
+#
+# Why this is a workflow and not a sentence in the framework doc:
+# #213 SATISFIED the written rule ("Altering never batches — it rides its own altering PR")
+# and the gate was still inert, because the ruleset `protect-main` targets `main` only. A PR
+# based on another branch is outside code-owner review entirely, AND merging it would have
+# carried the Altering change into a parent branch labelled `additive` — so it would have
+# reached `main` inside a PR the dev lead approved as additive. Nothing on the PR page shows
+# this; only the merge box does, and only if you look.
+#
+# Drafts are exempt BY THE RULE, not as a loophole: §8c-i sanctions "hold it as a draft until
+# its parents merge and GitHub re-targets it." A draft cannot merge, so it cannot defeat the
+# gate. The guard fires the moment it is marked ready.
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, labeled, unlabeled, synchronize, ready_for_review, converted_to_draft]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  altering-base:
+    runs-on: ubuntu-latest
+    steps:
+      - name: An altering PR must target main
+        env:
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          NUM: ${{ github.event.pull_request.number }}
+        run: |
+          echo "PR #$NUM · base=$BASE · draft=$IS_DRAFT · labels=[$LABELS]"
+
+          # SKIP-OK: F002 §8c-i governs ALTERING PRs only, so on an unlabelled PR this check does not
+          # apply to its input. It is not skipping because a checker is missing — that would be a broken
+          # gate (RB-095: "not found" is not a reason, it is an absence).
+          case ",$LABELS," in
+            *,altering,*) ;;
+            *) echo "SKIP-OK: not labelled 'altering' — F002 §8c-i applies to altering PRs only."; exit 0 ;;
+          esac
+
+          # SKIP-OK: §8c-i sanctions holding an altering PR as a draft until its parents merge. A draft
+          # cannot merge, so the check does not apply to this input — and the guard fires the moment it is
+          # marked ready, which is why this is an inapplicable input rather than a hole.
+          if [ "$IS_DRAFT" = "true" ]; then
+            echo "SKIP-OK: draft — exempt by F002 §8c-i (a draft cannot merge). The guard fires when it is marked ready."
+            exit 0
+          fi
+
+          if [ "$BASE" != "main" ]; then
+            echo "::error::F002 §8c-i violation — this PR is labelled 'altering' but its base is '$BASE', not 'main'."
+            echo "::error::A stacked altering PR is OUTSIDE the protect-main ruleset (no code-owner review is required),"
+            echo "::error::and merging it lands the altering change inside its parent's branch — reaching main inside a"
+            echo "::error::PR labelled 'additive'. Rebase onto main, or convert to draft until the parents merge."
+            exit 1
+          fi
+
+          echo "OK — altering PR targets main; the protect-main ruleset applies and code-owner review is required."

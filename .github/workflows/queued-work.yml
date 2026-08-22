@@ -1,0 +1,136 @@
+name: Queued work check
+
+# Owner instruction (2026-08-14): deferred work must be carried by a mechanism, not by memory.
+# `release-2/QUEUED_WORK.md` holds each deferred item with a machine-checkable trigger; this
+# workflow evaluates them and FAILS when one comes due.
+#
+# The `push: main` trigger is the point. Items like RB-055 wait on "the release-line PR stack is
+# empty" — so the check runs on the very merge that empties it, and the failure lands at the moment
+# the work becomes possible rather than whenever someone next looks.
+#
+# The checker also SELF-TESTS its date escalation before every run (fires on a past date, silent on a
+# future one). That escalation exists so an item whose state never changes cannot sit forever while
+# the queue truthfully reports "none due" — and on the day it shipped it had never once executed,
+# because both DUE items that day were state-due. A protection nobody has seen work is a claim.
+#
+# `gh` needs a token to see open PRs; without one the stack-empty predicate returns UNKNOWN and the
+# item is reported as unevaluable, never as due. A check that guesses trains people to ignore it.
+#
+# ⚠️ LANDED ON MAIN 2026-08-18 (RB-107, owner ruling). It previously existed only on the design line,
+# so it ran on no PR whose refs did not carry it — including every PR into a release line, and every
+# PR into main. Measured: #221 reported NO CHECKS AT ALL; #220 (base main) got one, not three. A gate
+# that lives on one branch enforces on one branch.
+#
+# ⚠️ ADDED 2026-08-17 (@HamzaSohailCodes, PR #217 review): `pull_request` was MISSING, so this gate
+# could only fail AFTER a merge had already landed on main. He found the failure by running the
+# checker himself at the exact head — the workflow could not have shown it. A gate that only fires
+# once the damage is done is not a gate; it is a post-mortem.
+#
+# This trigger is only SAFE because of the owner ruling the same day (RB-097): state-due REPORTS,
+# date-due FAILS. Adding `pull_request` before that split would have blocked every PR on a healthy
+# backlog — including on RB-079, which is dev-owned and not ours to close.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 13 * * *"   # DAILY: due dates do not observe working weeks (owner 2026-08-15),
+                            # so a date-overdue item cannot wait for Monday to be noticed.
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  queued-work:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Evaluate the queued-work register
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # ⚠️ 2026-08-16: same shape as the graduation-index defect (@HamzaSohailCodes, #216). This passes
+          # today only because the checker happens to sit on the current line. If the pointer moved or the file
+          # were renamed, the register's own gate would print "skipping" and go green — the mechanism built to
+          # stop work being forgotten, forgetting silently. A missing checker is a BROKEN GATE.
+          # ── RB-107 line resolution. `main` carries no release line; a release branch does. Both are
+          # legitimate, and BOTH DIFFER from "a line exists but its checker is missing", which is a
+          # broken gate. One resolver tells the three apart (tools/resolve_release_line.sh) so the
+          # telling is not copied per step. Read the EXIT CODE, never an empty stdout.
+          set +e
+          LINE="$(bash tools/resolve_release_line.sh current)"; RC=$?
+          set -e
+          if [ "$RC" -eq 3 ]; then
+            echo "SKIP-OK: this ref carries no release line, so the queued-work register does not apply (rule: RELEASE_LINE_CONVENTION.md — line-scoped checks resolve from the line pointer)."
+            exit 0
+          fi
+          if [ "$RC" -ne 0 ]; then
+            echo "::error::could not resolve the release line on this ref — see the message above."
+            echo "::error::An unresolvable pointer is a broken gate, never a skip."
+            exit 1
+          fi
+          echo "resolved release line: $LINE"
+          if [ ! -f "$LINE/tools/queued_work_check.py" ]; then
+            echo "::error::no queued-work checker at '$LINE/tools/queued_work_check.py'."
+            echo "::error::The line RESOLVED but its checker is absent. That is a broken gate, not a skip."
+            exit 1
+          fi
+          python3 "$LINE/tools/queued_work_check.py"
+
+      # ⚠️ PLACED HERE BECAUSE THE ROWS SAY SO, NOT BECAUSE IT IS WHERE I WOULD HAVE PUT THEM.
+      # RB-086 and RB-088 close on `grep-absent:<checker>:.github/workflows/queued-work.yml`. I first added
+      # both steps to doc-integrity.yml — which is where the other repo-consistency gates live and, I would
+      # argue, the better home — and the rows would then have stayed DUE FOREVER after their own fix landed.
+      # That is RB-108's dead-trigger class, and re-pointing the triggers to match what I had built would
+      # have been making the check agree with me rather than the reverse. The enumerated row governs, the
+      # same call made for RB-106. If the owner prefers doc-integrity, re-pointing both rows is a visible
+      # diff and this comment is the reason to make it.
+      # ── RB-086: pointer freshness. Built and RED-proven on 2026-08-14 and it ran ONLY WHEN INVOKED, which
+      # is the shape this repo keeps catching: a mechanism that exists is not a mechanism that runs.
+      - name: Stated pointers are current (RB-086)
+        run: |
+          set +e
+          LINE="$(bash tools/resolve_release_line.sh current)"; RC=$?
+          set -e
+          if [ "$RC" -eq 3 ]; then
+            echo "SKIP-OK: this ref carries no release line, so pointer freshness does not apply (rule: RELEASE_LINE_CONVENTION.md — line-scoped checks resolve from the line pointer)."
+            exit 0
+          fi
+          if [ "$RC" -ne 0 ]; then
+            echo "::error::could not resolve the release line — an unresolvable pointer is a broken gate."
+            exit 1
+          fi
+          if [ ! -f "$LINE/tools/pointer_freshness_check.py" ]; then
+            echo "::error::no pointer-freshness checker at '$LINE/tools/pointer_freshness_check.py' — the line RESOLVED but its checker is absent. Broken gate, not a skip."
+            exit 1
+          fi
+          python3 "$LINE/tools/pointer_freshness_check.py"
+
+      # ── RB-088: the state matrix. ⚠️ NEVER add `--list` here. The checker exits 0 with `--list` even when
+      # it reports violations, and RB-097 was exactly that shape one file over: a reporting mode that cannot
+      # report a failure, read as a pass for a whole session.
+      - name: The recorded state matrix is current and clean (RB-088)
+        run: |
+          set +e
+          LINE="$(bash tools/resolve_release_line.sh current)"; RC=$?
+          set -e
+          if [ "$RC" -eq 3 ]; then
+            echo "SKIP-OK: this ref carries no release line, so the state matrix does not apply (rule: RELEASE_LINE_CONVENTION.md — line-scoped checks resolve from the line pointer)."
+            exit 0
+          fi
+          if [ "$RC" -ne 0 ]; then
+            echo "::error::could not resolve the release line — an unresolvable pointer is a broken gate."
+            exit 1
+          fi
+          if [ ! -f "$LINE/tools/state_matrix_check.py" ]; then
+            echo "::error::no state-matrix checker at '$LINE/tools/state_matrix_check.py' — broken gate, not a skip."
+            exit 1
+          fi
+          python3 "$LINE/tools/state_matrix_check.py"
+
