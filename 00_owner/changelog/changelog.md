@@ -1419,6 +1419,13 @@ Each changelog entry contains:
 - **Change Summary:** The two-beat journey, built — the four-stop axis, the beat threshold, and beat-aware Start here (amends DL-153). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-191 — DL-237: A numeric confidence value may exist server-side; it may never be serialized
+
+- **Date:** 2026-08-23 · **Authorizing Decision:** DL-237.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-237-numeric-confidence-never-serialized.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** A numeric confidence value may exist server-side; it may never be serialized. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
