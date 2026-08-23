@@ -1433,6 +1433,13 @@ Each changelog entry contains:
 - **Change Summary:** A read that can execute the plan is not a read. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-193 — DL-239: The Deep Pass gains a ratified latency target and ceiling — 120s target, 180s P95
+
+- **Date:** 2026-08-23 · **Authorizing Decision:** DL-239.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-239-deep-pass-latency-target-and-ceiling.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The Deep Pass gains a ratified latency target and ceiling — 120s target, 180s P95. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
