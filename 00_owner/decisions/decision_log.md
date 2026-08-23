@@ -926,5 +926,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-155 — The journey gains its two beats — Understand, Optimize (Validate, Improve), Execute (amends DL-152/154) → `00_owner/decisions/records/DL-155-journey-two-beats-identity.md`
 - DL-156 — The two-beat journey, built — the four-stop axis, the beat threshold, and beat-aware Start here (amends DL-153) → `00_owner/decisions/records/DL-156-journey-two-beats-build.md`
 - DL-237 — A numeric confidence value may exist server-side; it may never be serialized → `00_owner/decisions/records/DL-237-numeric-confidence-never-serialized.md`
+- DL-238 — A read that can execute the plan is not a read → `00_owner/decisions/records/DL-238-a-read-that-can-execute-the-plan-is-not-a-read.md`
 
 <!-- RECORDS-INDEX:END -->
