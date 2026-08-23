@@ -1440,6 +1440,13 @@ Each changelog entry contains:
 - **Change Summary:** The Deep Pass gains a ratified latency target and ceiling — 120s target, 180s P95. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-194 — DL-240: The fixed understanding core is Intent · Constraints · Scope · Requirements — Context removed (amends DL-077 §1, DL-078 §2)
+
+- **Date:** 2026-08-23 · **Authorizing Decision:** DL-240.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-240-fixed-core-constraints-replaces-context.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** The fixed understanding core is Intent · Constraints · Scope · Requirements — Context removed (amends DL-077 §1, DL-078 §2). Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** **Amends DL-077 §1** (fixed understanding core enumeration) and **DL-078 §2** (fixed-core boundary confirmation). ⚠️ Neither record is superseded in full — only their enumeration of the fixed core. DL-078's rule that profiles may not remove the core Requirements artifact stands.
+
 ---
 
 ## Governance Notes

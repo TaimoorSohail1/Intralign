@@ -42,7 +42,7 @@
 | **Deep Pass** | Async, coalesced, event-triggered expansion. **Never blocks the user.** | "full scan", "background job" (loosely) |
 | **confidence_stage / Understanding State** | Orientation → Expanded → Validated (a.k.a. Initial→Partial→Refined→Validated→Mature). Emission attribute, **not** a new object. | "status" |
 | **SynthesizedPlanningModel** | Derived planning model constructed from Attested assertions. | "the plan" (bare) |
-| **PlanningArtifact** | Derived, **generated**, user-editable: Intent · Context · Scope · Requirements · WBS · Resources · Schedule. A user edit = **new Attested input → recompute** (not in-place mutation). | "document" (when it's this object), "Attested artifact" |
+| **PlanningArtifact** | Derived, **generated**, user-editable: Intent · **Constraints** · Scope · Requirements · WBS · Resources · Schedule (DL-240 — Context removed, its content distributed across the other understanding artifacts). A user edit = **new Attested input → recompute** (not in-place mutation). | "document" (when it's this object), "Attested artifact" |
 | **ReviewRequest / StakeholderResponse** (CRR) | Stakeholder review; a submitted response = **evidence** (Perceive) → triggers Deep Pass. | "approval workflow" (the cognitive seam is not commodity) |
 | **ChatSession / ChatExchange** | Disclose-class interaction; consumes/triggers cognition, **writes no canonical, changes no assessment**. | "assistant that edits" |
 | **Time-to-First-MRI** | The one ratified numeric target: **< 60 seconds** (Master Spec §20/M1). | any other latency name for this |
