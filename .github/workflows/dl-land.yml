@@ -5,8 +5,18 @@ name: DL Land (DL-067)
 # "Approve & Land" button. It authors a numbered record + regenerates the
 # index + appends a changelog entry, runs the doc-integrity gate (FAIL-CLOSED),
 # pushes a branch, and OPENS a PR. It NEVER merges — the owner merges
-# (canon is human-gated). Numbering happens here, off current `main`, so a
-# stale local clone can never mis-number (the failure this workflow prevents).
+# (canon is human-gated). Numbering happens here, off current `main`.
+#
+# ⚠️ CORRECTED 2026-08-19. This header used to end "so a stale local clone can never mis-number (the
+# failure this workflow prevents)". That was FALSE, and measured false rather than argued: the counter
+# read ONE of this repository's FOUR decision homes, so on 2026-08-19 it would have minted an id that
+# was already cited throughout the working tree. Staleness was never the failure mode — partial sight
+# was. tools/dl_records.py now scans every id in use across the working tree AND every ref, refuses to
+# mint one that is spoken for, and REFUSES TO MINT AT ALL when the other refs cannot be read, because
+# a counter that has looked at one branch cannot assert repo-wide freedom.
+#
+# It prefers a GAP to a COLLISION, and says which file set the ceiling so a spurious citation is
+# visible rather than silent.
 
 on:
   workflow_dispatch:
@@ -57,6 +67,20 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+
+      - name: Fetch every ref — the decision corpus is NOT all on main
+        run: |
+          git fetch --no-tags --prune origin '+refs/heads/*:refs/remotes/origin/*'
+          N=$(git for-each-ref --format='%(refname)' refs/remotes/origin/ refs/heads/ | wc -l)
+          echo "refs visible to the numbering scan: $N"
+          if [ "$N" -lt 2 ]; then
+            echo "::error::only $N ref(s) visible — the numbering guard would be reading one branch."
+            echo "::error::It fails closed in that state by design; fix the fetch rather than the guard."
+            exit 1
+          fi
+
+      - name: Numbering guard self-test (R4 — prove it can fail before trusting a green)
+        run: python3 tools/dl_records.py self-test
 
       - name: Guard — one canon PR in flight (R3)
         env:
