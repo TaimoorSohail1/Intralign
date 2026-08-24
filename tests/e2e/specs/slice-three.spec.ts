@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { dismissOrientation } from "../support/orientation";
 
 test.setTimeout(180_000);
 
@@ -25,14 +26,7 @@ async function createAnalyzedProject(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: /See where I stand/ }).click();
   await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
 
-  const orientation = page.getByRole("dialog", { name: "How OSLO works" });
-  if (await orientation.isVisible()) {
-    await page.getByRole("button", { name: "Get started" }).click();
-    for (let step = 0; step < 4; step += 1) {
-      await page.getByRole("button", { name: "Next", exact: true }).click();
-    }
-    await page.getByRole("button", { name: "Finish tour" }).click();
-  }
+  await dismissOrientation(page);
 }
 
 test("Slice 3 exposes an evidence-qualified console and stable workspace routes", async ({

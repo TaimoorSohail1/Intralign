@@ -1,5 +1,7 @@
 import { expect, test, type APIRequestContext } from "@playwright/test";
 
+const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://127.0.0.1:55324";
+
 async function signInAsOwner(page: import("@playwright/test").Page) {
   await page.goto("/login");
   await page.getByLabel("Email").fill("admin@oslo.local");
@@ -25,7 +27,7 @@ async function activationMessageFor(
   let messageId: string | undefined;
   await expect
     .poll(async () => {
-      const response = await request.get("http://127.0.0.1:55324/api/v1/messages");
+      const response = await request.get(`${MAILPIT_URL}/api/v1/messages`);
       const payload = await response.json();
       const message = payload.messages.find(
         (candidate: { ID: string; To: Array<{ Address: string }> }) =>
@@ -36,7 +38,7 @@ async function activationMessageFor(
       return Boolean(messageId);
     })
     .toBe(true);
-  const response = await request.get(`http://127.0.0.1:55324/api/v1/message/${messageId}`);
+  const response = await request.get(`${MAILPIT_URL}/api/v1/message/${messageId}`);
   const message = await response.json();
   const activationUrl = String(message.Text).match(/http:\/\/localhost:3000\/activate\?token=\S+/)?.[0];
   expect(activationUrl).toBeTruthy();

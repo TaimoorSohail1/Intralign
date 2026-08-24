@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { dismissOrientation } from "../support/orientation";
 
 test.setTimeout(120_000);
 
@@ -39,13 +40,7 @@ test("Slice 8 provides workspace home, switching, awareness, settings, and safe 
   expect(projectHref).toMatch(/^\/projects\/.+\/overview$/);
   await page.goto(projectHref!);
 
-  const orientation = page.getByRole("dialog", { name: "How OSLO works" });
-  await orientation.waitFor({ state: "visible", timeout: 3_000 }).catch(() => undefined);
-  if (await orientation.isVisible()) {
-    await orientation.getByRole("button", { name: "Get started" }).click();
-    await orientation.getByRole("button", { name: "Skip tour" }).click();
-    await expect(orientation).toBeHidden();
-  }
+  await dismissOrientation(page);
 
   const switcher = page.getByTitle("Switch project");
   await expect(switcher).toBeVisible();

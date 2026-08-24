@@ -60,7 +60,9 @@ jobs:
         shell: bash
         run: |
           uv run --project services/api uvicorn oslo_api.main:app --host 127.0.0.1 --port 8000 > /tmp/oslo-api.log 2>&1 &
+          echo $! > /tmp/oslo-api.pid
           pnpm --filter @oslo/web start > /tmp/oslo-web.log 2>&1 &
+          echo $! > /tmp/oslo-web.pid
           for attempt in {1..60}; do
             curl --fail --silent http://127.0.0.1:8000/health >/dev/null \
               && curl --fail --silent http://127.0.0.1:3000/login >/dev/null \
@@ -80,6 +82,18 @@ jobs:
             tests/e2e/test-results
             tests/e2e/playwright-report
           if-no-files-found: ignore
+      - name: Stop application
+        if: always()
+        shell: bash
+        run: |
+          for pid_file in /tmp/oslo-api.pid /tmp/oslo-web.pid; do
+            if [[ -f "$pid_file" ]]; then
+              pid="$(cat "$pid_file")"
+              pkill -TERM -P "$pid" 2>/dev/null || true
+              kill -TERM "$pid" 2>/dev/null || true
+            fi
+          done
+          wait || true
       - name: Stop local platform
         if: always()
         run: pnpm supabase stop

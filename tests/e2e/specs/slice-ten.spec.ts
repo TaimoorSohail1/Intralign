@@ -1,22 +1,26 @@
 import { expect, test } from "@playwright/test";
+import { dismissOrientation } from "../support/orientation";
 
 test.setTimeout(240_000);
 
-async function dismissOrientation(page: import("@playwright/test").Page) {
-  const orientation = page.getByRole("dialog", { name: "How OSLO works" });
-  await orientation.waitFor({ state: "visible", timeout: 3_000 }).catch(() => undefined);
-  if (!(await orientation.isVisible())) return;
-  await orientation.getByRole("button", { name: "Get started" }).click();
-  await orientation.getByRole("button", { name: "Skip tour" }).click();
-  await expect(orientation).toBeHidden();
-}
-
 test.afterEach(async ({ page }) => {
   if (page.isClosed()) return;
-  await page.request.put("/api/workspace/plan", {
-    data: { plan: "basic" },
-    failOnStatusCode: false,
-  });
+  await expect
+    .poll(
+      async () => {
+        try {
+          const response = await page.request.put("/api/workspace/plan", {
+            data: { plan: "basic" },
+            failOnStatusCode: false,
+          });
+          return response.ok();
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 15_000 },
+    )
+    .toBe(true);
 });
 
 async function signIn(page: import("@playwright/test").Page) {

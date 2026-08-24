@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from urllib.parse import urlparse
 from uuid import UUID
 
 import httpx
@@ -16,7 +17,8 @@ WORKSPACE_NAME = "OSLO Product Grill"
 
 
 def local_status(repository_root: Path) -> dict[str, str]:
-    executable = repository_root / "node_modules" / ".bin" / "supabase.cmd"
+    executable_name = "supabase.cmd" if os.name == "nt" else "supabase"
+    executable = repository_root / "node_modules" / ".bin" / executable_name
     result = subprocess.run(  # noqa: S603
         [str(executable), "status", "-o", "json"],
         cwd=repository_root,
@@ -25,6 +27,24 @@ def local_status(repository_root: Path) -> dict[str, str]:
         text=True,
     )
     return json.loads(result.stdout)
+
+
+def configured_local_status(repository_root: Path) -> dict[str, str]:
+    """Use an explicitly configured local stack, otherwise discover Supabase CLI status."""
+    api_url = os.getenv("SUPABASE_URL")
+    database_url = os.getenv("DATABASE_URL")
+    secret_key = os.getenv("SUPABASE_SECRET_KEY")
+    if api_url and database_url and secret_key:
+        api_host = (urlparse(api_url).hostname or "").lower()
+        database_host = (urlparse(database_url).hostname or "").lower()
+        local_hosts = {"127.0.0.1", "localhost"}
+        if api_host in local_hosts and database_host in local_hosts:
+            return {
+                "API_URL": api_url,
+                "DB_URL": database_url.replace("postgresql+psycopg://", "postgresql://", 1),
+                "SECRET_KEY": secret_key,
+            }
+    return local_status(repository_root)
 
 
 def ensure_auth_user(
@@ -106,7 +126,7 @@ def ensure_application_records(*, database_url: str, user_id: UUID) -> None:
 
 def main() -> None:
     repository_root = Path(__file__).resolve().parents[3]
-    status = local_status(repository_root)
+    status = configured_local_status(repository_root)
     email = os.getenv("OSLO_LOCAL_ADMIN_EMAIL", "admin@oslo.local").strip().lower()
     password = os.getenv("OSLO_LOCAL_ADMIN_PASSWORD", "OsloLocalAdmin123!")
     user_id = ensure_auth_user(
