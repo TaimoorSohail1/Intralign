@@ -6,6 +6,7 @@ projects, analyses, and non-E2E identities are never removed.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from urllib.parse import urlparse
 from uuid import UUID
@@ -24,6 +25,20 @@ E2E_EMAIL_PATTERNS = (
     "existing-%@example.com",
     "invitation-actions-%@example.com",
 )
+
+
+def _test_status(repository_root: Path) -> dict[str, str]:
+    """Prefer the explicitly configured local test stack when one is supplied."""
+    api_url = os.getenv("SUPABASE_URL")
+    database_url = os.getenv("DATABASE_URL")
+    secret_key = os.getenv("SUPABASE_SECRET_KEY")
+    if api_url and database_url and secret_key:
+        return {
+            "API_URL": api_url,
+            "DB_URL": database_url.replace("postgresql+psycopg://", "postgresql://", 1),
+            "SECRET_KEY": secret_key,
+        }
+    return local_status(repository_root)
 
 
 def _require_local_status(status: dict[str, str]) -> None:
@@ -92,7 +107,7 @@ def _reset_invitation_fixtures(*, database_url: str, existing_user_id: UUID) -> 
 
 def main() -> None:
     repository_root = Path(__file__).resolve().parents[3]
-    status = local_status(repository_root)
+    status = _test_status(repository_root)
     _require_local_status(status)
     existing_user_id = ensure_auth_user(
         api_url=status["API_URL"],

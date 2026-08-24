@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { dismissOrientation } from "../support/orientation";
 
 test.setTimeout(180_000);
 
@@ -28,14 +29,7 @@ test("Slice 2 survives refresh and publishes exactly seven artifacts", async ({ 
   await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
   await expect(page.locator(".confidence-read")).toBeVisible();
 
-  const orientation = page.getByRole("dialog", { name: "How OSLO works" });
-  if (await orientation.isVisible()) {
-    await page.getByRole("button", { name: "Get started" }).click();
-    for (let step = 0; step < 4; step += 1) {
-      await page.getByRole("button", { name: "Next", exact: true }).click();
-    }
-    await page.getByRole("button", { name: "Finish tour" }).click();
-  }
+  await dismissOrientation(page);
 
   await expect(page.getByText(/provisional|current/).first()).toBeVisible();
   await expect(
