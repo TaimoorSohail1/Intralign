@@ -1447,6 +1447,13 @@ Each changelog entry contains:
 - **Change Summary:** The fixed understanding core is Intent · Constraints · Scope · Requirements — Context removed (amends DL-077 §1, DL-078 §2). Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** **Amends DL-077 §1** (fixed understanding core enumeration) and **DL-078 §2** (fixed-core boundary confirmation). ⚠️ Neither record is superseded in full — only their enumeration of the fixed core. DL-078's rule that profiles may not remove the core Requirements artifact stands.
 
+### CHG-195 — DL-241: Framework 002 is ratified as a document; DL-212 is unrecoverable and sections 1, 2, 4, 6 are vacant
+
+- **Date:** 2026-08-24 · **Authorizing Decision:** DL-241.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-241-framework-002-is-ratified-as-a-document-dl-212-is-unrecoverable-and-sections-1-2-4-6-are-vacant.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Framework 002 is ratified as a document; DL-212 is unrecoverable and sections 1, 2, 4, 6 are vacant. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes

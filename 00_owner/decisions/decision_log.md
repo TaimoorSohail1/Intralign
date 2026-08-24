@@ -929,5 +929,6 @@ _One file per decision per DL-065. Generated — do not hand-edit._
 - DL-238 — A read that can execute the plan is not a read → `00_owner/decisions/records/DL-238-a-read-that-can-execute-the-plan-is-not-a-read.md`
 - DL-239 — The Deep Pass gains a ratified latency target and ceiling — 120s target, 180s P95 → `00_owner/decisions/records/DL-239-deep-pass-latency-target-and-ceiling.md`
 - DL-240 — The fixed understanding core is Intent · Constraints · Scope · Requirements — Context removed (amends DL-077 §1, DL-078 §2) → `00_owner/decisions/records/DL-240-fixed-core-constraints-replaces-context.md`
+- DL-241 — Framework 002 is ratified as a document; DL-212 is unrecoverable and sections 1, 2, 4, 6 are vacant → `00_owner/decisions/records/DL-241-framework-002-is-ratified-as-a-document-dl-212-is-unrecoverable-and-sections-1-2-4-6-are-vacant.md`
 
 <!-- RECORDS-INDEX:END -->
