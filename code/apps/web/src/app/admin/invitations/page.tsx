@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { BrandLockup } from "@/components/brand/brand-lockup";
+import { Button } from "@/components/design-system";
 import { listInvitations, OsloApiError } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
 import { logout } from "@/app/logout-action";
@@ -36,7 +37,7 @@ export default async function InvitationsPage({ searchParams }: InvitationsPageP
   }
   return (
     <main className="admin-shell">
-      <header className="admin-header"><BrandLockup /><div><span className="role-badge">Admin</span><span>{session.displayName}</span><form action={logout}><button className="button button-ghost" type="submit">Log out</button></form></div></header>
+      <header className="admin-header"><BrandLockup /><div><span className="role-badge">Admin</span><span>{session.displayName}</span><form action={logout}><Button variant="ghost" type="submit">Log out</Button></form></div></header>
       <section className="admin-content">
         <p className="eyebrow">Workspace access</p><h1>Invitations</h1>
         <p className="admin-copy">Invite trusted teammates into OSLO. Every link is unique and expires after 14 days.</p>
@@ -45,7 +46,7 @@ export default async function InvitationsPage({ searchParams }: InvitationsPageP
         {error ? <p className="form-error" id="invite-error" role="alert">{error}</p> : null}
         <form action={inviteMember} className="invite-form">
           <div className="field"><label htmlFor="invite-email">Email address</label><input aria-describedby={error ? "invite-error" : undefined} defaultValue={email} id="invite-email" name="email" required type="email" /></div>
-          <button className="button button-primary" type="submit">Send invitation →</button>
+          <Button type="submit">Send invitation →</Button>
         </form>
         <section className="invitation-table">
           <h2>Workspace invitations</h2>
@@ -54,8 +55,8 @@ export default async function InvitationsPage({ searchParams }: InvitationsPageP
               <div><strong>{invitation.email}</strong><span>Owner invitation · expires {new Date(invitation.expires_at).toLocaleDateString("en-GB")}</span></div>
               <span className={`status-badge status-${invitation.status}`}>{invitation.status}</span>
               {invitation.status === "pending" ? <div className="row-actions">
-                <form action={resendMemberInvitation}><input name="invitation_id" type="hidden" value={invitation.id} /><button className="button button-ghost" type="submit">Resend</button></form>
-                <form action={revokeMemberInvitation}><input name="invitation_id" type="hidden" value={invitation.id} /><button className="button button-ghost danger-button" type="submit">Revoke</button></form>
+                <form action={resendMemberInvitation}><input name="invitation_id" type="hidden" value={invitation.id} /><Button variant="ghost" type="submit">Resend</Button></form>
+                <form action={revokeMemberInvitation}><input name="invitation_id" type="hidden" value={invitation.id} /><Button variant="danger" type="submit">Revoke</Button></form>
               </div> : null}
             </article>
           ))}

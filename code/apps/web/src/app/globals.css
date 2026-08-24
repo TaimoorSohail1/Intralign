@@ -1,47 +1,48 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
 
 :root {
   color-scheme: dark;
-  --bg: #111315;
-  --bg-2: #15181c;
-  --surface: #1b1f24;
-  --surface-2: #242a31;
-  --surface-3: #2c333b;
-  --text: #f5f4f0;
-  --muted: #b8bdc5;
-  --subtle: #8c939d;
-  --border: #343b44;
-  --border-2: #3e4650;
-  --primary: #d97a3a;
-  --primary-hover: #c86a2b;
-  --primary-light: #e59a63;
-  --primary-fg: #111315;
-  --success: #4d8b6b;
-  --cool: #7fa0c9;
-  --danger: #c75b5b;
-  --focus: #e59a63;
-  --hover-tint: rgb(255 255 255 / 5%);
-  --sans: Inter, "Segoe UI", Roboto, Helvetica, Arial, system-ui, sans-serif;
-  --mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, ui-monospace, monospace;
+  --bg: var(--color-canvas);
+  --bg-2: var(--color-canvas-subtle);
+  --surface: var(--color-surface);
+  --surface-2: var(--color-surface-raised);
+  --surface-3: var(--color-surface-strong);
+  --text: var(--color-text);
+  --muted: var(--color-text-muted);
+  --subtle: var(--color-text-subtle);
+  --border: var(--color-border);
+  --border-2: var(--color-border-strong);
+  --primary: var(--color-accent);
+  --primary-hover: var(--color-accent-hover);
+  --primary-light: var(--color-accent-soft);
+  --primary-fg: var(--color-on-accent);
+  --success: var(--color-success);
+  --cool: var(--color-info);
+  --danger: var(--color-danger);
+  --focus: var(--color-focus);
+  --hover-tint: var(--color-hover);
+  --sans: var(--font-sans);
+  --mono: var(--font-mono);
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #fbfaf7;
-  --bg-2: #f2f1ec;
-  --surface: #fff;
-  --surface-2: #f5f4f0;
-  --surface-3: #e9e7e1;
-  --text: #1b1f24;
-  --muted: #4a515a;
-  --subtle: #79818b;
-  --cool: #3f6193;
+  --bg: var(--color-canvas);
+  --bg-2: var(--color-canvas-subtle);
+  --surface: var(--color-surface);
+  --surface-2: var(--color-surface-raised);
+  --surface-3: var(--color-surface-strong);
+  --text: var(--color-text);
+  --muted: var(--color-text-muted);
+  --subtle: var(--color-text-subtle);
+  --cool: var(--color-info);
   --hover-tint: rgb(17 19 21 / 5%);
-  --border: #dedbd3;
-  --border-2: #cac7bf;
-  --primary-light: #b45309;
-  --primary-fg: #1b1f24;
-  --focus: #b45309;
+  --border: var(--color-border);
+  --border-2: var(--color-border-strong);
+  --primary-light: var(--color-accent-soft);
+  --primary-fg: var(--color-on-accent);
+  --focus: var(--color-focus);
 }
 
 * { box-sizing: border-box; }

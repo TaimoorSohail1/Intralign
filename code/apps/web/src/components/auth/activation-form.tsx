@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { Button } from "@/components/design-system";
+
 interface ActivationFormProps {
   email: string;
   token: string;
@@ -91,9 +93,9 @@ export function ActivationForm({ email, token, action }: ActivationFormProps) {
         <span>Stay signed in on this device</span>
       </label>
 
-      <button className="button button-primary button-full" type="submit">
+      <Button fullWidth type="submit">
         Create account &amp; continue <span aria-hidden="true">→</span>
-      </button>
+      </Button>
       <Link className="activation-back-link" href={`/activate?token=${encodeURIComponent(token)}`}>
         ← Back to the invitation
       </Link>

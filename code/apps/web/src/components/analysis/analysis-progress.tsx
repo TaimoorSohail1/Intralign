@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { Button } from "@/components/design-system";
 import { analysisFailureCopy } from "@/lib/analysis-errors";
 
 const workflow = [
@@ -461,7 +462,7 @@ export function AnalysisProgress({
             <h1>{failureCopy?.title ?? "The read paused"}</h1>
             <p>{failureCopy?.detail ?? "Your last good read is still available."}</p>
             <p>No incomplete result was published.</p>
-            <button className="button button-primary" onClick={retry} type="button">Retry analysis</button>
+            <Button onClick={retry} type="button">Retry analysis</Button>
           </div>
         </section>
       ) : null}

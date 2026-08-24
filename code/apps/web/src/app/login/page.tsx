@@ -1,4 +1,5 @@
 import { EntryShell } from "@/components/layout/entry-shell";
+import { Button } from "@/components/design-system";
 import { resolveInvitation } from "@/lib/server/oslo-api";
 
 import { signIn } from "./actions";
@@ -36,7 +37,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="field"><label htmlFor="email">Email</label><input autoComplete="email" defaultValue={invitation?.email ?? localAdminEmail} id="email" name="email" readOnly={Boolean(invitation)} required type="email" /></div>
         <div className="field"><label htmlFor="password">Password</label><input autoComplete="current-password" defaultValue={localAdminPassword} id="password" name="password" required type="password" /></div>
         <label className="stay-signed-in"><input defaultChecked name="stay_signed_in" type="checkbox" value="true" /><span>Stay signed in on this device</span></label>
-        <button className="button button-primary button-full" type="submit">Sign in <span aria-hidden="true">→</span></button>
+        <Button fullWidth type="submit">Sign in <span aria-hidden="true">→</span></Button>
       </form>
     </EntryShell>
   );
