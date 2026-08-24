@@ -71,6 +71,7 @@ describe("WorkspaceSettings", () => {
         expect.objectContaining({
           method: "PUT",
           body: expect.stringContaining('"theme":"light"'),
+          keepalive: true,
         }),
       );
     });
@@ -158,5 +159,11 @@ describe("WorkspaceSettings", () => {
     });
     expect(screen.getByText("Collaborator")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Manage invitations" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: /Workspace name/ }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText("Only a workspace owner can rename the workspace."),
+    ).toBeInTheDocument();
   });
 });

@@ -15,9 +15,11 @@ import type { OverviewSnapshot } from "@/lib/server/oslo-api";
 import { ProjectOverview } from "./project-overview";
 
 const push = vi.fn();
+const replace = vi.fn();
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
+  usePathname: () => "/projects/project-001/issues",
+  useRouter: () => ({ push, replace }),
 }));
 
 const snapshot: OverviewSnapshot = {
@@ -117,6 +119,7 @@ beforeEach(() => {
   localStorage.setItem("oslo_orientation_seen", "true");
   sessionStorage.clear();
   push.mockReset();
+  replace.mockReset();
 });
 
 afterEach(() => {
@@ -156,6 +159,38 @@ describe("ProjectOverview", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(screen.getByText("Success metric is not measurable")).toBeInTheDocument();
+  });
+
+  it("keeps resolved findings out of the default active filter counts", () => {
+    const withResolved: OverviewSnapshot = {
+      ...sliceFourSnapshot,
+      assessment: {
+        ...sliceFourSnapshot.assessment,
+        issues: [
+          ...sliceFourSnapshot.assessment.issues,
+          {
+            ...sliceFourSnapshot.assessment.issues[1],
+            id: "ISS-RESOLVED",
+            status: "resolved",
+            title: "Old resolved resource issue",
+          },
+        ],
+      },
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={withResolved}
+        initialView="issues"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Resources 2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Critical 1" })).toBeInTheDocument();
+    expect(screen.queryByText(/hidden by the current filters/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Old resolved resource issue")).not.toBeInTheDocument();
   });
 
   it("opens the governed issue panel from an Issues workspace card", () => {
@@ -211,7 +246,7 @@ describe("ProjectOverview", () => {
     ).not.toHaveAttribute("tabindex");
   });
 
-  it("opens a single-cell finding directly and a multi-cell scoped list before issue detail", () => {
+  it("opens one finding directly and routes multiple findings to a filtered Issues page", () => {
     render(
       <ProjectOverview
         displayName="Alex"
@@ -236,23 +271,15 @@ describe("ProjectOverview", () => {
         name: "Resources Feasibility: 2 issues, Critical",
       }),
     );
-    const scope = screen.getByRole("dialog", { name: "Scoped attention findings" });
-    expect(scope).toHaveTextContent("Resources");
-    expect(scope).toHaveTextContent("Feasibility");
-    expect(scope).toHaveTextContent("Migration ownership is unresolved");
-    expect(scope).toHaveTextContent("Fallback capacity is not confirmed");
-
-    fireEvent.click(
-      screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
+    expect(push).toHaveBeenCalledWith(
+      "/projects/project-001/issues?artifact=resources&dimension=feasibility",
     );
-    expect(screen.getByRole("dialog", { name: "Issue details" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Close issue" }));
     expect(
-      screen.getByRole("dialog", { name: "Scoped attention findings" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("dialog", { name: "Scoped attention findings" }),
+    ).not.toBeInTheDocument();
   });
 
-  it("supports row scoping, clearing one scope chip, and the natural all-clear state", () => {
+  it("routes an artifact row to Issues and keeps the natural all-clear state", () => {
     const { unmount } = render(
       <ProjectOverview
         displayName="Alex"
@@ -263,11 +290,9 @@ describe("ProjectOverview", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Open Resources findings" }));
-    expect(
-      screen.getByRole("dialog", { name: "Scoped attention findings" }),
-    ).toHaveTextContent("2 findings");
-    fireEvent.click(screen.getByRole("button", { name: "Clear Resources filter" }));
-    expect(screen.queryByRole("dialog", { name: "Scoped attention findings" })).not.toBeInTheDocument();
+    expect(push).toHaveBeenCalledWith(
+      "/projects/project-001/issues?artifact=resources",
+    );
 
     unmount();
     render(
@@ -289,6 +314,37 @@ describe("ProjectOverview", () => {
     );
     expect(screen.getByText("Nothing needs your attention right now.")).toBeInTheDocument();
     expect(screen.getByText("All seven plan artifacts are clear in the current read.")).toBeInTheDocument();
+  });
+
+  it("hydrates Issues filters from the URL contract and keeps filter changes shareable", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={sliceFourSnapshot}
+        initialIssueFilters={{
+          artifact: "resources",
+          dimension: "feasibility",
+          severity: null,
+          status: "active",
+        }}
+        initialView="issues"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Resources 2" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Feasibility 2" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(replace).toHaveBeenCalledWith("/projects/project-001/issues", {
+      scroll: false,
+    });
   });
 
   it("renders the golden Overview hierarchy and routes prototype entry points", () => {
@@ -623,6 +679,7 @@ describe("ProjectOverview", () => {
     const confirmation = (await screen.findByText("Confirmed by you")).closest("section");
     expect(confirmation).not.toBeNull();
     expect(within(confirmation!).getByText("Confirm an accountable owner.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Issue status addressed")).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith(
       "/api/projects/project-001/issues/ISS-001/actions",
       expect.objectContaining({ method: "POST" }),
@@ -692,13 +749,14 @@ describe("ProjectOverview", () => {
     await waitFor(() => {
       expect(screen.getByRole("dialog", { name: "Issue details" })).toHaveAttribute(
         "aria-describedby",
-        "issue-addressed-status",
+        "issue-analysis-pending-status",
       );
       expect(screen.getByText("Confirmed by you")).toBeInTheDocument();
+      expect(screen.getByLabelText("Issue status addressed")).toBeInTheDocument();
     });
   });
 
-  it("saves a clarification once and immediately shows the addressed reanalysis state", async () => {
+  it("saves a clarification once and marks the issue addressed until analysis completes", async () => {
     let releaseResponse: ((value: unknown) => void) | undefined;
     const fetcher = vi.fn().mockImplementation(
       () =>
@@ -737,9 +795,11 @@ describe("ProjectOverview", () => {
     await waitFor(() => {
       expect(screen.getByRole("dialog", { name: "Issue details" })).toHaveAttribute(
         "aria-describedby",
-        "issue-addressed-status",
+        "issue-analysis-pending-status",
       );
       expect(screen.getByText("Re-analyzing…")).toBeInTheDocument();
+      expect(screen.getByText("Saved · Analysis pending")).toBeInTheDocument();
+      expect(screen.getByLabelText("Issue status addressed")).toBeInTheDocument();
     });
   });
 
@@ -889,7 +949,6 @@ describe("ProjectOverview", () => {
         id: "workspace-001",
         name: "OSLO Alpha",
         plan: "free",
-        active_project_limit: 1,
         active_project_count: 1,
         can_create_project: false,
         projects: [{
@@ -972,9 +1031,11 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    expect(screen.getByText("Extended Analysis paused safely")).toBeInTheDocument();
+    expect(screen.getByText("OpenAI API quota exhausted")).toBeInTheDocument();
     expect(
-      screen.getByText("The deeper read stopped before it could safely publish."),
+      screen.getByText(
+        "The configured OpenAI project has no available API quota. Restore API credits or increase its spending limit, then retry. The last successful read is unchanged.",
+      ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry Extended Analysis" }));
 

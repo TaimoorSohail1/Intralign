@@ -10,7 +10,6 @@ import {
   MagnifyingGlass,
   Plus,
   Sparkle,
-  X,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -38,14 +37,8 @@ export function WorkspaceHome({
   const router = useRouter();
   const [workspace, setWorkspace] = useState(initial);
   const [showArchived, setShowArchived] = useState(false);
-  const [limitOpen, setLimitOpen] = useState(
-    openNewProject
-      && initial.projects.filter((project) => !project.archived).length
-        >= initial.active_project_limit,
-  );
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [capacityMessage, setCapacityMessage] = useState<string | null>(null);
   const [plansOpen, setPlansOpen] = useState(false);
   const [projectQuery, setProjectQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(12);
@@ -72,21 +65,10 @@ export function WorkspaceHome({
       : activeSorted;
   }, [activeSorted, projectQuery]);
   const activeVisible = activeFiltered.slice(0, visibleCount);
-  const limitCandidates = activeSorted.slice(0, 5);
-  const isLegacyOverLimit = active.length > workspace.active_project_limit;
 
   const createProject = async () => {
     setError(null);
-    setCapacityMessage(null);
-    if (active.length >= workspace.active_project_limit) {
-      setLimitOpen(true);
-      return false;
-    }
     const response = await fetch("/api/projects/new", { method: "POST" });
-    if (response.status === 409) {
-      setLimitOpen(true);
-      return;
-    }
     if (!response.ok) {
       setError("The project could not be created. Please try again.");
       return;
@@ -99,7 +81,6 @@ export function WorkspaceHome({
     if (
       !openNewProject
       || newProjectHandled.current
-      || active.length >= workspace.active_project_limit
     ) return;
 
     newProjectHandled.current = true;
@@ -116,12 +97,11 @@ export function WorkspaceHome({
     return () => {
       cancelled = true;
     };
-  }, [active.length, openNewProject, router, workspace.active_project_limit]);
+  }, [openNewProject, router]);
 
   const setArchived = async (
     projectId: string,
     next: boolean,
-    options: { keepLimitOpen?: boolean } = {},
   ) => {
     setPendingId(projectId);
     setError(null);
@@ -141,37 +121,7 @@ export function WorkspaceHome({
       ),
     }));
     setPendingId(null);
-    if (next && limitOpen && !options.keepLimitOpen) setLimitOpen(false);
     return true;
-  };
-
-  const archiveAndCreate = async (projectId: string) => {
-    const remainingActiveCount = active.length - 1;
-    const stillAtLimit = remainingActiveCount >= workspace.active_project_limit;
-    const archivedSuccessfully = await setArchived(
-      projectId,
-      true,
-      { keepLimitOpen: stillAtLimit },
-    );
-    if (!archivedSuccessfully) return;
-    if (stillAtLimit) {
-      const projectsToArchive =
-        remainingActiveCount - workspace.active_project_limit + 1;
-      setCapacityMessage(
-        `Project archived safely. Archive ${projectsToArchive} more active ${
-          projectsToArchive === 1 ? "project" : "projects"
-        } to create a new one.`,
-      );
-      return;
-    }
-    setCapacityMessage(null);
-    const response = await fetch("/api/projects/new", { method: "POST" });
-    if (!response.ok) {
-      setError("The project was archived safely, but the new project could not be created.");
-      return;
-    }
-    const project = await response.json();
-    router.push(`/intake?project=${project.id}`);
   };
 
   return (
@@ -202,7 +152,7 @@ export function WorkspaceHome({
             <span>Open a project or start a new strategic read.</span>
           </div>
           <div className="workspace-create-control">
-            <small>{active.length} active · {workspace.active_project_limit} included</small>
+            <small>{active.length} active · unlimited</small>
             <button className="workspace-primary-action" onClick={createProject} type="button">
               <Plus size={16} weight="bold" />
               New project
@@ -215,13 +165,7 @@ export function WorkspaceHome({
             <Sparkle size={18} />
             <div>
               <strong>{workspace.plan_label} plan</strong>
-              <span>
-                {isLegacyOverLimit
-                  ? `${workspace.active_project_limit} active ${
-                      workspace.active_project_limit === 1 ? "project" : "projects"
-                    } included · ${active.length} existing projects retained`
-                  : `${workspace.active_project_limit} active ${workspace.active_project_limit === 1 ? "project" : "projects"} included`}
-              </span>
+              <span>Unlimited active projects</span>
             </div>
           </div>
           <button onClick={() => setPlansOpen(true)} type="button">
@@ -345,7 +289,7 @@ export function WorkspaceHome({
                   <div><strong>{project.name}</strong><span>Read-only · retained safely</span></div>
                   {workspace.role === "owner" ? (
                     <button
-                      disabled={pendingId === project.id || active.length >= workspace.active_project_limit}
+                      disabled={pendingId === project.id}
                       onClick={() => setArchived(project.id, false)}
                       type="button"
                     >
@@ -383,82 +327,6 @@ export function WorkspaceHome({
         open={plansOpen}
         workspace={workspace}
       />
-
-      {limitOpen ? (
-        <div className="workspace-modal-backdrop" role="presentation">
-          <section aria-labelledby="project-limit-title" aria-modal="true" role="dialog">
-            <button
-              aria-label="Close project limit"
-              className="workspace-modal-close"
-              onClick={() => {
-                setCapacityMessage(null);
-                setLimitOpen(false);
-              }}
-              type="button"
-            >
-              <X size={18} />
-            </button>
-            <span className="workspace-modal-icon"><Sparkle size={20} /></span>
-            <p className="workspace-modal-eyebrow">Free plan limit</p>
-            <h2 id="project-limit-title">Your active project space is full</h2>
-            <p>
-              Choose how you want to make room. Nothing is deleted and your current
-              project stays available until you decide.
-            </p>
-            <div className="workspace-limit-options">
-              <section>
-                <div className="workspace-limit-option-heading">
-                  <Archive size={20} />
-                  <span><strong>Archive an active project</strong><small>Keep its evidence, history, artifacts, and decisions.</small></span>
-                </div>
-                {limitCandidates.map((project) => (
-                  <div className="workspace-limit-project" key={project.id}>
-                    <div><strong>{project.name}</strong><span>Updated {workspaceDateFormatter.format(new Date(project.updated_at))}</span></div>
-                    <button disabled={pendingId === project.id} onClick={() => archiveAndCreate(project.id)} type="button">Archive</button>
-                  </div>
-                ))}
-              </section>
-              <section className="workspace-upgrade-option">
-                <div className="workspace-limit-option-heading">
-                  <Sparkle size={20} />
-                  <span><strong>Keep every project active</strong><small>Explore a plan with additional active-project capacity.</small></span>
-                </div>
-                <button
-                  onClick={() => {
-                    setLimitOpen(false);
-                    setPlansOpen(true);
-                  }}
-                  type="button"
-                >
-                  Explore upgrade <ArrowRight size={14} />
-                </button>
-              </section>
-            </div>
-            {active.length > limitCandidates.length ? (
-              <p className="workspace-limit-summary">
-                Showing the {limitCandidates.length} most recently updated projects from
-                {" "}{active.length} active projects.
-              </p>
-            ) : null}
-            {capacityMessage ? (
-              <p className="workspace-limit-summary" role="status">
-                {capacityMessage}
-              </p>
-            ) : null}
-            <div className="workspace-modal-actions">
-              <button
-                onClick={() => {
-                  setCapacityMessage(null);
-                  setLimitOpen(false);
-                }}
-                type="button"
-              >
-                Keep working in this project
-              </button>
-            </div>
-          </section>
-        </div>
-      ) : null}
     </main>
   );
 }

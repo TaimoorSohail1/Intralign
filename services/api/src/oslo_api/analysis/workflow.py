@@ -1,14 +1,17 @@
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, replace
 from datetime import UTC, datetime
+from threading import BoundedSemaphore
 from time import sleep
 from typing import TypedDict
 from uuid import uuid4
 
 from langgraph.graph import END, START, StateGraph
 
+from oslo_api.analysis.evidence_graph import build_evidence_graph
 from oslo_api.analysis.harness import AgentHarness, AgentHarnessError
-from oslo_api.analysis.issue_identity import stabilize_issue_ids
+from oslo_api.analysis.issue_identity import deduplicate_issues, stabilize_issue_ids
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     AnalysisPhase,
@@ -16,6 +19,7 @@ from oslo_api.analysis.models import (
     AnalysisRunResult,
     AnalysisRunStatus,
     Artifact,
+    ArtifactType,
     Assessment,
     AssessmentSnapshot,
     EvidenceCitation,
@@ -25,6 +29,7 @@ from oslo_api.analysis.models import (
 )
 from oslo_api.analysis.semantic_validation import (
     apply_evidence_rubric,
+    audit_artifact_conflicts,
     audit_project_evidence,
     merge_semantic_issues,
     normalize_artifact_provenance,
@@ -44,10 +49,14 @@ class AnalysisWorkflow:
         store: AnalysisStore,
         harness: AgentHarness,
         phase_delay_seconds: float = 0,
+        artifact_workers_per_run: int = 2,
+        artifact_worker_limit: int = 4,
     ) -> None:
         self._store = store
         self._harness = harness
         self._phase_delay_seconds = phase_delay_seconds
+        self._artifact_workers_per_run = max(1, min(2, artifact_workers_per_run))
+        self._artifact_slots = BoundedSemaphore(max(1, artifact_worker_limit))
         builder = StateGraph(_GraphState)
         phases = tuple(AnalysisPhase)
         for phase in phases:
@@ -132,30 +141,86 @@ class AnalysisWorkflow:
         elif phase is AnalysisPhase.PERCEIVE:
             self._start(run.id, request, phase)
             invocation = self._harness_invocation(run.id, phase, state)
-            state["perception"] = self._harness.perceive(
+            perception = self._harness.perceive(
                 description=request.description,
                 source_names=request.source_names,
                 evidence=self._store.evidence_for(request) + request.user_evidence,
                 kind=request.kind,
                 invocation=invocation,
             )
+            evidence_graph = build_evidence_graph(perception.evidence)
+            state["perception"] = replace(
+                perception,
+                structured_claims=evidence_graph.claims,
+                claim_relations=evidence_graph.relations,
+            )
             self._record_harness_call(state, invocation)
             self._store.complete_phase(run.id, phase, state)
         elif phase is AnalysisPhase.CONSTRUCT_ARTIFACTS:
             self._start(run.id, request, phase)
-            invocation = self._harness_invocation(run.id, phase, state)
-            constructed = normalize_artifact_provenance(
-                self._harness.construct(
-                    perception=state["perception"],
-                    kind=request.kind,
-                    invocation=invocation,
-                )
+            completed = self._store.completed_artifacts(run.id)
+            results = self._parent_artifacts_for_edit(request)
+            results.update(completed)
+            remaining = tuple(
+                artifact_type
+                for artifact_type in ARTIFACT_TYPES
+                if artifact_type not in results
             )
-            state["artifacts"] = self._scope_artifact_edit(
-                request=request,
-                constructed=constructed,
-            )
-            self._record_harness_call(state, invocation)
+            failures: list[Exception] = []
+
+            def construct_one(artifact_type):
+                with self._artifact_slots:
+                    invocation = self._harness_invocation(run.id, phase, state)
+                    artifact = normalize_artifact_provenance(
+                        (
+                            self._harness.construct_artifact(
+                                perception=state["perception"],
+                                artifact_type=artifact_type,
+                                kind=request.kind,
+                                invocation=invocation,
+                            ),
+                        )
+                    )[0]
+                return artifact, invocation
+
+            for artifact_type in remaining:
+                self._store.start_artifact_job(run.id, artifact_type)
+            with ThreadPoolExecutor(
+                max_workers=self._artifact_workers_per_run,
+                thread_name_prefix="oslo-artifact",
+            ) as pool:
+                futures = {
+                    pool.submit(construct_one, artifact_type): artifact_type
+                    for artifact_type in remaining
+                }
+                for future in as_completed(futures):
+                    artifact_type = futures[future]
+                    try:
+                        artifact, invocation = future.result()
+                    except Exception as error:
+                        error_code, retryable = self._safe_failure(error)
+                        self._store.fail_artifact_job(
+                            run.id,
+                            artifact_type,
+                            error_code=error_code,
+                            retryable=retryable,
+                        )
+                        failures.append(error)
+                        continue
+                    results[artifact_type] = artifact
+                    self._store.complete_artifact_job(
+                        run.id,
+                        artifact,
+                        invocation.metadata,
+                    )
+                    self._record_artifact_harness_call(
+                        state,
+                        artifact_type,
+                        invocation,
+                    )
+            if failures:
+                raise failures[0]
+            state["artifacts"] = tuple(results[item] for item in ARTIFACT_TYPES)
             self._store.complete_phase(run.id, phase, state)
         elif phase is AnalysisPhase.EVALUATE_ADVISE:
             self._start(run.id, request, phase)
@@ -172,7 +237,10 @@ class AnalysisWorkflow:
                     model_assessment,
                     issues=merge_semantic_issues(
                         model_assessment.issues,
-                        audit_project_evidence(state["perception"].evidence),
+                        (
+                            *audit_project_evidence(state["perception"].evidence),
+                            *audit_artifact_conflicts(state["artifacts"]),
+                        ),
                     ),
                 ),
                 state["perception"].evidence,
@@ -193,9 +261,15 @@ class AnalysisWorkflow:
             raw_assessment = state["assessment"]
             state["assessment"] = replace(
                 raw_assessment,
-                issues=stabilize_issue_ids(
-                    raw_assessment.issues,
-                    previous_snapshot.assessment.issues if previous_snapshot else (),
+                issues=deduplicate_issues(
+                    stabilize_issue_ids(
+                        raw_assessment.issues,
+                        (
+                            previous_snapshot.assessment.issues
+                            if previous_snapshot
+                            else ()
+                        ),
+                    )
                 ),
             )
             assessment = enrich_assessment(
@@ -283,6 +357,60 @@ class AnalysisWorkflow:
             for artifact in constructed
         )
 
+    def _parent_artifacts_for_edit(
+        self,
+        request: AnalysisRunRequest,
+    ) -> dict[ArtifactType, Artifact]:
+        """Reuse unrelated parent artifacts before scheduling model work.
+
+        Artifact edits and issue clarifications rebuild the owning artifact plus
+        the later cross-artifact evaluator. Source-document changes still rebuild
+        all seven artifacts.
+        """
+        edited_types = {
+            item.reference.split(":", 3)[2]
+            for item in request.user_evidence
+            if item.reference.startswith("user:artifact:")
+            and len(item.reference.split(":", 3)) == 4
+        }
+        if request.parent_run_id is None:
+            return {}
+        parent = self._store.get_run(request.parent_run_id)
+        if parent is None or parent.snapshot is None:
+            return {}
+        if len(edited_types) == 1:
+            edited_type = next(iter(edited_types))
+        else:
+            clarification_ids = {
+                match.group("issue")
+                for item in request.user_evidence
+                if (
+                    match := re.fullmatch(
+                        r"user:clarification:(?P<issue>[^:]+):answer:[^:]+",
+                        item.reference,
+                    )
+                )
+            }
+            if len(clarification_ids) != 1:
+                return {}
+            clarification_id = next(iter(clarification_ids))
+            previous_issue = next(
+                (
+                    issue
+                    for issue in parent.snapshot.assessment.issues
+                    if issue.id == clarification_id
+                ),
+                None,
+            )
+            if previous_issue is None:
+                return {}
+            edited_type = previous_issue.artifact_type.value
+        return {
+            artifact.artifact_type: artifact
+            for artifact in parent.snapshot.artifacts
+            if artifact.artifact_type.value != edited_type
+        }
+
     @staticmethod
     def _supported_project_title(perception: Perception) -> str | None:
         """Extract a repeated governed-document title without guessing.
@@ -340,15 +468,10 @@ class AnalysisWorkflow:
         phase: AnalysisPhase,
         state: dict[str, object],
     ) -> HarnessInvocation:
-        calls = state.get("harness_calls", {})
-        fallback_active = isinstance(calls, dict) and any(
-            isinstance(record, dict) and record.get("mode") == "fallback"
-            for record in calls.values()
-        )
+        del state
         return HarnessInvocation(
             run_id=run_id,
             phase=phase,
-            fallback_active=fallback_active,
         )
 
     @staticmethod
@@ -361,6 +484,18 @@ class AnalysisWorkflow:
         calls = state.setdefault("harness_calls", {})
         if isinstance(calls, dict):
             calls[invocation.phase.value] = asdict(invocation.metadata)
+
+    @staticmethod
+    def _record_artifact_harness_call(
+        state: dict[str, object],
+        artifact_type: ArtifactType,
+        invocation: HarnessInvocation,
+    ) -> None:
+        if invocation.metadata is None:
+            return
+        calls = state.setdefault("artifact_harness_calls", {})
+        if isinstance(calls, dict):
+            calls[artifact_type.value] = asdict(invocation.metadata)
 
     @staticmethod
     def _summary(

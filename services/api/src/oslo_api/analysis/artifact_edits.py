@@ -6,15 +6,32 @@ from oslo_api.analysis.models import EvidenceFragment
 
 
 def artifact_content_hash(content: Mapping[str, object]) -> str:
-    """Return a stable identity for material artifact content."""
+    """Return a stable identity for material artifact content.
+
+    Browser-only editor identities keep React nodes stable while typing. They
+    are excluded so adding those identities, or adding and then undoing a row,
+    cannot create a new artifact version or analysis run.
+    """
 
     canonical = json.dumps(
-        content,
+        _material_content(content),
         ensure_ascii=False,
         separators=(",", ":"),
         sort_keys=True,
     )
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _material_content(value: object) -> object:
+    if isinstance(value, Mapping):
+        return {
+            key: _material_content(item)
+            for key, item in value.items()
+            if key not in {"id", "row_ids"}
+        }
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return [_material_content(item) for item in value]
+    return value
 
 
 def build_user_edit_evidence(

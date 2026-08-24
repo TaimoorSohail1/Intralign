@@ -47,6 +47,28 @@ class ArtifactType(StrEnum):
 ARTIFACT_TYPES = tuple(ArtifactType)
 
 
+class ClaimKind(StrEnum):
+    DATE = "date"
+    DATE_RANGE = "date_range"
+    MONEY = "money"
+    PERCENTAGE = "percentage"
+    QUANTITY = "quantity"
+    REQUIREMENT = "requirement"
+    CONSTRAINT = "constraint"
+    DEPENDENCY = "dependency"
+    OWNER = "owner"
+    ASSUMPTION = "assumption"
+    DECISION = "decision"
+    RISK = "risk"
+    TEXT = "text"
+
+
+class ClaimProvenance(StrEnum):
+    SOURCE_GROUNDED = "source_grounded"
+    OSLO_INFERRED = "oslo_inferred"
+    CONFIRMED_BY_USER = "confirmed_by_user"
+
+
 @dataclass(frozen=True, slots=True)
 class AnalysisRunRequest:
     workspace_id: UUID
@@ -97,8 +119,37 @@ class HarnessCallMetadata:
 class HarnessInvocation:
     run_id: UUID
     phase: AnalysisPhase
-    fallback_active: bool = False
     metadata: HarnessCallMetadata | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceClaim:
+    id: str
+    kind: ClaimKind
+    subject: str
+    predicate: str
+    value: str
+    raw_text: str
+    evidence_ref: str
+    source_name: str | None = None
+    location: str | None = None
+    unit: str | None = None
+    numeric_value: float | None = None
+    provenance: ClaimProvenance = ClaimProvenance.SOURCE_GROUNDED
+
+
+@dataclass(frozen=True, slots=True)
+class ClaimRelation:
+    source_claim_id: str
+    target_claim_id: str
+    relation_type: str
+    evidence_refs: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceGraph:
+    claims: tuple[EvidenceClaim, ...]
+    relations: tuple[ClaimRelation, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,6 +159,8 @@ class Perception:
     gaps: tuple[str, ...]
     evidence_refs: tuple[str, ...]
     evidence: tuple[EvidenceFragment, ...] = ()
+    structured_claims: tuple[EvidenceClaim, ...] = ()
+    claim_relations: tuple[ClaimRelation, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,6 +278,7 @@ class AnalysisEvent:
     occurred_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     error_code: str | None = None
     retryable: bool | None = None
+    artifact_type: ArtifactType | None = None
 
 
 @dataclass(slots=True)

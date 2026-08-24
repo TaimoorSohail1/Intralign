@@ -1,7 +1,9 @@
 import json
+import logging
 import re
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from time import monotonic, sleep
 from typing import Annotated, Any, Literal
 
@@ -17,6 +19,7 @@ from oslo_api.analysis.models import (
     ArtifactSection,
     ArtifactType,
     Assessment,
+    ClaimKind,
     EvidenceFragment,
     HarnessCallMetadata,
     HarnessInvocation,
@@ -25,10 +28,13 @@ from oslo_api.analysis.models import (
     RunKind,
 )
 
+_LOGGER = logging.getLogger(__name__)
+
+
 PROMPT_VERSIONS = {
-    "perceive": "oslo-perceive-v4",
-    "construct": "oslo-construct-v4",
-    "evaluate": "oslo-evaluate-v6",
+    "perceive": "oslo-perceive-v5",
+    "construct": "oslo-construct-v5",
+    "evaluate": "oslo-evaluate-v9",
 }
 ShortText = Annotated[str, Field(min_length=1, max_length=1_000)]
 LongText = Annotated[str, Field(min_length=1, max_length=4_000)]
@@ -162,7 +168,7 @@ class _AssessmentOutput(_StrictOutput):
     alignment: RatingBand
     feasibility: RatingBand
     coverage_audit: list[_CoverageAuditOutput] = Field(min_length=7, max_length=7)
-    issues: list[_IssueOutput] = Field(max_length=20)
+    issues: list[_IssueOutput] = Field(max_length=60)
 
     @model_validator(mode="after")
     def complete_coverage_audit(self) -> "_AssessmentOutput":
@@ -181,6 +187,7 @@ class OpenAIAgentHarness:
         model: str | None = None,
         fast_model: str | None = None,
         extended_model: str | None = None,
+        fallback_model: str | None = None,
         timeout_seconds: float = 30,
         client: Any | None = None,
         sleeper=sleep,
@@ -196,6 +203,7 @@ class OpenAIAgentHarness:
             raise ValueError("OPENAI_FAST_MODEL_REQUIRED")
         self._fast_model = selected_fast_model
         self._extended_model = extended_model or selected_fast_model
+        self._fallback_model = fallback_model
         self._sleeper = sleeper
         self._max_retries = max(0, max_retries)
 
@@ -229,6 +237,11 @@ class OpenAIAgentHarness:
                 "reconstruct or alter page or fragment numbers. Be concise and consolidate "
                 "duplicate findings without dropping distinct requirements, milestones, "
                 "stakeholders, resources, decisions, assumptions, exclusions, or table rows. "
+                "Keep diagnosed problems and causes separate from proposed interventions, "
+                "features and success measures so later stages can test whether the solution "
+                "actually addresses the problem. Preserve requirement modality exactly: "
+                "labelled requirements and shall/must obligations are different from descriptive "
+                "feature prose, targets or ideas. "
                 "Return only the required JSON contract."
             ),
             payload={
@@ -257,7 +270,12 @@ class OpenAIAgentHarness:
         kind: RunKind,
         invocation: HarnessInvocation | None = None,
     ) -> tuple[Artifact, ...]:
-        if sum(len(item.content) for item in perception.evidence) > 48_000:
+        """Compatibility API for callers outside the durable workflow.
+
+        Production workflow execution calls ``construct_artifact`` directly so
+        every artifact has an independent durable checkpoint.
+        """
+        if sum(len(item.content) for item in perception.evidence) > 16_000:
             return self._construct_sharded(
                 perception=perception,
                 kind=kind,
@@ -272,23 +290,19 @@ class OpenAIAgentHarness:
             prompt_version=PROMPT_VERSIONS["construct"],
             system=(
                 f"You are OSLO Construct ({PROMPT_VERSIONS['construct']}). "
-                "Build exactly seven complete, structured artifacts "
-                "in this exact order: intent, context, scope, requirements, work_breakdown, "
-                "schedule, resources. Preserve every distinct source row instead of compressing "
-                "tables into generic summaries. Use separate sections and rows for objectives, "
-                "success measures, stakeholders, governance, inclusions, exclusions, functional "
-                "and non-functional requirements, acceptance criteria, work packages, milestones, "
-                "resources, allocations, vendors and RACI assignments. Mark every row "
-                "confirmed, inferred, conflicting or unknown and attach row-level evidence. "
-                "Record assumptions "
-                "only when the source explicitly states one or when a necessary inference is "
-                "clearly labelled. Record all conflicting values rather than silently choosing. "
-                "Use unknown for missing values and never invent them. Extract a concise project "
-                "title only when evidence supports it and set title confidence honestly. Qualify "
-                "uncertainty, cite evidence and keep each summary concise. Every evidence_refs "
-                "value, including section, row, assumption and conflict citations, must be copied "
-                "exactly from "
-                "allowed_evidence_locators; never reconstruct or alter a locator. Return JSON only."
+                "Build exactly seven complete, structured artifacts in this exact "
+                "order: intent, context, scope, requirements, work_breakdown, "
+                "schedule, resources. Preserve every distinct source row and use "
+                "separate sections for objectives, measures, stakeholders, "
+                "governance, scope, requirements, acceptance criteria, work "
+                "packages, milestones, resources, vendors and RACI assignments. "
+                "Mark rows confirmed, inferred, conflicting or unknown. Confirmed "
+                "means directly stated. Do not convert features or KPIs into formal "
+                "requirements unless the source explicitly uses obligation language. "
+                "Create one conflict per independently actionable subject and do not "
+                "repeat project-wide conflicts across all seven artifacts. Use unknown "
+                "for missing values. Every citation must be copied exactly from "
+                "allowed_evidence_locators. Return JSON only."
             ),
             payload={
                 "analysis_kind": kind.value,
@@ -312,6 +326,94 @@ class OpenAIAgentHarness:
             raise AgentHarnessError("SEVEN_ARTIFACT_CONTRACT_FAILED")
         return artifacts
 
+    def construct_artifact(
+        self,
+        *,
+        perception: Perception,
+        artifact_type: ArtifactType,
+        kind: RunKind,
+        invocation: HarnessInvocation | None = None,
+    ) -> Artifact:
+        evidence = self._evidence_for_artifact(
+            perception,
+            artifact_type,
+            character_budget=32_000,
+        )
+        facts = self._items_for_artifact(perception.facts, artifact_type)
+        claims = self._items_for_artifact(perception.claims, artifact_type)
+        gaps = self._items_for_artifact(perception.gaps, artifact_type)
+        title_candidate = self._supported_title_candidate(perception)
+        allowed_refs = {item.reference for item in evidence}
+        if "description:1" in perception.evidence_refs:
+            allowed_refs.add("description:1")
+        structured_claims = tuple(
+            claim
+            for claim in perception.structured_claims
+            if claim.evidence_ref in allowed_refs and claim.kind is not ClaimKind.TEXT
+        )
+        structured_claim_ids = {claim.id for claim in structured_claims}
+        claim_relations = tuple(
+            relation
+            for relation in perception.claim_relations
+            if relation.source_claim_id in structured_claim_ids
+            and relation.target_claim_id in structured_claim_ids
+        )
+        output = self._call_with_evidence_contract(
+            name=f"oslo_artifact_{artifact_type.value}",
+            schema=_SingleArtifactOutput,
+            max_output_tokens=12_000,
+            kind=kind,
+            prompt_version=PROMPT_VERSIONS["construct"],
+            system=(
+                f"You are OSLO Construct ({PROMPT_VERSIONS['construct']}). "
+                f"Build only the {artifact_type.value} artifact as complete structured "
+                f"sections and rows. Required coverage: "
+                f"{self._artifact_contract(artifact_type)}. "
+                "Preserve every distinct relevant source row. Mark each row confirmed, "
+                "inferred, conflicting or unknown and attach exact row-level evidence. "
+                "Confirmed means directly stated, not merely derived from cited prose. "
+                "For requirements, do not convert features, KPIs or descriptive prose "
+                "into formal requirements or acceptance criteria unless the source "
+                "explicitly labels them or uses shall/must/required language. Use "
+                "unknown for missing values and never invent them. Record explicit or "
+                "necessary labelled assumptions and retain all conflicting values, but "
+                "only when they directly belong to this artifact. Create one conflict "
+                "object per independently actionable subject. Do not duplicate the same "
+                "fact across prose, rows, assumptions and conflicts. Keep summaries and "
+                "body copy concise. Use typed claims and relations as deterministic "
+                "comparison aids while retaining exact source locators. Extract a project "
+                "title only when selected evidence supports it. Every citation must be "
+                "copied exactly from allowed_evidence_locators. Return only the required "
+                "JSON contract."
+            ),
+            payload={
+                "analysis_kind": kind.value,
+                "artifact_type": artifact_type.value,
+                "facts": facts,
+                "claims": claims,
+                "gaps": gaps,
+                "structured_claims": structured_claims,
+                "claim_relations": claim_relations,
+                "supported_project_title_candidate": title_candidate,
+                "evidence": evidence,
+                "allowed_evidence_locators": sorted(allowed_refs),
+            },
+            invocation=invocation,
+            allowed_refs=allowed_refs,
+            evidence_refs=self._single_artifact_output_evidence_refs,
+        )
+        if output.artifact.artifact_type is not artifact_type:
+            raise AgentHarnessError("ARTIFACT_TYPE_CONTRACT_FAILED", retryable=True)
+        project_title = (
+            output.project_title.strip()
+            if output.project_title_confidence == "high" and output.project_title
+            else title_candidate
+        )
+        return self._artifact_from_output(
+            output.artifact,
+            project_title=project_title,
+        )
+
     def _construct_sharded(
         self,
         *,
@@ -326,90 +428,51 @@ class OpenAIAgentHarness:
         """
 
         def construct_one(artifact_type: ArtifactType):
-            evidence = self._evidence_for_artifact(
-                perception,
-                artifact_type,
-                character_budget=32_000,
-            )
-            facts = self._items_for_artifact(perception.facts, artifact_type)
-            claims = self._items_for_artifact(perception.claims, artifact_type)
-            gaps = self._items_for_artifact(perception.gaps, artifact_type)
-            title_candidate = self._supported_title_candidate(perception)
-            allowed_refs = {item.reference for item in evidence}
-            if "description:1" in perception.evidence_refs:
-                allowed_refs.add("description:1")
             local_invocation = (
                 HarnessInvocation(run_id=invocation.run_id, phase=invocation.phase)
                 if invocation is not None
                 else None
             )
-            output = self._call_with_evidence_contract(
-                name=f"oslo_artifact_{artifact_type.value}",
-                schema=_SingleArtifactOutput,
-                max_output_tokens=6_000,
+            artifact = self.construct_artifact(
+                perception=perception,
+                artifact_type=artifact_type,
                 kind=kind,
-                prompt_version=PROMPT_VERSIONS["construct"],
-                system=(
-                    f"You are OSLO Construct ({PROMPT_VERSIONS['construct']}). "
-                    f"Build only the {artifact_type.value} artifact as complete structured "
-                    f"sections and rows. Required coverage: "
-                    f"{self._artifact_contract(artifact_type)}. "
-                    "Preserve every distinct relevant source row. Mark "
-                    "each row confirmed, inferred, conflicting or unknown and attach exact "
-                    "row-level evidence. Use unknown for missing values and never invent "
-                    "them. Record explicit or necessary labelled assumptions and retain all "
-                    "conflicting values. Extract a project title only when the selected "
-                    "evidence supports it. Every citation must be copied exactly from "
-                    "allowed_evidence_locators. Return only the required JSON contract."
-                ),
-                payload={
-                    "analysis_kind": kind.value,
-                    "artifact_type": artifact_type.value,
-                    "facts": facts,
-                    "claims": claims,
-                    "gaps": gaps,
-                    "supported_project_title_candidate": title_candidate,
-                    "evidence": evidence,
-                    "allowed_evidence_locators": sorted(allowed_refs),
-                },
                 invocation=local_invocation,
-                allowed_refs=allowed_refs,
-                evidence_refs=self._single_artifact_output_evidence_refs,
             )
-            if output.artifact.artifact_type is not artifact_type:
-                raise AgentHarnessError("ARTIFACT_TYPE_CONTRACT_FAILED", retryable=True)
             return (
                 artifact_type,
-                output,
+                artifact,
                 (local_invocation.metadata if local_invocation is not None else None),
             )
 
         results = {}
         metadata = None
-        with ThreadPoolExecutor(max_workers=3, thread_name_prefix="oslo-construct") as pool:
-            for artifact_type, output, call_metadata in pool.map(
+        # Two concurrent structured calls keep useful parallelism without the
+        # provider instability observed when three large schema-bound responses
+        # were generated at once.
+        with ThreadPoolExecutor(max_workers=2, thread_name_prefix="oslo-construct") as pool:
+            for artifact_type, artifact, call_metadata in pool.map(
                 construct_one,
                 ARTIFACT_TYPES,
             ):
-                results[artifact_type] = output
+                results[artifact_type] = artifact
                 metadata = self._merge_metadata(metadata, call_metadata)
         if invocation is not None:
             invocation.metadata = metadata
 
         project_title = next(
             (
-                output.project_title.strip()
-                for output in results.values()
-                if output.project_title_confidence == "high" and output.project_title
+                artifact.project_title
+                for artifact in results.values()
+                if artifact.project_title
             ),
             self._supported_title_candidate(perception),
         )
         return tuple(
-            self._artifact_from_output(
-                results[artifact_type].artifact,
-                project_title=project_title,
-            )
-            for artifact_type in ARTIFACT_TYPES
+            artifact
+            if artifact.project_title or not project_title
+            else replace(artifact, project_title=project_title)
+            for artifact in (results[item] for item in ARTIFACT_TYPES)
         )
 
     @staticmethod
@@ -476,13 +539,25 @@ class OpenAIAgentHarness:
         output = self._call_with_evidence_contract(
             name="oslo_assessment",
             schema=_AssessmentOutput,
-            max_output_tokens=4_000 if kind is RunKind.EXTENDED else 3_500,
+            max_output_tokens=12_000 if kind is RunKind.EXTENDED else 9_000,
             kind=kind,
             prompt_version=PROMPT_VERSIONS["evaluate"],
             system=(
                 f"You are OSLO Evaluate ({PROMPT_VERSIONS['evaluate']}). "
                 "Apply the approved clarity, "
                 "alignment and feasibility rubric. Identify actionable, evidence-cited issues. "
+                "Before scoring, build and test this trace chain: diagnosed problems and causes "
+                "to objectives, objectives to scope interventions, interventions to explicit "
+                "requirements and deliverables, and objectives to outcome measures. Create an "
+                "Alignment finding when a material problem or objective has no intervention or "
+                "outcome measure; displaying a problem is not the same as resolving it. Check "
+                "whether budget, ownership, stakeholders and risks support the stated purpose, "
+                "not merely whether delivery roles and totals exist. Do not reward document "
+                "detail, complexity, dates, identifiers or citations as proof of alignment, "
+                "feasibility or reliability. A clear document can describe an undeliverable plan. "
+                "Reliability depends on whether evidence supports the proposed solution and "
+                "cross-artifact relationships, not the number of citations. Confidence must be "
+                "limited by the weakest material dimension and any open critical finding. "
                 "When the evidence includes a USER_CLARIFICATION, mark the tied issue addressed "
                 "if the answer improves it but leaves a material gap, and resolved only when the "
                 "answer fully satisfies the clarification. Treat a direct user answer as "
@@ -495,10 +570,31 @@ class OpenAIAgentHarness:
                 "Issue ID supplied inside USER_CLARIFICATION for that tied issue. "
                 "For every open issue, include one concise clarification question whose answer "
                 "would materially reduce the stated uncertainty. Consolidate duplicate issues "
-                "and keep explanations concise. Before findings, complete the seven-artifact "
-                "coverage audit. Run both comparison checks for contradictory values and "
-                "absence checks for required owners, dates, thresholds, dependencies, controls, "
-                "registers and decisions implied by the project. Absence findings must cite the "
+                "only when they have the same root cause and corrective decision. Keep separate "
+                "issues when different values, approvals or owners can be corrected "
+                "independently, even if they appear in the same documents. Keep explanations "
+                "concise. Before findings, complete the seven-artifact "
+                "coverage audit. For every control material to the actual project, test "
+                "problem-to-solution alignment; beneficiary and operational stakeholder "
+                "representation. Calibrate control expectations to evidenced delivery scale, "
+                "staff count, budget, regulatory and safety exposure, and procurement "
+                "complexity. For a small owner-led business, do not require enterprise "
+                "governance such as a steering committee, project board, RACI, formal risk "
+                "register or formal change-control bureaucracy unless the project's actual "
+                "consequences or source evidence imply that control. Continue the audit for "
+                "formal requirements versus feature prose; acceptance and "
+                "testing; privacy, safety, accessibility and regulatory assurance; staffing "
+                "and capacity; dependencies, procurement, supplier exit and fallback; change, "
+                "adoption and communications; benefit baselines, attribution and measurement "
+                "timing; options appraisal; and evidence currency and citation. Do not require "
+                "a control that the project's content and consequences do not imply. Preserve "
+                "distinct material findings even when there are more than twenty. Run both "
+                "comparison checks for contradictory values and absence checks for required "
+                "owners, dates, thresholds, dependencies, controls, registers and decisions "
+                "implied by the project. Check predecessor and prerequisite dates, overlapping "
+                "use of constrained resources, capacity and FTE arithmetic, currencies and "
+                "units, benefit double-counting, and whether a claimed baseline or source was "
+                "available at the stated time. Absence findings must cite the "
                 "nearest evidence that establishes the relevant plan area. For each candidate "
                 "finding, actively check whether the source documents a rationale, approved "
                 "exception, change-control rule, dual sign-off, estimate, exclusion or later "
@@ -614,6 +710,16 @@ class OpenAIAgentHarness:
             if not invalid_refs:
                 return output
             if correction_attempt == 1:
+                quarantined = self._quarantine_invalid_findings(
+                    output,
+                    allowed_refs=allowed_refs,
+                )
+                if quarantined is not None:
+                    _LOGGER.warning(
+                        "Quarantined unsupported analysis findings with locators: %s",
+                        ", ".join(invalid_refs),
+                    )
+                    return quarantined
                 raise AgentHarnessError(
                     "EVIDENCE_REFERENCE_CONTRACT_FAILED",
                     retryable=True,
@@ -638,6 +744,25 @@ class OpenAIAgentHarness:
             }
 
         raise AssertionError("unreachable evidence correction state")
+    @staticmethod
+
+    def _quarantine_invalid_findings(
+        output: BaseModel,
+        *,
+        allowed_refs: set[str],
+    ) -> BaseModel | None:
+        """Omit unsupported findings without weakening other evidence contracts."""
+
+        issues = getattr(output, "issues", None)
+        if not isinstance(issues, list):
+            return None
+        supported = [
+            issue
+            for issue in issues
+            if set(getattr(issue, "evidence_refs", ())).issubset(allowed_refs)
+        ]
+        return output.model_copy(update={"issues": supported})
+
 
     @staticmethod
     def _merge_metadata(
@@ -676,6 +801,9 @@ class OpenAIAgentHarness:
         started = monotonic()
         attempts = 0
         model = self._extended_model if kind is RunKind.EXTENDED else self._fast_model
+        fallback_reason: str | None = None
+        current_system = system
+        current_payload = payload
         while True:
             attempts += 1
             try:
@@ -683,10 +811,13 @@ class OpenAIAgentHarness:
                     model=model,
                     max_output_tokens=max_output_tokens,
                     input=[
-                        {"role": "system", "content": system},
+                        {"role": "system", "content": current_system},
                         {
                             "role": "user",
-                            "content": json.dumps(payload, default=self._json_default),
+                            "content": json.dumps(
+                                current_payload,
+                                default=self._json_default,
+                            ),
                         },
                     ],
                     text_format=schema,
@@ -696,8 +827,52 @@ class OpenAIAgentHarness:
                 raise
             except Exception as error:
                 safe_error = self._safe_provider_error(error)
-                if not safe_error.retryable or attempts > self._max_retries:
+                if not safe_error.retryable:
                     raise safe_error from None
+                if attempts > self._max_retries:
+                    fallback_allowed = safe_error.code in {
+                        "OPENAI_SCHEMA_INVALID",
+                        "OPENAI_TIMEOUT",
+                        "OPENAI_OUTPUT_LIMIT",
+                        "OPENAI_UNAVAILABLE",
+                        "OPENAI_RATE_LIMIT",
+                    }
+                    if (
+                        self._fallback_model
+                        and model != self._fallback_model
+                        and fallback_reason is None
+                        and fallback_allowed
+                    ):
+                        fallback_reason = safe_error.code
+                        model = self._fallback_model
+                    else:
+                        raise safe_error from None
+                if safe_error.code == "OPENAI_SCHEMA_INVALID":
+                    current_system = (
+                        f"{system} This is a schema repair attempt. Correct every "
+                        "validation error listed in schema_repair.validation_errors "
+                        "and return the complete JSON contract. Do not omit valid "
+                        "content merely to satisfy the schema."
+                    )
+                    current_payload = {
+                        **payload,
+                        "schema_repair": {
+                            "validation_errors": self._schema_validation_errors(error),
+                            "attempt": attempts,
+                        },
+                    }
+                elif safe_error.code == "OPENAI_OUTPUT_LIMIT":
+                    current_system = (
+                        f"{system} This is an output-limit repair attempt. Return the "
+                        "complete JSON contract using concise wording. Preserve every "
+                        "distinct material fact or finding, but remove repeated explanation."
+                    )
+                    current_payload = {
+                        **payload,
+                        "output_limit_repair": {
+                            "instruction": "Return a complete, concise contract.",
+                        },
+                    }
                 self._sleeper(0.5 * (2 ** (attempts - 1)))
         output = response.output_parsed
         if output is None:
@@ -714,8 +889,37 @@ class OpenAIAgentHarness:
                 output_tokens=getattr(usage, "output_tokens", 0) if usage else 0,
                 duration_ms=max(0, round((monotonic() - started) * 1000)),
                 attempts=attempts,
+                mode="fallback" if fallback_reason else "primary",
+                fallback_reason=fallback_reason,
             )
         return output
+
+    @staticmethod
+    def _schema_validation_errors(error: Exception) -> list[dict[str, str]]:
+        """Return bounded validation detail for the model repair prompt only."""
+        validation_errors = getattr(error, "errors", None)
+        if callable(validation_errors):
+            repaired = []
+            for item in validation_errors()[:20]:
+                if not isinstance(item, dict):
+                    continue
+                location = ".".join(str(part) for part in item.get("loc", ()))
+                repaired.append(
+                    {
+                        "location": location or "response",
+                        "type": str(item.get("type", "validation_error"))[:120],
+                        "message": " ".join(str(item.get("msg", "")).split())[:500],
+                    }
+                )
+            if repaired:
+                return repaired
+        return [
+            {
+                "location": "response",
+                "type": type(error).__name__[:120],
+                "message": " ".join(str(error).split())[:500],
+            }
+        ]
 
     @staticmethod
     def _safe_provider_error(error: Exception) -> AgentHarnessError:
@@ -743,14 +947,14 @@ class OpenAIAgentHarness:
         if "connection" in type_name:
             return AgentHarnessError("OPENAI_UNAVAILABLE", retryable=True)
         if "lengthfinishreason" in type_name:
-            return AgentHarnessError("OPENAI_OUTPUT_LIMIT")
+            return AgentHarnessError("OPENAI_OUTPUT_LIMIT", retryable=True)
         validation_errors = getattr(error, "errors", None)
         if callable(validation_errors):
             for item in validation_errors():
                 context = item.get("ctx", {}) if isinstance(item, dict) else {}
                 detail = str(context.get("error", "")).casefold()
                 if item.get("type") == "json_invalid" and "eof" in detail:
-                    return AgentHarnessError("OPENAI_OUTPUT_LIMIT")
+                    return AgentHarnessError("OPENAI_OUTPUT_LIMIT", retryable=True)
         if "validation" in type_name:
             return AgentHarnessError("OPENAI_SCHEMA_INVALID", retryable=True)
         return AgentHarnessError("OPENAI_REQUEST_FAILED")
@@ -1058,9 +1262,27 @@ class OpenAIAgentHarness:
             remaining = [entry for entry in ordinary if entry not in sampled]
             ordinary = sampled + remaining
 
+        representatives: dict[str, tuple[int, int, EvidenceFragment]] = {}
+        for entry in scored:
+            score, index, item = entry
+            source_key = item.source_name or item.reference.split(":page:", 1)[0]
+            current = representatives.get(source_key)
+            if current is None or (score, -index) > (current[0], -current[1]):
+                representatives[source_key] = entry
+        representative_entries = sorted(
+            representatives.values(),
+            key=lambda entry: entry[1],
+        )
+        representative_indexes = {entry[1] for entry in representative_entries}
+        ordered = representative_entries + [
+            entry
+            for entry in high_signal + ordinary
+            if entry[1] not in representative_indexes
+        ]
+
         selected: list[tuple[int, EvidenceFragment]] = []
         used = 0
-        for _, index, item in high_signal + ordinary:
+        for _, index, item in ordered:
             estimated_size = len(item.reference) * 2 + len(item.content) + 160
             if used + estimated_size > character_budget:
                 continue
@@ -1071,10 +1293,10 @@ class OpenAIAgentHarness:
 
     @staticmethod
     def _json_default(value):
-        if hasattr(value, "value"):
-            return value.value
         if hasattr(value, "__dataclass_fields__"):
             return {field: getattr(value, field) for field in value.__dataclass_fields__}
+        if hasattr(value, "value"):
+            return value.value
         if isinstance(value, tuple):
             return list(value)
         raise TypeError(f"Unsupported prompt value: {type(value)!r}")

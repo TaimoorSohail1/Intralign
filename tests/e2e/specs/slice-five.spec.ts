@@ -74,13 +74,30 @@ test("Slice 5 exposes all seven editable artifacts and preserves a versioned edi
   const target = editableParagraphs.last();
   const original = await target.innerText();
   const marker = ` Confirmed in Slice 5 E2E ${Date.now()}.`;
-  await target.fill(`${original}${marker}`);
-  await expect(page.getByText("Editing…")).toBeVisible();
+  await target.click();
+  await target.press("End");
+  await target.type(marker.slice(0, 1));
+  await expect(target).toBeFocused();
+  await target.type(marker.slice(1), { delay: 5 });
+  await expect(target).toBeFocused();
+  await expect(target).toContainText(`${original}${marker}`);
+  await expect(page.getByText("Changes not applied")).toBeVisible();
+  await target.hover();
+  await expect(
+    target.locator("xpath=..").getByText("Confirmed by you", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Apply changes" }).click();
   await expect(page.getByText("Reanalyzing…")).toBeVisible({ timeout: 20_000 });
 
   await page.reload();
   await expect(page.getByText(marker.trim(), { exact: false })).toBeVisible();
-  await expect(page.getByText("Confirmed by you", { exact: true }).first()).toBeVisible();
+  const editedSection = page.locator(".artifact-section").filter({
+    hasText: marker.trim(),
+  });
+  await editedSection.hover();
+  await expect(
+    editedSection.getByText("Confirmed by you", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText(/^v[2-9]\d*$/)).toBeVisible();
   await expect(page.getByText("Up to date")).toBeVisible({ timeout: 90_000 });
 });

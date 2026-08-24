@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "name": "Project Thornfield PID v1.0",
+  "source_document": "Project_Thornfield_PID_v1.0.pdf",
+  "expected_ratings": {
+    "clarity": "High",
+    "alignment": "Moderate",
+    "feasibility": "Low",
+    "reliability": "Moderate",
+    "confidence": "Low"
+  },
+  "gates": {
+    "finding_recall": 0.9,
+    "critical_recall": 1.0,
+    "maximum_false_positive_traps": 0,
+    "locator_coverage": 1.0,
+    "maximum_duplicate_rate": 0.0,
+    "maximum_duration_seconds": 180,
+    "minimum_issue_id_stability": 0.95,
+    "require_rating_stability": true
+  },
+  "findings": [
+    {"id": "TH-01", "severity": "Critical", "concepts": [["billing", "statutory"], ["15 march"], ["27 march", "golive"], ["deadline", "after"]]},
+    {"id": "TH-02", "severity": "Critical", "concepts": [["m8"], ["m7"], ["predecessor"], ["before", "order"]]},
+    {"id": "TH-03", "severity": "Critical", "concepts": [["business rates", "nndr"], ["out of scope"], ["migration", "deliverable"]]},
+    {"id": "TH-04", "severity": "Critical", "concepts": [["budget", "envelope"], ["685", "6.85"], ["712", "7.12"], ["cabinet", "approved"]]},
+    {"id": "TH-05", "severity": "Critical", "concepts": [["assumption"], ["supplier"], ["extract"], ["dispute", "risk"]]},
+    {"id": "TH-06", "severity": "High", "concepts": [["freeze", "change"], ["february"], ["april"], ["golive", "stage"]]},
+    {"id": "TH-07", "severity": "High", "concepts": [["float"], ["six", "6"], ["negative", "deadline"]]},
+    {"id": "TH-08", "severity": "High", "concepts": [["benefit"], ["double", "duplicate"], ["420"], ["fte", "officer"]]},
+    {"id": "TH-09", "severity": "High", "concepts": [["council tax", "account"], ["96400", "96,400"], ["94600", "94,600"]]},
+    {"id": "TH-10", "severity": "High", "concepts": [["fte", "allocation"], ["ibrahim", "fiona"], ["15", "1.5", "12", "1.2"]]},
+    {"id": "TH-11", "severity": "High", "concepts": [["migration"], ["acceptance"], ["independent", "assurance"], ["manager"]]},
+    {"id": "TH-12", "severity": "High", "concepts": [["accessibility", "wcag"], ["test", "verification"], ["missing", "absent"]]},
+    {"id": "TH-13", "severity": "Moderate", "concepts": [["business case"], ["superseded", "revised"], ["january", "may"]]},
+    {"id": "TH-14", "severity": "Moderate", "concepts": [["benefit", "baseline"], ["march"], ["june"], ["predate", "source"]]},
+    {"id": "TH-15", "severity": "Moderate", "concepts": [["data protection", "dpia", "equality"], ["assessment"], ["benefit", "hardship", "claim"]]},
+    {"id": "TH-16", "severity": "Moderate", "concepts": [["supplier"], ["exit", "escrow", "stepin"], ["missing", "absent"]]},
+    {"id": "TH-17", "severity": "Low", "concepts": [["stakeholder", "communication"], ["plan"], ["missing", "absent"]]},
+    {"id": "TH-18", "severity": "Low", "concepts": [["contingency"], ["740", "11.6"], ["basis", "release"]]}
+  ],
+  "traps": [
+    {"id": "TH-T01", "concepts": [["procurement"], ["21"], ["too long", "excessive", "slack"]]},
+    {"id": "TH-T02", "concepts": [["contingency"], ["unallocated"], ["defect", "invalid"]]},
+    {"id": "TH-T03", "concepts": [["supplier"], ["unnamed", "not named"], ["defect", "missing"]]},
+    {"id": "TH-T04", "concepts": [["benefit"], ["after closure"], ["defect", "invalid"]]},
+    {"id": "TH-T05", "concepts": [["chair", "chief executive"], ["name"], ["missing", "defect"]]},
+    {"id": "TH-T06", "concepts": [["seven years", "7"], ["six years", "6"], ["retention"], ["conflict"]]},
+    {"id": "TH-T07", "concepts": [["m9"], ["two predecessor", "multiple predecessor"], ["invalid", "wrong"]]},
+    {"id": "TH-T08", "concepts": [["2210", "2,210"], ["effort"], ["sum", "reconcile"], ["conflict", "wrong"]]}
+  ]
+}

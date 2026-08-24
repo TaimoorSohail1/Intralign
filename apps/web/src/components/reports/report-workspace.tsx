@@ -39,6 +39,15 @@ function sentence(value: string | null | undefined, fallback: string) {
   return normalized || fallback;
 }
 
+function uniqueText(values: string[]) {
+  const unique = new Map<string, string>();
+  for (const value of values) {
+    const key = value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+    if (key && !unique.has(key)) unique.set(key, value);
+  }
+  return [...unique.values()];
+}
+
 const reportDateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "2-digit",
   month: "short",
@@ -92,10 +101,12 @@ function buildSections(
   const evidenceCount = new Set(
     snapshot.artifacts.flatMap((artifact) => artifact.evidence_refs),
   ).size;
-  const questions = issues
-    .filter((issue) => issue.clarification)
-    .map((issue) => issue.clarification as string);
-  const documentedRisks = snapshot.artifacts
+  const questions = uniqueText(
+    issues
+      .filter((issue) => issue.clarification)
+      .map((issue) => issue.clarification as string),
+  );
+  const documentedRisks = uniqueText(snapshot.artifacts
     .flatMap((artifact) =>
       (artifact.content?.sections ?? [])
         .filter((section) => section.heading.toLowerCase().includes("risk"))
@@ -105,7 +116,7 @@ function buildSections(
           ...section.rows.map((row) => row.filter(Boolean).join(" — ")),
         ]),
     )
-    .filter(Boolean);
+    .filter(Boolean));
 
   return [
     {
@@ -136,29 +147,37 @@ function buildSections(
       id: "risks",
       title: "Key risks",
       body: documentedRisks.length || issues.length
-        ? [
+        ? uniqueText([
             ...documentedRisks,
             ...issues.map(
             (issue) =>
               `${issue.title}. ${issue.why} If it stays unresolved, it may weaken delivery of the intended outcome.`,
             ),
-          ].slice(0, 10)
+          ]).slice(0, 10)
         : ["No open critical or moderate risk is present in the current read."],
     },
     {
       id: "assumptions",
       title: "Assumptions",
       body: (() => {
-        const assumptions = snapshot.artifacts
-          .flatMap((artifact) =>
-            (artifact.assumptions ?? []).map(
-              (assumption) =>
+        const assumptionsByStatement = new Map<string, string>();
+        for (const artifact of snapshot.artifacts) {
+          for (const assumption of artifact.assumptions ?? []) {
+            const key = assumption.statement
+              .toLowerCase()
+              .replace(/[^\p{L}\p{N}]+/gu, " ")
+              .trim();
+            if (!assumptionsByStatement.has(key)) {
+              assumptionsByStatement.set(
+                key,
                 `${artifact.title}: ${assumption.statement}${
                   assumption.load_bearing ? " (load-bearing)" : ""
                 }`,
-            ),
-          )
-          .slice(0, 10);
+              );
+            }
+          }
+        }
+        const assumptions = [...assumptionsByStatement.values()].slice(0, 10);
         return assumptions.length
           ? assumptions
           : ["No material assumption is recorded in the current read."];
@@ -168,7 +187,9 @@ function buildSections(
       id: "action",
       title: "Plan of action",
       body: issues.length
-        ? issues.slice(0, 5).map((issue) => `Recommended: ${issue.recommendation}`)
+        ? uniqueText(
+            issues.map((issue) => `Recommended: ${issue.recommendation}`),
+          ).slice(0, 5)
         : ["Recommended: keep the retained plan evidence current and record material changes."],
     },
     {
@@ -292,6 +313,8 @@ export function ReportWorkspace({
   const [scheduledFor, setScheduledFor] = useState("");
   const [deliveryPending, setDeliveryPending] = useState(false);
   const [documentHtml, setDocumentHtml] = useState(initialHtml);
+  const [currentSnapshotId, setCurrentSnapshotId] = useState(snapshot.snapshot_id);
+  const isPreviousAnalysis = currentSnapshotId !== snapshot.snapshot_id;
 
   useEffect(() => {
     let active = true;
@@ -307,6 +330,7 @@ export function ReportWorkspace({
           snapshot_id: string;
           content: ReportContent | null;
         };
+        setCurrentSnapshotId(result.snapshot_id);
         if (!active || result.snapshot_id !== snapshot.snapshot_id) return;
         if (result.content) {
           const html = contentToHtml(result.content);
@@ -319,6 +343,7 @@ export function ReportWorkspace({
         await fetch(`/api/projects/${snapshot.project_id}/report`, {
           method: "PUT",
           headers: { "content-type": "application/json" },
+          keepalive: true,
           body: JSON.stringify({
             snapshot_id: snapshot.snapshot_id,
             content: editorContent(staging, initialSections),
@@ -348,6 +373,7 @@ export function ReportWorkspace({
     const response = await fetch(`/api/projects/${snapshot.project_id}/report`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
+      keepalive: true,
       body: JSON.stringify({
         snapshot_id: snapshot.snapshot_id,
         content,
@@ -359,6 +385,17 @@ export function ReportWorkspace({
     return content;
   };
 
+  const exportDocument = async () => {
+    setNotice(null);
+    await persistDocument();
+    const link = document.createElement("a");
+    link.href = `/api/projects/${snapshot.project_id}/export`;
+    link.download = `${snapshot.project_title || "project"}-readout.pdf`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+  };
+
   const queueDocumentSave = () => {
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(() => void persistDocument(), 450);
@@ -367,6 +404,48 @@ export function ReportWorkspace({
   const runEditorCommand = (command: string, value?: string) => {
     editorRef.current?.focus();
     document.execCommand(command, false, value);
+    void persistDocument();
+  };
+
+  const insertReportParagraph = () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const selection = window.getSelection();
+    const anchor =
+      selection?.anchorNode?.nodeType === Node.ELEMENT_NODE
+        ? (selection.anchorNode as Element)
+        : selection?.anchorNode?.parentElement;
+    const selectedBody =
+      anchor && editor.contains(anchor)
+        ? anchor.closest<HTMLElement>(".report-section-body")
+        : null;
+    const targetBody =
+      selectedBody ??
+      editor.querySelector<HTMLElement>(
+        '[data-section="summary"] .report-section-body',
+      ) ??
+      editor.querySelector<HTMLElement>(".report-section-body");
+    if (!targetBody) return;
+
+    const selectedBlock =
+      anchor && targetBody.contains(anchor)
+        ? anchor.closest<HTMLElement>("p, li, blockquote")
+        : null;
+    const paragraph = document.createElement("p");
+    paragraph.append(document.createElement("br"));
+    if (selectedBlock?.parentElement === targetBody) {
+      selectedBlock.after(paragraph);
+    } else {
+      targetBody.append(paragraph);
+    }
+
+    const range = document.createRange();
+    range.setStart(paragraph, 0);
+    range.collapse(true);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    editor.focus();
     void persistDocument();
   };
 
@@ -391,24 +470,53 @@ export function ReportWorkspace({
   };
 
   const deliver = async (schedule: string | null) => {
-    if (!deliveryEmail.trim()) {
+    const normalizedEmail = deliveryEmail.trim();
+    const emailValidator = document.createElement("input");
+    emailValidator.type = "email";
+    emailValidator.required = true;
+    emailValidator.value = normalizedEmail;
+    if (!emailValidator.checkValidity()) {
       setNotice("Enter a valid recipient email address.");
+      return;
+    }
+    if (isPreviousAnalysis) {
+      setNotice(
+        "Refresh the report from the current analysis before sending or scheduling it.",
+      );
       return;
     }
     setDeliveryPending(true);
     setNotice(null);
     try {
+      let latestSnapshotId = currentSnapshotId;
+      const currencyResponse = await fetch(
+        `/api/projects/${snapshot.project_id}/report`,
+        { cache: "no-store" },
+      ).catch(() => null);
+      if (currencyResponse?.ok) {
+        const currency = (await currencyResponse.json()) as { snapshot_id: string };
+        latestSnapshotId = currency.snapshot_id;
+        setCurrentSnapshotId(currency.snapshot_id);
+      }
+      const sendingPreviousAnalysis = latestSnapshotId !== snapshot.snapshot_id;
+      if (sendingPreviousAnalysis) {
+        setNotice(
+          "Refresh the report from the current analysis before sending or scheduling it.",
+        );
+        return;
+      }
       const content = await persistDocument();
       const response = await fetch(`/api/projects/${snapshot.project_id}/report`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           snapshot_id: snapshot.snapshot_id,
-          recipient_email: deliveryEmail.trim(),
+          recipient_email: normalizedEmail,
           recipient_label: recipient,
           subject: `${snapshot.project_title || "Project"} readout`,
           content,
           scheduled_for: schedule,
+          confirm_previous_analysis: false,
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -422,7 +530,7 @@ export function ReportWorkspace({
       }
       setNotice(
         result.status === "sent"
-          ? `Report emailed to ${deliveryEmail.trim()}.`
+          ? `Report emailed to ${normalizedEmail}.`
           : `Report scheduled for ${reportDateTimeFormatter.format(new Date(result.scheduled_for))} UTC.`,
       );
       setSendOpen(false);
@@ -447,7 +555,7 @@ export function ReportWorkspace({
           </button>
           <button
             aria-label="Insert paragraph"
-            onClick={() => runEditorCommand("insertParagraph")}
+            onClick={insertReportParagraph}
             type="button"
           >
             <Plus size={14} />
@@ -542,6 +650,13 @@ export function ReportWorkspace({
           <button
             aria-expanded={scheduleOpen}
             onClick={() => {
+              if (isPreviousAnalysis) {
+                setNotice(
+                  "Refresh the report from the current analysis before sending or scheduling it.",
+                );
+                setScheduleOpen(false);
+                return;
+              }
               setScheduleOpen((current) => !current);
               setSectionsOpen(false);
             }}
@@ -586,6 +701,13 @@ export function ReportWorkspace({
         <button
           className="report-send"
           onClick={() => {
+            if (isPreviousAnalysis) {
+              setNotice(
+                "Refresh the report from the current analysis before sending or scheduling it.",
+              );
+              setSendOpen(false);
+              return;
+            }
             setSendOpen((current) => !current);
             setScheduleOpen(false);
             setSectionsOpen(false);
@@ -595,13 +717,13 @@ export function ReportWorkspace({
         >
           <EnvelopeSimple size={14} /> Send <CaretDown size={10} />
         </button>
-        <a
+        <button
           className="report-export"
-          href={`/api/projects/${snapshot.project_id}/export`}
-          onClick={() => void persistDocument()}
+          onClick={() => void exportDocument()}
+          type="button"
         >
           <DownloadSimple size={14} /> Export
-        </a>
+        </button>
       </header>
 
       {sendOpen ? (
@@ -651,6 +773,16 @@ export function ReportWorkspace({
 
       {notice ? <p className="report-notice" role="status">{notice}</p> : null}
 
+      {isPreviousAnalysis ? (
+        <aside className="report-currency-warning" role="note">
+          <strong>Previous analysis</strong>
+          <span>
+            This retained report does not include the latest project analysis.
+            Refresh it from the current analysis before sending or scheduling.
+          </span>
+        </aside>
+      ) : null}
+
       <article className="report-document">
         <header>
           <h1>{snapshot.project_title || "Project understanding"}</h1>
@@ -673,7 +805,11 @@ export function ReportWorkspace({
         />
         <footer>
           <span>Saved automatically to this workspace</span>
-          <span>This document reflects the current retained project analysis.</span>
+          <span>
+            {isPreviousAnalysis
+              ? "This document reflects a previous retained project analysis."
+              : "This document reflects the current retained project analysis."}
+          </span>
         </footer>
       </article>
     </section>

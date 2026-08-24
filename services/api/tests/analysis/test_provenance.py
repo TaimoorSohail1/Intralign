@@ -162,3 +162,48 @@ def test_provenance_links_assumptions_to_cross_artifact_findings_using_evidence(
     assert result["assumptions"][0]["issue_id"] == "ISS-OPERATORS"
     assert result["assumptions"][0]["load_bearing"] is True
     assert result["structure"]["unconfirmed_dependencies"] == 1
+
+
+def test_provenance_deduplicates_the_same_project_assumption_across_artifacts() -> None:
+    reference = "document:plan:page:3:fragment:1"
+    repeated = "The incumbent supplier will extend the support agreement."
+    artifacts = (
+        Artifact(
+            artifact_type=ArtifactType.SCOPE,
+            title="Scope",
+            summary="Scope assumption",
+            reliability="Moderate",
+            evidence_refs=(reference,),
+            assumptions=(
+                ArtifactAssumption(
+                    id="ASM-SCOPE-SUPPLIER",
+                    statement=repeated,
+                    state="inferred",
+                    load_bearing=False,
+                    evidence_refs=(reference,),
+                ),
+            ),
+        ),
+        Artifact(
+            artifact_type=ArtifactType.RESOURCES,
+            title="Resources",
+            summary="Commercial assumption",
+            reliability="Moderate",
+            evidence_refs=(reference,),
+            assumptions=(
+                ArtifactAssumption(
+                    id="ASM-RESOURCES-SUPPLIER",
+                    statement=repeated,
+                    state="inferred",
+                    load_bearing=True,
+                    evidence_refs=(reference,),
+                ),
+            ),
+        ),
+    )
+
+    result = build_project_provenance(artifacts=artifacts, issues=())
+
+    assert len(result["assumptions"]) == 1
+    assert result["assumptions"][0]["load_bearing"] is True
+    assert result["load_bearing_inferences"] == 1

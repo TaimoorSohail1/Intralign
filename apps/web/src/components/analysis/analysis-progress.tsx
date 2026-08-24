@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { analysisFailureCopy } from "@/lib/analysis-errors";
+
 const workflow = [
   ["submit_intake", "Building your understanding…", "Securing your project request…"],
   ["validate_scope", "Building your understanding…", "Checking the project boundary…"],
@@ -23,6 +25,16 @@ const visibleStages = [
   "Evaluated the plan",
 ] as const;
 
+const artifactLabels: Record<string, string> = {
+  intent: "Intent",
+  context: "Context",
+  scope: "Scope",
+  requirements: "Requirements",
+  work_breakdown: "Work breakdown",
+  schedule: "Schedule",
+  resources: "Resources",
+};
+
 export function AnalysisProgress({
   projectId,
   runId,
@@ -33,7 +45,10 @@ export function AnalysisProgress({
   const router = useRouter();
   const [phase, setPhase] = useState<string>("submit_intake");
   const [completed, setCompleted] = useState<string[]>([]);
+  const [completedArtifacts, setCompletedArtifacts] = useState<string[]>([]);
+  const [activeArtifacts, setActiveArtifacts] = useState<string[]>([]);
   const [failed, setFailed] = useState<string | null>(null);
+  const failureCopy = failed ? analysisFailureCopy(failed) : null;
   const activeIndex = Math.max(0, workflow.findIndex(([id]) => id === phase));
 
   useEffect(() => {
@@ -56,8 +71,34 @@ export function AnalysisProgress({
         setCompleted((current) => [...new Set([...current, payload.phase])]);
       }
     };
+    const onArtifactStarted = (event: MessageEvent) => {
+      const payload = JSON.parse(event.data);
+      if (!payload.artifact_type) return;
+      setActiveArtifacts((current) => [
+        ...new Set([...current, payload.artifact_type]),
+      ]);
+    };
+    const onArtifactCompleted = (event: MessageEvent) => {
+      const payload = JSON.parse(event.data);
+      if (!payload.artifact_type) return;
+      setActiveArtifacts((current) =>
+        current.filter((item) => item !== payload.artifact_type),
+      );
+      setCompletedArtifacts((current) => [
+        ...new Set([...current, payload.artifact_type]),
+      ]);
+    };
     stream.addEventListener("analysis.phase_started", onProgress);
     stream.addEventListener("analysis.phase_completed", onProgress);
+    stream.addEventListener("analysis.artifact_started", onArtifactStarted);
+    stream.addEventListener("analysis.artifact_completed", onArtifactCompleted);
+    stream.addEventListener("analysis.artifact_failed", (event) => {
+      const payload = JSON.parse((event as MessageEvent).data);
+      if (!payload.artifact_type) return;
+      setActiveArtifacts((current) =>
+        current.filter((item) => item !== payload.artifact_type),
+      );
+    });
     stream.addEventListener("assessment.published", () => {
       router.replace(`/projects/${projectId}/overview`);
     });
@@ -99,13 +140,11 @@ export function AnalysisProgress({
         <div className="analysis-scanner" aria-hidden="true"><i /></div>
         {failed ? (
           <>
-            <p className="analysis-pill">Analysis paused</p>
-            <h1>Your progress is safe.</h1>
-            <p className="analysis-lede">
-              Completed work is checkpointed. Retry continues from the last safe step.
-            </p>
+            <p className="analysis-pill">Analysis failed</p>
+            <h1>{failureCopy?.title}</h1>
+            <p className="analysis-lede">{failureCopy?.detail}</p>
             <div className="failure-card" role="alert">
-              <strong>{failed.replaceAll("_", " ")}</strong>
+              <strong>{failureCopy?.title}</strong>
               <span>No incomplete result was published.</span>
             </div>
             <button className="button button-primary" onClick={retry} type="button">
@@ -139,6 +178,20 @@ export function AnalysisProgress({
                 <p>starting analysis <span>· ok</span></p>
               )}
             </div>
+            {phase === "construct_artifacts" ? (
+              <div className="analysis-trace" aria-label="Artifact construction progress">
+                <p>
+                  {completedArtifacts.length} of 7 artifacts safely saved
+                  <span> · resumable</span>
+                </p>
+                {activeArtifacts.map((artifactType) => (
+                  <p key={artifactType}>
+                    {artifactLabels[artifactType] ?? artifactType}
+                    <span> · building</span>
+                  </p>
+                ))}
+              </div>
+            ) : null}
             <p className="analysis-timing">
               Initial Analysis runs first · timing varies with evidence volume
             </p>

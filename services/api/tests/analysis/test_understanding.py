@@ -5,6 +5,7 @@ from uuid import uuid4
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     Artifact,
+    ArtifactSection,
     Assessment,
     AssessmentSnapshot,
     EvidenceFragment,
@@ -96,6 +97,56 @@ def test_high_confidence_with_low_reliability_is_flagged() -> None:
     assert assessment.confidence_direction == "unchanged"
 
 
+def test_high_coverage_high_reliability_artifacts_cannot_publish_low_reliability() -> None:
+    artifacts = tuple(
+        replace(artifact, reliability="High")
+        for artifact in _artifacts()
+    )
+
+    assessment = enrich_assessment(
+        assessment=_assessment(reliability="Low"),
+        artifacts=artifacts,
+        kind=RunKind.EXTENDED,
+        previous_snapshot=None,
+        description="Run a deeper evidence pass.",
+    )
+
+    assert assessment.reliability == "High"
+    assert assessment.reliability_basis.coverage == "High"
+    assert assessment.reliability_basis.evidence == "High"
+    assert assessment.reliability_basis.assessability == "High"
+    assert "Reliability is high" in assessment.confidence_explanation
+
+
+def test_fully_cited_rows_establish_high_reliability_despite_plan_conflicts() -> None:
+    artifacts = tuple(
+        replace(
+            artifact,
+            reliability="Moderate",
+            sections=(
+                ArtifactSection(
+                    heading="Evidence",
+                    rows=(("Confirmed row",),),
+                    row_evidence_refs=(artifact.evidence_refs,),
+                ),
+            ),
+        )
+        for artifact in _artifacts()
+    )
+
+    assessment = enrich_assessment(
+        assessment=_assessment(reliability="Moderate"),
+        artifacts=artifacts,
+        kind=RunKind.EXTENDED,
+        previous_snapshot=None,
+        description="A complete but internally conflicting evidence pack.",
+    )
+
+    assert assessment.reliability == "High"
+    assert assessment.reliability_basis.evidence == "High"
+    assert assessment.reliability_basis.assessability == "High"
+
+
 def test_open_findings_always_expose_a_clarification_request() -> None:
     issue = Issue(
         id="ISS-MIGRATION",
@@ -149,6 +200,49 @@ def test_clarification_reanalysis_keeps_a_repeated_issue_addressed_until_validat
 
     assert result.understanding_stage == "validated"
     assert result.issues[0].status == "addressed"
+    assert result.resolved_issue_count == 0
+
+
+def test_missing_clarified_issue_is_not_resolved_when_reanalysis_splits_it() -> None:
+    previous_issue = Issue(
+        id="ISS-OWNER",
+        artifact_type=ARTIFACT_TYPES[-1],
+        dimension="Feasibility",
+        severity="Critical",
+        title="Delivery ownership and fallback are not confirmed",
+        why="No accountable owner or fallback is named.",
+        recommendation="Name the owner and approved fallback.",
+        evidence_refs=("document:plan:page:1:fragment:0",),
+        clarification="Who owns delivery and who is the approved fallback?",
+    )
+    owner_issue = replace(
+        previous_issue,
+        id="MODEL-OWNER",
+        title="Delivery owner is only partly confirmed",
+    )
+    fallback_issue = replace(
+        previous_issue,
+        id="MODEL-FALLBACK",
+        title="Delivery fallback is still missing",
+    )
+    previous = _snapshot(replace(_assessment(), issues=(previous_issue,)))
+
+    result = enrich_assessment(
+        assessment=replace(
+            _assessment(score=60),
+            issues=(owner_issue, fallback_issue),
+        ),
+        artifacts=_artifacts(),
+        kind=RunKind.EXTENDED,
+        previous_snapshot=previous,
+        description=(
+            "USER_CLARIFICATION\nIssue ID: ISS-OWNER\n"
+            "Answer: Priya owns delivery, but no fallback has been approved."
+        ),
+    )
+
+    tied = next(issue for issue in result.issues if issue.id == "ISS-OWNER")
+    assert tied.status == "addressed"
     assert result.resolved_issue_count == 0
 
 
@@ -211,6 +305,31 @@ def test_disappeared_issue_remains_open_without_resolution_evidence() -> None:
     assert result.resolved_issue_count == 0
 
 
+def test_fresh_initial_read_does_not_carry_a_stale_previous_issue() -> None:
+    issue = Issue(
+        id="ISS-STALE-EDIT",
+        artifact_type=ARTIFACT_TYPES[0],
+        dimension="Clarity",
+        severity="Warning",
+        title="A stale user edit is malformed",
+        why="The previous draft contained malformed data.",
+        recommendation="Correct the draft.",
+        evidence_refs=("user:artifact:intent:version:3",),
+        clarification="What value should replace the malformed edit?",
+    )
+    previous = _snapshot(replace(_assessment(), issues=(issue,)))
+
+    result = enrich_assessment(
+        assessment=replace(_assessment(), issues=()),
+        artifacts=_artifacts(),
+        kind=RunKind.INITIAL,
+        previous_snapshot=previous,
+        description="A fresh complete read of the source documents.",
+    )
+
+    assert result.issues == ()
+
+
 def test_structured_clarification_evidence_updates_only_the_tied_issue() -> None:
     owner_issue = Issue(
         id="ISS-OWNER",
@@ -246,7 +365,7 @@ def test_structured_clarification_evidence_updates_only_the_tied_issue() -> None
     )
 
     issue = next(item for item in result.issues if item.id == "ISS-OWNER")
-    assert issue.status == "resolved"
+    assert issue.status == "addressed"
     assert result.understanding_stage == "validated"
 
 
@@ -295,7 +414,7 @@ def test_clarification_reanalysis_preserves_unrelated_open_issues_when_model_omi
     assert issues_by_id["ISS-MILESTONE"].status == "open"
 
 
-def test_complete_user_confirmation_resolves_repeated_issue() -> None:
+def test_complete_user_confirmation_addresses_a_weakness_still_found_by_analysis() -> None:
     issue = Issue(
         id="ISS-OWNER",
         artifact_type=ARTIFACT_TYPES[-1],
@@ -322,8 +441,8 @@ def test_complete_user_confirmation_resolves_repeated_issue() -> None:
         ),
     )
 
-    assert result.issues[0].status == "resolved"
-    assert result.resolved_issue_count == 1
+    assert result.issues[0].status == "addressed"
+    assert result.resolved_issue_count == 0
 
 
 def test_latest_clarification_controls_issue_lifecycle() -> None:
@@ -356,4 +475,4 @@ def test_latest_clarification_controls_issue_lifecycle() -> None:
     )
 
     assert result.issues[0].id == "ISS-LATEST"
-    assert result.issues[0].status == "resolved"
+    assert result.issues[0].status == "addressed"

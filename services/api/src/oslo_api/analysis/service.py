@@ -13,7 +13,6 @@ from oslo_api.analysis import (
     AnalysisWorkflow,
     AssessmentSnapshot,
     DeterministicAgentHarness,
-    FallbackAgentHarness,
     RunKind,
 )
 from oslo_api.analysis.artifact_edits import (
@@ -23,6 +22,7 @@ from oslo_api.analysis.artifact_edits import (
 from oslo_api.analysis.document_store import DatabaseDocumentStore
 from oslo_api.analysis.harness import AgentHarness
 from oslo_api.analysis.history import append_history_event, list_project_history
+from oslo_api.analysis.models import EvidenceFragment
 from oslo_api.analysis.object_storage import LocalObjectStorage
 from oslo_api.analysis.openai_harness import OpenAIAgentHarness
 from oslo_api.analysis.persistence import DatabaseAnalysisStore
@@ -271,7 +271,6 @@ class DatabaseSliceTwoApplication:
                 .mappings()
                 .one()
             )
-
         if answer_row["analysis_run_id"] is not None:
             existing = self._store.get_run(answer_row["analysis_run_id"])
             if existing is not None:
@@ -319,6 +318,23 @@ class DatabaseSliceTwoApplication:
                     "idempotency_key": key,
                 },
             )
+            connection.execute(
+                text(
+                    """
+                    update public.issues
+                    set current_status = 'addressed', updated_at = now()
+                    where workspace_id = :workspace_id
+                      and project_id = :project_id
+                      and stable_key = :issue_id
+                      and current_status <> 'resolved'
+                    """
+                ),
+                {
+                    "workspace_id": workspace_id,
+                    "project_id": project_id,
+                    "issue_id": issue_id,
+                },
+            )
             append_history_event(
                 connection,
                 workspace_id=workspace_id,
@@ -332,22 +348,6 @@ class DatabaseSliceTwoApplication:
                 detail=f"Answered the clarification for “{issue.title}”.",
                 issue_id=issue_id,
                 idempotency_key=f"history:clarification:{key}",
-            )
-            connection.execute(
-                text(
-                    """
-                    update public.issues
-                    set current_status = 'addressed', updated_at = now()
-                    where workspace_id = :workspace_id
-                      and project_id = :project_id
-                      and stable_key = :issue_id
-                    """
-                ),
-                {
-                    "workspace_id": workspace_id,
-                    "project_id": project_id,
-                    "issue_id": issue_id,
-                },
             )
         if run.status is AnalysisRunStatus.QUEUED:
             self._executor.submit(self._execute, run.id)
@@ -493,6 +493,7 @@ class DatabaseSliceTwoApplication:
                 ),
                 "artifact_version": existing["artifact_version"],
                 "analysis_run": run,
+                "status": "addressed",
             }
 
         if action == "select":
@@ -523,11 +524,22 @@ class DatabaseSliceTwoApplication:
                         "idempotency_key": key,
                     },
                 )
-                self._mark_issue_addressed(
-                    connection,
-                    workspace_id=workspace_id,
-                    project_id=project_id,
-                    issue_id=issue_id,
+                connection.execute(
+                    text(
+                        """
+                        update public.issues
+                        set current_status = 'addressed', updated_at = now()
+                        where workspace_id = :workspace_id
+                          and project_id = :project_id
+                          and stable_key = :issue_id
+                          and current_status <> 'resolved'
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                        "issue_id": issue_id,
+                    },
                 )
                 append_history_event(
                     connection,
@@ -551,6 +563,7 @@ class DatabaseSliceTwoApplication:
                 "artifact_type": issue.artifact_type.value,
                 "artifact_version": None,
                 "analysis_run": None,
+                "status": "addressed",
             }
 
         artifact = self.get_artifact(
@@ -570,6 +583,16 @@ class DatabaseSliceTwoApplication:
             }
         )
         content["sections"] = sections
+        resolution_evidence = build_clarification_evidence(
+            issue_id=issue.id,
+            issue_title=issue.title,
+            question=(
+                issue.clarification
+                or "What governed change addresses this issue?"
+            ),
+            answer=resolution,
+            answer_key=key,
+        )
         updated_artifact, run = self.update_artifact(
             actor_user_id=actor_user_id,
             project_id=project_id,
@@ -577,6 +600,7 @@ class DatabaseSliceTwoApplication:
             content=content,
             expected_version=int(artifact["version"]),
             key=f"issue-action:{key}",
+            issue_evidence=resolution_evidence,
         )
         with self._engine.begin() as connection:
             connection.execute(
@@ -607,11 +631,22 @@ class DatabaseSliceTwoApplication:
                     "idempotency_key": key,
                 },
             )
-            self._mark_issue_addressed(
-                connection,
-                workspace_id=workspace_id,
-                project_id=project_id,
-                issue_id=issue_id,
+            connection.execute(
+                text(
+                    """
+                    update public.issues
+                    set current_status = 'addressed', updated_at = now()
+                    where workspace_id = :workspace_id
+                      and project_id = :project_id
+                      and stable_key = :issue_id
+                      and current_status <> 'resolved'
+                    """
+                ),
+                {
+                    "workspace_id": workspace_id,
+                    "project_id": project_id,
+                    "issue_id": issue_id,
+                },
             )
             append_history_event(
                 connection,
@@ -636,6 +671,7 @@ class DatabaseSliceTwoApplication:
             "artifact_type": issue.artifact_type.value,
             "artifact_version": updated_artifact["version"],
             "analysis_run": run,
+            "status": "addressed",
         }
 
     def list_issue_actions(
@@ -646,13 +682,31 @@ class DatabaseSliceTwoApplication:
     ) -> list[dict]:
         workspace_id = self._workspace_for_project(actor_user_id, project_id)
         with self._engine.begin() as connection:
+            lifecycle_by_issue = {
+                str(row["stable_key"]): str(row["current_status"])
+                for row in connection.execute(
+                    text(
+                        """
+                        select stable_key, current_status
+                        from public.issues
+                        where workspace_id = :workspace_id
+                          and project_id = :project_id
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                    },
+                ).mappings()
+            }
             actions = (
                 connection.execute(
                     text(
                         """
                         select distinct on (issue_stable_key)
                                issue_stable_key, action_type, resolution_text,
-                               artifact_type, artifact_version, analysis_run_id
+                               artifact_type, artifact_version, analysis_run_id,
+                               created_at
                         from public.issue_actions
                         where workspace_id = :workspace_id
                           and project_id = :project_id
@@ -667,11 +721,33 @@ class DatabaseSliceTwoApplication:
                 .mappings()
                 .all()
             )
-        return [
+            answers = (
+                connection.execute(
+                    text(
+                        """
+                        select distinct on (issue_stable_key)
+                               issue_stable_key, answer, analysis_run_id, created_at
+                        from public.issue_answers
+                        where workspace_id = :workspace_id
+                          and project_id = :project_id
+                        order by issue_stable_key, created_at desc
+                        """
+                    ),
+                    {
+                        "workspace_id": workspace_id,
+                        "project_id": project_id,
+                    },
+                )
+                .mappings()
+                .all()
+            )
+        updates = [
             {
                 "issue_id": str(action["issue_stable_key"]),
                 "action": str(action["action_type"]),
-                "status": "addressed",
+                "status": lifecycle_by_issue.get(
+                    str(action["issue_stable_key"]), "open"
+                ),
                 "selected_resolution": str(action["resolution_text"]),
                 "artifact_type": (
                     str(action["artifact_type"])
@@ -684,34 +760,33 @@ class DatabaseSliceTwoApplication:
                     if action["analysis_run_id"] is not None
                     else None
                 ),
+                "created_at": action["created_at"],
             }
             for action in actions
         ]
-
-    @staticmethod
-    def _mark_issue_addressed(
-        connection,
-        *,
-        workspace_id: UUID,
-        project_id: UUID,
-        issue_id: str,
-    ) -> None:
-        connection.execute(
-            text(
-                """
-                update public.issues
-                set current_status = 'addressed', updated_at = now()
-                where workspace_id = :workspace_id
-                  and project_id = :project_id
-                  and stable_key = :issue_id
-                """
-            ),
+        updates.extend(
             {
-                "workspace_id": workspace_id,
-                "project_id": project_id,
-                "issue_id": issue_id,
-            },
+                "issue_id": str(answer["issue_stable_key"]),
+                "action": "clarification",
+                "status": lifecycle_by_issue.get(
+                    str(answer["issue_stable_key"]), "open"
+                ),
+                "selected_resolution": None,
+                "artifact_type": None,
+                "artifact_version": None,
+                "analysis_run": (
+                    self._store.get_run(answer["analysis_run_id"])
+                    if answer["analysis_run_id"] is not None
+                    else None
+                ),
+                "created_at": answer["created_at"],
+            }
+            for answer in answers
         )
+        latest_by_issue: dict[str, dict] = {}
+        for update in sorted(updates, key=lambda item: item["created_at"], reverse=True):
+            latest_by_issue.setdefault(update["issue_id"], update)
+        return list(latest_by_issue.values())
 
     def get_artifact(
         self,
@@ -831,6 +906,7 @@ class DatabaseSliceTwoApplication:
         content: dict,
         expected_version: int,
         key: str,
+        issue_evidence: EvidenceFragment | None = None,
     ) -> tuple[dict, AnalysisRun | None]:
         workspace_id = self._workspace_for_project(actor_user_id, project_id)
         snapshot = self._store.current_snapshot(project_id)
@@ -1006,6 +1082,9 @@ class DatabaseSliceTwoApplication:
             version=next_version,
             content=content,
         )
+        user_evidence = parent_run.request.user_evidence + (edit_evidence,)
+        if issue_evidence is not None:
+            user_evidence += (issue_evidence,)
         run = self._store.create_run(
             AnalysisRunRequest(
                 workspace_id=workspace_id,
@@ -1015,7 +1094,7 @@ class DatabaseSliceTwoApplication:
                 description=parent_run.request.description,
                 source_names=parent_run.request.source_names,
                 source_document_ids=parent_run.request.source_document_ids,
-                user_evidence=parent_run.request.user_evidence + (edit_evidence,),
+                user_evidence=user_evidence,
                 idempotency_key=f"artifact-edit:{key}",
                 parent_run_id=parent_run.id,
                 consumes_analysis_allowance=False,
@@ -1073,11 +1152,13 @@ class DatabaseSliceTwoApplication:
                     "bullets": list(section.bullets),
                     "columns": list(section.columns),
                     "rows": [list(row) for row in section.rows],
+                    "provenance": "from_oslo",
                     "evidence_refs": list(section.evidence_refs),
                     "row_evidence_refs": [
                         list(references) for references in section.row_evidence_refs
                     ],
                     "row_states": list(section.row_states),
+                    "row_provenance": ["from_oslo" for _ in section.rows],
                 }
                 for section in artifact.sections
             ]
@@ -1294,6 +1375,8 @@ def build_slice_two_application() -> DatabaseSliceTwoApplication:
         store=store,
         harness=harness,
         phase_delay_seconds=settings.analysis_phase_delay_ms / 1000,
+        artifact_workers_per_run=2,
+        artifact_worker_limit=settings.analysis_artifact_worker_threads,
     )
     return DatabaseSliceTwoApplication(
         engine=engine,
@@ -1309,22 +1392,16 @@ def build_slice_two_application() -> DatabaseSliceTwoApplication:
 
 
 def build_agent_harness(settings: Settings) -> AgentHarness:
-    use_openai = settings.analysis_harness == "openai" or (
-        settings.analysis_harness == "auto" and bool(settings.openai_api_key)
-    )
-    if not use_openai:
+    if settings.analysis_harness == "deterministic":
         return DeterministicAgentHarness()
     if not settings.openai_api_key:
         raise RuntimeError("OPENAI_API_KEY_REQUIRED_FOR_OPENAI_HARNESS")
     legacy_model = settings.openai_model
-    primary = OpenAIAgentHarness(
+    return OpenAIAgentHarness(
         api_key=settings.openai_api_key,
         fast_model=legacy_model or settings.openai_fast_model,
         extended_model=legacy_model or settings.openai_extended_model,
+        fallback_model=settings.openai_fallback_model,
         timeout_seconds=settings.openai_timeout_seconds,
         max_retries=settings.openai_max_retries,
-    )
-    return FallbackAgentHarness(
-        primary=primary,
-        fallback=DeterministicAgentHarness(),
     )

@@ -12,7 +12,6 @@ const workspace: WorkspaceSummary = {
   plan: "free",
   plan_label: "Free",
   price_usd_monthly: 0,
-  active_project_limit: 1,
   document_limit: 20,
   word_limit: 50_000,
   collaborator_seat_limit: 3,
@@ -35,7 +34,6 @@ describe("PlanComparisonModal", () => {
       plan: "basic" as const,
       plan_label: "Basic",
       price_usd_monthly: 12,
-      active_project_limit: 3,
       document_limit: 40,
       word_limit: 100_000,
       collaborator_seat_limit: 10,
@@ -61,6 +59,7 @@ describe("PlanComparisonModal", () => {
     );
 
     expect(screen.getByText("Every plan gets the same read.")).toBeInTheDocument();
+    expect(screen.getAllByText("Unlimited active projects")).toHaveLength(2);
     expect(screen.getByText(/no payment method, invoice, or charge/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Simulate upgrade" }));

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Annotated, Literal
+from urllib.parse import quote
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -91,6 +93,16 @@ class ReportDeliveryRequest(ReportDraftRequest):
     recipient_label: str = Field(min_length=1, max_length=120)
     subject: str = Field(min_length=1, max_length=200)
     scheduled_for: datetime | None = None
+    confirm_previous_analysis: bool = False
+
+
+def download_disposition(project_name: str, suffix: str) -> str:
+    filename = f"{project_name}-{suffix}.pdf"
+    ascii_name = re.sub(r"[^A-Za-z0-9._-]+", "-", filename).strip("-")
+    return (
+        f'attachment; filename="{ascii_name or suffix + ".pdf"}"; '
+        f"filename*=UTF-8''{quote(filename)}"
+    )
 
 
 @router.get("/projects/{project_id}/collaboration")
@@ -150,6 +162,7 @@ def deliver_report(
             subject=payload.subject,
             content=payload.content.model_dump(),
             scheduled_for=payload.scheduled_for,
+            confirm_previous_analysis=payload.confirm_previous_analysis,
         )
     )
 
@@ -179,8 +192,9 @@ def export_report(
         pdf,
         media_type="application/pdf",
         headers={
-            "content-disposition": (
-                f'attachment; filename="{report["project_name"]}-readout.pdf"'
+            "content-disposition": download_disposition(
+                report["project_name"],
+                "readout",
             )
         },
     )
@@ -278,7 +292,10 @@ def export_project(
         pdf,
         media_type="application/pdf",
         headers={
-            "content-disposition": f'attachment; filename="{snapshot["project_name"]}-snapshot.pdf"'
+            "content-disposition": download_disposition(
+                snapshot["project_name"],
+                "snapshot",
+            )
         },
     )
 

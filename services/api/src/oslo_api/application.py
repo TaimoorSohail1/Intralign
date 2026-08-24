@@ -105,17 +105,6 @@ class CollaboratorSeatLimitReached(Exception):
         super().__init__("Workspace collaborator seat limit reached")
 
 
-class ProjectLimitReached(Exception):
-    """Raised when the workspace plan cannot create another active project."""
-
-    def __init__(self, policy: PlanPolicy | None = None) -> None:
-        policy = policy or get_plan_policy("free")
-        self.plan = policy.code.value
-        self.active_project_limit = policy.active_project_limit
-        self.remedies = ("archive_project", "compare_plans")
-        super().__init__("Workspace active project limit reached")
-
-
 class ProjectArchiveDenied(Exception):
     """Raised when a member cannot archive or restore the requested project."""
 
@@ -579,34 +568,6 @@ class DatabaseSliceOneApplication:
             if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
                 raise InvitePermissionDenied
             connection.execute(
-                text("select pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
-                {"scope": f"project-limit:{workspace_id}"},
-            )
-            active_count = connection.execute(
-                text(
-                    "select count(*) from public.projects "
-                    "where workspace_id = :workspace_id and archived_at is null"
-                ),
-                {"workspace_id": workspace_id},
-            ).scalar_one()
-            policy = get_workspace_plan(connection, workspace_id)
-            decision = policy.decide_project_capacity(active_projects=int(active_count))
-            if not decision.allowed:
-                self._record_blocked_limit_event(
-                    workspace_id=workspace_id,
-                    actor_user_id=actor_user_id,
-                    project_id=None,
-                    limit_kind="active_projects",
-                    details={
-                        "plan": policy.code.value,
-                        "limit": policy.active_project_limit,
-                        "active": int(active_count),
-                        "remedies": list(decision.remedies),
-                    },
-                    idempotency_key=f"project-create:{project_id}:blocked",
-                )
-                raise ProjectLimitReached(policy)
-            connection.execute(
                 text(
                     """
                     insert into public.projects (id, workspace_id, name, status, created_by)
@@ -640,20 +601,6 @@ class DatabaseSliceOneApplication:
                     "actor_user_id": actor_user_id,
                     "subject_id": str(project_id),
                 },
-            )
-            record_limit_event(
-                connection,
-                workspace_id=workspace_id,
-                actor_user_id=actor_user_id,
-                project_id=project_id,
-                limit_kind="active_projects",
-                outcome="allowed",
-                details={
-                    "plan": policy.code.value,
-                    "limit": policy.active_project_limit,
-                    "active_before": int(active_count),
-                },
-                idempotency_key=f"project-create:{project_id}:allowed",
             )
         return Project(
             id=project_id,
@@ -798,7 +745,6 @@ class DatabaseSliceOneApplication:
             name=workspace_name,
             role=role.value,
             plan=policy.code.value,
-            active_project_limit=policy.active_project_limit,
             projects=[
                 WorkspaceProject(
                     id=row["id"],
@@ -905,37 +851,6 @@ class DatabaseSliceOneApplication:
                 is not MembershipRole.OWNER
             ):
                 raise ProjectArchiveDenied
-            connection.execute(
-                text("select pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
-                {"scope": f"project-limit:{workspace_id}"},
-            )
-            if not archived:
-                active_count = connection.execute(
-                    text(
-                        "select count(*) from public.projects "
-                        "where workspace_id = :workspace_id and archived_at is null"
-                    ),
-                    {"workspace_id": workspace_id},
-                ).scalar_one()
-                policy = get_workspace_plan(connection, workspace_id)
-                decision = policy.decide_project_capacity(
-                    active_projects=int(active_count)
-                )
-                if not decision.allowed:
-                    self._record_blocked_limit_event(
-                        workspace_id=workspace_id,
-                        actor_user_id=actor_user_id,
-                        project_id=project_id,
-                        limit_kind="active_projects",
-                        details={
-                            "plan": policy.code.value,
-                            "limit": policy.active_project_limit,
-                            "active": int(active_count),
-                            "remedies": list(decision.remedies),
-                        },
-                        idempotency_key=f"project-restore:{project_id}:blocked",
-                    )
-                    raise ProjectLimitReached(policy)
             updated = connection.execute(
                 text(
                     """
@@ -957,21 +872,6 @@ class DatabaseSliceOneApplication:
             )
             if updated.rowcount != 1:
                 raise ProjectArchiveDenied
-            if not archived:
-                record_limit_event(
-                    connection,
-                    workspace_id=workspace_id,
-                    actor_user_id=actor_user_id,
-                    project_id=project_id,
-                    limit_kind="active_projects",
-                    outcome="allowed",
-                    details={
-                        "plan": policy.code.value,
-                        "limit": policy.active_project_limit,
-                        "active_before": int(active_count),
-                    },
-                    idempotency_key=f"project-restore:{project_id}:allowed",
-                )
             connection.execute(
                 text(
                     """

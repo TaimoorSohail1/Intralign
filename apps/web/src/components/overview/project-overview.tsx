@@ -31,6 +31,12 @@ import { HistoryWorkspace } from "@/components/history/history-workspace";
 import { InferenceMap } from "@/components/inference/inference-map";
 import { ReportWorkspace } from "@/components/reports/report-workspace";
 import { ProjectWorkspaceControls } from "@/components/workspace/project-workspace-controls";
+import { analysisFailureCopy } from "@/lib/analysis-errors";
+import {
+  defaultIssueFilters,
+  issueFiltersToSearchParams,
+  type IssueFilters,
+} from "@/lib/issue-filters";
 import { buildProjectProvenance } from "@/lib/project-provenance";
 
 const dimensions = ["clarity", "alignment", "feasibility"] as const;
@@ -139,13 +145,16 @@ export function ProjectOverview({
   logoutAction,
   initialView = "overview",
   initialHistory,
+  initialIssueFilters = defaultIssueFilters,
 }: {
   initial: OverviewSnapshot;
   displayName: string;
   logoutAction: () => Promise<void>;
   initialView?: ProjectView;
   initialHistory?: ProjectHistory;
+  initialIssueFilters?: IssueFilters;
 }) {
+  const router = useRouter();
   const [snapshot, setSnapshot] = useState(initial);
   const [orientation, setOrientation] = useState(false);
   const [tourStep, setTourStep] = useState<number | null>(null);
@@ -156,7 +165,6 @@ export function ProjectOverview({
   const [confidenceBreakdownOpen, setConfidenceBreakdownOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [attentionScope, setAttentionScope] = useState<AttentionScope | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [advisorQuestions, setAdvisorQuestions] = useState(initialAdvisorQuestions);
   const [question, setQuestion] = useState("");
@@ -318,7 +326,7 @@ export function ProjectOverview({
           setExtendedRetrying(false);
           setAnalysisUpdateRunId(null);
           setClarificationError(
-            "Your answer is saved, but the update paused safely. The current read is unchanged.",
+            `${analysisFailureCopy(run.error_code).title}. Your answer is saved and the current read is unchanged.`,
           );
         }
       } catch {
@@ -345,22 +353,17 @@ export function ProjectOverview({
   }, []);
 
   useEffect(() => {
-    if (!selectedIssue && !attentionScope) return;
+    if (!selectedIssue) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (selectedIssue && attentionScope) {
-          setSelectedIssue(null);
-        } else {
-          setSelectedIssue(null);
-          setAttentionScope(null);
-          setAdvisorOpen(advisorStateBeforeIssue.current);
-          window.setTimeout(() => issueTrigger.current?.focus(), 0);
-        }
+        setSelectedIssue(null);
+        setAdvisorOpen(advisorStateBeforeIssue.current);
+        window.setTimeout(() => issueTrigger.current?.focus(), 0);
         return;
       }
       if (event.key === "Tab") {
         const panel = document.querySelector<HTMLElement>(
-          '[role="dialog"][aria-label="Issue details"], [role="dialog"][aria-label="Scoped attention findings"]',
+          '[role="dialog"][aria-label="Issue details"]',
         );
         const focusable = panel?.querySelectorAll<HTMLElement>(
           'button:not([disabled]), textarea:not([disabled]), input:not([disabled]), a[href]',
@@ -379,7 +382,7 @@ export function ProjectOverview({
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [attentionScope, selectedIssue]);
+  }, [selectedIssue]);
 
   useEffect(() => {
     if (initialView !== "overview") return;
@@ -412,9 +415,7 @@ export function ProjectOverview({
   };
 
   const openIssue = (issue: Issue, trigger?: HTMLElement | null) => {
-    if (!attentionScope) {
-      advisorStateBeforeIssue.current = advisorOpen;
-    }
+    advisorStateBeforeIssue.current = advisorOpen;
     issueTrigger.current = trigger ?? (document.activeElement as HTMLElement | null);
     setAdvisorOpen(false);
     setSelectedIssue(issue);
@@ -424,28 +425,44 @@ export function ProjectOverview({
 
   const closeIssue = () => {
     setSelectedIssue(null);
-    if (!attentionScope) {
-      setAdvisorOpen(advisorStateBeforeIssue.current);
-      window.setTimeout(() => issueTrigger.current?.focus(), 0);
-    }
-  };
-
-  const openAttentionScope = (
-    scope: AttentionScope,
-    trigger?: HTMLElement | null,
-  ) => {
-    advisorStateBeforeIssue.current = advisorOpen;
-    issueTrigger.current = trigger ?? (document.activeElement as HTMLElement | null);
-    setSelectedIssue(null);
-    setAdvisorOpen(false);
-    setAttentionScope(scope);
-  };
-
-  const closeAttentionScope = () => {
-    setSelectedIssue(null);
-    setAttentionScope(null);
     setAdvisorOpen(advisorStateBeforeIssue.current);
     window.setTimeout(() => issueTrigger.current?.focus(), 0);
+  };
+  const updateIssueLifecycle = (
+    issueId: string,
+    status: Issue["status"],
+    selectedResolution?: string,
+  ) => {
+    const update = (issue: Issue) =>
+      issue.id === issueId
+        ? {
+            ...issue,
+            status,
+            ...(selectedResolution === undefined
+              ? {}
+              : { selected_resolution: selectedResolution }),
+          }
+        : issue;
+    setSnapshot((current) => ({
+      ...current,
+      assessment: {
+        ...current.assessment,
+        issues: current.assessment.issues.map(update),
+      },
+    }));
+    setSelectedIssue((current) => (current ? update(current) : current));
+  };
+
+  const openAttentionScope = (scope: AttentionScope) => {
+    const filters: IssueFilters = {
+      ...defaultIssueFilters,
+      artifact: (scope.artifact as IssueFilters["artifact"]) ?? null,
+      dimension: (scope.dimension as IssueFilters["dimension"]) ?? null,
+    };
+    const query = issueFiltersToSearchParams(filters).toString();
+    router.push(
+      `/projects/${snapshot.project_id}/issues${query ? `?${query}` : ""}`,
+    );
   };
 
   const rememberOverviewPosition = () => {
@@ -531,14 +548,18 @@ export function ProjectOverview({
           }),
         },
       );
-      if (!response.ok) throw new Error("answer was not accepted");
-      const result = await response.json();
-      setSelectedIssue((current) =>
-        current ? { ...current, status: "addressed" } : current,
-      );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.message || "Your answer could not be saved.");
+      }
+      updateIssueLifecycle(selectedIssue.id, "addressed");
       setAnalysisUpdateRunId(result.run_id);
-    } catch {
-      setClarificationError("Your answer could not be saved. Please try again.");
+    } catch (error) {
+      setClarificationError(
+        error instanceof Error
+          ? error.message
+          : "Your answer could not be saved. Please try again.",
+      );
     } finally {
       setClarificationPending(false);
     }
@@ -572,51 +593,41 @@ export function ProjectOverview({
           }),
         },
       );
-      if (!response.ok) throw new Error("issue action was not accepted");
-      const result = await response.json();
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.message || "The resolution could not be saved.");
+      }
       setSelectedResolutions((current) => ({
         ...current,
         [selectedIssue.id]: result.selected_resolution,
       }));
-      setSelectedIssue((current) =>
-        current ? { ...current, status: "addressed" } : current,
+      updateIssueLifecycle(
+        selectedIssue.id,
+        "addressed",
+        result.selected_resolution,
       );
-      setSnapshot((current) => ({
-        ...current,
-        assessment: {
-          ...current.assessment,
-          issues: current.assessment.issues.map((issue) =>
-            issue.id === selectedIssue.id
-              ? {
-                  ...issue,
-                  status: "addressed",
-                  selected_resolution: result.selected_resolution,
-                }
-              : issue,
-          ),
-        },
-      }));
       if (result.analysis_run?.run_id) {
         setAnalysisUpdateRunId(result.analysis_run.run_id);
       }
-    } catch {
-      setIssueActionError("The resolution could not be saved. Please try again.");
+    } catch (error) {
+      setIssueActionError(
+        error instanceof Error
+          ? error.message
+          : "The resolution could not be saved. Please try again.",
+      );
     } finally {
       setIssueActionPending(false);
     }
   };
 
-  const extendedFailureMessage =
-    extendedRun?.error_code === "EVIDENCE_REFERENCE_CONTRACT_FAILED"
-      ? "An evidence reference did not match the source document."
-      : "The deeper read stopped before it could safely publish.";
+  const extendedFailure = analysisFailureCopy(extendedRun?.error_code);
 
-  const panelVisible = advisorOpen || Boolean(selectedIssue) || Boolean(attentionScope);
+  const panelVisible = advisorOpen || Boolean(selectedIssue);
 
   return (
     <main
       className={`project-shell ${
-        selectedIssue || attentionScope ? "has-issue" : ""
+        selectedIssue ? "has-issue" : ""
       }`}
     >
       <header className="project-header">
@@ -1163,7 +1174,6 @@ export function ProjectOverview({
                   .filter((value): value is string => Boolean(value))
                   .map(artifactLabel)
                   .join(" × ");
-                setAttentionScope(null);
                 setAdvisorOpen(true);
                 void askQuestion(
                   focus
@@ -1191,8 +1201,10 @@ export function ProjectOverview({
             />
           ) : initialView === "issues" ? (
             <IssuesWorkspace
+              initialFilters={initialIssueFilters}
               issues={snapshot.assessment.issues}
               onOpenIssue={openIssue}
+              projectId={snapshot.project_id}
             />
           ) : initialView === "history" && initialHistory ? (
             <HistoryWorkspace
@@ -1229,45 +1241,13 @@ export function ProjectOverview({
             pending={clarificationPending || issueActionPending}
             selectedResolution={selectedResolutions[selectedIssue.id] ?? null}
           />
-        ) : attentionScope ? (
-          <AttentionScopePanel
-            issues={openIssues}
-            onAsk={() => {
-              const focus = [attentionScope.artifact, attentionScope.dimension]
-                .filter((value): value is string => Boolean(value))
-                .map(artifactLabel)
-                .join(" × ");
-              setAttentionScope(null);
-              setAdvisorOpen(true);
-              void askQuestion(
-                `Explain the ${focus} findings and what I should address first.`,
-              );
-            }}
-            onClearArtifact={() => {
-              if (!attentionScope.dimension) {
-                closeAttentionScope();
-                return;
-              }
-              setAttentionScope({ dimension: attentionScope.dimension });
-            }}
-            onClearDimension={() => {
-              if (!attentionScope.artifact) {
-                closeAttentionScope();
-                return;
-              }
-              setAttentionScope({ artifact: attentionScope.artifact });
-            }}
-            onClose={closeAttentionScope}
-            onOpenIssue={openIssue}
-            scope={attentionScope}
-          />
         ) : advisorOpen ? (
           <AdvisorPanel
             advisorError={advisorError}
             advisorPending={advisorPending}
             advisorQuestions={advisorQuestions}
             extendedFailed={extendedFailed}
-            extendedFailureMessage={extendedFailureMessage}
+            extendedFailure={extendedFailure}
             extendedRetryError={extendedRetryError}
             extendedRetrying={extendedRetrying}
             isProvisional={isProvisional}
@@ -1591,21 +1571,48 @@ function DeferredWorkspace() {
 type IssueGroupMode = "dimension" | "severity" | "artifact";
 
 function IssuesWorkspace({
+  initialFilters,
   issues,
   onOpenIssue,
+  projectId,
 }: {
+  initialFilters: IssueFilters;
   issues: Issue[];
   onOpenIssue: (issue: Issue, trigger?: HTMLElement | null) => void;
+  projectId: string;
 }) {
+  const router = useRouter();
   const [groupMode, setGroupMode] = useState<IssueGroupMode>("dimension");
-  const [artifactFilter, setArtifactFilter] = useState<string | null>(null);
-  const [dimensionFilter, setDimensionFilter] = useState<string | null>(null);
-  const [severityFilter, setSeverityFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>("active");
+  const [filters, setFiltersState] = useState<IssueFilters>(initialFilters);
+  const {
+    artifact: artifactFilter,
+    dimension: dimensionFilter,
+    severity: severityFilter,
+    status: statusFilter,
+  } = filters;
+
+  function setFilters(next: IssueFilters) {
+    setFiltersState(next);
+    const query = issueFiltersToSearchParams(next).toString();
+    router.replace(
+      `/projects/${projectId}/issues${query ? `?${query}` : ""}`,
+      { scroll: false },
+    );
+  }
+
+  const statusScopedIssues = useMemo(
+    () =>
+      issues.filter((issue) => {
+        if (statusFilter === "active") return issue.status !== "resolved";
+        if (statusFilter === "all") return true;
+        return issue.status === statusFilter;
+      }),
+    [issues, statusFilter],
+  );
 
   const filteredIssues = useMemo(
     () =>
-      issues
+      statusScopedIssues
         .filter((issue) => {
           if (artifactFilter && issue.artifact_type !== artifactFilter) return false;
           if (
@@ -1615,12 +1622,10 @@ function IssuesWorkspace({
             return false;
           }
           if (severityFilter && issue.severity !== severityFilter) return false;
-          if (statusFilter === "active") return issue.status !== "resolved";
-          if (statusFilter !== "all" && issue.status !== statusFilter) return false;
           return true;
         })
         .sort(issueSort),
-    [artifactFilter, dimensionFilter, issues, severityFilter, statusFilter],
+    [artifactFilter, dimensionFilter, severityFilter, statusScopedIssues],
   );
 
   const groups = useMemo(() => {
@@ -1646,7 +1651,7 @@ function IssuesWorkspace({
   }, [filteredIssues, groupMode]);
 
   const activeCount = issues.filter((issue) => issue.status !== "resolved").length;
-  const hiddenCount = Math.max(0, issues.length - filteredIssues.length);
+  const hiddenCount = Math.max(0, statusScopedIssues.length - filteredIssues.length);
   const hasExplicitFilters = Boolean(
     artifactFilter ||
       dimensionFilter ||
@@ -1655,10 +1660,7 @@ function IssuesWorkspace({
   );
 
   function clearFilters() {
-    setArtifactFilter(null);
-    setDimensionFilter(null);
-    setSeverityFilter(null);
-    setStatusFilter("active");
+    setFilters(defaultIssueFilters);
   }
 
   return (
@@ -1690,23 +1692,35 @@ function IssuesWorkspace({
         <IssueFilterRow
           active={artifactFilter}
           label="Artifact"
-          onChange={setArtifactFilter}
+          onChange={(artifact) =>
+            setFilters({
+              ...filters,
+              artifact: artifact as IssueFilters["artifact"],
+            })
+          }
           options={artifactOrder
             .map((artifact) => ({
               label: artifactLabel(artifact),
               value: artifact,
-              count: issues.filter((issue) => issue.artifact_type === artifact).length,
+              count: statusScopedIssues.filter(
+                (issue) => issue.artifact_type === artifact,
+              ).length,
             }))
             .filter((option) => option.count)}
         />
         <IssueFilterRow
           active={dimensionFilter}
           label="Dimension"
-          onChange={setDimensionFilter}
+          onChange={(dimension) =>
+            setFilters({
+              ...filters,
+              dimension: dimension as IssueFilters["dimension"],
+            })
+          }
           options={dimensions.map((dimension) => ({
             label: artifactLabel(dimension),
             value: dimension,
-            count: issues.filter(
+            count: statusScopedIssues.filter(
               (issue) => issue.dimension.toLowerCase() === dimension,
             ).length,
           }))}
@@ -1714,11 +1728,18 @@ function IssuesWorkspace({
         <IssueFilterRow
           active={severityFilter}
           label="Severity"
-          onChange={setSeverityFilter}
+          onChange={(severity) =>
+            setFilters({
+              ...filters,
+              severity: severity as IssueFilters["severity"],
+            })
+          }
           options={["Critical", "Moderate", "Warning"].map((severity) => ({
             label: severity,
             value: severity,
-            count: issues.filter((issue) => issue.severity === severity).length,
+            count: statusScopedIssues.filter(
+              (issue) => issue.severity === severity,
+            ).length,
           }))}
         />
         <div className="issue-filter-row">
@@ -1733,7 +1754,12 @@ function IssuesWorkspace({
             <button
               aria-pressed={statusFilter === value}
               key={value}
-              onClick={() => setStatusFilter(value)}
+              onClick={() =>
+                setFilters({
+                  ...filters,
+                  status: value as IssueFilters["status"],
+                })
+              }
               type="button"
             >
               {label}
@@ -2021,110 +2047,6 @@ function MatrixRow({
   );
 }
 
-function AttentionScopePanel({
-  issues,
-  onAsk,
-  onClearArtifact,
-  onClearDimension,
-  onClose,
-  onOpenIssue,
-  scope,
-}: {
-  issues: Issue[];
-  onAsk: () => void;
-  onClearArtifact: () => void;
-  onClearDimension: () => void;
-  onClose: () => void;
-  onOpenIssue: (issue: Issue, trigger?: HTMLElement | null) => void;
-  scope: AttentionScope;
-}) {
-  const closeButton = useRef<HTMLButtonElement>(null);
-  const scopedIssues = issues.filter(
-    (issue) =>
-      (!scope.artifact || issue.artifact_type === scope.artifact) &&
-      (!scope.dimension || issue.dimension.toLowerCase() === scope.dimension),
-  );
-
-  useEffect(() => {
-    closeButton.current?.focus();
-  }, []);
-
-  return (
-    <aside
-      aria-label="Scoped attention findings"
-      aria-modal="true"
-      className="project-sidepanel attention-scope-panel"
-      role="dialog"
-    >
-      <div className="attention-scope-heading">
-        <div>
-          <span>Attention focus</span>
-          <h2>{scopedIssues.length} findings in this view</h2>
-          <p>Current published read · open and addressed</p>
-        </div>
-        <button
-          aria-label="Close scoped findings"
-          onClick={onClose}
-          ref={closeButton}
-          type="button"
-        >
-          <X aria-hidden="true" size={19} />
-        </button>
-      </div>
-      <div className="attention-scope-chips" aria-label="Active filters">
-        {scope.artifact ? (
-          <button
-            aria-label={`Clear ${artifactLabel(scope.artifact)} filter`}
-            onClick={onClearArtifact}
-            type="button"
-          >
-            {artifactLabel(scope.artifact)}
-            <X aria-hidden="true" size={11} />
-          </button>
-        ) : null}
-        {scope.dimension ? (
-          <button
-            aria-label={`Clear ${artifactLabel(scope.dimension)} filter`}
-            onClick={onClearDimension}
-            type="button"
-          >
-            {artifactLabel(scope.dimension)}
-            <X aria-hidden="true" size={11} />
-          </button>
-        ) : null}
-      </div>
-      <button className="ask-oslo-issue" onClick={onAsk} type="button">
-        <Sparkle aria-hidden="true" size={12} weight="fill" />
-        Ask OSLO about this focus
-      </button>
-      <div className="attention-scope-list">
-        {scopedIssues.map((issue) => (
-          <button
-            aria-label={`Open ${issue.title}`}
-            key={issue.id}
-            onClick={(event) => onOpenIssue(issue, event.currentTarget)}
-            type="button"
-          >
-            <span className={`severity severity-${issue.severity.toLowerCase()}`}>
-              {issue.severity}
-            </span>
-            <strong>{issue.title}</strong>
-            <small>
-              {artifactLabel(issue.artifact_type)} · {issue.dimension} ·{" "}
-              {artifactLabel(issue.status)}
-            </small>
-            <CaretRight aria-hidden="true" size={14} />
-          </button>
-        ))}
-      </div>
-      <p className="attention-scope-note">
-        A finding can appear in more than one focused view when the same evidence affects
-        multiple dimensions. The underlying issue remains one governed record.
-      </p>
-    </aside>
-  );
-}
-
 function IssuePanel({
   analysisRunning,
   answer,
@@ -2173,7 +2095,7 @@ function IssuePanel({
   const [reviewLink, setReviewLink] = useState("");
   const [reviewCopied, setReviewCopied] = useState(false);
   const evidence = issue.evidence ?? [];
-  const effectiveStatus = analysisRunning ? "addressed" : issue.status;
+  const effectiveStatus = issue.status;
 
   useEffect(() => {
     closeButton.current?.focus();
@@ -2265,7 +2187,7 @@ function IssuePanel({
 
   return (
     <aside
-      aria-describedby={analysisRunning ? "issue-addressed-status" : undefined}
+      aria-describedby={analysisRunning ? "issue-analysis-pending-status" : undefined}
       aria-label="Issue details"
       aria-modal="true"
       className="project-sidepanel issue-panel"
@@ -2299,8 +2221,16 @@ function IssuePanel({
         ))}
       </div>
       {analysisRunning ? (
-        <p className="sr-only" id="issue-addressed-status" aria-live="polite">
-          Your answer is saved. This issue is addressed while OSLO re-analyzes it.
+        <p
+          className="issue-analysis-status"
+          id="issue-analysis-pending-status"
+          aria-live="polite"
+        >
+          <strong>Saved · Analysis pending</strong>
+          <span>
+            The issue stays {artifactLabel(issue.status)} until the completed analysis
+            confirms its new status.
+          </span>
         </p>
       ) : null}
       <button className="ask-oslo-issue" onClick={onAsk} type="button">
@@ -2547,7 +2477,7 @@ function AdvisorPanel({
   advisorPending,
   advisorQuestions,
   extendedFailed,
-  extendedFailureMessage,
+  extendedFailure,
   extendedRetryError,
   extendedRetrying,
   isProvisional,
@@ -2563,7 +2493,7 @@ function AdvisorPanel({
   advisorPending: boolean;
   advisorQuestions: string[];
   extendedFailed: boolean;
-  extendedFailureMessage: string;
+  extendedFailure: ReturnType<typeof analysisFailureCopy>;
   extendedRetryError: string | null;
   extendedRetrying: boolean;
   isProvisional: boolean;
@@ -2592,7 +2522,7 @@ function AdvisorPanel({
         <div className="chat-completion-note">
           <strong>
             {extendedFailed
-              ? "Extended Analysis paused safely"
+              ? extendedFailure.title
               : extendedRetrying
                 ? "Extended Analysis is retrying"
                 : isProvisional
@@ -2601,7 +2531,7 @@ function AdvisorPanel({
           </strong>
           <p>
             {extendedFailed
-              ? extendedFailureMessage
+              ? `${extendedFailure.detail} The last successful read is unchanged.`
               : isProvisional
                 ? "Your provisional read is ready while the deeper evidence pass continues."
                 : "The current read supersedes the provisional orientation."}

@@ -793,7 +793,8 @@ class DatabaseCollaborationService:
                     text(
                         """
                         select id::text, recipient_email::text, recipient_label,
-                               status, scheduled_for, sent_at, error_code, created_at
+                               status, scheduled_for, sent_at, error_code, created_at,
+                               currency_state, previous_analysis_confirmed
                         from public.project_report_deliveries
                         where project_id = :project_id
                         order by created_at desc
@@ -885,6 +886,7 @@ class DatabaseCollaborationService:
         subject: str,
         content: dict,
         scheduled_for: datetime | None,
+        confirm_previous_analysis: bool = False,
     ) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
         self._require_editor(role)
@@ -898,34 +900,65 @@ class DatabaseCollaborationService:
                 422,
             )
         with self._engine.begin() as connection:
-            current_snapshot_id = connection.execute(
+            snapshot_state = (
+                connection.execute(
                 text(
                     """
-                    select s.id from public.projects p
-                    join public.assessment_snapshots s
-                      on s.analysis_run_id = p.current_analysis_run_id
+                    select current_snapshot.id as current_snapshot_id,
+                           exists (
+                             select 1
+                             from public.assessment_snapshots requested_snapshot
+                             where requested_snapshot.id = :snapshot_id
+                               and requested_snapshot.project_id = :project_id
+                               and requested_snapshot.workspace_id = :workspace_id
+                           ) as requested_snapshot_exists
+                    from public.projects p
+                    left join public.assessment_snapshots current_snapshot
+                      on current_snapshot.analysis_run_id = p.current_analysis_run_id
                     where p.id = :project_id and p.workspace_id = :workspace_id
                     """
                 ),
-                {"project_id": project_id, "workspace_id": workspace_id},
-            ).scalar_one_or_none()
-            if current_snapshot_id != snapshot_id:
+                {
+                    "project_id": project_id,
+                    "workspace_id": workspace_id,
+                    "snapshot_id": snapshot_id,
+                },
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if snapshot_state is None or not snapshot_state["requested_snapshot_exists"]:
                 raise CollaborationError(
-                    "REPORT_SNAPSHOT_STALE",
-                    "The project changed. Refresh the report before sending.",
+                    "REPORT_SNAPSHOT_NOT_FOUND",
+                    "The selected report snapshot is not available for this project.",
+                    404,
+                )
+            is_previous_analysis = snapshot_state["current_snapshot_id"] != snapshot_id
+            if is_previous_analysis:
+                raise CollaborationError(
+                    "REPORT_PREVIOUS_ANALYSIS_BLOCKED",
+                    (
+                        "Refresh the report from the current analysis before "
+                        "sending or scheduling it."
+                    ),
                     409,
                 )
+            currency_state = "current"
+            delivery_content = json.loads(json.dumps(content))
+            delivery_subject = subject
             delivery_id = connection.execute(
                 text(
                     """
                     insert into public.project_report_deliveries (
                       workspace_id, project_id, snapshot_id, requested_by,
                       recipient_email, recipient_label, subject, content_json,
-                      status, scheduled_for
+                      status, scheduled_for, currency_state,
+                      previous_analysis_confirmed
                     ) values (
                       :workspace_id, :project_id, :snapshot_id, :requested_by,
                       :recipient_email, :recipient_label, :subject,
-                      cast(:content as jsonb), 'scheduled', :scheduled_for
+                      cast(:content as jsonb), 'scheduled', :scheduled_for,
+                      :currency_state, :previous_analysis_confirmed
                     )
                     returning id
                     """
@@ -937,9 +970,11 @@ class DatabaseCollaborationService:
                     "requested_by": actor_user_id,
                     "recipient_email": recipient_email,
                     "recipient_label": recipient_label,
-                    "subject": subject,
-                    "content": json.dumps(content),
+                    "subject": delivery_subject,
+                    "content": json.dumps(delivery_content),
                     "scheduled_for": deliver_at,
+                    "currency_state": currency_state,
+                    "previous_analysis_confirmed": False,
                 },
             ).scalar_one()
             scheduled = scheduled_for is not None and deliver_at > datetime.now(UTC)
@@ -960,6 +995,7 @@ class DatabaseCollaborationService:
                     "delivery_id": str(delivery_id),
                     "recipient_email": recipient_email,
                     "scheduled_for": deliver_at.isoformat(),
+                    "currency_state": currency_state,
                 },
                 idempotency_key=f"history:report-request:{delivery_id}",
             )
@@ -1008,7 +1044,8 @@ class DatabaseCollaborationService:
                     text(
                         """
                         select id::text, recipient_email::text, recipient_label,
-                               status, scheduled_for, sent_at, error_code, created_at
+                               status, scheduled_for, sent_at, error_code, created_at,
+                               currency_state, previous_analysis_confirmed
                         from public.project_report_deliveries where id = :delivery_id
                         """
                     ),

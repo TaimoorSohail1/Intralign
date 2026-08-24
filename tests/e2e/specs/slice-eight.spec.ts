@@ -85,13 +85,5 @@ test("Slice 8 provides workspace home, switching, awareness, settings, and safe 
     await page.goto("/workspace");
   }
   await page.getByRole("button", { name: "New project" }).click();
-  const limit = page.getByRole("dialog", {
-    name: "Your active project space is full",
-  });
-  await expect(limit).toBeVisible();
-  await expect(limit.getByText("Nothing is deleted")).toBeVisible();
-  await expect(limit.getByRole("button", { name: "Archive" }).first()).toBeVisible();
-  await expect(limit.getByRole("button", { name: "Explore upgrade" })).toBeVisible();
-  await limit.getByRole("button", { name: "Keep working in this project" }).click();
-  await expect(limit).toBeHidden();
+  await expect(page).toHaveURL(/\/intake\?project=/);
 });

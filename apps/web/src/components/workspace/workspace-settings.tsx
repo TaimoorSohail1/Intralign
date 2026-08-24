@@ -106,6 +106,7 @@ export function WorkspaceSettings({
           method: "PUT",
           headers: { "content-type": "application/json" },
           body: JSON.stringify(next),
+          keepalive: true,
         });
         const payload = await response.json().catch(() => null);
         if (!response.ok) {
@@ -316,7 +317,18 @@ export function WorkspaceSettings({
           <article className="settings-section" id="workspace">
             <div className="settings-section-heading"><h2>Workspace</h2><p>The container your projects live in.</p></div>
             <div className="settings-card">
-              <label className="settings-field-row"><span>Workspace name</span><input onBlur={commitLocalIdentity} onChange={(event) => setLocalWorkspaceName(event.target.value)} value={localWorkspaceName} /></label>
+              <label className="settings-field-row">
+                <span>Workspace name</span>
+                <input
+                  disabled={preferences.actor_role !== "owner"}
+                  onBlur={commitLocalIdentity}
+                  onChange={(event) => setLocalWorkspaceName(event.target.value)}
+                  value={localWorkspaceName}
+                />
+                {preferences.actor_role !== "owner" ? (
+                  <small>Only a workspace owner can rename the workspace.</small>
+                ) : null}
+              </label>
               <div className="settings-row"><span>Workspace icon</span><small>First letter — {localWorkspaceName.slice(0, 1).toUpperCase()}. Picture upload comes later.</small></div>
             </div>
           </article>
@@ -386,8 +398,8 @@ export function WorkspaceSettings({
                 <span>Active projects</span>
                 <strong>
                   {workspaceState
-                    ? `${workspaceState.projects.filter((project) => !project.archived).length} of ${workspaceState.active_project_limit}`
-                    : "1 of 1"}
+                    ? `${workspaceState.projects.filter((project) => !project.archived).length} active · unlimited`
+                    : "Unlimited"}
                 </strong>
               </div>
               <div className="settings-row"><span>Evidence envelope</span><strong>{workspaceState ? `${workspaceState.document_limit} documents · ${workspaceState.word_limit.toLocaleString()} words` : "20 documents · 50,000 words"}</strong></div>

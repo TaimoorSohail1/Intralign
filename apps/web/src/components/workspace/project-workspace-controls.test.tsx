@@ -12,7 +12,6 @@ const workspace: WorkspaceSummary = {
   plan: "free",
   plan_label: "Free",
   price_usd_monthly: 0,
-  active_project_limit: 1,
   document_limit: 20,
   word_limit: 50_000,
   collaborator_seat_limit: 3,

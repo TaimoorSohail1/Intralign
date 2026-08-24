@@ -82,7 +82,6 @@ class WorkspaceSummary:
     name: str
     role: str
     plan: str
-    active_project_limit: int
     projects: list[WorkspaceProject]
     notifications: list[WorkspaceNotification]
     plan_label: str = "Free"

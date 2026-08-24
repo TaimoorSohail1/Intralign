@@ -19,8 +19,8 @@
   --success: #4d8b6b;
   --danger: #c75b5b;
   --focus: #e59a63;
-  --sans: var(--font-inter), Inter, system-ui, sans-serif;
-  --mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --sans: Inter, "Segoe UI", Roboto, Helvetica, Arial, system-ui, sans-serif;
+  --mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, ui-monospace, monospace;
 }
 
 :root[data-theme="light"] {
@@ -1756,7 +1756,30 @@ button.attention-cell { cursor: pointer; }
 }
 .artifact-row-gutter .artifact-row-provenance.is-conflicting { background: #e1a044; }
 .artifact-row-gutter .artifact-row-provenance.is-unknown { background: #737c86; }
+.artifact-row-origin {
+  position: absolute;
+  z-index: 3;
+  top: -13px;
+  left: 4px;
+  width: max-content;
+  padding: 2px 6px;
+  border: 1px solid #3a424b;
+  border-radius: 999px;
+  background: #1d2227;
+  color: #8f98a2;
+  font-size: 7px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(3px);
+  transition: opacity .14s ease, transform .14s ease;
+}
+.artifact-table-wrap tbody tr:hover .artifact-row-origin,
+.artifact-table-wrap tbody tr:focus-within .artifact-row-origin {
+  opacity: 1;
+  transform: translateY(0);
+}
 .artifact-row-gutter {
+  position: relative;
   vertical-align: middle !important;
 }
 .artifact-row-gutter .artifact-row-grip { cursor: grab; }
@@ -6864,6 +6887,55 @@ button.attention-cell { cursor: pointer; }
   border-radius: 8px;
   background: #28211c;
   color: #dfb289;
+  font-size: 11px;
+}
+
+.report-currency-warning {
+  align-items: flex-start;
+  background: #28231c;
+  border: 1px solid #795d35;
+  border-radius: 10px;
+  color: var(--text);
+  display: flex;
+  gap: 10px;
+  margin: 14px auto 0;
+  padding: 10px 14px;
+  width: min(820px, calc(100% - 32px));
+}
+
+.report-currency-warning strong {
+  color: #d9962e;
+  white-space: nowrap;
+}
+
+.report-currency-warning span {
+  color: var(--muted);
+}
+
+.report-previous-confirmation {
+  align-items: flex-start;
+  display: flex !important;
+  gap: 8px;
+  line-height: 1.35;
+}
+
+.report-previous-confirmation input {
+  margin-top: 2px;
+}
+
+.issue-analysis-status {
+  background: #1b2724;
+  border: 1px solid #315c50;
+  border-radius: 8px;
+  color: #a9d8c9;
+  display: grid;
+  gap: 3px;
+  margin: 10px 0;
+  padding: 9px 11px;
+}
+
+.issue-analysis-status span {
+  color: #9ca9a5;
   font-size: 11px;
 }
 

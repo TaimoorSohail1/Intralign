@@ -1,13 +1,13 @@
 from oslo_api.tiering.policy import PlanCode, get_plan_policy
 
 
-def test_free_and_basic_share_the_same_judgment_but_have_different_capacity() -> None:
+def test_free_and_basic_share_the_same_judgment_and_unlimited_projects() -> None:
     free = get_plan_policy(PlanCode.FREE)
     basic = get_plan_policy(PlanCode.BASIC)
 
     assert free.judgment_profile == basic.judgment_profile == "oslo-governed-v1"
-    assert free.active_project_limit == 1
-    assert basic.active_project_limit == 3
+    assert not hasattr(free, "active_project_limit")
+    assert not hasattr(basic, "active_project_limit")
     assert free.document_limit == 20
     assert basic.document_limit == 40
     assert free.word_limit == 50_000
@@ -25,15 +25,12 @@ def test_free_and_basic_share_the_same_judgment_but_have_different_capacity() ->
 def test_plan_policy_exposes_contextual_remedies_without_destructive_actions() -> None:
     free = get_plan_policy(PlanCode.FREE)
 
-    project_decision = free.decide_project_capacity(active_projects=1)
     document_decision = free.decide_document_capacity(
         document_count=21,
         word_count=52_000,
     )
     seat_decision = free.decide_collaborator_capacity(occupied_seats=3)
 
-    assert project_decision.allowed is False
-    assert project_decision.remedies == ("archive_project", "compare_plans")
     assert document_decision.allowed is False
     assert document_decision.partial is False
     assert document_decision.remedies == ("remove_documents", "compare_plans")

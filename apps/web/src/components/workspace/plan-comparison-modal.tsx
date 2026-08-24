@@ -9,10 +9,10 @@ const plans = {
   free: {
     label: "Free",
     price: "$0",
-    tagline: "The complete OSLO read for one active project.",
+    tagline: "The complete OSLO read with unlimited active projects.",
     features: [
       "The same governed OSLO judgment",
-      "1 active project",
+      "Unlimited active projects",
       "Up to 20 documents and 50,000 words",
       "3 collaborator seats",
       "Full artifacts, issues, history, and review",
@@ -21,10 +21,10 @@ const plans = {
   basic: {
     label: "Basic",
     price: "$12",
-    tagline: "More room for active work, evidence, and your team.",
+    tagline: "More evidence and collaboration capacity for your team.",
     features: [
       "Everything in Free",
-      "3 active projects",
+      "Unlimited active projects",
       "Up to 40 documents and 100,000 words",
       "10 collaborator seats",
       "The same prompts, model, safety, and scoring",

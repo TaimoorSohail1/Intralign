@@ -92,4 +92,70 @@ describe("InferenceMap", () => {
       expect.any(HTMLElement),
     );
   });
+
+  it("renders repeated upstream assumption ids without React key collisions", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const repeatedIds: OverviewSnapshot = {
+      ...snapshot,
+      artifacts: [
+        snapshot.artifacts[0],
+        {
+          ...snapshot.artifacts[0],
+          artifact_type: "schedule",
+          title: "Schedule",
+          assumptions: [
+            {
+              ...snapshot.artifacts[0].assumptions![0],
+              statement: "The supplier date is assumed.",
+            },
+          ],
+        },
+      ],
+    };
+
+    render(<InferenceMap snapshot={repeatedIds} />);
+
+    expect(screen.getByText("Nobody is accountable.")).toBeInTheDocument();
+    expect(screen.getByText("The supplier date is assumed.")).toBeInTheDocument();
+    expect(
+      consoleError.mock.calls.some((call) =>
+        call.some((value) => String(value).includes("same key")),
+      ),
+    ).toBe(false);
+    consoleError.mockRestore();
+  });
+
+  it("bounds visual claim markers while preserving the exact accessible totals", () => {
+    const manyClaims: OverviewSnapshot = {
+      ...snapshot,
+      provenance: {
+        schema_version: 1,
+        artifacts: [
+          {
+            artifact_type: "resources",
+            grounded: 80,
+            inferred: 60,
+            total: 140,
+            verify_first: false,
+          },
+        ],
+        assumptions: [],
+        grounded_claims: 80,
+        inferred_claims: 60,
+        total_claims: 140,
+        load_bearing_inferences: 0,
+        structure: {
+          unconfirmed_dependencies: 0,
+          unowned_parties: 0,
+          untraceable_numbers: 0,
+        },
+        this_week: { user_grounded: 0, oslo_inferred: 0 },
+      },
+    };
+
+    render(<InferenceMap snapshot={manyClaims} />);
+
+    const markers = screen.getByLabelText("80 grounded and 60 inferred");
+    expect(markers.querySelectorAll("i").length).toBeLessThanOrEqual(40);
+  });
 });

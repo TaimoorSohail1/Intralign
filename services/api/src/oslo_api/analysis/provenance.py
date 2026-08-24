@@ -206,6 +206,31 @@ def build_project_provenance(
                     "state": assumption.state,
                 }
             )
+    unique_assumptions: dict[str, dict[str, Any]] = {}
+    state_priority = {"confirmed": 3, "conflicting": 2, "inferred": 1}
+    for item in assumptions:
+        key = " ".join(_WORD.findall(item["text"].casefold()))
+        current = unique_assumptions.get(key)
+        if current is None:
+            unique_assumptions[key] = item
+            continue
+        preferred = max(
+            (current, item),
+            key=lambda candidate: (
+                candidate["issue_id"] is not None,
+                candidate["load_bearing"],
+                state_priority.get(candidate["state"], 0),
+            ),
+        )
+        unique_assumptions[key] = {
+            **preferred,
+            "load_bearing": current["load_bearing"] or item["load_bearing"],
+            "state": max(
+                (current["state"], item["state"]),
+                key=lambda state: state_priority.get(state, 0),
+            ),
+        }
+    assumptions = list(unique_assumptions.values())
     assumptions.sort(key=lambda item: (not item["load_bearing"], item["text"].casefold()))
 
     unowned_parties = sum(

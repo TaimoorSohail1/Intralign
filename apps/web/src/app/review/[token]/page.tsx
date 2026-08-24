@@ -10,7 +10,6 @@ type ReviewPayload = {
   snapshot_json: {
     summary?: string;
     assessment?: {
-      confidence_index?: number;
       confidence_band?: string;
       issues?: Array<{
         id: string;
@@ -72,18 +71,14 @@ export default async function ReviewPage({
           </p>
           <div
             aria-label={`Outcome confidence ${
-              review.snapshot_json.assessment?.confidence_index ?? "not available"
-            } out of 100`}
+              review.snapshot_json.assessment?.confidence_band ?? "not available"
+            }`}
             className="public-confidence-card"
           >
-            <span className="public-confidence-score">
-              <strong>{review.snapshot_json.assessment?.confidence_index ?? "—"}</strong>
-              <small>/100</small>
-            </span>
+            <strong>{review.snapshot_json.assessment?.confidence_band ?? "Current read"}</strong>
             <span>
-              <small>Outcome confidence</small>
-              <b>{review.snapshot_json.assessment?.confidence_band ?? "Current read"}</b>
-              <small>Retained snapshot at the time this review was requested</small>
+              <b>Outcome confidence</b>
+              <small>Evidence-qualified retained read, not a project score</small>
             </span>
           </div>
           {issue ? (

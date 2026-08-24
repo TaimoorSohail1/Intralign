@@ -239,14 +239,18 @@ export interface IssueActionSummary {
 }
 
 export interface ArtifactSection {
+  id?: string;
   heading: string;
   body: string;
   bullets: string[];
   columns: string[];
   rows: string[][];
+  provenance?: "from_oslo" | "confirmed_by_user";
   evidence_refs?: string[];
   row_evidence_refs?: string[][];
   row_states?: Array<"confirmed" | "inferred" | "conflicting" | "unknown">;
+  row_provenance?: Array<"from_oslo" | "confirmed_by_user">;
+  row_ids?: string[];
 }
 
 export interface ArtifactAssumption {
@@ -599,7 +603,6 @@ export interface WorkspaceSummary {
   plan: "free" | "basic";
   plan_label: string;
   price_usd_monthly: number;
-  active_project_limit: number;
   document_limit: number;
   word_limit: number;
   collaborator_seat_limit: number;
@@ -790,6 +793,8 @@ export function getProjectReport(accessToken: string, projectId: string) {
       scheduled_for: string;
       sent_at: string | null;
       error_code: string | null;
+      currency_state: "current" | "previous_analysis";
+      previous_analysis_confirmed: boolean;
     }>;
   }>(`/v1/projects/${projectId}/report`, {
     method: "GET",
@@ -822,6 +827,7 @@ export function deliverProjectReport(input: {
   subject: string;
   content: ReportContent;
   scheduledFor?: string | null;
+  confirmPreviousAnalysis?: boolean;
 }) {
   return apiRequest<{
     id: string;
@@ -829,6 +835,8 @@ export function deliverProjectReport(input: {
     scheduled_for: string;
     sent_at: string | null;
     error_code: string | null;
+    currency_state: "current" | "previous_analysis";
+    previous_analysis_confirmed: boolean;
   }>(`/v1/projects/${input.projectId}/report/deliveries`, {
     method: "POST",
     headers: { authorization: `Bearer ${input.accessToken}` },
@@ -839,6 +847,7 @@ export function deliverProjectReport(input: {
       subject: input.subject,
       content: input.content,
       scheduled_for: input.scheduledFor || null,
+      confirm_previous_analysis: input.confirmPreviousAnalysis ?? false,
     }),
   });
 }

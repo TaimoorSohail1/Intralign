@@ -62,19 +62,13 @@ test("Slice 4 renders the current-snapshot Attention Map and drills into finding
   await page.keyboard.press("Enter");
 
   const issueDialog = page.getByRole("dialog", { name: "Issue details" });
-  const scopeDialog = page.getByRole("dialog", { name: "Scoped attention findings" });
-  await expect(issueDialog.or(scopeDialog)).toBeVisible();
-
-  if (await scopeDialog.isVisible()) {
-    await scopeDialog.locator(".attention-scope-item").first().click();
-    await expect(issueDialog).toBeVisible();
-    await expect(issueDialog.getByText("Open", { exact: true })).toBeVisible();
-    await expect(issueDialog.getByText("Addressed", { exact: true })).toBeVisible();
-    await expect(issueDialog.getByText("Resolved", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Close issue" }).click();
-    await expect(scopeDialog).toBeVisible();
-    await page.getByRole("button", { name: "Close scoped findings" }).click();
+  await page.waitForTimeout(100);
+  if (page.url().includes("/issues")) {
+    await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
+    await page.goBack();
+    await expect(page.getByRole("heading", { name: "Attention map" })).toBeVisible();
   } else {
+    await expect(issueDialog).toBeVisible();
     await expect(issueDialog.getByText("Open", { exact: true })).toBeVisible();
     await expect(issueDialog.getByText("Addressed", { exact: true })).toBeVisible();
     await expect(issueDialog.getByText("Resolved", { exact: true })).toBeVisible();
@@ -82,9 +76,11 @@ test("Slice 4 renders the current-snapshot Attention Map and drills into finding
   }
 
   await page.getByRole("button", { name: /Open Resources findings/ }).click();
-  await expect(scopeDialog).toBeVisible();
-  await expect(scopeDialog.getByText("Resources", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Close scoped findings" }).click();
+  await expect(page).toHaveURL(/\/issues\?artifact=resources/);
+  await expect(
+    page.getByRole("button", { name: /Resources \d+/ }),
+  ).toHaveAttribute("aria-pressed", "true");
 
+  await page.goBack();
   await expect(page.getByRole("button", { name: /Ask OSLO about this map/ })).toBeVisible();
 });
