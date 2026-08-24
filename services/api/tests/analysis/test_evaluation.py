@@ -101,6 +101,32 @@ def test_default_benchmark_gates_match_the_approved_release_policy() -> None:
     assert gates.maximum_duplicate_rate == 0
 
 
+def test_benchmark_matching_handles_simple_singular_and_plural_variants() -> None:
+    manifest = BenchmarkManifest(
+        name="Small-business rollout",
+        findings=(
+            BenchmarkFinding(
+                id="F-01",
+                severity="Critical",
+                concepts=(("four shops",), ("three go-lives",), ("only", "missing")),
+            ),
+        ),
+    )
+    issues = (
+        _issue(
+            "ISS-ROLLOUT",
+            "The four-shop target has only three scheduled go-lives",
+            "One shop is not represented in the rollout schedule.",
+            severity="Critical",
+        ),
+    )
+
+    result = evaluate_benchmark(manifest, issues)
+
+    assert result.findings_found == ("F-01",)
+    assert result.critical_recall == 1
+
+
 def test_repeated_benchmark_runs_must_keep_issue_ids_and_ratings_stable() -> None:
     manifest = BenchmarkManifest(
         name="Stable release fixture",

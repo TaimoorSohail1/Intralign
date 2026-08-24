@@ -144,21 +144,23 @@ export function InferenceMap({
                 key={artifact.artifactType}
               >
                 <span>{label(artifact.artifactType)}</span>
-                <span
-                  aria-label={`${artifact.grounded} grounded and ${artifact.inferred} inferred`}
-                  className="inference-pips"
-                  role="img"
-                >
-                  {Array.from({ length: markers.grounded }, (_, index) => (
-                    <i className="is-grounded" key={`grounded-${index}`} />
-                  ))}
-                  {Array.from({ length: markers.inferred }, (_, index) => (
-                    <i className="is-inferred" key={`inferred-${index}`} />
-                  ))}
-                </span>
-                <span>
-                  <strong>{artifact.grounded}</strong> grounded ·{" "}
-                  <strong>{artifact.inferred}</strong> inferred
+                <span className="inference-claim-visual">
+                  <span
+                    aria-label={`${artifact.grounded} grounded and ${artifact.inferred} inferred`}
+                    className="inference-pips"
+                    role="img"
+                  >
+                    {Array.from({ length: markers.grounded }, (_, index) => (
+                      <i className="is-grounded" key={`grounded-${index}`} />
+                    ))}
+                    {Array.from({ length: markers.inferred }, (_, index) => (
+                      <i className="is-inferred" key={`inferred-${index}`} />
+                    ))}
+                  </span>
+                  <span className="inference-counts">
+                    <strong>{artifact.grounded}</strong> grounded ·{" "}
+                    <strong>{artifact.inferred}</strong> inferred
+                  </span>
                 </span>
                 </Link>
               );

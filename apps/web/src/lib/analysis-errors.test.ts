@@ -3,31 +3,25 @@ import { describe, expect, it } from "vitest";
 import { analysisFailureCopy } from "./analysis-errors";
 
 describe("analysisFailureCopy", () => {
-  it("explains exhausted OpenAI quota without masking it as a safe pause", () => {
+  it("keeps provider and validation details out of client-facing copy", () => {
     expect(analysisFailureCopy("OPENAI_QUOTA")).toEqual({
-      title: "OpenAI API quota exhausted",
+      title: "This read needs another attempt",
       detail:
-        "The configured OpenAI project has no available API quota. Restore API credits or increase its spending limit, then retry.",
+        "Your documents are safe. OSLO did not publish an incomplete read. Please retry the analysis.",
     });
-  });
-
-  it("distinguishes authentication, rate limits, and timeouts", () => {
-    expect(analysisFailureCopy("OPENAI_AUTHENTICATION").title).toBe(
-      "OpenAI API key was rejected",
+    expect(analysisFailureCopy("OPENAI_AUTHENTICATION")).toEqual(
+      analysisFailureCopy("OPENAI_TIMEOUT"),
     );
-    expect(analysisFailureCopy("OPENAI_RATE_LIMIT").title).toBe(
-      "OpenAI rate limit reached",
-    );
-    expect(analysisFailureCopy("OPENAI_TIMEOUT").title).toBe(
-      "OpenAI request timed out",
+    expect(analysisFailureCopy("EVIDENCE_REFERENCE_CONTRACT_FAILED")).toEqual(
+      analysisFailureCopy("OPENAI_TIMEOUT"),
     );
   });
 
   it("keeps unknown internal errors safe and truthful", () => {
     expect(analysisFailureCopy("UNEXPECTED_INTERNAL_ERROR")).toEqual({
-      title: "Analysis failed",
+      title: "This read needs another attempt",
       detail:
-        "OSLO could not complete this analysis. No incomplete result was published.",
+        "Your documents are safe. OSLO did not publish an incomplete read. Please retry the analysis.",
     });
   });
 });

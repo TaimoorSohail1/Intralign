@@ -157,5 +157,9 @@ describe("InferenceMap", () => {
 
     const markers = screen.getByLabelText("80 grounded and 60 inferred");
     expect(markers.querySelectorAll("i").length).toBeLessThanOrEqual(40);
+    expect(markers.closest(".inference-claim-visual")).toBeInTheDocument();
+    expect(
+      markers.closest("a")?.querySelector(".inference-counts"),
+    ).toHaveTextContent("80 grounded · 60 inferred");
   });
 });

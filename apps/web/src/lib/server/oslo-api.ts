@@ -5,7 +5,7 @@ const apiUrl = process.env.OSLO_API_URL ?? "http://127.0.0.1:8000";
 export interface InvitationDetails {
   email: string;
   workspace_name: string;
-  role: "owner" | "collaborator" | "viewer";
+  role: "owner";
   expires_at: string;
   account_exists: boolean;
 }
@@ -23,7 +23,7 @@ export interface SessionPayload {
 export interface InvitationSummary {
   id: string;
   email: string;
-  role: "owner" | "collaborator" | "viewer";
+  role: "owner";
   status: "pending" | "accepted" | "revoked" | "expired";
   expires_at: string;
 }
@@ -520,12 +520,11 @@ export function sendInvitation(input: {
   accessToken: string;
   workspaceId: string;
   email: string;
-  role: string;
 }): Promise<{ id: string; email: string }> {
   return apiRequest(`/v1/workspaces/${input.workspaceId}/invitations`, {
     method: "POST",
     headers: { authorization: `Bearer ${input.accessToken}` },
-    body: JSON.stringify({ email: input.email, role: input.role }),
+    body: JSON.stringify({ email: input.email }),
   });
 }
 
@@ -599,7 +598,7 @@ export interface WorkspaceNotificationSummary {
 export interface WorkspaceSummary {
   id: string;
   name: string;
-  role: "owner" | "collaborator" | "viewer";
+  role: "owner";
   plan: "free" | "basic";
   plan_label: string;
   price_usd_monthly: number;
@@ -610,6 +609,7 @@ export interface WorkspaceSummary {
   monthly_analyses_used: number;
   can_manage_plan: boolean;
   member_count?: number;
+  collaborator_seats_used?: number;
   projects: WorkspaceProjectSummary[];
   notifications: WorkspaceNotificationSummary[];
 }
@@ -622,14 +622,14 @@ export interface WorkspacePreferences {
   display_name: string;
   role_title: string;
   workspace_name: string;
-  actor_role: "owner" | "collaborator" | "viewer";
+  actor_role: "owner";
   mentions_notifications: boolean;
   reply_notifications: boolean;
   shared_notifications: boolean;
 }
 
 export interface CollaborationState {
-  actor_role: "owner" | "collaborator" | "viewer";
+  actor_role: "owner";
   plan: {
     name: string;
     collaborator_seats: number;
@@ -640,7 +640,7 @@ export interface CollaborationState {
     reviewers_unmetered: boolean;
     export_formats: string[];
   };
-  participants: Array<{ id: string; display_name: string; role: string }>;
+  participants: Array<{ id: string; display_name: string; role: "owner" }>;
   invitations?: InvitationSummary[];
   comments: Array<{
     id: string;

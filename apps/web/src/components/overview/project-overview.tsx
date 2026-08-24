@@ -14,7 +14,6 @@ import {
   ListBullets,
   MapTrifold,
   MagnifyingGlass,
-  PaperPlaneTilt,
   Question,
   SignOut,
   Sparkle,
@@ -51,31 +50,36 @@ const artifactOrder = [
   "resources",
 ] as const;
 const initialAdvisorQuestions = [
-  "What should I address first?",
-  "Why is Feasibility Low?",
+  "What should I do next?",
+  "Why is Feasibility where it is?",
   "Explain the top issue",
-  "What do you need me to confirm?",
+  "What changed in the last run?",
+  "What does my plan include?",
 ];
 const orientationSteps = [
   {
-    title: "Your confidence read",
-    body: "See how mature OSLO's understanding is, what limits it, and how reliable the supporting evidence is.",
+    title: "Your strategic read",
+    body: "Outcome Confidence is how mature OSLO’s understanding of your plan is. It sits on a five-step scale, always qualified by how well grounded the read is.",
   },
   {
-    title: "What needs attention",
-    body: "Start with the highest-impact open findings. OSLO explains the issue; you decide what to do.",
+    title: "Your read, always visible",
+    body: "Outcome Confidence and how well grounded it is stay in the top bar. Click it for the Clarity · Alignment · Feasibility breakdown and the reliability basis.",
+  },
+  {
+    title: "Where to start",
+    body: "The most consequential open issue, most severe first — OSLO suggests where to begin. Advisory; the call stays yours.",
   },
   {
     title: "The Attention map",
-    body: "Move from the summary into the seven plan artifacts across Clarity, Alignment, and Feasibility.",
+    body: "Switch to the Attention map to see where the plan needs attention — documents × Clarity/Alignment/Feasibility. Brighter means more attention, not a health score.",
   },
   {
-    title: "Progress and evidence",
-    body: "Track resolved findings, confirmed dependencies, and how much of the plan has been evidence-qualified.",
+    title: "Edit a document",
+    body: "Open any of the seven documents and type. Your edits become confirmed evidence; saved changes reanalyse automatically and keep every view up to date.",
   },
   {
-    title: "Your OSLO advisor",
-    body: "Ask grounded questions about this project. The advisor reads the published snapshot and never changes it.",
+    title: "Ask OSLO anything",
+    body: "A persistent advisor — ask about the read, an issue, or what to do next. It reads and explains; nothing changes your plan without you.",
   },
 ];
 const severityRank: Record<string, number> = {
@@ -180,16 +184,17 @@ export function ProjectOverview({
   const [selectedResolutions, setSelectedResolutions] = useState<Record<string, string>>(
     () => issueResolutionMap(initial.assessment.issues),
   );
+  const [projectHistory, setProjectHistory] = useState(initialHistory);
   const [analysisUpdateRunId, setAnalysisUpdateRunId] = useState<string | null>(() => {
     const activeExtended = initial.extended_analysis;
-    return initial.state === "current" &&
-      (activeExtended?.status === "queued" || activeExtended?.status === "running")
+    return activeExtended?.status === "queued" || activeExtended?.status === "running"
       ? activeExtended.run_id
       : null;
   });
   const advisorInFlight = useRef(false);
   const advisorStateBeforeIssue = useRef(true);
   const issueTrigger = useRef<HTMLElement | null>(null);
+  const mainScrollRegion = useRef<HTMLElement | null>(null);
   const messageId = useRef(0);
   const clarificationIdempotency = useRef<{
     signature: string;
@@ -234,6 +239,28 @@ export function ProjectOverview({
             : "thinly grounded";
   const hasFirstValue = snapshot.artifacts.length > 0;
   const overviewScrollKey = `oslo:overview-scroll:${snapshot.project_id}`;
+
+  useEffect(() => {
+    if (!initialHistory) return;
+    let cancelled = false;
+    void fetch(`/api/projects/${snapshot.project_id}/history?category=all`, {
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json() as Promise<ProjectHistory>;
+      })
+      .then((nextHistory) => {
+        if (!cancelled && nextHistory) setProjectHistory(nextHistory);
+      })
+      .catch(() => {
+        // Keep the last history page when refresh fails. All other views still use
+        // the last atomically published Overview snapshot.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialHistory, snapshot.analysis_run_id, snapshot.project_id]);
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
@@ -391,7 +418,7 @@ export function ProjectOverview({
     const top = Number(savedPosition);
     if (!Number.isFinite(top)) return;
     const restorePosition = () => {
-      window.scrollTo({ behavior: "auto", top });
+      mainScrollRegion.current?.scrollTo({ behavior: "auto", top });
     };
     const restore = window.requestAnimationFrame(restorePosition);
     const layoutRetry = window.setTimeout(restorePosition, 100);
@@ -467,7 +494,10 @@ export function ProjectOverview({
 
   const rememberOverviewPosition = () => {
     if (initialView !== "overview") return;
-    window.sessionStorage.setItem(overviewScrollKey, String(window.scrollY));
+    window.sessionStorage.setItem(
+      overviewScrollKey,
+      String(mainScrollRegion.current?.scrollTop ?? 0),
+    );
   };
 
   const askQuestion = async (value: string, historyRunId?: string) => {
@@ -623,11 +653,12 @@ export function ProjectOverview({
   const extendedFailure = analysisFailureCopy(extendedRun?.error_code);
 
   const panelVisible = advisorOpen || Boolean(selectedIssue);
+  const activeTourStep = tourStep ?? 0;
 
   return (
     <main
-      className={`project-shell ${
-        selectedIssue ? "has-issue" : ""
+      className={`project-shell ${selectedIssue ? "has-issue" : ""} ${
+        orientation ? "is-touring" : ""
       }`}
     >
       <header className="project-header">
@@ -635,7 +666,10 @@ export function ProjectOverview({
           <span aria-hidden="true">I</span>
           <strong>Intralign</strong>
         </Link>
-        <ProjectWorkspaceControls projectId={snapshot.project_id} />
+        <ProjectWorkspaceControls
+          planPortalId="project-sidebar-plan"
+          projectId={snapshot.project_id}
+        />
         <div className="project-context">
           <strong>Project understanding</strong>
           <span aria-hidden="true">›</span>
@@ -652,7 +686,9 @@ export function ProjectOverview({
         <button
           aria-label={`Outcome Confidence ${snapshot.assessment.confidence_band}, ${groundingQualifier}`}
           aria-expanded={confidenceBreakdownOpen}
-          className="project-header-confidence"
+          className={`project-header-confidence ${
+            orientation && activeTourStep === 1 ? "is-tour-target" : ""
+          }`}
           onClick={() => {
             setSearchOpen(false);
             setConfidenceBreakdownOpen((current) => !current);
@@ -687,45 +723,6 @@ export function ProjectOverview({
               OSLO
             </button>
           ) : null}
-          <details className="project-account">
-            <summary
-              aria-label={`Open account menu for ${displayName}`}
-              role="button"
-              title="Account and settings"
-            >
-              <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
-            </summary>
-            <div className="project-account-menu">
-              <header>
-                <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
-                <div>
-                  <strong>{displayName}</strong>
-                  <small>Account &amp; workspace</small>
-                </div>
-              </header>
-              <button
-                onClick={(event) => {
-                  event.currentTarget.closest("details")?.removeAttribute("open");
-                  setTourStep(null);
-                  setOrientation(true);
-                }}
-                type="button"
-              >
-                <Question aria-hidden="true" size={16} />
-                How OSLO works
-              </button>
-              <Link href="/settings">
-                <Gear aria-hidden="true" size={16} />
-                Settings
-              </Link>
-              <form action={logoutAction}>
-                <button type="submit">
-                  <SignOut aria-hidden="true" size={16} />
-                  Log out
-                </button>
-              </form>
-            </div>
-          </details>
         </div>
       </header>
 
@@ -737,7 +734,11 @@ export function ProjectOverview({
         />
       ) : null}
 
-      <aside className="workspace-sidebar">
+      <aside
+        aria-label="Project navigation"
+        className="workspace-sidebar"
+        tabIndex={0}
+      >
         <p className="workspace-label">Project</p>
         <nav aria-label="Workspace">
           <Link
@@ -768,7 +769,9 @@ export function ProjectOverview({
           </Link>
           <Link
             aria-current={initialView === "attention" ? "page" : undefined}
-            className={initialView === "attention" ? "is-current" : ""}
+            className={`${initialView === "attention" ? "is-current" : ""} ${
+              orientation && activeTourStep === 3 ? "is-tour-target" : ""
+            }`}
             href={`/projects/${snapshot.project_id}/attention`}
             onClick={rememberOverviewPosition}
           >
@@ -802,7 +805,11 @@ export function ProjectOverview({
             ).length;
             return (
               <Link
-                className={initialView === artifactType ? "is-current" : ""}
+                className={`${initialView === artifactType ? "is-current" : ""} ${
+                  orientation && activeTourStep === 4 && artifactType === "resources"
+                    ? "is-tour-target"
+                    : ""
+                }`}
                 href={`/projects/${snapshot.project_id}/artifacts/${artifactType}`}
                 key={artifactType}
               >
@@ -833,7 +840,7 @@ export function ProjectOverview({
         <div className="workspace-sidebar-footer">
           <button
             onClick={() => {
-              setTourStep(null);
+              setTourStep(0);
               setOrientation(true);
             }}
             type="button"
@@ -841,12 +848,64 @@ export function ProjectOverview({
             <Sparkle aria-hidden="true" size={15} />
             Take a quick tour
           </button>
+          <div
+            className="project-sidebar-plan-slot"
+            id="project-sidebar-plan"
+          />
+          <details className="project-account project-sidebar-account">
+            <summary
+              aria-label={`Open account menu for ${displayName}`}
+              role="button"
+              title="Account and settings"
+            >
+              <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
+              <span className="project-account-summary-copy">
+                <strong>{displayName}</strong>
+                <small>Your account &amp; settings</small>
+              </span>
+            </summary>
+            <div className="project-account-menu">
+              <header>
+                <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
+                <div>
+                  <strong>{displayName}</strong>
+                  <small>Account &amp; workspace</small>
+                </div>
+              </header>
+              <button
+                onClick={(event) => {
+                  event.currentTarget.closest("details")?.removeAttribute("open");
+                  setTourStep(0);
+                  setOrientation(true);
+                }}
+                type="button"
+              >
+                <Question aria-hidden="true" size={16} />
+                How OSLO works
+              </button>
+              <Link href="/settings">
+                <Gear aria-hidden="true" size={16} />
+                Settings
+              </Link>
+              <form action={logoutAction}>
+                <button type="submit">
+                  <SignOut aria-hidden="true" size={16} />
+                  Log out
+                </button>
+              </form>
+            </div>
+          </details>
           <span>OSLO advises; you decide.</span>
         </div>
       </aside>
 
       <div className={`project-grid ${panelVisible ? "" : "is-panel-closed"}`}>
-        <section className="project-main">
+        <section
+          aria-label="Project content"
+          className="project-main"
+          ref={mainScrollRegion}
+          tabIndex={0}
+        >
           {initialView === "overview" ? (
             <div className={`overview-stack ${hasFirstValue ? "has-first-value" : ""}`}>
               <section className="confidence-read">
@@ -994,7 +1053,9 @@ export function ProjectOverview({
                 </div>
               </section>
 
-              <section className="start-here">
+              <section className={`start-here ${
+                orientation && activeTourStep === 2 ? "is-tour-target" : ""
+              }`}>
                 <div className="overview-label">
                   <p>Start here</p>
                   <Info aria-hidden="true" size={14} />
@@ -1208,7 +1269,8 @@ export function ProjectOverview({
             />
           ) : initialView === "history" && initialHistory ? (
             <HistoryWorkspace
-              history={initialHistory}
+              analysisRunId={snapshot.analysis_run_id}
+              history={projectHistory ?? initialHistory}
               onAskOslo={(runId, prompt) => {
                 setAdvisorOpen(true);
                 void askQuestion(prompt, runId);
@@ -1216,7 +1278,7 @@ export function ProjectOverview({
               projectId={snapshot.project_id}
             />
           ) : initialView === "reports" ? (
-            <ReportWorkspace history={initialHistory} snapshot={snapshot} />
+            <ReportWorkspace history={projectHistory} snapshot={snapshot} />
           ) : (
             <DeferredWorkspace />
           )}
@@ -1242,7 +1304,8 @@ export function ProjectOverview({
             selectedResolution={selectedResolutions[selectedIssue.id] ?? null}
           />
         ) : advisorOpen ? (
-          <AdvisorPanel
+          <div className={orientation && activeTourStep === 5 ? "advisor-tour-target" : ""}>
+            <AdvisorPanel
             advisorError={advisorError}
             advisorPending={advisorPending}
             advisorQuestions={advisorQuestions}
@@ -1257,8 +1320,9 @@ export function ProjectOverview({
             onQuestionChange={setQuestion}
             onRetry={retryExtendedAnalysis}
             onSubmit={submitQuestion}
-            question={question}
-          />
+              question={question}
+            />
+          </div>
         ) : null}
       </div>
 
@@ -1279,81 +1343,34 @@ export function ProjectOverview({
           aria-label="How OSLO works"
           aria-modal="true"
           className="orientation-overlay"
+          data-step={activeTourStep + 1}
           role="dialog"
         >
-          {tourStep === null ? (
-            <div className="orientation-pro">
-              <h2>You bring the strategy. OSLO brings the understanding.</h2>
-              <p>
-                This is how you work as an AI-first PM — you stay in control at every step,
-                with OSLO&apos;s understanding beside you.
-              </p>
-              <div className="orientation-cards">
-                <article>
-                  <strong>Understanding</strong>
-                  <small>OSLO</small>
-                  <p>OSLO reads your plan and shows how sound it is — where it&apos;s clear, where it&apos;s weak, and what could derail the outcome.</p>
-                </article>
-                <article>
-                  <strong>Judgement</strong>
-                  <small>You</small>
-                  <p>You weigh what matters. OSLO surfaces the issues and options; the call is always yours.</p>
-                </article>
-                <article>
-                  <strong>Decision</strong>
-                  <small>You</small>
-                  <p>You commit the path. OSLO records it — it never decides for you.</p>
-                </article>
-                <article>
-                  <strong>Oversight</strong>
-                  <small>You</small>
-                  <p>As reality shifts, OSLO re-reads and updates the picture, so you can adjust and stay on course.</p>
-                </article>
-              </div>
-              <div className="orientation-footer">
-                <p>OSLO advises. You lead. That&apos;s how an AI-first PM steers to the outcome — augmented, not automated.</p>
-                <button
-                  className="button button-primary"
-                  onClick={() => setTourStep(0)}
-                  type="button"
-                >
-                  Get started
-                  <ArrowRight aria-hidden="true" size={14} />
-                </button>
-              </div>
+          <div className="tour-card">
+            <span className="tour-step-label">Step {activeTourStep + 1} of {orientationSteps.length}</span>
+            <h2>{orientationSteps[activeTourStep].title}</h2>
+            <p>{orientationSteps[activeTourStep].body}</p>
+            <div className="tour-actions">
+              <button onClick={() => void dismissOrientation()} type="button">Skip</button>
+              <span aria-hidden="true" />
+              {activeTourStep > 0 ? (
+                <button onClick={() => setTourStep(activeTourStep - 1)} type="button">Back</button>
+              ) : null}
+              <button
+                className="button button-primary"
+                onClick={() => {
+                  if (activeTourStep === orientationSteps.length - 1) {
+                    void dismissOrientation();
+                  } else {
+                    setTourStep(activeTourStep + 1);
+                  }
+                }}
+                type="button"
+              >
+                {activeTourStep === orientationSteps.length - 1 ? "Done" : "Next"}
+              </button>
             </div>
-          ) : (
-            <div className="tour-card">
-              <div className="tour-progress">
-                <span>{tourStep + 1} of {orientationSteps.length}</span>
-                <div>
-                  {orientationSteps.map((step, index) => (
-                    <i className={index <= tourStep ? "is-active" : ""} key={step.title} />
-                  ))}
-                </div>
-              </div>
-              <Sparkle aria-hidden="true" size={24} weight="fill" />
-              <h2>{orientationSteps[tourStep].title}</h2>
-              <p>{orientationSteps[tourStep].body}</p>
-              <div className="tour-actions">
-                <button onClick={() => void dismissOrientation()} type="button">Skip tour</button>
-                <button
-                  className="button button-primary"
-                  onClick={() => {
-                    if (tourStep === orientationSteps.length - 1) {
-                      void dismissOrientation();
-                    } else {
-                      setTourStep((current) => (current ?? 0) + 1);
-                    }
-                  }}
-                  type="button"
-                >
-                  {tourStep === orientationSteps.length - 1 ? "Finish tour" : "Next"}
-                  <ArrowRight aria-hidden="true" size={14} />
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </section>
       ) : null}
 
@@ -2514,7 +2531,13 @@ function AdvisorPanel({
           <CaretRight aria-hidden="true" size={16} />
         </button>
       </div>
-      <div aria-live="polite" className="chat-content">
+      <div
+        aria-label="OSLO conversation"
+        aria-live="polite"
+        className="chat-content"
+        role="region"
+        tabIndex={0}
+      >
         <p className="chat-note">
           I&apos;ve completed the {isProvisional ? "initial" : "extended"} read. Start with
           the top issue, or ask about any part of the plan.
@@ -2565,23 +2588,20 @@ function AdvisorPanel({
           ))}
         </div>
         <form className="chat-composer" onSubmit={onSubmit}>
-          <input
+          <textarea
             aria-label="Ask OSLO"
             disabled={advisorPending}
             maxLength={1000}
             onChange={(event) => onQuestionChange(event.target.value)}
-            placeholder="Ask OSLO about the read, an issue, or what to do next…"
+            placeholder="Ask OSLO about the read, an issue, or what to do next…  (@ to pin a context)"
+            rows={3}
             value={question}
           />
-          <button
-            aria-label="Send"
-            disabled={advisorPending || !question.trim()}
-            type="submit"
-          >
-            <PaperPlaneTilt aria-hidden="true" size={15} weight="fill" />
-          </button>
+          <div className="chat-composer-footer">
+            <span>↳ advisory <Info aria-hidden="true" size={12} /></span>
+            <button disabled={advisorPending || !question.trim()} type="submit">Send</button>
+          </div>
         </form>
-        <p className="chat-advisory">OSLO advises; you decide.</p>
       </div>
     </aside>
   );

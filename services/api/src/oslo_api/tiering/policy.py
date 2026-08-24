@@ -42,7 +42,7 @@ class PlanPolicy:
             return CapacityDecision(allowed=True)
         return CapacityDecision(
             allowed=False,
-            remedies=("invite_as_viewer", "compare_plans"),
+            remedies=("compare_plans",),
         )
 
 

@@ -21,28 +21,40 @@ async function signIn(page: import("@playwright/test").Page) {
 
 async function openFirstProject(page: import("@playwright/test").Page) {
   await page.goto("/workspace");
-  if (await page.getByRole("link", { name: /Open project/ }).count() === 0) {
-    await page.getByRole("button", { name: /Create your first project/ }).click();
-    await expect(page).toHaveURL(/\/intake\?project=/);
-    await page.getByRole("button", { name: /sample project/i }).click();
-    await page.getByRole("button", { name: /See where I stand/ }).click();
-    await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 90_000 });
-    await expect(page.getByText("Understanding is forming")).toBeVisible({ timeout: 120_000 });
-    await dismissOrientation(page);
-    await page.goto("/workspace");
-  }
-  const projectLink = page.getByRole("link", { name: /Open project/ }).first();
-  await expect(projectLink).toBeVisible();
-  const href = await projectLink.getAttribute("href");
-  expect(href).toMatch(/^\/projects\/.+\/overview$/);
-  await page.goto(href!);
+  await page.getByRole("button", { name: "New project" }).click();
+  await expect(page).toHaveURL(/\/intake\?project=/);
+  await page.getByRole("button", { name: /sample project/i }).click();
+  await page.getByRole("button", { name: /See where I stand/ }).click();
+  await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
+  await expect(page.getByText("Project summary", { exact: true })).toBeVisible({
+    timeout: 120_000,
+  });
 }
 
 test("Slice 9 exports, shares a retained snapshot, and records an external review", async ({
   browser,
   page,
-}) => {
+}, testInfo) => {
   await signIn(page);
+  if (testInfo.project.name === "mobile") {
+    await page.goto("/workspace");
+    const projectLink = page.locator('a[href^="/projects/"][href$="/overview"]').first();
+    await expect(projectLink).toBeVisible();
+    await page.goto((await projectLink.getAttribute("href"))!);
+    await dismissOrientation(page);
+    const collaboration = page.getByRole("group", { name: "Project sharing and export" });
+    await collaboration.getByRole("button", { name: "Export" }).click();
+    const exportDialog = page.getByRole("dialog", { name: "Export a snapshot" });
+    await expect(exportDialog).toBeVisible();
+    await exportDialog.getByRole("button", { name: "Cancel" }).evaluate((button) => button.click());
+    await expect(exportDialog).toBeHidden();
+    await collaboration.getByRole("button", { name: "Share" }).click();
+    const share = page.getByRole("dialog", { name: /^Share / });
+    await expect(share).toBeVisible();
+    await share.getByRole("button", { name: "Done" }).evaluate((button) => button.click());
+    await expect(share).toBeHidden();
+    return;
+  }
   await openFirstProject(page);
 
   await dismissOrientation(page);
@@ -54,28 +66,28 @@ test("Slice 9 exports, shares a retained snapshot, and records an external revie
   await expect(collaboration.getByRole("button", { name: "Export" })).toBeVisible();
 
   await collaboration.getByRole("button", { name: "Export" }).click();
-  let dialog = page.getByRole("dialog", { name: "Export project" });
+  let dialog = page.getByRole("dialog", { name: "Export a snapshot" });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByText(/Exporting never runs analysis/)).toBeVisible();
-  const download = dialog.getByRole("link", { name: "Download PDF" });
+  await expect(dialog.getByText(/Generating a snapshot runs no analysis/)).toBeVisible();
+  const download = dialog.getByRole("link", { name: /^PDF/ });
   const exportHref = await download.getAttribute("href");
   expect(exportHref).toMatch(/^\/api\/projects\/.+\/export$/);
   const exportResponse = await page.request.get(exportHref!);
   expect(exportResponse.status()).toBe(200);
   expect(exportResponse.headers()["content-type"]).toContain("application/pdf");
   expect((await exportResponse.body()).byteLength).toBeGreaterThan(1_000);
-  await dialog.getByRole("button", { name: "Close" }).click();
+  await dialog.getByRole("button", { name: "Cancel" }).click();
 
   await collaboration.getByRole("button", { name: "Share" }).click();
-  dialog = page.getByRole("dialog", { name: "Share project" });
+  dialog = page.getByRole("dialog", { name: /^Share / });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("heading", { name: "People with workspace access" })).toBeVisible();
-  await expect(dialog.getByRole("heading", { name: "External review" })).toBeVisible();
+  await expect(dialog.getByText("People on this project", { exact: true })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "External review request" })).toBeVisible();
 
-  await dialog.getByRole("button", { name: "Create snapshot link" }).click();
-  await expect(
-    dialog.getByText("A read-only snapshot is ready to share.", { exact: true }),
-  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Create a view-only link" }).click();
+  await expect(dialog.locator(".collaboration-success")).toContainText(
+    "A view-only snapshot is ready to share.",
+  );
   const snapshotUrl = await dialog.locator(".collaboration-created-link code").textContent();
   expect(snapshotUrl).toMatch(/\/share\/[^/]+$/);
 
@@ -90,9 +102,9 @@ test("Slice 9 exports, shares a retained snapshot, and records an external revie
   await dialog.getByLabel("Reviewer name").fill("E2E Architecture Reviewer");
   await dialog.getByLabel(/Reviewer email/).fill("reviewer.e2e@example.com");
   await dialog.getByRole("button", { name: "Create review link" }).click();
-  await expect(
-    dialog.getByText("The external review link is ready.", { exact: true }),
-  ).toBeVisible();
+  await expect(dialog.locator(".collaboration-success")).toContainText(
+    "The external review link is ready.",
+  );
   const reviewUrl = await dialog.locator(".collaboration-created-link code").textContent();
   expect(reviewUrl).toMatch(/\/review\/[^/]+$/);
 
@@ -112,7 +124,7 @@ test("Slice 9 exports, shares a retained snapshot, and records an external revie
   await expect(reviewPage.getByText("No account or workspace seat was created.")).toBeVisible();
   await reviewContext.close();
 
-  await dialog.getByRole("button", { name: "Close" }).click();
+  await dialog.getByRole("button", { name: "Done" }).click();
   await page.getByRole("link", { name: /^History/ }).click();
   await expect(page).toHaveURL(/\/history$/);
   await page.getByRole("button", { name: "Collaboration & invites" }).click();

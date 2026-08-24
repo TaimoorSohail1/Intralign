@@ -309,7 +309,9 @@ export function ReportWorkspace({
   const [recipient, setRecipient] = useState(defaultRecipient);
   const [notice, setNotice] = useState<string | null>(null);
   const [sendOpen, setSendOpen] = useState(false);
-  const [deliveryEmail, setDeliveryEmail] = useState("");
+  const [exportOpen, setExportOpen] = useState(false);
+  const [editingRecipient, setEditingRecipient] = useState(false);
+  const [deliveryEmail, setDeliveryEmail] = useState("sponsor@example.com");
   const [scheduledFor, setScheduledFor] = useState("");
   const [deliveryPending, setDeliveryPending] = useState(false);
   const [documentHtml, setDocumentHtml] = useState(initialHtml);
@@ -709,6 +711,8 @@ export function ReportWorkspace({
               return;
             }
             setSendOpen((current) => !current);
+            setExportOpen(false);
+            setEditingRecipient(false);
             setScheduleOpen(false);
             setSectionsOpen(false);
           }}
@@ -718,8 +722,14 @@ export function ReportWorkspace({
           <EnvelopeSimple size={14} /> Send <CaretDown size={10} />
         </button>
         <button
+          aria-expanded={exportOpen}
           className="report-export"
-          onClick={() => void exportDocument()}
+          onClick={() => {
+            setExportOpen((current) => !current);
+            setSendOpen(false);
+            setScheduleOpen(false);
+            setSectionsOpen(false);
+          }}
           type="button"
         >
           <DownloadSimple size={14} /> Export
@@ -728,24 +738,58 @@ export function ReportWorkspace({
 
       {sendOpen ? (
         <div aria-label="Send readout" className="report-send-panel" role="dialog">
-          <strong>Email this retained readout</strong>
-          <label>
-            Recipient email
-            <input
-              autoFocus
-              onChange={(event) => setDeliveryEmail(event.target.value)}
-              placeholder="sponsor@example.com"
-              type="email"
-              value={deliveryEmail}
-            />
-          </label>
-          <button
-            disabled={deliveryPending}
-            onClick={() => void deliver(null)}
-            type="button"
-          >
-            {deliveryPending ? "Sending…" : "Send now"}
-          </button>
+          <span className="report-popover-label">Send</span>
+          <p>Goes to <strong>{recipient}</strong> as a read-only copy, on a link back into OSLO.</p>
+          <div className="report-send-actions">
+            <button
+              aria-label={`Send to the ${recipient.toLowerCase()}`}
+              className="is-primary"
+              disabled={deliveryPending}
+              onClick={() => void deliver(null)}
+              type="button"
+            >
+              {deliveryPending ? "Sending…" : `→ Send to the ${recipient.toLowerCase()}`}
+            </button>
+            <button onClick={() => setEditingRecipient((current) => !current)} type="button">
+              Change recipient
+            </button>
+          </div>
+          {editingRecipient ? (
+            <label>
+              Recipient email
+              <input
+                autoFocus
+                onChange={(event) => setDeliveryEmail(event.target.value)}
+                placeholder="sponsor@example.com"
+                type="email"
+                value={deliveryEmail}
+              />
+            </label>
+          ) : null}
+          <p>Sending runs no analysis. It writes down the read you already have.</p>
+          <p>The link is their access — <strong>no signup</strong>. It opens this one memo, read-only, and nothing else.</p>
+          <strong>Free on every plan.</strong>
+        </div>
+      ) : null}
+
+      {exportOpen ? (
+        <div aria-label="Export readout" className="report-export-panel" role="dialog">
+          <span className="report-popover-label">Export</span>
+          <div className="report-export-actions">
+            <button className="is-primary" onClick={() => void exportDocument()} type="button">
+              <DownloadSimple size={14} /> Export as PDF
+            </button>
+            <button type="button">Change format</button>
+            <button type="button">Preview what travels</button>
+          </div>
+          <p>A file you handle yourself. To send it to someone, use Send.</p>
+          <hr />
+          <span className="report-popover-label">Memos</span>
+          <article>
+            <p><strong>Memo 1</strong> <span>Current analysis</span></p>
+            <small>Frozen when exported · prepared for {recipient}</small>
+          </article>
+          <p>A memo is frozen when it goes. If the read moves on, it remains a labelled previous analysis.</p>
         </div>
       ) : null}
 

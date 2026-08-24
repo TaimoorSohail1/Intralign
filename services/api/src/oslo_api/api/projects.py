@@ -63,6 +63,7 @@ class WorkspaceResponse(BaseModel):
     monthly_analyses_used: int
     can_manage_plan: bool
     member_count: int
+    collaborator_seats_used: int
     projects: list[WorkspaceProjectResponse]
     notifications: list[WorkspaceNotificationResponse]
 
@@ -76,7 +77,7 @@ class WorkspacePreferencesResponse(BaseModel):
     display_name: str = ""
     role_title: str = ""
     workspace_name: str = ""
-    actor_role: str = "viewer"
+    actor_role: str = "owner"
     mentions_notifications: bool = True
     reply_notifications: bool = True
     shared_notifications: bool = True

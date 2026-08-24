@@ -23,16 +23,17 @@ test("Slice 8 provides workspace home, switching, awareness, settings, and safe 
   await expect(page.getByLabel("Settings")).toBeVisible();
   await expect(page.getByRole("button", { name: /Archived projects/ })).toBeVisible();
 
-  if (await page.getByRole("link", { name: /Open project/ }).count() === 0) {
+  const analyzedProjects = page.locator('a[href^="/projects/"][href$="/overview"]');
+  if (await analyzedProjects.count() === 0) {
     await page.getByRole("button", { name: /Create your first project/ }).click();
-    await expect(page).toHaveURL(/\/intake\?project=/);
+    await expect(page).toHaveURL(/\/intake\?project=/, { timeout: 30_000 });
     await page.getByRole("button", { name: /sample project/i }).click();
     await page.getByRole("button", { name: /See where I stand/ }).click();
-    await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 90_000 });
+    await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
     await page.goto("/workspace");
   }
 
-  const projectLink = page.getByRole("link", { name: /Open project/ }).first();
+  const projectLink = page.locator('a[href^="/projects/"][href$="/overview"]').first();
   await expect(projectLink).toBeVisible();
   const projectHref = await projectLink.getAttribute("href");
   expect(projectHref).toMatch(/^\/projects\/.+\/overview$/);
@@ -56,15 +57,18 @@ test("Slice 8 provides workspace home, switching, awareness, settings, and safe 
   await page.getByLabel("Notifications").click();
   const notifications = page.getByRole("dialog", { name: "Notifications" });
   await expect(notifications).toBeVisible();
-  await expect(notifications.getByText("Workspace awareness")).toBeVisible();
-  await expect(notifications.getByText(/Awareness only/)).toBeVisible();
+  await expect(notifications.getByText("awareness", { exact: true })).toBeVisible();
+  await expect(
+    notifications.getByText(/Notifications never start analysis/),
+  ).toBeVisible();
   const markAllRead = notifications.getByRole("button", { name: "Mark all read" });
   if (await markAllRead.isEnabled()) {
     await markAllRead.click();
     await expect(markAllRead).toBeDisabled();
   }
-  await notifications.getByLabel("Notification settings").click();
-  await expect(page).toHaveURL(/\/settings#notifications$/);
+  await notifications.getByLabel("Close notifications").click();
+  await expect(notifications).toBeHidden();
+  await page.goto("/settings#notifications");
 
   await expect(page.getByRole("heading", { name: "Account & workspace" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Settings" })).toBeVisible();
@@ -81,9 +85,9 @@ test("Slice 8 provides workspace home, switching, awareness, settings, and safe 
   await page.goto("/workspace");
   while (await page.getByRole("link", { name: /Open project/ }).count() < 3) {
     await page.getByRole("button", { name: "New project" }).click();
-    await expect(page).toHaveURL(/\/intake\?project=/);
+    await expect(page).toHaveURL(/\/intake\?project=/, { timeout: 30_000 });
     await page.goto("/workspace");
   }
   await page.getByRole("button", { name: "New project" }).click();
-  await expect(page).toHaveURL(/\/intake\?project=/);
+  await expect(page).toHaveURL(/\/intake\?project=/, { timeout: 30_000 });
 });

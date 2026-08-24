@@ -147,6 +147,7 @@ def test_workspace_summary_serializes_projects_and_activity() -> None:
     assert payload["name"] == "OSLO Alpha"
     assert "active_project_limit" not in payload
     assert payload["member_count"] == 1
+    assert payload["collaborator_seats_used"] == 1
     assert payload["projects"][0]["confidence_index"] == 62
     assert payload["notifications"][0]["key"] == "analysis:run-1"
 

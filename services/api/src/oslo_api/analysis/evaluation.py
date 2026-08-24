@@ -41,6 +41,7 @@ _STOP_WORDS = {
 @dataclass(frozen=True, slots=True)
 class BenchmarkFinding:
     """One expected defect expressed as domain-neutral concept alternatives.
+
     Every inner tuple is one required concept. Any term inside that tuple may
     satisfy it, allowing fixtures to match honest paraphrases without matching
     against exact model wording.
@@ -96,6 +97,7 @@ _TRAP_PROFILES = {
         ),
     ),
 }
+
 
 @dataclass(frozen=True, slots=True)
 class BenchmarkGates:
@@ -254,7 +256,6 @@ def evaluate_benchmark_series(
 
     if not observations:
         raise ValueError("benchmark series needs at least one observation")
-
     runs = tuple(
         evaluate_benchmark(
             manifest,
@@ -321,7 +322,6 @@ def manifest_from_mapping(payload: Mapping[str, Any]) -> BenchmarkManifest:
         for profile in payload.get("trap_profiles", ())
         for trap in _trap_profile(str(profile))
     )
-
     return BenchmarkManifest(
         name=str(payload["name"]),
         findings=tuple(
@@ -366,12 +366,12 @@ def _concepts(value: Any) -> tuple[tuple[str, ...], ...]:
         raise ValueError("every benchmark concept needs at least one term")
     return concepts
 
+
 def _trap_profile(name: str) -> tuple[BenchmarkTrap, ...]:
     try:
         return _TRAP_PROFILES[name]
     except KeyError as error:
         raise ValueError(f"unknown benchmark trap profile: {name}") from error
-
 
 
 def _open_issue_ids(issues: tuple[Issue, ...]) -> set[str]:
@@ -400,10 +400,20 @@ def _issue_tokens(issue: Issue) -> set[str]:
 
 def _tokens(value: str) -> set[str]:
     return {
-        token
+        _normalise_token(token)
         for token in _TOKEN.findall(value.casefold())
         if token not in _STOP_WORDS
     }
+
+
+def _normalise_token(token: str) -> str:
+    """Normalize basic grammatical variants without fuzzy semantic guessing."""
+
+    if len(token) > 4 and token.endswith("ies"):
+        return f"{token[:-3]}y"
+    if len(token) > 4 and token.endswith("s") and not token.endswith("ss"):
+        return token[:-1]
+    return token
 
 
 def _duplicate_issue_ids(

@@ -28,8 +28,9 @@ router = APIRouter(prefix="/v1", tags=["invitations"])
 
 
 class InviteMemberRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email: EmailStr
-    role: MembershipRole = MembershipRole.COLLABORATOR
 
 
 class InvitationResponse(BaseModel):
@@ -126,7 +127,6 @@ def invite_member(
             actor_user_id=context.user.id,
             workspace_id=workspace_id,
             email=payload.email,
-            role=payload.role,
         )
     except InvitePermissionDenied as error:
         raise HTTPException(
@@ -155,8 +155,8 @@ def invite_member(
                 "code": "COLLABORATOR_SEAT_LIMIT_REACHED",
                 "message": (
                     f"The {error.plan.title()} plan includes "
-                    f"{error.collaborator_seat_limit} collaborator seats, including the owner. "
-                    "Invite this person as a Viewer or upgrade the workspace."
+                    f"{error.collaborator_seat_limit} workspace owner seats. "
+                    "Upgrade the workspace before inviting another owner."
                 ),
                 "plan": error.plan,
                 "collaborator_seat_limit": error.collaborator_seat_limit,

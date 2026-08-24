@@ -34,15 +34,15 @@ class RecordingSliceOneApplication:
         assert access_token == "valid-access-token"
         return type("User", (), {"id": USER_ID, "email": "owner@example.com"})()
 
-    def invite_member(self, *, actor_user_id, workspace_id, email, role):
-        self.invite_request = (actor_user_id, workspace_id, email, role)
+    def invite_member(self, *, actor_user_id, workspace_id, email):
+        self.invite_request = (actor_user_id, workspace_id, email)
         now = datetime(2026, 7, 20, 9, 0, tzinfo=UTC)
         return Invitation(
             id=INVITATION_ID,
             workspace_id=workspace_id,
             invited_by_user_id=actor_user_id,
             email=email,
-            role=role,
+            role=MembershipRole.OWNER,
             token_hash=b"private",
             status=InvitationStatus.PENDING,
             created_at=now,
@@ -70,7 +70,7 @@ class RecordingSliceOneApplication:
         return InvitationDetails(
             email="new.member@example.com",
             workspace_name="OSLO Product Grill",
-            role=MembershipRole.COLLABORATOR,
+            role=MembershipRole.OWNER,
             expires_at=datetime(2026, 7, 27, 9, 0, tzinfo=UTC),
             account_exists=False,
         )
@@ -100,7 +100,7 @@ class RecordingSliceOneApplication:
                 workspace_id=workspace_id,
                 invited_by_user_id=actor_user_id,
                 email="pending.member@example.com",
-                role=MembershipRole.COLLABORATOR,
+                role=MembershipRole.OWNER,
                 token_hash=b"private",
                 status=InvitationStatus.PENDING,
                 created_at=now,
@@ -159,7 +159,7 @@ class SeatLimitApplication(RecordingSliceOneApplication):
 def test_inviting_requires_an_authenticated_session() -> None:
     response = TestClient(create_app()).post(
         f"/v1/workspaces/{WORKSPACE_ID}/invitations",
-        json={"email": "new.member@example.com", "role": "collaborator"},
+        json={"email": "new.member@example.com"},
     )
 
     assert response.status_code == 401
@@ -170,7 +170,7 @@ def test_expired_session_cannot_manage_invitations() -> None:
     response = TestClient(create_app(slice_one=ExpiredSessionApplication())).post(
         f"/v1/workspaces/{WORKSPACE_ID}/invitations",
         headers={"Authorization": "Bearer expired-access-token"},
-        json={"email": "new.member@example.com", "role": "collaborator"},
+        json={"email": "new.member@example.com"},
     )
 
     assert response.status_code == 401
@@ -181,14 +181,14 @@ def test_owner_can_create_an_invitation_through_the_api() -> None:
     response = TestClient(create_app(slice_one=application)).post(
         f"/v1/workspaces/{WORKSPACE_ID}/invitations",
         headers={"Authorization": "Bearer valid-access-token"},
-        json={"email": "new.member@example.com", "role": "collaborator"},
+        json={"email": "new.member@example.com"},
     )
 
     assert response.status_code == 201
     assert response.json() == {
         "id": str(INVITATION_ID),
         "email": "new.member@example.com",
-        "role": "collaborator",
+        "role": "owner",
         "status": "pending",
         "expires_at": "2026-07-27T09:00:00Z",
     }
@@ -196,7 +196,6 @@ def test_owner_can_create_an_invitation_through_the_api() -> None:
         USER_ID,
         WORKSPACE_ID,
         "new.member@example.com",
-        MembershipRole.COLLABORATOR,
     )
 
 
@@ -204,7 +203,7 @@ def test_non_owner_cannot_create_an_invitation_through_the_api() -> None:
     response = TestClient(create_app(slice_one=NonOwnerSliceOneApplication())).post(
         f"/v1/workspaces/{WORKSPACE_ID}/invitations",
         headers={"Authorization": "Bearer valid-access-token"},
-        json={"email": "new.member@example.com", "role": "collaborator"},
+        json={"email": "new.member@example.com"},
     )
 
     assert response.status_code == 403
@@ -231,7 +230,7 @@ def test_email_delivery_failure_is_reported_as_retryable() -> None:
     response = TestClient(create_app(slice_one=DeliveryFailureApplication())).post(
         f"/v1/workspaces/{WORKSPACE_ID}/invitations",
         headers={"Authorization": "Bearer valid-access-token"},
-        json={"email": "new.member@example.com", "role": "collaborator"},
+        json={"email": "new.member@example.com"},
     )
 
     assert response.status_code == 503
@@ -256,7 +255,7 @@ def test_free_plan_invitation_limits_are_reported_as_conflicts(
     response = TestClient(create_app(slice_one=application)).post(
         f"/v1/workspaces/{WORKSPACE_ID}/invitations",
         headers={"Authorization": "Bearer valid-access-token"},
-        json={"email": "new.member@example.com", "role": "collaborator"},
+        json={"email": "new.member@example.com"},
     )
 
     assert response.status_code == 409
@@ -268,13 +267,13 @@ def test_invalid_email_is_rejected(email: str) -> None:
     response = TestClient(create_app(slice_one=RecordingSliceOneApplication())).post(
         f"/v1/workspaces/{WORKSPACE_ID}/invitations",
         headers={"Authorization": "Bearer valid-access-token"},
-        json={"email": email, "role": "collaborator"},
+        json={"email": email},
     )
 
     assert response.status_code == 422
 
 
-def test_unknown_role_cannot_be_injected_through_the_api() -> None:
+def test_role_cannot_be_injected_through_the_owner_only_api() -> None:
     response = TestClient(create_app(slice_one=RecordingSliceOneApplication())).post(
         f"/v1/workspaces/{WORKSPACE_ID}/invitations",
         headers={"Authorization": "Bearer valid-access-token"},
@@ -330,7 +329,7 @@ def test_activation_link_resolves_invitation_context() -> None:
     assert response.json() == {
         "email": "new.member@example.com",
         "workspace_name": "OSLO Product Grill",
-        "role": "collaborator",
+        "role": "owner",
         "expires_at": "2026-07-27T09:00:00Z",
         "account_exists": False,
     }

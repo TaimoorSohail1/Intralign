@@ -140,21 +140,6 @@ describe("WorkspaceHome", () => {
     });
   });
 
-  it("does not expose owner-only archive controls to collaborators", () => {
-    render(
-      <WorkspaceHome
-        displayName="Collaborator"
-        initial={{ ...workspace, role: "collaborator", can_manage_plan: false }}
-      />,
-    );
-
-    expect(
-      screen.queryByRole("button", { name: "Archive Active transformation" }),
-    ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Archived projects/ }));
-    expect(screen.queryByRole("button", { name: "Restore" })).not.toBeInTheDocument();
-  });
-
   it("creates projects in workspaces that already contain many active projects", async () => {
     const existingProjects = Array.from({ length: 8 }, (_, index) => ({
       ...workspace.projects[0],

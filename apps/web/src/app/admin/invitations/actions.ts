@@ -14,20 +14,20 @@ export async function inviteMember(formData: FormData) {
   const session = await readSession();
   if (!session.accessToken || !session.workspaceId) redirect("/login");
   const email = String(formData.get("email") ?? "").trim();
-  const role = String(formData.get("role") ?? "collaborator");
   try {
     await sendInvitation({
       accessToken: session.accessToken,
       workspaceId: session.workspaceId,
       email,
-      role,
     });
   } catch (caught) {
     const message =
       caught instanceof OsloApiError && caught.status === 422
         ? "Enter a valid email address."
         : caught instanceof OsloApiError && caught.status === 409
-          ? "That person already has an active invitation or workspace access."
+          ? caught.message === "OSLO API request failed"
+            ? "That person already has an active invitation or workspace access."
+            : caught.message
           : "The invitation could not be sent. Please try again.";
     redirect(
       `/admin/invitations?error=${encodeURIComponent(message)}&email=${encodeURIComponent(email)}`,

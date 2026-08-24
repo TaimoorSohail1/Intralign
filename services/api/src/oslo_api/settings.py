@@ -33,5 +33,9 @@ class Settings(BaseSettings):
     # correctly bounded. Keep this below the worker's external timeout while allowing
     # each artifact shard enough time to finish once instead of being retried mid-call.
     openai_timeout_seconds: float = Field(default=90, ge=5, le=120)
-    openai_max_retries: int = Field(default=1, ge=0, le=3)
+    # Workflow-level artifact recovery already retries one isolated artifact and
+    # can publish a visibly provisional fallback. Avoid multiplying the SDK retry
+    # loop inside that recovery path, which previously allowed one artifact to
+    # consume four full provider timeouts.
+    openai_max_retries: int = Field(default=0, ge=0, le=3)
     object_storage_path: Path = Path(__file__).resolve().parents[2] / ".data" / "uploads"

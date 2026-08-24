@@ -7,8 +7,6 @@ from uuid import UUID
 
 class MembershipRole(StrEnum):
     OWNER = "owner"
-    COLLABORATOR = "collaborator"
-    VIEWER = "viewer"
 
 
 class InvitationStatus(StrEnum):
@@ -23,7 +21,6 @@ class InviteMemberCommand:
     workspace_id: UUID
     invited_by_user_id: UUID
     email: str
-    role: MembershipRole = MembershipRole.COLLABORATOR
 
 
 @dataclass(frozen=True, slots=True)

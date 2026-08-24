@@ -3,7 +3,6 @@ import { ThemeInitializer } from "@/components/workspace/theme-initializer";
 
 import "./globals.css";
 
-
 export const metadata: Metadata = {
   title: "OSLO Product Grill",
   description: "Strategic project leadership for AI-first project managers.",

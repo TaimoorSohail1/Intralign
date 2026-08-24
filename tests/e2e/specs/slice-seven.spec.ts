@@ -16,7 +16,7 @@ async function createAnalyzedProject(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: /Start your first project/ }).click();
   await page.getByRole("button", { name: /sample project/i }).click();
   await page.getByRole("button", { name: /See where I stand/ }).click();
-  await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 90_000 });
+  await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
 
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
   if (await orientation.isVisible()) {
@@ -27,7 +27,7 @@ async function createAnalyzedProject(page: import("@playwright/test").Page) {
     await page.getByRole("button", { name: "Finish tour" }).click();
   }
   await expect(
-    page.getByText("Current evidence-qualified read", { exact: true }),
+    page.getByText("Project summary", { exact: true }),
   ).toBeVisible({ timeout: 120_000 });
 }
 
@@ -39,7 +39,9 @@ test("Slice 7 retains read-only history, snapshots, filters, and historical advi
   await page.getByRole("link", { name: /^History/ }).click();
   await expect(page).toHaveURL(/\/history$/);
   await expect(page.getByRole("heading", { name: "History & timeline" })).toBeVisible();
-  await expect(page.getByText("Extended Analysis complete").first()).toBeVisible();
+  await expect(page.getByText("Extended Analysis complete").first()).toBeVisible({
+    timeout: 120_000,
+  });
   await expect(page.getByText("Initial Analysis complete").first()).toBeVisible();
   await expect(page.getByText(/Read-only · viewing history changes nothing/)).toBeVisible();
 

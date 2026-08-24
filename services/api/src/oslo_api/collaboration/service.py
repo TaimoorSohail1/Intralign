@@ -55,9 +55,7 @@ class DatabaseCollaborationService:
                         from public.memberships m
                         join public.profiles p on p.id = m.user_id
                         where m.workspace_id = :workspace_id
-                        order by
-                          case m.role when 'owner' then 0 when 'collaborator' then 1 else 2 end,
-                          lower(p.display_name)
+                        order by lower(p.display_name)
                         """
                     ),
                     {"workspace_id": workspace_id},
@@ -134,9 +132,7 @@ class DatabaseCollaborationService:
             "plan": {
                 "name": "Free",
                 "collaborator_seats": 3,
-                "collaborator_seats_used": sum(
-                    1 for participant in participants if participant["role"] != "viewer"
-                ),
+                "collaborator_seats_used": len(participants),
                 "monthly_invites": 2,
                 "monthly_invites_used": monthly_invites_used,
                 "viewers_unlimited": True,
@@ -1168,10 +1164,10 @@ class DatabaseCollaborationService:
 
     @staticmethod
     def _require_editor(role: str) -> None:
-        if role not in {"owner", "collaborator"}:
+        if role != "owner":
             raise CollaborationError(
                 "COLLABORATION_FORBIDDEN",
-                "Only owners and collaborators can change collaboration settings",
+                "Only workspace owners can change collaboration settings",
                 403,
             )
 

@@ -1,66 +1,10 @@
 {
   "name": "SB06 Marrow Co Coffee",
-  "expected_ratings": {
-    "clarity": "High",
-    "alignment": "Moderate",
-    "feasibility": "Low",
-    "reliability": "Moderate",
-    "confidence": "Moderate"
-  },
-  "trap_profiles": [
-    "small_business"
-  ],
+  "expected_ratings": {"clarity":"High","alignment":"Moderate","feasibility":"Low","reliability":"Moderate","confidence":"Moderate"},
+  "trap_profiles": ["small_business"],
   "findings": [
-    {
-      "id": "SB06-01",
-      "severity": "Critical",
-      "concepts": [
-        [
-          "four shops",
-          "all four"
-        ],
-        [
-          "three go-lives",
-          "three sites"
-        ],
-        [
-          "missing",
-          "omitted"
-        ]
-      ]
-    },
-    {
-      "id": "SB06-02",
-      "severity": "Moderate",
-      "concepts": [
-        [
-          "go-live",
-          "rollout"
-        ],
-        [
-          "December"
-        ],
-        [
-          "Christmas",
-          "trading peak"
-        ]
-      ]
-    },
-    {
-      "id": "SB06-03",
-      "severity": "Warning",
-      "concepts": [
-        [
-          "payroll"
-        ],
-        [
-          "out of scope"
-        ],
-        [
-          "interface",
-          "integration"
-        ]
-      ]
-    }
+    {"id":"SB06-01","severity":"Critical","concepts":[["four shops","all four"],["three go-lives","three sites"],["missing","omitted","only"]]},
+    {"id":"SB06-02","severity":"Moderate","concepts":[["go-live","rollout"],["December"],["Christmas","trading peak"]]},
+    {"id":"SB06-03","severity":"Warning","concepts":[["payroll"],["out of scope","excluded"],["interface","integration"]]}
   ]
 }

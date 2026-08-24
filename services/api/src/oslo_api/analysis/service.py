@@ -1375,7 +1375,7 @@ def build_slice_two_application() -> DatabaseSliceTwoApplication:
         store=store,
         harness=harness,
         phase_delay_seconds=settings.analysis_phase_delay_ms / 1000,
-        artifact_workers_per_run=2,
+        artifact_workers_per_run=min(4, settings.analysis_artifact_worker_threads),
         artifact_worker_limit=settings.analysis_artifact_worker_threads,
     )
     return DatabaseSliceTwoApplication(

@@ -198,10 +198,14 @@ describe("ReportWorkspace", () => {
       "Please resolve the highest-impact open decision",
     );
     fireEvent.click(screen.getByRole("button", { name: /Send/i }));
+    expect(screen.getByRole("dialog", { name: "Send readout" })).toHaveTextContent(
+      "Goes to Steering group as a read-only copy",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Change recipient" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Recipient email" }), {
       target: { value: "sponsor@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send now" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send to the steering group" }));
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent(
         "Report emailed to sponsor@example.com.",
@@ -217,10 +221,11 @@ describe("ReportWorkspace", () => {
     render(<ReportWorkspace snapshot={snapshot} />);
 
     fireEvent.click(screen.getByRole("button", { name: /Send/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Change recipient" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Recipient email" }), {
       target: { value: "not-an-email" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send now" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send to the sponsor" }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
       "Enter a valid recipient email address.",
@@ -263,6 +268,9 @@ describe("ReportWorkspace", () => {
     render(<ReportWorkspace snapshot={snapshot} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    expect(screen.getByRole("dialog", { name: "Export readout" })).toBeInTheDocument();
+    expect(screen.getByText("Memos")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Export as PDF" }));
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
@@ -342,10 +350,11 @@ describe("ReportWorkspace", () => {
     render(<ReportWorkspace snapshot={snapshot} />);
 
     fireEvent.click(screen.getByRole("button", { name: /Send/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Change recipient" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Recipient email" }), {
       target: { value: "sponsor@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send now" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send to the sponsor" }));
 
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent("email delivery failed");

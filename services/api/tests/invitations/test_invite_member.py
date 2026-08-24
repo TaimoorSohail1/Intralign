@@ -29,7 +29,7 @@ class FixedMemberships:
         return self.role
 
 
-def test_owner_can_invite_a_collaborator_for_seven_days() -> None:
+def test_owner_can_invite_another_owner_for_fourteen_days() -> None:
     now = datetime(2026, 7, 20, 9, 0, tzinfo=UTC)
     store = RecordingInvitationStore()
     invite_member = InviteMember(
@@ -45,28 +45,24 @@ def test_owner_can_invite_a_collaborator_for_seven_days() -> None:
             workspace_id=UUID("018f9f7e-8de2-7000-8000-000000000010"),
             invited_by_user_id=UUID("018f9f7e-8de2-7000-8000-000000000011"),
             email="new.member@example.com",
-            role=MembershipRole.COLLABORATOR,
         )
     )
     invitation = issued.invitation
 
     assert invitation.status is InvitationStatus.PENDING
-    assert invitation.expires_at == now + timedelta(days=7)
+    assert invitation.role is MembershipRole.OWNER
+    assert invitation.expires_at == now + timedelta(days=14)
     assert store.saved == [invitation]
     assert issued.token == "raw-activation-token"
     assert invitation.token_hash == sha256(b"raw-activation-token").digest()
     assert "raw-activation-token" not in repr(invitation)
 
 
-@pytest.mark.parametrize(
-    "actor_role",
-    [MembershipRole.COLLABORATOR, MembershipRole.VIEWER],
-)
-def test_non_owners_cannot_invite_members(actor_role: MembershipRole) -> None:
+def test_non_members_cannot_invite_members() -> None:
     store = RecordingInvitationStore()
     invite_member = InviteMember(
         invitations=store,
-        memberships=FixedMemberships(actor_role),
+        memberships=FixedMemberships(None),
         clock=lambda: datetime(2026, 7, 20, 9, 0, tzinfo=UTC),
         new_id=lambda: UUID("018f9f7e-8de2-7000-8000-000000000001"),
         new_token=lambda: "raw-activation-token",

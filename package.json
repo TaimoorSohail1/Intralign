@@ -13,6 +13,7 @@
     "test:api": "uv run --project services/api pytest services/api/tests",
     "test:e2e": "pnpm --filter @oslo/e2e test",
     "seed:local": "uv run --project services/api python services/api/scripts/seed_local.py",
+    "seed:e2e": "uv run --project services/api python services/api/scripts/seed_e2e.py",
     "supabase": "supabase"
   },
   "devDependencies": {

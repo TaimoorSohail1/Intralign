@@ -30,7 +30,6 @@ from oslo_api.analysis.models import (
 
 _LOGGER = logging.getLogger(__name__)
 
-
 PROMPT_VERSIONS = {
     "perceive": "oslo-perceive-v5",
     "construct": "oslo-construct-v5",
@@ -59,15 +58,15 @@ class _PerceptionOutput(_StrictOutput):
 class _ArtifactSectionOutput(_StrictOutput):
     heading: ShortText
     body: OptionalText = ""
-    bullets: list[ShortText] = Field(default_factory=list, max_length=200)
+    bullets: list[ShortText] = Field(default_factory=list, max_length=80)
     columns: list[ShortText] = Field(default_factory=list, max_length=20)
-    rows: list[list[ShortText]] = Field(default_factory=list, max_length=500)
+    rows: list[list[ShortText]] = Field(default_factory=list, max_length=120)
     evidence_refs: list[EvidenceReference] = Field(default_factory=list, max_length=100)
     row_evidence_refs: list[list[EvidenceReference]] = Field(
         default_factory=list,
-        max_length=500,
+        max_length=120,
     )
-    row_states: list[EvidenceState] = Field(default_factory=list, max_length=500)
+    row_states: list[EvidenceState] = Field(default_factory=list, max_length=120)
 
     @model_validator(mode="after")
     def validate_shape(self) -> "_ArtifactSectionOutput":
@@ -115,9 +114,9 @@ class _ArtifactOutput(_StrictOutput):
     reliability: ReliabilityBand
     evidence_refs: list[EvidenceReference] = Field(min_length=1, max_length=50)
     basis: Literal["supported", "derived", "inferred"] = "derived"
-    sections: list[_ArtifactSectionOutput] = Field(min_length=1, max_length=20)
-    assumptions: list[_AssumptionOutput] = Field(default_factory=list, max_length=100)
-    conflicts: list[_ConflictOutput] = Field(default_factory=list, max_length=100)
+    sections: list[_ArtifactSectionOutput] = Field(min_length=1, max_length=8)
+    assumptions: list[_AssumptionOutput] = Field(default_factory=list, max_length=24)
+    conflicts: list[_ConflictOutput] = Field(default_factory=list, max_length=24)
 
 
 class _ArtifactsOutput(_StrictOutput):
@@ -337,11 +336,11 @@ class OpenAIAgentHarness:
         evidence = self._evidence_for_artifact(
             perception,
             artifact_type,
-            character_budget=32_000,
+            character_budget=18_000,
         )
-        facts = self._items_for_artifact(perception.facts, artifact_type)
-        claims = self._items_for_artifact(perception.claims, artifact_type)
-        gaps = self._items_for_artifact(perception.gaps, artifact_type)
+        facts = self._items_for_artifact(perception.facts, artifact_type, maximum=24)
+        claims = self._items_for_artifact(perception.claims, artifact_type, maximum=24)
+        gaps = self._items_for_artifact(perception.gaps, artifact_type, maximum=24)
         title_candidate = self._supported_title_candidate(perception)
         allowed_refs = {item.reference for item in evidence}
         if "description:1" in perception.evidence_refs:
@@ -361,7 +360,7 @@ class OpenAIAgentHarness:
         output = self._call_with_evidence_contract(
             name=f"oslo_artifact_{artifact_type.value}",
             schema=_SingleArtifactOutput,
-            max_output_tokens=12_000,
+            max_output_tokens=8_000,
             kind=kind,
             prompt_version=PROMPT_VERSIONS["construct"],
             system=(
@@ -369,7 +368,8 @@ class OpenAIAgentHarness:
                 f"Build only the {artifact_type.value} artifact as complete structured "
                 f"sections and rows. Required coverage: "
                 f"{self._artifact_contract(artifact_type)}. "
-                "Preserve every distinct relevant source row. Mark each row confirmed, "
+                "Preserve the most decision-relevant distinct source rows, using no "
+                "more than 8 sections and 80 rows in total. Mark each row confirmed, "
                 "inferred, conflicting or unknown and attach exact row-level evidence. "
                 "Confirmed means directly stated, not merely derived from cited prose. "
                 "For requirements, do not convert features, KPIs or descriptive prose "
@@ -395,6 +395,12 @@ class OpenAIAgentHarness:
                 "structured_claims": structured_claims,
                 "claim_relations": claim_relations,
                 "supported_project_title_candidate": title_candidate,
+                "output_limits": {
+                    "sections": 8,
+                    "rows_total": 80,
+                    "assumptions": 24,
+                    "conflicts": 24,
+                },
                 "evidence": evidence,
                 "allowed_evidence_locators": sorted(allowed_refs),
             },
@@ -679,10 +685,12 @@ class OpenAIAgentHarness:
         allowed_refs: set[str],
         evidence_refs: Callable[[Any], Iterable[str]],
     ):
-        """Retry one citation-only correction, then fail closed.
+        """Quarantine unsupported findings or retry one indivisible contract.
 
-        The model receives the exact immutable locator allowlist again. OSLO never
-        guesses, normalizes, or silently rewrites an invented evidence reference.
+        Issue and artifact responses can safely retain their independently supported
+        content immediately. Indivisible perception responses receive the exact
+        immutable locator allowlist once more. OSLO never guesses or silently rewrites
+        an invented evidence reference.
         """
 
         accumulated_metadata: HarnessCallMetadata | None = None
@@ -709,17 +717,17 @@ class OpenAIAgentHarness:
             invalid_refs = sorted(set(evidence_refs(output)) - allowed_refs)
             if not invalid_refs:
                 return output
-            if correction_attempt == 1:
-                quarantined = self._quarantine_invalid_findings(
-                    output,
-                    allowed_refs=allowed_refs,
+            quarantined = self._quarantine_invalid_findings(
+                output,
+                allowed_refs=allowed_refs,
+            )
+            if quarantined is not None:
+                _LOGGER.warning(
+                    "Quarantined %s unsupported analysis finding locator(s).",
+                    len(invalid_refs),
                 )
-                if quarantined is not None:
-                    _LOGGER.warning(
-                        "Quarantined unsupported analysis findings with locators: %s",
-                        ", ".join(invalid_refs),
-                    )
-                    return quarantined
+                return quarantined
+            if correction_attempt == 1:
                 raise AgentHarnessError(
                     "EVIDENCE_REFERENCE_CONTRACT_FAILED",
                     retryable=True,
@@ -734,7 +742,7 @@ class OpenAIAgentHarness:
             current_payload = {
                 **payload,
                 "citation_correction": {
-                    "invalid_locators": invalid_refs,
+                    "invalid_locator_count": len(invalid_refs),
                     "allowed_evidence_locators": sorted(allowed_refs),
                     "instruction": (
                         "Return the complete corrected JSON contract. Every evidence "
@@ -744,8 +752,8 @@ class OpenAIAgentHarness:
             }
 
         raise AssertionError("unreachable evidence correction state")
-    @staticmethod
 
+    @staticmethod
     def _quarantine_invalid_findings(
         output: BaseModel,
         *,
@@ -754,15 +762,83 @@ class OpenAIAgentHarness:
         """Omit unsupported findings without weakening other evidence contracts."""
 
         issues = getattr(output, "issues", None)
-        if not isinstance(issues, list):
-            return None
-        supported = [
-            issue
-            for issue in issues
-            if set(getattr(issue, "evidence_refs", ())).issubset(allowed_refs)
-        ]
-        return output.model_copy(update={"issues": supported})
+        if isinstance(issues, list):
+            supported = [
+                issue
+                for issue in issues
+                if set(getattr(issue, "evidence_refs", ())).issubset(allowed_refs)
+            ]
+            return output.model_copy(update={"issues": supported})
+        if isinstance(output, _SingleArtifactOutput):
+            return OpenAIAgentHarness._quarantine_invalid_artifact_content(
+                output,
+                allowed_refs=allowed_refs,
+            )
+        return None
 
+    @staticmethod
+    def _quarantine_invalid_artifact_content(
+        output: _SingleArtifactOutput,
+        *,
+        allowed_refs: set[str],
+    ) -> _SingleArtifactOutput | None:
+        """Keep supported artifact content when only some model citations are invalid."""
+
+        data = output.model_dump(mode="json")
+        artifact = data["artifact"]
+        artifact["evidence_refs"] = [
+            ref for ref in artifact["evidence_refs"] if ref in allowed_refs
+        ]
+        retained_refs = set(artifact["evidence_refs"])
+        sections = []
+        for section in artifact["sections"]:
+            original_section_refs = section["evidence_refs"]
+            section["evidence_refs"] = [
+                ref for ref in original_section_refs if ref in allowed_refs
+            ]
+            retained_refs.update(section["evidence_refs"])
+            kept_rows = []
+            kept_row_refs = []
+            kept_row_states = []
+            for row, row_refs, row_state in zip(
+                section["rows"],
+                section["row_evidence_refs"],
+                section["row_states"],
+                strict=True,
+            ):
+                if not set(row_refs).issubset(allowed_refs):
+                    continue
+                kept_rows.append(row)
+                kept_row_refs.append(row_refs)
+                kept_row_states.append(row_state)
+                retained_refs.update(row_refs)
+            section["rows"] = kept_rows
+            section["row_evidence_refs"] = kept_row_refs
+            section["row_states"] = kept_row_states
+            had_invalid_section_ref = bool(
+                set(original_section_refs) - allowed_refs
+            )
+            if had_invalid_section_ref and not section["evidence_refs"] and not kept_rows:
+                continue
+            sections.append(section)
+        artifact["sections"] = sections
+        artifact["assumptions"] = [
+            item
+            for item in artifact["assumptions"]
+            if set(item["evidence_refs"]).issubset(allowed_refs)
+        ]
+        artifact["conflicts"] = [
+            item
+            for item in artifact["conflicts"]
+            if set(item["evidence_refs"]).issubset(allowed_refs)
+        ]
+        for item in (*artifact["assumptions"], *artifact["conflicts"]):
+            retained_refs.update(item["evidence_refs"])
+        if not artifact["evidence_refs"]:
+            artifact["evidence_refs"] = sorted(retained_refs)
+        if not artifact["evidence_refs"] or not artifact["sections"]:
+            return None
+        return _SingleArtifactOutput.model_validate(data)
 
     @staticmethod
     def _merge_metadata(

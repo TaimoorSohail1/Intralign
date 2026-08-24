@@ -10,14 +10,20 @@ const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
 export async function logout() {
   const session = await readSession();
   if (session.accessToken) {
-    await fetch(`${supabaseUrl}/auth/v1/logout`, {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        apikey: publishableKey,
-        authorization: `Bearer ${session.accessToken}`,
-      },
-    });
+    try {
+      await fetch(`${supabaseUrl}/auth/v1/logout`, {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          apikey: publishableKey,
+          authorization: `Bearer ${session.accessToken}`,
+        },
+        signal: AbortSignal.timeout(3_000),
+      });
+    } catch {
+      // Remote revocation is best-effort. Never leave a user signed in locally
+      // because the identity provider is temporarily slow or unavailable.
+    }
   }
   await clearSessionCookies();
   redirect("/login");

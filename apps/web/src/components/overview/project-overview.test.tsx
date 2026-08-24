@@ -371,7 +371,15 @@ describe("ProjectOverview", () => {
 
   it("restores the Overview scroll position after returning from Attention Map", () => {
     vi.useFakeTimers();
-    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+    const scrollTo = vi.fn();
+    const originalScrollTo = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "scrollTo",
+    );
+    Object.defineProperty(HTMLElement.prototype, "scrollTo", {
+      configurable: true,
+      value: scrollTo,
+    });
     const requestAnimationFrame = vi
       .spyOn(window, "requestAnimationFrame")
       .mockImplementation((callback) => {
@@ -381,11 +389,6 @@ describe("ProjectOverview", () => {
     const cancelAnimationFrame = vi
       .spyOn(window, "cancelAnimationFrame")
       .mockImplementation(() => undefined);
-    Object.defineProperty(window, "scrollY", {
-      configurable: true,
-      value: 640,
-    });
-
     const overview = render(
       <ProjectOverview
         displayName="Alex"
@@ -393,6 +396,13 @@ describe("ProjectOverview", () => {
         logoutAction={vi.fn()}
       />,
     );
+    const overviewScrollRegion = screen.getByRole("region", {
+      name: "Project content",
+    });
+    Object.defineProperty(overviewScrollRegion, "scrollTop", {
+      configurable: true,
+      value: 640,
+    });
     const workspace = screen.getByRole("navigation", { name: "Workspace" });
     fireEvent.click(
       within(workspace).getByRole("link", { name: /Attention map/ }),
@@ -420,7 +430,15 @@ describe("ProjectOverview", () => {
 
     cancelAnimationFrame.mockRestore();
     requestAnimationFrame.mockRestore();
-    scrollTo.mockRestore();
+    if (originalScrollTo) {
+      Object.defineProperty(
+        HTMLElement.prototype,
+        "scrollTo",
+        originalScrollTo,
+      );
+    } else {
+      delete (HTMLElement.prototype as { scrollTo?: unknown }).scrollTo;
+    }
   });
 
   it("renders the Slice 3 project shell and evidence-qualified confidence read", () => {
@@ -444,6 +462,29 @@ describe("ProjectOverview", () => {
     expect(screen.getAllByText("Moderate").length).toBeGreaterThan(0);
     expect(screen.getByText("Strengthened")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "How confidence is calculated" })).toBeInTheDocument();
+  });
+
+  it("exposes navigation, project content, and advisor as independent regions", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("complementary", { name: "Project navigation" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Project content" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("complementary", { name: "OSLO project advisor" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "OSLO conversation" }),
+    ).toBeInTheDocument();
   });
 
   it("renders the five-step confidence ramp without exposing the numeric score", () => {
@@ -517,19 +558,22 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    const account = screen.getByRole("button", {
+    const navigation = screen.getByRole("complementary", {
+      name: "Project navigation",
+    });
+    const account = within(navigation).getByRole("button", {
       name: "Open account menu for Alex Morgan",
     });
     expect(account).toHaveAttribute("title", "Account and settings");
 
     fireEvent.click(account);
 
-    expect(screen.getByText("Account & workspace")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
+    expect(within(navigation).getByText("Account & workspace")).toBeInTheDocument();
+    expect(within(navigation).getByRole("link", { name: "Settings" })).toHaveAttribute(
       "href",
       "/settings",
     );
-    expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
+    expect(within(navigation).getByRole("button", { name: "Log out" })).toBeInTheDocument();
   });
 
   it("opens the prototype confidence breakdown from the toolbar", () => {
@@ -886,7 +930,7 @@ describe("ProjectOverview", () => {
     expect(screen.getByText(/full decision history arrives in Slice 7/i)).toBeInTheDocument();
   });
 
-  it("replays and completes the five-step orientation tour", async () => {
+  it("replays and completes the six-step anchored orientation tour", async () => {
     render(
       <ProjectOverview
         displayName="Alex"
@@ -896,15 +940,17 @@ describe("ProjectOverview", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Take a quick tour" }));
-    fireEvent.click(screen.getByRole("button", { name: "Get started" }));
 
-    expect(screen.getByText("1 of 5")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Your confidence read" })).toBeInTheDocument();
-    for (let step = 1; step < 5; step += 1) {
+    expect(screen.getByText("Step 1 of 6")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Your strategic read" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Back" })).not.toBeInTheDocument();
+    for (let step = 1; step < 6; step += 1) {
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
-      expect(screen.getByText(`${step + 1} of 5`)).toBeInTheDocument();
+      expect(screen.getByText(`Step ${step + 1} of 6`)).toBeInTheDocument();
     }
-    fireEvent.click(screen.getByRole("button", { name: "Finish tour" }));
+    expect(screen.getByRole("heading", { name: "Ask OSLO anything" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog", { name: "How OSLO works" })).not.toBeInTheDocument();
@@ -929,14 +975,14 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "What should I address first?" }));
+    fireEvent.click(screen.getByRole("button", { name: "What should I do next?" }));
 
     expect(await screen.findByText(/Confirm the migration owner first/)).toBeInTheDocument();
     expect(fetcher).toHaveBeenCalledWith(
       "/api/projects/project-001/advisor",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ question: "What should I address first?" }),
+        body: JSON.stringify({ question: "What should I do next?" }),
       }),
     );
     expect(screen.getByRole("button", { name: "Who can approve the owner?" })).toBeInTheDocument();
@@ -1031,10 +1077,10 @@ describe("ProjectOverview", () => {
       />,
     );
 
-    expect(screen.getByText("OpenAI API quota exhausted")).toBeInTheDocument();
+    expect(screen.getByText("This read needs another attempt")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "The configured OpenAI project has no available API quota. Restore API credits or increase its spending limit, then retry. The last successful read is unchanged.",
+        "Your documents are safe. OSLO did not publish an incomplete read. Please retry the analysis. The last successful read is unchanged.",
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry Extended Analysis" }));

@@ -410,9 +410,7 @@ def test_perceive_retries_once_with_exact_locator_correction() -> None:
     assert len(client.responses.requests) == 2
     correction_request = client.responses.requests[1]
     correction_payload = json.loads(correction_request["input"][1]["content"])
-    assert correction_payload["citation_correction"]["invalid_locators"] == [
-        invented_ref
-    ]
+    assert correction_payload["citation_correction"]["invalid_locator_count"] == 1
     assert correction_payload["allowed_evidence_locators"] == [evidence_ref]
     assert "correction attempt" in correction_request["input"][0]["content"].lower()
     assert invocation.metadata is not None
@@ -822,7 +820,7 @@ def test_dense_projects_construct_artifacts_in_bounded_shards() -> None:
 
     assert len(client.responses.requests) == 7
     assert {request["max_output_tokens"] for request in client.responses.requests} == {
-        12_000
+        8_000
     }
     assert tuple(item.artifact_type for item in artifacts) == ARTIFACT_TYPES
     assert all(item.sections for item in artifacts)
@@ -831,6 +829,21 @@ def test_dense_projects_construct_artifacts_in_bounded_shards() -> None:
         json.loads(request["input"][1]["content"])
         for request in client.responses.requests
     ]
+    assert all(
+        sum(len(item["reference"]) + len(item["content"]) + 160 for item in payload["evidence"])
+        <= 18_000
+        for payload in payloads
+    )
+    assert all(
+        payload["output_limits"]
+        == {
+            "sections": 8,
+            "rows_total": 80,
+            "assumptions": 24,
+            "conflicts": 24,
+        }
+        for payload in payloads
+    )
     assert all(payload["structured_claims"][0]["id"] == "claim:freeze" for payload in payloads)
 
 
@@ -905,6 +918,52 @@ def test_construct_receives_an_explicit_exact_evidence_locator_allowlist() -> No
     payload = json.loads(request["input"][1]["content"])
     assert payload["allowed_evidence_locators"] == [evidence_ref]
     assert "copied exactly" in request["input"][0]["content"]
+
+
+def test_construct_quarantines_only_artifact_content_with_unsupported_evidence() -> None:
+    evidence_ref = "document:plan:page:1:fragment:0"
+    invented_ref = "document:plan:page:99:fragment:9"
+    payload = {
+        "project_title": None,
+        "project_title_confidence": "low",
+        "artifact": structured_artifact_payload(
+            ARTIFACT_TYPES[0],
+            evidence_ref,
+        ),
+    }
+    payload["artifact"]["sections"].append(
+        {
+            "heading": "Unsupported detail",
+            "body": "This content cites a locator that was never supplied.",
+            "bullets": [],
+            "columns": [],
+            "rows": [],
+            "evidence_refs": [invented_ref],
+            "row_evidence_refs": [],
+            "row_states": [],
+        }
+    )
+    client = SequencedOpenAI([payload, payload])
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+
+    artifact = harness.construct_artifact(
+        perception=Perception(
+            facts=("A supported fact.",),
+            claims=(),
+            gaps=(),
+            evidence_refs=(evidence_ref,),
+            evidence=(EvidenceFragment(reference=evidence_ref, content="Supported evidence."),),
+        ),
+        artifact_type=ARTIFACT_TYPES[0],
+        kind=RunKind.INITIAL,
+    )
+
+    assert [section.heading for section in artifact.sections] == ["Intent"]
+    assert len(client.responses.requests) == 1
 
 
 def test_output_limit_uses_a_specific_safe_failure_code() -> None:
@@ -1096,4 +1155,4 @@ def test_evaluate_quarantines_only_findings_with_unsupported_evidence() -> None:
     )
 
     assert [issue.id for issue in assessment.issues] == ["ISS-SUPPORTED"]
-    assert len(client.responses.requests) == 2
+    assert len(client.responses.requests) == 1

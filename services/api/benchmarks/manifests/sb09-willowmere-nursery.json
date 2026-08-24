@@ -1,60 +1,10 @@
 {
   "name": "SB09 Willowmere Nursery",
-  "expected_ratings": {
-    "clarity": "High",
-    "alignment": "Moderate",
-    "feasibility": "Low",
-    "reliability": "Moderate",
-    "confidence": "Moderate"
-  },
-  "trap_profiles": [
-    "small_business"
-  ],
+  "expected_ratings": {"clarity":"High","alignment":"Moderate","feasibility":"Low","reliability":"Moderate","confidence":"Moderate"},
+  "trap_profiles": ["small_business"],
   "findings": [
-    {
-      "id": "SB09-01",
-      "severity": "Critical",
-      "concepts": [
-        [
-          "photos of children",
-          "parent app"
-        ],
-        [
-          "safeguarding",
-          "consent",
-          "data protection"
-        ]
-      ]
-    },
-    {
-      "id": "SB09-02",
-      "severity": "Moderate",
-      "concepts": [
-        [
-          "occupancy"
-        ],
-        [
-          "staff-to-child ratio",
-          "staff child ratio"
-        ],
-        [
-          "missing",
-          "no"
-        ]
-      ]
-    },
-    {
-      "id": "SB09-03",
-      "severity": "Moderate",
-      "concepts": [
-        [
-          "Ofsted"
-        ],
-        [
-          "missing",
-          "no reference"
-        ]
-      ]
-    }
+    {"id":"SB09-01","severity":"Critical","concepts":[["photos of children","parent app"],["safeguarding","consent","data protection"]]},
+    {"id":"SB09-02","severity":"Moderate","concepts":[["occupancy"],["staff-to-child ratio","staff child ratio"],["missing","no"]]},
+    {"id":"SB09-03","severity":"Moderate","concepts":[["Ofsted"],["missing","no reference"]]}
   ]
 }

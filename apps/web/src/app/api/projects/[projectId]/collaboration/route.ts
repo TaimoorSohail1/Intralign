@@ -78,7 +78,6 @@ export async function POST(
         accessToken: session.accessToken,
         workspaceId: session.workspaceId,
         email: body.email,
-        role: body.role,
       });
       return Response.json(result, { status: 201 });
     }

@@ -19,6 +19,7 @@ from oslo_api.analysis.models import (
     AnalysisRunResult,
     AnalysisRunStatus,
     Artifact,
+    ArtifactSection,
     ArtifactType,
     Assessment,
     AssessmentSnapshot,
@@ -27,6 +28,7 @@ from oslo_api.analysis.models import (
     Perception,
     RunKind,
 )
+from oslo_api.analysis.result_contract import canonicalize_assessment
 from oslo_api.analysis.semantic_validation import (
     apply_evidence_rubric,
     audit_artifact_conflicts,
@@ -51,12 +53,14 @@ class AnalysisWorkflow:
         phase_delay_seconds: float = 0,
         artifact_workers_per_run: int = 2,
         artifact_worker_limit: int = 4,
+        artifact_attempts_per_run: int = 1,
     ) -> None:
         self._store = store
         self._harness = harness
         self._phase_delay_seconds = phase_delay_seconds
-        self._artifact_workers_per_run = max(1, min(2, artifact_workers_per_run))
+        self._artifact_workers_per_run = max(1, min(4, artifact_workers_per_run))
         self._artifact_slots = BoundedSemaphore(max(1, artifact_worker_limit))
+        self._artifact_attempts_per_run = max(1, min(3, artifact_attempts_per_run))
         builder = StateGraph(_GraphState)
         phases = tuple(AnalysisPhase)
         for phase in phases:
@@ -169,20 +173,39 @@ class AnalysisWorkflow:
             failures: list[Exception] = []
 
             def construct_one(artifact_type):
-                with self._artifact_slots:
-                    invocation = self._harness_invocation(run.id, phase, state)
-                    artifact = normalize_artifact_provenance(
-                        (
-                            self._harness.construct_artifact(
-                                perception=state["perception"],
-                                artifact_type=artifact_type,
-                                kind=request.kind,
-                                invocation=invocation,
-                            ),
-                        )
-                    )[0]
-                return artifact, invocation
+                for attempt in range(1, self._artifact_attempts_per_run + 1):
+                    try:
+                        with self._artifact_slots:
+                            invocation = self._harness_invocation(run.id, phase, state)
+                            artifact = normalize_artifact_provenance(
+                                (
+                                    self._harness.construct_artifact(
+                                        perception=state["perception"],
+                                        artifact_type=artifact_type,
+                                        kind=request.kind,
+                                        invocation=invocation,
+                                    ),
+                                )
+                            )[0]
+                    except Exception as error:
+                        _error_code, retryable = self._safe_failure(error)
+                        if retryable and attempt < self._artifact_attempts_per_run:
+                            continue
+                        if retryable and self._can_fallback_artifact(error):
+                            return (
+                                self._fallback_artifact(
+                                    perception=state["perception"],
+                                    artifact_type=artifact_type,
+                                ),
+                                invocation,
+                            )
+                        raise
+                    return artifact, invocation
+                raise RuntimeError("ARTIFACT_ATTEMPTS_EXHAUSTED")
 
+            # Persist job lifecycle changes in a stable order. The model calls run
+            # concurrently, but concurrent event writers would contend on the run's
+            # ordered event sequence and can deadlock in Postgres.
             for artifact_type in remaining:
                 self._store.start_artifact_job(run.id, artifact_type)
             with ThreadPoolExecutor(
@@ -232,18 +255,20 @@ class AnalysisWorkflow:
                 context=request.description,
                 invocation=invocation,
             )
-            state["assessment"] = apply_evidence_rubric(
-                replace(
-                    model_assessment,
-                    issues=merge_semantic_issues(
-                        model_assessment.issues,
-                        (
-                            *audit_project_evidence(state["perception"].evidence),
-                            *audit_artifact_conflicts(state["artifacts"]),
+            state["assessment"] = canonicalize_assessment(
+                apply_evidence_rubric(
+                    replace(
+                        model_assessment,
+                        issues=merge_semantic_issues(
+                            model_assessment.issues,
+                            (
+                                *audit_project_evidence(state["perception"].evidence),
+                                *audit_artifact_conflicts(state["artifacts"]),
+                            ),
                         ),
                     ),
-                ),
-                state["perception"].evidence,
+                    state["perception"].evidence,
+                )
             )
             self._record_harness_call(state, invocation)
             self._store.complete_phase(run.id, phase, state)
@@ -258,7 +283,7 @@ class AnalysisWorkflow:
         elif phase is AnalysisPhase.PUBLISH:
             self._start(run.id, request, phase)
             previous_snapshot = self._store.current_snapshot(request.project_id)
-            raw_assessment = state["assessment"]
+            raw_assessment = canonicalize_assessment(state["assessment"])
             state["assessment"] = replace(
                 raw_assessment,
                 issues=deduplicate_issues(
@@ -326,6 +351,62 @@ class AnalysisWorkflow:
         if phase is AnalysisPhase.EXTENDED_TRANSITION:
             self._store.complete_run(run.id)
         return graph_state
+
+    @staticmethod
+    def _can_fallback_artifact(error: Exception) -> bool:
+        return isinstance(error, AgentHarnessError) and error.code in {
+            "EVIDENCE_REFERENCE_CONTRACT_FAILED",
+            "OPENAI_OUTPUT_LIMIT",
+            "OPENAI_RATE_LIMIT",
+            "OPENAI_SCHEMA_INVALID",
+            "OPENAI_TIMEOUT",
+            "OPENAI_UNAVAILABLE",
+        }
+
+    @staticmethod
+    def _fallback_artifact(
+        *,
+        perception: Perception,
+        artifact_type: ArtifactType,
+    ) -> Artifact:
+        """Retain a usable, visibly provisional artifact after provider exhaustion."""
+
+        evidence_refs = tuple(
+            dict.fromkeys(
+                (
+                    *perception.evidence_refs,
+                    *(item.reference for item in perception.evidence),
+                )
+            )
+        )[:20]
+        if not evidence_refs:
+            evidence_refs = ("description:1",)
+        bullets = tuple(
+            item.strip()
+            for item in (*perception.facts, *perception.claims, *perception.gaps)
+            if item.strip()
+        )[:12]
+        if not bullets:
+            bullets = ("Available project evidence is retained for confirmation.",)
+        label = artifact_type.value.replace("_", " ").title()
+        return Artifact(
+            artifact_type=artifact_type,
+            title=label,
+            summary=(
+                f"A provisional {label.lower()} view was assembled from the available "
+                "evidence and should be confirmed."
+            ),
+            reliability="Low",
+            evidence_refs=evidence_refs,
+            basis="inferred",
+            sections=(
+                ArtifactSection(
+                    heading="Evidence retained",
+                    bullets=bullets,
+                    evidence_refs=evidence_refs,
+                ),
+            ),
+        )
 
     def _scope_artifact_edit(
         self,

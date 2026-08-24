@@ -1,65 +1,10 @@
 {
   "name": "SB02 Ottolines Bakery",
-  "expected_ratings": {
-    "clarity": "High",
-    "alignment": "Moderate",
-    "feasibility": "Low",
-    "reliability": "Moderate",
-    "confidence": "Moderate"
-  },
-  "trap_profiles": [
-    "small_business"
-  ],
+  "expected_ratings": {"clarity":"High","alignment":"Moderate","feasibility":"Low","reliability":"Moderate","confidence":"Moderate"},
+  "trap_profiles": ["small_business"],
   "findings": [
-    {
-      "id": "SB02-01",
-      "severity": "Moderate",
-      "concepts": [
-        [
-          "75,000"
-        ],
-        [
-          "75,300"
-        ],
-        [
-          "short",
-          "funding gap",
-          "300"
-        ]
-      ]
-    },
-    {
-      "id": "SB02-02",
-      "severity": "Moderate",
-      "concepts": [
-        [
-          "wholesale orders"
-        ],
-        [
-          "delivery van"
-        ],
-        [
-          "phase 2",
-          "deferred"
-        ]
-      ]
-    },
-    {
-      "id": "SB02-03",
-      "severity": "Moderate",
-      "concepts": [
-        [
-          "rent",
-          "lease"
-        ],
-        [
-          "1 September"
-        ],
-        [
-          "14 September",
-          "fit-out"
-        ]
-      ]
-    }
+    {"id":"SB02-01","severity":"Moderate","concepts":[["75,000"],["75,300"],["short","funding gap","300"]]},
+    {"id":"SB02-02","severity":"Moderate","concepts":[["wholesale orders"],["delivery van"],["phase 2","deferred"]]},
+    {"id":"SB02-03","severity":"Moderate","concepts":[["rent","lease"],["1 September"],["14 September","fit-out"]]}
   ]
 }

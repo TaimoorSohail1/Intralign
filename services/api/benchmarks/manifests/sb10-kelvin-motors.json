@@ -1,66 +1,10 @@
 {
   "name": "SB10 Kelvin Motors",
-  "expected_ratings": {
-    "clarity": "High",
-    "alignment": "Moderate",
-    "feasibility": "Low",
-    "reliability": "Moderate",
-    "confidence": "Moderate"
-  },
-  "trap_profiles": [
-    "small_business"
-  ],
+  "expected_ratings": {"clarity":"High","alignment":"Moderate","feasibility":"Low","reliability":"Moderate","confidence":"Moderate"},
+  "trap_profiles": ["small_business"],
   "findings": [
-    {
-      "id": "SB10-01",
-      "severity": "Critical",
-      "concepts": [
-        [
-          "job cards"
-        ],
-        [
-          "tablet"
-        ],
-        [
-          "not included",
-          "no device"
-        ]
-      ]
-    },
-    {
-      "id": "SB10-02",
-      "severity": "Moderate",
-      "concepts": [
-        [
-          "bays"
-        ],
-        [
-          "five",
-          "5"
-        ],
-        [
-          "four",
-          "4"
-        ]
-      ]
-    },
-    {
-      "id": "SB10-03",
-      "severity": "Moderate",
-      "concepts": [
-        [
-          "DVSA"
-        ],
-        [
-          "approval",
-          "credentials",
-          "eligibility"
-        ],
-        [
-          "dependency",
-          "missing"
-        ]
-      ]
-    }
+    {"id":"SB10-01","severity":"Critical","concepts":[["job cards"],["tablet"],["not included","no device"]]},
+    {"id":"SB10-02","severity":"Moderate","concepts":[["bays"],["five","5"],["four","4"]]},
+    {"id":"SB10-03","severity":"Moderate","concepts":[["DVSA"],["approval","credentials","eligibility"],["dependency","missing"]]}
   ]
 }

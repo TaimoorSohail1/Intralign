@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ProjectHistory } from "@/lib/server/oslo-api";
@@ -111,9 +111,49 @@ const history: ProjectHistory = {
   next_cursor: null,
 };
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe("HistoryWorkspace", () => {
+  it("refreshes the visible timeline in place when a newer analysis version arrives", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValue({ ok: true, json: async () => history });
+    vi.stubGlobal("fetch", fetchMock);
+    const initialOnly: ProjectHistory = {
+      ...history,
+      groups: history.groups.filter((group) => group.kind === "initial"),
+      trend: history.trend.filter((item) => item.run_id === "run-initial"),
+    };
+    const view = render(
+      <HistoryWorkspace
+        analysisRunId="run-initial"
+        history={initialOnly}
+        projectId="project-001"
+      />,
+    );
+
+    expect(screen.queryByText("Extended Analysis complete")).not.toBeInTheDocument();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    view.rerender(
+      <HistoryWorkspace
+        analysisRunId="run-extended"
+        history={history}
+        projectId="project-001"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("Extended Analysis complete")).toBeInTheDocument(),
+    );
+    view.unmount();
+  });
+
   it("renders the append-only timeline, filters events, and opens a retained snapshot", async () => {
     const onAskOslo = vi.fn();
     vi.stubGlobal(

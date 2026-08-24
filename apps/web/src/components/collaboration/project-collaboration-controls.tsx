@@ -7,28 +7,28 @@ import {
   DownloadSimple,
   FilePdf,
   LinkSimple,
-  ShareNetwork,
   ShieldCheck,
   UserPlus,
-  UsersThree,
   X,
 } from "@phosphor-icons/react";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 
+import type { OverviewSnapshot } from "@/lib/server/oslo-api";
+
 type CollaborationMode = "share" | "export" | null;
-type WorkspaceRole = "collaborator" | "viewer";
+type ExportAudience = "sponsor" | "programme" | "operations" | "executive";
 
 interface Participant {
   id: string;
   display_name: string;
   email?: string | null;
-  role: "owner" | WorkspaceRole;
+  role: "owner";
 }
 
 interface Invitation {
   id: string;
   email: string;
-  role: WorkspaceRole;
+  role: "owner";
   status: string;
   expires_at: string;
 }
@@ -55,7 +55,7 @@ interface ReviewGrant {
 }
 
 interface CollaborationState {
-  actor_role: "owner" | WorkspaceRole;
+  actor_role: "owner";
   plan: {
     name: string;
     collaborator_seats: number;
@@ -64,6 +64,7 @@ interface CollaborationState {
     monthly_invites_used?: number;
     viewers_unlimited: boolean;
     reviewers_unmetered: boolean;
+    export_formats?: string[];
   };
   participants: Participant[];
   invitations?: Invitation[];
@@ -76,6 +77,13 @@ interface CreatedAccess {
   url: string;
   expires_at: string;
 }
+
+const audienceLabels: Record<ExportAudience, string> = {
+  sponsor: "Sponsor",
+  programme: "Programme lead",
+  operations: "Operations",
+  executive: "Executive / board",
+};
 
 function readableDate(value: string) {
   const date = new Date(value);
@@ -96,38 +104,122 @@ function initials(name: string) {
     .join("");
 }
 
-export function ProjectCollaborationControls({ projectId }: { projectId: string }) {
+function humanize(value?: string | null) {
+  if (!value) return "Unknown";
+  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function issueDimensionSummary(snapshot: OverviewSnapshot | null) {
+  const dimensions = Array.from(
+    new Set(snapshot?.assessment?.issues?.map((issue) => humanize(issue.dimension)) ?? []),
+  );
+  return dimensions.length ? dimensions.join(" · ") : "Clarity · Alignment · Feasibility";
+}
+
+function readoutSections(snapshot: OverviewSnapshot | null, audience: ExportAudience) {
+  const issues = snapshot?.assessment?.issues ?? [];
+  const openIssues = issues.filter((issue) => issue.status !== "resolved");
+  const limiting = humanize(snapshot?.assessment?.limiting_dimension);
+  const top = openIssues[0];
+  const questions = openIssues
+    .filter((issue) => issue.clarification)
+    .slice(0, 3)
+    .map((issue) => issue.clarification as string);
+  const confirmations = openIssues.slice(0, 5).map((issue) => issue.recommendation);
+  const ask: Record<ExportAudience, string> = {
+    sponsor: "Confirm the key decisions, ownership, and evidence needed to release the plan.",
+    programme: "Assign owners and close the cross-workstream dependencies that limit the current read.",
+    operations: "Confirm the operational capacity, controls, and delivery assumptions that remain open.",
+    executive: "Confirm the decisions, funding, and risk appetite needed for the plan to move forward.",
+  };
+
+  return [
+    {
+      number: "§1",
+      title: "The read",
+      body:
+        snapshot?.summary
+        ?? "OSLO is packaging the latest published understanding of this project.",
+    },
+    {
+      number: "§2",
+      title: "What’s limiting it",
+      body: `${limiting} is the limiting dimension (${openIssues.length} open issue${openIssues.length === 1 ? "" : "s"}).${top ? ` The sharpest issue is ${top.title}.` : ""}`,
+    },
+    {
+      number: "§3",
+      title: "What we don’t know yet",
+      items: questions.length ? questions : ["No open clarification questions are recorded in the current read."],
+    },
+    {
+      number: "§4",
+      title: `What I need from ${audienceLabels[audience]}`,
+      body: ask[audience],
+      addressed: true,
+    },
+    {
+      number: "§5",
+      title: "What I’d need to be sure",
+      items: confirmations.length
+        ? confirmations
+        : ["No further confirmation is requested in the current published read."],
+    },
+  ];
+}
+
+export function ProjectCollaborationControls({
+  projectId,
+  projectName = "this project",
+}: {
+  projectId: string;
+  projectName?: string;
+}) {
   const [mode, setMode] = useState<CollaborationMode>(null);
   const [state, setState] = useState<CollaborationState | null>(null);
+  const [overview, setOverview] = useState<OverviewSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<WorkspaceRole>("collaborator");
   const [reviewerName, setReviewerName] = useState("");
   const [reviewerEmail, setReviewerEmail] = useState("");
   const [created, setCreated] = useState<CreatedAccess | null>(null);
   const [copied, setCopied] = useState(false);
+  const [audience, setAudience] = useState<ExportAudience>("sponsor");
 
   const loadCollaboration = useCallback(async () => {
+    const response = await fetch(`/api/projects/${projectId}/collaboration`, {
+      cache: "no-store",
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.message ?? "Collaboration could not be loaded.");
+    setState(payload as CollaborationState);
+    return payload as CollaborationState;
+  }, [projectId]);
+
+  const loadModalData = useCallback(async (includeOverview: boolean) => {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/projects/${projectId}/collaboration`, {
-        cache: "no-store",
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Collaboration could not be loaded.");
+      const tasks: Array<Promise<unknown>> = [loadCollaboration()];
+      if (includeOverview) {
+        tasks.push(
+          fetch(`/api/projects/${projectId}/overview`, { cache: "no-store" })
+            .then(async (response) => {
+              const payload = await response.json().catch(() => ({}));
+              if (!response.ok) throw new Error(payload.message ?? "The current read could not be loaded.");
+              setOverview(payload as OverviewSnapshot);
+            }),
+        );
       }
-      setState(payload as CollaborationState);
+      await Promise.all(tasks);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Collaboration could not be loaded.");
+      setError(cause instanceof Error ? cause.message : "The current project state could not be loaded.");
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [loadCollaboration, projectId]);
 
   function resetTransientState() {
     setCreated(null);
@@ -140,12 +232,16 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
     resetTransientState();
     setState(null);
     setMode("share");
-    void loadCollaboration();
+    void loadModalData(false);
   }
 
   function openExport() {
     resetTransientState();
+    setState(null);
+    setOverview(null);
+    setAudience("sponsor");
     setMode("export");
+    void loadModalData(true);
   }
 
   function closeModal() {
@@ -188,14 +284,10 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
 
   async function createSnapshot() {
     setBusy("snapshot");
-    const payload = await runAction({
-      action: "share",
-      reviewerName: "",
-      reviewerEmail: null,
-    });
+    const payload = await runAction({ action: "share", reviewerName: "", reviewerEmail: null });
     if (payload?.url) {
       setCreated({ kind: "snapshot", url: payload.url, expires_at: payload.expires_at });
-      setSuccess("A read-only snapshot is ready to share.");
+      setSuccess("A view-only snapshot is ready to share.");
       await loadCollaboration();
     }
     setBusy("");
@@ -225,10 +317,7 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
   async function promoteReviewEvidence(review: ReviewGrant) {
     if (!review.response_id || review.analysis_run_id) return;
     setBusy(`response-${review.response_id}`);
-    const payload = await runAction({
-      action: "use_review_evidence",
-      responseId: review.response_id,
-    });
+    const payload = await runAction({ action: "use_review_evidence", responseId: review.response_id });
     if (payload?.analysis_run_id) {
       setSuccess("Reviewer evidence queued for analysis.");
       await loadCollaboration();
@@ -242,11 +331,7 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
       return;
     }
     setBusy("invite");
-    const payload = await runAction({
-      action: "invite",
-      email: inviteEmail.trim(),
-      role: inviteRole,
-    });
+    const payload = await runAction({ action: "invite", email: inviteEmail.trim() });
     if (payload) {
       setSuccess(`Invitation sent to ${inviteEmail.trim()}.`);
       setInviteEmail("");
@@ -272,364 +357,197 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
     window.setTimeout(() => setCopied(false), 1600);
   }
 
+  async function copySummary() {
+    const text = readoutSections(overview, audience)
+      .map((section) => `${section.number} ${section.title}\n${section.body ?? section.items?.join("\n")}`)
+      .join("\n\n");
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+
+  const inviteLimit = state?.plan.monthly_invites ?? 0;
+  const inviteUsed = state?.plan.monthly_invites_used ?? 0;
+  const inviteRemaining = Math.max(inviteLimit - inviteUsed, 0);
+  const isBasic = state?.plan.name.toLowerCase() === "basic";
+  const sections = readoutSections(overview, audience);
+
   return (
-    <div
-      aria-label="Project sharing and export"
-      className="project-collaboration-actions"
-      role="group"
-    >
-      <button
-        aria-label="Share"
-        className="topbar-action"
-        type="button"
-        onClick={openShare}
-      >
-        <ShareNetwork size={16} weight="bold" aria-hidden="true" />
+    <div aria-label="Project sharing and export" className="project-collaboration-actions" role="group">
+      <button aria-label="Share" className="topbar-action" type="button" onClick={openShare}>
+        <UserPlus size={16} weight="bold" aria-hidden="true" />
         <span>Share</span>
       </button>
-      <button
-        aria-label="Export"
-        className="topbar-action"
-        type="button"
-        onClick={openExport}
-      >
+      <button aria-label="Export" className="topbar-action" type="button" onClick={openExport}>
         <DownloadSimple size={16} weight="bold" aria-hidden="true" />
         <span>Export</span>
       </button>
 
       {mode ? (
-        <div className="collaboration-modal-backdrop" role="presentation">
+        <div className="collaboration-modal-backdrop" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) closeModal();
+        }}>
           <section
-            aria-label={mode === "share" ? "Share project" : "Export project"}
+            aria-labelledby="collaboration-modal-title"
             aria-modal="true"
-            className="collaboration-modal"
+            className={`collaboration-modal is-${mode}`}
             role="dialog"
           >
-            <button
-              aria-label="Close"
-              className="collaboration-modal-dismiss"
-              type="button"
-              onClick={closeModal}
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
             <header className="collaboration-modal-header">
               <div>
-                <span className="eyebrow">
-                  {mode === "share" ? "PROJECT ACCESS" : "READ-ONLY EXPORT"}
-                </span>
-                <h2>{mode === "share" ? "Share this project" : "Project snapshot · PDF"}</h2>
+                <h2 id="collaboration-modal-title">
+                  {mode === "share" ? `Share ${projectName}` : "Export a snapshot"}
+                </h2>
                 <p>
                   {mode === "share"
-                    ? "Invite workspace members, create a governed review, or share a read-only snapshot."
-                    : "Download the current evidence-qualified read. Exporting never runs analysis."}
+                    ? "Invite people, or hand out a view-only snapshot of where understanding stands."
+                    : "Where understanding stands, as it stands now."}
                 </p>
               </div>
+              <button aria-label="Close" className="collaboration-modal-dismiss" type="button" onClick={closeModal}>
+                <X size={18} aria-hidden="true" />
+              </button>
             </header>
 
-            {mode === "export" ? (
-              <div className="collaboration-export">
-                <div className="collaboration-export-icon" aria-hidden="true">
-                  <FilePdf size={30} weight="duotone" />
+            <div className="collaboration-modal-body">
+              {loading ? <div className="collaboration-loading" role="status">Loading the current project state…</div> : null}
+              {error ? (
+                <div className="collaboration-error" role="alert">
+                  <span>{error}</span>
+                  {!state ? <button type="button" onClick={() => void loadModalData(mode === "export")}>Retry</button> : null}
                 </div>
-                <div>
-                  <h3>Current project read</h3>
-                  <p>
-                    Includes the seven artifacts, confidence read, findings, evidence references,
-                    currency marker, and OSLO advisory disclaimer.
-                  </p>
-                </div>
-                <a
-                  className="collaboration-primary-button"
-                  href={`/api/projects/${projectId}/export`}
-                >
-                  <DownloadSimple size={16} weight="bold" aria-hidden="true" />
-                  Download PDF
-                </a>
-              </div>
-            ) : null}
+              ) : null}
+              {success ? <p className="collaboration-success" role="status"><Check size={15} weight="bold" />{success}</p> : null}
 
-            {mode === "share" ? (
-              <div className="collaboration-share-body">
-                {loading ? (
-                  <div className="collaboration-loading" role="status">
-                    Loading governed project access…
-                  </div>
-                ) : null}
-                {error ? (
-                  <div className="collaboration-error" role="alert">
-                    <span>{error}</span>
-                    {!state ? (
-                      <button type="button" onClick={() => void loadCollaboration()}>
-                        Retry
-                      </button>
-                    ) : null}
-                  </div>
-                ) : null}
-                {success ? (
-                  <p className="collaboration-success" role="status">
-                    <Check size={15} weight="bold" aria-hidden="true" />
-                    {success}
-                  </p>
-                ) : null}
+              {mode === "export" && !loading ? (
+                <ExportComposer
+                  audience={audience}
+                  copied={copied}
+                  isBasic={isBasic}
+                  overview={overview}
+                  projectId={projectId}
+                  sections={sections}
+                  setAudience={setAudience}
+                  onCopySummary={() => void copySummary()}
+                />
+              ) : null}
 
-                {state ? (
-                  <>
-                    <Heading
-                      icon={<UsersThree size={18} weight="duotone" />}
-                      title="People with workspace access"
-                      detail={`${state.plan.collaborator_seats_used}/${state.plan.collaborator_seats} seats`}
-                    />
-                    <div className="collaboration-participants">
+              {mode === "share" && state ? (
+                <div className="prototype-share-body">
+                  <div className="collaboration-limit-box is-phase">
+                    <span>Phase limit — invites (supply)</span>
+                    <p><strong>{inviteRemaining} of {inviteLimit} left</strong> this month on {state.plan.name}. Resets monthly and does not accumulate.</p>
+                  </div>
+                  <div className="collaboration-limit-box is-tier">
+                    <span>Tier limit — workspace owner seats</span>
+                    <p><strong>{state.plan.collaborator_seats} owner seats</strong> on {state.plan.name}, including you. {state.plan.collaborator_seats_used} of {state.plan.collaborator_seats} filled.</p>
+                  </div>
+                  <div className="collaboration-review-free">
+                    <strong>Asking for a read is free — no invite, no seat.</strong>
+                    <span>Review requests</span>
+                  </div>
+
+                  {state.actor_role === "owner" ? (
+                    <section className="prototype-share-section">
+                      <p className="collaboration-label">Invite by email</p>
+                      <div className="prototype-invite-row">
+                        <label>
+                          <span className="sr-only">Email address</span>
+                          <input aria-label="Email address" type="email" value={inviteEmail} placeholder="name@company.com" onChange={(event) => setInviteEmail(event.target.value)} />
+                        </label>
+                        <button className="collaboration-primary-button" disabled={busy === "invite"} type="button" onClick={() => void sendInvite()}>{busy === "invite" ? "Sending…" : "Invite"}</button>
+                      </div>
+                      <p className="collaboration-fine-print">The invitation is sent by email and expires after 14 days.</p>
+                    </section>
+                  ) : null}
+
+                  <section className="prototype-share-section">
+                    <p className="collaboration-label">Workspace role</p>
+                    <div className="prototype-role-table">
+                      <RoleRow label="Owner" seat detail="Every workspace member can change the plan, share it, and export it." />
+                    </div>
+                  </section>
+
+                  <section className="prototype-share-section">
+                    <p className="collaboration-label">People on this project</p>
+                    <div className="prototype-people-list">
                       {state.participants.map((participant) => (
-                        <div className="collaboration-participant" key={participant.id}>
-                          <span className="collaboration-avatar">
-                            {initials(participant.display_name) || "OS"}
-                          </span>
-                          <span>
-                            <strong>{participant.display_name}</strong>
-                            <small>{participant.email ?? participant.role}</small>
-                          </span>
-                          <span className="collaboration-role">{participant.role}</span>
+                        <div className="prototype-person" key={participant.id}>
+                          <span className="collaboration-avatar">{initials(participant.display_name) || "OS"}</span>
+                          <span><strong>{participant.display_name}</strong><small>{participant.email ?? participant.role}</small></span>
+                          <span className="seat-badge">seat</span>
+                          <span className="collaboration-role">Owner</span>
                         </div>
                       ))}
                     </div>
+                  </section>
 
-                    {state.actor_role === "owner" ? (
-                      <div className="collaboration-invite-card">
-                        <Heading
-                          icon={<UserPlus size={18} weight="duotone" />}
-                          title="Invite to workspace"
-                          detail={`${state.plan.monthly_invites_used ?? 0}/${state.plan.monthly_invites} this month`}
-                        />
-                        <div className="collaboration-invite-fields">
-                          <label>
-                            Email address
-                            <input
-                              type="email"
-                              value={inviteEmail}
-                              placeholder="teammate@company.com"
-                              onChange={(event) => setInviteEmail(event.target.value)}
-                            />
-                          </label>
-                          <label>
-                            Role
-                            <select
-                              value={inviteRole}
-                              onChange={(event) =>
-                                setInviteRole(event.target.value as WorkspaceRole)
-                              }
-                            >
-                              <option value="collaborator">Collaborator</option>
-                              <option value="viewer">Viewer</option>
-                            </select>
-                          </label>
-                          <button
-                            className="collaboration-secondary-button"
-                            type="button"
-                            disabled={busy === "invite"}
-                            onClick={() => void sendInvite()}
-                          >
-                            <UserPlus size={16} weight="bold" aria-hidden="true" />
-                            {busy === "invite" ? "Sending…" : "Send invitation"}
-                          </button>
-                        </div>
-                        <p className="collaboration-fine-print">
-                          Viewers are unlimited. Collaborators use a plan seat. Invitations expire
-                          after 14 days.
-                        </p>
-                      </div>
-                    ) : null}
-
-                    <div className="collaboration-share-grid">
-                      <article className="collaboration-share-card">
-                        <span className="collaboration-card-icon" aria-hidden="true">
-                          <LinkSimple size={21} weight="duotone" />
-                        </span>
-                        <div>
-                          <h3>Read-only snapshot</h3>
-                          <p>
-                            Share the current result without granting workspace access. The link
-                            expires after 30 days and never starts analysis.
-                          </p>
-                        </div>
-                        <button
-                          className="collaboration-primary-button"
-                          type="button"
-                          disabled={busy === "snapshot"}
-                          onClick={() => void createSnapshot()}
-                        >
-                          <LinkSimple size={16} weight="bold" aria-hidden="true" />
-                          {busy === "snapshot" ? "Creating…" : "Create snapshot link"}
-                        </button>
-                      </article>
-
-                      <article className="collaboration-share-card collaboration-review-card">
-                        <span className="collaboration-card-icon" aria-hidden="true">
-                          <ShieldCheck size={21} weight="duotone" />
-                        </span>
-                        <div>
-                          <h3>External review</h3>
-                          <p>
-                            Ask a named reviewer to comment, approve, reject, or suggest an
-                            alternative. Reviewers do not use a workspace seat.
-                          </p>
-                        </div>
-                        <label>
-                          Reviewer name
-                          <input
-                            value={reviewerName}
-                            placeholder="Amina Khan"
-                            onChange={(event) => setReviewerName(event.target.value)}
-                          />
-                        </label>
-                        <label>
-                          Reviewer email <small>optional</small>
-                          <input
-                            type="email"
-                            value={reviewerEmail}
-                            placeholder="amina@company.com"
-                            onChange={(event) => setReviewerEmail(event.target.value)}
-                          />
-                        </label>
-                        <button
-                          className="collaboration-secondary-button"
-                          type="button"
-                          disabled={busy === "review"}
-                          onClick={() => void createReview()}
-                        >
-                          <ShieldCheck size={16} weight="bold" aria-hidden="true" />
-                          {busy === "review" ? "Creating…" : "Create review link"}
-                        </button>
-                      </article>
-                    </div>
-
-                    {created ? (
-                      <div className="collaboration-created-link" role="status">
-                        <div>
-                          <strong>
-                            {created.kind === "review"
-                              ? "External review link"
-                              : "Read-only snapshot link"}
-                          </strong>
-                          <span>Expires {readableDate(created.expires_at)}</span>
-                        </div>
-                        <code>{created.url}</code>
-                        <div className="collaboration-created-actions">
-                          <button type="button" onClick={() => void copyCreated()}>
-                            {copied ? (
-                              <Check size={15} weight="bold" aria-hidden="true" />
-                            ) : (
-                              <Copy size={15} weight="bold" aria-hidden="true" />
-                            )}
-                            {copied ? "Copied" : "Copy link"}
-                          </button>
-                          <a href={created.url} target="_blank" rel="noreferrer">
-                            <ArrowSquareOut size={15} weight="bold" aria-hidden="true" />
-                            Open
-                          </a>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {pendingInvitations.length || activeShares.length || activeReviews.length ? (
-                      <section className="collaboration-access-records">
-                        <Heading
-                          icon={<ShieldCheck size={18} weight="duotone" />}
-                          title="Active access"
-                          detail={`${pendingInvitations.length + activeShares.length + activeReviews.length} records`}
-                        />
-                        <div className="collaboration-record-list">
-                          {pendingInvitations.map((invitation) => (
-                            <AccessRecord
-                              key={invitation.id}
-                              title={invitation.email}
-                              detail={`${invitation.role} invitation · expires ${readableDate(
-                                invitation.expires_at,
-                              )}`}
-                              actionLabel={
-                                busy === `invitation-${invitation.id}` ? "Revoking…" : "Revoke"
-                              }
-                              onAction={() =>
-                                void revoke(
-                                  { action: "revoke_invitation", invitationId: invitation.id },
-                                  `invitation-${invitation.id}`,
-                                  "The invitation was revoked.",
-                                )
-                              }
-                            />
-                          ))}
+                  <section className="prototype-share-section">
+                    <p className="collaboration-label">Share link — a view-only snapshot of this project</p>
+                    <div className="prototype-share-link-card">
+                      {activeShares.length ? (
+                        <>
+                          <p><strong>{activeShares.length} active snapshot link{activeShares.length === 1 ? "" : "s"}.</strong> It stays frozen at the analysis used when it was created.</p>
                           {activeShares.map((share) => (
                             <AccessRecord
                               key={share.id}
-                              title="Read-only snapshot"
-                              detail={`Expires ${readableDate(share.expires_at)}`}
+                              title={`Snapshot · expires ${readableDate(share.expires_at)}`}
+                              detail="View-only and revocable"
                               actionLabel={busy === `share-${share.id}` ? "Revoking…" : "Revoke"}
-                              onAction={() =>
-                                void revoke(
-                                  { action: "revoke_share", linkId: share.id },
-                                  `share-${share.id}`,
-                                  "The snapshot link was revoked.",
-                                )
-                              }
+                              onAction={() => void revoke({ action: "revoke_share", linkId: share.id }, `share-${share.id}`, "The snapshot link was revoked.")}
                             />
                           ))}
-                          {activeReviews.map((review) => (
-                            <AccessRecord
-                              key={review.id}
-                              title={review.reviewer_name}
-                              detail={`External review · expires ${readableDate(
-                                review.expires_at,
-                              )}`}
-                              actionLabel={busy === `review-${review.id}` ? "Revoking…" : "Revoke"}
-                              onAction={() =>
-                                void revoke(
-                                  { action: "revoke_review", grantId: review.id },
-                                  `review-${review.id}`,
-                                  "The external review was revoked.",
-                                )
-                              }
-                            />
-                          ))}
-                        </div>
-                      </section>
-                    ) : null}
-                    {reviewerResponses.length ? (
-                      <section className="collaboration-access-records">
-                        <Heading
-                          icon={<Check size={18} weight="duotone" />}
-                          title="Reviewer responses"
-                          detail={`${reviewerResponses.length} received`}
-                        />
-                        <div className="collaboration-record-list">
-                          {reviewerResponses.map((review) => (
-                            <AccessRecord
-                              key={review.response_id}
-                              title={`${review.reviewer_name} · ${(
-                                review.response_kind ?? "comment"
-                              ).replaceAll("_", " ")}`}
-                              detail={review.response_body ?? "Reviewer response received."}
-                              actionLabel={
-                                review.analysis_run_id
-                                  ? "Evidence added"
-                                  : busy === `response-${review.response_id}`
-                                    ? "Queuing…"
-                                    : "Use as project evidence"
-                              }
-                              onAction={
-                                review.analysis_run_id
-                                  ? undefined
-                                  : () => void promoteReviewEvidence(review)
-                              }
-                            />
-                          ))}
-                        </div>
-                      </section>
-                    ) : null}
-                  </>
-                ) : null}
-              </div>
-            ) : null}
+                        </>
+                      ) : (
+                        <><p>No link yet. A snapshot link is view-only.</p><button className="collaboration-primary-button" type="button" disabled={busy === "snapshot"} onClick={() => void createSnapshot()}>{busy === "snapshot" ? "Creating…" : "Create a view-only link"}</button></>
+                      )}
+                    </div>
+                    <p className="collaboration-fine-print">A share link shows OSLO’s read as it stood when the link was made. If the project moves on, recipients are told they are viewing a previous analysis.</p>
+                    <div className="collaboration-rule-box"><strong>A share link is not an export link.</strong> Share links give revocable, view-only access. Export creates a frozen copy of one snapshot.</div>
+                  </section>
+
+                  <section className="prototype-share-section prototype-review-request">
+                    <Heading icon={<ShieldCheck size={18} weight="duotone" />} title="External review request" detail="Free — no workspace seat" />
+                    <div className="prototype-review-fields">
+                      <label>Reviewer name<input value={reviewerName} placeholder="Amina Khan" onChange={(event) => setReviewerName(event.target.value)} /></label>
+                      <label>Reviewer email <small>optional</small><input type="email" value={reviewerEmail} placeholder="amina@company.com" onChange={(event) => setReviewerEmail(event.target.value)} /></label>
+                      <button className="collaboration-secondary-button" disabled={busy === "review"} type="button" onClick={() => void createReview()}>{busy === "review" ? "Creating…" : "Create review link"}</button>
+                    </div>
+                  </section>
+
+                  {created ? (
+                    <div className="collaboration-created-link" role="status">
+                      <div><strong>{created.kind === "review" ? "External review link" : "View-only snapshot link"}</strong><span>Expires {readableDate(created.expires_at)}</span></div>
+                      <code>{created.url}</code>
+                      <div className="collaboration-created-actions">
+                        <button type="button" onClick={() => void copyCreated()}>{copied ? <Check size={15} weight="bold" /> : <Copy size={15} weight="bold" />}{copied ? "Copied" : "Copy link"}</button>
+                        <a href={created.url} target="_blank" rel="noreferrer"><ArrowSquareOut size={15} weight="bold" />Open</a>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {pendingInvitations.length || activeReviews.length ? (
+                    <section className="prototype-share-section collaboration-access-records">
+                      <p className="collaboration-label">Active access</p>
+                      {pendingInvitations.map((invitation) => <AccessRecord key={invitation.id} title={invitation.email} detail={`Pending owner invite · expires ${readableDate(invitation.expires_at)}`} actionLabel={busy === `invite-${invitation.id}` ? "Revoking…" : "Revoke"} onAction={() => void revoke({ action: "revoke_invitation", invitationId: invitation.id }, `invite-${invitation.id}`, "The invitation was revoked.")} />)}
+                      {activeReviews.map((review) => <AccessRecord key={review.id} title={review.reviewer_name} detail={`External review · expires ${readableDate(review.expires_at)}`} actionLabel={busy === `review-${review.id}` ? "Revoking…" : "Revoke"} onAction={() => void revoke({ action: "revoke_review", grantId: review.id }, `review-${review.id}`, "The external review was revoked.")} />)}
+                    </section>
+                  ) : null}
+
+                  {reviewerResponses.length ? (
+                    <section className="prototype-share-section collaboration-access-records">
+                      <p className="collaboration-label">Reviewer responses</p>
+                      {reviewerResponses.map((review) => <AccessRecord key={review.response_id} title={`${review.reviewer_name} · ${humanize(review.response_kind)}`} detail={review.response_body ?? "Reviewer response received."} actionLabel={review.analysis_run_id ? "Evidence added" : busy === `response-${review.response_id}` ? "Queuing…" : "Use as project evidence"} onAction={review.analysis_run_id ? undefined : () => void promoteReviewEvidence(review)} />)}
+                    </section>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            <footer className="collaboration-modal-footer">
+              <span>{mode === "share" ? "Sharing changes no assessment. Only an analysis update does." : "Export runs no analysis."}</span>
+              <button type="button" onClick={closeModal}>{mode === "share" ? "Done" : "Cancel"}</button>
+            </footer>
           </section>
         </div>
       ) : null}
@@ -637,46 +555,64 @@ export function ProjectCollaborationControls({ projectId }: { projectId: string 
   );
 }
 
-function Heading({
-  icon,
-  title,
-  detail,
+function ExportComposer({
+  audience,
+  copied,
+  isBasic,
+  overview,
+  projectId,
+  sections,
+  setAudience,
+  onCopySummary,
 }: {
-  icon: ReactNode;
-  title: string;
-  detail: string;
+  audience: ExportAudience;
+  copied: boolean;
+  isBasic: boolean;
+  overview: OverviewSnapshot | null;
+  projectId: string;
+  sections: ReturnType<typeof readoutSections>;
+  setAudience: (audience: ExportAudience) => void;
+  onCopySummary: () => void;
 }) {
+  const openIssues = overview?.assessment?.issues?.filter((issue) => issue.status !== "resolved").length ?? 0;
   return (
-    <div className="collaboration-section-heading">
-      <span aria-hidden="true">{icon}</span>
-      <div>
-        <h3>{title}</h3>
-        <small>{detail}</small>
+    <div className="prototype-export-body">
+      <p className="collaboration-label">What you’re exporting</p>
+      <div className="prototype-export-current">
+        <strong>Outcome Confidence {humanize(overview?.assessment?.confidence_band)}</strong> · {humanize(overview?.assessment?.reliability).toLowerCase()} reliability<br />
+        <strong>{overview?.extended_analysis ? "Extended analysis run" : "Current analysis run"}</strong> · {overview?.state ?? "current"} · Current<br />
+        {openIssues} open issue{openIssues === 1 ? "" : "s"} · {issueDimensionSummary(overview)}
       </div>
+      <div className="prototype-export-disclaimer">This reflects OSLO’s <strong>understanding maturity</strong> — how clear, aligned and feasible the plan reads, and how reliable that read is. It is <strong>not</strong> a measure of project health, readiness, or probability of success.</div>
+
+      <p className="collaboration-label">Strategic readout — the five-section read</p>
+      <div className="prototype-export-draftbar">Assembled from what OSLO already understands — one honest read, many asks. Generating a snapshot runs no analysis.</div>
+      <div className="prototype-export-binding"><Check size={16} weight="bold" /> <span>The read (§1–§3 and §5) is <strong>identical for every audience</strong>. Only <strong>§4 — what I need from you</strong> changes for the recipient.</span></div>
+      <div className="prototype-audience-picker"><span>Address the ask to</span>{(Object.keys(audienceLabels) as ExportAudience[]).map((key) => <button className={audience === key ? "is-selected" : ""} key={key} type="button" onClick={() => setAudience(key)}>{audienceLabels[key]}</button>)}</div>
+      <div className="prototype-readout-document">
+        {sections.map((section) => <section className={section.addressed ? "is-addressed" : ""} key={section.number}><h3><span>{section.number}</span>{section.title}</h3>{section.body ? <p>{section.body}</p> : null}{section.items ? <ul>{section.items.map((item) => <li key={item}>{item}</li>)}</ul> : null}{section.addressed ? <small>Addressed to the recipient — the read above stays unchanged.</small> : null}</section>)}
+      </div>
+      <div className="prototype-export-options"><span>Optional sections <i>Basic</i></span>{["Alignment", "Unvalidated assumptions", "How understanding matured", "Document detail"].map((label) => <label key={label}><input type="checkbox" disabled={!isBasic} />{label}</label>)}</div>
+      <p className="collaboration-fine-print"><strong>Free</strong> exports the five-section snapshot as a PDF. <strong>Basic</strong> adds optional sections, branding, and scheduling. The read itself is never gated.</p>
+      <p className="collaboration-label">Format</p>
+      <div className="prototype-export-formats">
+        <a href={`/api/projects/${projectId}/export`}><FilePdf size={19} /><span><strong>PDF</strong><small>A written snapshot you can send on.</small></span></a>
+        <button type="button" disabled={!isBasic} onClick={onCopySummary}><Copy size={19} /><span><strong>{copied ? "Copied" : "Copy summary"}</strong><small>The read as text, on your clipboard.</small></span>{!isBasic ? <i>Basic</i> : null}</button>
+        <button type="button" disabled><LinkSimple size={19} /><span><strong>Export link</strong><small>A hosted frozen copy of this snapshot.</small></span><i>{isBasic ? "Coming soon" : "Basic"}</i></button>
+      </div>
+      {!isBasic ? <div className="collaboration-tier-note"><strong>Tier limit — export formats</strong> Free exports as PDF. Copy summary and export links come with Basic.</div> : null}
     </div>
   );
 }
 
-function AccessRecord({
-  title,
-  detail,
-  actionLabel,
-  onAction,
-}: {
-  title: string;
-  detail: string;
-  actionLabel: string;
-  onAction?: () => void;
-}) {
-  return (
-    <div className="collaboration-access-record">
-      <span>
-        <strong>{title}</strong>
-        <small>{detail}</small>
-      </span>
-      <button type="button" disabled={!onAction} onClick={onAction}>
-        {actionLabel}
-      </button>
-    </div>
-  );
+function RoleRow({ label, detail, seat = false }: { label: string; detail: string; seat?: boolean }) {
+  return <div><strong>{label}</strong><span className={seat ? "seat-badge" : "seat-badge no-seat"}>{seat ? "takes a seat" : "no seat"}</span><p>{detail}</p></div>;
+}
+
+function Heading({ icon, title, detail }: { icon: ReactNode; title: string; detail: string }) {
+  return <div className="collaboration-section-heading"><span aria-hidden="true">{icon}</span><div><h3>{title}</h3><small>{detail}</small></div></div>;
+}
+
+function AccessRecord({ title, detail, actionLabel, onAction }: { title: string; detail: string; actionLabel: string; onAction?: () => void }) {
+  return <div className="collaboration-access-record"><span><strong>{title}</strong><small>{detail}</small></span><button type="button" disabled={!onAction} onClick={onAction}>{actionLabel}</button></div>;
 }

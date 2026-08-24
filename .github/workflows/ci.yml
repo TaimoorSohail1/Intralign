@@ -1,0 +1,85 @@
+name: OSLO quality gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: oslo-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANALYSIS_HARNESS: deterministic
+      ANALYSIS_PHASE_DELAY_MS: 0
+      EXTENDED_ANALYSIS_DELAY_MS: 0
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:55322/postgres
+      SUPABASE_URL: http://127.0.0.1:55321
+      WEB_URL: http://localhost:3000
+      SMTP_HOST: 127.0.0.1
+      SMTP_PORT: 55325
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:55321
+      OSLO_API_URL: http://127.0.0.1:8000
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --project services/api --frozen
+      - run: pnpm supabase start
+      - name: Export local Supabase credentials
+        shell: bash
+        run: |
+          status="$(pnpm exec supabase status -o json)"
+          echo "SUPABASE_SECRET_KEY=$(jq -r .SECRET_KEY <<<"$status")" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(jq -r .PUBLISHABLE_KEY <<<"$status")" >> "$GITHUB_ENV"
+      - run: pnpm seed:local
+
+      - run: pnpm lint:api
+      - run: pnpm lint:web
+      - run: pnpm test:api
+      - run: pnpm test:web
+      - run: pnpm build:web
+
+      - name: Start application
+        shell: bash
+        run: |
+          uv run --project services/api uvicorn oslo_api.main:app --host 127.0.0.1 --port 8000 > /tmp/oslo-api.log 2>&1 &
+          pnpm --filter @oslo/web start > /tmp/oslo-web.log 2>&1 &
+          for attempt in {1..60}; do
+            curl --fail --silent http://127.0.0.1:8000/health >/dev/null \
+              && curl --fail --silent http://127.0.0.1:3000/login >/dev/null \
+              && exit 0
+            sleep 2
+          done
+          cat /tmp/oslo-api.log /tmp/oslo-web.log
+          exit 1
+      - run: pnpm test:e2e
+
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: |
+            tests/e2e/test-results
+            tests/e2e/playwright-report
+          if-no-files-found: ignore
+      - name: Stop local platform
+        if: always()
+        run: pnpm supabase stop

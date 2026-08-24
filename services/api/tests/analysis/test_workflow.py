@@ -1,3 +1,5 @@
+from threading import Lock
+from time import sleep
 from uuid import UUID
 
 from oslo_api.analysis import (
@@ -54,6 +56,17 @@ class FailResourcesArtifactOnceHarness(DeterministicAgentHarness):
         return super().construct_artifact(artifact_type=artifact_type, **kwargs)
 
 
+class AlwaysFailResourcesArtifactHarness(DeterministicAgentHarness):
+    def __init__(self) -> None:
+        self.construct_calls = {artifact_type: 0 for artifact_type in ARTIFACT_TYPES}
+
+    def construct_artifact(self, *, artifact_type, **kwargs):
+        self.construct_calls[artifact_type] += 1
+        if artifact_type is ArtifactType.RESOURCES:
+            raise AgentHarnessError("OPENAI_TIMEOUT", retryable=True)
+        return super().construct_artifact(artifact_type=artifact_type, **kwargs)
+
+
 class CountingArtifactHarness(DeterministicAgentHarness):
     def __init__(self) -> None:
         self.construct_calls = {artifact_type: 0 for artifact_type in ARTIFACT_TYPES}
@@ -61,6 +74,24 @@ class CountingArtifactHarness(DeterministicAgentHarness):
     def construct_artifact(self, *, artifact_type, **kwargs):
         self.construct_calls[artifact_type] += 1
         return super().construct_artifact(artifact_type=artifact_type, **kwargs)
+
+
+class ConcurrentArtifactHarness(DeterministicAgentHarness):
+    def __init__(self) -> None:
+        self._lock = Lock()
+        self.active_calls = 0
+        self.peak_active_calls = 0
+
+    def construct_artifact(self, **kwargs):
+        with self._lock:
+            self.active_calls += 1
+            self.peak_active_calls = max(self.peak_active_calls, self.active_calls)
+        try:
+            sleep(0.05)
+            return super().construct_artifact(**kwargs)
+        finally:
+            with self._lock:
+                self.active_calls -= 1
 
 
 class UnavailableOpenAIHarness(DeterministicAgentHarness):
@@ -101,6 +132,21 @@ class SemanticEvidenceStore(InMemoryAnalysisStore):
                 ),
                 source_name="Project plan.pdf",
                 location="Page 14",
+            ),
+        )
+
+
+class AccessibilityEvidenceStore(InMemoryAnalysisStore):
+    def evidence_for(self, request):
+        return (
+            EvidenceFragment(
+                reference="document:plan:page:4:fragment:1",
+                content=(
+                    "The solution includes a guest-facing online reservation interface "
+                    "and staff-facing front desk workflows."
+                ),
+                source_name="Project plan.pdf",
+                location="Page 4",
             ),
         )
 
@@ -410,6 +456,36 @@ def test_workflow_publishes_deterministic_semantic_findings() -> None:
     assert issue.evidence_refs == ("document:plan:page:14:fragment:1",)
 
 
+def test_workflow_publishes_only_database_supported_issue_severities() -> None:
+    result = AnalysisWorkflow(
+        store=AccessibilityEvidenceStore(),
+        harness=DeterministicAgentHarness(),
+    ).run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.INITIAL,
+            description="",
+            source_names=("Project plan.pdf",),
+        )
+    )
+
+    assert result.status is AnalysisRunStatus.COMPLETED
+    assert result.snapshot is not None
+    assert {issue.severity for issue in result.snapshot.assessment.issues} <= {
+        "Warning",
+        "Moderate",
+        "Critical",
+    }
+    accessibility = next(
+        issue
+        for issue in result.snapshot.assessment.issues
+        if "accessibility" in issue.title.casefold()
+    )
+    assert accessibility.severity == "Warning"
+
+
 def test_governed_node_failures_preserve_the_last_good_snapshot() -> None:
     store = InMemoryAnalysisStore()
     workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
@@ -451,7 +527,11 @@ def test_governed_node_failures_preserve_the_last_good_snapshot() -> None:
 def test_failed_run_resumes_from_the_last_completed_checkpoint() -> None:
     store = InMemoryAnalysisStore()
     harness = FailConstructOnceHarness()
-    workflow = AnalysisWorkflow(store=store, harness=harness)
+    workflow = AnalysisWorkflow(
+        store=store,
+        harness=harness,
+        artifact_attempts_per_run=1,
+    )
 
     failed = workflow.run(
         AnalysisRunRequest(
@@ -475,12 +555,16 @@ def test_failed_run_resumes_from_the_last_completed_checkpoint() -> None:
     assert store.current_snapshot(PROJECT_ID) == resumed.snapshot
 
 
-def test_failed_artifact_resume_reuses_each_completed_artifact_job() -> None:
+def test_retryable_artifact_failure_recovers_within_the_same_run() -> None:
     store = InMemoryAnalysisStore()
     harness = FailResourcesArtifactOnceHarness()
-    workflow = AnalysisWorkflow(store=store, harness=harness)
+    workflow = AnalysisWorkflow(
+        store=store,
+        harness=harness,
+        artifact_attempts_per_run=2,
+    )
 
-    failed = workflow.run(
+    completed = workflow.run(
         AnalysisRunRequest(
             workspace_id=WORKSPACE_ID,
             project_id=PROJECT_ID,
@@ -491,20 +575,66 @@ def test_failed_artifact_resume_reuses_each_completed_artifact_job() -> None:
         )
     )
 
-    assert failed.status is AnalysisRunStatus.FAILED
-    assert failed.error_code == "OPENAI_SCHEMA_INVALID"
-    assert len(store.completed_artifacts(failed.run_id)) == 6
-
-    resumed = workflow.resume(failed.run_id)
-
-    assert resumed.status is AnalysisRunStatus.COMPLETED
-    assert resumed.snapshot is not None
+    assert completed.status is AnalysisRunStatus.COMPLETED
+    assert completed.snapshot is not None
+    assert len(store.completed_artifacts(completed.run_id)) == 7
     assert harness.construct_calls[ArtifactType.RESOURCES] == 2
+
+
+def test_exhausted_retryable_artifact_uses_a_low_reliability_fallback() -> None:
+    store = DocumentEvidenceStore()
+    harness = AlwaysFailResourcesArtifactHarness()
+    result = AnalysisWorkflow(store=store, harness=harness).run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.INITIAL,
+            description="",
+            source_names=("Project Nova plan.pdf",),
+        )
+    )
+
+    assert result.status is AnalysisRunStatus.COMPLETED
+    assert result.snapshot is not None
+    resources = next(
+        item
+        for item in result.snapshot.artifacts
+        if item.artifact_type is ArtifactType.RESOURCES
+    )
+    assert resources.reliability == "Low"
+    assert resources.basis == "inferred"
+    assert resources.evidence_refs
+    assert harness.construct_calls[ArtifactType.RESOURCES] == 1
     assert all(
         harness.construct_calls[artifact_type] == 1
         for artifact_type in ARTIFACT_TYPES
         if artifact_type is not ArtifactType.RESOURCES
     )
+
+
+def test_artifact_construction_uses_four_workers_when_configured() -> None:
+    harness = ConcurrentArtifactHarness()
+    workflow = AnalysisWorkflow(
+        store=InMemoryAnalysisStore(),
+        harness=harness,
+        artifact_workers_per_run=4,
+        artifact_worker_limit=4,
+    )
+
+    result = workflow.run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.INITIAL,
+            description="A project whose artifacts can be built independently.",
+            source_names=(),
+        )
+    )
+
+    assert result.status is AnalysisRunStatus.COMPLETED
+    assert harness.peak_active_calls == 4
 
 
 def test_issue_clarification_rebuilds_only_the_owning_artifact() -> None:

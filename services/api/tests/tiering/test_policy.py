@@ -35,4 +35,4 @@ def test_plan_policy_exposes_contextual_remedies_without_destructive_actions() -
     assert document_decision.partial is False
     assert document_decision.remedies == ("remove_documents", "compare_plans")
     assert seat_decision.allowed is False
-    assert seat_decision.remedies == ("invite_as_viewer", "compare_plans")
+    assert seat_decision.remedies == ("compare_plans",)
