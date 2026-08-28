@@ -221,6 +221,25 @@ describe("WorkspaceSettings", () => {
     expect(screen.queryByText("pending@example.com")).not.toBeInTheDocument();
   });
 
+  it("describes Basic usage without presenting Free limits as current", () => {
+    render(<WorkspaceSettings
+      displayName="Taimoor"
+      email="taimoor@example.com"
+      initial={initial}
+      initialSection="plan"
+      modal
+      onClose={vi.fn()}
+      workspace={{ ...workspace, plan: "basic", plan_label: "Basic", active_project_limit: 3 }}
+      workspaceName="OSLO Alpha"
+    />);
+
+    expect(screen.getByText("What Basic includes")).toBeInTheDocument();
+    expect(screen.getByText("Basic optimizes every declared outcome.")).toBeInTheDocument();
+    expect(screen.getByText("Basic keeps up to 3 plans active at once.")).toBeInTheDocument();
+    expect(screen.queryByText(/The Free plan optimizes/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Review Free vs Basic" })).toBeInTheDocument();
+  });
+
   it("shows a Delegate-PM only personal settings", () => {
     render(
       <WorkspaceSettings

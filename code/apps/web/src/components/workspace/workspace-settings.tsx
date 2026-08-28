@@ -379,6 +379,7 @@ export function WorkspaceSettings({
   const collaboratorSeatsUsed = workspaceState?.collaborator_seats_used ?? memberCount;
   const activeProjects = workspaceState?.projects.filter((project) => !project.archived).length ?? 1;
   const activeProjectLimit = workspaceState?.active_project_limit ?? (workspaceState?.plan === "basic" ? 3 : 1);
+  const isBasicPlan = workspaceState?.plan === "basic";
   const actorRole = workspaceState?.role ?? preferences.actor_role;
   const visibleSettingsSections = useMemo(
     () => actorRole === "owner"
@@ -488,15 +489,15 @@ export function WorkspaceSettings({
 
             <h3>What you&apos;re using</h3>
             <div className="settings-card settings-plan-usage">
-              <PlanUsageFact detail="The Free plan optimizes your primary outcome. Declaring more is free — the rest are recorded but don’t drive the read until optimized." label="Outcomes" value="1 optimized · 1 declared" />
-              <PlanUsageFact detail="The Free plan works one plan at a time — switch whenever; the others are kept, never deleted." label="Plans" value={`${activeProjects} in your workspace · ${Math.min(activeProjects, activeProjectLimit)} active`} />
+              <PlanUsageFact detail={isBasicPlan ? "Basic optimizes every declared outcome." : "The Free plan optimizes your primary outcome. Declaring more is free — the rest are recorded but don’t drive the read until optimized."} label="Outcomes" value="1 optimized · 1 declared" />
+              <PlanUsageFact detail={isBasicPlan ? `Basic keeps up to ${activeProjectLimit} plans active at once.` : "The Free plan works one plan at a time — switch whenever; the others are kept, never deleted."} label="Plans" value={`${activeProjects} in your workspace · ${Math.min(activeProjects, activeProjectLimit)} active`} />
               <PlanUsageFact detail="Never metered — attach as much as your plan needs." label="Documents" value="Unlimited" />
               <PlanUsageFact detail="A fair-use ceiling, not a product limit. The unit that matters is the outcome, not analysis count." label="Analyses" value="Generous — fair-use" />
               <PlanUsageFact detail="Never expires, never truncated." label="History" value="Full" />
               <PlanUsageFact detail="Sharing and asking for a read never consume a seat." label="Collaboration" value="Viewers &amp; reviewers free" />
             </div>
 
-            <h3>What Basic adds</h3>
+            <h3>{isBasicPlan ? "What Basic includes" : "What Basic adds"}</h3>
             <div className="settings-card settings-plan-additions">
               <PlanAddition title="Optimize all your outcomes">OSLO steering your plan toward every outcome at once — not just your primary</PlanAddition>
               <PlanAddition title="Run more than one plan">Working several plans in your workspace at the same time</PlanAddition>
@@ -504,8 +505,8 @@ export function WorkspaceSettings({
               <PlanAddition title="Send on a schedule">A recurring weekly send that re-reads for currency before it goes</PlanAddition>
               <PlanAddition title="Push your plan to Asana">A one-way push so you can view it there</PlanAddition>
               <div className="settings-plan-compare">
-                <span>Need more capacity?</span>
-                <button className="settings-primary-button" onClick={openPlans} type="button">Compare Free vs Basic</button>
+                <span>{isBasicPlan ? "Review your plan" : "Need more capacity?"}</span>
+                <button className="settings-primary-button" onClick={openPlans} type="button">{isBasicPlan ? "Review Free vs Basic" : "Compare Free vs Basic"}</button>
               </div>
             </div>
           </article> : null}
