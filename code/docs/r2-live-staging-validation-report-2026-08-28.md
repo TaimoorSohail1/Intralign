@@ -109,10 +109,12 @@ The parallel Vitest run was resource-saturated on the Windows QA host. All timed
 
 ## Evidence
 
-- [Outcome and OSLO source-grounded chat](D:/Users/Hp/Downloads/oslo-r2-design-system/code/docs/evidence/r2-live-2026-08-28/01-outcome-openai-chat.png)
-- [Reports and export controls](D:/Users/Hp/Downloads/oslo-r2-design-system/code/docs/evidence/r2-live-2026-08-28/02-reports-export.png)
-- [Share and collaboration controls](D:/Users/Hp/Downloads/oslo-r2-design-system/code/docs/evidence/r2-live-2026-08-28/03-share-dialog.png)
-- [Grounding Map after governed reanalysis](D:/Users/Hp/Downloads/oslo-r2-design-system/code/docs/evidence/r2-live-2026-08-28/04-grounding-map.png)
+- [Live Outcome](https://intralign-oslo-web-staging-9f21dcd15274.herokuapp.com/projects/e0f0a2fc-4694-4829-beb7-673c2b11a9ab/outcome)
+- [Live Reports](https://intralign-oslo-web-staging-9f21dcd15274.herokuapp.com/projects/e0f0a2fc-4694-4829-beb7-673c2b11a9ab/reports)
+- [Live Issues](https://intralign-oslo-web-staging-9f21dcd15274.herokuapp.com/projects/e0f0a2fc-4694-4829-beb7-673c2b11a9ab/issues)
+- [Live Grounding Map](https://intralign-oslo-web-staging-9f21dcd15274.herokuapp.com/projects/e0f0a2fc-4694-4829-beb7-673c2b11a9ab/grounding)
+
+These authenticated routes contain the isolated QA evidence used for this report. They require access to the staging workspace.
 
 ## Remaining release risks
 
