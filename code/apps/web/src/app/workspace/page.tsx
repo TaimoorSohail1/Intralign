@@ -11,6 +11,7 @@ export default async function WorkspacePage({
 }) {
   const session = await readSession();
   if (!session.accessToken || !session.workspaceId) redirect("/login");
+  if (session.accountRole === "admin") redirect("/admin/invitations");
   const workspace = await getWorkspace({
     accessToken: session.accessToken,
     workspaceId: session.workspaceId,
