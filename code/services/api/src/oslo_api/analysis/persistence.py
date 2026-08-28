@@ -1319,15 +1319,6 @@ class DatabaseAnalysisStore:
                         "title": primary_outcome,
                     },
                 )
-            else:
-                connection.execute(
-                    text(
-                        "delete from public.project_outcomes "
-                        "where project_id = :project_id and is_primary "
-                        "and provenance = 'inferred'"
-                    ),
-                    {"project_id": snapshot.project_id},
-                )
                 connection.execute(
                     text(
                         "insert into public.project_outcomes "
@@ -1344,6 +1335,15 @@ class DatabaseAnalysisStore:
                         "title": primary_outcome,
                         "created_by": run_row["requested_by"],
                     },
+                )
+            else:
+                connection.execute(
+                    text(
+                        "delete from public.project_outcomes "
+                        "where project_id = :project_id and is_primary "
+                        "and provenance = 'inferred'"
+                    ),
+                    {"project_id": snapshot.project_id},
                 )
             for artifact in snapshot.artifacts:
                 artifact_payload = {
