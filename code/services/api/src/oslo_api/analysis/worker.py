@@ -4,10 +4,9 @@ from socket import gethostname
 from time import sleep
 from uuid import uuid4
 
-from sqlalchemy import create_engine
-
 from oslo_api.analysis.job_queue import DatabaseAnalysisJobQueue
 from oslo_api.analysis.service import build_slice_two_application
+from oslo_api.database import create_database_engine
 from oslo_api.settings import Settings
 
 logger = logging.getLogger("oslo.analysis.worker")
@@ -15,7 +14,7 @@ logger = logging.getLogger("oslo.analysis.worker")
 
 def run_worker() -> None:
     settings = Settings()  # type: ignore[call-arg]
-    engine = create_engine(settings.database_url, pool_pre_ping=True)
+    engine = create_database_engine(settings.database_url)
     queue = DatabaseAnalysisJobQueue(engine)
     application = build_slice_two_application()
     worker_id = f"{gethostname()}:{os.getpid()}:{uuid4()}"

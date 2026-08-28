@@ -1,7 +1,7 @@
 import httpx
-from sqlalchemy import create_engine
 
 from oslo_api.application import DatabaseSliceOneApplication
+from oslo_api.database import create_database_engine
 from oslo_api.email import PostmarkInvitationMailer, SmtpInvitationMailer
 from oslo_api.entitlements.repository import SqlEntitlementRepository
 from oslo_api.entitlements.service import EntitlementService
@@ -26,7 +26,7 @@ def build_slice_one_application() -> DatabaseSliceOneApplication:
             sender=settings.email_sender,
         )
     return DatabaseSliceOneApplication(
-        engine=create_engine(settings.database_url, pool_pre_ping=True),
+        engine=create_database_engine(settings.database_url),
         identity=SupabaseIdentityProvider(
             client=httpx.Client(timeout=10),
             supabase_url=settings.supabase_url,
@@ -47,7 +47,7 @@ def build_slice_four_application() -> EntitlementService:
             settings.stripe_basic_annual_price_id,
         )
     )
-    engine = create_engine(settings.database_url, pool_pre_ping=True)
+    engine = create_database_engine(settings.database_url)
     web_url = settings.web_url.rstrip("/")
     return EntitlementService(
         repository=SqlEntitlementRepository(engine),
@@ -75,5 +75,5 @@ def build_slice_four_application() -> EntitlementService:
 
 def build_feedback_application() -> FeedbackService:
     settings = Settings()  # type: ignore[call-arg]
-    engine = create_engine(settings.database_url, pool_pre_ping=True)
+    engine = create_database_engine(settings.database_url)
     return FeedbackService(repository=SqlFeedbackRepository(engine))

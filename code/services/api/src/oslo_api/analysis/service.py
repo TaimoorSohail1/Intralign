@@ -6,7 +6,7 @@ from time import sleep
 from typing import Protocol
 from uuid import UUID, uuid4
 
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, text
 
 from oslo_api.analysis import (
     AnalysisEvent,
@@ -37,6 +37,7 @@ from oslo_api.analysis.user_evidence import (
     build_clarification_evidence,
     build_reviewer_evidence,
 )
+from oslo_api.database import create_database_engine
 from oslo_api.project_access import find_project_access
 from oslo_api.settings import Settings
 from oslo_api.slice_two import (
@@ -3323,7 +3324,7 @@ class DatabaseSliceTwoApplication:
 
 def build_slice_two_application() -> DatabaseSliceTwoApplication:
     settings = Settings()  # type: ignore[call-arg]
-    engine = create_engine(settings.database_url, pool_pre_ping=True)
+    engine = create_database_engine(settings.database_url)
     store = DatabaseAnalysisStore(engine)
     object_store = (
         SupabaseObjectStorage(

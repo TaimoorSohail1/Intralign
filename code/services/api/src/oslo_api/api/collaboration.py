@@ -8,7 +8,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import create_engine
 
 from oslo_api.api.invitations import InvitationRequestContext, invitation_request_context
 from oslo_api.collaboration.asana import HttpAsanaGateway
@@ -18,6 +17,7 @@ from oslo_api.collaboration.pdf import (
     render_snapshot_pdf,
 )
 from oslo_api.collaboration.service import CollaborationError, DatabaseCollaborationService
+from oslo_api.database import create_database_engine
 from oslo_api.email import PostmarkReportMailer, SmtpReportMailer
 from oslo_api.settings import Settings
 from oslo_api.slice_two import SliceTwoApplication
@@ -42,7 +42,7 @@ def collaboration_service(request: Request) -> DatabaseCollaborationService:
                 sender=settings.email_sender,
             )
         service = DatabaseCollaborationService(
-            create_engine(settings.database_url, pool_pre_ping=True),
+            create_database_engine(settings.database_url),
             settings.web_url,
             report_mailer,
             report_mailer,
