@@ -16,3 +16,4 @@ services/api/tests/
 *.png
 design-qa.md
 README.md
+/uv.lock
