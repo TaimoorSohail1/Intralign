@@ -4,7 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from oslo_api.api.authentication import require_access_token
 from oslo_api.application import (
@@ -31,6 +31,14 @@ class InviteMemberRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     email: EmailStr
+    role: MembershipRole = MembershipRole.OWNER
+    project_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def delegate_pm_requires_project(self) -> "InviteMemberRequest":
+        if self.role is MembershipRole.DELEGATE_PM and self.project_id is None:
+            raise ValueError("Delegate-PM invitations require a project")
+        return self
 
 
 class InvitationResponse(BaseModel):
@@ -41,6 +49,7 @@ class InvitationResponse(BaseModel):
     role: MembershipRole
     status: InvitationStatus
     expires_at: datetime
+    project_id: UUID | None = None
 
 
 class ActivateInvitationRequest(BaseModel):
@@ -127,6 +136,8 @@ def invite_member(
             actor_user_id=context.user.id,
             workspace_id=workspace_id,
             email=payload.email,
+            role=payload.role,
+            project_id=payload.project_id,
         )
     except InvitePermissionDenied as error:
         raise HTTPException(

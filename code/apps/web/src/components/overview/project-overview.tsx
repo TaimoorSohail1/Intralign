@@ -480,12 +480,24 @@ export function ProjectOverview({
     ),
     [openIssues],
   );
-  const firstRunTargetIssue =
+  const defaultFirstRunTargetIssue =
     rankedIssues[0] ??
     actedIssues.find((issue) => issue.status === "needs_grounding") ??
     actedIssues.find((issue) => issue.primary_act === "verify") ??
     actedIssues[0] ??
     null;
+  const firstRunNeedsConfirmation = Boolean(
+    snapshot.first_run?.freeze_on && snapshot.first_run.grounding_act_count > 0,
+  );
+  const firstRunVerificationIssue = [...rankedIssues, ...actedIssues].find(
+    (issue) =>
+      !issue.unassessed &&
+      issue.classification_state !== "escalated" &&
+      (issue.primary_act === "verify" || issue.also_offered?.includes("verify")),
+  );
+  const firstRunTargetIssue = firstRunNeedsConfirmation
+    ? firstRunVerificationIssue ?? defaultFirstRunTargetIssue
+    : defaultFirstRunTargetIssue;
   const resolvedIssues = useMemo(
     () => snapshot.assessment.issues.filter((issue) => issue.status === "resolved"),
     [snapshot.assessment.issues],
@@ -565,12 +577,13 @@ export function ProjectOverview({
   const provenance = useMemo(() => buildProjectProvenance(snapshot), [snapshot]);
   const integrity = snapshot.assessment.integrity;
   const groundingPillar = integrity.decomposition.find((pillar) => pillar.key === "Grounding");
+  const canonicalGroundingTotal = provenance.grounding.total;
+  const canonicalGroundingLabel =
+    snapshot.provenance?.schema_version === 1
+      ? `Grounded ${provenance.grounding.grounded} of ${canonicalGroundingTotal} load-bearing`
+      : null;
   const integrityBandIndex = Math.max(0, integrityBands.indexOf(integrity.level));
   const hasFirstValue = snapshot.artifacts.length > 0;
-  const outcomeArtifact = snapshot.artifacts.find(
-    (artifact) => artifact.artifact_type === "intent",
-  );
-  const outcomeDefinition = outcomeArtifact?.summary ?? null;
   const projectTitle = snapshot.project_title?.trim() || "Project";
   const overviewScrollKey = `oslo:overview-scroll:${snapshot.project_id}`;
   const workspaceNoticeKey = `oslo:workspace-open:${snapshot.project_id}`;
@@ -1756,37 +1769,45 @@ export function ProjectOverview({
         </details>
       </div>
       <div className="integrity-pillars">
-        {integrity.decomposition.map((pillar) => (
-          <button
-            aria-label={`${pillar.key} ${pillar.band}`}
-            className={pillar.key === integrity.limiting_pillar ? "is-limiting" : ""}
-            key={pillar.key}
-            onClick={(event) => {
-              const issue = openIssues.find(
-                (candidate) => issuePillar(candidate) === pillar.key,
-              );
-              if (issue) {
-                openIssue(issue, event.currentTarget);
-                return;
-              }
-              router.push(
-                `/projects/${snapshot.project_id}/issues?pillar=${pillar.key.toLowerCase()}`,
-              );
-            }}
-            type="button"
-          >
-            <span>
-              <strong>
-                {pillar.key}
-                {pillar.key === integrity.limiting_pillar ? <em>Floor</em> : null}
-              </strong>
-              <b>{pillar.band}</b>
-            </span>
-            <i aria-hidden="true"><b style={{ width: `${pillar.basis * 100}%` }} /></i>
-            <small>{pillar.why[0]}</small>
-            <CaretRight aria-hidden="true" size={13} />
-          </button>
-        ))}
+        {integrity.decomposition.map((pillar) => {
+          const usesCanonicalGrounding =
+            pillar.key === "Grounding" && canonicalGroundingLabel !== null;
+          const displayBasis = usesCanonicalGrounding && canonicalGroundingTotal > 0
+            ? provenance.grounding.basis
+            : pillar.basis;
+
+          return (
+            <button
+              aria-label={`${pillar.key} ${pillar.band}`}
+              className={pillar.key === integrity.limiting_pillar ? "is-limiting" : ""}
+              key={pillar.key}
+              onClick={(event) => {
+                const issue = openIssues.find(
+                  (candidate) => issuePillar(candidate) === pillar.key,
+                );
+                if (issue) {
+                  openIssue(issue, event.currentTarget);
+                  return;
+                }
+                router.push(
+                  `/projects/${snapshot.project_id}/issues?pillar=${pillar.key.toLowerCase()}`,
+                );
+              }}
+              type="button"
+            >
+              <span>
+                <strong>
+                  {pillar.key}
+                  {pillar.key === integrity.limiting_pillar ? <em>Floor</em> : null}
+                </strong>
+                <b>{pillar.band}</b>
+              </span>
+              <i aria-hidden="true"><b style={{ width: `${displayBasis * 100}%` }} /></i>
+              <small>{usesCanonicalGrounding ? canonicalGroundingLabel : pillar.why[0]}</small>
+              <CaretRight aria-hidden="true" size={13} />
+            </button>
+          );
+        })}
       </div>
     </section>
   );
@@ -1813,18 +1834,6 @@ export function ProjectOverview({
       }`}
       ref={r2Shell}
     >
-      {initialView === "reports" || initialView === "full_plan" ? (
-        <div aria-label="Reports product context" className="r2-reports-banner" role="note">
-          <strong>OSLO · AI-first R2</strong>
-          <div>
-            <b>Official</b>
-            <span>
-              One walkable shell: the read is home · artifacts + execution plan in the center ·
-              reasoning + chat on the right · Issues / History / Reports / Map as doors.
-            </span>
-          </div>
-        </div>
-      ) : null}
       <header className="project-header">
         <Link className="project-toolbar-brand" href="/workspace">
           <Image
@@ -1925,10 +1934,10 @@ export function ProjectOverview({
       </header>
 
       {(initialView === "overview" || (isArtifactView(initialView) && r2IntegrityExpanded)) &&
-      (activeOutcome?.title ?? outcomeDefinition) ? (
+      activeOutcome?.title ? (
         <div className="r2-outcome-capacity-row">
           <button
-            aria-label={`Outcome: ${activeOutcome?.title ?? outcomeDefinition}`}
+            aria-label={`Outcome: ${activeOutcome.title}`}
             className={`r2-outcome-anchor ${orientation && activeTourStep === 1 ? "is-tour-target" : ""}`}
             onClick={() => router.push(`/projects/${snapshot.project_id}/outcome`)}
             ref={tourOutcomeTarget}
@@ -1936,8 +1945,8 @@ export function ProjectOverview({
           >
             <span aria-hidden="true">◎</span>
             <small>Outcome</small>
-            <strong>{activeOutcome?.title ?? outcomeDefinition}</strong>
-            <em>{activeOutcome?.provenance === "declared" ? "✓ yours" : "OSLO inference"}</em>
+            <strong>{activeOutcome?.title ?? "No outcome defined"}</strong>
+            <em>{activeOutcome?.provenance === "declared" ? "✓ yours" : activeOutcome ? "OSLO inference" : "Define in Intent"}</em>
             <CaretRight aria-hidden="true" size={13} />
           </button>
         </div>
@@ -2312,7 +2321,7 @@ export function ProjectOverview({
                       <LockSimple aria-hidden="true" size={16} weight="duotone" />
                       <div>
                         <strong>One call down - you confirmed your outcome.</strong>
-                        <p>One more confirm opens your full workspace. OSLO waits a click away.</p>
+                        <p>One more decision completes your guided review.</p>
                       </div>
                     </section>
                     <button
@@ -2348,8 +2357,8 @@ export function ProjectOverview({
                   <section className="r2-first-run-guide" aria-label="First run guidance">
                     <span>{snapshot.first_run.grounding_act_count} of {snapshot.first_run.unlock_threshold}</span>
                     <div>
-                      <strong>Ground two decisions to open the full workspace.</strong>
-                      <p>Your plan remains available. Start with the top issue; every confirmed, flagged, or routed decision counts.</p>
+                      <strong>Ground two decisions to complete your first read.</strong>
+                      <p>Your workspace remains available. Start with the top issue; every confirmed, flagged, or routed decision counts.</p>
                     </div>
                   </section>
                 )
@@ -2643,7 +2652,7 @@ export function ProjectOverview({
                   <div>
                     <strong>Your workspace is open.</strong>
                     <p>
-                      Your two calls unlocked the full read. <b>Now live:</b> your plan
+                      Your guided review is complete. <b>Now in focus:</b> your plan
                       documents on the left and <b>OSLO&apos;s reasoning</b> on the right —
                       every pillar and open issue with them.
                     </p>
@@ -3798,6 +3807,7 @@ function IssuePanel({
   const [proposalsOpen, setProposalsOpen] = useState(true);
   const [otherWaysOpen, setOtherWaysOpen] = useState(false);
   const [routingOpen, setRoutingOpen] = useState(false);
+  const [verificationOpen, setVerificationOpen] = useState(false);
   const [discussionVisible, setDiscussionVisible] = useState(false);
   const [customResolution, setCustomResolution] = useState("");
   const [customResolutionOpen, setCustomResolutionOpen] = useState(false);
@@ -4002,6 +4012,15 @@ function IssuePanel({
   const foregroundFirstRunVerification = firstRunFocus && otherActs.includes("verify");
   const presentedPrimaryAct = foregroundFirstRunVerification ? "verify" : primaryAct;
   const unassessed = issue.unassessed || issue.classification_state === "escalated";
+  const dependencyPaths = issue.sensitivity_trace?.dependency_paths ??
+    issue.sensitivity_trace?.paths ?? [];
+  const dependencyLabels = Array.from(
+    new Set(
+      dependencyPaths
+        .map((path) => path.slice(1).join(" → ").trim())
+        .filter(Boolean),
+    ),
+  );
 
   return (
     <aside
@@ -4042,7 +4061,20 @@ function IssuePanel({
           <p>{issue.why}</p>
           <dl>
             <div><dt>Affects</dt><dd><span>{artifactLabel(issue.artifact_type)}</span><span>{artifactLabel(issue.dimension)}</span></dd></div>
-            <div><dt>Holds up</dt><dd>{issue.why}</dd></div>
+            <div>
+              <dt>Holds up</dt>
+              <dd>
+                {dependencyLabels.length ? (
+                  <ul>
+                    {dependencyLabels.map((dependency) => (
+                      <li key={dependency}>{dependency}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span>No downstream dependency path was published.</span>
+                )}
+              </dd>
+            </div>
           </dl>
         </div>
       ) : null}
@@ -4250,17 +4282,38 @@ function IssuePanel({
           </div>
         ) : presentedPrimaryAct === "verify" ? (
           <div className="issue-action-row is-lifecycle">
-            <button
-              aria-label="Confirm — it holds"
-              disabled={pending || analysisRunning}
-              onClick={() => void onLifecycleAct("confirm", {
-                basis: "verified-directly",
-                evidenceRef: issue.evidence_refs.at(0) ?? `user:direct-confirm:${issue.id}`,
-              })}
-              type="button"
-            >
-              ✓ Confirm — it holds
-            </button>
+            {!verificationOpen ? (
+              <button
+                aria-expanded="false"
+                disabled={pending || analysisRunning}
+                onClick={() => setVerificationOpen(true)}
+                type="button"
+              >
+                Confirm — it holds
+              </button>
+            ) : (
+              <div aria-label="It holds because" className="issue-verification-bases" role="group">
+                <span>It holds because…</span>
+                {[
+                  ["I have it documented in writing", "documented"],
+                  ["A vendor or owner verified it", "vendor-or-owner-verified"],
+                  ["I’ve verified this directly", "verified-directly"],
+                ].map(([label, basis]) => (
+                  <button
+                    disabled={pending || analysisRunning}
+                    key={basis}
+                    onClick={() => void onLifecycleAct("confirm", {
+                      basis: basis as "documented" | "vendor-or-owner-verified" | "verified-directly",
+                      evidenceRef:
+                        issue.evidence_refs.at(0) ?? `user:${basis}:confirm:${issue.id}`,
+                    })}
+                    type="button"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
             <button
               disabled={pending || analysisRunning}
               onClick={() => void onLifecycleAct("flag", {

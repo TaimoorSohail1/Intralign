@@ -14,7 +14,7 @@ const workflow = [
   ["retrieve_evidence", "Mapping what your outcome rests on…", "Connecting the parts of your plan to the result"],
   ["construct_artifacts", "Drafting your plan documents…", "Intent · Scope · Requirements · Constraints · Work breakdown · Schedule · Resourcing"],
   ["checkpoint", "Mapping what your outcome rests on…", "Saving a safe, restartable checkpoint"],
-  ["evaluate_advise", "Checking what is clear, aligned and feasible…", "Testing Viability · Grounding · Adaptability"],
+  ["evaluate_advise", "Checking viability, grounding, and adaptability…", "Testing Viability · Grounding · Adaptability"],
   ["validate_result", "Ordering your issues…", "Putting the biggest threat to your outcome first"],
   ["publish", "Your read is ready.", "Preparing your first outcome decision"],
 ] as const;
@@ -40,7 +40,7 @@ const returningStages = [
   },
   {
     title: "Mapping what your outcome rests on…",
-    description: "Linking program, venue, sponsors and logistics to your outcome…",
+    description: "Connecting the evidence and dependencies that your outcome rests on…",
     trace: "mapped what your outcome rests on",
     result: "linked",
   },
@@ -52,8 +52,8 @@ const returningStages = [
   },
   {
     title: "Assessing your plan…",
-    description: "Checking clarity, alignment and feasibility…",
-    trace: "assessed Clarity · Alignment · Feasibility",
+    description: "Checking viability, grounding and adaptability…",
+    trace: "assessed Viability · Grounding · Adaptability",
     result: "",
   },
   {

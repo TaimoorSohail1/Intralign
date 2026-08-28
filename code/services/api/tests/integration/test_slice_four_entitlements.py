@@ -1,5 +1,5 @@
-from datetime import UTC, datetime
-from uuid import UUID
+from datetime import UTC, datetime, timedelta
+from uuid import UUID, uuid4
 
 import httpx
 import pytest
@@ -8,7 +8,11 @@ from sqlalchemy import create_engine, text
 from oslo_api.application import ActiveProjectLimitReached, DatabaseSliceOneApplication
 from oslo_api.email import SmtpInvitationMailer
 from oslo_api.entitlements.repository import SqlEntitlementRepository
-from oslo_api.entitlements.service import OutcomeCapacityReached, UnknownSubscription
+from oslo_api.entitlements.service import (
+    OutcomeCapacityReached,
+    OutcomePermissionDenied,
+    UnknownSubscription,
+)
 from oslo_api.identity import SupabaseIdentityProvider
 from oslo_api.settings import Settings
 from oslo_api.slice_four import (
@@ -290,6 +294,104 @@ def test_free_outcome_archive_is_reversible_and_reactivation_respects_the_slot(
     assert blocked_gate_count == 2
 
 
+def test_delegate_pm_can_manage_only_assigned_project_outcomes(
+    entitlement_repository,
+) -> None:
+    repository, owner_id, engine = entitlement_repository
+    unassigned_project_id = uuid4()
+    client = httpx.Client(timeout=20)
+    identity = SupabaseIdentityProvider(
+        client=client,
+        supabase_url=SETTINGS.supabase_url,
+        api_key=SETTINGS.supabase_secret_key,
+    )
+    delegate = identity.create_user(
+        email=f"slice-four-delegate-{uuid4().hex}@oslo.local",
+        password="SliceFourDelegate123!",
+        display_name="Slice Four Delegate",
+    )
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "insert into public.profiles (id, display_name) "
+                    "values (:delegate_id, 'Slice Four Delegate')"
+                ),
+                {"delegate_id": delegate.id},
+            )
+            connection.execute(
+                text(
+                    "insert into public.projects "
+                    "(id, workspace_id, name, status, created_by) values "
+                    "(:project_id, :workspace_id, 'Unassigned plan', 'active', :owner_id)"
+                ),
+                {
+                    "project_id": unassigned_project_id,
+                    "workspace_id": WORKSPACE_ID,
+                    "owner_id": owner_id,
+                },
+            )
+            connection.execute(
+                text(
+                    "insert into public.project_memberships "
+                    "(workspace_id, project_id, user_id, role, assigned_by) values "
+                    "(:workspace_id, :project_id, :delegate_id, 'delegate_pm', :owner_id)"
+                ),
+                {
+                    "workspace_id": WORKSPACE_ID,
+                    "project_id": PROJECT_ID,
+                    "delegate_id": delegate.id,
+                    "owner_id": owner_id,
+                },
+            )
+
+        outcome = repository.create_outcome(
+            actor_user_id=delegate.id,
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            title="Delegate-owned outcome",
+            provenance=OutcomeProvenance.DECLARED,
+        )
+
+        assert [
+            item.id
+            for item in repository.list_outcomes(
+                actor_user_id=delegate.id,
+                workspace_id=WORKSPACE_ID,
+                project_id=PROJECT_ID,
+            )
+        ] == [outcome.id]
+        with pytest.raises(OutcomePermissionDenied):
+            repository.list_outcomes(
+                actor_user_id=delegate.id,
+                workspace_id=WORKSPACE_ID,
+                project_id=unassigned_project_id,
+            )
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "delete from public.project_outcomes "
+                    "where workspace_id = :workspace_id"
+                ),
+                {"workspace_id": WORKSPACE_ID},
+            )
+            connection.execute(
+                text("delete from public.projects where id = :project_id"),
+                {"project_id": unassigned_project_id},
+            )
+            connection.execute(
+                text("delete from public.project_memberships where user_id = :user_id"),
+                {"user_id": delegate.id},
+            )
+            connection.execute(
+                text("delete from public.profiles where id = :user_id"),
+                {"user_id": delegate.id},
+            )
+        identity.delete_user(delegate.id)
+        client.close()
+
+
 def test_outcome_in_an_archived_project_does_not_consume_the_free_active_slot(
     entitlement_repository,
 ) -> None:
@@ -389,7 +491,7 @@ def test_payment_grace_and_cancellation_preserve_existing_outcomes(
             provenance=OutcomeProvenance.DECLARED,
         )
 
-    paid_through = datetime(2026, 8, 20, tzinfo=UTC)
+    paid_through = datetime.now(UTC) + timedelta(days=30)
     repository.apply_subscription_state(
         change=VerifiedSubscriptionState(
             event_id="evt_lifecycle_past_due",

@@ -13,6 +13,7 @@ from oslo_api.entitlements.service import (
     UnknownCheckoutSession,
     UnknownSubscription,
 )
+from oslo_api.project_access import find_project_access
 from oslo_api.slice_four import (
     BillingInterval,
     EntitlementView,
@@ -119,6 +120,22 @@ class SqlEntitlementRepository:
             raise OutcomePermissionDenied
 
     @staticmethod
+    def _require_project_access(
+        connection: Connection,
+        *,
+        workspace_id: UUID,
+        project_id: UUID,
+        actor_user_id: UUID,
+    ) -> None:
+        access = find_project_access(
+            connection,
+            actor_user_id=actor_user_id,
+            project_id=project_id,
+        )
+        if access is None or access.workspace_id != workspace_id:
+            raise OutcomePermissionDenied
+
+    @staticmethod
     def _outcome_from_row(row: RowMapping) -> ProjectOutcome:
         return ProjectOutcome(
             id=row["id"],
@@ -163,9 +180,10 @@ class SqlEntitlementRepository:
         blocked_limit: int | None = None
         row: RowMapping | None = None
         with self._engine.begin() as connection:
-            self._require_member(
+            self._require_project_access(
                 connection,
                 workspace_id=workspace_id,
+                project_id=project_id,
                 actor_user_id=actor_user_id,
             )
             project_exists = connection.execute(
@@ -248,9 +266,10 @@ class SqlEntitlementRepository:
         project_id: UUID,
     ) -> list[ProjectOutcome]:
         with self._engine.connect() as connection:
-            self._require_member(
+            self._require_project_access(
                 connection,
                 workspace_id=workspace_id,
+                project_id=project_id,
                 actor_user_id=actor_user_id,
             )
             rows = connection.execute(
@@ -272,9 +291,19 @@ class SqlEntitlementRepository:
         outcome_id: UUID,
     ) -> ProjectOutcome:
         with self._engine.begin() as connection:
-            self._require_member(
+            project_id = connection.execute(
+                text(
+                    "select project_id from public.project_outcomes "
+                    "where id = :outcome_id and workspace_id = :workspace_id"
+                ),
+                {"outcome_id": outcome_id, "workspace_id": workspace_id},
+            ).scalar_one_or_none()
+            if project_id is None:
+                raise OutcomeNotFound
+            self._require_project_access(
                 connection,
                 workspace_id=workspace_id,
+                project_id=project_id,
                 actor_user_id=actor_user_id,
             )
             row = connection.execute(
@@ -301,11 +330,6 @@ class SqlEntitlementRepository:
         blocked_limit: int | None = None
         row: RowMapping | None = None
         with self._engine.begin() as connection:
-            self._require_member(
-                connection,
-                workspace_id=workspace_id,
-                actor_user_id=actor_user_id,
-            )
             self._lock_workspace(connection, workspace_id)
             current = connection.execute(
                 text(
@@ -317,6 +341,12 @@ class SqlEntitlementRepository:
             ).mappings().one_or_none()
             if current is None:
                 raise OutcomeNotFound
+            self._require_project_access(
+                connection,
+                workspace_id=workspace_id,
+                project_id=current["project_id"],
+                actor_user_id=actor_user_id,
+            )
             if current["status"] == "active":
                 return self._outcome_from_row(current)
             policy = self._workspace_policy(connection, workspace_id)

@@ -838,7 +838,7 @@ export function ArtifactWorkspace({
           ) : null}
         </div>
         <p className="artifact-oslo-read">
-          <strong>OSLO&apos;s read:</strong> {artifactRead(artifact, executionView)}
+          <strong>Artifact summary:</strong> {artifactRead(artifact, executionView)}
         </p>
         <div className="artifact-content-heading">
           <strong>Contents · you author, OSLO reads</strong>

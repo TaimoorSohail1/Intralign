@@ -149,6 +149,7 @@ class IssueResponse(BaseModel):
     finding_type: str
     section: str
     recommendation_from_oslo: bool
+    load_bearing: bool
     exposure_rank: float
     finding_basis: str
     structural_target: str
@@ -186,7 +187,6 @@ class IntegrityResponse(BaseModel):
 
 
 class AssessmentResponse(BaseModel):
-    confidence_index: int
     confidence_band: str
     reliability: str
     clarity: str
@@ -233,6 +233,16 @@ class ProvenanceMovementResponse(BaseModel):
     oslo_inferred: int
 
 
+class GroundingProjectionResponse(BaseModel):
+    grounded: int
+    addressed: int
+    routed: int
+    inferred: int
+    total: int
+    basis: float
+    band: Literal["Fragile", "Weak", "Developing", "Solid", "Sound"]
+
+
 class ProjectProvenanceResponse(BaseModel):
     schema_version: int
     artifacts: list[ArtifactProvenanceResponse]
@@ -241,6 +251,7 @@ class ProjectProvenanceResponse(BaseModel):
     inferred_claims: int
     total_claims: int
     load_bearing_inferences: int
+    grounding: GroundingProjectionResponse
     structure: ProvenanceStructureResponse
     this_week: ProvenanceMovementResponse
 
@@ -320,8 +331,9 @@ class HistoryGroupResponse(BaseModel):
     status: str
     current: bool
     occurred_at: datetime
-    confidence_index: int | None
     confidence_band: str | None
+    grounded_load_bearing: int
+    total_load_bearing: int
     confidence_direction: str | None
     understanding_stage: str | None
     changes: list[HistoryChangeResponse]
@@ -330,8 +342,9 @@ class HistoryGroupResponse(BaseModel):
 
 class HistoryTrendResponse(BaseModel):
     run_id: UUID
-    confidence_index: int
     confidence_band: str
+    grounded_load_bearing: int
+    total_load_bearing: int
     direction: str
     cause: str
     occurred_at: datetime
@@ -545,6 +558,10 @@ class ArtifactContentPayload(BaseModel):
         return self
 
 
+class ArtifactWorkspaceContentResponse(BaseModel):
+    sections: list[ArtifactSectionPayload] = Field(min_length=1, max_length=20)
+
+
 class ArtifactUpdateRequest(BaseModel):
     content: ArtifactContentPayload
     expected_version: int = Field(ge=1)
@@ -553,7 +570,7 @@ class ArtifactUpdateRequest(BaseModel):
 class ArtifactWorkspaceResponse(BaseModel):
     artifact_type: str
     title: str
-    content: ArtifactContentPayload
+    content: ArtifactWorkspaceContentResponse
     version: int
     provenance: Literal["from_oslo", "confirmed_by_user", "mixed"]
     reliability: str
@@ -622,7 +639,11 @@ def _overview_response(
     issue_actions: list[dict] | None = None,
     runtime_state: dict | None = None,
 ) -> OverviewResponse:
-    assessment = with_integrity(snapshot.assessment, snapshot.artifacts)
+    assessment = with_integrity(
+        snapshot.assessment,
+        snapshot.artifacts,
+        issue_actions=tuple(issue_actions or ()),
+    )
     if assessment.integrity is None:  # pragma: no cover - constructor invariant
         raise RuntimeError("R2_INTEGRITY_PROJECTION_MISSING")
     latest_actions = {action["issue_id"]: action for action in (issue_actions or [])}
@@ -711,7 +732,6 @@ def _overview_response(
             for artifact in snapshot.artifacts
         ],
         assessment=AssessmentResponse(
-            confidence_index=assessment.confidence_index,
             confidence_band=assessment.confidence_band,
             reliability=assessment.reliability,
             clarity=assessment.clarity,
@@ -778,6 +798,7 @@ def _overview_response(
                     finding_type=issue.finding_type or f"{issue.dimension} Gap",
                     section=issue.section or issue.artifact_type.value,
                     recommendation_from_oslo=issue.recommendation_from_oslo,
+                    load_bearing=issue.load_bearing,
                     exposure_rank=issue.exposure_rank,
                     finding_basis=issue.finding_basis,
                     structural_target=issue.structural_target,
@@ -796,6 +817,7 @@ def _overview_response(
             build_project_provenance(
                 artifacts=snapshot.artifacts,
                 issues=assessment.issues,
+                issue_actions=tuple(issue_actions or ()),
             )
         ),
         published_at=snapshot.published_at,
@@ -844,7 +866,7 @@ def _artifact_workspace_response(
     return ArtifactWorkspaceResponse(
         artifact_type=artifact["artifact_type"],
         title=artifact["title"],
-        content=ArtifactContentPayload.model_validate(content),
+        content=ArtifactWorkspaceContentResponse.model_validate(content),
         version=artifact["version"],
         provenance=artifact["provenance"],
         reliability=artifact["reliability"],
@@ -883,6 +905,7 @@ def _artifact_workspace_response(
                 finding_type=issue.finding_type or f"{issue.dimension} Gap",
                 section=issue.section or issue.artifact_type.value,
                 recommendation_from_oslo=issue.recommendation_from_oslo,
+                load_bearing=issue.load_bearing,
                 exposure_rank=issue.exposure_rank,
                 finding_basis=issue.finding_basis,
                 structural_target=issue.structural_target,

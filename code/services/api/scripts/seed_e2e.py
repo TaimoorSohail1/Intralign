@@ -7,12 +7,14 @@ non-E2E projects, analyses, and non-E2E identities are never removed.
 from __future__ import annotations
 
 from pathlib import Path
+from time import sleep
 from urllib.parse import urlparse
 from uuid import UUID
 
 import psycopg
 from seed_local import (
     WORKSPACE_ID,
+    ensure_application_records,
     ensure_auth_user,
     local_status,
 )
@@ -36,7 +38,7 @@ def _require_local_status(status: dict[str, str]) -> None:
             raise RuntimeError(f"Refusing to reset E2E fixtures on non-local {key}: {host}")
 
 
-def _reset_invitation_fixtures(
+def _reset_invitation_fixtures_once(
     *,
     database_url: str,
     existing_user_id: UUID,
@@ -83,7 +85,7 @@ def _reset_invitation_fixtures(
         cursor.execute(
             """
             insert into public.workspaces (id, name, created_by)
-            values (%s, 'OSLO Product Grill', %s)
+            values (%s, 'Intralign E2E', %s)
             on conflict (id) do update set
               name = excluded.name,
               updated_at = now()
@@ -144,10 +146,54 @@ def _reset_invitation_fixtures(
         )
 
 
+def _reset_invitation_fixtures(
+    *,
+    database_url: str,
+    existing_user_id: UUID,
+    owner_user_id: UUID,
+) -> None:
+    """Reset E2E data after any in-flight worker transaction releases its locks.
+
+    Playwright deliberately resets the same isolated workspace before every
+    journey. A worker from the preceding journey can finish its final database
+    write at the same instant as the cascading project delete. PostgreSQL
+    resolves that race by aborting one complete transaction, so retrying the
+    whole reset on a fresh connection is safe and keeps fixture setup atomic.
+    """
+
+    max_attempts = 4
+    for attempt in range(max_attempts):
+        try:
+            _reset_invitation_fixtures_once(
+                database_url=database_url,
+                existing_user_id=existing_user_id,
+                owner_user_id=owner_user_id,
+            )
+            return
+        except psycopg.errors.DeadlockDetected:
+            if attempt == max_attempts - 1:
+                raise
+            sleep(0.25 * (2**attempt))
+
+
 def main() -> None:
     repository_root = Path(__file__).resolve().parents[3]
     status = local_status(repository_root)
     _require_local_status(status)
+    admin_user_id = ensure_auth_user(
+        api_url=status["API_URL"],
+        secret_key=status["SECRET_KEY"],
+        email="admin@oslo.local",
+        password="OsloLocalAdmin123!",
+    )
+    # E2E runs can follow integration tests that temporarily make the platform
+    # administrator a workspace Owner. Restore the production-shaped admin
+    # boundary before every browser journey so invitations provision an
+    # isolated client workspace instead of exposing the admin workspace.
+    ensure_application_records(
+        database_url=status["DB_URL"],
+        user_id=admin_user_id,
+    )
     existing_user_id = ensure_auth_user(
         api_url=status["API_URL"],
         secret_key=status["SECRET_KEY"],

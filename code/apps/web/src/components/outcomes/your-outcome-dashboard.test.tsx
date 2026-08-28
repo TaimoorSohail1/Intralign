@@ -64,7 +64,6 @@ const snapshot: OverviewSnapshot = {
     },
   ],
   assessment: {
-    confidence_index: 48,
     confidence_band: "Moderate",
     reliability: "Moderate",
     clarity: "Moderate",
@@ -136,6 +135,30 @@ const snapshot: OverviewSnapshot = {
       created_at: "2026-08-16T10:00:00Z",
     },
   ],
+  provenance: {
+    schema_version: 1,
+    artifacts: [],
+    assumptions: [],
+    grounded_claims: 1,
+    inferred_claims: 3,
+    total_claims: 4,
+    load_bearing_inferences: 2,
+    grounding: {
+      grounded: 0,
+      addressed: 0,
+      routed: 1,
+      inferred: 1,
+      total: 2,
+      basis: 0,
+      band: "Fragile",
+    },
+    structure: {
+      unconfirmed_dependencies: 0,
+      unowned_parties: 0,
+      untraceable_numbers: 0,
+    },
+    this_week: { user_grounded: 0, oslo_inferred: 0 },
+  },
   published_at: "2026-08-16T10:00:00Z",
 };
 
@@ -206,6 +229,41 @@ describe("Your Outcome dashboard", () => {
     });
     expect(JSON.stringify(projection)).not.toContain("Reduce handling time");
     expect(JSON.stringify(projection)).not.toContain("Grow adoption");
+    expect(projection.grounding).toEqual({ grounded: 0, total: 2 });
+  });
+
+  it("does not silently promote the first active outcome when no primary is declared", () => {
+    const projection = buildYourOutcomeProjection({
+      snapshot,
+      outcomes: outcomes.map((outcome) => ({ ...outcome, is_primary: false })),
+      rollUp,
+    });
+
+    expect(projection.primary_outcome).toBeNull();
+    render(<YourOutcomeDashboard data={projection} />);
+    expect(screen.getByText("No outcome is defined yet.")).toBeInTheDocument();
+    expect(screen.queryByText("Primary")).not.toBeInTheDocument();
+  });
+
+  it("does not present an inferred missing-purpose statement as the primary outcome", () => {
+    const projection = buildYourOutcomeProjection({
+      snapshot,
+      outcomes: outcomes.map((outcome, index) =>
+        index === 0
+          ? {
+              ...outcome,
+              title: "The conference purpose is not defined.",
+              provenance: "inferred",
+            }
+          : outcome,
+      ),
+      rollUp,
+    });
+
+    expect(projection.primary_outcome).toBeNull();
+    render(<YourOutcomeDashboard data={projection} />);
+    expect(screen.getByText("No outcome is defined yet.")).toBeInTheDocument();
+    expect(screen.queryByText("The conference purpose is not defined.")).not.toBeInTheDocument();
   });
 
   it("describes an unchanged integrity band without claiming it moved", () => {

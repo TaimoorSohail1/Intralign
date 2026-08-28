@@ -43,6 +43,11 @@ def render_snapshot_pdf(
     """Render a dependency-free, immutable snapshot PDF for Alpha."""
 
     assessment = snapshot.get("assessment") or {}
+    integrity = assessment.get("integrity") or {}
+    integrity_bands = {
+        str(item.get("key")): item.get("band")
+        for item in integrity.get("decomposition", [])
+    }
     artifacts = snapshot.get("artifacts") or []
     issues = [
         issue
@@ -76,10 +81,11 @@ def render_snapshot_pdf(
         ),
         "",
         f"State: {snapshot.get('state', 'current')}",
-        f"Confidence: {assessment.get('confidence_index', 'Not available')}/100",
-        f"Clarity: {assessment.get('clarity', 'Not available')}",
-        f"Alignment: {assessment.get('alignment', 'Not available')}",
-        f"Feasibility: {assessment.get('feasibility', 'Not available')}",
+        "Outcome integrity: "
+        + str(integrity.get("level", assessment.get("confidence_band", "Not available"))),
+        f"Viability: {integrity_bands.get('Viability', 'Not available')}",
+        f"Grounding: {integrity_bands.get('Grounding', 'Not available')}",
+        f"Adaptability: {integrity_bands.get('Adaptability', 'Not available')}",
         "",
         "Summary",
         _current_read_summary(

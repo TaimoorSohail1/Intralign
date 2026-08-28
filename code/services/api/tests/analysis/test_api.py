@@ -1,5 +1,6 @@
 from uuid import UUID
 
+import pytest
 from fastapi.testclient import TestClient
 
 from oslo_api.analysis import (
@@ -12,6 +13,7 @@ from oslo_api.analysis import (
     RunKind,
 )
 from oslo_api.analysis.advisor import AdvisorReply
+from oslo_api.api.schema_guard import PublicSchemaViolation, validate_public_schema
 from oslo_api.main import create_app
 from oslo_api.slice_two import (
     SliceTwoAnalysisInProgress,
@@ -639,8 +641,9 @@ def test_authenticated_user_lists_append_only_project_history() -> None:
                 "status": "completed",
                 "current": True,
                 "occurred_at": "2026-07-26T10:00:00Z",
-                "confidence_index": 62,
                 "confidence_band": "Moderate",
+                "grounded_load_bearing": 12,
+                "total_load_bearing": 15,
                 "confidence_direction": "up",
                 "understanding_stage": "expanded",
                 "changes": [{"label": "Feasibility Very Low → Low", "tone": "positive"}],
@@ -663,8 +666,9 @@ def test_authenticated_user_lists_append_only_project_history() -> None:
         "trend": [
             {
                 "run_id": "018f9f7e-8de2-7000-8000-000000000040",
-                "confidence_index": 62,
                 "confidence_band": "Moderate",
+                "grounded_load_bearing": 12,
+                "total_load_bearing": 15,
                 "direction": "up",
                 "cause": "Feasibility rose from Very Low to Low.",
                 "occurred_at": "2026-07-26T10:00:00Z",
@@ -682,6 +686,48 @@ def test_authenticated_user_lists_append_only_project_history() -> None:
 
     assert response.status_code == 200
     assert response.json() == slice_two.history
+    assert "confidence_index" not in response.text
+
+
+def test_public_analysis_schemas_do_not_publish_numeric_confidence() -> None:
+    schema = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=RecordingSliceTwo())
+    ).get("/openapi.json").json()
+
+    for name in (
+        "AssessmentResponse",
+        "HistoryGroupResponse",
+        "HistoryTrendResponse",
+    ):
+        assert "confidence_index" not in schema["components"]["schemas"][name]["properties"]
+
+
+@pytest.mark.parametrize(
+    ("field_name", "property_schema"),
+    (
+        ("maturity_score", {"type": "number", "title": "Outcome maturity score"}),
+        (
+            "read_strength",
+            {
+                "type": "integer",
+                "description": "A numeric confidence value for the current read.",
+            },
+        ),
+    ),
+)
+def test_public_schema_guard_rejects_renamed_numeric_confidence(
+    field_name: str,
+    property_schema: dict[str, object],
+) -> None:
+    schema = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=RecordingSliceTwo())
+    ).get("/openapi.json").json()
+    schema["components"]["schemas"]["AssessmentResponse"]["properties"][field_name] = (
+        property_schema
+    )
+
+    with pytest.raises(PublicSchemaViolation, match=field_name):
+        validate_public_schema(schema)
 
 
 def test_project_history_accepts_collaboration_events() -> None:
@@ -712,8 +758,9 @@ def test_project_history_accepts_collaboration_events() -> None:
                 "status": "completed",
                 "current": True,
                 "occurred_at": "2026-07-26T10:00:00Z",
-                "confidence_index": 62,
                 "confidence_band": "Moderate",
+                "grounded_load_bearing": 12,
+                "total_load_bearing": 15,
                 "confidence_direction": "up",
                 "understanding_stage": "expanded",
                 "changes": [],
@@ -1356,6 +1403,57 @@ def test_artifact_workspace_reads_source_grounded_rows_from_structured_extractio
 
     assert response.status_code == 200
     assert response.json()["content"]["sections"][0]["row_states"] == ["confirmed"]
+
+
+def test_artifact_workspace_reads_empty_generated_sections() -> None:
+    class EmptyArtifactSliceTwo(RecordingSliceTwo):
+        def get_artifact(self, **kwargs):
+            artifact = super().get_artifact(**kwargs)
+            artifact["content"] = {
+                "sections": [
+                    {
+                        "heading": "Schedule",
+                        "body": "",
+                        "bullets": [],
+                        "columns": [],
+                        "rows": [],
+                    },
+                    {
+                        "heading": "Shared plan tasks",
+                        "body": "",
+                        "bullets": [],
+                        "columns": ["Milestone", "Date", "Status"],
+                        "rows": [],
+                    },
+                ]
+            }
+            return artifact
+
+    slice_two = EmptyArtifactSliceTwo()
+    slice_two.start_analysis(
+        actor_user_id=USER_ID,
+        project_id=PROJECT_ID,
+        description="A plan without documented schedule details.",
+        source_names=(),
+        source_document_ids=(),
+        kind=RunKind.INITIAL,
+        key="empty-artifact-seed",
+    )
+    slice_two.complete_latest()
+    client = TestClient(
+        create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two),
+        raise_server_exceptions=False,
+    )
+
+    response = client.get(
+        f"/v1/projects/{PROJECT_ID}/artifacts/schedule",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 200
+    assert [
+        section["heading"] for section in response.json()["content"]["sections"]
+    ] == ["Schedule", "Shared plan tasks"]
 
 
 def test_artifact_workspace_returns_readable_issue_evidence() -> None:

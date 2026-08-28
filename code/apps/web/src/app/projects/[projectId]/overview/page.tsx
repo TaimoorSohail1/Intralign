@@ -37,8 +37,6 @@ export default async function OverviewPage({
     redirect(`/intake?project=${projectId}`);
   }
   const activeOutcome =
-    outcomes.find((outcome) => outcome.status === "active" && outcome.is_primary) ??
-    outcomes.find((outcome) => outcome.status === "active") ??
-    null;
+    outcomes.find((outcome) => outcome.status === "active" && outcome.is_primary) ?? null;
   return <ProjectOverview initial={snapshot} initialOutcome={activeOutcome} initialProposals={proposals} displayName={session.displayName ?? "Member"} logoutAction={logout} />;
 }

@@ -14,8 +14,9 @@ const history: ProjectHistory = {
       status: "completed",
       current: true,
       occurred_at: "2026-07-26T12:00:00Z",
-      confidence_index: 62,
       confidence_band: "Moderate",
+      grounded_load_bearing: 12,
+      total_load_bearing: 15,
       confidence_direction: "strengthened",
       understanding_stage: "expanded",
       changes: [
@@ -67,8 +68,9 @@ const history: ProjectHistory = {
       status: "completed",
       current: false,
       occurred_at: "2026-07-26T11:58:00Z",
-      confidence_index: 58,
       confidence_band: "Moderate",
+      grounded_load_bearing: 9,
+      total_load_bearing: 15,
       confidence_direction: "unchanged",
       understanding_stage: "orientation",
       changes: [{ label: "First evidence-qualified read", tone: "neutral" }],
@@ -91,8 +93,9 @@ const history: ProjectHistory = {
   trend: [
     {
       run_id: "run-initial",
-      confidence_index: 58,
       confidence_band: "Moderate",
+      grounded_load_bearing: 9,
+      total_load_bearing: 15,
       direction: "unchanged",
       cause: "First evidence-qualified read",
       occurred_at: "2026-07-26T11:58:00Z",
@@ -100,8 +103,9 @@ const history: ProjectHistory = {
     },
     {
       run_id: "run-extended",
-      confidence_index: 62,
       confidence_band: "Moderate",
+      grounded_load_bearing: 12,
+      total_load_bearing: 15,
       direction: "strengthened",
       cause: "Feasibility Very Low → Low",
       occurred_at: "2026-07-26T12:00:00Z",
@@ -118,6 +122,71 @@ afterEach(() => {
 });
 
 describe("HistoryWorkspace", () => {
+  it("keeps an empty session steady without inventing movement", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+    render(
+      <HistoryWorkspace
+        history={{ project_id: "project-001", groups: [], trend: [], next_cursor: null }}
+        projectId="project-001"
+      />,
+    );
+
+    const trend = screen.getByRole("region", { name: "Your read over this session" });
+    expect(trend).toHaveTextContent("Grounded 0 of 0 load-bearing");
+    expect(trend).toHaveTextContent("— steady this session");
+  });
+
+  it("shows eased when retained grounded evidence decreases", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+    const easedHistory: ProjectHistory = {
+      ...history,
+      trend: [history.trend[1], history.trend[0]].map((point, index) => ({
+        ...point,
+        current: index === 1,
+      })),
+    };
+    render(
+      <HistoryWorkspace history={easedHistory} projectId="project-001" />,
+    );
+
+    expect(
+      screen.getByRole("region", { name: "Your read over this session" }),
+    ).toHaveTextContent("▼ eased");
+  });
+
+  it("refreshes the grounded trend when the published analysis changes", async () => {
+    const initialOnly: ProjectHistory = {
+      ...history,
+      groups: history.groups.filter((group) => group.kind === "initial"),
+      trend: history.trend.filter((item) => item.run_id === "run-initial"),
+    };
+    const expandedHistory: ProjectHistory = {
+      ...history,
+      trend: history.trend.map((point) => ({
+        ...point,
+        total_load_bearing: point.grounded_load_bearing,
+      })),
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, json: async () => expandedHistory }),
+    );
+
+    render(
+      <HistoryWorkspace
+        analysisRunId="run-extended"
+        history={initialOnly}
+        projectId="project-001"
+      />,
+    );
+
+    const trend = screen.getByRole("region", { name: "Your read over this session" });
+    await waitFor(() =>
+      expect(trend).toHaveTextContent("Grounded 12 of 12 load-bearing"),
+    );
+    expect(trend).toHaveTextContent("▲ rising");
+  });
+
   it("refreshes the visible timeline in place when a newer analysis version arrives", async () => {
     const fetchMock = vi
       .fn()
@@ -161,7 +230,16 @@ describe("HistoryWorkspace", () => {
       vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({
-          assessment: { confidence_index: 62, confidence_band: "Moderate" },
+          assessment: {
+            confidence_band: "Moderate",
+            integrity: {
+              level: "Developing",
+              limiting_pillar: "Grounding",
+              decomposition: [],
+              posture: "moment-in-time",
+              tracking: "pending-execution",
+            },
+          },
           artifacts: [{ artifact_type: "intent", title: "Intent", summary: "Run the event." }],
           summary: "A retained historical project read.",
         }),

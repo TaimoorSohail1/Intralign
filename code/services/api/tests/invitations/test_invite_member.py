@@ -58,6 +58,53 @@ def test_owner_can_invite_another_owner_for_fourteen_days() -> None:
     assert "raw-activation-token" not in repr(invitation)
 
 
+def test_owner_can_invite_a_delegate_pm_to_one_project() -> None:
+    now = datetime(2026, 8, 25, 9, 0, tzinfo=UTC)
+    project_id = UUID("018f9f7e-8de2-7000-8000-000000000012")
+    store = RecordingInvitationStore()
+    invite_member = InviteMember(
+        invitations=store,
+        memberships=FixedMemberships(MembershipRole.OWNER),
+        clock=lambda: now,
+        new_id=lambda: UUID("018f9f7e-8de2-7000-8000-000000000001"),
+        new_token=lambda: "raw-delegate-token",
+    )
+
+    issued = invite_member(
+        InviteMemberCommand(
+            workspace_id=UUID("018f9f7e-8de2-7000-8000-000000000010"),
+            invited_by_user_id=UUID("018f9f7e-8de2-7000-8000-000000000011"),
+            email="delegate@example.com",
+            role=MembershipRole.DELEGATE_PM,
+            project_id=project_id,
+        )
+    )
+
+    assert issued.invitation.role is MembershipRole.DELEGATE_PM
+    assert issued.invitation.project_id == project_id
+    assert store.saved == [issued.invitation]
+
+
+def test_delegate_pm_invitation_requires_a_project() -> None:
+    invite_member = InviteMember(
+        invitations=RecordingInvitationStore(),
+        memberships=FixedMemberships(MembershipRole.OWNER),
+        clock=lambda: datetime(2026, 8, 25, 9, 0, tzinfo=UTC),
+        new_id=lambda: UUID("018f9f7e-8de2-7000-8000-000000000001"),
+        new_token=lambda: "raw-delegate-token",
+    )
+
+    with pytest.raises(ValueError, match="DELEGATE_PM_REQUIRES_PROJECT"):
+        invite_member(
+            InviteMemberCommand(
+                workspace_id=UUID("018f9f7e-8de2-7000-8000-000000000010"),
+                invited_by_user_id=UUID("018f9f7e-8de2-7000-8000-000000000011"),
+                email="delegate@example.com",
+                role=MembershipRole.DELEGATE_PM,
+            )
+        )
+
+
 def test_non_members_cannot_invite_members() -> None:
     store = RecordingInvitationStore()
     invite_member = InviteMember(

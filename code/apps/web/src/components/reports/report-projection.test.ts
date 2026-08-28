@@ -116,6 +116,15 @@ const snapshot = {
     inferred_claims: 2,
     total_claims: 3,
     load_bearing_inferences: 1,
+    grounding: {
+      grounded: 0,
+      addressed: 1,
+      routed: 0,
+      inferred: 1,
+      total: 2,
+      basis: 0,
+      band: "Fragile",
+    },
     structure: { unconfirmed_dependencies: 1, unowned_parties: 1, untraceable_numbers: 0 },
     this_week: { user_grounded: 1, oslo_inferred: 2 },
   },
@@ -159,7 +168,7 @@ describe("projectReportProjection", () => {
 
     expect(projection.analysisAt).toBe("2026-08-15T10:30:00Z");
     expect(projection.openIssues.map((issue) => issue.id)).toEqual(["issue-top", "issue-low"]);
-    expect(projection.criticalGrounding).toEqual({ grounded: 1, total: 2 });
+    expect(projection.criticalGrounding).toEqual({ grounded: 0, total: 2 });
     expect(projection.evidenceRegister).toEqual({ grounded: 1, inferred: 2, total: 3 });
     expect(projection.decisions[0]).toMatchObject({
       title: "Confirmed Avery as data steward",

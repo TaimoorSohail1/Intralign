@@ -193,7 +193,7 @@ export function FullPlanWorkspace({
       </header>
 
       <p className="full-plan-read">
-        <strong>OSLO’s read:</strong> The whole sequenced plan — task, owner, dates,
+        <strong>Current plan view:</strong> The whole sequenced plan — task, owner, dates,
         provenance. Read-only: this is what leaves as the export.
       </p>
 

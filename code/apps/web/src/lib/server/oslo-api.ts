@@ -5,7 +5,8 @@ const apiUrl = process.env.OSLO_API_URL ?? "http://127.0.0.1:8000";
 export interface InvitationDetails {
   email: string;
   workspace_name: string;
-  role: "owner";
+  role: "owner" | "delegate_pm";
+  project_id?: string | null;
   expires_at: string;
   account_exists: boolean;
 }
@@ -18,7 +19,7 @@ export interface SessionPayload {
   refresh_token: string;
   expires_in: number;
   welcome_required: boolean;
-  account_role?: "admin" | "owner";
+  account_role?: "admin" | "owner" | "delegate_pm";
 }
 
 export interface SessionContext {
@@ -26,14 +27,15 @@ export interface SessionContext {
   email: string;
   workspace_id: string;
   display_name: string;
-  account_role: "admin" | "owner";
+  account_role: "admin" | "owner" | "delegate_pm";
   welcome_required: boolean;
 }
 
 export interface InvitationSummary {
   id: string;
   email: string;
-  role: "owner";
+  role: "owner" | "delegate_pm";
+  project_id?: string | null;
   status: "pending" | "accepted" | "revoked" | "expired";
   expires_at: string;
 }
@@ -117,7 +119,6 @@ export interface OverviewSnapshot {
     conflicts?: ArtifactConflict[];
   }>;
   assessment: {
-    confidence_index: number;
     confidence_band: string;
     reliability: string;
     clarity: string;
@@ -176,6 +177,7 @@ export interface OverviewSnapshot {
       finding_type?: string;
       section?: string;
       recommendation_from_oslo?: boolean;
+      load_bearing?: boolean;
       exposure_rank?: number;
       finding_basis?: "inference" | "structural" | "decision" | "model_gap" | "";
       structural_target?: "definition" | "edge" | "achievability" | "truth" | "coverage" | "";
@@ -185,6 +187,8 @@ export interface OverviewSnapshot {
       sensitivity?: number | null;
       sensitivity_trace?: {
         paths: string[][];
+        dependency_paths?: string[][];
+        outcome_dependencies?: string[];
         span_true: number;
         span_false: number;
         span: number;
@@ -220,6 +224,15 @@ export interface OverviewSnapshot {
     inferred_claims: number;
     total_claims: number;
     load_bearing_inferences: number;
+    grounding?: {
+      grounded: number;
+      addressed: number;
+      routed: number;
+      inferred: number;
+      total: number;
+      basis: number;
+      band: "Fragile" | "Weak" | "Developing" | "Solid" | "Sound";
+    };
     structure: {
       unconfirmed_dependencies: number;
       unowned_parties: number;
@@ -301,8 +314,9 @@ export interface HistoryGroup {
   status: string;
   current: boolean;
   occurred_at: string;
-  confidence_index: number | null;
   confidence_band: string | null;
+  grounded_load_bearing: number;
+  total_load_bearing: number;
   confidence_direction: string | null;
   understanding_stage: string | null;
   changes: HistoryChange[];
@@ -311,8 +325,9 @@ export interface HistoryGroup {
 
 export interface HistoryTrendPoint {
   run_id: string;
-  confidence_index: number;
   confidence_band: string;
+  grounded_load_bearing: number;
+  total_load_bearing: number;
   direction: string;
   cause: string;
   occurred_at: string;
@@ -796,11 +811,17 @@ export function sendInvitation(input: {
   accessToken: string;
   workspaceId: string;
   email: string;
+  role?: "owner" | "delegate_pm";
+  projectId?: string | null;
 }): Promise<{ id: string; email: string }> {
   return apiRequest(`/v1/workspaces/${input.workspaceId}/invitations`, {
     method: "POST",
     headers: { authorization: `Bearer ${input.accessToken}` },
-    body: JSON.stringify({ email: input.email }),
+    body: JSON.stringify({
+      email: input.email,
+      role: input.role ?? "owner",
+      project_id: input.projectId ?? null,
+    }),
   });
 }
 
@@ -863,7 +884,6 @@ export interface WorkspaceProjectSummary {
   archived: boolean;
   updated_at: string;
   analysis_status: string;
-  confidence_index: number | null;
   confidence_band: string | null;
   reliability: string | null;
   open_issues: number;
@@ -886,7 +906,7 @@ export interface WorkspaceNotificationSummary {
 export interface WorkspaceSummary {
   id: string;
   name: string;
-  role: "owner";
+  role: "owner" | "delegate_pm";
   plan: "free" | "basic";
   plan_label: string;
   price_usd_monthly: number;
@@ -912,14 +932,14 @@ export interface WorkspacePreferences {
   display_name: string;
   role_title: string;
   workspace_name: string;
-  actor_role: "owner";
+  actor_role: "owner" | "delegate_pm";
   mentions_notifications: boolean;
   reply_notifications: boolean;
   shared_notifications: boolean;
 }
 
 export interface CollaborationState {
-  actor_role: "owner" | "collaborator" | "viewer";
+  actor_role: "owner" | "delegate_pm" | "viewer";
   plan: {
     name: string;
     collaborators_unmetered: boolean;
@@ -931,7 +951,7 @@ export interface CollaborationState {
   participants: Array<{
     id: string;
     display_name: string;
-    role: "owner" | "collaborator" | "viewer";
+    role: "owner" | "delegate_pm" | "viewer";
   }>;
   invitations?: InvitationSummary[];
   comments: Array<{

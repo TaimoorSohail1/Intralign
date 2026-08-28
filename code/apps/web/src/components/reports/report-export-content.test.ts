@@ -17,7 +17,7 @@ const snapshot = {
       summary: "Delivery plan",
       reliability: "Moderate",
       basis: "Documented",
-      evidence_refs: ["document:plan:page:2"],
+      evidence_refs: ["description:1", "document:plan:page:2"],
       content: {
         sections: [
           {
@@ -26,7 +26,7 @@ const snapshot = {
             bullets: [],
             columns: ["Task", "Owner", "Due"],
             rows: [["=IMPORTXML(\"bad\")", "Avery", "2026-09-01"]],
-            row_evidence_refs: [["document:plan:page:2"]],
+            row_evidence_refs: [["description:1", "document:plan:page:2"]],
           },
         ],
       },
@@ -44,6 +44,8 @@ describe("buildPlanExport", () => {
     expect(result.excel.mime).toBe("application/vnd.ms-excel");
     expect(result.excel.content).toContain("Atlas launch");
     expect(result.text.content).toContain("Task: =IMPORTXML");
+    expect(result.text.content).toContain("Provenance: Project description | plan, page 2");
+    expect(result.text.content).not.toContain("description:1");
     expect(result.csv.content).not.toContain("confidence_explanation");
   });
 });

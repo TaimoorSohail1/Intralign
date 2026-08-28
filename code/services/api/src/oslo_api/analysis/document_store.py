@@ -184,7 +184,7 @@ class DatabaseDocumentStore:
                     update public.projects
                     set name = :upload_title, updated_at = now()
                     where id = :project_id
-                      and name = 'Untitled project'
+                      and name in ('Project', 'Untitled project')
                       and nullif(trim(cast(:upload_title as text)), '') is not null
                     """
                 ),

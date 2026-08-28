@@ -151,8 +151,7 @@ class GroundedProjectAdvisor:
         elif "changed" in normalized:
             answer = (
                 f"The current read is {assessment.confidence_direction}. "
-                f"Outcome confidence is {assessment.confidence_band}, with "
-                f"{assessment.reliability.lower()} reliability."
+                f"Its evidence basis has {assessment.reliability.lower()} reliability."
             )
         elif top is not None:
             answer = (

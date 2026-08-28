@@ -15,7 +15,9 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import Connection, Engine, text
 
 from oslo_api.analysis.history import append_history_event
+from oslo_api.analysis.provenance import grounding_issue_state
 from oslo_api.collaboration.asana import AsanaGateway, executable_plan_items
+from oslo_api.project_access import find_project_access
 
 
 class CollaborationError(Exception):
@@ -37,6 +39,7 @@ def _freeze_public_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     """
 
     frozen = json.loads(json.dumps(snapshot))
+    (frozen.get("assessment") or {}).pop("confidence_index", None)
     issues = frozen.get("assessment", {}).get("issues", [])
     open_issue_count = sum(
         1 for issue in issues if issue.get("status") != "resolved"
@@ -169,10 +172,18 @@ class DatabaseCollaborationService:
                         from public.memberships m
                         join public.profiles p on p.id = m.user_id
                         where m.workspace_id = :workspace_id
-                        order by lower(p.display_name)
+
+                        union all
+
+                        select pm.user_id::text as id, p.display_name,
+                               pm.role::text as role, 'member' as principal_type
+                        from public.project_memberships pm
+                        join public.profiles p on p.id = pm.user_id
+                        where pm.project_id = :project_id
+                        order by display_name
                         """
                     ),
-                    {"workspace_id": workspace_id},
+                    {"workspace_id": workspace_id, "project_id": project_id},
                 ).mappings()
             ]
             comments = [
@@ -231,7 +242,7 @@ class DatabaseCollaborationService:
                     ),
                     {"project_id": project_id},
                 ).mappings()
-            ]
+            ] if role == "owner" else []
             plan_code = connection.execute(
                 text(
                     """
@@ -262,13 +273,14 @@ class DatabaseCollaborationService:
 
     def roll_up(self, *, actor_user_id: UUID, project_id: UUID) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        snapshot, statuses, reviewers = self._collaboration_projection_data(project_id)
+        snapshot, statuses, reviewers, actions = self._collaboration_projection_data(project_id)
         assessment = snapshot.get("assessment") or {}
         nodes = self._grounding_nodes(
             project_id,
             assessment.get("issues") or [],
             statuses,
             reviewers,
+            actions,
         )
         decision_queue = [node for node in nodes if node["state"] != "grounded"]
         decision_queue.sort(key=lambda item: item["exposure_rank"], reverse=True)
@@ -307,9 +319,9 @@ class DatabaseCollaborationService:
 
     def grounding_map(self, *, actor_user_id: UUID, project_id: UUID) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        snapshot, statuses, reviewers = self._collaboration_projection_data(project_id)
+        snapshot, statuses, reviewers, actions = self._collaboration_projection_data(project_id)
         issues = (snapshot.get("assessment") or {}).get("issues") or []
-        nodes = self._grounding_nodes(project_id, issues, statuses, reviewers)
+        nodes = self._grounding_nodes(project_id, issues, statuses, reviewers, actions)
         return {
             "workspace_id": str(workspace_id),
             "project_id": str(project_id),
@@ -324,7 +336,7 @@ class DatabaseCollaborationService:
     def _collaboration_projection_data(
         self,
         project_id: UUID,
-    ) -> tuple[dict, dict[str, str], list[dict]]:
+    ) -> tuple[dict, dict[str, str], list[dict], dict[str, dict]]:
         with self._engine.connect() as connection:
             snapshot = connection.execute(
                 text(
@@ -371,7 +383,26 @@ class DatabaseCollaborationService:
                     {"project_id": project_id},
                 ).mappings()
             ]
-        return dict(snapshot), statuses, reviewers
+            actions = {
+                str(row["issue_stable_key"]): {
+                    "act": str(row["act"]),
+                    "basis": str(row["basis"]) if row["basis"] is not None else None,
+                    "evidence_ref": row["evidence_ref"],
+                }
+                for row in connection.execute(
+                    text(
+                        """
+                        select distinct on (issue_stable_key)
+                               issue_stable_key, act, basis, evidence_ref
+                        from public.issue_attestations
+                        where project_id = :project_id
+                        order by issue_stable_key, created_at desc
+                        """
+                    ),
+                    {"project_id": project_id},
+                ).mappings()
+            }
+        return dict(snapshot), statuses, reviewers, actions
 
     @staticmethod
     def _grounding_nodes(
@@ -379,6 +410,7 @@ class DatabaseCollaborationService:
         issues: list[dict],
         statuses: dict[str, str],
         reviewers: list[dict],
+        actions: dict[str, dict],
     ) -> list[dict]:
         routed_ids = {
             str(reviewer["issue_id"])
@@ -387,16 +419,15 @@ class DatabaseCollaborationService:
         }
         nodes: list[dict] = []
         for issue in issues:
+            if not bool(issue.get("load_bearing", True)):
+                continue
             issue_id = str(issue.get("id") or "")
             current_status = statuses.get(issue_id, str(issue.get("status") or "open"))
-            if current_status == "resolved":
-                state = "grounded"
-            elif current_status == "addressed":
-                state = "addressed"
-            elif issue_id in routed_ids or current_status == "routed":
-                state = "routed"
-            else:
-                state = "inferred"
+            action = dict(actions.get(issue_id) or {})
+            action["status"] = current_status
+            if issue_id in routed_ids and not action.get("act"):
+                action["act"] = "route"
+            state = grounding_issue_state(issue, action)
             nodes.append(
                 {
                     "issue_id": issue_id,
@@ -468,9 +499,17 @@ class DatabaseCollaborationService:
                         join public.profiles p on p.id = m.user_id
                         left join auth.users u on u.id = m.user_id
                         where m.workspace_id = :workspace_id
+
+                        union all
+
+                        select pm.user_id, p.display_name, u.email::text
+                        from public.project_memberships pm
+                        join public.profiles p on p.id = pm.user_id
+                        left join auth.users u on u.id = pm.user_id
+                        where pm.project_id = :project_id
                         """
                     ),
-                    {"workspace_id": workspace_id},
+                    {"workspace_id": workspace_id, "project_id": project_id},
                 ).mappings()
             )
             actor_name = next(
@@ -543,7 +582,7 @@ class DatabaseCollaborationService:
         recipient_email: str | None,
     ) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+        self._require_owner(role)
         recipient = recipient_name.strip()
         if not recipient:
             raise CollaborationError("RECIPIENT_REQUIRED", "Snapshot recipient name is required")
@@ -641,7 +680,7 @@ class DatabaseCollaborationService:
         source_excerpt: str,
     ) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+        self._require_owner(role)
         name = reviewer_name.strip()
         if not name:
             raise CollaborationError("REVIEWER_REQUIRED", "Reviewer name is required")
@@ -925,7 +964,7 @@ class DatabaseCollaborationService:
         grant_id: UUID,
     ) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+        self._require_owner(role)
         with self._engine.begin() as connection:
             row = (
                 connection.execute(
@@ -1474,7 +1513,7 @@ class DatabaseCollaborationService:
         self, *, actor_user_id: UUID, project_id: UUID, link_id: UUID
     ) -> None:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+        self._require_owner(role)
         with self._engine.begin() as connection:
             result = connection.execute(
                 text(
@@ -1509,7 +1548,7 @@ class DatabaseCollaborationService:
         self, *, actor_user_id: UUID, project_id: UUID, grant_id: UUID
     ) -> None:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+        self._require_owner(role)
         with self._engine.begin() as connection:
             result = connection.execute(
                 text(
@@ -1758,7 +1797,7 @@ class DatabaseCollaborationService:
         self, *, actor_user_id: UUID, project_id: UUID
     ) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+        self._require_owner(role)
         if self._asana_gateway is None:
             raise CollaborationError(
                 "ASANA_NOT_CONNECTED",
@@ -2034,7 +2073,7 @@ class DatabaseCollaborationService:
         timezone: str,
     ) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+        self._require_owner(role)
         next_run_at = self._next_weekly_run(
             weekday=weekday,
             local_time=local_time,
@@ -2111,7 +2150,7 @@ class DatabaseCollaborationService:
         state: str,
     ) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+        self._require_owner(role)
         with self._engine.begin() as connection:
             row = connection.execute(
                 text(
@@ -2153,7 +2192,7 @@ class DatabaseCollaborationService:
         self, *, actor_user_id: UUID, project_id: UUID, schedule_id: UUID
     ) -> None:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+        self._require_owner(role)
         with self._engine.begin() as connection:
             deleted = connection.execute(
                 text(
@@ -2384,7 +2423,7 @@ class DatabaseCollaborationService:
         confirm_previous_analysis: bool = False,
     ) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
-        self._require_editor(role)
+        self._require_owner(role)
         deliver_at = scheduled_for or datetime.now(UTC)
         if deliver_at.tzinfo is None:
             deliver_at = deliver_at.replace(tzinfo=UTC)
@@ -2773,31 +2812,30 @@ class DatabaseCollaborationService:
 
     def _project_access(self, actor_user_id: UUID, project_id: UUID) -> tuple[UUID, str]:
         with self._engine.connect() as connection:
-            row = (
-                connection.execute(
-                    text(
-                        """
-                        select p.workspace_id, m.role::text as role
-                        from public.projects p
-                        join public.memberships m on m.workspace_id = p.workspace_id
-                        where p.id = :project_id and m.user_id = :user_id
-                        """
-                    ),
-                    {"project_id": project_id, "user_id": actor_user_id},
-                )
-                .mappings()
-                .one_or_none()
+            access = find_project_access(
+                connection,
+                actor_user_id=actor_user_id,
+                project_id=project_id,
             )
-        if row is None:
+        if access is None:
             raise CollaborationError("PROJECT_FORBIDDEN", "Project access denied", 403)
-        return row["workspace_id"], row["role"]
+        return access.workspace_id, access.role
 
     @staticmethod
     def _require_editor(role: str) -> None:
+        if role not in {"owner", "delegate_pm"}:
+            raise CollaborationError(
+                "COLLABORATION_FORBIDDEN",
+                "Project editing access is required",
+                403,
+            )
+
+    @staticmethod
+    def _require_owner(role: str) -> None:
         if role != "owner":
             raise CollaborationError(
                 "COLLABORATION_FORBIDDEN",
-                "Only workspace owners can change collaboration settings",
+                "Only workspace owners can change sharing and delivery settings",
                 403,
             )
 

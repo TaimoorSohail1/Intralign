@@ -18,7 +18,7 @@ async function signIn(page: import("@playwright/test").Page) {
 }
 
 async function unlockFirstRead(page: import("@playwright/test").Page) {
-  const decision = page.getByRole("button", { name: /Confirm.+it holds/i });
+  const decision = page.getByRole("button", { name: /verified this directly/i });
   await decision.waitFor({ state: "visible", timeout: 2_000 }).catch(() => undefined);
   if (!(await decision.isVisible())) return;
   const actResponse = page.waitForResponse(
@@ -89,7 +89,7 @@ test("Slice 3 exposes an evidence-qualified console and stable workspace routes"
   await issue.focus();
   await issue.click();
   await expect(page.getByRole("region", { name: "Issue details" })).toBeVisible();
-  await expect(page.getByLabel("OSLO project advisor")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ask OSLO", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Close issue" }).click();
   await expect(issue).toBeFocused();
 
@@ -100,7 +100,7 @@ test("Slice 3 exposes an evidence-qualified console and stable workspace routes"
   }
   await page.goto(`/projects/${projectId}/attention`);
   await expect(page).toHaveURL(/\/issues$/, { timeout: 120_000 });
-  await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Exposure-ranked issue queue" })).toBeVisible();
 
   await page.goto(`/projects/${projectId}/issues`);
   await expect(page).toHaveURL(/\/issues$/, { timeout: 120_000 });

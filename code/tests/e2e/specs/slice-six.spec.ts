@@ -84,12 +84,26 @@ test("Issues regression filters issues and persists a governed resolution select
   await evidence.click();
   await expect(evidence).toHaveAttribute("aria-expanded", "true");
 
-  await dialog.getByRole("button", { name: "Other ways to handle this" }).click();
+  await dialog
+    .getByRole("button", { name: /Other (?:ways to handle this|options \(\d+\))/ })
+    .click();
   await dialog.getByRole("button", { name: "Select this path" }).click();
-  await expect(dialog.getByRole("heading", { name: "Confirmed by you" })).toBeVisible();
+
+  const settlement = page
+    .getByRole("region", { name: "Acted on, not yet closed" })
+    .getByText(issueTitle, { exact: true });
+  await expect(settlement).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Acted on, not yet closed" }).getByText(
+      "Waiting for reanalysis",
+      { exact: true },
+    ),
+  ).toBeVisible();
 
   await page.reload();
-  await page.getByRole("button", { name: new RegExp(issueTitle) }).click();
+  const persistedSettlement = page.getByRole("region", { name: "Acted on, not yet closed" });
+  await expect(persistedSettlement.getByText(issueTitle, { exact: true })).toBeVisible();
+  await persistedSettlement.getByRole("button", { name: `View ${issueTitle}` }).click();
   await expect(
     page.getByRole("region", { name: "Issue details" }).getByRole("heading", {
       name: "Confirmed by you",

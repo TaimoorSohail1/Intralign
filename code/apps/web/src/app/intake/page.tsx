@@ -21,8 +21,9 @@ export default async function IntakePage({
       }).catch(() => null)
     : null;
   const existingProject = workspace?.projects.find((candidate) => candidate.id === project);
+  if (!existingProject) redirect("/workspace");
   const analysisKind =
-    existingProject && existingProject.analysis_status !== "not_analyzed"
+    existingProject.analysis_status !== "not_analyzed"
       ? "extended"
       : "initial";
   return (

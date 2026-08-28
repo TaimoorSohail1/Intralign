@@ -4,12 +4,58 @@ from uuid import UUID
 
 from fastapi.testclient import TestClient
 
-from oslo_api.collaboration.service import CollaborationError
+from oslo_api.collaboration.service import CollaborationError, DatabaseCollaborationService
 from oslo_api.main import create_app
 
 USER_ID = UUID("018f9f7e-8de2-7000-8000-000000000011")
 PROJECT_ID = UUID("018f9f7e-8de2-7000-8000-000000000012")
 RUN_ID = UUID("018f9f7e-8de2-7000-8000-000000000013")
+
+
+def test_grounding_map_uses_only_load_bearing_issues_and_verified_resolution() -> None:
+    issues = [
+        {
+            "id": "verified",
+            "title": "Verify the capacity",
+            "status": "resolved",
+            "load_bearing": True,
+            "primary_act": "verify",
+        },
+        {
+            "id": "built",
+            "title": "Build the missing schedule",
+            "status": "resolved",
+            "load_bearing": True,
+            "primary_act": "build",
+        },
+        {
+            "id": "minor",
+            "title": "Polish supporting copy",
+            "status": "open",
+            "load_bearing": False,
+            "primary_act": "build",
+        },
+    ]
+
+    nodes = DatabaseCollaborationService._grounding_nodes(
+        PROJECT_ID,
+        issues,
+        {"verified": "resolved", "built": "resolved", "minor": "open"},
+        [],
+        {
+            "verified": {
+                "act": "ground",
+                "basis": "verified-directly",
+                "status": "resolved",
+            },
+            "built": {"act": "fix", "basis": None, "status": "resolved"},
+        },
+    )
+
+    assert [(node["issue_id"], node["state"]) for node in nodes] == [
+        ("verified", "grounded"),
+        ("built", "addressed"),
+    ]
 
 
 class AuthenticatedApplication:
@@ -294,6 +340,29 @@ def test_collaboration_state_is_authenticated_and_exposes_plan_boundaries() -> N
         "viewers_unlimited": True,
         "reviewers_unmetered": True,
         "export_formats": ["pdf"],
+    }
+
+
+def test_unassigned_project_access_is_reported_as_forbidden() -> None:
+    class ForbiddenCollaboration(RecordingCollaboration):
+        def state(self, *, actor_user_id, project_id):
+            raise CollaborationError(
+                "PROJECT_FORBIDDEN",
+                "Project access denied",
+                403,
+            )
+
+    response = client_for(ForbiddenCollaboration()).get(
+        f"/v1/projects/{PROJECT_ID}/collaboration",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": {
+            "code": "PROJECT_FORBIDDEN",
+            "message": "Project access denied",
+        }
     }
 
 

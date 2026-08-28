@@ -81,7 +81,9 @@ test("R2 Slice 6 traces scoped review, projections, frozen sharing, and revocati
   const projectId = await analyzedProjectId(page);
   const { issue, otherTitle } = await openFirstIssue(page, projectId);
 
-  await issue.getByRole("button", { name: /Ask for evidence/i }).click();
+  await issue
+    .getByRole("button", { name: /Ask for evidence|Verify with evidence/i })
+    .click();
   await issue.getByRole("button", { name: /External evidence holder/i }).click();
   const scope = issue.getByLabel("External reviewer scope preview");
   await expect(scope).toBeVisible();

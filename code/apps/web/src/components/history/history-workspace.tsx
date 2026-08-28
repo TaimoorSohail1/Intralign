@@ -74,6 +74,7 @@ export function HistoryWorkspace({
 }) {
   const [filter, setFilter] = useState<HistoryFilter>("all");
   const [groups, setGroups] = useState(history.groups);
+  const [trend, setTrend] = useState(history.trend);
   const [nextCursor, setNextCursor] = useState(history.next_cursor);
   const [snapshot, setSnapshot] = useState<OverviewSnapshot | null>(null);
   const [snapshotPending, setSnapshotPending] = useState(false);
@@ -94,6 +95,7 @@ export function HistoryWorkspace({
         const latest = (await response.json()) as ProjectHistory;
         if (!active || !Array.isArray(latest.groups)) return;
         setGroups(latest.groups);
+        setTrend(Array.isArray(latest.trend) ? latest.trend : []);
         setNextCursor(latest.next_cursor);
       } catch {
         // The server-rendered history remains the safe last-good view.
@@ -180,7 +182,7 @@ export function HistoryWorkspace({
         </div>
       </header>
 
-      <HistoryTrend history={history} />
+      <HistoryTrend points={trend} />
 
       <div aria-label="History filters" className="history-filters" role="group">
         <span>Show</span>
@@ -267,14 +269,37 @@ export function HistoryWorkspace({
   );
 }
 
-function HistoryTrend({ history }: { history: ProjectHistory }) {
-  const points = history.trend;
-  if (!points.length) return null;
+function HistoryTrend({ points }: { points: ProjectHistory["trend"] }) {
+  if (!points.length) {
+    return (
+      <section className="history-trend" aria-label="Your read over this session">
+        <div className="history-session-heading">
+          <strong>Your read over this session</strong>
+        </div>
+        <div className="history-session-legend">
+          <span>Grounded <b>0 of 0 load-bearing</b></span>
+          <strong>— steady this session</strong>
+        </div>
+      </section>
+    );
+  }
   const first = points[0];
   const current = points.find((point) => point.current) ?? points.at(-1) ?? first;
-  const start = Math.max(3, Math.min(97, first.confidence_index ?? 0));
-  const now = Math.max(3, Math.min(97, current.confidence_index ?? 0));
-  const direction = now > start ? "rising" : now < start ? "eased" : "steady this session";
+  const percentage = (grounded: number, total: number) => total > 0 ? (grounded / total) * 100 : 0;
+  const sessionScale = Math.max(
+    1,
+    ...points.map((point) =>
+      Math.max(point.grounded_load_bearing, point.total_load_bearing),
+    ),
+  );
+  const start = Math.max(3, Math.min(97, percentage(first.grounded_load_bearing, sessionScale)));
+  const now = Math.max(3, Math.min(97, percentage(current.grounded_load_bearing, sessionScale)));
+  const groundedDelta = current.grounded_load_bearing - first.grounded_load_bearing;
+  const direction = groundedDelta > 0
+    ? "rising"
+    : groundedDelta < 0
+      ? "eased"
+      : "steady this session";
   return (
     <section className="history-trend" aria-label="Your read over this session">
       <div className="history-session-heading">
@@ -290,7 +315,7 @@ function HistoryTrend({ history }: { history: ProjectHistory }) {
         <span>Now</span>
       </div>
       <div className="history-session-legend">
-        <span>Understanding <b>{current.confidence_band ?? "Pending"}</b></span>
+        <span>Grounded <b>{current.grounded_load_bearing} of {current.total_load_bearing} load-bearing</b></span>
         <strong className={direction === "rising" ? "is-rising" : ""}>
           {direction === "rising" ? "▲" : direction === "eased" ? "▼" : "—"} {direction}
         </strong>
@@ -358,8 +383,8 @@ function HistoricalSnapshot({
           </button>
         </header>
         <div className="history-snapshot-score">
-          <strong>{snapshot.assessment.confidence_band}</strong>
-          <span>Outcome Confidence · retained read</span>
+          <strong>{snapshot.assessment.integrity.level}</strong>
+          <span>Outcome Integrity · retained read</span>
         </div>
         <p className="history-snapshot-summary">{snapshot.summary}</p>
         <div className="history-snapshot-artifacts">

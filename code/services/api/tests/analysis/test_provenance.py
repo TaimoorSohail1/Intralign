@@ -1,3 +1,4 @@
+from oslo_api.analysis.history import _snapshot_provenance
 from oslo_api.analysis.models import (
     Artifact,
     ArtifactAssumption,
@@ -44,6 +45,46 @@ def test_provenance_counts_rows_from_evidence_contract_not_ui_text() -> None:
     assert result["grounded_claims"] == 1
     assert result["inferred_claims"] == 1
     assert result["structure"]["untraceable_numbers"] == 0
+
+
+def test_history_rebuilds_legacy_provenance_without_grounding_projection() -> None:
+    snapshot = {
+        "artifacts": [],
+        "assessment": {
+            "issues": [
+                {
+                    "id": "ISS-LEGACY",
+                    "artifact_type": "requirements",
+                    "dimension": "Feasibility",
+                    "severity": "Critical",
+                    "title": "Acceptance evidence is missing",
+                    "why": "No test evidence is attached.",
+                    "recommendation": "Attach the approved result.",
+                    "evidence_refs": [],
+                    "status": "open",
+                    "load_bearing": True,
+                    "primary_act": "verify",
+                }
+            ]
+        },
+        "provenance": {
+            "schema_version": 1,
+            "grounded_claims": 20,
+            "load_bearing_inferences": 0,
+        },
+    }
+
+    result = _snapshot_provenance(snapshot)
+
+    assert result["grounding"] == {
+        "grounded": 0,
+        "addressed": 0,
+        "routed": 0,
+        "inferred": 1,
+        "total": 1,
+        "basis": 0.0,
+        "band": "Fragile",
+    }
 
 
 def test_provenance_counts_legacy_source_grounded_rows_as_grounded() -> None:
@@ -278,3 +319,71 @@ def test_provenance_deduplicates_the_same_project_assumption_across_artifacts() 
     assert len(result["assumptions"]) == 1
     assert result["assumptions"][0]["load_bearing"] is True
     assert result["load_bearing_inferences"] == 1
+
+
+def test_grounding_projection_has_one_load_bearing_issue_universe() -> None:
+    issues = (
+        Issue(
+            id="ISS-CONFIRMED",
+            artifact_type=ArtifactType.INTENT,
+            dimension="Grounding",
+            severity="Critical",
+            title="Outcome needs confirmation",
+            why="The outcome is inferred.",
+            recommendation="Confirm it.",
+            evidence_refs=(),
+            load_bearing=True,
+            primary_act="verify",
+        ),
+        Issue(
+            id="ISS-FIXED",
+            artifact_type=ArtifactType.SCOPE,
+            dimension="Viability",
+            severity="Critical",
+            title="Scope needs structure",
+            why="The scope is incomplete.",
+            recommendation="Build it.",
+            evidence_refs=(),
+            load_bearing=True,
+            primary_act="build",
+        ),
+        Issue(
+            id="ISS-ADVISORY",
+            artifact_type=ArtifactType.CONTEXT,
+            dimension="Grounding",
+            severity="Warning",
+            title="Optional context",
+            why="Useful but not load-bearing.",
+            recommendation="Review it.",
+            evidence_refs=(),
+            load_bearing=False,
+        ),
+    )
+
+    result = build_project_provenance(
+        artifacts=(),
+        issues=issues,
+        issue_actions=(
+            {
+                "issue_id": "ISS-CONFIRMED",
+                "action": "confirm",
+                "status": "resolved",
+                "basis": "verified-directly",
+            },
+            {
+                "issue_id": "ISS-FIXED",
+                "action": "fix",
+                "status": "addressed",
+            },
+        ),
+    )
+
+    assert result["grounding"] == {
+        "grounded": 1,
+        "addressed": 1,
+        "routed": 0,
+        "inferred": 0,
+        "total": 2,
+        "basis": 0.5,
+        "band": "Developing",
+    }

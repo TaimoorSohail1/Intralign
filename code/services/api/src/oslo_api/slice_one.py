@@ -138,6 +138,8 @@ class SliceOneApplication(Protocol):
         actor_user_id: UUID,
         workspace_id: UUID,
         email: str,
+        role: MembershipRole = MembershipRole.OWNER,
+        project_id: UUID | None = None,
     ) -> Invitation: ...
 
     def activate_invitation(

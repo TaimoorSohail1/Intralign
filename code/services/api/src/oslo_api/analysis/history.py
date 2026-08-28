@@ -7,6 +7,8 @@ from uuid import UUID
 
 from sqlalchemy import Connection, Engine, text
 
+from oslo_api.analysis.provenance import build_serialized_project_provenance
+
 HistoryCategory = Literal[
     "analysis",
     "issues",
@@ -14,6 +16,13 @@ HistoryCategory = Literal[
     "decisions",
     "collaboration",
 ]
+
+
+def _snapshot_provenance(snapshot: dict) -> dict:
+    stored = snapshot.get("provenance")
+    if isinstance(stored, dict) and isinstance(stored.get("grounding"), dict):
+        return stored
+    return build_serialized_project_provenance(snapshot)
 
 
 def append_history_event(
@@ -227,6 +236,8 @@ def list_project_history(
             dict(row["snapshot_json"]) if row["snapshot_json"] is not None else None
         )
         assessment = snapshot.get("assessment", {}) if snapshot else {}
+        provenance = _snapshot_provenance(snapshot) if snapshot else {}
+        grounding = provenance.get("grounding") or {}
         group = grouped.setdefault(
             run_id,
             {
@@ -235,8 +246,9 @@ def list_project_history(
                 "status": str(row["status"]),
                 "current": run_id == row["current_analysis_run_id"],
                 "occurred_at": row["occurred_at"].isoformat(),
-                "confidence_index": assessment.get("confidence_index"),
                 "confidence_band": assessment.get("confidence_band"),
+                "grounded_load_bearing": int(grounding.get("grounded", 0)),
+                "total_load_bearing": int(grounding.get("total", 0)),
                 "confidence_direction": assessment.get("confidence_direction"),
                 "understanding_stage": assessment.get("understanding_stage"),
                 "changes": (
@@ -341,8 +353,17 @@ def list_project_history(
                 "status": str(row["status"]),
                 "current": run_id == row["current_analysis_run_id"],
                 "occurred_at": published_at,
-                "confidence_index": assessment.get("confidence_index"),
                 "confidence_band": assessment.get("confidence_band"),
+                "grounded_load_bearing": int(
+                    (_snapshot_provenance(snapshot).get("grounding") or {}).get(
+                        "grounded", 0
+                    )
+                ),
+                "total_load_bearing": int(
+                    (_snapshot_provenance(snapshot).get("grounding") or {}).get(
+                        "total", 0
+                    )
+                ),
                 "confidence_direction": assessment.get("confidence_direction"),
                 "understanding_stage": assessment.get("understanding_stage"),
                 "changes": _change_labels(
@@ -358,11 +379,16 @@ def list_project_history(
         snapshot = dict(row["snapshot_json"])
         assessment = snapshot.get("assessment", {})
         changes = _change_labels(snapshot, previous)
+        provenance = _snapshot_provenance(snapshot)
+        grounding = provenance.get("grounding") or {}
+        grounded_load_bearing = int(grounding.get("grounded", 0))
+        total_load_bearing = int(grounding.get("total", 0))
         trend.append(
             {
                 "run_id": str(row["analysis_run_id"]),
-                "confidence_index": assessment.get("confidence_index", 0),
                 "confidence_band": assessment.get("confidence_band", "Low"),
+                "grounded_load_bearing": grounded_load_bearing,
+                "total_load_bearing": total_load_bearing,
                 "direction": assessment.get("confidence_direction", "unchanged"),
                 "cause": changes[0]["label"],
                 "occurred_at": row["published_at"].isoformat(),

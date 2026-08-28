@@ -138,9 +138,9 @@ export function WorkspaceHome({
       <section className="r2-plans-content">
         <header className="r2-plans-heading">
           <div><h1>Your project</h1><p>Pick up where understanding stands.</p></div>
-          <button aria-label="New project" disabled={creatingProject} onClick={() => void createProject()} type="button">
+          {workspace.role === "owner" ? <button aria-label="New project" disabled={creatingProject} onClick={() => void createProject()} type="button">
             <Plus aria-hidden="true" size={14} /> New project
-          </button>
+          </button> : null}
         </header>
 
         {error && !capacityOpen ? <p className="workspace-error" role="alert">{error}</p> : null}
@@ -182,12 +182,12 @@ export function WorkspaceHome({
               </footer>
             </article>
           ) : (
-            <button className="r2-current-plan is-empty" disabled={creatingProject} onClick={() => void createProject()} type="button">
+            workspace.role === "owner" ? <button className="r2-current-plan is-empty" disabled={creatingProject} onClick={() => void createProject()} type="button">
               <Plus size={19} /><strong>Create your first plan</strong><span>Drop in a document with context.</span>
-            </button>
+            </button> : <div className="r2-current-plan is-empty"><strong>No assigned project</strong><span>Ask an Owner to assign you to a project.</span></div>
           )}
 
-          {currentProject ? (
+          {currentProject && workspace.role === "owner" ? (
             <button aria-label="Create a new project" className="r2-new-plan" disabled={creatingProject} onClick={() => void createProject()} type="button">
               <Plus aria-hidden="true" size={19} />
               <strong>New project</strong>

@@ -30,6 +30,20 @@ function htmlCell(value: string) {
     .replaceAll('"', "&quot;");
 }
 
+function evidenceLabel(reference: string) {
+  if (/^description(?::\d+)?$/i.test(reference)) return "Project description";
+  const documentReference = /^document:([^:]+):page:(\d+)(?::.*)?$/i.exec(reference);
+  if (documentReference) {
+    const [, source, page] = documentReference;
+    return `${source.replaceAll("_", " ")}, page ${page}`;
+  }
+  return reference.replaceAll("_", " ");
+}
+
+function evidenceSummary(references: string[]) {
+  return references.map(evidenceLabel).join(" | ");
+}
+
 function exportRecords(snapshot: OverviewSnapshot): ExportRecord[] {
   return snapshot.artifacts.flatMap((artifact) => {
     const sections = artifact.content?.sections ?? [];
@@ -38,7 +52,7 @@ function exportRecords(snapshot: OverviewSnapshot): ExportRecord[] {
         artifact: artifact.title,
         section: artifact.artifact_type,
         fields: { Item: artifact.summary },
-        provenance: artifact.evidence_refs.join(" | "),
+        provenance: evidenceSummary(artifact.evidence_refs),
       }];
     }
     return sections.flatMap((section) => {
@@ -53,7 +67,7 @@ function exportRecords(snapshot: OverviewSnapshot): ExportRecord[] {
               value,
             ]),
           ),
-          provenance: (section.row_evidence_refs?.[index] ?? artifact.evidence_refs).join(" | "),
+          provenance: evidenceSummary(section.row_evidence_refs?.[index] ?? artifact.evidence_refs),
         }));
       }
       const items = section.bullets?.length
@@ -65,7 +79,7 @@ function exportRecords(snapshot: OverviewSnapshot): ExportRecord[] {
         artifact: artifact.title,
         section: section.heading,
         fields: { Item: item },
-        provenance: (section.row_evidence_refs?.[index] ?? artifact.evidence_refs).join(" | "),
+        provenance: evidenceSummary(section.row_evidence_refs?.[index] ?? artifact.evidence_refs),
       }));
     });
   });

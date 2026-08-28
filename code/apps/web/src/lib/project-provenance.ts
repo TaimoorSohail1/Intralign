@@ -38,6 +38,15 @@ export interface ProjectProvenance {
   inferredClaims: number;
   totalClaims: number;
   loadBearingInferences: number;
+  grounding: {
+    grounded: number;
+    addressed: number;
+    routed: number;
+    inferred: number;
+    total: number;
+    basis: number;
+    band: "Fragile" | "Weak" | "Developing" | "Solid" | "Sound";
+  };
   structure: {
     unconfirmedDependencies: number;
     unownedParties: number;
@@ -99,6 +108,30 @@ function artifactClaimCounts(
 export function buildProjectProvenance(snapshot: OverviewSnapshot): ProjectProvenance {
   if (snapshot.provenance?.schema_version === 1) {
     const canonical = snapshot.provenance;
+    const legacyLoadBearing = snapshot.assessment.issues.filter(
+      (issue) => issue.load_bearing !== false,
+    );
+    const legacyGrounded = legacyLoadBearing.filter(
+      (issue) => issue.status === "resolved" && issue.primary_act === "verify" && Boolean(issue.basis),
+    ).length;
+    const legacyRouted = legacyLoadBearing.filter((issue) => issue.status === "routed").length;
+    const legacyAddressed = legacyLoadBearing.filter((issue) =>
+      ["addressed", "needs_fix", "needs_grounding", "resolved"].includes(issue.status),
+    ).length - legacyGrounded;
+    const legacyInferred = Math.max(
+      0,
+      legacyLoadBearing.length - legacyGrounded - legacyRouted - legacyAddressed,
+    );
+    const legacyBasis = legacyGrounded / Math.max(1, legacyLoadBearing.length);
+    const legacyBand = legacyBasis >= 1
+      ? "Sound"
+      : legacyBasis >= 0.75
+        ? "Solid"
+        : legacyBasis >= 0.5
+          ? "Developing"
+          : legacyBasis >= 0.25
+            ? "Weak"
+            : "Fragile";
     const artifacts = projectArtifactOrder.map((artifactType) => {
       const item = canonical.artifacts.find(
         (candidate) => candidate.artifact_type === artifactType,
@@ -130,6 +163,15 @@ export function buildProjectProvenance(snapshot: OverviewSnapshot): ProjectProve
       inferredClaims: canonical.inferred_claims,
       totalClaims: canonical.total_claims,
       loadBearingInferences: canonical.load_bearing_inferences,
+      grounding: canonical.grounding ?? {
+        grounded: legacyGrounded,
+        addressed: Math.max(0, legacyAddressed),
+        routed: legacyRouted,
+        inferred: legacyInferred,
+        total: legacyLoadBearing.length,
+        basis: legacyBasis,
+        band: legacyBand,
+      },
       structure: {
         unconfirmedDependencies: canonical.structure.unconfirmed_dependencies,
         unownedParties: canonical.structure.unowned_parties,
@@ -208,6 +250,15 @@ export function buildProjectProvenance(snapshot: OverviewSnapshot): ProjectProve
     inferredClaims,
     totalClaims: groundedClaims + inferredClaims,
     loadBearingInferences,
+    grounding: {
+      grounded: 0,
+      addressed: 0,
+      routed: 0,
+      inferred: openIssues.filter((issue) => issue.load_bearing !== false).length,
+      total: openIssues.filter((issue) => issue.load_bearing !== false).length,
+      basis: 0,
+      band: "Fragile",
+    },
     structure: {
       unconfirmedDependencies: openIssues.filter((issue) =>
         dependencyPattern.test(issueText(issue)),

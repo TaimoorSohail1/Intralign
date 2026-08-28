@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Mapping
 from typing import Any
 
 from oslo_api.analysis.models import (
     ARTIFACT_TYPES,
     Artifact,
+    ArtifactAssumption,
+    ArtifactSection,
     ArtifactType,
     Issue,
     normalize_evidence_state,
@@ -43,6 +46,102 @@ _MATCH_STOP_WORDS = {
     "to",
     "with",
 }
+
+_GROUNDING_BANDS = ("Fragile", "Weak", "Developing", "Solid", "Sound")
+
+
+def _grounding_band(value: float) -> str:
+    if value >= 1:
+        return "Sound"
+    if value >= 0.75:
+        return "Solid"
+    if value >= 0.5:
+        return "Developing"
+    if value >= 0.25:
+        return "Weak"
+    return "Fragile"
+
+
+def grounding_issue_state(
+    issue: Issue | Mapping[str, Any],
+    action: Mapping[str, Any] | None = None,
+) -> str:
+    """Return the canonical state of one load-bearing issue.
+
+    Only an evidence-bearing verification grounds the read. Building plan
+    structure, routing work, or merely resolving a non-verification finding must
+    not manufacture Grounding.
+    """
+
+    action = action or {}
+    issue_status = (
+        issue.status if isinstance(issue, Issue) else str(issue.get("status") or "open")
+    )
+    status = str(action.get("status") or issue_status)
+    act = str(action.get("action") or action.get("act") or "")
+    basis = action.get("basis")
+    evidence_refs = (
+        issue.evidence_refs
+        if isinstance(issue, Issue)
+        else tuple(issue.get("evidence_refs") or ())
+    )
+    has_evidence = bool(basis or evidence_refs)
+    primary_act = (
+        issue.primary_act
+        if isinstance(issue, Issue)
+        else str(issue.get("primary_act") or "")
+    )
+
+    if (
+        status == "resolved"
+        and has_evidence
+        and act in {"confirm", "ground", "answer", "clarification"}
+    ):
+        return "grounded"
+    if status == "resolved" and primary_act == "verify" and has_evidence:
+        return "grounded"
+    if act == "route" or status == "routed":
+        return "routed"
+    if status in {"addressed", "needs_fix", "needs_grounding", "resolved"}:
+        return "addressed"
+    return "inferred"
+
+
+def build_grounding_projection(
+    *,
+    issues: Iterable[Issue | Mapping[str, Any]],
+    issue_actions: Iterable[Mapping[str, Any]] = (),
+    outcome_root_grounded: bool = True,
+) -> dict[str, Any]:
+    """Project one Grounding denominator and band for every product surface."""
+
+    actions = {
+        str(action.get("issue_id") or action.get("issue_stable_key") or ""): action
+        for action in issue_actions
+    }
+    counts = {state: 0 for state in ("grounded", "addressed", "routed", "inferred")}
+    for issue in issues:
+        load_bearing = (
+            issue.load_bearing
+            if isinstance(issue, Issue)
+            else bool(issue.get("load_bearing", True))
+        )
+        if not load_bearing:
+            continue
+        issue_id = issue.id if isinstance(issue, Issue) else str(issue.get("id") or "")
+        counts[grounding_issue_state(issue, actions.get(issue_id))] += 1
+
+    total = sum(counts.values())
+    basis = counts["grounded"] / max(1, total)
+    band = _grounding_band(basis)
+    if not outcome_root_grounded:
+        band = _GROUNDING_BANDS[min(_GROUNDING_BANDS.index(band), 1)]
+    return {
+        **counts,
+        "total": total,
+        "basis": basis,
+        "band": band,
+    }
 
 
 def _claim_counts(artifact: Artifact | None) -> tuple[int, int]:
@@ -167,6 +266,7 @@ def build_project_provenance(
     *,
     artifacts: tuple[Artifact, ...],
     issues: tuple[Issue, ...],
+    issue_actions: Iterable[Mapping[str, Any]] = (),
 ) -> dict[str, Any]:
     """Build the canonical provenance projection once, at the API boundary.
 
@@ -253,6 +353,15 @@ def build_project_provenance(
         assumption["load_bearing"] and assumption["state"] != "confirmed"
         for assumption in assumptions
     )
+    intent = next(
+        (item for item in artifact_rows if item["artifact_type"] == "intent"),
+        None,
+    )
+    grounding = build_grounding_projection(
+        issues=issues,
+        issue_actions=issue_actions,
+        outcome_root_grounded=(intent is None or intent["inferred"] == 0),
+    )
     return {
         "schema_version": 1,
         "artifacts": artifact_rows,
@@ -261,6 +370,7 @@ def build_project_provenance(
         "inferred_claims": inferred_claims,
         "total_claims": grounded_claims + inferred_claims,
         "load_bearing_inferences": load_bearing,
+        "grounding": grounding,
         "structure": {
             "unconfirmed_dependencies": load_bearing,
             "unowned_parties": unowned_parties,
@@ -273,3 +383,70 @@ def build_project_provenance(
             "oslo_inferred": inferred_claims,
         },
     }
+
+
+def build_serialized_project_provenance(snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Rebuild canonical provenance for retained snapshots written before it was stored.
+
+    History reads immutable JSON snapshots rather than the live dataclasses used by
+    Overview. Rehydrating the provenance inputs here keeps both surfaces on the same
+    calculation and prevents legacy snapshots from being reported as ``0 of 0``.
+    """
+
+    artifacts = tuple(
+        Artifact(
+            artifact_type=ArtifactType(item["artifact_type"]),
+            title=str(item.get("title", "")),
+            summary=str(item.get("summary", "")),
+            reliability=str(item.get("reliability", "Unknown")),
+            evidence_refs=tuple(item.get("evidence_refs", [])),
+            basis=str(item.get("basis", "derived")),
+            sections=tuple(
+                ArtifactSection(
+                    heading=str(section.get("heading", "")),
+                    body=str(section.get("body", "")),
+                    bullets=tuple(section.get("bullets", [])),
+                    columns=tuple(section.get("columns", [])),
+                    rows=tuple(tuple(row) for row in section.get("rows", [])),
+                    evidence_refs=tuple(section.get("evidence_refs", [])),
+                    row_evidence_refs=tuple(
+                        tuple(references)
+                        for references in section.get("row_evidence_refs", [])
+                    ),
+                    row_states=tuple(section.get("row_states", [])),
+                )
+                for section in item.get("sections", [])
+            ),
+            assumptions=tuple(
+                ArtifactAssumption(
+                    id=str(assumption.get("id", "")),
+                    statement=str(assumption.get("statement", "")),
+                    state=str(assumption.get("state", "inferred")),
+                    load_bearing=bool(assumption.get("load_bearing", False)),
+                    evidence_refs=tuple(assumption.get("evidence_refs", [])),
+                )
+                for assumption in item.get("assumptions", [])
+            ),
+            project_title=item.get("project_title"),
+        )
+        for item in snapshot.get("artifacts", [])
+    )
+    assessment = snapshot.get("assessment") or {}
+    issues = tuple(
+        Issue(
+            id=str(item.get("id", "")),
+            artifact_type=ArtifactType(item["artifact_type"]),
+            dimension=str(item.get("dimension", "")),
+            severity=str(item.get("severity", "warning")),
+            title=str(item.get("title", "")),
+            why=str(item.get("why", "")),
+            recommendation=str(item.get("recommendation", "")),
+            evidence_refs=tuple(item.get("evidence_refs", [])),
+            clarification=item.get("clarification"),
+            status=str(item.get("status", "open")),
+            load_bearing=bool(item.get("load_bearing", True)),
+            primary_act=str(item.get("primary_act", "")),
+        )
+        for item in assessment.get("issues", [])
+    )
+    return build_project_provenance(artifacts=artifacts, issues=issues)

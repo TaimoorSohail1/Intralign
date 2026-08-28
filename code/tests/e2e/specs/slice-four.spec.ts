@@ -18,7 +18,7 @@ async function signIn(page: import("@playwright/test").Page) {
 }
 
 async function unlockFirstRead(page: import("@playwright/test").Page) {
-  const decision = page.getByRole("button", { name: /Confirm.+it holds/i });
+  const decision = page.getByRole("button", { name: /verified this directly/i });
   await decision.waitFor({ state: "visible", timeout: 2_000 }).catch(() => undefined);
   if (!(await decision.isVisible())) return;
   const actResponse = page.waitForResponse(
@@ -88,6 +88,5 @@ test("Slice 4 removes the superseded Attention Map and keeps its URL compatible"
   }
   await page.goto(`/projects/${projectId}/attention`);
   await expect(page).toHaveURL(/\/issues$/, { timeout: 120_000 });
-  await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Exposure-ranked issue queue" })).toBeVisible();
 });

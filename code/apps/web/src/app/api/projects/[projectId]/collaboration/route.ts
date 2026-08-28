@@ -4,6 +4,7 @@ import {
   getCollaboration,
   listInvitations,
   markReviewDelivered,
+  OsloApiError,
   promoteReviewResponse,
   revokeInvitation,
   revokeReviewGrant,
@@ -11,6 +12,10 @@ import {
   sendInvitation,
 } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
+
+function collaborationErrorStatus(error: unknown) {
+  return error instanceof OsloApiError ? error.status : 400;
+}
 
 export async function GET(
   _request: Request,
@@ -34,12 +39,14 @@ export async function GET(
     });
     return Response.json({
       ...collaboration,
-      invitations,
+      invitations: invitations.filter(
+        (invitation) => invitation.role === "delegate_pm" && invitation.project_id === projectId,
+      ),
     });
   } catch (error) {
     return Response.json(
       { message: error instanceof Error ? error.message : "Collaboration is unavailable." },
-      { status: 400 },
+      { status: collaborationErrorStatus(error) },
     );
   }
 }
@@ -87,6 +94,8 @@ export async function POST(
         accessToken: session.accessToken,
         workspaceId: session.workspaceId,
         email: body.email,
+        role: "delegate_pm",
+        projectId,
       });
       return Response.json(result, { status: 201 });
     }
@@ -138,7 +147,7 @@ export async function POST(
   } catch (error) {
     return Response.json(
       { message: error instanceof Error ? error.message : "Collaboration action failed." },
-      { status: 400 },
+      { status: collaborationErrorStatus(error) },
     );
   }
 }
@@ -167,7 +176,7 @@ export async function PUT(
   } catch (error) {
     return Response.json(
       { message: error instanceof Error ? error.message : "Comment could not be added." },
-      { status: 400 },
+      { status: collaborationErrorStatus(error) },
     );
   }
 }

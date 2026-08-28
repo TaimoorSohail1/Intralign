@@ -7,6 +7,7 @@ from uuid import UUID
 
 class MembershipRole(StrEnum):
     OWNER = "owner"
+    DELEGATE_PM = "delegate_pm"
 
 
 class InvitationStatus(StrEnum):
@@ -21,6 +22,8 @@ class InviteMemberCommand:
     workspace_id: UUID
     invited_by_user_id: UUID
     email: str
+    role: MembershipRole = MembershipRole.OWNER
+    project_id: UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +37,7 @@ class Invitation:
     status: InvitationStatus
     created_at: datetime
     expires_at: datetime
+    project_id: UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)

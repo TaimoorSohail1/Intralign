@@ -135,6 +135,26 @@ describe("ArtifactWorkspace R2 plan artifacts", () => {
     expect(document.querySelectorAll(".r2-schedule-track")).toHaveLength(2);
   });
 
+  it("uses neutral artifact-level narration while item labels retain provenance", async () => {
+    renderArtifact();
+    expect(await screen.findByRole("heading", { name: "Schedule" })).toBeInTheDocument();
+
+    expect(screen.getByText("Artifact summary:")).toBeInTheDocument();
+    expect(screen.queryByText("OSLO's read:")).not.toBeInTheDocument();
+    expect(document.querySelector(".artifact-content-heading")).toHaveTextContent("yours");
+    expect(document.querySelector(".artifact-content-heading")).toHaveTextContent("OSLO-inferred");
+  });
+
+  it("keeps artifact narration neutral after user confirmation", async () => {
+    renderArtifact({
+      artifact: { ...scheduleArtifact, provenance: "confirmed_by_user" },
+    });
+    expect(await screen.findByRole("heading", { name: "Schedule" })).toBeInTheDocument();
+
+    expect(screen.getByText("Artifact summary:")).toBeInTheDocument();
+    expect(screen.queryByText("OSLO's read:")).not.toBeInTheDocument();
+  });
+
   it("does not treat dependency evidence as an end-date field", async () => {
     const dependencies = artifactFor("schedule", [
       {

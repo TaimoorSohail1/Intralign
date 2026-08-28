@@ -24,6 +24,7 @@ from oslo_api.slice_one import ActivationResult, InvitationDetails
 WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
 USER_ID = UUID("018f9f7e-8de2-7000-8000-000000000011")
 INVITATION_ID = UUID("018f9f7e-8de2-7000-8000-000000000001")
+PROJECT_ID = UUID("018f9f7e-8de2-7000-8000-000000000012")
 
 
 class RecordingSliceOneApplication:
@@ -34,19 +35,20 @@ class RecordingSliceOneApplication:
         assert access_token == "valid-access-token"
         return type("User", (), {"id": USER_ID, "email": "owner@example.com"})()
 
-    def invite_member(self, *, actor_user_id, workspace_id, email):
-        self.invite_request = (actor_user_id, workspace_id, email)
+    def invite_member(self, *, actor_user_id, workspace_id, email, role, project_id):
+        self.invite_request = (actor_user_id, workspace_id, email, role, project_id)
         now = datetime(2026, 7, 20, 9, 0, tzinfo=UTC)
         return Invitation(
             id=INVITATION_ID,
             workspace_id=workspace_id,
             invited_by_user_id=actor_user_id,
             email=email,
-            role=MembershipRole.OWNER,
+            role=role,
             token_hash=b"private",
             status=InvitationStatus.PENDING,
             created_at=now,
             expires_at=now + timedelta(days=7),
+            project_id=project_id,
         )
 
     def activate_invitation(self, *, token, display_name, password):
@@ -181,7 +183,7 @@ def test_owner_can_create_an_invitation_through_the_api() -> None:
     response = TestClient(create_app(slice_one=application)).post(
         f"/v1/workspaces/{WORKSPACE_ID}/invitations",
         headers={"Authorization": "Bearer valid-access-token"},
-        json={"email": "new.member@example.com"},
+        json={"email": "new.member@example.com", "role": "owner"},
     )
 
     assert response.status_code == 201
@@ -191,12 +193,49 @@ def test_owner_can_create_an_invitation_through_the_api() -> None:
         "role": "owner",
         "status": "pending",
         "expires_at": "2026-07-27T09:00:00Z",
+        "project_id": None,
     }
     assert application.invite_request == (
         USER_ID,
         WORKSPACE_ID,
         "new.member@example.com",
+        MembershipRole.OWNER,
+        None,
     )
+
+
+def test_owner_can_invite_a_delegate_pm_to_one_project_through_the_api() -> None:
+    application = RecordingSliceOneApplication()
+    response = TestClient(create_app(slice_one=application)).post(
+        f"/v1/workspaces/{WORKSPACE_ID}/invitations",
+        headers={"Authorization": "Bearer valid-access-token"},
+        json={
+            "email": "delegate@example.com",
+            "role": "delegate_pm",
+            "project_id": str(PROJECT_ID),
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["role"] == "delegate_pm"
+    assert response.json()["project_id"] == str(PROJECT_ID)
+    assert application.invite_request == (
+        USER_ID,
+        WORKSPACE_ID,
+        "delegate@example.com",
+        MembershipRole.DELEGATE_PM,
+        PROJECT_ID,
+    )
+
+
+def test_delegate_pm_invitation_without_project_is_rejected() -> None:
+    response = TestClient(create_app(slice_one=RecordingSliceOneApplication())).post(
+        f"/v1/workspaces/{WORKSPACE_ID}/invitations",
+        headers={"Authorization": "Bearer valid-access-token"},
+        json={"email": "delegate@example.com", "role": "delegate_pm"},
+    )
+
+    assert response.status_code == 422
 
 
 def test_non_owner_cannot_create_an_invitation_through_the_api() -> None:

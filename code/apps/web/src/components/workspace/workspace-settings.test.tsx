@@ -220,4 +220,36 @@ describe("WorkspaceSettings", () => {
     ));
     expect(screen.queryByText("pending@example.com")).not.toBeInTheDocument();
   });
+
+  it("shows a Delegate-PM only personal settings", () => {
+    render(
+      <WorkspaceSettings
+        displayName="Amina"
+        email="amina@example.com"
+        initial={{ ...initial, actor_role: "delegate_pm" as const }}
+        initialSection="profile"
+        modal
+        onClose={vi.fn()}
+        workspace={{
+          ...workspace,
+          role: "delegate_pm" as const,
+          can_manage_plan: false,
+          projects: [workspace.projects[0]],
+        }}
+        workspaceName="OSLO Alpha"
+      />,
+    );
+
+    const navigation = screen.getByRole("navigation", { name: "Settings" });
+    expect(navigation.querySelectorAll("button")).toHaveLength(3);
+    expect(within(navigation).getByRole("button", { name: "Profile" })).toBeInTheDocument();
+    expect(within(navigation).getByRole("button", { name: "Appearance" })).toBeInTheDocument();
+    expect(within(navigation).getByRole("button", { name: "Notifications" })).toBeInTheDocument();
+    expect(within(navigation).queryByRole("button", { name: "Workspace" }))
+      .not.toBeInTheDocument();
+    expect(within(navigation).queryByRole("button", { name: "Access & invites" }))
+      .not.toBeInTheDocument();
+    expect(within(navigation).queryByRole("button", { name: "Plan & usage" }))
+      .not.toBeInTheDocument();
+  });
 });

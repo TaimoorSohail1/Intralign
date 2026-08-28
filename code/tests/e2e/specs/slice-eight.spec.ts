@@ -113,7 +113,7 @@ test("Prototype Slice 8 provides a coherent workspace, awareness, settings, and 
   await page.goto("/workspace");
   for (let attempt = 0; attempt < 4; attempt += 1) {
     await page.getByRole("button", { name: "New project", exact: true }).click();
-    const capacity = page.getByRole("dialog", { name: "Start another project" });
+    const capacity = page.getByRole("dialog", { name: /Run more than one plan|Start another project/ });
     await capacity.waitFor({ state: "visible", timeout: 3_000 }).catch(() => undefined);
     if (await capacity.isVisible()) {
       await expect(capacity.getByRole("button", { name: /Upgrade your plan/ })).toBeVisible();

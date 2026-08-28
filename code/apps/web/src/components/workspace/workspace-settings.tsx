@@ -9,7 +9,7 @@ import {
   UserPlus,
   X,
 } from "@phosphor-icons/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { PlanComparisonModal } from "@/components/workspace/plan-comparison-modal";
 import type { InvitationSummary, WorkspacePreferences, WorkspaceSummary } from "@/lib/server/oslo-api";
@@ -170,6 +170,11 @@ export function WorkspaceSettings({
   onClose?: () => void;
   initialSection?: SettingsSectionId;
 }) {
+  const initialActorRole = workspace?.role ?? initial.actor_role;
+  const safeInitialSection = initialActorRole === "owner"
+    || settingsSections.find((section) => section.id === initialSection)?.group === "You"
+    ? initialSection
+    : "profile";
   const [preferences, setPreferences] = useState(initial);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -181,7 +186,7 @@ export function WorkspaceSettings({
   const [workspaceState, setWorkspaceState] = useState(workspace);
   const [plansOpen, setPlansOpen] = useState(false);
   const planTransitionRef = useRef(false);
-  const [activeSection, setActiveSection] = useState<SettingsSectionId>(initialSection);
+  const [activeSection, setActiveSection] = useState<SettingsSectionId>(safeInitialSection);
   const [invitationManagerOpen, setInvitationManagerOpen] = useState(false);
   const [invitations, setInvitations] = useState<InvitationSummary[]>([]);
   const [invitationEmail, setInvitationEmail] = useState("");
@@ -375,6 +380,12 @@ export function WorkspaceSettings({
   const activeProjects = workspaceState?.projects.filter((project) => !project.archived).length ?? 1;
   const activeProjectLimit = workspaceState?.active_project_limit ?? (workspaceState?.plan === "basic" ? 3 : 1);
   const actorRole = workspaceState?.role ?? preferences.actor_role;
+  const visibleSettingsSections = useMemo(
+    () => actorRole === "owner"
+      ? settingsSections
+      : settingsSections.filter((section) => section.group === "You"),
+    [actorRole],
+  );
 
   const content = (
     <section className={`settings-dialog is-${activeSection}`} ref={dialogRef} role={modal ? "dialog" : undefined} aria-modal={modal ? "true" : undefined} aria-labelledby="settings-dialog-title" tabIndex={-1}>
@@ -387,14 +398,15 @@ export function WorkspaceSettings({
         <aside className="settings-sidebar">
           <nav aria-label="Settings">
             {["You", "Workspace", "Plan"].map((group) => (
+              visibleSettingsSections.some((section) => section.group === group) ?
               <div className="settings-nav-group" key={group}>
                 <p>{group}</p>
-                {settingsSections.filter((section) => section.group === group).map(({ id, label, ...section }) => (
+                {visibleSettingsSections.filter((section) => section.group === group).map(({ id, label, ...section }) => (
                   <button aria-current={activeSection === id ? "page" : undefined} className={activeSection === id ? "is-active" : undefined} key={id} onClick={() => setActiveSection(id)} type="button">
                     <span>{label}</span>{"badge" in section ? <small>{section.badge}</small> : null}
                   </button>
                 ))}
-              </div>
+              </div> : null
             ))}
           </nav>
         </aside>

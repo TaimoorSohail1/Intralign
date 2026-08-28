@@ -5,6 +5,7 @@ from oslo_api.analysis.integrity import (
     IntegrityArtifact,
     IntegrityIssue,
     build_integrity_read,
+    with_grounding_projection,
 )
 from oslo_api.analysis.issue_identity import deduplicate_issues
 from oslo_api.analysis.load_bearing import (
@@ -303,6 +304,8 @@ _INTEGRITY_ARTIFACT_TYPES = (
 def with_integrity(
     assessment: Assessment,
     artifacts: tuple[Artifact, ...],
+    *,
+    issue_actions: tuple[dict, ...] = (),
 ) -> Assessment:
     """Project the persisted analysis into the signed Slice 1 read contract."""
 
@@ -311,7 +314,11 @@ def with_integrity(
         for issue in assessment.issues
         if not issue.id.startswith(("ISS-FC-", "ISS-CP-"))
     )
-    provenance = build_project_provenance(artifacts=artifacts, issues=base_issues)
+    provenance = build_project_provenance(
+        artifacts=artifacts,
+        issues=base_issues,
+        issue_actions=issue_actions,
+    )
     artifact_provenance = {
         item["artifact_type"]: item for item in provenance["artifacts"]
     }
@@ -390,6 +397,10 @@ def with_integrity(
         )
     )
     calibration_policy = calibration_policy_from_environment()
+    node_labels = {
+        node.id: node.label
+        for node in (assessment.dependency_graph.nodes if assessment.dependency_graph else ())
+    }
     ranked = tuple(
         _with_sensitivity(
             _with_finding_model(
@@ -405,14 +416,25 @@ def with_integrity(
             record=sensitivity_by_id.get(issue.id),
             candidate=candidate_by_id.get(issue.id),
             calibration_policy=calibration_policy,
+            node_labels=node_labels,
         )
         for index, issue in enumerate(ordered_issues)
     )
     under_review_regions = tuple(
         issue.title for issue in ranked if issue.unassessed and issue.load_bearing
     )
+    canonical_grounding = build_project_provenance(
+        artifacts=artifacts,
+        issues=ranked,
+        issue_actions=issue_actions,
+    )["grounding"]
     integrity = replace(
-        read.integrity,
+        with_grounding_projection(
+            read.integrity,
+            grounded=canonical_grounding["grounded"],
+            total=canonical_grounding["total"],
+            band=canonical_grounding["band"],
+        ),
         complete=not under_review_regions,
         sound_claim_blocked=bool(under_review_regions),
         under_review_regions=under_review_regions,
@@ -542,6 +564,7 @@ def _with_sensitivity(
     record: SensitivityRecord | None,
     candidate: SensitivityCandidate | None,
     calibration_policy: CalibrationPolicy | None,
+    node_labels: dict[str, str],
 ) -> Issue:
     if record is None:
         return issue
@@ -560,12 +583,22 @@ def _with_sensitivity(
         )
         load_bearing = decision.load_bearing
 
+    trace = asdict(record.trace)
+    trace["dependency_paths"] = [
+        [node_labels.get(node_id, node_id) for node_id in path]
+        for path in record.trace.paths
+    ]
+    trace["outcome_dependencies"] = [
+        node_labels.get(node_id, node_id)
+        for node_id in record.trace.outcome_reachability
+    ]
+
     return replace(
         issue,
         load_bearing=load_bearing,
         exposure_rank=record.exposure_rank,
         sensitivity=record.sensitivity,
-        sensitivity_trace=asdict(record.trace),
+        sensitivity_trace=trace,
         sensitivity_state="calibrated" if calibrated else "shadow",
     )
 

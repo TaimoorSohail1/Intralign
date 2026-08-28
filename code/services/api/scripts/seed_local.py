@@ -12,7 +12,7 @@ import httpx
 import psycopg
 
 WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
-WORKSPACE_NAME = "OSLO Product Grill"
+WORKSPACE_NAME = "Intralign Local"
 
 
 def supabase_executable(repository_root: Path, *, platform_name: str | None = None) -> Path:

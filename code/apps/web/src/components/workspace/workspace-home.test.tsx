@@ -313,4 +313,31 @@ describe("WorkspaceHome", () => {
       );
     });
   });
+
+  it("shows a Delegate-PM only the assigned project without owner actions", () => {
+    render(
+      <WorkspaceHome
+        displayName="Amina"
+        initial={{
+          ...workspace,
+          role: "delegate_pm",
+          can_manage_plan: false,
+          can_create_project: false,
+          projects: [workspace.projects[0]],
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Active transformation" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Open the project/ })).toHaveAttribute(
+      "href",
+      "/projects/project-1/overview",
+    );
+    expect(screen.queryByRole("button", { name: "New project" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Create a new project" }))
+      .not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Archive Active transformation" }))
+      .not.toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });

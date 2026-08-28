@@ -145,6 +145,8 @@ describe("FullPlanWorkspace", () => {
       screen.getByRole("note", { name: "Full plan status" }),
     ).toHaveTextContent("Grounding is the current gate");
     expect(screen.getByRole("heading", { name: "Full plan · export" })).toBeInTheDocument();
+    expect(screen.getByText("Current plan view:")).toBeInTheDocument();
+    expect(screen.queryByText("OSLO’s read:")).not.toBeInTheDocument();
     const table = screen.getByRole("table", { name: "Full execution plan" });
     expect(within(table).getByText("Implement payment gateway")).toBeInTheDocument();
     expect(within(table).getAllByText("— unowned")).toHaveLength(2);

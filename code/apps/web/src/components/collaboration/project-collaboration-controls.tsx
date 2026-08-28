@@ -22,13 +22,14 @@ interface Participant {
   id: string;
   display_name: string;
   email?: string | null;
-  role: "owner" | "collaborator" | "viewer";
+  role: "owner" | "delegate_pm" | "viewer";
 }
 
 interface Invitation {
   id: string;
   email: string;
-  role: "owner";
+  role: "owner" | "delegate_pm";
+  project_id?: string | null;
   status: string;
   expires_at: string;
 }
@@ -63,7 +64,7 @@ interface ReviewGrant {
 }
 
 interface CollaborationState {
-  actor_role: "owner" | "collaborator" | "viewer";
+  actor_role: "owner" | "delegate_pm" | "viewer";
   plan: {
     name: string;
     collaborators_unmetered: boolean;
@@ -116,17 +117,17 @@ function humanize(value?: string | null) {
   return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function issueDimensionSummary(snapshot: OverviewSnapshot | null) {
-  const dimensions = Array.from(
-    new Set(snapshot?.assessment?.issues?.map((issue) => humanize(issue.dimension)) ?? []),
-  );
-  return dimensions.length ? dimensions.join(" · ") : "Clarity · Alignment · Feasibility";
+function integrityPillarSummary(snapshot: OverviewSnapshot | null) {
+  const pillars = snapshot?.assessment?.integrity?.decomposition ?? [];
+  return pillars.length
+    ? pillars.map((pillar) => `${pillar.key} ${pillar.band}`).join(" · ")
+    : "Viability · Grounding · Adaptability";
 }
 
 function readoutSections(snapshot: OverviewSnapshot | null, audience: ExportAudience) {
   const issues = snapshot?.assessment?.issues ?? [];
   const openIssues = issues.filter((issue) => issue.status !== "resolved");
-  const limiting = humanize(snapshot?.assessment?.limiting_dimension);
+  const limiting = snapshot?.assessment?.integrity?.limiting_pillar ?? "Outcome integrity";
   const top = openIssues[0];
   const questions = openIssues
     .filter((issue) => issue.clarification)
@@ -151,7 +152,7 @@ function readoutSections(snapshot: OverviewSnapshot | null, audience: ExportAudi
     {
       number: "§2",
       title: "What’s limiting it",
-      body: `${limiting} is the limiting dimension (${openIssues.length} open issue${openIssues.length === 1 ? "" : "s"}).${top ? ` The sharpest issue is ${top.title}.` : ""}`,
+      body: `${limiting} is the limiting pillar (${openIssues.length} open issue${openIssues.length === 1 ? "" : "s"}).${top ? ` The sharpest issue is ${top.title}.` : ""}`,
     },
     {
       number: "§3",
@@ -466,8 +467,8 @@ export function ProjectCollaborationControls({
                   <section className="prototype-share-section">
                     <p className="collaboration-label">Workspace role</p>
                     <div className="prototype-role-table">
-                      <RoleRow label="Owner" detail="Every workspace member can change the plan, share it, and export it." />
-                      <RoleRow label="Delegate-PM" detail="Full authenticated read and co-grounding access; enforcement remains display-level in this slice." />
+                      <RoleRow label="Owner" detail="Owns workspace settings, project sharing, invitations, and exports." />
+                      <RoleRow label="Delegate-PM" detail="Can read and co-ground this assigned project only." />
                     </div>
                   </section>
 
@@ -479,13 +480,13 @@ export function ProjectCollaborationControls({
                           <span className="collaboration-avatar">{initials(participant.display_name) || "OS"}</span>
                           <span><strong>{participant.display_name}</strong><small>{participant.email ?? participant.role}</small></span>
                           <span className="seat-badge no-seat">unmetered</span>
-                          <span className="collaboration-role">{participant.role === "owner" ? "Owner" : participant.role === "collaborator" ? "Delegate-PM" : "Viewer"}</span>
+                          <span className="collaboration-role">{participant.role === "owner" ? "Owner" : participant.role === "delegate_pm" ? "Delegate-PM" : "Viewer"}</span>
                         </div>
                       ))}
                     </div>
                   </section>
 
-                  <section className="prototype-share-section">
+                  {state.actor_role === "owner" ? <section className="prototype-share-section">
                     <p className="collaboration-label">Share link — a view-only snapshot of this project</p>
                     <div className="prototype-share-link-card">
                       {activeShares.length ? (
@@ -520,14 +521,14 @@ export function ProjectCollaborationControls({
                     </div>
                     <p className="collaboration-fine-print">A share link shows OSLO’s read as it stood when the link was made. If the project moves on, recipients are told they are viewing a previous analysis.</p>
                     <div className="collaboration-rule-box"><strong>A share link is not an export link.</strong> Share links give revocable, view-only access. Export creates a frozen copy of one snapshot.</div>
-                  </section>
+                  </section> : null}
 
-                  <section className="prototype-share-section prototype-review-request">
+                  {state.actor_role === "owner" ? <section className="prototype-share-section prototype-review-request">
                     <Heading icon={<ShieldCheck size={18} weight="duotone" />} title="External review request" detail="Free — no workspace seat" />
                     <div className="collaboration-rule-box">
                       <strong>Start from an issue.</strong> Choose <em>Ask for evidence</em> so OSLO can preview exactly one question and one cited source before creating the scoped link.
                     </div>
-                  </section>
+                  </section> : null}
 
                   {created ? (
                     <div className="collaboration-created-link" role="status">
@@ -540,10 +541,10 @@ export function ProjectCollaborationControls({
                     </div>
                   ) : null}
 
-                  {pendingInvitations.length || activeReviews.length ? (
+                  {state.actor_role === "owner" && (pendingInvitations.length || activeReviews.length) ? (
                     <section className="prototype-share-section collaboration-access-records">
                       <p className="collaboration-label">Active access</p>
-                      {pendingInvitations.map((invitation) => <AccessRecord key={invitation.id} title={invitation.email} detail={`Pending owner invite · expires ${readableDate(invitation.expires_at)}`} actionLabel={busy === `invite-${invitation.id}` ? "Revoking…" : "Revoke"} onAction={() => void revoke({ action: "revoke_invitation", invitationId: invitation.id }, `invite-${invitation.id}`, "The invitation was revoked.")} />)}
+                      {pendingInvitations.map((invitation) => <AccessRecord key={invitation.id} title={invitation.email} detail={`Pending Delegate-PM invite · expires ${readableDate(invitation.expires_at)}`} actionLabel={busy === `invite-${invitation.id}` ? "Revoking…" : "Revoke"} onAction={() => void revoke({ action: "revoke_invitation", invitationId: invitation.id }, `invite-${invitation.id}`, "The invitation was revoked.")} />)}
                       {activeReviews.map((review) => <AccessRecord key={review.id} title={review.reviewer_name} detail={`External review · ${humanize(review.delivery_state)} · expires ${readableDate(review.expires_at)}`} actionLabel={busy === `review-${review.id}` ? "Revoking…" : "Revoke"} onAction={() => void revoke({ action: "revoke_review", grantId: review.id }, `review-${review.id}`, "The external review was revoked.")} />)}
                     </section>
                   ) : null}
@@ -554,7 +555,7 @@ export function ProjectCollaborationControls({
                       {reviewerResponses.map((review) => (
                         <div className="collaboration-response-record" key={review.response_id}>
                           <AccessRecord title={`${review.reviewer_name} · ${humanize(review.response_kind)}`} detail={review.response_body ?? "Reviewer response received."} actionLabel={review.analysis_run_id ? "Analysis queued" : "Recorded"} />
-                          {review.reviewer_email && !pendingInvitationEmails.has(review.reviewer_email.toLowerCase()) ? (
+                          {state.actor_role === "owner" && review.reviewer_email && !pendingInvitationEmails.has(review.reviewer_email.toLowerCase()) ? (
                             <div className="collaboration-invite-draft">
                               <span>
                                 <strong>Invitation draft — not sent</strong>
@@ -613,11 +614,11 @@ function ExportComposer({
     <div className="prototype-export-body">
       <p className="collaboration-label">What you’re exporting</p>
       <div className="prototype-export-current">
-        <strong>Outcome Confidence {humanize(overview?.assessment?.confidence_band)}</strong> · {humanize(overview?.assessment?.reliability).toLowerCase()} reliability<br />
+        <strong>Outcome Integrity {humanize(overview?.assessment?.integrity?.level)}</strong> · {humanize(overview?.assessment?.reliability).toLowerCase()} reliability<br />
         <strong>{overview?.extended_analysis ? "Extended analysis run" : "Current analysis run"}</strong> · {overview?.state ?? "current"} · Current<br />
-        {openIssues} open issue{openIssues === 1 ? "" : "s"} · {issueDimensionSummary(overview)}
+        {openIssues} open issue{openIssues === 1 ? "" : "s"} · {integrityPillarSummary(overview)}
       </div>
-      <div className="prototype-export-disclaimer">This reflects OSLO’s <strong>understanding maturity</strong> — how clear, aligned and feasible the plan reads, and how reliable that read is. It is <strong>not</strong> a measure of project health, readiness, or probability of success.</div>
+      <div className="prototype-export-disclaimer">This reflects OSLO’s <strong>outcome integrity</strong> — how viable, grounded, and adaptable the plan reads, and how reliable that read is. It is <strong>not</strong> a measure of project health, readiness, or probability of success.</div>
 
       <p className="collaboration-label">Strategic readout — the five-section read</p>
       <div className="prototype-export-draftbar">Assembled from what OSLO already understands — one honest read, many asks. Generating a snapshot runs no analysis.</div>
@@ -626,7 +627,7 @@ function ExportComposer({
       <div className="prototype-readout-document">
         {sections.map((section) => <section className={section.addressed ? "is-addressed" : ""} key={section.number}><h3><span>{section.number}</span>{section.title}</h3>{section.body ? <p>{section.body}</p> : null}{section.items ? <ul>{section.items.map((item) => <li key={item}>{item}</li>)}</ul> : null}{section.addressed ? <small>Addressed to the recipient — the read above stays unchanged.</small> : null}</section>)}
       </div>
-      <div className="prototype-export-options"><span>Optional sections <i>Basic</i></span>{["Alignment", "Unvalidated assumptions", "How understanding matured", "Document detail"].map((label) => <label key={label}><input type="checkbox" disabled={!isBasic} />{label}</label>)}</div>
+      <div className="prototype-export-options"><span>Optional sections <i>Basic</i></span>{["Integrity detail", "Unvalidated assumptions", "How the read changed", "Document detail"].map((label) => <label key={label}><input type="checkbox" disabled={!isBasic} />{label}</label>)}</div>
       <p className="collaboration-fine-print"><strong>Free</strong> exports the five-section snapshot as a PDF. <strong>Basic</strong> adds optional sections, branding, and scheduling. The read itself is never gated.</p>
       <p className="collaboration-label">Format</p>
       <div className="prototype-export-formats">

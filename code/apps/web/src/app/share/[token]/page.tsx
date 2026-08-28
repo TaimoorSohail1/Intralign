@@ -12,10 +12,10 @@ type SharePayload = {
     summary?: string;
     artifacts?: Array<{ artifact_type: string; title: string; summary: string; reliability: string }>;
     assessment?: {
-      confidence_band?: string;
-      clarity?: string;
-      alignment?: string;
-      feasibility?: string;
+      integrity?: {
+        level?: string;
+        decomposition?: Array<{ key: string; band: string }>;
+      };
       issues?: SharedIssue[];
     };
   };
@@ -60,12 +60,12 @@ export default async function SharedSnapshotPage({
           <span className="public-readonly-badge">Read only · {shared.snapshot_state}</span>
         </header>
         <div className="public-confidence-card">
-          <strong>{assessment?.confidence_band ?? "Current read"}</strong>
-          <span><b>Outcome confidence</b><small>Evidence-qualified read, not a project score</small></span>
+          <strong>{assessment?.integrity?.level ?? "Current read"}</strong>
+          <span><b>Outcome integrity</b><small>Evidence-qualified read, not a project score</small></span>
           <dl>
-            <div><dt>Clarity</dt><dd>{assessment?.clarity ?? "—"}</dd></div>
-            <div><dt>Alignment</dt><dd>{assessment?.alignment ?? "—"}</dd></div>
-            <div><dt>Feasibility</dt><dd>{assessment?.feasibility ?? "—"}</dd></div>
+            {(assessment?.integrity?.decomposition ?? []).map((pillar) => (
+              <div key={pillar.key}><dt>{pillar.key}</dt><dd>{pillar.band}</dd></div>
+            ))}
           </dl>
         </div>
         <div className="public-snapshot-grid">

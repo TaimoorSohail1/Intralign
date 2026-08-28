@@ -73,7 +73,7 @@ export function YourOutcomeDashboard({
           <div>
             <strong>Your workspace is open.</strong>
             <p>
-              Your two calls unlocked the full read. <b>Now live:</b> your plan documents on the
+              Your guided review is complete. <b>Now in focus:</b> your plan documents on the
               left and <b>OSLO&apos;s reasoning</b> on the right — every pillar and open issue with them.
             </p>
             <div>

@@ -30,7 +30,6 @@ class WorkspaceProjectResponse(BaseModel):
     archived: bool
     updated_at: datetime
     analysis_status: str
-    confidence_index: int | None
     confidence_band: str | None
     reliability: str | None
     open_issues: int

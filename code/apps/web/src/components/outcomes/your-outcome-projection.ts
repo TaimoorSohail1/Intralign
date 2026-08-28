@@ -4,6 +4,7 @@ import type {
   OverviewSnapshot,
   ProjectOutcomeSummary,
 } from "@/lib/server/oslo-api";
+import { buildProjectProvenance } from "@/lib/project-provenance";
 
 export interface YourOutcomeProjection {
   project_id: string;
@@ -76,6 +77,16 @@ function normalizedClaimKey(value: string) {
     .toLocaleLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
+}
+
+function isMissingOutcomePlaceholder(outcome: ProjectOutcomeSummary) {
+  if (outcome.provenance !== "inferred") return false;
+  const title = normalizedClaimKey(outcome.title);
+  const namesOutcomeConcept = /\b(?:outcome|purpose|objective|goal|benefit|success)\b/.test(title);
+  const saysItIsMissing =
+    /\b(?:is|are|was|were) not (?:yet )?(?:defined|documented|provided|stated|specified|identified|known|confirmed)\b/.test(title) ||
+    /\bno (?:purpose|objective|outcome|goal|benefit|success)\b/.test(title);
+  return namesOutcomeConcept && saysItIsMissing;
 }
 
 function sectionClaims(section: {
@@ -151,9 +162,10 @@ export function buildYourOutcomeProjection({
   outcomes: ProjectOutcomeSummary[];
   rollUp: CollaborationRollUpProjection;
 }): YourOutcomeProjection {
-  const activeOutcomes = outcomes.filter((outcome) => outcome.status === "active");
-  const primaryOutcome =
-    activeOutcomes.find((outcome) => outcome.is_primary) ?? activeOutcomes[0] ?? null;
+  const activeOutcomes = outcomes.filter(
+    (outcome) => outcome.status === "active" && !isMissingOutcomePlaceholder(outcome),
+  );
+  const primaryOutcome = activeOutcomes.find((outcome) => outcome.is_primary) ?? null;
   const disclosureEligible = Boolean(
     snapshot.first_run?.ever_unlocked &&
       snapshot.first_run.grounding_act_count >= snapshot.first_run.unlock_threshold,
@@ -166,10 +178,14 @@ export function buildYourOutcomeProjection({
   const heldOutcomeCount = disclosureEligible
     ? Math.max(0, detectedOutcomeCount - Number(Boolean(primaryOutcome)) - visibleSecondaryOutcomes.length)
     : 0;
-  const totalGrounding = Object.values(rollUp.rests_on).reduce(
-    (total, count) => total + count,
-    0,
-  );
+  // IC-OT-GROUND / DL-242: the published analysis provenance is the one
+  // Grounding source for every client surface. The collaboration roll-up is
+  // useful for routing work, but must not independently recalculate the read.
+  const grounding = buildProjectProvenance(snapshot).grounding;
+  const canonicalGrounding = {
+    grounded: grounding.grounded,
+    total: grounding.total,
+  };
   const issuesById = new Map(
     snapshot.assessment.issues.map((issue) => [issue.id, issue]),
   );
@@ -188,10 +204,7 @@ export function buildYourOutcomeProjection({
     },
     integrity: snapshot.assessment.integrity,
     trend: rollUp.trend,
-    grounding: {
-      grounded: rollUp.rests_on.grounded,
-      total: totalGrounding,
-    },
+    grounding: canonicalGrounding,
     freshness: snapshot.freshness ?? null,
     unseen_changes: (snapshot.read_moved_notifications ?? [])
       .filter((notification) => !notification.seen_at)

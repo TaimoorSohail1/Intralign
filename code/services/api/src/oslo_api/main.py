@@ -8,6 +8,7 @@ from oslo_api.api.feedback import router as feedback_router
 from oslo_api.api.invitations import router as invitations_router
 from oslo_api.api.outcomes import router as outcomes_router
 from oslo_api.api.projects import router as projects_router
+from oslo_api.api.schema_guard import install_public_schema_guard
 from oslo_api.api.session import router as session_router
 from oslo_api.slice_four import SliceFourApplication
 from oslo_api.slice_one import SliceOneApplication
@@ -24,7 +25,7 @@ def create_app(
     feedback=None,
 ) -> FastAPI:
     app = FastAPI(
-        title="OSLO Product Grill API",
+        title="Intralign API",
         version="0.1.0",
         docs_url="/docs",
         redoc_url=None,
@@ -48,6 +49,7 @@ def create_app(
     def health() -> dict[str, str]:
         return {"status": "ready", "service": "oslo-api"}
 
+    install_public_schema_guard(app)
     return app
 
 

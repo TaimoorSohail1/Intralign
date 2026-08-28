@@ -18,7 +18,7 @@ async function signIn(page: import("@playwright/test").Page) {
 }
 
 async function unlockFirstRead(page: import("@playwright/test").Page) {
-  const decision = page.getByRole("button", { name: /Confirm.+it holds/i });
+  const decision = page.getByRole("button", { name: /verified this directly/i });
   await decision.waitFor({ state: "visible", timeout: 2_000 }).catch(() => undefined);
   if (!(await decision.isVisible())) return;
   const actResponse = page.waitForResponse(

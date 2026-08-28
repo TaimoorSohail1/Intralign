@@ -98,6 +98,25 @@ def test_primary_outcome_uses_the_grounded_intent_instead_of_extractor_status_co
     )
 
 
+def test_primary_outcome_rejects_an_absence_statement() -> None:
+    intent = Artifact(
+        artifact_type=ArtifactType.INTENT,
+        title="Intent",
+        summary="The conference purpose is not defined.",
+        reliability="High",
+        evidence_refs=("document:brief:page:1:fragment:0",),
+        sections=(
+            ArtifactSection(
+                heading="Purpose, objectives and outcomes",
+                body="The conference purpose is not defined.",
+                evidence_refs=("document:brief:page:1:fragment:0",),
+            ),
+        ),
+    )
+
+    assert _primary_outcome_title((intent,)) is None
+
+
 def test_snapshot_round_trip_retains_slice_ten_graph_and_sensitivity_contract() -> None:
     graph = PlanDependencyGraph(
         nodes=(

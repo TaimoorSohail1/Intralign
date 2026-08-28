@@ -1,5 +1,6 @@
 import type { OverviewSnapshot, ProjectHistory } from "@/lib/server/oslo-api";
 import { currentReadSummary } from "@/lib/current-read-summary";
+import { buildProjectProvenance } from "@/lib/project-provenance";
 
 export { currentReadSummary } from "@/lib/current-read-summary";
 
@@ -133,7 +134,7 @@ export function projectReportProjection(
   history?: ProjectHistory,
 ): ProjectReportProjection {
   const projectedEvidence = evidenceItems(snapshot);
-  const loadBearing = projectedEvidence.filter((item) => item.loadBearing);
+  const canonicalGrounding = buildProjectProvenance(snapshot).grounding;
   const openIssues = snapshot.assessment.issues
     .filter((issue) => issue.status !== "resolved")
     .slice()
@@ -158,8 +159,8 @@ export function projectReportProjection(
     openIssues,
     resolvedIssues,
     criticalGrounding: {
-      grounded: loadBearing.filter((item) => item.state === "confirmed").length,
-      total: loadBearing.length,
+      grounded: canonicalGrounding.grounded,
+      total: canonicalGrounding.total,
     },
     evidenceRegister: {
       grounded: projectedEvidence.filter((item) => item.state === "confirmed").length,

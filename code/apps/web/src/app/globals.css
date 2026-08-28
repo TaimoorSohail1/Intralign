@@ -16055,6 +16055,12 @@ button.attention-cell { cursor: pointer; }
   min-width: 0;
 }
 
+.is-r2-slice-one .issue-panel.is-inline .issue-verification-bases {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+}
+
 .is-r2-slice-one .issue-panel.is-inline .issue-action-row.is-lifecycle button:first-child {
   background: var(--r2-action);
   color: #111315;

@@ -20,10 +20,12 @@ async function completeOrientationTour(page: import("@playwright/test").Page) {
   const dialog = page.getByRole("dialog", { name: "How OSLO works" });
   await dialog.waitFor({ state: "visible", timeout: 2_000 }).catch(() => undefined);
   if (!(await dialog.isVisible())) return;
-  for (let step = 0; step < 5; step += 1) {
-    await page.getByRole("button", { name: "Next", exact: true }).click();
+  for (let step = 0; step < 10; step += 1) {
+    const next = dialog.getByRole("button", { name: "Next", exact: true });
+    if (!(await next.isVisible())) break;
+    await next.click();
   }
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await dialog.getByRole("button", { name: "Done", exact: true }).click();
   await expect(dialog).toHaveCount(0);
 }
 
@@ -130,7 +132,7 @@ test("Owner invite to activated member intake", async ({ browser, page, request 
     await confirmOutcome.click();
   }
   await expect(recipient).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
-  const firstReadDecision = recipient.getByRole("button", { name: /Confirm.+it holds/i });
+  const firstReadDecision = recipient.getByRole("button", { name: /verified this directly/i });
   if (await firstReadDecision.isVisible()) {
     const actResponse = recipient.waitForResponse(
       (response) => response.request().method() === "POST" && /\/issues\/.+\/acts$/.test(response.url()),
@@ -158,7 +160,10 @@ test("Owner invite to activated member intake", async ({ browser, page, request 
   );
 
   await recipient.locator(".project-account summary").click();
-  await recipient.getByRole("button", { name: "How OSLO works" }).click();
+  await recipient
+    .locator(".project-account-menu")
+    .getByRole("button", { name: "Take a quick tour", exact: true })
+    .click();
   await completeOrientationTour(recipient);
   const account = recipient.locator(".project-account");
   if (!(await account.evaluate((element) => (element as HTMLDetailsElement).open))) {

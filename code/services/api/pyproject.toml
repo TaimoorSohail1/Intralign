@@ -1,7 +1,7 @@
 [project]
 name = "oslo-api"
 version = "0.1.0"
-description = "OSLO Product Grill application API"
+description = "Intralign application API"
 requires-python = ">=3.11,<3.13"
 dependencies = [
   "email-validator>=2.3,<3",

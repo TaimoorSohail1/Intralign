@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 _BANDS = ("Fragile", "Weak", "Developing", "Solid", "Sound")
 _PILLAR_ORDER = ("Viability", "Grounding", "Adaptability")
@@ -128,6 +128,42 @@ def compute_integrity(inputs: IntegrityInputs) -> Integrity:
         level=_BANDS[floor],
         limiting_pillar=limiting_pillar,
         decomposition=decomposition,  # type: ignore[arg-type]
+    )
+
+
+def with_grounding_projection(
+    integrity: Integrity,
+    *,
+    grounded: int,
+    total: int,
+    band: str,
+) -> Integrity:
+    """Replace Grounding with the canonical load-bearing issue projection."""
+
+    basis = grounded / max(1, total)
+    decomposition = tuple(
+        Pillar(
+            key="Grounding",
+            band=band,
+            basis=basis,
+            why=(f"{grounded} of {total} load-bearing details rest on your evidence",),
+        )
+        if pillar.key == "Grounding"
+        else pillar
+        for pillar in integrity.decomposition
+    )
+    floor = min(_band_index(pillar.band) for pillar in decomposition)
+    limiting_pillar = next(
+        key
+        for key in _PILLAR_ORDER
+        if next(pillar for pillar in decomposition if pillar.key == key).band
+        == _BANDS[floor]
+    )
+    return replace(
+        integrity,
+        level=_BANDS[floor],
+        limiting_pillar=limiting_pillar,
+        decomposition=decomposition,
     )
 
 

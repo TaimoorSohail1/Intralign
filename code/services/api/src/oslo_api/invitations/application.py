@@ -50,6 +50,8 @@ class InviteMember:
         )
         if actor_role is not MembershipRole.OWNER:
             raise InvitePermissionDenied
+        if command.role is MembershipRole.DELEGATE_PM and command.project_id is None:
+            raise ValueError("DELEGATE_PM_REQUIRES_PROJECT")
 
         now = self._clock()
         token = self._new_token()
@@ -58,11 +60,12 @@ class InviteMember:
             workspace_id=command.workspace_id,
             invited_by_user_id=command.invited_by_user_id,
             email=command.email.strip().lower(),
-            role=MembershipRole.OWNER,
+            role=command.role,
             token_hash=sha256(token.encode("utf-8")).digest(),
             status=InvitationStatus.PENDING,
             created_at=now,
             expires_at=now + self._validity,
+            project_id=command.project_id,
         )
         self._invitations.save(invitation)
         return IssuedInvitation(invitation=invitation, token=token)

@@ -74,6 +74,8 @@ async function openArtifact(
     name === "Work Breakdown" ? "Work breakdown" : name,
     { timeout: 30_000 },
   );
+  await expect(page.getByText("Artifact summary:", { exact: true })).toBeVisible();
+  await expect(page.getByText("OSLO's read:", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Contents · you author, OSLO reads", { exact: true })).toBeVisible();
   await expect(page.getByText("Up to date", { exact: true })).toBeVisible({ timeout: 120_000 });
 }
@@ -138,12 +140,18 @@ test("Slice 5 view, edit, undo, and execution framing controls stay usable", asy
   await expect(page.locator(".r2-understanding-groups")).toBeVisible();
 
   await openArtifact(page, projectId, "Scope", "scope");
-  const statement = page.locator(".r2-statement-row [contenteditable]").first();
-  const original = await statement.innerText();
-  await statement.fill(`${original} — E2E local review`);
+  const statement = page.locator(".r2-statement-row").first();
+  const original = await statement.locator(".r2-statement-text").innerText();
+  await statement.hover();
+  const editStatement = statement.getByRole("button", { name: `Edit ${original}` });
+  await expect(editStatement).toBeVisible();
+  await editStatement.click();
+  await statement.getByRole("textbox", { name: `Edit ${original}` })
+    .fill(`${original} — E2E local review`);
+  await statement.getByRole("button", { name: "Save statement edit" }).click();
   await expect(page.getByText("Changes not applied", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Undo" }).click();
-  await expect(statement).toHaveText(original);
+  await expect(statement.locator(".r2-statement-text")).toHaveText(original);
   await expect(page.getByText("Up to date", { exact: true })).toBeVisible();
 
   await openArtifact(page, projectId, "Work Breakdown", "work_breakdown");

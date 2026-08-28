@@ -262,20 +262,20 @@ export function ProjectWorkspaceControls({
                 View all {active.length} projects
               </Link>
             ) : null}
-            <Link href="/workspace?new=1" role="menuitem"><Plus size={15} /> New project</Link>
+            {workspace?.role === "owner" ? <Link href="/workspace?new=1" role="menuitem"><Plus size={15} /> New project</Link> : null}
             <Link href="/workspace" role="menuitem"><House size={15} /> Workspace Home</Link>
           </div>
         ) : null}
       </div>
-      <ProjectCollaborationControls
-        projectId={projectId}
-        projectName={projectName ?? current?.name ?? "this project"}
-      />
-      {planPortalId
+      {workspace?.role === "owner" ? <ProjectCollaborationControls
+          projectId={projectId}
+          projectName={projectName ?? current?.name ?? "this project"}
+        /> : null}
+      {workspace?.role === "owner" && (planPortalId
         ? planPortalTarget
           ? createPortal(planControl, planPortalTarget)
           : null
-        : planControl}
+        : planControl)}
       <div className="workspace-notifications">
         <button
           aria-expanded={notificationsOpen}

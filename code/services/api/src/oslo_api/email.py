@@ -82,7 +82,7 @@ def _invitation_html(*, workspace_name: str, role: str, activation_url: str, exp
           <tr>
             <td style="padding:0 0 20px 4px;">
               <span style="font-size:19px; font-weight:800; letter-spacing:3px; color:#ffffff;">OSLO</span>
-              <span style="font-size:11px; font-weight:700; letter-spacing:1.5px; color:#e98a45; padding-left:10px;">PRODUCT GRILL</span>
+              <span style="font-size:11px; font-weight:700; letter-spacing:1.5px; color:#e98a45; padding-left:10px;">INTRALIGN</span>
             </td>
           </tr>
           <tr>
@@ -123,7 +123,7 @@ def _invitation_html(*, workspace_name: str, role: str, activation_url: str, exp
           <tr>
             <td style="padding:22px 12px 0; text-align:center;">
               <p style="margin:0 0 6px; font-size:12px; line-height:18px; color:#7f8791;">If you weren&rsquo;t expecting this invitation, you can safely ignore this email.</p>
-              <p style="margin:0; font-size:12px; line-height:18px; color:#626a74;">OSLO Product Grill &middot; Evidence-led product decisions</p>
+              <p style="margin:0; font-size:12px; line-height:18px; color:#626a74;">Intralign &middot; Evidence-led product decisions</p>
             </td>
           </tr>
         </table>
@@ -184,8 +184,8 @@ def _alpha_invitation_html(
                     <div style="margin-bottom:9px;font-size:12px;color:#7f91ad;">Invite to {safe_workspace_name} &middot; {safe_role}</div>
                     <h1 style="margin:0 0 12px;font-size:22px;line-height:28px;color:#fff;">You&rsquo;re invited to Intralign Alpha</h1>
                     <p style="margin:0 0 14px;font-size:14px;line-height:23px;color:#b8c1cd;">
-                      OSLO helps you drive your plan to the outcome you own: it shows where your plan is
-                      <strong style="color:#fff;">clear, aligned, and feasible</strong> &mdash; and where the issues are &mdash;
+                      OSLO helps you drive your plan to the outcome you own: it shows whether your plan is
+                      <strong style="color:#fff;">viable, grounded, and adaptable</strong> &mdash; and where the issues are &mdash;
                       so you close the gaps with AI-grade judgement, not guesswork. The Alpha is
                       <strong style="color:#fff;">invite-only</strong>. Activate your account to get started.
                     </p>
@@ -239,7 +239,7 @@ class SmtpInvitationMailer:
             f"""You're invited to Intralign Alpha for {workspace_name} as {role}.
 
 OSLO helps you drive your plan to the outcome you own. It shows where your plan is clear,
-aligned, and feasible, and where the issues are, so you can close the gaps.
+viable, grounded, and adaptable, and where the issues are, so you can close the gaps.
 
 Activate account:
 {activation_url}
@@ -344,7 +344,7 @@ class PostmarkInvitationMailer:
         text_body = f"""You're invited to Intralign Alpha for {workspace_name} as {role}.
 
 OSLO helps you drive your plan to the outcome you own. It shows where your plan is clear,
-aligned, and feasible, and where the issues are, so you can close the gaps.
+viable, grounded, and adaptable, and where the issues are, so you can close the gaps.
 
 Activate account:
 {activation_url}

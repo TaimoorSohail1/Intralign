@@ -155,10 +155,10 @@ class SqlInvitationStore:
                 """
                 insert into public.invitations (
                   id, workspace_id, email, role, token_hash, status,
-                  invited_by, created_at, expires_at
+                  invited_by, created_at, expires_at, project_id
                 ) values (
                   :id, :workspace_id, :email, :role, :token_hash, :status,
-                  :invited_by, :created_at, :expires_at
+                  :invited_by, :created_at, :expires_at, :project_id
                 )
                 """
             ),
@@ -172,6 +172,7 @@ class SqlInvitationStore:
                 "invited_by": invitation.invited_by_user_id,
                 "created_at": invitation.created_at,
                 "expires_at": invitation.expires_at,
+                "project_id": invitation.project_id,
             },
         )
 
@@ -226,14 +227,33 @@ class DatabaseSliceOneApplication:
                 connection.execute(
                     text(
                         """
-                        select membership.workspace_id, membership.role,
-                               membership.welcome_seen_at, profile.display_name,
+                        with access as (
+                          select membership.workspace_id, membership.role::text as role,
+                                 membership.welcome_seen_at, 0 as access_order,
+                                 membership.created_at
+                          from public.memberships membership
+                          where membership.user_id = :user_id
+                            and membership.role = 'owner'
+
+                          union all
+
+                          select project_membership.workspace_id,
+                                 'delegate_pm'::text as role,
+                                 null::timestamptz as welcome_seen_at,
+                                 1 as access_order,
+                                 min(project_membership.created_at) as created_at
+                          from public.project_memberships project_membership
+                          where project_membership.user_id = :user_id
+                            and project_membership.role = 'delegate_pm'
+                          group by project_membership.workspace_id
+                        )
+                        select access.workspace_id, access.role,
+                               access.welcome_seen_at, profile.display_name,
                                auth_user.email::text
-                        from public.memberships membership
-                        join public.profiles profile on profile.id = membership.user_id
-                        join auth.users auth_user on auth_user.id = membership.user_id
-                        where membership.user_id = :user_id
-                        order by membership.created_at, membership.workspace_id
+                        from access
+                        join public.profiles profile on profile.id = :user_id
+                        join auth.users auth_user on auth_user.id = :user_id
+                        order by access.access_order, access.created_at, access.workspace_id
                         limit 1
                         """
                     ),
@@ -250,7 +270,10 @@ class DatabaseSliceOneApplication:
             workspace_id=membership["workspace_id"],
             display_name=membership["display_name"],
             account_role=membership["role"],
-            welcome_required=membership["welcome_seen_at"] is None,
+            welcome_required=(
+                membership["role"] == MembershipRole.OWNER.value
+                and membership["welcome_seen_at"] is None
+            ),
         )
 
     def complete_welcome(self, *, actor_user_id: UUID, workspace_id: UUID) -> None:
@@ -295,6 +318,32 @@ class DatabaseSliceOneApplication:
             ).scalar_one()
         )
 
+    @staticmethod
+    def _workspace_access_role(
+        connection: Connection, *, workspace_id: UUID, actor_user_id: UUID
+    ) -> MembershipRole | None:
+        owner_role = SqlMembershipReader(connection).role_for(
+            workspace_id, actor_user_id
+        )
+        if owner_role is MembershipRole.OWNER:
+            return owner_role
+        delegate = connection.execute(
+            text(
+                """
+                select 1
+                from public.project_memberships
+                where workspace_id = :workspace_id
+                  and user_id = :user_id
+                  and role = 'delegate_pm'
+                limit 1
+                """
+            ),
+            {"workspace_id": workspace_id, "user_id": actor_user_id},
+        ).scalar_one_or_none()
+        if delegate is not None:
+            return MembershipRole.DELEGATE_PM
+        return None
+
     def _record_blocked_limit_event(
         self,
         *,
@@ -325,6 +374,8 @@ class DatabaseSliceOneApplication:
         actor_user_id: UUID,
         workspace_id: UUID,
         email: str,
+        role: MembershipRole = MembershipRole.OWNER,
+        project_id: UUID | None = None,
     ) -> Invitation:
         normalised_email = email.strip().lower()
         with self._engine.begin() as connection:
@@ -342,6 +393,16 @@ class DatabaseSliceOneApplication:
                 connection, workspace_id=workspace_id, actor_user_id=actor_user_id
             ):
                 raise InvitePermissionDenied
+            if role is MembershipRole.DELEGATE_PM:
+                project_exists = connection.execute(
+                    text(
+                        "select exists (select 1 from public.projects "
+                        "where id = :project_id and workspace_id = :workspace_id)"
+                    ),
+                    {"project_id": project_id, "workspace_id": workspace_id},
+                ).scalar_one()
+                if not project_exists:
+                    raise InvitePermissionDenied
             connection.execute(
                 text("select pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
                 {"scope": f"{workspace_id}:{normalised_email}"},
@@ -351,7 +412,7 @@ class DatabaseSliceOneApplication:
                     text(
                         """
                     select id, workspace_id, invited_by, email::text, role,
-                           status, created_at, expires_at
+                           status, created_at, expires_at, project_id
                     from public.invitations
                     where workspace_id = :workspace_id and email = :email
                       and status = 'pending'
@@ -373,6 +434,7 @@ class DatabaseSliceOneApplication:
                     status=InvitationStatus(existing["status"]),
                     created_at=existing["created_at"],
                     expires_at=existing["expires_at"],
+                    project_id=existing["project_id"],
                 )
             invitation_memberships = (
                 _PlatformAdminMembershipReader(actor_user_id, workspace_id)
@@ -390,6 +452,8 @@ class DatabaseSliceOneApplication:
                     workspace_id=workspace_id,
                     invited_by_user_id=actor_user_id,
                     email=normalised_email,
+                    role=role,
+                    project_id=project_id,
                 )
             )
             workspace_name = connection.execute(
@@ -412,7 +476,15 @@ class DatabaseSliceOneApplication:
                     "actor_user_id": actor_user_id,
                     "subject_id": str(issued.invitation.id),
                     "metadata": json.dumps(
-                        {"email": issued.invitation.email, "role": MembershipRole.OWNER.value}
+                        {
+                            "email": issued.invitation.email,
+                            "role": issued.invitation.role.value,
+                            "project_id": (
+                                str(issued.invitation.project_id)
+                                if issued.invitation.project_id is not None
+                                else None
+                            ),
+                        }
                     ),
                 },
             )
@@ -421,7 +493,11 @@ class DatabaseSliceOneApplication:
             self._mailer.send_invitation(
                 email=issued.invitation.email,
                 workspace_name=workspace_name,
-                role=issued.invitation.role.value.title(),
+                role=(
+                    "Delegate-PM"
+                    if issued.invitation.role is MembershipRole.DELEGATE_PM
+                    else "Owner"
+                ),
                 activation_url=f"{self._web_url}/activate?{query}",
                 expires_at=issued.invitation.expires_at,
             )
@@ -472,7 +548,7 @@ class DatabaseSliceOneApplication:
                 connection.execute(
                     text(
                         """
-                    select id, workspace_id, invited_by, email::text, role,
+                    select id, workspace_id, project_id, invited_by, email::text, role,
                            status, created_at, expires_at
                     from public.invitations
                     where workspace_id = :workspace_id
@@ -500,6 +576,7 @@ class DatabaseSliceOneApplication:
                 ),
                 created_at=row["created_at"],
                 expires_at=row["expires_at"],
+                project_id=row["project_id"],
             )
             for row in rows
         ]
@@ -530,7 +607,7 @@ class DatabaseSliceOneApplication:
                 connection.execute(
                     text(
                         """
-                    select email::text from public.invitations
+                    select email::text, role, project_id from public.invitations
                     where id = :invitation_id and workspace_id = :workspace_id
                       and status = 'pending'
                     for update
@@ -567,6 +644,8 @@ class DatabaseSliceOneApplication:
                     workspace_id=workspace_id,
                     invited_by_user_id=actor_user_id,
                     email=previous["email"],
+                    role=MembershipRole(previous["role"]),
+                    project_id=previous["project_id"],
                 )
             )
             workspace_name = connection.execute(
@@ -595,7 +674,11 @@ class DatabaseSliceOneApplication:
             self._mailer.send_invitation(
                 email=issued.invitation.email,
                 workspace_name=workspace_name,
-                role=issued.invitation.role.value.title(),
+                role=(
+                    "Delegate-PM"
+                    if issued.invitation.role is MembershipRole.DELEGATE_PM
+                    else "Owner"
+                ),
                 activation_url=f"{self._web_url}/activate?{urlencode({'token': issued.token})}",
                 expires_at=issued.invitation.expires_at,
             )
@@ -671,7 +754,10 @@ class DatabaseSliceOneApplication:
         project_id = uuid4()
         blocked_policy: PlanPolicy | None = None
         with self._engine.begin() as connection:
-            if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
+            if (
+                SqlMembershipReader(connection).role_for(workspace_id, actor_user_id)
+                is not MembershipRole.OWNER
+            ):
                 raise InvitePermissionDenied
             connection.execute(
                 text("select pg_advisory_xact_lock(hashtextextended(:scope, 0))"),
@@ -710,7 +796,7 @@ class DatabaseSliceOneApplication:
                         insert into public.projects (
                           id, workspace_id, name, status, created_by
                         ) values (
-                          :id, :workspace_id, 'Untitled project', 'draft', :created_by
+                          :id, :workspace_id, 'Project', 'draft', :created_by
                         )
                         """
                     ),
@@ -752,7 +838,7 @@ class DatabaseSliceOneApplication:
         return Project(
             id=project_id,
             workspace_id=workspace_id,
-            name="Untitled project",
+            name="Project",
             status="draft",
         )
 
@@ -760,7 +846,11 @@ class DatabaseSliceOneApplication:
         self, *, actor_user_id: UUID, workspace_id: UUID
     ) -> WorkspaceSummary:
         with self._engine.connect() as connection:
-            role = SqlMembershipReader(connection).role_for(workspace_id, actor_user_id)
+            role = self._workspace_access_role(
+                connection,
+                workspace_id=workspace_id,
+                actor_user_id=actor_user_id,
+            )
             if role is None:
                 raise InvitePermissionDenied
             workspace_name = connection.execute(
@@ -771,9 +861,15 @@ class DatabaseSliceOneApplication:
                 connection.execute(
                     text(
                         """
-                        select count(*)
-                        from public.memberships
-                        where workspace_id = :workspace_id
+                        select count(*) from (
+                          select membership.user_id
+                          from public.memberships membership
+                          where membership.workspace_id = :workspace_id
+                          union
+                          select project_membership.user_id
+                          from public.project_memberships project_membership
+                          where project_membership.workspace_id = :workspace_id
+                        ) workspace_people
                         """
                     ),
                     {"workspace_id": workspace_id},
@@ -783,9 +879,15 @@ class DatabaseSliceOneApplication:
                 connection.execute(
                     text(
                         """
-                        select count(*)
-                        from public.memberships
-                        where workspace_id = :workspace_id
+                        select count(*) from (
+                          select membership.user_id
+                          from public.memberships membership
+                          where membership.workspace_id = :workspace_id
+                          union
+                          select project_membership.user_id
+                          from public.project_memberships project_membership
+                          where project_membership.workspace_id = :workspace_id
+                        ) workspace_people
                         """
                     ),
                     {"workspace_id": workspace_id},
@@ -845,10 +947,24 @@ class DatabaseSliceOneApplication:
                           ) <> 'resolved'
                         ) issue_counts on true
                         where p.workspace_id = :workspace_id
+                          and (
+                            :is_owner
+                            or exists (
+                              select 1
+                              from public.project_memberships project_membership
+                              where project_membership.project_id = p.id
+                                and project_membership.user_id = :actor_user_id
+                                and project_membership.role = 'delegate_pm'
+                            )
+                          )
                         order by p.archived_at nulls first, p.updated_at desc
                         """
                     ),
-                    {"workspace_id": workspace_id},
+                    {
+                        "workspace_id": workspace_id,
+                        "actor_user_id": actor_user_id,
+                        "is_owner": role is MembershipRole.OWNER,
+                    },
                 )
                 .mappings()
                 .all()
@@ -947,6 +1063,14 @@ class DatabaseSliceOneApplication:
                           on reads.workspace_id = :workspace_id
                          and reads.user_id = :actor_user_id
                          and reads.notification_key = activity.key
+                        where :is_owner
+                           or exists (
+                             select 1
+                             from public.project_memberships project_membership
+                             where project_membership.project_id = activity.project_id
+                               and project_membership.user_id = :actor_user_id
+                               and project_membership.role = 'delegate_pm'
+                           )
                         order by activity.created_at desc
                         limit 12
                         """
@@ -955,6 +1079,7 @@ class DatabaseSliceOneApplication:
                         "workspace_id": workspace_id,
                         "actor_user_id": actor_user_id,
                         "actor_user_id_text": str(actor_user_id),
+                        "is_owner": role is MembershipRole.OWNER,
                     },
                 )
                 .mappings()
@@ -1008,6 +1133,8 @@ class DatabaseSliceOneApplication:
             collaborator_seats_used=collaborator_seats_used,
             active_project_limit=policy.active_project_limit,
             can_create_project=(
+                role is MembershipRole.OWNER
+                and
                 sum(row["archived_at"] is None for row in rows)
                 < policy.active_project_limit
             ),
@@ -1092,7 +1219,14 @@ class DatabaseSliceOneApplication:
         if not keys:
             return
         with self._engine.begin() as connection:
-            if SqlMembershipReader(connection).role_for(workspace_id, actor_user_id) is None:
+            if (
+                self._workspace_access_role(
+                    connection,
+                    workspace_id=workspace_id,
+                    actor_user_id=actor_user_id,
+                )
+                is None
+            ):
                 raise InvitePermissionDenied
             for notification_key in set(keys):
                 if not notification_key.startswith(("analysis:", "review:", "mention:")):
@@ -1118,8 +1252,10 @@ class DatabaseSliceOneApplication:
         self, *, actor_user_id: UUID, workspace_id: UUID
     ) -> WorkspacePreferences:
         with self._engine.begin() as connection:
-            actor_role = SqlMembershipReader(connection).role_for(
-                workspace_id, actor_user_id
+            actor_role = self._workspace_access_role(
+                connection,
+                workspace_id=workspace_id,
+                actor_user_id=actor_user_id,
             )
             if actor_role is None:
                 raise InvitePermissionDenied
@@ -1192,8 +1328,10 @@ class DatabaseSliceOneApplication:
         if not 1 <= len(workspace_name) <= 120:
             raise ValueError("Workspace name must be between 1 and 120 characters")
         with self._engine.begin() as connection:
-            actor_role = SqlMembershipReader(connection).role_for(
-                workspace_id, actor_user_id
+            actor_role = self._workspace_access_role(
+                connection,
+                workspace_id=workspace_id,
+                actor_user_id=actor_user_id,
             )
             if actor_role is None:
                 raise InvitePermissionDenied
@@ -1339,18 +1477,12 @@ class DatabaseSliceOneApplication:
                     user_id=user.id,
                     display_name=display_name.strip(),
                 )
-                connection.execute(
-                    text(
-                        """
-                        insert into public.memberships (workspace_id, user_id, role)
-                        values (:workspace_id, :user_id, :role)
-                        """
-                    ),
-                    {
-                        "workspace_id": accepted_workspace_id,
-                        "user_id": user.id,
-                        "role": accepted_role,
-                    },
+                self._grant_invitation_access(
+                    connection,
+                    invitation=invitation,
+                    accepted_workspace_id=accepted_workspace_id,
+                    accepted_role=accepted_role,
+                    user_id=user.id,
                 )
                 accepted = connection.execute(
                     text(
@@ -1402,7 +1534,7 @@ class DatabaseSliceOneApplication:
             access_token=session.access_token,
             refresh_token=session.refresh_token,
             expires_in=session.expires_in,
-            welcome_required=True,
+            welcome_required=accepted_role == MembershipRole.OWNER.value,
         )
 
     def resolve_invitation(self, token: str) -> InvitationDetails:
@@ -1477,26 +1609,12 @@ class DatabaseSliceOneApplication:
                 user_id=session.user_id,
                 display_name=session.email.split("@")[0],
             )
-            membership_exists = connection.execute(
-                text(
-                    "select 1 from public.memberships "
-                    "where workspace_id = :workspace_id and user_id = :user_id"
-                ),
-                {"workspace_id": accepted_workspace_id, "user_id": session.user_id},
-            ).scalar_one_or_none()
-            connection.execute(
-                text(
-                    """
-                    insert into public.memberships (workspace_id, user_id, role)
-                    values (:workspace_id, :user_id, :role)
-                    on conflict (workspace_id, user_id) do nothing
-                    """
-                ),
-                {
-                    "workspace_id": accepted_workspace_id,
-                    "user_id": session.user_id,
-                    "role": accepted_role,
-                },
+            access_existed = self._grant_invitation_access(
+                connection,
+                invitation=invitation,
+                accepted_workspace_id=accepted_workspace_id,
+                accepted_role=accepted_role,
+                user_id=session.user_id,
             )
             accepted_at = datetime.now(UTC)
             accepted = connection.execute(
@@ -1544,7 +1662,9 @@ class DatabaseSliceOneApplication:
             access_token=session.access_token,
             refresh_token=session.refresh_token,
             expires_in=session.expires_in,
-            welcome_required=membership_exists is None,
+            welcome_required=(
+                accepted_role == MembershipRole.OWNER.value and not access_existed
+            ),
         )
 
     def _resume_accepted_invitation(
@@ -1568,10 +1688,28 @@ class DatabaseSliceOneApplication:
             membership = (
                 connection.execute(
                     text(
-                        "select created_at, welcome_seen_at from public.memberships "
-                        "where workspace_id = :workspace_id and user_id = :user_id"
+                        """
+                        select membership.created_at, membership.welcome_seen_at
+                        from public.memberships membership
+                        where :role = 'owner'
+                          and membership.workspace_id = :workspace_id
+                          and membership.user_id = :user_id
+
+                        union all
+
+                        select project_membership.created_at, null::timestamptz
+                        from public.project_memberships project_membership
+                        where :role = 'delegate_pm'
+                          and project_membership.project_id = :project_id
+                          and project_membership.user_id = :user_id
+                        """
                     ),
-                    {"workspace_id": accepted_workspace_id, "user_id": session.user_id},
+                    {
+                        "role": invitation["role"],
+                        "workspace_id": accepted_workspace_id,
+                        "project_id": invitation["project_id"],
+                        "user_id": session.user_id,
+                    },
                 )
                 .mappings()
                 .one_or_none()
@@ -1590,7 +1728,9 @@ class DatabaseSliceOneApplication:
             refresh_token=session.refresh_token,
             expires_in=session.expires_in,
             welcome_required=(
-                membership["welcome_seen_at"] is None and joined_from_this_invitation
+                invitation["role"] == MembershipRole.OWNER.value
+                and membership["welcome_seen_at"] is None
+                and joined_from_this_invitation
             ),
         )
 
@@ -1606,7 +1746,7 @@ class DatabaseSliceOneApplication:
                 connection.execute(
                     text(
                         """
-                    select i.id, i.workspace_id, i.email::text, i.role,
+                    select i.id, i.workspace_id, i.project_id, i.email::text, i.role,
                            i.status, i.created_at, i.expires_at, i.accepted_by,
                            i.accepted_workspace_id, i.invited_by,
                            w.name as workspace_name
@@ -1639,6 +1779,8 @@ class DatabaseSliceOneApplication:
         user_id: UUID,
         display_name: str,
     ) -> tuple[UUID, str]:
+        if invitation["role"] != MembershipRole.OWNER.value:
+            return invitation["workspace_id"], invitation["role"]
         provisions_client_workspace = connection.execute(
             text(
                 """
@@ -1680,3 +1822,76 @@ class DatabaseSliceOneApplication:
             },
         )
         return workspace_id, MembershipRole.OWNER.value
+
+    @staticmethod
+    def _grant_invitation_access(
+        connection: Connection,
+        *,
+        invitation: RowMapping,
+        accepted_workspace_id: UUID,
+        accepted_role: str,
+        user_id: UUID,
+    ) -> bool:
+        """Grant exactly the owner or project-scoped access carried by the invite."""
+
+        if accepted_role == MembershipRole.OWNER.value:
+            existed = connection.execute(
+                text(
+                    """
+                    select 1 from public.memberships
+                    where workspace_id = :workspace_id and user_id = :user_id
+                    """
+                ),
+                {"workspace_id": accepted_workspace_id, "user_id": user_id},
+            ).scalar_one_or_none()
+            connection.execute(
+                text(
+                    """
+                    insert into public.memberships (workspace_id, user_id, role)
+                    values (:workspace_id, :user_id, :role)
+                    on conflict (workspace_id, user_id) do nothing
+                    """
+                ),
+                {
+                    "workspace_id": accepted_workspace_id,
+                    "user_id": user_id,
+                    "role": accepted_role,
+                },
+            )
+            return existed is not None
+
+        project_id = invitation["project_id"]
+        if (
+            accepted_role != MembershipRole.DELEGATE_PM.value
+            or project_id is None
+            or accepted_workspace_id != invitation["workspace_id"]
+        ):
+            raise InvalidInvitation
+        existed = connection.execute(
+            text(
+                """
+                select 1 from public.project_memberships
+                where project_id = :project_id and user_id = :user_id
+                """
+            ),
+            {"project_id": project_id, "user_id": user_id},
+        ).scalar_one_or_none()
+        connection.execute(
+            text(
+                """
+                insert into public.project_memberships (
+                  workspace_id, project_id, user_id, role, assigned_by
+                ) values (
+                  :workspace_id, :project_id, :user_id, 'delegate_pm', :assigned_by
+                )
+                on conflict (project_id, user_id) do nothing
+                """
+            ),
+            {
+                "workspace_id": accepted_workspace_id,
+                "project_id": project_id,
+                "user_id": user_id,
+                "assigned_by": invitation["invited_by"],
+            },
+        )
+        return existed is not None

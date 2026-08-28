@@ -37,6 +37,7 @@ from oslo_api.analysis.user_evidence import (
     build_clarification_evidence,
     build_reviewer_evidence,
 )
+from oslo_api.project_access import find_project_access
 from oslo_api.settings import Settings
 from oslo_api.slice_two import (
     SliceTwoArtifactConflict,
@@ -443,9 +444,18 @@ class DatabaseSliceTwoApplication:
                            'answered', :evidence_ref, :analysis_run_id,
                            :idempotency_key
                     from public.profiles profile
-                    join public.memberships membership
-                      on membership.user_id = profile.id
-                     and membership.workspace_id = :workspace_id
+                    cross join lateral (
+                      select membership.role::text as role
+                      from public.memberships membership
+                      where membership.user_id = profile.id
+                        and membership.workspace_id = :workspace_id
+                      union all
+                      select membership.role::text as role
+                      from public.project_memberships membership
+                      where membership.user_id = profile.id
+                        and membership.project_id = :project_id
+                      limit 1
+                    ) membership
                     where profile.id = :actor_user_id
                     on conflict (workspace_id, idempotency_key) do nothing
                     """
@@ -935,14 +945,24 @@ class DatabaseSliceTwoApplication:
                         """
                         select profile.display_name, membership.role
                         from public.profiles profile
-                        join public.memberships membership
-                          on membership.user_id = profile.id
-                         and membership.workspace_id = :workspace_id
+                        cross join lateral (
+                          select owner.role::text as role
+                          from public.memberships owner
+                          where owner.user_id = profile.id
+                            and owner.workspace_id = :workspace_id
+                          union all
+                          select delegate.role::text as role
+                          from public.project_memberships delegate
+                          where delegate.user_id = profile.id
+                            and delegate.project_id = :project_id
+                          limit 1
+                        ) membership
                         where profile.id = :actor_user_id
                         """
                     ),
                     {
                         "workspace_id": workspace_id,
+                        "project_id": project_id,
                         "actor_user_id": actor_user_id,
                     },
                 )
@@ -2074,7 +2094,18 @@ class DatabaseSliceTwoApplication:
                 ),
                 {"workspace_id": workspace_id, "user_id": actor_user_id},
             )
-            if updated.rowcount != 1:
+            if updated.rowcount == 0:
+                updated = connection.execute(
+                    text(
+                        """
+                        update public.project_memberships
+                        set orientation_seen_at = coalesce(orientation_seen_at, now())
+                        where workspace_id = :workspace_id and user_id = :user_id
+                        """
+                    ),
+                    {"workspace_id": workspace_id, "user_id": actor_user_id},
+                )
+            if updated.rowcount < 1:
                 raise SliceTwoPermissionDenied
 
     def has_seen_orientation(
@@ -2088,11 +2119,17 @@ class DatabaseSliceTwoApplication:
                 text(
                     """
                     select membership.orientation_seen_at
-                    from public.projects project
-                    join public.memberships membership
-                      on membership.workspace_id = project.workspace_id
+                    from public.memberships membership
+                    join public.projects project
+                      on project.workspace_id = membership.workspace_id
                     where project.id = :project_id
                       and membership.user_id = :user_id
+                    union all
+                    select membership.orientation_seen_at
+                    from public.project_memberships membership
+                    where membership.project_id = :project_id
+                      and membership.user_id = :user_id
+                    limit 1
                     """
                 ),
                 {"project_id": project_id, "user_id": actor_user_id},
@@ -3245,21 +3282,14 @@ class DatabaseSliceTwoApplication:
 
     def _workspace_for_project(self, actor_user_id: UUID, project_id: UUID) -> UUID:
         with self._engine.connect() as connection:
-            workspace_id = connection.execute(
-                text(
-                    """
-                    select project.workspace_id
-                    from public.projects project
-                    join public.memberships membership
-                      on membership.workspace_id = project.workspace_id
-                    where project.id = :project_id and membership.user_id = :user_id
-                    """
-                ),
-                {"project_id": project_id, "user_id": actor_user_id},
-            ).scalar_one_or_none()
-        if workspace_id is None:
+            access = find_project_access(
+                connection,
+                actor_user_id=actor_user_id,
+                project_id=project_id,
+            )
+        if access is None or not access.can_edit:
             raise SliceTwoPermissionDenied
-        return workspace_id
+        return access.workspace_id
 
     def _validate_documents(
         self,

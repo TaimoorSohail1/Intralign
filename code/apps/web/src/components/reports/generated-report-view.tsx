@@ -189,8 +189,11 @@ function AssumptionsEvidence({
       <article className="generated-report">
         <ReportHeader projection={projection} reportName="Assumptions & Evidence" />
         <p className="generated-report-intro">
-          <strong>{projection.evidenceRegister.grounded}</strong> of {projection.evidenceRegister.total}{" "}
-          load-bearing details rest on your evidence; {projection.evidenceRegister.inferred} are still OSLO’s inference.
+          <strong>{projection.criticalGrounding.grounded}</strong> of {projection.criticalGrounding.total}{" "}
+          load-bearing details rest on your evidence; {Math.max(
+            0,
+            projection.criticalGrounding.total - projection.criticalGrounding.grounded,
+          )} remain ungrounded.
         </p>
         <section aria-label="Evidence register" className="generated-report-list is-compact">
           <span className="generated-report-list-label">

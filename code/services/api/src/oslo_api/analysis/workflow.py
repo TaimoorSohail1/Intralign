@@ -334,6 +334,16 @@ class AnalysisWorkflow:
                 None,
             )
             project_title = project_title or self._supported_project_title(state["perception"])
+            if not project_title and request.kind is RunKind.INITIAL:
+                project_title = self._explicit_description_title(
+                    str(state.get("governed_description", request.description))
+                )
+            # Clarification and artifact-edit reanalysis can legitimately contain only
+            # the newly supplied evidence. If that evidence does not restate the
+            # project name, retain the title from the last atomically published read.
+            project_title = project_title or (
+                previous_snapshot.project_title if previous_snapshot else None
+            )
             if project_title:
                 state["artifacts"] = tuple(
                     artifact
@@ -526,6 +536,49 @@ class AnalysisWorkflow:
             for artifact in parent.snapshot.artifacts
             if artifact.artifact_type.value != edited_type
         }
+
+    @staticmethod
+    def _explicit_description_title(description: str) -> str | None:
+        """Return a deliberately separated title from text-only intake.
+
+        A first line followed by a blank line is the text equivalent of a
+        document heading. The strict shape keeps prose and section labels from
+        being promoted into the governed project name.
+        """
+
+        lines = description.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+        first_index = next(
+            (index for index, line in enumerate(lines) if line.strip()),
+            None,
+        )
+        if first_index is None or first_index + 1 >= len(lines):
+            return None
+        if lines[first_index + 1].strip():
+            return None
+        if not any(line.strip() for line in lines[first_index + 2 :]):
+            return None
+
+        candidate = re.sub(r"^#{1,6}\s+", "", lines[first_index].strip()).strip()
+        words = candidate.split()
+        if not 3 <= len(candidate) <= 160 or not 2 <= len(words) <= 16:
+            return None
+        if candidate.endswith((".", "!", "?", ";", ":", ",")):
+            return None
+        if not any(character.isalpha() for character in candidate):
+            return None
+        if candidate.casefold() in {
+            "project",
+            "untitled project",
+            "objective",
+            "scope",
+            "requirements",
+            "constraints",
+            "work breakdown",
+            "schedule",
+            "resources",
+        }:
+            return None
+        return candidate
 
     @staticmethod
     def _supported_project_title(perception: Perception) -> str | None:

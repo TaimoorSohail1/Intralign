@@ -57,12 +57,12 @@ class FailingStageHarness(DeterministicAgentHarness):
         return super().evaluate(**kwargs)
 
 
-class TitledHarness(DeterministicAgentHarness):
+class InitialOnlyTitledHarness(DeterministicAgentHarness):
     def construct_artifact(self, **kwargs):
-        return replace(
-            super().construct_artifact(**kwargs),
-            project_title="Northstar CRM Modernization",
-        )
+        artifact = super().construct_artifact(**kwargs)
+        if kwargs["kind"] is RunKind.INITIAL:
+            return replace(artifact, project_title="Northstar CRM Modernization")
+        return artifact
 
 
 class NoopExecutor:
@@ -2195,6 +2195,18 @@ def test_history_falls_back_to_retained_snapshots_when_legacy_events_are_absent(
         assert len(history["groups"]) == 1
         assert history["groups"][0]["run_id"] == str(result.run_id)
         assert history["groups"][0]["current"] is True
+        assert "confidence_index" not in history["groups"][0]
+        # A freshly generated read is not grounded merely because its source
+        # artifacts were extracted. Grounding is credited only after verified
+        # evidence is published by reanalysis.
+        assert history["groups"][0]["grounded_load_bearing"] == 0
+        assert history["groups"][0]["total_load_bearing"] > 0
+        assert history["groups"][0]["grounded_load_bearing"] == (
+            history["trend"][0]["grounded_load_bearing"]
+        )
+        assert history["groups"][0]["total_load_bearing"] == (
+            history["trend"][0]["total_load_bearing"]
+        )
         assert history["groups"][0]["events"][0]["summary"] == (
             "Initial Analysis complete"
         )
@@ -2224,7 +2236,7 @@ def test_analysis_promotes_a_supported_title_and_increments_artifact_revisions(
         )
     try:
         store = DatabaseAnalysisStore(engine)
-        workflow = AnalysisWorkflow(store=store, harness=TitledHarness())
+        workflow = AnalysisWorkflow(store=store, harness=InitialOnlyTitledHarness())
         source_names = tuple(f"project-{index}.pdf" for index in range(1, 11))
         initial = workflow.run(
             AnalysisRunRequest(
@@ -2277,6 +2289,83 @@ def test_analysis_promotes_a_supported_title_and_increments_artifact_revisions(
             )
         assert project_name == "Northstar CRM Modernization"
         assert revisions == [1, 2]
+
+        # Historical snapshots created before title preservation was enforced
+        # still render the governed project name instead of generic "Project".
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    update public.assessment_snapshots
+                    set snapshot_json = jsonb_set(
+                      snapshot_json,
+                      '{project_title}',
+                      'null'::jsonb
+                    )
+                    where analysis_run_id = :run_id
+                    """
+                ),
+                {"run_id": extended.run_id},
+            )
+        recovered = store.current_snapshot(project_id)
+        assert recovered is not None
+        assert recovered.project_title == "Northstar CRM Modernization"
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
+def test_text_intake_promotes_an_explicit_heading_from_the_r2_project_fallback(
+    workspace_owner_id: UUID,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    owner_id = workspace_owner_id
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Project', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        result = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description=(
+                    "Meridian GTM Launch\n\n"
+                    "Objective: Launch the enterprise analytics product by 30 November.\n"
+                    "Owner: Product Marketing Director."
+                ),
+                source_names=(),
+                idempotency_key=f"text-title:{project_id}",
+            )
+        )
+
+        assert result.status is AnalysisRunStatus.COMPLETED
+        assert result.snapshot is not None
+        assert result.snapshot.project_title == "Meridian GTM Launch"
+        assert all(
+            artifact.project_title == "Meridian GTM Launch"
+            for artifact in result.snapshot.artifacts
+        )
+        with engine.connect() as connection:
+            project_name = connection.execute(
+                text("select name from public.projects where id = :id"),
+                {"id": project_id},
+            ).scalar_one()
+        assert project_name == "Meridian GTM Launch"
     finally:
         with engine.begin() as connection:
             connection.execute(

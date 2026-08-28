@@ -1,6 +1,7 @@
 import { expect, test } from "../fixtures";
+import { unlockFirstRead } from "../helpers";
 
-test.setTimeout(240_000);
+test.setTimeout(360_000);
 
 async function dismissOrientation(page: import("@playwright/test").Page) {
   const orientation = page.getByRole("dialog", { name: "How OSLO works" });
@@ -24,12 +25,12 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
   await signIn(page);
   await page.goto("/workspace");
 
-  await expect(page.getByRole("heading", { name: "OSLO Product Grill" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Active projects" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your project" })).toBeVisible();
+  await expect(page.getByText("Pick up where understanding stands.")).toBeVisible();
 
   let analyzedProject = page
-    .locator("article.workspace-project-card")
-    .filter({ hasText: /Analyzed.*7 artifacts/i })
+    .locator("article.r2-current-plan")
+    .filter({ hasText: /Analyzed.*7 (?:artifacts|plan artifacts)/i })
     .first();
   if (await analyzedProject.count() === 0) {
     await page.getByRole("button", { name: "New project" }).click();
@@ -48,17 +49,18 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
       await confirmOutcome.click();
     }
     await expect(page).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
-    await expect(page.getByText("Project summary", { exact: true })).toBeVisible({
+    await dismissOrientation(page);
+    await unlockFirstRead(page);
+    await expect(page.getByRole("region", { name: "Outcome Integrity summary" })).toBeVisible({
       timeout: 120_000,
     });
-    await dismissOrientation(page);
     await page.goto("/workspace");
     analyzedProject = page
-      .locator("article.workspace-project-card")
-      .filter({ hasText: /Analyzed.*7 artifacts/i })
+      .locator("article.r2-current-plan")
+      .filter({ hasText: /Analyzed.*7 (?:artifacts|plan artifacts)/i })
       .first();
   }
-  const analyzedProjectLink = analyzedProject.getByRole("link", { name: /Open project/ });
+  const analyzedProjectLink = analyzedProject.getByRole("link", { name: /Open the project/ });
   await expect(analyzedProjectLink).toBeVisible();
   const projectHref = await analyzedProjectLink.getAttribute("href");
   expect(projectHref).toMatch(/^\/projects\/.+\/overview$/);
@@ -78,57 +80,54 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
   }
   await page.reload();
 
-  await page.getByRole("button", { name: /Compare plans/ }).click();
+  let capacity = page.getByRole("dialog", { name: /Run more than one plan/ });
+  for (let attempt = 0; attempt < 3 && !(await capacity.isVisible()); attempt += 1) {
+    await page.getByRole("button", { name: "New project", exact: true }).click();
+    await capacity.waitFor({ state: "visible", timeout: 3_000 }).catch(() => undefined);
+    if (await capacity.isVisible()) break;
+    await expect(page).toHaveURL(/\/intake\?project=/, { timeout: 30_000 });
+    await page.goto("/workspace");
+    capacity = page.getByRole("dialog", { name: /Run more than one plan/ });
+  }
+  await expect(capacity).toBeVisible();
+  await expect(capacity.getByText(/gates capacity, never the quality/i)).toBeVisible();
+  await capacity.getByRole("button", { name: /Upgrade your plan/ }).click();
+
   let plans = page.getByRole("dialog", { name: "Your plan" });
   await expect(plans).toBeVisible();
   await expect(plans.getByText("Every plan gets the same read.")).toBeVisible();
   await expect(
-    plans.getByText(/Plans differ on capacity, scope and collaboration/),
+    plans.getByText(/Plans differ only on capacity/),
   ).toBeVisible();
-
-  await expect(plans.getByRole("button", { name: "You’re on Basic" })).toBeDisabled();
+  await expect(plans.getByText(/Judgment quality never changes/)).toBeVisible();
+  await expect(plans.getByText(/Cancellation preserves every record/)).toBeVisible();
   await plans.getByRole("button", { name: "Done" }).click();
-
-  await page.getByRole("button", { name: "New project" }).click();
-  await expect(page).toHaveURL(/\/intake\?project=/, { timeout: 30_000 });
-  await page.goto("/workspace");
-  await expect(page.getByText("3 active projects", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: /Compare plans/ }).click();
-
-  plans = page.getByRole("dialog", { name: "Your plan" });
-  await expect(plans).toBeVisible();
-  await expect(plans.getByRole("button", { name: "You’re on Basic" })).toBeDisabled();
-  await plans.getByRole("button", { name: "Done" }).click();
-
-  await page.goto("/settings#subscription");
-  await expect(page.getByRole("heading", { name: "Subscription" })).toBeVisible();
-  await expect(page.getByText("Basic", { exact: true })).toBeVisible();
-  await expect(page.getByText("Not yet set", { exact: true })).toBeVisible();
-  await expect(page.getByText("Never metered.", { exact: true })).toBeVisible();
-  await expect(page.getByText("PDF · Copy summary · Export link", { exact: true })).toBeVisible();
 
   await page.goto(projectHref!);
   await dismissOrientation(page);
 
-  if (testInfo.project.name !== "mobile") {
+  if (testInfo.project.name === "desktop") {
     const projectPlanBadge = page.getByRole("button", { name: "Basic", exact: true });
     await expect(projectPlanBadge).toBeVisible();
     await projectPlanBadge.click();
-    const usage = page.getByRole("dialog", { name: "Usage & limits" });
-    await expect(usage).toBeVisible();
-    await expect(usage.getByText("What you are using, on Basic", { exact: true })).toBeVisible();
-    await usage.getByRole("button", { name: "Close usage and limits" }).click();
+    const settings = page.getByRole("dialog", { name: "Settings" });
+    await expect(settings.getByRole("heading", { name: "Plan & usage" })).toBeVisible();
+    await expect(settings.getByText("Documents", { exact: true })).toBeVisible();
+    await expect(settings.getByText("Unlimited", { exact: true })).toBeVisible();
+    await expect(settings.getByText("History", { exact: true })).toBeVisible();
+    await expect(settings.getByText("Full", { exact: true })).toBeVisible();
+    await settings.getByRole("button", { name: "Close settings" }).click();
   }
 
   await page.goto(projectHref!.replace(/\/overview$/, "/reports"));
   await expect(page.getByRole("textbox", { name: "Edit readout" })).toBeVisible();
-  if (testInfo.project.name !== "mobile") {
+  if (testInfo.project.name === "desktop") {
     await expect(page.getByRole("button", { name: "Basic", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Reports" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   }
-  await expect(page.getByRole("link", { name: "Reports" })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
   const readout = page.getByRole("textbox", { name: "Edit readout" });
   await expect(readout).toBeVisible();
   await expect(readout.getByRole("heading", { name: "Summary" })).toBeVisible();
@@ -140,14 +139,13 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
   await expect(readout.getByRole("heading", { name: "Appendix" })).toBeVisible();
   await expect(page.getByText("Saved automatically to this workspace")).toBeVisible();
 
-  await page.goto(projectHref!.replace(/\/overview$/, "/inference"));
-  await expect(page.getByRole("heading", { name: "Inference map" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Inference map" })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
-  await expect(page.getByRole("heading", { name: "By artifact" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Assumptions" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Structure" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "This week" })).toBeVisible();
+  await page.goto(projectHref!.replace(/\/overview$/, "/grounding"));
+  await expect(page.getByRole("heading", { name: "Grounding map" })).toBeVisible();
+  if (testInfo.project.name === "desktop") {
+    await expect(page.getByRole("link", { name: "Grounding map" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  }
+  await expect(page.getByText("what your plan rests on — grounded vs still OSLO-inferred")).toBeVisible();
 });

@@ -1136,6 +1136,7 @@ describe("ProjectOverview", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
+    fireEvent.click(screen.getByRole("button", { name: "I have it documented in writing" }));
 
     await waitFor(() => expect(fetcher).toHaveBeenCalledWith(
       "/api/projects/project-001/issues/ISS-001/acts",
@@ -1144,7 +1145,7 @@ describe("ProjectOverview", () => {
     const actCall = fetcher.mock.calls.find(([url]) => String(url).endsWith("/acts"));
     expect(JSON.parse(String(actCall?.[1]?.body))).toMatchObject({
       act: "confirm",
-      basis: "verified-directly",
+      basis: "documented",
       evidenceRef: "document:plan:page:1:fragment:0",
     });
 
@@ -1216,7 +1217,7 @@ describe("ProjectOverview", () => {
     );
 
     expect(screen.getByRole("img", { name: "Intralign" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Outcome: Move the Northstar platform/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Outcome:/i })).not.toBeInTheDocument();
 
     const workspace = screen.getByRole("navigation", { name: "Workspace" });
     expect(within(workspace).getAllByRole("link").map((link) => link.textContent)).toEqual([
@@ -1247,6 +1248,68 @@ describe("ProjectOverview", () => {
       "0 load-bearing details grounded · 1 still OSLO's inference",
     );
     expect(within(advisor).getByText(/Your next move/)).toBeInTheDocument();
+  });
+
+  it("uses canonical provenance for the Overview load-bearing grounding count", () => {
+    const canonicalSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      assessment: {
+        ...snapshot.assessment,
+        integrity: {
+          ...snapshot.assessment.integrity,
+          decomposition: snapshot.assessment.integrity.decomposition.map((pillar) =>
+            pillar.key === "Grounding"
+              ? { ...pillar, why: ["38 of 54 load-bearing items rest on evidence"] }
+              : pillar,
+          ),
+        },
+      },
+      provenance: {
+        schema_version: 1,
+        artifacts: [],
+        assumptions: [],
+        grounded_claims: 47,
+        inferred_claims: 45,
+        total_claims: 92,
+        load_bearing_inferences: 0,
+        grounding: {
+          grounded: 47,
+          addressed: 0,
+          routed: 0,
+          inferred: 0,
+          total: 47,
+          basis: 1,
+          band: "Sound",
+        },
+        structure: {
+          unconfirmed_dependencies: 0,
+          unowned_parties: 0,
+          untraceable_numbers: 0,
+        },
+        this_week: {
+          user_grounded: 0,
+          oslo_inferred: 0,
+        },
+      },
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={canonicalSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const integritySummary = screen.getByRole("region", {
+      name: "Outcome Integrity summary",
+    });
+    expect(
+      within(integritySummary).getByText("Grounded 47 of 47 load-bearing"),
+    ).toBeInTheDocument();
+    expect(
+      within(integritySummary).queryByText("38 of 54 load-bearing items rest on evidence"),
+    ).not.toBeInTheDocument();
   });
 
   it("labels an inferred primary outcome honestly and uses its managed title", () => {
@@ -1964,6 +2027,8 @@ describe("ProjectOverview", () => {
     });
     expect(screen.queryByText("Your workspace is open.")).not.toBeInTheDocument();
     expect(screen.getByText("One call down - you confirmed your outcome.")).toBeInTheDocument();
+    expect(screen.getByText("One more decision completes your guided review.")).toBeInTheDocument();
+    expect(screen.queryByText(/opens your full workspace/i)).not.toBeInTheDocument();
     const startHere = screen.getByRole("button", {
       name: /Start here: settle .*Migration ownership is unresolved/i,
     });
@@ -2056,6 +2121,55 @@ describe("ProjectOverview", () => {
     expect(screen.queryByRole("button", { name: "Apply this fix →" })).not.toBeInTheDocument();
   });
 
+  it("opens a verifiable issue for the second first-run confirmation", async () => {
+    const firstRunSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      first_run: {
+        first_run: true,
+        onboarded: false,
+        grounding_act_count: 1,
+        unlock_threshold: 2,
+        ever_unlocked: false,
+        freeze_on: true,
+      },
+      assessment: {
+        ...snapshot.assessment,
+        issues: [
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-BUILD-FIRST",
+            title: "Delivery scope needs to be built",
+            primary_act: "build" as const,
+            also_offered: [],
+            classification_state: "classified" as const,
+          },
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-VERIFY-SECOND",
+            severity: "Moderate" as const,
+            title: "Owner evidence needs confirmation",
+            primary_act: "verify" as const,
+            also_offered: ["build" as const],
+            classification_state: "classified" as const,
+          },
+        ],
+      },
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={firstRunSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const issuePanel = await screen.findByRole("region", { name: "Issue details" });
+    expect(within(issuePanel).getByText("Owner evidence needs confirmation")).toBeVisible();
+    expect(within(issuePanel).getByRole("button", { name: "Confirm — it holds" })).toBeVisible();
+    expect(within(issuePanel).queryByRole("button", { name: "Apply this fix →" })).not.toBeInTheDocument();
+  });
+
   it("treats the first-run outcome confirmation as transient feedback", async () => {
     vi.useFakeTimers();
     window.sessionStorage.removeItem("r2-first-run-recorded:project-001");
@@ -2130,6 +2244,7 @@ describe("ProjectOverview", () => {
       expect(screen.getByRole("region", { name: "Issue details" })).toBeInTheDocument(),
     );
     fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
+    fireEvent.click(screen.getByRole("button", { name: "I’ve verified this directly" }));
     const queue = screen.getByRole("region", { name: "Exposure-ranked issue queue" });
     await waitFor(() =>
       expect(
@@ -2187,6 +2302,12 @@ describe("ProjectOverview", () => {
     ).not.toBeInTheDocument();
     expect(within(detail).getByText("Affects")).toBeInTheDocument();
     expect(within(detail).getByText("Holds up")).toBeInTheDocument();
+    expect(
+      within(detail).getByText("No downstream dependency path was published."),
+    ).toBeInTheDocument();
+    expect(
+      within(detail).getAllByText("No accountable owner is identified."),
+    ).toHaveLength(1);
     expect(screen.getByText("Your work — most important first")).toBeInTheDocument();
     await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({
       behavior: "auto",
@@ -2198,6 +2319,85 @@ describe("ProjectOverview", () => {
     } else {
       delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
     }
+  });
+
+  it("records a confirmation basis in the same tap instead of using a basis-free confirm", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ issue_id: "ISS-001", status: "resolved" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={{
+          ...snapshot,
+          assessment: {
+            ...snapshot.assessment,
+            issues: snapshot.assessment.issues.map((issue) => ({
+              ...issue,
+              primary_act: "verify" as const,
+            })),
+          },
+        }}
+        initialView="issues"
+        logoutAction={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
+    expect(screen.getByRole("group", { name: "It holds because" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "I’ve verified this directly" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const request = fetchMock.mock.calls.find(([url]) => String(url).endsWith("/acts"));
+    expect(JSON.parse(String(request?.[1]?.body))).toMatchObject({
+      act: "confirm",
+      basis: "verified-directly",
+    });
+  });
+
+  it("shows the actual downstream dependency path instead of repeating why the issue matters", () => {
+    const tracedSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      assessment: {
+        ...snapshot.assessment,
+        issues: [{
+          ...snapshot.assessment.issues[0],
+          sensitivity_trace: {
+            paths: [["migration-owner", "migration-ready", "safe-launch"]],
+            dependency_paths: [["Migration owner", "Migration readiness", "Safe launch"]],
+            outcome_dependencies: ["Safe launch"],
+            span_true: 0.8,
+            span_false: 0.2,
+            span: 0.6,
+            leverage: 0.8,
+            uncertainty_factor: 1.2,
+            runway_factor: 1,
+            edge_key: null,
+            outcome_reachability: ["safe-launch"],
+          },
+        }],
+      },
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={tracedSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
+    );
+
+    const detail = screen.getByRole("region", { name: "Issue details" });
+    expect(
+      within(detail).getByText("Migration readiness → Safe launch"),
+    ).toBeInTheDocument();
   });
 
   it("reveals readable evidence through a keyboard-operable disclosure and hides locator ids", () => {
@@ -2336,6 +2536,7 @@ describe("ProjectOverview", () => {
       screen.getByRole("button", { name: /Migration ownership is unresolved/i }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
+    fireEvent.click(screen.getByRole("button", { name: "I’ve verified this directly" }));
 
     await waitFor(() => {
       expect(screen.queryByRole("region", { name: "Issue details" })).not.toBeInTheDocument();
@@ -2574,6 +2775,7 @@ describe("ProjectOverview", () => {
       json: async () => ({
         id: "workspace-001",
         name: "OSLO Alpha",
+        role: "owner",
         plan: "free",
         active_project_count: 1,
         can_create_project: false,
@@ -2807,6 +3009,7 @@ describe("ProjectOverview", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
+    fireEvent.click(screen.getByRole("button", { name: "I’ve verified this directly" }));
 
     await act(async () => Promise.resolve());
     expect(screen.getByRole("status", { name: "Issue action recorded" })).toBeInTheDocument();

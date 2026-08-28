@@ -331,6 +331,15 @@ describe("ReportWorkspace", () => {
         inferred_claims: 5,
         total_claims: 6,
         load_bearing_inferences: 1,
+        grounding: {
+          grounded: 1,
+          addressed: 1,
+          routed: 0,
+          inferred: 2,
+          total: 4,
+          basis: 0.25,
+          band: "Weak",
+        },
         structure: {
           unconfirmed_dependencies: 0,
           unowned_parties: 1,
@@ -346,6 +355,11 @@ describe("ReportWorkspace", () => {
     expect(
       screen.getByRole("heading", { name: /Assumptions & Evidence · read-only snapshot/i }),
     ).toBeInTheDocument();
+    const groundingSummary = screen.getByText(
+      (_content, element) => element?.classList.contains("generated-report-intro") ?? false,
+    );
+    expect(groundingSummary).toHaveTextContent(/1 of 4 load-bearing details rest on your evidence/i);
+    expect(groundingSummary).toHaveTextContent(/3 remain ungrounded/i);
     expect(screen.getByRole("button", { name: "Summary" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByText("Evidence detail 6")).not.toBeInTheDocument();
 

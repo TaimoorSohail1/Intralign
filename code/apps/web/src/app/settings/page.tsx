@@ -15,7 +15,7 @@ export default async function SettingsPage() {
   const activeProject = [...workspace.projects]
     .filter((project) => !project.archived)
     .sort((left, right) => right.updated_at.localeCompare(left.updated_at))[0];
-  if (activeProject) {
+  if (activeProject && activeProject.analysis_status !== "not_analyzed") {
     redirect(`/projects/${activeProject.id}/overview?settings=profile`);
   }
   return (

@@ -122,8 +122,11 @@ def test_inference_threatens_grounding_without_cross_contaminating_viability() -
         pillar.key: pillar for pillar in assessment.integrity.decomposition  # type: ignore[union-attr]
     }
     assert pillars["Viability"].band == "Sound"
-    assert pillars["Grounding"].basis == 0.75
-    assert pillars["Grounding"].band == "Weak"
+    assert pillars["Grounding"].basis == 0
+    assert pillars["Grounding"].band == "Fragile"
+    assert pillars["Grounding"].why == (
+        "0 of 1 load-bearing details rest on your evidence",
+    )
     assert any(issue.id == "ISS-FC-INTENT" for issue in assessment.issues)
 
 
@@ -205,7 +208,7 @@ def test_accepted_schedule_checkpoint_proposal_is_registered_from_artifact_evide
     assert result.outcome_checkpoints[0].evidence_refs == (evidence.reference,)
 
 
-def test_grounding_uses_the_evidence_projection_when_assumptions_are_absent() -> None:
+def test_grounding_does_not_use_artifact_claims_as_a_second_denominator() -> None:
     assessment = enrich_assessment(
         assessment=_assessment(),
         artifacts=_artifacts(),
@@ -219,10 +222,10 @@ def test_grounding_uses_the_evidence_projection_when_assumptions_are_absent() ->
         for pillar in assessment.integrity.decomposition  # type: ignore[union-attr]
         if pillar.key == "Grounding"
     )
-    assert grounding.basis == 1
-    assert grounding.band == "Sound"
+    assert grounding.basis == 0
+    assert grounding.band == "Fragile"
     assert grounding.why == (
-        "4 of 4 load-bearing items rest on evidence",
+        "0 of 0 load-bearing details rest on your evidence",
     )
 
 

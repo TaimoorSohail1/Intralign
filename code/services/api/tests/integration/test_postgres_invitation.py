@@ -10,16 +10,21 @@ from oslo_api.application import (
     DatabaseSliceOneApplication,
     InvalidInvitation,
     InvitationDeliveryFailed,
+    ProjectArchiveDenied,
 )
 from oslo_api.identity import SupabaseIdentityProvider
-from oslo_api.invitations import InvitationStatus
+from oslo_api.invitations import InvitationStatus, InvitePermissionDenied, MembershipRole
+from oslo_api.project_access import find_project_access
 from oslo_api.settings import Settings
 
 SETTINGS = Settings()  # type: ignore[call-arg]
 DATABASE_URL = SETTINGS.database_url
 SUPABASE_URL = SETTINGS.supabase_url
 SUPABASE_SECRET_KEY = SETTINGS.supabase_secret_key
-WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000099")
+# Keep invitation integration fixtures separate from the local platform-admin
+# workspace (…0099). Reusing that workspace changes its security semantics and
+# can make later browser tests treat the administrator as a tenant Owner.
+WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000098")
 
 
 @pytest.fixture(autouse=True)
@@ -47,6 +52,14 @@ def isolated_invitation_workspace():
             )
             connection.execute(
                 text("delete from public.invitations where workspace_id = :workspace_id"),
+                {"workspace_id": WORKSPACE_ID},
+            )
+            connection.execute(
+                text("delete from public.project_memberships where workspace_id = :workspace_id"),
+                {"workspace_id": WORKSPACE_ID},
+            )
+            connection.execute(
+                text("delete from public.projects where workspace_id = :workspace_id"),
                 {"workspace_id": WORKSPACE_ID},
             )
             connection.execute(
@@ -721,3 +734,146 @@ def test_concurrent_activation_submissions_are_idempotent() -> None:
     assert membership.welcome_seen_at is None
     assert invitation_status == "accepted"
     assert membership_count == 1
+
+
+def test_delegate_pm_invitation_grants_only_the_assigned_project() -> None:
+    engine = create_engine(DATABASE_URL)
+    mailer = RecordingInvitationMailer()
+    identity = SupabaseIdentityProvider(
+        client=httpx.Client(timeout=20),
+        supabase_url=SUPABASE_URL,
+        api_key=SUPABASE_SECRET_KEY,
+    )
+    application = DatabaseSliceOneApplication(
+        engine=engine,
+        identity=identity,
+        mailer=mailer,
+        web_url="http://localhost:3000",
+    )
+    assigned_project_id = uuid4()
+    unassigned_project_id = uuid4()
+    delegate_email = f"delegate-pm-{uuid4()}@example.com"
+    delegate_user_id = None
+
+    with engine.begin() as connection:
+        owner_id = connection.execute(
+            text("select id from auth.users where email = 'admin@oslo.local'")
+        ).scalar_one()
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values
+                  (:assigned_id, :workspace_id, 'Assigned project', 'draft', :owner_id),
+                  (:unassigned_id, :workspace_id, 'Unassigned project', 'draft', :owner_id)
+                """
+            ),
+            {
+                "assigned_id": assigned_project_id,
+                "unassigned_id": unassigned_project_id,
+                "workspace_id": WORKSPACE_ID,
+                "owner_id": owner_id,
+            },
+        )
+
+    try:
+        invitation = application.invite_member(
+            actor_user_id=owner_id,
+            workspace_id=WORKSPACE_ID,
+            project_id=assigned_project_id,
+            email=delegate_email,
+            role=MembershipRole.DELEGATE_PM,
+        )
+        raw_token = mailer.messages[0][2].rsplit("=", maxsplit=1)[1]
+        activation = application.activate_invitation(
+            token=raw_token,
+            display_name="Delegate PM",
+            password="DelegateProject123!",
+        )
+        delegate_user_id = activation.user_id
+
+        assert invitation.role is MembershipRole.DELEGATE_PM
+        assert invitation.project_id == assigned_project_id
+        assert activation.workspace_id == WORKSPACE_ID
+        assert activation.welcome_required is False
+
+        session = application.get_session_context(actor_user_id=delegate_user_id)
+        summary = application.get_workspace_summary(
+            actor_user_id=delegate_user_id,
+            workspace_id=WORKSPACE_ID,
+        )
+        assert session.account_role == MembershipRole.DELEGATE_PM.value
+        assert summary.role == MembershipRole.DELEGATE_PM.value
+        assert summary.can_create_project is False
+        assert summary.can_manage_plan is False
+        assert [project.id for project in summary.projects] == [assigned_project_id]
+
+        with engine.connect() as connection:
+            assigned_access = find_project_access(
+                connection,
+                actor_user_id=delegate_user_id,
+                project_id=assigned_project_id,
+            )
+            unassigned_access = find_project_access(
+                connection,
+                actor_user_id=delegate_user_id,
+                project_id=unassigned_project_id,
+            )
+            workspace_owner_membership = connection.execute(
+                text(
+                    "select 1 from public.memberships "
+                    "where workspace_id = :workspace_id and user_id = :user_id"
+                ),
+                {"workspace_id": WORKSPACE_ID, "user_id": delegate_user_id},
+            ).scalar_one_or_none()
+
+        assert assigned_access is not None
+        assert assigned_access.role == MembershipRole.DELEGATE_PM.value
+        assert unassigned_access is None
+        assert workspace_owner_membership is None
+
+        with pytest.raises(InvitePermissionDenied):
+            application.start_first_project(
+                actor_user_id=delegate_user_id,
+                workspace_id=WORKSPACE_ID,
+            )
+        with pytest.raises(ProjectArchiveDenied):
+            application.archive_project(
+                actor_user_id=delegate_user_id,
+                workspace_id=WORKSPACE_ID,
+                project_id=assigned_project_id,
+            )
+    finally:
+        if delegate_user_id is not None:
+            with engine.begin() as connection:
+                connection.execute(
+                    text("delete from public.audit_events where actor_user_id = :user_id"),
+                    {"user_id": delegate_user_id},
+                )
+                connection.execute(
+                    text(
+                        "delete from public.workspace_notification_reads "
+                        "where user_id = :user_id"
+                    ),
+                    {"user_id": delegate_user_id},
+                )
+                connection.execute(
+                    text(
+                        "delete from public.workspace_member_preferences "
+                        "where user_id = :user_id"
+                    ),
+                    {"user_id": delegate_user_id},
+                )
+                connection.execute(
+                    text("delete from public.project_memberships where user_id = :user_id"),
+                    {"user_id": delegate_user_id},
+                )
+                connection.execute(
+                    text("delete from public.invitations where accepted_by = :user_id"),
+                    {"user_id": delegate_user_id},
+                )
+                connection.execute(
+                    text("delete from public.profiles where id = :user_id"),
+                    {"user_id": delegate_user_id},
+                )
+            identity.delete_user(delegate_user_id)

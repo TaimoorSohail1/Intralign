@@ -15,7 +15,7 @@ async function unlockFirstRead(page: import("@playwright/test").Page) {
     return;
   }
   const decision = page
-    .getByRole("button", { name: /Confirm .*it holds|Confirm — it holds/i })
+    .getByRole("button", { name: "I’ve verified this directly" })
     .first();
   const actResponse = page.waitForResponse(
     (response) =>

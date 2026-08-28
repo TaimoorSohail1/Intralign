@@ -41,6 +41,7 @@ describe("ProjectCollaborationControls", () => {
 
     expect(await screen.findByText("People on this project")).toBeInTheDocument();
     expect(screen.getByText("Collaboration and invitations are never metered.")).toBeInTheDocument();
+    expect(screen.queryByText(/in this slice/i)).not.toBeInTheDocument();
 
     vi.mocked(fetch)
       .mockResolvedValueOnce(
@@ -115,6 +116,13 @@ describe("ProjectCollaborationControls", () => {
           confidence_band: "Moderate",
           reliability: "Moderate",
           limiting_dimension: "feasibility",
+          integrity: {
+            level: "Developing",
+            limiting_pillar: "Grounding",
+            decomposition: [],
+            posture: "moment-in-time",
+            tracking: "pending-execution",
+          },
           issues: [],
         },
       }));
@@ -138,7 +146,7 @@ describe("ProjectCollaborationControls", () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it("invites another owner without exposing alternative workspace roles", async () => {
+  it("invites a project-scoped Delegate-PM without exposing arbitrary roles", async () => {
     render(<ProjectCollaborationControls projectId="project-1" />);
     fireEvent.click(screen.getByRole("button", { name: "Share" }));
 
@@ -149,7 +157,8 @@ describe("ProjectCollaborationControls", () => {
           {
             id: "invitation-1",
             email: "amina@example.com",
-            role: "owner",
+            role: "delegate_pm",
+            project_id: "project-1",
             status: "pending",
             expires_at: "2026-08-10T00:00:00Z",
           },
@@ -163,7 +172,8 @@ describe("ProjectCollaborationControls", () => {
             {
               id: "invitation-1",
               email: "amina@example.com",
-              role: "owner",
+              role: "delegate_pm",
+              project_id: "project-1",
               status: "pending",
               expires_at: "2026-08-10T00:00:00Z",
             },
@@ -191,6 +201,28 @@ describe("ProjectCollaborationControls", () => {
         }),
       }),
     );
+  });
+
+  it("keeps owner-only sharing actions unavailable to a Delegate-PM", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
+      ...collaboration,
+      actor_role: "delegate_pm",
+      participants: [
+        collaboration.participants[0],
+        { id: "delegate", display_name: "Amina", role: "delegate_pm" },
+      ],
+    }));
+
+    render(<ProjectCollaborationControls projectId="project-1" />);
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+
+    expect(await screen.findByText("People on this project")).toBeInTheDocument();
+    expect(screen.getByText("Amina")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
+    expect(screen.queryByText("Share link — a view-only snapshot of this project"))
+      .not.toBeInTheDocument();
+    expect(screen.queryByText("External review request")).not.toBeInTheDocument();
+    expect(screen.queryByText("Active access")).not.toBeInTheDocument();
   });
 
   it("shows a retry path when governed access cannot be loaded", async () => {

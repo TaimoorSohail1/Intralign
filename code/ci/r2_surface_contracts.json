@@ -135,6 +135,7 @@
     {"route":"/projects/[projectId]/grounding","frontend":"apps/web/src/app/projects/[projectId]/grounding/page.tsx","backend":["services/api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
     {"route":"/projects/[projectId]/attention","frontend":"apps/web/src/app/projects/[projectId]/attention/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py"],"track":"legacy-compatibility"},
     {"route":"/projects/[projectId]/reports","frontend":"apps/web/src/app/projects/[projectId]/reports/page.tsx","backend":["services/api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/full-plan","frontend":"apps/web/src/app/projects/[projectId]/full-plan/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py","services/api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
     {"route":"/projects/[projectId]/history","frontend":"apps/web/src/app/projects/[projectId]/history/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
     {"route":"/projects/[projectId]/inference","frontend":"apps/web/src/app/projects/[projectId]/inference/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py"],"track":"legacy-compatibility"},
     {"route":"/review/[token]","frontend":"apps/web/src/app/review/[token]/page.tsx","backend":["services/api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},

@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,6 +13,15 @@ class Settings(BaseSettings):
     )
 
     database_url: str = "postgresql+psycopg://postgres:postgres@127.0.0.1:55322/postgres"
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def select_psycopg_driver(cls, value: object) -> object:
+        """Make plain Postgres URLs use the driver bundled with the API."""
+
+        if isinstance(value, str) and value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+psycopg://", 1)
+        return value
     supabase_url: str = "http://127.0.0.1:55321"
     supabase_secret_key: str = Field(min_length=20)
     web_url: str = "http://127.0.0.1:3002"

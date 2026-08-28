@@ -26,7 +26,6 @@ const workspace: WorkspaceSummary = {
       archived: false,
       updated_at: "2026-07-26T10:00:00Z",
       analysis_status: "current",
-      confidence_index: 62,
       confidence_band: "Moderate",
       reliability: "Moderate",
       open_issues: 4,
@@ -362,13 +361,48 @@ describe("ProjectWorkspaceControls", () => {
     expect(screen.queryByRole("heading", { name: "Usage & limits" })).not.toBeInTheDocument();
   });
 
+  it("limits a Delegate-PM to assigned projects and hides owner-only controls", async () => {
+    const delegatedWorkspace: WorkspaceSummary = {
+      ...workspace,
+      role: "delegate_pm",
+      can_manage_plan: false,
+      can_create_project: false,
+    };
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify(delegatedWorkspace), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    render(
+      <>
+        <div data-testid="delegate-plan-slot" id="delegate-plan-slot" />
+        <ProjectWorkspaceControls
+          planPortalId="delegate-plan-slot"
+          projectId="project-1"
+        />
+      </>,
+    );
+
+    const switcher = await screen.findByRole("button", { name: "Transformation" });
+    fireEvent.click(switcher);
+    expect(screen.getByRole("menuitem", { name: /Transformation/ })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /New project/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Project sharing and export" }))
+      .not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(screen.getByTestId("delegate-plan-slot")).queryByRole("button"))
+        .not.toBeInTheDocument();
+    });
+  });
+
   it("does not present a false plan while workspace awareness is loading", () => {
     vi.mocked(fetch).mockImplementation(() => new Promise<Response>(() => undefined));
 
     render(<ProjectWorkspaceControls projectId="project-1" />);
 
-    expect(screen.getByRole("button", { name: "Loading plan" })).toBeDisabled();
-    expect(screen.getByText("Loading workspace")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Loading plan" })).not.toBeInTheDocument();
     expect(screen.queryByText("Free plan")).not.toBeInTheDocument();
   });
 

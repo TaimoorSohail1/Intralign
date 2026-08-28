@@ -1,6 +1,6 @@
 import json
 import re
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, is_dataclass, replace
 from datetime import datetime
 from hashlib import sha256
 from time import monotonic, sleep
@@ -38,6 +38,7 @@ from oslo_api.analysis.models import (
     ReliabilityBasis,
     RunKind,
 )
+from oslo_api.analysis.provenance import build_project_provenance
 
 
 def _stable_payload_hash(payload: object) -> str:
@@ -343,7 +344,12 @@ def _integrity_from_dict(data: dict | None) -> Integrity | None:
 
 
 def _snapshot_dict(snapshot: AssessmentSnapshot) -> dict:
-    return json.loads(json.dumps(asdict(snapshot), default=_json_default))
+    payload = json.loads(json.dumps(asdict(snapshot), default=_json_default))
+    payload["provenance"] = build_project_provenance(
+        artifacts=snapshot.artifacts,
+        issues=snapshot.assessment.issues,
+    )
+    return payload
 
 
 def _public_snapshot_summary(value: str) -> str:
@@ -426,6 +432,19 @@ def _primary_outcome_title(artifacts: tuple[Artifact, ...]) -> str | None:
         if not normalized:
             continue
         sentence = re.split(r"(?<=[.!?])\s+", normalized, maxsplit=1)[0]
+        normalized_sentence = sentence.casefold()
+        names_outcome_concept = re.search(
+            r"\b(outcome|purpose|objective|goal|benefit|success)\b",
+            normalized_sentence,
+        )
+        says_it_is_missing = re.search(
+            r"\b(is|are|was|were) not (yet )?"
+            r"(defined|documented|provided|stated|specified|identified|known|confirmed)\b"
+            r"|\bno (purpose|objective|outcome|goal|benefit|success)\b",
+            normalized_sentence,
+        )
+        if names_outcome_concept and says_it_is_missing:
+            continue
         return sentence if len(sentence) <= 320 else f"{sentence[:317].rstrip()}…"
     return None
 
@@ -1210,8 +1229,25 @@ class DatabaseAnalysisStore:
             )
 
     def publish(self, run_id: UUID, snapshot: AssessmentSnapshot) -> None:
-        payload = _snapshot_dict(snapshot)
         with self._engine.begin() as connection:
+            if not snapshot.project_title:
+                project_name = connection.execute(
+                    text("select name from public.projects where id = :project_id"),
+                    {"project_id": snapshot.project_id},
+                ).scalar_one_or_none()
+                normalized_title = str(project_name or "").strip()
+                if normalized_title:
+                    snapshot = replace(
+                        snapshot,
+                        project_title=normalized_title,
+                        artifacts=tuple(
+                            artifact
+                            if artifact.project_title
+                            else replace(artifact, project_title=normalized_title)
+                            for artifact in snapshot.artifacts
+                        ),
+                    )
+            payload = _snapshot_dict(snapshot)
             run_row = (
                 connection.execute(
                     text(
@@ -1282,6 +1318,15 @@ class DatabaseAnalysisStore:
                         "project_id": snapshot.project_id,
                         "title": primary_outcome,
                     },
+                )
+            else:
+                connection.execute(
+                    text(
+                        "delete from public.project_outcomes "
+                        "where project_id = :project_id and is_primary "
+                        "and provenance = 'inferred'"
+                    ),
+                    {"project_id": snapshot.project_id},
                 )
                 connection.execute(
                     text(
@@ -1553,7 +1598,7 @@ class DatabaseAnalysisStore:
                     set current_analysis_run_id = :run_id,
                         status = 'active',
                         name = case
-                          when name = 'Untitled project'
+                          when name in ('Project', 'Untitled project')
                             and nullif(trim(cast(:project_title as text)), '') is not null
                           then trim(cast(:project_title as text))
                           else name
@@ -1787,10 +1832,10 @@ class DatabaseAnalysisStore:
 
     def current_snapshot(self, project_id: UUID) -> AssessmentSnapshot | None:
         with self._engine.connect() as connection:
-            payload = connection.execute(
+            row = connection.execute(
                 text(
                     """
-                    select snapshot.snapshot_json
+                    select snapshot.snapshot_json, project.name as project_name
                     from public.projects project
                     join public.assessment_snapshots snapshot
                       on snapshot.analysis_run_id = project.current_analysis_run_id
@@ -1798,8 +1843,14 @@ class DatabaseAnalysisStore:
                     """
                 ),
                 {"project_id": project_id},
-            ).scalar_one_or_none()
-        return _snapshot_from_dict(payload) if payload else None
+            ).mappings().one_or_none()
+        if row is None:
+            return None
+        snapshot = _snapshot_from_dict(row["snapshot_json"])
+        if snapshot.project_title:
+            return snapshot
+        project_name = str(row["project_name"] or "").strip()
+        return replace(snapshot, project_title=project_name or None)
 
     def snapshot_for_run(self, run_id: UUID) -> AssessmentSnapshot | None:
         with self._engine.connect() as connection:

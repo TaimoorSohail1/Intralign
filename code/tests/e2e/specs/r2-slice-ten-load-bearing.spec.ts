@@ -1,4 +1,5 @@
 import { expect, test } from "../fixtures";
+import { unlockFirstRead } from "../helpers";
 
 test.setTimeout(240_000);
 
@@ -13,6 +14,8 @@ type SliceTenIssue = {
   also_offered: Array<"verify" | "build" | "decide">;
   classification_state: "classified" | "escalated" | "unclassified";
   sensitivity_state: "calibrated" | "shadow" | "unavailable";
+  status: "open" | "addressed" | "routed" | "needs_fix" | "needs_grounding" | "resolved";
+  recommendation: string;
 };
 
 async function signIn(page: import("@playwright/test").Page) {
@@ -114,6 +117,7 @@ test("Slice 10 presents the derived build route and records the chosen resolutio
 }) => {
   const projectId = await createAnalyzedProject(page);
   await waitForCurrentRead(page, projectId);
+  await unlockFirstRead(page);
   const overviewResponse = await page.request.get(`/api/projects/${projectId}/overview`);
   expect(overviewResponse.ok()).toBeTruthy();
   const overview = (await overviewResponse.json()) as {
@@ -121,7 +125,9 @@ test("Slice 10 presents the derived build route and records the chosen resolutio
   };
   const issue = overview.assessment.issues.find(
     (candidate) =>
-      candidate.classification_state === "classified" && candidate.primary_act === "build",
+      candidate.status === "open" &&
+      candidate.classification_state === "classified" &&
+      candidate.primary_act === "build",
   );
   expect(issue, "The analyzed fixture needs a Build finding").toBeTruthy();
 
@@ -129,11 +135,10 @@ test("Slice 10 presents the derived build route and records the chosen resolutio
   await expect(page.getByRole("region", { name: "Exposure-ranked issue queue" })).toBeVisible();
   const issueRow = page.locator(".issue-row").filter({ hasText: issue!.title }).first();
   await expect(issueRow).toBeVisible();
-  await issueRow.evaluate((element: HTMLButtonElement) => element.click());
-
+  await issueRow.click();
   const panel = page.locator(".issue-panel");
   await expect(panel.getByRole("heading", { name: issue!.title })).toBeVisible();
-  await expect(panel.getByRole("button", { name: "Build this in the plan" })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Apply this fix →" })).toBeVisible();
 
   if (issue!.also_offered.includes("verify")) {
     await panel.getByRole("button", { name: "Verify with evidence" }).click();
@@ -147,12 +152,23 @@ test("Slice 10 presents the derived build route and records the chosen resolutio
       response.url().includes(`/issues/${encodeURIComponent(issue!.id)}/actions`) &&
       response.ok(),
   );
-  await panel.getByRole("button", { name: "Build this in the plan" }).click();
-  await saved;
-  await expect(panel.getByRole("heading", { name: "Confirmed by you" })).toBeVisible();
-
-  await page.reload();
-  const actedOn = page.getByRole("region", { name: "Acted on, not yet closed" });
-  await expect(actedOn.getByText(issue!.title)).toBeVisible();
-  await expect(actedOn.getByText("Waiting for reanalysis")).toBeVisible();
+  await panel.getByRole("button", { name: "Apply this fix →" }).click();
+  const savedResponse = await saved;
+  const recorded = (await savedResponse.json()) as {
+    issue_id: string;
+    action: string;
+    status: string;
+    selected_resolution: string;
+    analysis_run?: { run_id: string } | null;
+  };
+  expect(recorded).toMatchObject({
+    issue_id: issue!.id,
+    action: "apply",
+    status: "addressed",
+    selected_resolution: issue!.recommendation,
+  });
+  expect(recorded.analysis_run?.run_id).toBeTruthy();
+  const confirmation = page.getByRole("status", { name: "Issue action recorded" });
+  await expect(confirmation).toContainText(issue!.title);
+  await expect(confirmation).toContainText("Settling to needs grounding");
 });

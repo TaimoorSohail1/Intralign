@@ -25,7 +25,7 @@ const templates = [
 const phases = [
   "Reading your plan",
   "Constructing plan artifacts",
-  "Checking clarity, alignment and feasibility",
+  "Checking viability, grounding and adaptability",
   "Preparing your Overview",
 ];
 
@@ -238,8 +238,8 @@ export function IntakeExperience({
       <p className="intake-subtitle">
         Drop in a plan, brief, backlog, or goals — a document, a schedule export, or just paste
         your notes. <strong>OSLO</strong> — Intralign’s outcome-orchestration AI — shows you what
-        stands between it and your outcome: how clear, aligned, and feasible it is, and what to fix,
-        so you can close the gaps yourself.
+        stands between it and your outcome: whether the plan is viable, grounded in evidence, and
+        adaptable when conditions change — and what to fix so you can close the gaps yourself.
       </p>
       <section className="composer">
         <textarea
