@@ -21,7 +21,15 @@
 - **`DL-212` — cited as Framework 002's founding decision — has no record file and no `decision_log.md`
   entry.**
 - ⚠️ **Neither do `DL-227` (two trains) nor `DL-228` (corrective vs evolutionary)** — and **`DL-235`
-  declares all three as dependencies while being itself ratified and landed on `main`.**
+  declares all three as dependencies while being itself ratified.**
+  ⚠️ **ERRATUM, 2026-08-24 — this line originally read "ratified and landed on `main`". That was
+  wrong.** Measured on `main` at `a2c1732`: **`DL-235` has no record file and no `decision_log.md`
+  entry** — the log's index jumps `DL-156` → `DL-237`. Its record is on the R2.1 design line.
+  ⚠️⚠️ **So the decision declaring `main` the only delivery truth is itself absent from `main`, and
+  it is the most-cited unresolved id in the corpus (14×).** The claim was inferred from `DL-235`
+  being in force rather than measured against the file, which is the same failure this record was
+  written about. **Corrected in place rather than rewritten silently: the original wording is
+  quoted above so the error is legible.** See `UNRECORDED_DECISIONS.md`.
 - The only F002 artifacts in `00_owner` were **DL-235**, which amends **§9 of a document that was not
   there**, and **DL-230**.
 - ⚠️⚠️ **AND THE CITATIONS ARE NOT WHERE THE GOVERNANCE IS.** Measured per line:

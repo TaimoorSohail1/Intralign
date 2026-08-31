@@ -30,7 +30,9 @@ that was measured on the design line and is corrected here.**
   `framework_001A_decision_ready.md`.
 - **`DL-212`, cited as Framework 002's founding decision, has no record file and no `decision_log.md`
   entry.** ⚠️ **Nor do `DL-227` (two trains) or `DL-228` (corrective vs evolutionary)** — and **DL-235
-  declares all three as its dependencies while being itself ratified and landed.**
+  declares all three as its dependencies while being itself ratified.**
+  ⚠️ **Clarified 2026-08-24: "landed" meant landed on the R2.1 DESIGN line.** `DL-235` has no
+  record on `main`. See the erratum in the `DL-241` record.
 - The only F002 artifacts in `00_owner` were **DL-235** (which amends *§9 of a document that was not
   there*) and **DL-230**.
 
