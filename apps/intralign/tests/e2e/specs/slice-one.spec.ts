@@ -1,5 +1,6 @@
 import type { APIRequestContext } from "@playwright/test";
 import { expect, test } from "../fixtures";
+import { unlockFirstRead } from "../helpers";
 
 async function signInAsOwner(page: import("@playwright/test").Page) {
   await page.goto("/login");
@@ -132,24 +133,14 @@ test("Owner invite to activated member intake", async ({ browser, page, request 
     await confirmOutcome.click();
   }
   await expect(recipient).toHaveURL(/\/projects\/.+\/overview/, { timeout: 120_000 });
-  const firstReadDecision = recipient.getByRole("button", { name: /verified this directly/i });
-  if (await firstReadDecision.isVisible()) {
-    const actResponse = recipient.waitForResponse(
-      (response) => response.request().method() === "POST" && /\/issues\/.+\/acts$/.test(response.url()),
-    );
-    await firstReadDecision.click();
-    expect((await actResponse).ok()).toBeTruthy();
-    await recipient.reload();
-    await expect(recipient.locator(".project-shell")).not.toHaveClass(
-      /is-first-run-frozen/,
-      { timeout: 30_000 },
-    );
-    const closeIssue = recipient.getByRole("button", { name: "Close issue" });
-    if (await closeIssue.isVisible()) await closeIssue.click();
-  }
+  await unlockFirstRead(recipient);
   await completeOrientationTour(recipient);
   if (!(await recipient.locator(".confidence-read").isVisible())) {
-    await recipient.getByRole("button", { name: "Expand Outcome Integrity" }).click();
+    const expandIntegrity = recipient.getByRole("button", {
+      name: "Expand Outcome Integrity",
+    });
+    await expandIntegrity.focus();
+    await expandIntegrity.press("Enter");
   }
   await expect(recipient.locator(".confidence-read")).toBeVisible();
   await expect(

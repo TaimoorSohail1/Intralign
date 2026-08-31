@@ -1,4 +1,5 @@
 import { expect, test } from "../fixtures";
+import { unlockFirstRead } from "../helpers";
 
 test.setTimeout(300_000);
 
@@ -15,23 +16,6 @@ async function signIn(page: import("@playwright/test").Page) {
       if (attempt === 1) throw new Error("Local E2E owner sign-in did not recover");
     }
   }
-}
-
-async function unlockFirstRead(page: import("@playwright/test").Page) {
-  const decision = page.getByRole("button", { name: /verified this directly/i });
-  await decision.waitFor({ state: "visible", timeout: 2_000 }).catch(() => undefined);
-  if (!(await decision.isVisible())) return;
-  const actResponse = page.waitForResponse(
-    (response) => response.request().method() === "POST" && /\/issues\/.+\/acts$/.test(response.url()),
-  );
-  await decision.click();
-  expect((await actResponse).ok()).toBeTruthy();
-  await page.reload();
-  await expect(page.locator(".project-shell")).not.toHaveClass(/is-first-run-frozen/, {
-    timeout: 30_000,
-  });
-  const closeIssue = page.getByRole("button", { name: "Close issue" });
-  if (await closeIssue.isVisible()) await closeIssue.click();
 }
 
 async function createAnalyzedProject(page: import("@playwright/test").Page) {

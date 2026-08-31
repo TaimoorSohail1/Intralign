@@ -6,9 +6,17 @@ export async function unlockFirstRead(page: Page) {
     return;
   }
 
+  const confirm = page
+    .getByRole("button", { name: "Confirm — it holds" })
+    .first();
   const decision = page
     .getByRole("button", { name: "I’ve verified this directly" })
     .first();
+  if (!(await decision.isVisible())) {
+    await expect(confirm).toBeVisible();
+    await confirm.click();
+  }
+  await expect(decision).toBeVisible();
   const actResponse = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" && /\/issues\/.+\/acts$/.test(response.url()),
