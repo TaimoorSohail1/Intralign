@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "name": "Project Greenway Status Report P09",
+  "source_document": "Project_Greenway_Status_Report_P09.pdf",
+  "expected_ratings": {
+    "clarity": "High",
+    "alignment": "Low",
+    "feasibility": "Very Low",
+    "reliability": "High",
+    "confidence": "Low"
+  },
+  "gates": {
+    "finding_recall": 0.9,
+    "critical_recall": 1.0,
+    "maximum_false_positive_traps": 0,
+    "locator_coverage": 1.0,
+    "maximum_duplicate_rate": 0.0,
+    "maximum_duration_seconds": 180,
+    "minimum_issue_id_stability": 0.95,
+    "require_rating_stability": true
+  },
+  "findings": [
+    {"id": "GW-01", "severity": "Critical", "concepts": [["overall"], ["green"], ["status"], ["unsupported", "contradict"]]},
+    {"id": "GW-02", "severity": "Critical", "concepts": [["forecast", "outturn"], ["unit", "premise"], ["638", "63.8", "211"]]},
+    {"id": "GW-03", "severity": "Critical", "concepts": [["schedule"], ["green"], ["slip", "late", "variance"]]},
+    {"id": "GW-04", "severity": "Critical", "concepts": [["recovery"], ["3200", "3,200"], ["950"], ["crew", "capacity"]]},
+    {"id": "GW-05", "severity": "High", "concepts": [["completion"], ["68"], ["439", "43.9", "33"]]},
+    {"id": "GW-06", "severity": "High", "concepts": [["quality"], ["green"], ["rework", "inspection"], ["target"]]},
+    {"id": "GW-07", "severity": "High", "concepts": [["resource"], ["green"], ["crew"], ["3", "5", "40"]]},
+    {"id": "GW-08", "severity": "High", "concepts": [["risk"], ["green"], ["critical"], ["20"]]},
+    {"id": "GW-09", "severity": "High", "concepts": [["completion", "m9"], ["predecessor", "m8"], ["float", "same day", "31 march"]]},
+    {"id": "GW-10", "severity": "Moderate", "concepts": [["critical issue", "i04"], ["118"], ["escalat"], ["20"]]},
+    {"id": "GW-11", "severity": "Moderate", "concepts": [["premises"], ["12800", "12,800"], ["4100", "4,100"], ["steady", "collapse"]]},
+    {"id": "GW-12", "severity": "Moderate", "concepts": [["decision", "d01"], ["owner"], ["date", "required"]]},
+    {"id": "GW-13", "severity": "Moderate", "concepts": [["tolerance"], ["4"], ["rebaseline", "baseline"], ["milestone"]]},
+    {"id": "GW-14", "severity": "Low", "concepts": [["board"], ["intervention"], ["critical issue", "settlement", "blockage"]]}
+  ],
+  "traps": [
+    {"id": "GW-T01", "concepts": [["cost"], ["amber"], ["wrong", "invalid", "defect"]]},
+    {"id": "GW-T02", "concepts": [["safety"], ["green"], ["wrong", "invalid", "defect"]]},
+    {"id": "GW-T03", "concepts": [["weather"], ["vague", "excuse", "unsupported"]]},
+    {"id": "GW-T04", "concepts": [["contractor"], ["dispute"], ["disclosure"], ["defect", "invalid"]]},
+    {"id": "GW-T05", "concepts": [["61400", "61,400"], ["63200", "63,200"], ["conflict", "inconsistent"]]},
+    {"id": "GW-T06", "concepts": [["m1"], ["complete"], ["late"], ["invalid", "wrong"]]},
+    {"id": "GW-T07", "concepts": [["i09"], ["19"], ["escalat"], ["breach", "late"]]},
+    {"id": "GW-T08", "concepts": [["change request"], ["reference"], ["defect", "invalid"]]}
+  ]
+}

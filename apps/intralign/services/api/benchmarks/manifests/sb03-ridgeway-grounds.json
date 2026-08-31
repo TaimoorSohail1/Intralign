@@ -1,0 +1,9 @@
+{
+  "name": "SB03 Ridgeway Grounds",
+  "expected_ratings": {"clarity":"High","alignment":"Moderate","feasibility":"Low","reliability":"Moderate","confidence":"Moderate"},
+  "trap_profiles": ["small_business"],
+  "findings": [
+    {"id":"SB03-01","severity":"Critical","concepts":[["offline","no mobile signal"],["internet connection","cloud"],["contradict","requires"]]},
+    {"id":"SB03-02","severity":"Moderate","concepts":[["training","trial"],["peak growing season","peak season"]]}
+  ]
+}

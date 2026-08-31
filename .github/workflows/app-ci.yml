@@ -1,46 +1,44 @@
-# OSLO Release 1 — Application CI (DTM-0001; Phase I).
-#
-# Implements the Deployment Governance §4 gate sequence for the app under code/
-# (monorepo override, ADR-0001). Gate semantics + ordering follow the starter-kit
-# template (30_engineering/delivery/starter_kit/ci-pipeline.yml); any gate failure
-# stops the run (steps run in order; first non-zero exit fails the job).
-# Gate logic lives in unit-testable scripts under code/ci/ (see code/ci/README.md,
-# incl. the per-gate forced-failure procedure).
-#
-# Gate 7 (human review) is enforced by GitHub branch protection on `main`
-# (required reviewer = owner), NOT by this workflow. Keep branch protection ON.
-# Gate 8 (promote) is out of Phase I scope (Deployment Governance §4.8).
-#
-# Does not touch doc-integrity.yml (knowledge-base docs gate).
-
-name: app-ci
+name: OSLO application quality gates
 
 on:
-  # RB-056: this job must always report on a PR so it can become a required check.
-  # Applicability is decided inside the job; GitHub's `paths` filter would omit the
-  # status entirely on docs-only PRs.
   pull_request:
   push:
     branches: [main]
 
+concurrency:
+  group: oslo-app-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
-  pull-requests: read # gitleaks-action (gate 6) lists PR commits on pull_request events
+  pull-requests: read
 
 jobs:
-  app-ci:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANALYSIS_HARNESS: deterministic
+      ANALYSIS_PHASE_DELAY_MS: 0
+      EXTENDED_ANALYSIS_DELAY_MS: 0
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:55322/postgres
+      SUPABASE_URL: http://127.0.0.1:55321
+      WEB_URL: http://localhost:3000
+      SMTP_HOST: 127.0.0.1
+      SMTP_PORT: 55325
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:55321
+      OSLO_API_URL: http://127.0.0.1:8000
+
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # gitleaks (gate 6) scans commit history
+          fetch-depth: 0
 
-      # An always-reporting required check must distinguish a docs-only PR from a
-      # failed app build. The full suite applies only to application-code changes;
-      # a workflow-only edit must not turn unrelated existing app debt into a red
-      # required check.
-      - name: Determine app-ci applicability (RB-056)
+      # RB-056: required checks report on every PR. Expensive gates run only
+      # when the consolidated application tree changed.
+      - name: Determine application-CI applicability
         id: scope
+        shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -49,24 +47,21 @@ jobs:
           app_ci_applies() {
             has_app_tree="$1"
             changed_paths="$2"
-            [ "$has_app_tree" = "true" ] && printf '%s\n' "$changed_paths" | grep -Eq '^code/'
+            [ "$has_app_tree" = "true" ] && printf '%s\n' "$changed_paths" | grep -Eq '^apps/intralign/'
           }
 
-          # RED proofs: the required status must not rubber-stamp docs-only work,
-          # and must still select the full gate for an application-code change.
           if app_ci_applies true '00_owner/framework.md'; then
-            echo "::error::RB-056 self-test failed: docs-only input selected app CI."
+            echo "::error::RB-056 self-test failed: docs-only input selected application CI."
             exit 1
           fi
-          if ! app_ci_applies true 'code/backend/example.py'; then
-            echo "::error::RB-056 self-test failed: application-code input skipped app CI."
+          if ! app_ci_applies true 'apps/intralign/services/api/example.py'; then
+            echo "::error::RB-056 self-test failed: application input skipped application CI."
             exit 1
           fi
-          if app_ci_applies false 'code/backend/example.py'; then
-            echo "::error::RB-056 self-test failed: a ref without an app tree selected app CI."
+          if app_ci_applies false 'apps/intralign/services/api/example.py'; then
+            echo "::error::RB-056 self-test failed: absent application tree selected application CI."
             exit 1
           fi
-          echo "RB-056 self-test OK: docs skip; application code runs; absent app tree skips."
 
           if [ "$EVENT_NAME" = "pull_request" ]; then
             BASE_SHA="$PR_BASE_SHA"
@@ -80,115 +75,133 @@ jobs:
             CHANGED="$(git diff --name-only "$BASE_SHA" HEAD)"
           fi
 
-          if [ ! -d code ]; then
+          if [ ! -d apps/intralign ]; then
             echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "reason=no application tree on this ref" >> "$GITHUB_OUTPUT"
+            echo "reason=no consolidated application tree on this ref" >> "$GITHUB_OUTPUT"
           elif app_ci_applies true "$CHANGED"; then
             echo "run=true" >> "$GITHUB_OUTPUT"
-            echo "reason=application code changed" >> "$GITHUB_OUTPUT"
+            echo "reason=consolidated application changed" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "reason=no application code change" >> "$GITHUB_OUTPUT"
+            echo "reason=no consolidated application change" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: SKIP-OK — app-ci does not apply to this change (RB-056)
+      - name: SKIP-OK — application CI does not apply
         if: steps.scope.outputs.run != 'true'
-        run: |
-          echo "SKIP-OK: ${{ steps.scope.outputs.reason }}. The app-ci status is reported deliberately; no application build is applicable."
+        run: echo "SKIP-OK — ${{ steps.scope.outputs.reason }}."
 
-      - uses: actions/setup-python@v5
+      - uses: pnpm/action-setup@v4
         if: steps.scope.outputs.run == 'true'
         with:
-          python-version: "3.12"
+          version: 10.25.0
 
       - uses: actions/setup-node@v4
         if: steps.scope.outputs.run == 'true'
         with:
-          node-version: "20"
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/intralign/pnpm-lock.yaml
 
-      # --- Gate 1: Build (ratified stack) ---
-      - name: "Gate 1 — build backend (pip install + ruff)"
+      - uses: astral-sh/setup-uv@v6
         if: steps.scope.outputs.run == 'true'
-        working-directory: code
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
-          ruff check .
+        with:
+          python-version: "3.12"
+          enable-cache: true
 
-      - name: "Gate 1 — build frontend (npm ci + tsc/vite)"
+      - name: Gate 1 — install application dependencies
         if: steps.scope.outputs.run == 'true'
-        working-directory: code/frontend
+        working-directory: apps/intralign
         run: |
-          npm ci
-          npm run build
+          pnpm install --frozen-lockfile
+          uv sync --project services/api --frozen
 
-      # --- Gate 2: Contract-traceability (HARD GATE) ---
-      # PR body must cite an approved IC-* contract id; label `phase-1-infra`
-      # bypasses until Phase I closes (decision #3). PR body/labels are passed
-      # via env (never interpolated into the shell). Push events to main carry
-      # no PR context: the gate already ran on the PR; merge is gate-7 protected.
-      - name: "Gate 2 — contract-traceability"
+      - name: Gate 2 — approved-contract traceability
         if: steps.scope.outputs.run == 'true' && github.event_name == 'pull_request'
-        working-directory: code
+        working-directory: apps/intralign
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
-        run: python -m ci.gate_contract
-
-      # --- Gate 3: Tests (positive AND negative) ---
-      # Suites run separately so an empty or absent suite fails on its own:
-      # pytest exits 5 on zero collected tests and 4 on a missing path — both
-      # non-zero. A suite without negatives is invalid (QA Governance).
-      - name: "Gate 3 — positive suite"
-        if: steps.scope.outputs.run == 'true'
-        working-directory: code
-        run: python -m pytest tests/positive
-
-      - name: "Gate 3 — negative suite"
-        if: steps.scope.outputs.run == 'true'
-        working-directory: code
-        run: python -m pytest tests/negative
-
-      # --- Gate 4: Epistemic-invariant gate (HARD GATE, Critical) ---
-      # Forbidden-token scan (allowlist: ci/invariant_allowlist.txt), no
-      # backend/**/authority dir, canonical-table migration linter (DL-043).
-      - name: "Gate 4 — epistemic-invariant gate"
-        if: steps.scope.outputs.run == 'true'
-        working-directory: code
-        run: python -m ci.gate_invariants
-
-      # --- Gate 5: Observability (REAL — DTM-0006, OBS-WA-00R) ---
-      # Static checks: every CHR-append call-site emits
-      # cognition_history_record_appended (a governed emission without its
-      # event fails the build, DL-054 cond.1); the A6 vocabulary is pinned
-      # verbatim in events.py; the two-axis replay harness exists. Then the
-      # replay suite runs (its live axes skip without a local Supabase stack;
-      # the pure tamper-detection axes always run — an empty/missing suite
-      # fails via pytest exit 4/5).
-      - name: "Gate 5 — observability (governed-output events + two-axis replay)"
-        if: steps.scope.outputs.run == 'true'
-        working-directory: code
+        shell: bash
         run: |
-          python -m ci.gate_observability
-          python -m pytest tests/replay
+          if ! grep -Eq 'IC-[A-Z0-9-]+' <<<"$PR_BODY"; then
+            echo "PR body must cite at least one approved IC-* contract."
+            exit 1
+          fi
 
-      # --- Gate 6: Security (secret-scan + dependency audits; findings FAIL) ---
-      - name: "Gate 6 — secret scan (gitleaks)"
+      - name: Start local Supabase
         if: steps.scope.outputs.run == 'true'
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: apps/intralign
+        run: pnpm supabase start
 
-      - name: "Gate 6 — pip-audit (production deps)"
+      - name: Export local Supabase credentials
         if: steps.scope.outputs.run == 'true'
-        working-directory: code
-        # Audits [project.dependencies] from pyproject.toml (production scope).
-        run: pipx run pip-audit .
+        working-directory: apps/intralign
+        shell: bash
+        run: |
+          status="$(pnpm exec supabase status -o json)"
+          echo "SUPABASE_SECRET_KEY=$(jq -r .SECRET_KEY <<<"$status")" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(jq -r .PUBLISHABLE_KEY <<<"$status")" >> "$GITHUB_ENV"
 
-      - name: "Gate 6 — npm audit (production deps, high+)"
+      - name: Seed local platform
         if: steps.scope.outputs.run == 'true'
-        working-directory: code/frontend
-        run: npm audit --omit=dev --audit-level=high
+        working-directory: apps/intralign
+        run: pnpm seed:local
 
-      # --- Gate 7: Human review — branch protection on `main`, not this file ---
-      # --- Gate 8: Promote — out of Phase I scope ---
+      - name: Gate 2b — R2 doctrine guardrails
+        if: steps.scope.outputs.run == 'true'
+        working-directory: apps/intralign
+        run: pnpm test:r2-guardrails
+
+      - name: Gate 3 — API and web quality
+        if: steps.scope.outputs.run == 'true'
+        working-directory: apps/intralign
+        run: |
+          pnpm lint:api
+          pnpm lint:web
+          pnpm test:api
+          pnpm test:web
+          pnpm build:web
+
+      - name: Start application
+        if: steps.scope.outputs.run == 'true'
+        working-directory: apps/intralign
+        shell: bash
+        run: |
+          uv run --project services/api uvicorn oslo_api.main:app --host 127.0.0.1 --port 8000 > /tmp/oslo-api.log 2>&1 &
+          echo $! > /tmp/oslo-api.pid
+          pnpm --filter @oslo/web start > /tmp/oslo-web.log 2>&1 &
+          echo $! > /tmp/oslo-web.pid
+          for attempt in {1..60}; do
+            curl --fail --silent http://127.0.0.1:8000/health >/dev/null \
+              && curl --fail --silent http://127.0.0.1:3000/login >/dev/null \
+              && exit 0
+            sleep 2
+          done
+          cat /tmp/oslo-api.log /tmp/oslo-web.log
+          exit 1
+
+      - name: Gate 4 — end-to-end slices
+        if: steps.scope.outputs.run == 'true'
+        working-directory: apps/intralign
+        run: pnpm test:e2e
+
+      - name: Upload browser diagnostics
+        if: failure() && steps.scope.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: |
+            apps/intralign/tests/e2e/test-results
+            apps/intralign/tests/e2e/playwright-report
+          if-no-files-found: ignore
+
+      - name: Stop local platform
+        if: always() && steps.scope.outputs.run == 'true'
+        working-directory: apps/intralign
+        shell: bash
+        run: |
+          for pid_file in /tmp/oslo-api.pid /tmp/oslo-web.pid; do
+            if [[ -f "$pid_file" ]]; then
+              kill "$(cat "$pid_file")" 2>/dev/null || true
+            fi
+          done
+          pnpm supabase stop

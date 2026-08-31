@@ -23,12 +23,20 @@ import re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MD = [p for p in ROOT.rglob("*.md") if ".git" not in p.parts]
+APPLICATION_ROOT = ROOT / "apps" / "intralign"
+
+
+def is_knowledge_file(path: Path) -> bool:
+    """Keep the knowledge gate isolated from the non-canonical application tree."""
+    return ".git" not in path.parts and not path.is_relative_to(APPLICATION_ROOT)
+
+
+MD = [p for p in ROOT.rglob("*.md") if is_knowledge_file(p)]
 ALL_BASENAMES = {p.name for p in ROOT.rglob("*") if p.is_file() and ".git" not in p.parts}
 
 errors, warns = [], []
 
-def rel(p): return str(p.relative_to(ROOT))
+def rel(p): return p.relative_to(ROOT).as_posix()
 
 # ---- allowlists -------------------------------------------------------------
 # files that may legitimately reference history / deprecated terms:

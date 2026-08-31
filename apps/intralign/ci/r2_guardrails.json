@@ -1,0 +1,330 @@
+{
+  "schema_version": 1,
+  "contract_path": "ci/contracts/r2-doctrine-guardrails.md",
+  "phase0_required_guard_ids": [
+    "GT-01", "GT-02", "GT-03", "GT-04", "GT-05", "GT-06", "GT-07", "GT-08", "GT-09", "GT-10",
+    "GT-11", "GT-12", "GT-13", "GT-14", "GT-15", "GT-16", "GT-17", "GT-18", "GT-19", "GT-20",
+    "GT-21", "GT-22", "GT-23", "GT-24", "GT-25", "GT-26", "GT-27", "GT-28", "GT-29", "GT-30",
+    "GT-31", "GT-32", "GT-33", "GT-34", "GT-35", "GT-36", "GT-37", "GT-38", "GT-39", "GT-40",
+    "GT-41", "GT-42", "GT-43", "GT-44", "GT-45", "GT-46", "GT-47", "GT-48", "GT-49", "GT-50"
+  ],
+  "guards": {
+    "GT-01": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/entitlements/test_service.py::test_only_a_signature_verified_checkout_completion_grants_basic"
+      ]
+    },
+    "GT-02": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/tiering/test_policy.py::test_free_and_basic_define_capacity_without_metering_people_or_quality"
+      ]
+    },
+    "GT-03": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/api/test_outcomes_api.py::test_archive_keeps_the_outcome_visible_and_reactivation_restores_it"
+      ]
+    },
+    "GT-04": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/analysis/test_api.py::test_overview_exposes_the_evidence_qualified_understanding_console"
+      ]
+    },
+    "GT-05": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/feedback/test_feedback_service.py::test_feedback_is_sanitized_and_emits_no_free_text_or_history_payload",
+        "services/api/tests/feedback/test_feedback_service.py::test_feedback_context_is_metadata_only"
+      ],
+      "client_tests": [
+        "apps/web/src/components/overview/project-overview.test.tsx"
+      ]
+    },
+    "GT-06": {"status": "pending", "tests": [], "pending_reason": "Feedback isolation is shipped and verified, but the canonical survey store is not shipped; the combined feedback-and-survey guard cannot be activated yet."},
+    "GT-07": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_integrity.py::test_integrity_composes_three_normalized_pillars_through_the_weakest_gate"
+      ]
+    },
+    "GT-08": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/integration/test_slice_two_analysis.py::test_scoped_reviewer_confirmation_is_private_attributed_and_queued"
+      ]
+    },
+    "GT-09": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_withdraw_appends_a_reversal_reopens_and_preserves_activation"
+      ]
+    },
+    "GT-10": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/analysis/test_api.py::test_overview_overlays_the_saved_resolution_and_addressed_status",
+        "services/api/tests/analysis/test_workflow.py::test_governed_node_failures_preserve_the_last_good_snapshot"
+      ]
+    },
+    "GT-11": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_integrity.py::test_flagging_grounds_the_read_without_raising_viability"
+      ]
+    },
+    "GT-12": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_comment_never_grounds_or_changes_any_lifecycle_band"
+      ]
+    },
+    "GT-13": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_integrity.py::test_integrity_is_proportional_when_plan_size_changes"
+      ]
+    },
+    "GT-14": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/integration/test_slice_two_analysis.py::test_scoped_reviewer_confirmation_is_private_attributed_and_queued"
+      ]
+    },
+    "GT-15": {"status": "pending", "tests": [], "pending_reason": "The canonical Slice 8 PMF-readiness computation is not shipped and must remain absent from product surfaces."},
+    "GT-16": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/collaboration/test_pdf.py::test_snapshot_pdf_contains_all_artifacts_evidence_and_governance_markers",
+        "services/api/tests/collaboration/test_pdf.py::test_report_pdf_uses_the_exact_shared_draft_sections"
+      ]
+    },
+    "GT-17": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/integration/test_slice_two_analysis.py::test_scoped_reviewer_confirmation_is_private_attributed_and_queued"
+      ]
+    },
+    "GT-18": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/analysis/test_reanalysis.py::test_first_run_unlock_is_latched_after_two_grounding_acts"
+      ]
+    },
+    "GT-19": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_integrity.py::test_integrity_composes_three_normalized_pillars_through_the_weakest_gate",
+        "services/api/tests/r2/test_integrity.py::test_foundation_first_tie_breaking_is_deterministic"
+      ]
+    },
+    "GT-20": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_integrity_ui_contract.py::test_integrity_maturity_guard_runs_as_a_client_test"
+      ],
+      "client_tests": [
+        "apps/web/src/components/overview/project-overview.test.tsx"
+      ]
+    },
+    "GT-21": {
+      "status": "active",
+      "tests": [],
+      "client_tests": [
+        "apps/web/src/components/outcomes/your-outcome-dashboard.test.tsx"
+      ]
+    },
+    "GT-22": {
+      "status": "active",
+      "tests": [],
+      "client_tests": [
+        "apps/web/src/components/outcomes/your-outcome-dashboard.test.tsx"
+      ]
+    },
+    "GT-23": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/analysis/test_api.py::test_overview_exposes_the_evidence_qualified_understanding_console",
+        "services/api/tests/integration/test_slice_two_analysis.py::test_clarification_is_durable_and_addressed_before_reanalysis_completes"
+      ]
+    },
+    "GT-24": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/analysis/test_reanalysis.py::test_grounding_changes_coalesce_by_project_into_one_scoped_fast_batch"
+      ]
+    },
+    "GT-25": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_withdraw_appends_a_reversal_reopens_and_preserves_activation"
+      ]
+    },
+    "GT-26": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_confirm_is_typed_and_only_reanalysis_resolves",
+        "services/api/tests/r2/test_issue_lifecycle.py::test_reviewer_reject_is_an_attributed_answered_flag"
+      ]
+    },
+    "GT-27": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_fix_then_grounding_are_separate_acts_and_only_the_second_closes"
+      ]
+    },
+    "GT-28": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/api/test_collaboration_api.py::test_report_export_uses_a_header_safe_unicode_filename"
+      ],
+      "client_tests": [
+        "apps/web/src/components/reports/report-workspace.test.tsx"
+      ]
+    },
+    "GT-29": {"status": "pending", "tests": [], "pending_reason": "Feedback is structurally barred from canonical History, but the canonical survey side channel is not shipped; the combined guard cannot be activated yet."},
+    "GT-30": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/integration/test_slice_four_entitlements.py::test_every_intent_branch_is_durable"
+      ]
+    },
+    "GT-31": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/integration/test_slice_two_analysis.py::test_report_draft_and_immediate_delivery_are_durable"
+      ],
+      "client_tests": [
+        "apps/web/src/components/reports/report-projection.test.ts"
+      ]
+    },
+    "GT-32": {"status": "pending", "tests": [], "pending_reason": "The canonical Slice 8 sticky survey experiment is not shipped in the current application track."},
+    "GT-33": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_issue_lifecycle.py::test_fix_then_grounding_are_separate_acts_and_only_the_second_closes",
+        "services/api/tests/r2/test_slice_two_ui_contract.py::test_slice_two_renders_itemized_cross_surface_owner_work_without_blank_state"
+      ]
+    },
+    "GT-34": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_resolution_is_derived_from_finding_model"],
+      "client_tests": ["apps/web/src/components/overview/project-overview.test.tsx"]
+    },
+    "GT-35": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_inference_always_leads_with_verify_and_only_verify_can_ground"]
+    },
+    "GT-36": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_inference_always_leads_with_verify_and_only_verify_can_ground"]
+    },
+    "GT-37": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_unmapped_finding_type_escalates_instead_of_defaulting"]
+    },
+    "GT-38": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_unmapped_finding_type_escalates_instead_of_defaulting"]
+    },
+    "GT-39": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_sensitivity_is_deterministic_decomposable_and_two_sided"]
+    },
+    "GT-40": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_sensitivity_is_deterministic_decomposable_and_two_sided"]
+    },
+    "GT-41": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_sensitivity_is_deterministic_decomposable_and_two_sided"]
+    },
+    "GT-42": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_calibration_uses_global_prior_until_labels_and_never_suppresses_floor"]
+    },
+    "GT-43": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_calibration_uses_global_prior_until_labels_and_never_suppresses_floor"]
+    },
+    "GT-44": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_calibration_uses_global_prior_until_labels_and_never_suppresses_floor"]
+    },
+    "GT-45": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_every_structural_target_has_endpoints_and_unknown_escalates"]
+    },
+    "GT-46": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_structural_target_owns_dimension_not_finding_type"]
+    },
+    "GT-47": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_alignment_sensitivity_is_edge_keyed_and_traces_outcome_reachability"]
+    },
+    "GT-48": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_load_bearing.py::test_unmapped_finding_type_escalates_instead_of_defaulting",
+        "services/api/tests/r2/test_load_bearing.py::test_runtime_ambiguity_routes_to_clarity_or_alignment"
+      ]
+    },
+    "GT-49": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_load_bearing_model_gap_is_incomplete_never_fragile_or_weak"]
+    },
+    "GT-50": {
+      "status": "active",
+      "tests": ["services/api/tests/r2/test_load_bearing.py::test_load_bearing_model_gap_is_incomplete_never_fragile_or_weak"]
+    },
+    "GT-51": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_proposal_resolution.py::test_build_finding_stays_open_until_every_resolver_lands_via_reanalysis"
+      ]
+    },
+    "GT-52": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_proposal_resolution.py::test_inference_and_optional_proposals_are_additive_and_ground_nothing"
+      ]
+    },
+    "GT-53": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_proposal_resolution.py::test_build_finding_stays_open_until_every_resolver_lands_via_reanalysis",
+        "services/api/tests/r2/test_slice_two_ui_contract.py::test_slice_two_renders_itemized_cross_surface_owner_work_without_blank_state"
+      ]
+    },
+    "GT-54": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_slice_two_ui_contract.py::test_slice_two_renders_itemized_cross_surface_owner_work_without_blank_state"
+      ]
+    },
+    "GT-55": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_slice_two_ui_contract.py::test_slice_two_renders_itemized_cross_surface_owner_work_without_blank_state"
+      ]
+    },
+    "GT-56": {
+      "status": "active",
+      "tests": [
+        "services/api/tests/r2/test_slice_two_ui_contract.py::test_slice_two_renders_itemized_cross_surface_owner_work_without_blank_state"
+      ]
+    },
+    "GT-57": {
+      "status": "active",
+      "tests": [
+        "tests/negative/ci/test_gate_r2_guardrails.py::test_a_declared_prototype_capability_without_a_simulation_fails_the_gate"
+      ]
+    },
+    "GT-A1": {"status": "pending", "tests": [], "pending_reason": "Feedback now proves server-authoritative pending behavior, but the consolidated cross-surface assertion is not complete."},
+    "GT-A2": {"status": "pending", "tests": [], "pending_reason": "Token streaming for all declared LLM surfaces is not shipped; truthful bounded pending states remain under review."},
+    "GT-A3": {"status": "pending", "tests": [], "pending_reason": "Feedback now proves failure and retry without invented timings, but consolidated cross-surface coverage is not complete."}
+  }
+}
