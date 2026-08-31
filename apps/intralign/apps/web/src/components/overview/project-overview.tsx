@@ -2280,7 +2280,7 @@ export function ProjectOverview({
                 </section>
               ) : null}
               {reanalysisFeedback ? (
-                <p className="r2-reanalysis-feedback" role="status">{reanalysisFeedback}</p>
+                <p className="sr-only" role="status">{reanalysisFeedback}</p>
               ) : null}
               {snapshot.read_moved_notifications?.[0] && !snapshot.first_run?.freeze_on ? (
                 <section className="r2-read-moved r2-overview-notice" role="status">
