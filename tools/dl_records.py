@@ -237,6 +237,193 @@ def check_records(root=ROOT):
     return errs
 
 
+# ── A citation that resolves to nothing (added 2026-08-23) ────────────────────────────────────────
+# ⚠️ THIS FILE ALREADY KNEW HOW TO ASK "is this id spoken for?" and was never asked the complementary
+# question: "does this id RESOLVE?" The difference is not academic. ids_in_use() deliberately treats a
+# bare citation as claiming an id, which is right for a counter and useless as a gate — under that
+# rule a framework cited by section number for nine days, and never written, is in perfect health.
+#
+# Measured on main the day this was written: 172 ids cited, 161 resolve, ELEVEN do not, across 50
+# citations. doc_integrity passed on all 1120 documents throughout. Two of the eleven were caught by
+# hand hours apart on the same day — one framework cited by section number since 2026-08-14 and never
+# written, and one glossary row about to be landed citing four sections of a spec the project's own
+# decision index records as "spec unfinished". SECOND INSTANCE OF ONE SHAPE ⇒ MECHANISM, not a note.
+#
+# ⚠️ RESOLVE is deliberately NARROWER than "in use", in three ways, each of which was a real bug in a
+# draft of this function:
+#   1. 90_research is NON-CANONICAL (zone rules). It holds files literally named DL-nnn-*-dl-land-body.md
+#      — dispatch DRAFTS. Counting them would let a research scratch file satisfy a canon citation.
+#      Excluded as a RECORD home AND as a citing surface: a dangling citation in a non-canonical zone
+#      is not a canon defect.
+#   2. The debt register is excluded as a citing surface. It names every id it exempts, so counting it
+#      would make the "this row is dead" clause below permanently unable to fire — a dead trigger
+#      created by the change that needs it, the shape that has now appeared here three times.
+#   3. The legacy log resolves ids only INSIDE the frozen range. Outside it, the log's generated
+#      records-index is derivative of the record files and asserts nothing on its own; treating a
+#      prose mention as a record is how a missing decision looks recorded.
+REC_HOMES = ("00_owner/decisions/records",
+             "release-2/canon/decisions",
+             "release-2.1/canon/decisions")
+REGISTER_REL = "00_owner/decisions/UNRECORDED_DECISIONS.md"
+CITE_SKIP_DIRS = {"90_research"}
+REGISTER_ROW_RE = re.compile(r"^\|\s*\*\*DL-(\d{3,})\*\*\s*\|")
+
+
+# ⚠️ THE SUBJECT IS THE TRACKED CORPUS, NOT THE FILESYSTEM. A draft of this gate walked rglob and was
+# handed to the owner; on his clone it failed instantly on EIGHT ids cited only in
+# release-2/oslo-prototype-r2.backup-*.html — UNTRACKED backup files left in the working tree by a
+# previous checkout, present on no ref at all. Checking out main does not remove untracked files, so
+# the gate graded local litter as canon and the "fix" it invited was to enter stray backups into the
+# decision register: the precise failure the register's own header warns against.
+#
+# ⚠️ Over-scanning is the UNSAFE direction for a gate, the opposite of the trade-off in next_number()
+# above. There, over-matching can only raise a ceiling and a gap is harmless. Here a false red trains
+# people to reach for the exemption list, and a gate that reds on one machine and greens on another
+# asserts nothing. This is the fourth appearance of checker-and-subject-in-different-scopes on this
+# repository, so it is fixed at the enumeration rather than patched at the call site.
+#
+# Inside a git work tree the answer is `git ls-files`. Outside one (the self-test fixtures) the
+# filesystem IS the corpus. ⚠️ Inside a work tree where ls-files FAILS we return None and the caller
+# errors: a scan that cannot see the corpus must not report on it.
+def scan_paths(root=ROOT):
+    """(relative paths, scope) where scope is 'tracked' | 'filesystem', or (None, 'broken')."""
+    import subprocess
+    root = Path(root)
+    # ⚠️ Asked BEFORE git runs, and it is the clause C8 caught. Judging "is this a repository?" purely
+    # from `rev-parse` exit status silently reclassifies a BROKEN work tree as "not a repo", and the
+    # filesystem fallback then reports a clean pass on a corpus it never enumerated — a gate passing by
+    # not running. The presence of .git is the claim; failing to read it is a broken gate, not a hint
+    # to go and glob instead.
+    looks_git = (root / ".git").exists()
+    try:
+        inside = subprocess.run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"],
+                                capture_output=True, text=True, timeout=30)
+        if inside.returncode == 0 and inside.stdout.strip() == "true":
+            out = subprocess.run(["git", "-C", str(root), "ls-files", "-z"],
+                                 capture_output=True, text=True, timeout=300)
+            if out.returncode != 0:
+                return None, "broken"
+            return [p for p in out.stdout.split("\0") if p], "tracked"
+    except Exception:
+        return None, "broken"
+    if looks_git:
+        return None, "broken"
+    return [str(f.relative_to(root)) for f in sorted(root.rglob("*")) if f.is_file()], "filesystem"
+
+
+def recorded_ids(root=ROOT):
+    """{id: path} for every id that RESOLVES to a record on this ref.
+
+    Filenames, not bodies: one of the four homes names its files in UPPER_SNAKE, which the canonical
+    slug pattern cannot match, and those are precisely the records a slug-only scan cannot see.
+    """
+    root = Path(root)
+    out = {}
+    paths, _scope = scan_paths(root)
+    for rel in (paths or []):
+        if not rel.lower().endswith(".md"):
+            continue
+        if not any(rel.startswith(home + "/") for home in REC_HOMES):
+            continue
+        m = CITE_RE.search(Path(rel).name)
+        if m:
+            out.setdefault(int(m.group(1)), rel)
+    log = root / "00_owner/decisions/decision_log.md"
+    if log.exists():
+        text = log.read_text(encoding="utf-8", errors="ignore")
+        for n in (int(x) for x in CITE_RE.findall(text)):
+            if n <= FROZEN_THROUGH:
+                out.setdefault(n, "00_owner/decisions/decision_log.md (frozen legacy range)")
+    return out
+
+
+def cited_ids_canonical(root=ROOT):
+    """{id: [up to 3 paths]} for ids cited on tracked CANONICAL surfaces, or None if unscannable."""
+    root = Path(root)
+    out = {}
+    paths, _scope = scan_paths(root)
+    if paths is None:
+        return None
+    for rel in paths:
+        parts = set(Path(rel).parts)
+        if parts & SCAN_SKIP_DIRS or parts & CITE_SKIP_DIRS:
+            continue
+        if Path(rel).suffix.lower() not in SCAN_SUFFIXES:
+            continue
+        if rel == REGISTER_REL:
+            continue
+        f = root / rel
+        if not f.is_file():
+            continue
+        try:
+            hay = f.name + "\n" + f.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        for m in CITE_RE.finditer(hay):
+            locs = out.setdefault(int(m.group(1)), [])
+            if rel not in locs and len(locs) < 3:
+                locs.append(rel)
+    return out
+
+
+def register_ids(root=ROOT):
+    """{id: True} for every row of the debt register, or {} when the register is absent."""
+    reg = Path(root) / REGISTER_REL
+    if not reg.exists():
+        return {}
+    out = {}
+    for line in reg.read_text(encoding="utf-8", errors="ignore").splitlines():
+        m = REGISTER_ROW_RE.match(line.strip())
+        if m:
+            out[int(m.group(1))] = True
+    return out
+
+
+def check_citations_resolve(root=ROOT):
+    """(errors, notices). A cited id must resolve to a record or be an owner-ratified debt row.
+
+    ⚠️ ASYMMETRIC ON PURPOSE, and the asymmetry is the interesting part.
+    * "cited but neither recorded nor registered" is an ERROR on every ref. That is the property.
+    * "registered but it now resolves" is a NOTICE, not an error. A release line legitimately carries
+      records main has not graduated yet, so a row that is redundant THERE is still load-bearing on
+      main; failing would punish the correct ref. Shrinking the register is bookkeeping, and it is
+      owned by the Freeze audit, not by this gate.
+    * "registered but cited nowhere" IS an error, because that row can only rot. This is the clause a
+      draft of this function could not fire at all, until the register stopped counting itself.
+    """
+    root = Path(root)
+    recorded = recorded_ids(root)
+    cited = cited_ids_canonical(root)
+    reg = register_ids(root)
+    errs, notes = [], []
+    if cited is None:
+        return ([f"[citation-guard] the tracked corpus could not be enumerated (git ls-files failed), "
+                 f"so this gate has seen nothing. A scan that cannot see the corpus must not report on "
+                 f"it — fix the checkout, do not treat an unseen corpus as a clean one."], notes)
+    for n in sorted(cited):
+        if n in recorded or n in reg:
+            continue
+        where = ", ".join(cited[n][:2])
+        errs.append(
+            f"[citation-unresolved] DL-{n:03d} is cited ({where}) but resolves to no record.\n"
+            f"                      Write the record, or — with an owner ratification — enter it in "
+            f"{REGISTER_REL} with its reason.\n"
+            f"                      ⚠️ Adding a row to turn this gate green is the failure the "
+            f"register exists to prevent.")
+    for n in sorted(reg):
+        if n in recorded:
+            notes.append(f"[citation-debt-paid] DL-{n:03d} now resolves at {recorded[n]} — the "
+                         f"{REGISTER_REL} row is redundant on this ref and should be dropped when it "
+                         f"is redundant on every ref.")
+        elif n not in cited:
+            errs.append(
+                f"[citation-debt-dead] DL-{n:03d} is listed in {REGISTER_REL} but is cited nowhere on "
+                f"this ref.\n"
+                f"                     A debt row for a citation that no longer exists can only rot — "
+                f"delete the row.")
+    return errs, notes
+
+
 def title_of(rf):
     for line in rf.read_text(encoding="utf-8", errors="ignore").splitlines():
         m = re.match(r"^#\s*(DL-\d{3,}\s*—\s*.+)$", line.strip())
@@ -427,12 +614,107 @@ def self_test():
                      "the scanner is inventing ids and inflating the counter it computes"
                      % ", ".join(tag(n) for n in invented))
 
+    # ── The citation gate, RED-proved in BOTH directions (added 2026-08-23) ───────────────────────
+    # ⚠️ Each clause below was watched to fail before it was trusted. The pair C1/C3 differ by ONE
+    # file, so a green C3 cannot be a fixture that simply cannot detect anything.
+    reg = lambda ids: "".join("| **%s** | 1x | fixture | fixture |\n" % tag(i) for i in ids)
+    cited_only = lambda n: {"00_owner/decisions/decision_log.md": frozen,
+                            "20_handoff/contracts/SEAM.md": "as ruled in %s\n" % tag(n)}
+
+    # C1 RED — cited, no record, no register row: must ERROR.
+    t = tree(cited_only(301))
+    e, _ = check_citations_resolve(root=t)
+    if not any("citation-unresolved" in x and tag(301) in x for x in e):
+        fails.append("a cited id with no record and no register row did not fail the citation gate")
+
+    # C2 GREEN — the same tree plus an owner-ratified debt row: must pass.
+    s = cited_only(302); s[REGISTER_REL] = reg([302])
+    e, _ = check_citations_resolve(root=tree(s))
+    if e:
+        fails.append("a registered debt row did not exempt its citation: %s" % e[0].splitlines()[0])
+
+    # C3 GREEN — the same tree plus the RECORD: must pass. Differs from C1 by one file only.
+    s = cited_only(303); s["00_owner/decisions/records/%s-a-thing.md" % tag(303)] = "# %s\n" % tag(303)
+    e, _ = check_citations_resolve(root=tree(s))
+    if e:
+        fails.append("a cited id WITH a record still failed the citation gate: %s" % e[0].splitlines()[0])
+
+    # C4 RED — a debt row for an id cited nowhere is a rotting row: must ERROR.
+    # ⚠️ THIS CLAUSE COULD NOT FIRE AT ALL until the citing scan stopped reading the register, which
+    # names every id it exempts. A draft shipped with it permanently green — a dead trigger created by
+    # the change that needs it.
+    e, _ = check_citations_resolve(root=tree({"00_owner/decisions/decision_log.md": frozen,
+                                             REGISTER_REL: reg([304])}))
+    if not any("citation-debt-dead" in x and tag(304) in x for x in e):
+        fails.append("a debt row for an id cited nowhere did not fail — the register can rot, and the "
+                     "citing scan is probably counting the register itself")
+
+    # C5 — a debt row whose id now resolves is a NOTICE, never an error. A release line legitimately
+    # carries records main has not graduated, so failing here would punish the correct ref.
+    s = cited_only(305); s[REGISTER_REL] = reg([305])
+    s["00_owner/decisions/records/%s-a-thing.md" % tag(305)] = "# %s\n" % tag(305)
+    e, n = check_citations_resolve(root=tree(s))
+    if e:
+        fails.append("a debt row whose id now resolves was treated as an error, not a notice")
+    if not any("citation-debt-paid" in x and tag(305) in x for x in n):
+        fails.append("a debt row whose id now resolves produced no notice — nothing will ever ask for "
+                     "the row to be dropped")
+
+    # C6 BOTH DIRECTIONS — a non-canonical zone must not fail the gate, and the SAME citation in a
+    # canonical zone must. One assertion each way; the pair is the proof.
+    e, _ = check_citations_resolve(root=tree({
+        "00_owner/decisions/decision_log.md": frozen,
+        "90_research/notes/SCRATCH.md": "as ruled in %s\n" % tag(306)}))
+    if e:
+        fails.append("a dangling citation in the non-canonical research zone failed the gate")
+    e, _ = check_citations_resolve(root=tree(cited_only(306)))
+    if not e:
+        fails.append("the research-zone exemption is swallowing canonical citations too — the C6 pair "
+                     "cannot tell the zones apart")
+
+
+    # C7 BOTH DIRECTIONS — the subject is the TRACKED corpus. This is the clause the owner's clone
+    # taught us: a draft walked the filesystem and failed on eight ids cited only in untracked
+    # release-2/*.backup-*.html files left behind by a checkout. Same file, same citation, tracked vs
+    # not; the pair is the proof, and a single-direction version of this clause would have passed on
+    # the broken draft.
+    import subprocess as _sp
+
+    def _gittree(spec, track):
+        d = tree(spec)
+        _sp.run(["git", "init", "-q", str(d)], check=True)
+        for rel in track:
+            _sp.run(["git", "-C", str(d), "add", rel], check=True)
+        return d
+
+    _spec = lambda n: {"00_owner/decisions/decision_log.md": frozen,
+                       "release-2/proto.backup.html": "as ruled in %s\n" % tag(n)}
+    e, _ = check_citations_resolve(root=_gittree(_spec(307), ["release-2/proto.backup.html"]))
+    if not any("citation-unresolved" in x and tag(307) in x for x in e):
+        fails.append("a dangling citation in a TRACKED file did not fail — the C7 pair cannot tell "
+                     "tracked from untracked")
+    e, _ = check_citations_resolve(root=_gittree(_spec(308), []))
+    if e:
+        fails.append("a dangling citation in an UNTRACKED file failed the gate: the scan is walking the "
+                     "filesystem, so local litter grades as canon (%s)" % e[0].splitlines()[0])
+
+    # C8 — a git work tree whose corpus cannot be enumerated must ERROR, never pass quietly.
+    _d = tree({"00_owner/decisions/decision_log.md": frozen})
+    (_d / ".git").mkdir(exist_ok=True)
+    (_d / ".git" / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
+    e, _ = check_citations_resolve(root=_d)
+    if not any("citation-guard" in x for x in e):
+        fails.append("an unenumerable git work tree passed the citation gate — an unseen corpus is "
+                     "being treated as a clean one")
+
+
     for f in fails:
         print("  FAIL " + f)
     if not fails:
         print("  self-test OK — a second decision home raises the ceiling, a cited-but-unrecorded id is "
               "not re-issued, a filename-only id is seen, a collision fails closed, the frozen range is "
-              "refused, an unreadable corpus refuses rather than guesses, and this file invents no id")
+              "refused, an unreadable corpus refuses rather than guesses, this file invents no id, and a\n"
+              "          citation that resolves to nothing fails while a ratified debt row does not")
     return 1 if fails else 0
 
 
@@ -446,6 +728,14 @@ def main(argv):
         regenerate_index()
     elif cmd == "self-test":
         return self_test()
+    elif cmd == "citations":
+        errs, notes = check_citations_resolve()
+        for n in notes:
+            print("NOTICE " + n)
+        for e in errs:
+            print("ERROR " + e)
+        print("PASS" if not errs else f"FAIL ({len(errs)} citation error(s))")
+        return 1 if errs else 0
     elif cmd == "check":
         errs = check_records()
         for e in errs:
