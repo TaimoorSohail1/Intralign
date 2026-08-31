@@ -16,7 +16,9 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The complete 84-case Playwright matrix runs serially against shared seeded
+    # database state across desktop, tablet, and mobile.
+    timeout-minutes: 90
     env:
       ANALYSIS_HARNESS: deterministic
       ANALYSIS_PHASE_DELAY_MS: 0
