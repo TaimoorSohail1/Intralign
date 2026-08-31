@@ -73,6 +73,58 @@ def test_same_plan_weakness_keeps_identity_when_wording_and_artifact_move() -> N
     assert stabilized[0].id == "ISS-VENUE"
 
 
+def test_deterministic_conflict_keeps_identity_when_artifact_moves() -> None:
+    shared_refs = (
+        "document:plan:page:3:fragment:2",
+        "document:plan:page:5:fragment:4",
+    )
+    previous = _issue(
+        "DET-RESOURCES-CONFLICT-OLD",
+        artifact_type=ArtifactType.RESOURCES,
+        title="Phase 1 and first-release scope is internally inconsistent",
+        why=(
+            "The structured read records competing statements: native mobile, "
+            "occupancy, QR access and wearable data are required for first release; "
+            "native mobile and wearable sync are out of scope."
+        ),
+        evidence_refs=shared_refs,
+        finding_type="unowned",
+        structural_target="achievability",
+        graph_node_id="",
+    )
+    current = _issue(
+        "DET-INTENT-CONFLICT-NEW",
+        artifact_type=ArtifactType.INTENT,
+        title="Phase 1 and first-release intent is internally inconsistent",
+        why=(
+            "The structured read records competing statements: trainer scheduling "
+            "is mandatory for first release; native mobile, occupancy, QR access "
+            "and wearable data are required while also listed as out of scope."
+        ),
+        evidence_refs=("document:plan:page:2:fragment:1", *shared_refs),
+        finding_type="unowned",
+        structural_target="edge",
+        graph_node_id="",
+    )
+
+    stabilized = stabilize_issue_ids((current,), (previous,))
+
+    assert stabilized[0].id == "DET-RESOURCES-CONFLICT-OLD"
+
+
+def test_unmatched_deterministic_issue_keeps_its_canonical_id() -> None:
+    current = _issue(
+        "DET-RESOURCES-FUNDING-CONFLICT",
+        title="Funding statements conflict",
+        why="The approved and forecast funding totals differ.",
+        graph_node_id="",
+    )
+
+    stabilized = stabilize_issue_ids((current,), ())
+
+    assert stabilized[0].id == "DET-RESOURCES-FUNDING-CONFLICT"
+
+
 def test_new_issue_receives_deterministic_id_independent_of_model_id() -> None:
     first = _issue(
         "MODEL-ONE",
