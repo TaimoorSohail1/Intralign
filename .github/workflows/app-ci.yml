@@ -47,7 +47,7 @@ jobs:
           app_ci_applies() {
             has_app_tree="$1"
             changed_paths="$2"
-            [ "$has_app_tree" = "true" ] && printf '%s\n' "$changed_paths" | grep -Eq '^apps/intralign/'
+            [ "$has_app_tree" = "true" ] && grep -Eq '^apps/intralign/' <<<"$changed_paths"
           }
 
           if app_ci_applies true '00_owner/framework.md'; then
