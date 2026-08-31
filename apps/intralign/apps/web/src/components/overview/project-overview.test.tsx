@@ -297,7 +297,7 @@ describe("ProjectOverview", () => {
         expect.objectContaining({ method: "POST" }),
       ),
     );
-    expect(await screen.findByText("Reanalysis queued")).toBeInTheDocument();
+    expect(await screen.findByText("Reanalysis queued")).toHaveClass("sr-only");
   });
 
   it("withdraws the latest pending change without hiding the last good read", async () => {
