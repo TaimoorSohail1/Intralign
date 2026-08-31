@@ -42,7 +42,7 @@ _LOGGER = logging.getLogger(__name__)
 PROMPT_VERSIONS = {
     "perceive": "oslo-perceive-v5",
     "construct": "oslo-construct-v6",
-    "evaluate": "oslo-evaluate-v10",
+    "evaluate": "oslo-evaluate-v11",
 }
 ShortText = Annotated[str, Field(min_length=1, max_length=1_000)]
 LongText = Annotated[str, Field(min_length=1, max_length=4_000)]
@@ -252,6 +252,26 @@ class _AssessmentOutput(_StrictOutput):
     def complete_coverage_audit(self) -> "_AssessmentOutput":
         if tuple(item.artifact_type for item in self.coverage_audit) != ARTIFACT_TYPES:
             raise ValueError("Coverage audit must contain all seven artifacts in order")
+        graph_node_ids = {item.id for item in self.dependency_nodes}
+        if self.issues and not graph_node_ids:
+            raise ValueError("Issues require dependency graph nodes")
+        unknown_graph_nodes = {
+            item.graph_node_id
+            for item in self.issues
+            if item.graph_node_id not in graph_node_ids
+        }
+        if unknown_graph_nodes:
+            raise ValueError("Every issue must reference a known dependency graph node")
+        semantic_issue_keys = [
+            (
+                item.graph_node_id.casefold(),
+                item.finding_type.casefold(),
+                item.structural_target.casefold(),
+            )
+            for item in self.issues
+        ]
+        if len(semantic_issue_keys) != len(set(semantic_issue_keys)):
+            raise ValueError("Issue semantic identity must be unique within an assessment")
         workstreams = [item.workstream.casefold() for item in self.outcome_checkpoints]
         if len(workstreams) != len(set(workstreams)):
             raise ValueError("Each outcome-bearing workstream requires one checkpoint")
@@ -292,6 +312,7 @@ def _issue_from_output(item: _IssueOutput) -> Issue:
         section=item.artifact_type.value,
         finding_basis=item.finding_basis,
         structural_target=item.structural_target,
+        graph_node_id=item.graph_node_id,
         primary_act=primary_act,
         also_offered=also_offered,
         classification_state=classification_state,
@@ -756,7 +777,11 @@ class OpenAIAgentHarness:
                 "dependency_edges: to_id depends on from_id, and every node and edge carries "
                 "extraction_confidence. Include one sensitivity_candidate per issue, linked by "
                 "the same id and graph_node_id, with plausible evidence-bounded favorable and "
-                "adverse integrity endpoints. Alignment candidates must identify edge_key and "
+                "adverse integrity endpoints. graph_node_id identifies the plan element the "
+                "finding concerns: reuse the same semantic node id across reruns even when issue "
+                "wording, rank, severity, or artifact placement changes. Do not derive a node id "
+                "from the issue title or explanation. "
+                "Alignment candidates must identify edge_key and "
                 "must sit on a path reaching an outcome. Do not invent certainty in graph "
                 "weights or endpoints; lower extraction_confidence when the evidence is weak. "
                 "Do not expose hidden "
