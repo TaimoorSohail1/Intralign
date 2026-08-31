@@ -159,6 +159,30 @@ try:
 except Exception as ex:
     warns.append(f"[records-guard] could not run records check: {ex}")
 
+# ---- 7: a cited decision must RESOLVE (added 2026-08-23) --------------------
+# Section 6 validates records that EXIST. Nothing validated the other direction:
+# a citation pointing at a decision that was never written. Measured on main the
+# day this was added — 172 DL ids cited, 161 resolve, ELEVEN do not, across 50
+# citations, with this very file reporting PASS on all 1120 documents.
+#
+# Two were caught by hand hours apart that day: a framework cited by section
+# number since 2026-08-14 and never written, and a glossary row about to land
+# citing four sections of a spec the project's own decision index records as
+# "spec unfinished". A second instance of one shape is a mechanism, not a note.
+#
+# ⚠️ FAILS CLOSED, unlike section 6 above. Section 6 turns an exception into a
+# WARN, so an import error there makes the guard pass by not running — the shape
+# already fixed once in doc-integrity.yml's graduation step. Not repeated here:
+# if this check cannot run, that is an ERROR.
+try:
+    from dl_records import check_citations_resolve
+    cit_errs, cit_notes = check_citations_resolve(ROOT)
+    errors.extend(cit_errs)
+    warns.extend(cit_notes)
+except Exception as ex:
+    errors.append(f"[citation-guard] could not run the citation-resolution check: {ex} "
+                  f"— a gate that cannot run is a broken gate, never a quiet pass.")
+
 # ---- report ----------------------------------------------------------------
 print(f"OSLO doc-integrity: {len(MD)} docs · {len(errors)} errors · {len(warns)} warnings\n")
 for e in errors: print("ERROR  " + e)

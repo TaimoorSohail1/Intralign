@@ -1454,6 +1454,13 @@ Each changelog entry contains:
 - **Change Summary:** Framework 002 is ratified as a document; DL-212 is unrecoverable and sections 1, 2, 4, 6 are vacant. Landed via the dl-land workflow (DL-067).
 - **Supersession Reference:** None.
 
+### CHG-196 — DL-242: Narration may not assert what the mechanism does not enforce
+
+- **Date:** 2026-08-24 · **Authorizing Decision:** DL-242.
+- **Affected Artifacts:** `00_owner/decisions/records/DL-242-narration-may-not-assert-what-the-mechanism-does-not-enforce.md` (new); `00_owner/decisions/decision_log.md` (records index regenerated).
+- **Change Summary:** Narration may not assert what the mechanism does not enforce. Landed via the dl-land workflow (DL-067).
+- **Supersession Reference:** None.
+
 ---
 
 ## Governance Notes
