@@ -1,0 +1,25 @@
+{
+  "schema": "iteration/v1",
+  "note": "The ONLY hand-authored surface in the iteration queue. It holds no work rows — rows are derived from governed sources by tools/iteration_queue.py. If you want engineering to do something, it must first exist as an obligation, a due queued-work row, or an apparatus increment. 'I mentioned it in chat' is structurally not a source.",
+
+  "id": "iteration-1",
+  "start": "2026-08-31",
+  "end": "2026-09-11",
+  "boundaries": ["2026-09-11", "2026-09-25", "2026-10-09"],
+
+  "goal": "Complete R2.0 validation against the production-gating subset and fix its defects; freeze R2.1 and begin build; owner begins R2.2 design. Apparatus: all five layers targeted.",
+
+  "tracks": [
+    { "id": "T1", "name": "R2.0 validation + defect fixing", "outranks": ["T2"] },
+    { "id": "T2", "name": "R2.1 freeze and build" },
+    { "id": "T3", "name": "R2.2 design (owner)" }
+  ],
+
+  "precedence_note": "RULED 2026-08-31: when T1 and T2 compete for the same people, T1 wins and the freeze slips. The first freeze under the new cadence may be missed, deliberately. This is why P0 is production-blocking defects and not the freeze chain.",
+
+  "people": {
+    "TaimoorSohail1": "engineer",
+    "HamzaSohailCodes": "dev lead",
+    "owner": "product owner (ratifies canon; never delegated)"
+  }
+}
