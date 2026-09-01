@@ -71,10 +71,14 @@ jobs:
       - name: Fetch every ref — the decision corpus is NOT all on main
         run: |
           git fetch --no-tags --prune origin '+refs/heads/*:refs/remotes/origin/*'
-          N=$(git for-each-ref --format='%(refname)' refs/remotes/origin/ refs/heads/ | wc -l)
-          echo "refs visible to the numbering scan: $N"
+          # ⚠️ COUNT DISTINCT BRANCHES, NOT REFNAMES. `-lt 2` was the same defect as the one in
+          # ids_across_refs(): a single-branch checkout prints refs/heads/main AND
+          # refs/remotes/origin/main, so the check passed while one branch was visible.
+          N=$(git for-each-ref --format='%(refname)' refs/remotes/origin/ refs/heads/ \
+                | sed -e 's|^refs/remotes/origin/||' -e 's|^refs/heads/||' | sort -u | wc -l)
+          echo "distinct branches visible to the numbering scan: $N"
           if [ "$N" -lt 2 ]; then
-            echo "::error::only $N ref(s) visible — the numbering guard would be reading one branch."
+            echo "::error::only $N branch(es) visible — the numbering guard would be reading one branch."
             echo "::error::It fails closed in that state by design; fix the fetch rather than the guard."
             exit 1
           fi

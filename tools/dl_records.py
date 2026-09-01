@@ -118,7 +118,7 @@ def ids_in_use(root=ROOT):
 # ⚠️ refs/remotes/origin/* IS the right thing to read HERE and only here: in CI, `origin` is GitHub. In
 # a clone-of-a-clone, origin/* maps the intermediate clone's LOCAL branches and is actively misleading.
 # Do not copy this line into a sandbox script.
-def ids_across_refs():
+def ids_across_refs(root=ROOT):
     """{id: 'ref:path'} for every DL id in any ref, or None when the refs cannot be seen.
 
     None is not zero. A counter that has looked at one branch cannot assert repo-wide freedom, so the
@@ -128,12 +128,22 @@ def ids_across_refs():
     try:
         refs = subprocess.run(["git", "for-each-ref", "--format=%(refname)",
                                "refs/remotes/origin/", "refs/heads/"],
-                              cwd=str(ROOT), capture_output=True, text=True, timeout=60)
+                              cwd=str(root), capture_output=True, text=True, timeout=60)
         names = [r for r in refs.stdout.split() if r]
-        if len(names) < 2:
+        # ⚠️ NOT `len(names) < 2`, AND THE REASON IS MEASURED, NOT ARGUED. A clone made with
+        # `--depth 1 --single-branch` yields EXACTLY TWO refnames — refs/heads/main and
+        # refs/remotes/origin/main — so the old test passed while the scan had seen ONE BRANCH,
+        # which is the precise state this sentinel exists to catch. Measured 2026-08-22 on such a
+        # clone: ids_across_refs() returned a dict instead of None, and assert_mintable() then
+        # accepted a number it had no basis to call free. The docstring below was already correct
+        # ("None is not zero"); the test under it was counting the wrong thing.
+        # Count DISTINCT BRANCHES, not refnames: a branch and its origin mirror are one branch.
+        branches = {r.replace("refs/remotes/origin/", "", 1).replace("refs/heads/", "", 1)
+                    for r in names}
+        if len(branches) < 2:
             return None
         out = subprocess.run(["git", "grep", "-o", "-E", r"DL-[0-9]{3,}"] + names,
-                             cwd=str(ROOT), capture_output=True, text=True, timeout=600)
+                             cwd=str(root), capture_output=True, text=True, timeout=600)
         seen = {}
         for line in out.stdout.splitlines():
             loc, _, tail = line.rpartition(":")
@@ -148,7 +158,7 @@ def ids_across_refs():
 def next_number(root=ROOT, explain=False):
     """The next number no decision anywhere in this repository already answers to."""
     used = dict(ids_in_use(root))
-    across = ids_across_refs() if root == ROOT else None
+    across = ids_across_refs(root) if root == ROOT else None
     if across:
         for n, where in across.items():
             used.setdefault(n, where)
@@ -592,6 +602,40 @@ def self_test():
     finally:
         ids_across_refs = keep
 
+    # 8. ⚠️ THE SENTINEL IN CLAUSE 6 MUST ACTUALLY FIRE ON A ONE-BRANCH CHECKOUT.
+    #    Clause 6 proves that assert_mintable refuses WHEN ids_across_refs returns None — it stubs the
+    #    function out, so it never tests whether the real one returns None when it should. It did not:
+    #    measured 2026-08-22 on a `clone --depth 1 --single-branch`, the old `len(names) < 2` test saw
+    #    refs/heads/main AND refs/remotes/origin/main, counted two, and reported a corpus it had not
+    #    read. A sentinel that passes in the exact state it guards against is not a sentinel.
+    #    This clause builds a REAL one-branch repository rather than mocking one, because the defect
+    #    lived in what git actually prints, and a mock would have agreed with the bug.
+    import subprocess as _sp
+    _d = Path(tempfile.mkdtemp())
+    try:
+        _q = dict(cwd=str(_d), capture_output=True, text=True)
+        _sp.run(["git", "init", "-q", "-b", "main", "."], **_q)
+        _sp.run(["git", "config", "user.email", "t@t"], **_q)
+        _sp.run(["git", "config", "user.name", "t"], **_q)
+        (_d / "a.md").write_text("# %s\n" % tag(100), encoding="utf-8")
+        _sp.run(["git", "add", "-A"], **_q)
+        _sp.run(["git", "commit", "-qm", "one"], **_q)
+        # the shape a shallow single-branch checkout has: one branch, mirrored under origin/
+        _sp.run(["git", "update-ref", "refs/remotes/origin/main", "refs/heads/main"], **_q)
+        if ids_across_refs(root=_d) is not None:
+            fails.append("ids_across_refs() reported a corpus from a ONE-BRANCH checkout — the "
+                         "fail-closed sentinel counts refnames, and a branch plus its origin mirror "
+                         "is two refnames but one branch")
+        # and with a genuine second branch it must once again see something
+        _sp.run(["git", "branch", "other"], **_q)
+        _sp.run(["git", "update-ref", "refs/remotes/origin/other", "refs/heads/other"], **_q)
+        if ids_across_refs(root=_d) is None:
+            fails.append("ids_across_refs() refused a checkout that really does carry two branches — "
+                         "the sentinel is now too strict and would block every landing")
+    finally:
+        import shutil as _sh
+        _sh.rmtree(_d, ignore_errors=True)
+
     # 7. ⚠️ THIS FILE MUST NOT INVENT AN ID. It found itself doing exactly that on the first cut: the
     #    fixtures were written as literals, the scan indexed them, and the counter jumped by 64.
     #    ⚠️ The first version of THIS clause compared against the working tree only and asked whether
@@ -713,7 +757,8 @@ def self_test():
     if not fails:
         print("  self-test OK — a second decision home raises the ceiling, a cited-but-unrecorded id is "
               "not re-issued, a filename-only id is seen, a collision fails closed, the frozen range is "
-              "refused, an unreadable corpus refuses rather than guesses, this file invents no id, and a\n"
+              "refused, an unreadable corpus refuses rather than guesses, a ONE-BRANCH checkout is "
+              "detected as one branch rather than two refnames, this file invents no id, and a\n"
               "          citation that resolves to nothing fails while a ratified debt row does not")
     return 1 if fails else 0
 
