@@ -22,10 +22,11 @@ the rule.
 
 WHAT IT CHECKS
 --------------
-Two axes, because instance 1 proves fixing one leaves the other:
+Three axes, because instance 1 proves fixing one leaves the other:
   A. a hardcoded release-line DIRECTORY  (`"release-2"`, `"release-2.1"`, …)
   B. a hardcoded line-versioned FILENAME (`…-r2.1.html`, `R2_…`) — a resolved line plus a stale filename
      fails in exactly the same way as a stale line.
+  C. a hardcoded release BRANCH inside a governance workflow (`design/release-2.1`, `r2.1/...`).
 
 ⚠️ Resolvers legitimately mention the pattern: they scan for `release-*` and derive prefixes. Those lines
 are ALLOWED BY DECLARATION below, one entry per file with a reason — never by a blanket "skip the resolver"
@@ -36,8 +37,11 @@ rule, which would exempt the very files most able to get this wrong.
 """
 import os, re, sys
 
-# Files scanned: governance tooling only. Docs may name lines freely — they are records, not resolvers.
-SCAN_DIRS = ["tools", "release-2/tools", "release-2.1/tools"]
+# Files scanned: governance tooling and the workflows that invoke it. Docs may name lines freely —
+# they are records, not resolvers. Omitting workflows was RB-093's blind spot: the convention was
+# applied to the tool and not to the gate that selected it.
+SCAN_DIRS = ["tools", "release-2/tools", "release-2.1/tools", ".github/workflows"]
+SCAN_SUFFIXES = (".py", ".sh", ".yml", ".yaml")
 
 # DECLARED ALLOWANCES — INLINE, on the line itself, never per file.
 #
@@ -57,6 +61,7 @@ MARKER = re.compile(r'#\s*LINE-OK:\s*\S')
 
 DIR_PAT  = re.compile(r'["\']release-\d[\w.]*["\']')
 FILE_PAT = re.compile(r'["\'][\w./-]*-r\d[\w.]*\.html["\']|["\']R\d_[\w.]+["\']')
+REF_PAT  = re.compile(r'(?<![A-Za-z0-9_./-])(?:design/release-\d[\w.]*|r\d(?:\.\d)?/[A-Za-z0-9._/-]+)')
 
 
 def scan(root):
@@ -66,7 +71,7 @@ def scan(root):
         if not os.path.isdir(full):
             continue
         for name in sorted(os.listdir(full)):
-            if not name.endswith((".py", ".sh")):
+            if not name.endswith(SCAN_SUFFIXES):
                 continue
             rel = "%s/%s" % (d, name)
             in_doc = False
@@ -82,7 +87,9 @@ def scan(root):
                 if in_doc or line.lstrip().startswith("#"):
                     continue
                 hit = None
-                for pat, axis in ((DIR_PAT, "release-line directory"), (FILE_PAT, "line-versioned filename")):
+                for pat, axis in ((DIR_PAT, "release-line directory"),
+                                  (FILE_PAT, "line-versioned filename"),
+                                  (REF_PAT, "release branch ref")):
                     m = pat.search(line)
                     if m:
                         hit = (axis, m.group(0))
@@ -122,6 +129,14 @@ def self_test():
         if not scan(td)[0]:
             fails.append("axis B did not fire on a prefixed filename")
 
+        workflows = os.path.join(td, ".github", "workflows")
+        os.makedirs(workflows)
+        with open(os.path.join(workflows, "hardcoded.yml"), "w") as f:
+            f.write("steps:\n  - uses: actions/checkout@v4\n    with:\n      ref: design/release-9.1\n")  # LINE-OK: self-test fixture
+        if not any("hardcoded.yml" in problem for problem in scan(td)[0]):
+            fails.append("axis C (hardcoded workflow ref) did NOT fire")
+        os.remove(os.path.join(workflows, "hardcoded.yml"))
+
         w("clean.py", '# LINE = "release-2.1" is what this used to say\n')   # LINE-OK: self-test fixture — the literal is the thing under test
         if scan(td)[0]:
             fails.append("a comment was reported as code")
@@ -138,7 +153,7 @@ def self_test():
         print("SELF-TEST FAILED:")
         [print("   " + f) for f in fails]
         return False
-    print("  self-test OK — both axes fire, comments are ignored, a resolving tool stays quiet")
+    print("  self-test OK — all three axes fire, comments are ignored, a resolving tool stays quiet")
     return True
 
 
