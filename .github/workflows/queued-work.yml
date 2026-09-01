@@ -90,6 +90,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.active-design.outputs.ref }}
+          # Keep the default-branch checkout at the workspace root. The resolver and the
+          # workflow's control-plane tools live there; replacing it makes a scheduled gate
+          # fail before it can evaluate the designated design line (RB-076).
+          path: active-design-line
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
@@ -99,6 +103,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          SUBJECT_ROOT="."
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SUBJECT_ROOT="active-design-line"
+          fi
           # ⚠️ 2026-08-16: same shape as the graduation-index defect (@HamzaSohailCodes, #216). This passes
           # today only because the checker happens to sit on the current line. If the pointer moved or the file
           # were renamed, the register's own gate would print "skipping" and go green — the mechanism built to
@@ -108,7 +116,7 @@ jobs:
           # broken gate. One resolver tells the three apart (tools/resolve_release_line.sh) so the
           # telling is not copied per step. Read the EXIT CODE, never an empty stdout.
           set +e
-          LINE="$(bash tools/resolve_release_line.sh current)"; RC=$?
+          LINE="$(cd "$SUBJECT_ROOT" && bash "$GITHUB_WORKSPACE/tools/resolve_release_line.sh" current)"; RC=$?
           set -e
           if [ "$RC" -eq 3 ]; then
             echo "SKIP-OK: this ref carries no release line, so the queued-work register does not apply (rule: RELEASE_LINE_CONVENTION.md — line-scoped checks resolve from the line pointer)."
@@ -120,12 +128,12 @@ jobs:
             exit 1
           fi
           echo "resolved release line: $LINE"
-          if [ ! -f "$LINE/tools/queued_work_check.py" ]; then
-            echo "::error::no queued-work checker at '$LINE/tools/queued_work_check.py'."
+          if [ ! -f "$SUBJECT_ROOT/$LINE/tools/queued_work_check.py" ]; then
+            echo "::error::no queued-work checker at '$SUBJECT_ROOT/$LINE/tools/queued_work_check.py'."
             echo "::error::The line RESOLVED but its checker is absent. That is a broken gate, not a skip."
             exit 1
           fi
-          python3 "$LINE/tools/queued_work_check.py"
+          python3 "$SUBJECT_ROOT/$LINE/tools/queued_work_check.py"
 
       # ⚠️ PLACED HERE BECAUSE THE ROWS SAY SO, NOT BECAUSE IT IS WHERE I WOULD HAVE PUT THEM.
       # RB-086 and RB-088 close on `grep-absent:<checker>:.github/workflows/queued-work.yml`. I first added
@@ -139,8 +147,12 @@ jobs:
       # is the shape this repo keeps catching: a mechanism that exists is not a mechanism that runs.
       - name: Stated pointers are current (RB-086)
         run: |
+          SUBJECT_ROOT="."
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SUBJECT_ROOT="active-design-line"
+          fi
           set +e
-          LINE="$(bash tools/resolve_release_line.sh current)"; RC=$?
+          LINE="$(cd "$SUBJECT_ROOT" && bash "$GITHUB_WORKSPACE/tools/resolve_release_line.sh" current)"; RC=$?
           set -e
           if [ "$RC" -eq 3 ]; then
             echo "SKIP-OK: this ref carries no release line, so pointer freshness does not apply (rule: RELEASE_LINE_CONVENTION.md — line-scoped checks resolve from the line pointer)."
@@ -150,19 +162,23 @@ jobs:
             echo "::error::could not resolve the release line — an unresolvable pointer is a broken gate."
             exit 1
           fi
-          if [ ! -f "$LINE/tools/pointer_freshness_check.py" ]; then
-            echo "::error::no pointer-freshness checker at '$LINE/tools/pointer_freshness_check.py' — the line RESOLVED but its checker is absent. Broken gate, not a skip."
+          if [ ! -f "$SUBJECT_ROOT/$LINE/tools/pointer_freshness_check.py" ]; then
+            echo "::error::no pointer-freshness checker at '$SUBJECT_ROOT/$LINE/tools/pointer_freshness_check.py' — the line RESOLVED but its checker is absent. Broken gate, not a skip."
             exit 1
           fi
-          python3 "$LINE/tools/pointer_freshness_check.py"
+          python3 "$SUBJECT_ROOT/$LINE/tools/pointer_freshness_check.py"
 
       # ── RB-088: the state matrix. ⚠️ NEVER add `--list` here. The checker exits 0 with `--list` even when
       # it reports violations, and RB-097 was exactly that shape one file over: a reporting mode that cannot
       # report a failure, read as a pass for a whole session.
       - name: The recorded state matrix is current and clean (RB-088)
         run: |
+          SUBJECT_ROOT="."
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SUBJECT_ROOT="active-design-line"
+          fi
           set +e
-          LINE="$(bash tools/resolve_release_line.sh current)"; RC=$?
+          LINE="$(cd "$SUBJECT_ROOT" && bash "$GITHUB_WORKSPACE/tools/resolve_release_line.sh" current)"; RC=$?
           set -e
           if [ "$RC" -eq 3 ]; then
             echo "SKIP-OK: this ref carries no release line, so the state matrix does not apply (rule: RELEASE_LINE_CONVENTION.md — line-scoped checks resolve from the line pointer)."
@@ -172,8 +188,8 @@ jobs:
             echo "::error::could not resolve the release line — an unresolvable pointer is a broken gate."
             exit 1
           fi
-          if [ ! -f "$LINE/tools/state_matrix_check.py" ]; then
-            echo "::error::no state-matrix checker at '$LINE/tools/state_matrix_check.py' — broken gate, not a skip."
+          if [ ! -f "$SUBJECT_ROOT/$LINE/tools/state_matrix_check.py" ]; then
+            echo "::error::no state-matrix checker at '$SUBJECT_ROOT/$LINE/tools/state_matrix_check.py' — broken gate, not a skip."
             exit 1
           fi
-          python3 "$LINE/tools/state_matrix_check.py"
+          python3 "$SUBJECT_ROOT/$LINE/tools/state_matrix_check.py"
