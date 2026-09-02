@@ -27,6 +27,27 @@ untracked obligations. Five paths, not eight.**
 the state of the work, which lives partly on GitHub. **One `gh pr list` before drafting would have
 prevented six of seven duplicates.**
 
+### Three further corrections, 2026-09-02 — the first three did not reach the document's own gates
+
+⚠️⚠️ **Corrections 1–3 above were recorded at the head and never applied to the body.** A correction that
+does not reach the instructions it invalidates is a note, not a correction — and the stalest numbers were
+the ones that *gate* the landing.
+
+4. **The Landing gate demanded "exactly 8 added paths"** while correction 3, three paragraphs above it,
+   had already reduced the landing set to **five**. An owner following the block as written would have
+   stopped on a correct staging. **Now reads five — one rulings record and four obligations**, which is
+   what the branch carries.
+5. **"18 of 131 criteria" survived in *What these rulings do NOT do***, contradicting correction 1 in this
+   same header and the PR body of #287, both of which say **20**. **Now reads 20 of 131.** ⚠️ 18 is the
+   CLASSIFIED count; the subset is 20 criterion ids across 17 rows.
+6. **"They do not close any criterion" appeared twice** in a six-bullet list, the second instance also
+   restating the permitted-claim bullet. **The duplicate is removed**; nothing else in that list changed.
+
+★ **The through-line, and it is the same one as the first three:** a count was corrected where it was
+*discussed* and left standing where it was *used*. ⇒ **when a number moves, grep the document for every
+instance of it before recording the correction** — the copy that gates something is rarely the copy you
+were looking at. **Second instance in one document ⇒ this is the mechanism, not a fourth note.**
+
 ## R2.0-1 — Every open subset criterion gets a durable object
 
 **RULED: all seven missing obligations are created.** *(Amended above: three are withdrawn as duplicates
@@ -280,11 +301,10 @@ each reading "on the deployed build" — becomes attributable only after it clos
 
 - They do not close any criterion. **Ten subset criteria remain open: six failing, four untested.**
 - They do not change the permitted claim. **R2.0 may only be described as "validated against the
-  production-gating subset" — 18 of 131 criteria — never as "validated."**
+  production-gating subset" — 20 of 131 criteria — never as "validated."**
 - They do not name **iteration 3's tranches** (R2.0-2), owed at the Sep 11 boundary.
 - They do not **author** the four minted oracles (R2.0-6). An id is not a guard.
 - They do not settle **RB-109's range of record**, which the four new ids will force.
-- They do not close any criterion, and they do not change the permitted claim.
 
 ## Landing
 
@@ -296,8 +316,10 @@ git add 00_owner/decisions/OWNER_RULINGS_2026-09-02_r2.0-closeout.md 20_handoff/
 git status --short
 ```
 
-Must show exactly **8** added paths — one rulings record and seven obligations. Any other number means a
-file was missed or something else was staged; name the paths rather than committing the sweep.
+Must show exactly **5** added paths — one rulings record and **four** obligations. Any other number means
+a file was missed or something else was staged; name the paths rather than committing the sweep.
+*(Corrected 2026-09-02 — see correction 4 in the header. This gate said **8** while the correction three
+paragraphs above it had already withdrawn three obligations to five paths.)*
 
 Then regenerate the queue and confirm the rows appear:
 
@@ -305,5 +327,10 @@ Then regenerate the queue and confirm the rows appear:
 python3 tools/iteration_queue.py && grep -c '^| `' 20_handoff/ITERATION_QUEUE.md
 ```
 
-**P0 should rise from 4 rows to 11.** If it does not, the obligations are present but not derivable — the
+**P0 should rise from 4 rows to 8.** If it does not, the obligations are present but not derivable — the
 row format, not the filing, is wrong.
+
+`MEASURED-BY:` `python3 tools/iteration_queue.py` on this branch in a clean worktree — 15 rows derived,
+the P0 section carrying all eight obligation files (`B0 · b1 · b2 · b3 · b5 · entitlement · gt107 · n4`).
+⚠️ **Flip condition:** #272 derives obligations as a **ref union**, so a checkout that cannot see every
+ref will under-count. If the local run yields fewer than 8, check the refs before the row format.
