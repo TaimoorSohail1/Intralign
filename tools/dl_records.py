@@ -388,6 +388,13 @@ def cited_ids_canonical(root=ROOT):
             continue
         if rel == REGISTER_REL:
             continue
+        # ⚠️ A DECLARED INDEX MAY NOT CITE ITSELF — the same treatment REGISTER_REL gets directly above,
+        # and for the same reason. An index CATALOGUES ids; reading its own rows as CITATIONS makes the
+        # document the author of its own demand, so it resolves what nothing outside it ever asked for.
+        # MEASURED 2026-09-02 on the merged graduation chain: without this, 45 of 51 resolutions were
+        # the index citing itself; with it, 13 remain and every one has a citer outside the index.
+        if rel in DECISION_INDEX_RELS:
+            continue
         f = root / rel
         if not f.is_file():
             continue
@@ -785,6 +792,25 @@ def self_test():
     e, _ = check_citations_resolve(root=tree(s6))
     if e:
         fails.append("a marked RANGE row did not resolve an id inside it: %s" % e[0].splitlines()[0])
+
+    # I7 GREEN — an index's OWN rows are not citations. A tree whose only mention of an id is the
+    # index row that catalogues it must pass, and must NOT announce a resolution, because nothing
+    # cited it. Without the DECISION_INDEX_RELS exclusion this tree resolves — self-authored demand.
+    s7 = {"00_owner/decisions/decision_log.md": frozen, idxrel: idxrow([321])}
+    e, n7 = check_citations_resolve(root=tree(s7))
+    if e:
+        fails.append("an index row citing only itself raised an error: %s" % e[0].splitlines()[0])
+    if any(tag(321) in x for x in n7):
+        fails.append("the index resolved an id NOTHING outside it cited — a document became the "
+                     "author of its own demand")
+
+    # I8 RED — the exclusion must not blind the gate. The SAME id, cited by a real canonical file and
+    # absent from the index, must still ERROR. I7 and I8 differ only in who does the citing.
+    s8 = cited_only(322); s8[idxrel] = idxrow([999])
+    e, _ = check_citations_resolve(root=tree(s8))
+    if not any("citation-unresolved" in x and tag(322) in x for x in e):
+        fails.append("excluding the index as a citer also hid a citation from a real file — the "
+                     "exclusion is too wide")
 
     # I4 RED — a DECLARED index that is absent must fail closed at the REAL corpus, not pass quietly.
     # Proved directly against indexed_ids: every declared index is checked, and absence is an error.

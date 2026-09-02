@@ -144,7 +144,8 @@ that assumption.
   `canon/graduate-owner-rulings-2026-08-17` (#pushed, red, must not merge) · `canon/dl-214-graduation`
   (`faa0438`, clean, independent of this) · RB-055's trigger · `QUEUED_WORK.md`'s absence from `main`.
 - **Recommendation.** **Option C**, with the `QUEUED_WORK.md` locus ruled alongside it.
-- **Status.** **ESCALATED — awaiting owner ruling.** No canon edited. No branch pushed for DL-210.
+- **Status.** **RULED 2026-09-02 — see §6.** Option C adopted **with an amendment**; the dependencies
+  above are superseded by §6a, three of them having been measured false.
 
 ---
 
@@ -161,3 +162,57 @@ corpus, the simulation must `git add` before it asserts anything — and a green
 gate never enumerated is indistinguishable from a green result on a clean one. **Third instance today of
 a check that could not fail; the mechanism adopted is that graduation scripts gate a COMMIT in a clean
 worktree, never a working directory.**
+
+---
+
+## 6 · OWNER RULING — 2026-09-02
+
+**RULED: Option C is adopted, AMENDED — a declared index resolves a citation, and a declared index may
+not cite itself.** Decided by Idris (Founder Console), 2026-09-02. Merging this branch is the
+ratifying act.
+
+**The amendment, and why it was needed.** As drafted, Option C admitted the index to the corpus as both
+authority and citer. Measured on the merged chain: **45 of 51 resolutions were the index citing its own
+rows** — demand the document authored for itself. Only **six** ids had a citer outside the index
+(`DL-209 · DL-210 · DL-211 · DL-213` from `DL-214`'s record and the 08-17 rulings; `DL-200 · DL-205` from
+`dl_records.py`'s own commentary). A narrower ratification was attempted first and **does not work**:
+the 45 cannot be trimmed as rows, because they exist only to satisfy the file's self-citation.
+
+**The mechanism is an EXTENSION, not a new one.** `cited_ids_canonical()` already refuses to let
+`REGISTER_REL` cite its own rows, immediately above. `DECISION_INDEX_RELS` now receives the same
+treatment, in the same form, for the same reason.
+
+`MEASURED-BY:` `python3 tools/dl_records.py citations` in a clean worktree, corpus staged, on
+`origin/main` + this branch + `canon/dl-214-graduation` + `canon/graduate-owner-rulings-2026-08-17`,
+the three merges performed (not simulated), 0 conflicts —
+
+```
+before the amendment   rc=0   51 [citation-indexed]   45 self-cited
+after  the amendment   rc=0   13 [citation-indexed]    0 self-cited
+control: origin/main   rc=0    0
+```
+
+**RED-proved in both directions**, as I1…I6 already were:
+- **I7 GREEN** — a tree whose only mention of an id is the index row cataloguing it passes, and emits
+  **no** resolution notice, because nothing cited it.
+- **I8 RED** — the same id cited by a real canonical file and absent from the index still ERRORs. I7 and
+  I8 differ only in *who does the citing*, so a green I7 cannot be a fixture that always passes.
+
+### 6a · Three dependencies in §4 were measured FALSE — recorded, not tidied away
+
+1. **`canon/dl-214-graduation` `faa0438` is not "clean".** It is **RED with four** `citation-unresolved`
+   (`DL-209 · DL-210 · DL-211 · DL-213`), and it is **10 commits behind `origin/main`** — the "clean"
+   reading was taken on a stale base. ⇒ **a gate result is bound to a BASE as well as a SHA.**
+2. **`canon/dl-210-graduation` is unnecessary**, not merely blocked. Under this ruling DL-210 resolves
+   through the index. The chain is **three** merges — index → dl-214 → 08-17 — not four.
+3. **This branch was itself RED** on the fabricated three-digit id its own §3a *narrates* while
+   describing a RED-proof. `CITE_RE` cannot distinguish narration from citation. Fixed by adopting the
+   corpus's existing `DL-NNN` placeholder convention rather than adding an escape to the gate: **an
+   exemption for a "declared non-citation" is a way to make any citation invisible.**
+   ⚠️ **This section reproduced the defect while documenting it** — the first draft of this very
+   paragraph named the fabricated id literally and turned the branch RED a second time. **A document
+   that discusses a citation defect is a canonical surface like any other. Write the placeholder, never
+   the example.**
+
+⚠️ **This ruling does not promote anything.** An id resolved by an index entry still has no record file,
+and every resolution says so on every run. Graduation to a record remains owed.
