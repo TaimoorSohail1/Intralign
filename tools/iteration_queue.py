@@ -77,11 +77,22 @@ def resolve_design_ref(root):
     if raw is None or not raw.strip():
         return None, "absent"
     ref = raw.strip().splitlines()[0].strip()
+    git_dir = os.path.join(root, ".git")
     try:
-        r = subprocess.run(["git", "--git-dir", os.path.join(root, ".git"),
-                            "rev-parse", "--verify", "--quiet", ref + "^{commit}"],
-                           capture_output=True, text=True, timeout=20)
-        return ref, ("ok" if r.returncode == 0 else "dangling")
+        candidates = ["refs/heads/%s" % ref]
+        remotes = subprocess.run(["git", "--git-dir", git_dir, "for-each-ref", "--format=%(refname)", "refs/remotes"],
+                                 capture_output=True, text=True, timeout=20)
+        candidates += [name for name in remotes.stdout.splitlines() if name.endswith("/%s" % ref)]
+        found = []
+        for candidate in candidates:
+            r = subprocess.run(["git", "--git-dir", git_dir, "rev-parse", "--verify", "--quiet", candidate + "^{commit}"],
+                               capture_output=True, text=True, timeout=20)
+            if r.returncode == 0:
+                found.append((candidate, r.stdout.strip()))
+        commits = {commit for _name, commit in found}
+        if len(commits) != 1:
+            return ref, "dangling"
+        return found[0][0], "ok"
     except Exception:
         return ref, "dangling"
 
@@ -513,6 +524,19 @@ def self_test():
         # not that it is phrased a particular way. A test that pins prose breaks on every edit.
         if "no/such/ref" not in out or "does not exist" not in out.lower():
             fails.append("a DANGLING ACTIVE_DESIGN_REF produced no row — it must fail loudly")
+
+    # ── #267: a fresh clone has a remote-tracking ref, not a local design head. ──
+    with tempfile.TemporaryDirectory() as tr:
+        open(os.path.join(tr, "seed"), "w").write("x\n")
+        for args in (("init",), ("config", "user.email", "queue@example.test"),
+                     ("config", "user.name", "Queue Test"), ("add", "."), ("commit", "-m", "seed")):
+            subprocess.run(["git", "-C", tr] + list(args), check=True, capture_output=True)
+        sha = subprocess.run(["git", "-C", tr, "rev-parse", "HEAD"], check=True, capture_output=True, text=True).stdout.strip()
+        subprocess.run(["git", "-C", tr, "update-ref", "refs/remotes/origin/design/test", sha], check=True)
+        open(os.path.join(tr, "ACTIVE_DESIGN_REF"), "w").write("design/test\n")
+        resolved, state = resolve_design_ref(tr)
+        if state != "ok" or resolved != "refs/remotes/origin/design/test":
+            fails.append("a remote-tracking ACTIVE_DESIGN_REF did not resolve in a fresh-clone fixture")
 
     # ── Deferral is a recorded ruling; a second one escalates. ──
     with tempfile.TemporaryDirectory() as t4:

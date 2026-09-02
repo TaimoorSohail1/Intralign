@@ -72,6 +72,17 @@ def _git(root, *args):
         return None
 
 
+def _resolve_design_ref(root, ref):
+    """Resolve a pointer through a local head or one unambiguous remote-tracking ref."""
+    candidates = ["refs/heads/%s" % ref]
+    names = _git(root, "for-each-ref", "--format=%(refname)", "refs/remotes") or ""
+    candidates += [name for name in names.splitlines() if name.endswith("/%s" % ref)]
+    found = [(candidate, _git(root, "rev-parse", "--verify", "--quiet", candidate + "^{commit}"))
+             for candidate in candidates]
+    found = [(candidate, commit.strip()) for candidate, commit in found if commit]
+    return found[0][0] if len({commit for _candidate, commit in found}) == 1 else None
+
+
 def resolve_line(root=ROOT, override=None):
     """(line_dir, how) — never hardcoded; unreadable is an ERROR, not a guess.
 
@@ -104,17 +115,18 @@ def resolve_line(root=ROOT, override=None):
     ref = (open(ap, encoding="utf-8").read().strip().splitlines() or [""])[0].strip()
     if not ref:
         return None, "ACTIVE_DESIGN_REF is empty"
-    if _git(root, "rev-parse", "--verify", "--quiet", ref + "^{commit}") is None:
+    resolved = _resolve_design_ref(root, ref)
+    if resolved is None:
         return None, ("ACTIVE_DESIGN_REF names '%s', which does not exist — a dangling pointer "
                       "must fail loudly, never SKIP-OK" % ref)
-    line = (_git(root, "cat-file", "-p", "%s:CURRENT_RELEASE" % ref) or "").strip()
+    line = (_git(root, "cat-file", "-p", "%s:CURRENT_RELEASE" % resolved) or "").strip()
     if not line:
         return None, "'%s' carries no CURRENT_RELEASE" % ref
-    if _git(root, "cat-file", "-e", "%s:%s/" % (ref, line)) is None and \
-       _git(root, "ls-tree", "--name-only", "%s:%s" % (ref, line)) is None:
+    if _git(root, "cat-file", "-e", "%s:%s/" % (resolved, line)) is None and \
+       _git(root, "ls-tree", "--name-only", "%s:%s" % (resolved, line)) is None:
         return None, "'%s' names line '%s', absent on that ref" % (ref, line)
-    _REF = ref
-    return line, "ACTIVE_DESIGN_REF -> %s" % ref
+    _REF = resolved
+    return line, "ACTIVE_DESIGN_REF -> %s" % resolved
 
 
 def _read(root, *parts):
@@ -542,6 +554,17 @@ def self_test():
         _l, how, _rows = evaluate(root=tmp)
         if _l is not None or "empty" not in how:
             fails.append("an EMPTY ACTIVE_DESIGN_REF did not fail closed (%s)" % how)
+
+    # #267 — fresh clones resolve the design line through origin, not a local head.
+    with tempfile.TemporaryDirectory() as tmp:
+        open(os.path.join(tmp, "seed"), "w").write("x\n")
+        for args in (("init",), ("config", "user.email", "freeze@example.test"),
+                     ("config", "user.name", "Freeze Test"), ("add", "."), ("commit", "-m", "seed")):
+            subprocess.run(["git", "-C", tmp] + list(args), check=True, capture_output=True)
+        sha = _git(tmp, "rev-parse", "HEAD").strip()
+        subprocess.run(["git", "-C", tmp, "update-ref", "refs/remotes/origin/design/test", sha], check=True)
+        if _resolve_design_ref(tmp, "design/test") != "refs/remotes/origin/design/test":
+            fails.append("a remote-tracking design ref was not resolved in the fresh-clone fixture")
 
     if fails:
         print("SELF-TEST FAILED:")
