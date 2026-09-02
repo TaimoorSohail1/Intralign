@@ -98,7 +98,7 @@ The mechanism is implemented in `patches/05-index-entry-resolves-a-citation.patc
 `DECISION_INDEX_RELS` (**declared, never globbed**), `INDEX_ROW_RE` (a **structured row**, not a mention),
 `indexed_ids()`, and four self-test cases. **RED-proved five ways** — an indexed id resolves; an id absent
 from the index still fails; a bare *mention* still fails; a declared-but-absent index fails closed; and on
-the real corpus a fabricated `DL-987` still fails while the tree is otherwise green.
+the real corpus a fabricated `DL-NNN` still fails while the tree is otherwise green.
 
 **Measured result: the closure converges at ROUND 1 with TWO files** — the index and the DL-210 record.
 The 22 record graduations are unnecessary. 47 citations resolve through index entries, each announced by
