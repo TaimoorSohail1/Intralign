@@ -99,6 +99,10 @@ def stabilize_issue_ids(
     unmatched = {issue.id: issue for issue in previous}
     stabilized = []
     for issue in current:
+        if issue.id.startswith("DET-"):
+            stabilized.append(issue)
+            unmatched.pop(issue.id, None)
+            continue
         if issue.id in previous_by_id:
             unmatched.pop(issue.id, None)
             stabilized.append(issue)
@@ -107,9 +111,6 @@ def stabilize_issue_ids(
         if candidate is not None:
             unmatched.pop(candidate.id, None)
             stabilized.append(replace(issue, id=candidate.id))
-            continue
-        if issue.id.startswith("DET-"):
-            stabilized.append(issue)
             continue
         stabilized.append(replace(issue, id=_deterministic_id(issue)))
     return tuple(stabilized)
@@ -131,10 +132,7 @@ def _best_match(issue: Issue, candidates: tuple[Issue, ...]) -> Issue | None:
     issue_tokens = _tokens(issue)
     best: tuple[float, Issue] | None = None
     for candidate in candidates:
-        if (
-            candidate.artifact_type is not issue.artifact_type
-            and not _same_root_cause(issue, candidate)
-        ):
+        if candidate.artifact_type is not issue.artifact_type:
             continue
         candidate_tokens = _tokens(candidate)
         union = issue_tokens | candidate_tokens
