@@ -276,6 +276,45 @@ REC_HOMES = ("00_owner/decisions/records",
              "release-2.1/canon/decisions")
 REGISTER_REL = "00_owner/decisions/UNRECORDED_DECISIONS.md"
 CITE_SKIP_DIRS = {"90_research"}
+
+# 4. Declared CI FIXTURES are TEST INPUTS, not assertions about canon. `ci/contracts/*` holds copies of
+#    release-line artifacts that CI reads — a prototype an e2e spec loads, contract documents two
+#    manifests name. A copy read by a test makes no claim that a decision is ratified, and scanning it
+#    reports the corpus split as a canon defect. ⚠️ EXEMPT BY DECLARATION ONLY: a path is skipped iff a
+#    CI manifest names it as `contract_path`. A blanket directory skip would be unenumerable — the
+#    failure shape this file already refuses three times above. Owner ruling 2026-09-02.
+def declared_fixtures(root, paths):
+    """(declared, errors) — relative paths a CI manifest declares as `contract_path`.
+
+    ⚠️ FAIL-CLOSED: a declaration that resolves to no tracked file is an ERROR, never a silently wider
+    exemption. `contract_path` is relative to the APP ROOT — the manifest's `ci/` directory's parent.
+    """
+    import json
+    declared, errors = set(), []
+    tracked = set(paths)
+    for rel in paths:
+        if not rel.endswith(".json") or "/ci/" not in "/" + rel:
+            continue
+        try:
+            data = json.loads((Path(root) / rel).read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(data, dict):
+            continue
+        cp = data.get("contract_path")
+        if not isinstance(cp, str) or not cp:
+            continue
+        target = (Path(rel).parent.parent / cp).as_posix()
+        if target in tracked:
+            declared.add(target)
+        else:
+            errors.append(
+                f"[fixture-declaration] {rel} declares contract_path {cp!r}, which is not a tracked "
+                f"file (resolved to {target}).\n"
+                f"                      A declaration that names nothing cannot exempt anything — fix "
+                f"the path or drop the declaration.")
+    return declared, errors
+
 REGISTER_ROW_RE = re.compile(r"^\|\s*\*\*DL-(\d{3,})\*\*\s*\|")
 
 
@@ -354,9 +393,12 @@ def cited_ids_canonical(root=ROOT):
     paths, _scope = scan_paths(root)
     if paths is None:
         return None
+    fixtures, _ferrs = declared_fixtures(root, paths)
     for rel in paths:
         parts = set(Path(rel).parts)
         if parts & SCAN_SKIP_DIRS or parts & CITE_SKIP_DIRS:
+            continue
+        if rel in fixtures:          # declared CI fixture: a test input, never a canon assertion
             continue
         if Path(rel).suffix.lower() not in SCAN_SUFFIXES:
             continue
@@ -406,6 +448,10 @@ def check_citations_resolve(root=ROOT):
     cited = cited_ids_canonical(root)
     reg = register_ids(root)
     errs, notes = [], []
+    _fpaths, _fscope = scan_paths(root)
+    if _fpaths is not None:
+        _, _ferrs = declared_fixtures(root, _fpaths)
+        errs.extend(_ferrs)
     if cited is None:
         return ([f"[citation-guard] the tracked corpus could not be enumerated (git ls-files failed), "
                  f"so this gate has seen nothing. A scan that cannot see the corpus must not report on "
