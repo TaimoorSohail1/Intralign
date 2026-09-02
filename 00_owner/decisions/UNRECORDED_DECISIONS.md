@@ -82,3 +82,39 @@ PR. `python3 tools/dl_records.py citations` reports which rows have become resol
 **Adding a row** — requires an owner ratification. ⚠️ **A PR that adds a row to turn a red gate green
 is the exact failure this register exists to prevent.** The correct response to a red citation gate is
 to write the record.
+
+---
+
+## C · Index-catalogued but not ratifiable — the `[R]` marker withdrawn 2026-09-02
+
+**Owner ratification 2026-09-02**, alongside the ruling that a declared index resolves a citation
+(`PROPOSAL_r2-decision-records-exist-only-as-index-entries.md` §6). Two index rows carried the `[R]`
+marker while their own text disqualified them. The marker was withdrawn and the debt recorded here.
+⚠️ **These rows did not turn a red gate green — they replace an authority that should not have
+existed.** Before this change all six ids resolved through the index; the gate was already green. The
+debt was invisible, not absent.
+
+| DL | cited by | what it is | why it may not resolve |
+|---|---|---|---|
+| **DL-199** | the proposal, describing its own closure | owner activation = first grounding act | **CLOSED 2026-08-14**, absorbed into DL-205 §0/§0a. The index row (2026-08-09) predates the closure and still answered for it. Writing a DL-199 record would contradict a closed owner decision — **this citation is correct and must stay unresolved.** |
+| **DL-200** | the proposal; `tools/dl_records.py` commentary | DR-1 outcome-first | the index row's own status column reads **"DRAFTS for ratification"**. A draft may not be a citation authority. |
+| **DL-201** | the proposal | DR-2 enforce via commitment gate | as DL-200 |
+| **DL-202** | the proposal | DR-3 integrity indicator | as DL-200 |
+| **DL-203** | the proposal | DR-4 phased resolution | as DL-200 |
+| **DL-205** | the proposal §1c; `tools/dl_records.py` commentary | DR-6 activation = 2nd act; absorbed DL-199 | as DL-200 — and §1c cites it substantively, so a placeholder would destroy the claim rather than record it |
+
+**Remedy — one act, not six:** ratify DR-1…DR-6 as formal records. Every row above clears together and
+`[citation-debt-paid]` will say so on the next run. ⚠️ **Do not restore the `[R]` marker to clear them.**
+That is this register's own failure mode, one level up: not a row added to go green, but an authority
+restored to go green.
+
+`MEASURED-BY:` `python3 tools/dl_records.py citations`, clean worktree, corpus staged — index
+resolutions fall **16 → 10**, rc=0. **RED-proved:** deleting the DL-205 row alone returns
+`[citation-unresolved] DL-205 … (the proposal, tools/dl_records.py)`, rc=1.
+
+★ **Five of the six are cited only by documents ABOUT the citation machinery.** `CITE_RE` cannot
+distinguish a mention from a citation, so the documents most likely to name an id are the ones
+explaining how ids resolve. **Third instance 2026-09-02**, after the fabricated id narrated inside the
+proposal's own RED-proof. ⇒ **the mention-vs-citation distinction needs a mechanism, not a third
+placeholder.** The shape already exists in #284: declare the path in a manifest, default-deny, an
+undeclared file still scanned, a declaration resolving to nothing an ERROR.
