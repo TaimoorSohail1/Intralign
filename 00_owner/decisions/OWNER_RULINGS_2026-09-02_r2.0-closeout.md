@@ -246,6 +246,34 @@ The generator already documents the mechanism in the file's own header. ⚠️ *
 ⚠️ **Do NOT fold this into #271.** That PR ignores litter permanently; this keeps derived state current.
 **Opposite mechanisms, same symptom.**
 
+## R2.0-12 — N-5 is production-blocking, and the inclusion test never governed it
+
+**RULED: production-blocking.** This closes the classification #275 escalated and unblocks that PR.
+
+```
+MEASURED-BY: git show origin/main:20_handoff/R2.0_PRODUCTION_ACCEPTANCE_CRITERIA.md | sed -n '251,263p'
+  ## 4 · WHAT A PASS REQUIRES
+  4. The build carries a **resolvable identity** (N-5, DL-243 §6e).
+```
+
+⚠️ **The decisive basis is §4.4, not §4b's inclusion test.** A resolvable build identity is already a
+**condition of a pass**, independently of the subset. So N-5 never had to satisfy *"if this fails, is a
+user actively misled or blocked?"* in order to gate — **§4 gates it directly.** That test triages
+*product* defects; N-5 is a property of the *gate*. Applying a product-defect test to a measurement
+precondition is a category error, and reading it literally is what made the classification look open.
+
+★ **The code-owner review was right about the defect and right to block on it.** #275's `Class:` field
+made the queue derive N-5 as P0 while the row's own §3 said the classification was *pending* — a row
+operationalizing a recommendation before the decision existed. **The fix is the ruling, not a softer
+`Class:` value.** §3 now records the decision; the `Class:` field is unchanged because it was, in the
+event, correct.
+⚠️ **This is the same defect the AI committed the same day** with N-4 — a drafted obligation answering a
+question #277 had escalated to the owner. Caught in one document by the reviewer, in the other after the
+fact. **A row may not classify what its own text says is unruled.**
+
+⇒ **Consequence: N-5 is first in the execution order (R2.0-5), and every other row's DONE CONDITION —
+each reading "on the deployed build" — becomes attributable only after it closes.**
+
 ---
 
 ## What these rulings do NOT do
