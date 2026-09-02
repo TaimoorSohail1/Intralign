@@ -36,9 +36,6 @@ def _issue(issue_id: str, status: str) -> Issue:
         recommendation="Confirm the missing evidence.",
         evidence_refs=("document:test:page:1:fragment:1",),
         status=status,
-        finding_type="dependency_may_fail",
-        structural_target="edge",
-        graph_node_id="dependency",
     )
 
 
@@ -165,4 +162,3 @@ def test_snapshot_round_trip_retains_slice_ten_graph_and_sensitivity_contract() 
 
     assert restored.assessment.dependency_graph == graph
     assert restored.assessment.sensitivity_candidates == (candidate,)
-    assert restored.assessment.issues[0].graph_node_id == "dependency"

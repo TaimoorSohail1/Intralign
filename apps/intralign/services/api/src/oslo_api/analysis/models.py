@@ -256,7 +256,6 @@ class Issue:
     exposure_rank: float = 0
     finding_basis: str = ""
     structural_target: str = ""
-    graph_node_id: str = ""
     primary_act: str = ""
     also_offered: tuple[str, ...] = ()
     classification_state: str = "unclassified"

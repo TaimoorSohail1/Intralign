@@ -229,7 +229,6 @@ def _issue_from_dict(data: dict) -> Issue:
         exposure_rank=float(data.get("exposure_rank", 0)),
         finding_basis=data.get("finding_basis", ""),
         structural_target=data.get("structural_target", ""),
-        graph_node_id=data.get("graph_node_id", ""),
         primary_act=data.get("primary_act", ""),
         also_offered=tuple(data.get("also_offered", [])),
         classification_state=data.get("classification_state", "unclassified"),
@@ -1549,9 +1548,6 @@ class DatabaseAnalysisStore:
                                 "recommendation": issue.recommendation,
                                 "clarification": issue.clarification,
                                 "evidence_refs": issue.evidence_refs,
-                                "finding_type": issue.finding_type,
-                                "structural_target": issue.structural_target,
-                                "graph_node_id": issue.graph_node_id,
                             }
                         ),
                     },
