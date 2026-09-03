@@ -1,10 +1,12 @@
 # Release 2 Contract Invariant Binding v1
 
-**Document Type:** Contract binding annex (structure only — supplies an existing specification's §G and §D-14 for R2; defines no new contract shape) · **Status:** **DRAFT · Pending Owner Ratification** · **Date:** 2026-08-31 · **Zone:** `20_handoff/` — co-governed seam (DL-053 filing).
+**Document Type:** Contract binding annex (structure only — supplies an existing specification's §G and §D-14 for R2; defines no new contract shape) · **Status:** **RATIFIED 2026-09-02** — owner ruling; the specification's §G was amended in the same change so the corrected section points here. · **Date:** 2026-08-31 · **Ratified:** 2026-09-02 · **Zone:** `20_handoff/` — co-governed seam (DL-053 filing).
+
+> ⚠️ **WHAT RATIFICATION DID AND DID NOT COVER.** Ratified: §3 (an R2 contract's applicable set is the acceptance register's `GT-` ids), §4's adjudication of the eleven Release 1 clauses, §5's Release 2 bindings, and §8's conformance conditions. **Not closed:** §7.4 and §7.5, which remain open owner questions, and §7.6, raised on ratification. **Not made citable:** any §5 binding whose decision record is not on the control plane — the ordering ruling is named there and is still uncitable by id. Ratifying the annex did not write the records it waits on.
 
 **Subordinate to / must not redefine:** [Implementation Contract Specification v1](IMPLEMENTATION_CONTRACT_SPECIFICATION_V1.md).
 
-> ⚠️ **AI-drafted; AI ratifies nothing.** Unmarked rows are recommendations for the owner to accept, amend or reject. Rows marked **▶ RULED \<date\>** record an owner ruling made on that date — captured here, still routed through Framework 001 (Backlog → Proposal → Review → Decision) to become canon. **AI may analyze, check consistency and recommend; it may never ratify or author canon.**
+> ⚠️ **AI-drafted; AI ratifies nothing.** This document was drafted by AI and **ratified by the owner on 2026-09-02**; that ruling, not the drafting, is what makes it binding. Rows marked **▶ RULED \<date\>** record owner rulings made on those dates. Rows still marked as open questions in §7 were **not** settled by ratification and remain escalations. **AI may analyze, check consistency and recommend; it may never ratify or author canon.**
 >
 > ⚠️ **This annex adds no field, no section and no lifecycle.** The contract structure — twenty-two required fields, dual positive/negative acceptance, ambiguity handling, human review — is unchanged and governs. This document supplies only **which invariants bind** and **which vocabulary is current** when the contract is for Release 2. **Extend, don't mint.**
 
@@ -44,7 +46,7 @@ The ratified Release 2 reading of grounding appears **nowhere** in the seam that
 
 ## §3 — §G's applicable set for Release 2 is the acceptance register, not a prose list
 
-**Recommendation.** For an R2 contract, the bound invariants are the **applicable rows of the acceptance register (`GT-…`)**, cited by id, rather than a list transcribed into this document.
+▶ **RULED 2026-09-02.** For an R2 contract, the bound invariants are the **applicable rows of the acceptance register (`GT-…`)**, cited by id, rather than a list transcribed into this document. The specification's §G was amended in the same change to say so.
 
 **Why a register and not a list.** §G's own list is the demonstration: it was written once, was correct for Release 1, and has drifted silently ever since because nothing reconciles prose against the guard set. A register has an authority that can be re-run; a prose list has only its author's memory. This is the same correction already applied on the governance side — the rule is not new, only its application here.
 
@@ -56,7 +58,7 @@ Each R2 contract therefore satisfies §D-14 by naming the `GT-` ids applicable t
 
 ## §4 — The Release 1 invariant list, adjudicated
 
-**Three rows were RULED by the owner on 2026-08-31; the rest are recommendations.** ⚠️ Anti-Assumption still governs the unruled rows: where the Release 2 position is not established by a ratified record, this document **escalates rather than resolves**.
+**Three rows were RULED by the owner on 2026-08-31; the whole table was ratified on 2026-09-02.** The three dated rows record rulings made on that earlier date and are left dated so the sequence stays visible. ⚠️ Anti-Assumption still governs: where a Release 2 position is not established by a ratified record, this document **escalates rather than resolves**, and ratification did not convert any such escalation into an answer.
 
 | §G invariant (R1) | recommendation |
 |---|---|
@@ -76,7 +78,7 @@ Each R2 contract therefore satisfies §D-14 by naming the `GT-` ids applicable t
 
 ## §5 — Release 2 invariants that must bind
 
-**Recommendation:** these are added to the applicable set for R2 contracts and appear as negative acceptance. Each is stated as the must-not-occur form, because that is the form §H requires.
+▶ **RULED 2026-09-02:** these are added to the applicable set for R2 contracts and appear as negative acceptance. Each is stated as the must-not-occur form, because that is the form §H requires.
 
 - **A read is not an execution.** A read that can execute the plan is not a read (DL-238).
 - **A deferred capability ships no governed behaviour** (DL-230). A capability recorded as deferred must not perform a governed write, on any surface, in any build a user can reach. ▶ Bound by the 2026-08-31 ruling in §4, replacing the R1 Chat/Companion clause.
@@ -90,7 +92,7 @@ Each R2 contract therefore satisfies §D-14 by naming the `GT-` ids applicable t
 - **Capacity, never judgment quality.** A tier boundary must not degrade the quality of judgement offered; it may only limit capacity.
 - **Deep Pass performance is a bound, not an aspiration** — 120s target, 180s P95 (DL-239). A contract must not accept an unbounded pass.
 
-⚠️ Items in this section that do not resolve to a decision record are **proposed bindings**, not canon, and are marked for ratification in §7.
+⚠️ **Ratification bound these invariants; it did not make them all citable.** An item above whose decision record is not on the control plane **binds as stated here but may not be cited by id** until its record lands — the ordering ruling is the live instance, and this annex deliberately does not cite it. §7.4 tracks which are which and remains open.
 
 ---
 
@@ -119,6 +121,13 @@ it was answered is part of its record.
 3. ~~Chat/Companion and the stronger deferred-capability form.~~ **RULED: bind DL-230, retire the R1 clause.**
 4. **Which §5 bindings need a decision record** before an R2 contract may cite them, and which are already carried by an existing record. ⚠️ **Still open.** Measured 2026-08-31: DL-230, DL-238, DL-239 and DL-240 resolve on the control plane; the ordering ruling does not, and its citation closure needs eleven records that do not exist.
 5. **Does an R2 contract bind `GT-` ids only, or also a QA Contract reference** naming the server-side twin that proves each? ⚠️ Relevant because the register currently has **61 ids with no registered twin** (`GT-58…GT-118`), so a contract could bind an invariant nothing can validate.
+6. **What is governed by the specification, and does the name decide it?** ⚠️ **Raised 2026-09-02 on ratification; open.** `OSLO_PLAN_WRITE_API_CONTRACT_V1` (#220) calls itself a contract, is filed under `20_handoff/interfaces/` rather than `contracts/`, and carries **none of the specification's shape** — no §G invariant-binding section, no dual positive/negative acceptance section, headings `1…9` rather than `§A…§N`. It does cite `GT-08 · GT-75 · GT-80 · GT-81 · GT-88`, i.e. this annex's approach, in prose.
+
+   ⚠️ **That artifact is named here without its extension, deliberately** — it exists on `canon/plan-write-api-contract-v1` and on no ref `main` can see, and writing the filename would assert a document this line does not carry. Same convention as the 2026-08-17 rulings record.
+
+   MEASURED-BY: `git show origin/canon/plan-write-api-contract-v1:20_handoff/interfaces/<that file>`, 2026-09-02 — 194 lines, zero occurrences of "invariant", zero `§G`/negative-acceptance sections.
+
+   **Both readings have a cost, which is why this is escalated rather than resolved.** If the specification governs it, #220 is non-conformant on shape and §N applies. If it does not, the repository has **two different artifacts called "contract" under different governance**, distinguished only by directory — which is a Disambiguation Register matter (DL-053), the same shape as the `§R8` collision. ⚠️ **Do not infer the answer from the filing location**; the filing may be the defect.
 
 ---
 
@@ -136,4 +145,4 @@ An R2 Implementation Contract is **incomplete** (§K) and **fails conformance** 
 
 ---
 
-> **Reminder:** this document is a recommendation. It becomes canon only via Framework 001 — Backlog → Proposal → **Review** → **Decision** → Change → Changelog — and only on owner ratification.
+> **Status of this document:** ratified by the owner on **2026-09-02** and binding for Release 2 contracts, per Framework 001 — Backlog → Proposal → **Review** → **Decision** → Change → Changelog. Its **open items in §7 are not ratified** and remain escalations; a reader must not treat this document's ratified status as an answer to them.
