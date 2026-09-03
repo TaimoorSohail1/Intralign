@@ -88,7 +88,20 @@ When the AI implementation system encounters any of the following, it MUST **not
 
 ## G. Invariant Binding
 
-Every contract MUST carry the **applicable** Release 1 invariants (bound, not optional), especially:
+Every contract MUST carry the **applicable** invariants **for its own release** (bound, not optional). A contract that omits an applicable invariant **fails** (§N).
+
+**Which set is applicable is determined by the contract's release — not by the list in §G.1:**
+
+- **Release 1 contracts** bind the invariants enumerated in **§G.1** below.
+- **Release 2 contracts** bind the applicable rows of the acceptance register (`GT-` ids), cited by id, together with the Release 2 invariants named in [Release 2 Contract Invariant Binding v1](RELEASE_2_CONTRACT_INVARIANT_BINDING_V1.md). That annex also records which of §G.1's clauses carry into Release 2, which are restated, and which are retired. **For a Release 2 contract the annex governs the applicable set; this section does not.**
+
+> ⚠️ **AMENDED 2026-09-02 — owner ruling.** As written before this date, this section required *"the applicable **Release 1** invariants"* of **every** contract and referenced no Release 2 set at all. Because §N fails a contract that omits an applicable invariant and §D-14 makes the bound set a required field, **a Release 2 contract authored against this section would have bound Release 1's invariants — including three since retired or halved — carried none of Release 2's, and still passed conformance.**
+>
+> The correction had been recorded since 2026-08-31 in the annex named above, which stated this defect precisely. It never reached this section, and this section never referenced it. ⇒ **A correction recorded anywhere other than where the corrected thing is used is not a correction.** Third instance of that shape on 2026-09-02; the other two were a landing gate demanding a path count its own correction had already reduced, and a permitted-claim count corrected where it was discussed and left standing where it was used.
+
+### G.1 — The Release 1 invariant set
+
+Binding for Release 1 contracts. For Release 2, read this list only through the annex, which adjudicates each clause:
 - **only reanalysis changes assessment**
 - **Recommendation Panel only in Finding context**
 - **Confidence is trust in understanding, never project health/readiness/probability/score**

@@ -103,6 +103,16 @@ qualified canonical form below.** (This register *qualifies* — it does not red
 | | the OSLO **product's** observability/economics surface → **OSLO Observability Console** *(reserved name; never "Founder Console")* | product (`30_engineering/telemetry/OSLO_RELEASE_1_OBSERVABILITY_AND_ECONOMICS_PLATFORM_SPECIFICATION_V1`) |
 | **R1 / R2 …** | the **product release** → **Release 1** *(never bare "R1"; the `RELEASE_1_*` document prefix)* | product / spec |
 | | the **audience-scale rung** (DL-076: *"R1 = owner + <5 users; R2 = 10–20; 50+ = the Beta gate"*) → **Audience Rung R1** *(never bare "R1")* | rollout / GTM |
+| **R7 · R8 · R9 … (section refs)** | a **ruling** in the 2026-08-17 owner rulings record — §R8 is *"COMMISSION the plan-write API contract"*, the commission #220 cites → **`Rulings 2026-08-17 §R8`** *(never bare "R8")* | repo-process |
+| | a **finding** in the 2026-08-29/31 staging fitness audit — §R8 is *a governed act surfacing a raw `Failed to fetch`*, the origin of criterion **N-4** → **`Staging audit 2026-08-29 §R8`** *(never bare "R8")* | build / audit |
+
+⚠️ **On the section-reference rows, and why they were added before the collision was symmetric.** As of 2026-09-02 only one §R8 is reachable from `main`, and it is the **audit finding** — `R2.0_PRODUCTION_ACCEPTANCE_CRITERIA` row 118 cites *"R8, GT-A3"* in that sense. Bare citations in the same sense also sit on the unmerged R2.0 closeout branch, in the N-4 obligation's own title. The **other** §R8 — the rulings' commission — is on the unmerged 2026-08-17 graduation.
+
+**Neither is on `main` alongside the other yet, and that is the point.** The moment the graduation lands, every existing bare "R8" becomes ambiguous **retroactively**, and the cost of this register entry rises from *qualify new citations* to *re-read old ones*. A disambiguation is cheapest while the collision is still one-sided.
+
+`MEASURED-BY:` `git ls-files` on `origin/main` d26e8d5 — `R2.0_PRODUCTION_ACCEPTANCE_CRITERIA` tracked; the N-4 obligation **not** tracked on this ref. ⚠️ Both are named above without their `.md` extensions, deliberately: one is absent from this line, and writing a filename this ref does not carry asserts a document that is not here.
+
+★ This one was caught by accident, and the accident is the argument: an AI-assisted review grepped the R2.0 closeout material for "R8" to decide whether the graduation chain blocked R2.0, read the hits as the *rulings'* R8, and reached the right conclusion for the wrong reason. Only running the citation gate surfaced the real dependency. **A bare section reference is not evidence of what it refers to.**
 
 **Semantic landmines** (same word, unrelated/opposite meaning):
 
