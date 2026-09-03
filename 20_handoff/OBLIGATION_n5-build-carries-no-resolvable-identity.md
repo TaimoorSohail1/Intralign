@@ -22,7 +22,7 @@ Two supporting observations were recorded on 2026-08-31 and **have not been re-m
 
 ⚠️ Both are carried here as **recorded, not re-verified**. Step 1 of the done condition re-measures them rather than inheriting them, because a row that reasons from a remembered measurement is the failure mode this apparatus exists to end.
 
-## 2 · Why this is the precondition, not one criterion among eighteen
+## 2 · Why this is the precondition, not one criterion among twenty
 
 Every other row in the R2.0 set closes on measurement **against the deployed build**. B0, B1, B2, B3, B5 and the entitlement row each say so explicitly, and the criteria document requires every WALK criterion to be executed against *that* build, each result citing `MEASURED-BY:`.
 
@@ -68,7 +68,19 @@ All six, each reported with the command or observation that produced it:
 3. **It is machine-readable.** Retrievable by a command that can be pasted into a `MEASURED-BY:` line and re-run by someone else. A human-visible footer alone does not satisfy this.
 4. **It round-trips to source.** Given the reported identity, `git cat-file -e <sha>` succeeds in this repository and the checked-out tree is the one that was built. An identity that names something unreachable is a label, not an identity.
 5. **The deployed surface is named in the repository.** Which host serves which line is recorded in a file, so "the deployed build" resolves to something a reader can find without asking a person.
-6. **The first attributed measurement exists.** One R2.0 criterion — any of the eighteen — is re-measured and its result records both `MEASURED-BY:` and the build identity. Until one result carries an identity, this row has produced a capability rather than a change.
+6. **The first attributed measurement exists.** One R2.0 criterion — any of the **twenty** — is re-measured and its result records both `MEASURED-BY:` and the build identity. Until one result carries an identity, this row has produced a capability rather than a change. *(Read "eighteen" before 2026-09-02; that is the CLASSIFIED count, corrected by #277. §2 of this document already carried the correction — this line did not, which is the failure the correction itself warns about.)*
+
+7. ▶ **RULED 2026-09-02 — a build carrying the B-series fix is DEPLOYED, and this row owns that step.**
+
+   **Six obligations — B0, B1, B2, B3, N-5 and N-7/N-8 — open their DONE CONDITION with *"on the deployed build carrying the fix."* Measured 2026-09-02: not one of them had a step that IS the deployment.** Everything waited on an act with no owner, no date and no ticket — which is why "re-measure on staging" has never had a date.
+
+   It lands here because this row already owns **naming** the deployed surface (item 5) and **exposing** its identity (items 2–4); producing the build those items describe belongs with them, and R2.0-5 already puts N-5 first. **Extend, don't mint.**
+
+   - **Owner: HamzaSohailCodes** — unchanged from this row's `Fix:` field; R2.0-5 assigns checks-and-infrastructure to his lane.
+   - **Date: after #280 retargets to `main` and merges** — a dependency, not a calendar date. The fix is isolated in #280, stacked on the #279 relocation; deploying before it lands would deploy a build without the fix and every downstream measurement would be attributed to the wrong thing.
+   - ⚠️ **This step does not close by deploying.** It closes when the deployed build's identity is reported per items 2–4, so that the five obligations waiting on it can each cite *which* build they measured. **A deployment nobody can name leaves those five exactly where they were.**
+
+   ⚠️ **This item can fail on its own.** If a build is deployed but its identity is not reported, item 7 is unmet and **N-5 does not close**, however items 1–6 read.
 
 ## 5 · Out of scope, filed as a pointer
 
