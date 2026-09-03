@@ -77,11 +77,22 @@ def resolve_design_ref(root):
     if raw is None or not raw.strip():
         return None, "absent"
     ref = raw.strip().splitlines()[0].strip()
+    git_dir = os.path.join(root, ".git")
     try:
-        r = subprocess.run(["git", "--git-dir", os.path.join(root, ".git"),
-                            "rev-parse", "--verify", "--quiet", ref + "^{commit}"],
-                           capture_output=True, text=True, timeout=20)
-        return ref, ("ok" if r.returncode == 0 else "dangling")
+        candidates = ["refs/heads/%s" % ref]
+        remotes = subprocess.run(["git", "--git-dir", git_dir, "for-each-ref", "--format=%(refname)", "refs/remotes"],
+                                 capture_output=True, text=True, timeout=20)
+        candidates += [name for name in remotes.stdout.splitlines() if name.endswith("/%s" % ref)]
+        found = []
+        for candidate in candidates:
+            r = subprocess.run(["git", "--git-dir", git_dir, "rev-parse", "--verify", "--quiet", candidate + "^{commit}"],
+                               capture_output=True, text=True, timeout=20)
+            if r.returncode == 0:
+                found.append((candidate, r.stdout.strip()))
+        commits = {commit for _name, commit in found}
+        if len(commits) != 1:
+            return ref, "dangling"
+        return found[0][0], "ok"
     except Exception:
         return ref, "dangling"
 
@@ -144,18 +155,20 @@ def _src(root, ref, path):
 def rows_from_obligations(root, ref=None):
     """P0/P2 — OBLIGATION_*.md, one row each while OPEN. Owner comes from `**Fix:**`."""
     out, d = [], os.path.join(root, "20_handoff")
-    names = sorted(n for n in os.listdir(d)
+    local = sorted(n for n in os.listdir(d)
                    if n.startswith("OBLIGATION_") and n.endswith(".md")) if os.path.isdir(d) else []
-    if not names and ref:
-        names = sorted(n for n in _ls_at_ref(root, ref, "20_handoff")
-                       if n.startswith("OBLIGATION_") and n.endswith(".md"))
-    for name in names:
-        text, _locus = _src(root, ref, "20_handoff/%s" % name)
+    remote = sorted(n for n in _ls_at_ref(root, ref, "20_handoff")
+                    if n.startswith("OBLIGATION_") and n.endswith(".md")) if ref else []
+    sources = [(name, "worktree") for name in local]
+    sources += [(name, ref) for name in remote if name not in set(local)]
+    for name, locus in sources:
+        text = _read(root, "20_handoff/%s" % name) if locus == "worktree" else _read_at_ref(root, ref, "20_handoff/%s" % name)
         text = text or ""
         status = re.search(r"\*\*Status:\*\*\s*\*?\*?(\w+)", text)
         if status and status.group(1).upper() != "OPEN":
             continue
-        blocking = bool(re.search(r"blocking for production", text, re.I))
+        klass = re.search(r"^\*\*Class:\*\*\s*(.+)$", text, re.I | re.M)
+        blocking = bool(klass and re.search(r"\bproduction blocker\b", klass.group(1), re.I))
         fix = re.search(r"\*\*Fix:\*\*\s*([^\n(]+)", text)
         acc = re.search(r"\*\*Accepts:\*\*\s*([A-Za-z0-9_-]+)", text)
         title = re.search(r"^#\s+(.+)$", text, re.M)
@@ -171,7 +184,7 @@ def rows_from_obligations(root, ref=None):
             "owner": _clean(fix.group(1)) if fix else "⚠️ UNASSIGNED",
             "accepts": acc.group(1) if acc else "—",
             "done": done,
-            "src": "20_handoff/%s" % name,
+            "src": "20_handoff/%s (%s)" % (name, locus),
             "note": ("invariants: " + " · ".join(inv[:4])) if inv else "",
         })
     return out
@@ -459,9 +472,9 @@ def self_test():
                   open(os.path.join(tmp, CONFIG), "w"))
         open(os.path.join(tmp, "20_handoff", "OBLIGATION_blocker.md"), "w").write(
             "# OBLIGATION — a blocking one\n**Status:** OPEN\n**Fix:** Alice\n"
-            "**Accepts:** Bob\nblocking for production\n## 4 · DONE CONDITION\n")
+            "**Accepts:** Bob\n**Class:** production blocker\n## 4 · DONE CONDITION\n")
         open(os.path.join(tmp, "20_handoff", "OBLIGATION_closed.md"), "w").write(
-            "# OBLIGATION — closed\n**Status:** CLOSED\n**Fix:** Alice\nblocking for production\n")
+            "# OBLIGATION — closed\n**Status:** CLOSED\n**Fix:** Alice\n**Class:** production blocker\n")
         open(os.path.join(tmp, "release-X", "QUEUED_WORK.md"), "w").write(
             "```queue\nid: RB-01\ndue: 2026-01-05\ntitle: inside window\nowner: Carol\n\n"
             "id: RB-02\ndue: 2027-01-05\ntitle: outside window\nowner: Carol\n```\n")
@@ -512,13 +525,26 @@ def self_test():
         if "no/such/ref" not in out or "does not exist" not in out.lower():
             fails.append("a DANGLING ACTIVE_DESIGN_REF produced no row — it must fail loudly")
 
+    # ── #267: a fresh clone has a remote-tracking ref, not a local design head. ──
+    with tempfile.TemporaryDirectory() as tr:
+        open(os.path.join(tr, "seed"), "w").write("x\n")
+        for args in (("init",), ("config", "user.email", "queue@example.test"),
+                     ("config", "user.name", "Queue Test"), ("add", "."), ("commit", "-m", "seed")):
+            subprocess.run(["git", "-C", tr] + list(args), check=True, capture_output=True)
+        sha = subprocess.run(["git", "-C", tr, "rev-parse", "HEAD"], check=True, capture_output=True, text=True).stdout.strip()
+        subprocess.run(["git", "-C", tr, "update-ref", "refs/remotes/origin/design/test", sha], check=True)
+        open(os.path.join(tr, "ACTIVE_DESIGN_REF"), "w").write("design/test\n")
+        resolved, state = resolve_design_ref(tr)
+        if state != "ok" or resolved != "refs/remotes/origin/design/test":
+            fails.append("a remote-tracking ACTIVE_DESIGN_REF did not resolve in a fresh-clone fixture")
+
     # ── Deferral is a recorded ruling; a second one escalates. ──
     with tempfile.TemporaryDirectory() as t4:
         os.makedirs(os.path.join(t4, "20_handoff"))
         json.dump({"id": "it-T", "start": "2026-01-01", "end": "2026-01-14", "goal": "G"},
                   open(os.path.join(t4, CONFIG), "w"))
         open(os.path.join(t4, "20_handoff", "OBLIGATION_x.md"), "w").write(
-            "# OBLIGATION — deferrable\n**Status:** OPEN\n**Fix:** Alice\nblocking for production\n")
+            "# OBLIGATION — deferrable\n**Status:** OPEN\n**Fix:** Alice\n**Class:** production blocker\n")
         base = build(t4)
         if "P0 · production-blocking" not in base:
             fails.append("fixture obligation did not reach P0")
@@ -536,6 +562,28 @@ def self_test():
             open(os.path.join(t4, "20_handoff", "DEFERRALS.json"), "w"))
         if "DEFERRED 2x" not in build(t4):
             fails.append("a row deferred TWICE did not escalate — the second slip is the signal")
+
+    # ── #266: obligations are a union across the worktree and design ref, never a fallback. ──
+    with tempfile.TemporaryDirectory() as t5:
+        os.makedirs(os.path.join(t5, "20_handoff"))
+        ref_file = os.path.join(t5, "20_handoff", "OBLIGATION_ref_only.md")
+        open(ref_file, "w").write("# OBLIGATION — ref only\n**Status:** OPEN\n**Fix:** Alice\n**Class:** apparatus integrity\n")
+        for args in (("init",), ("config", "user.email", "queue@example.test"),
+                     ("config", "user.name", "Queue Test"), ("add", "."),
+                     ("commit", "-m", "ref obligation"), ("branch", "design/test")):
+            subprocess.run(["git", "-C", t5] + list(args), check=True, capture_output=True)
+        os.remove(ref_file)
+        open(os.path.join(t5, "20_handoff", "OBLIGATION_local.md"), "w").write(
+            "# OBLIGATION — local only\n**Status:** OPEN\n**Fix:** Bob\n**Class:** production blocker\n")
+        both = rows_from_obligations(t5, "design/test")
+        if {r["id"] for r in both} != {"ref_only", "local"}:
+            fails.append("local and ref-only obligations were not derived as a union")
+        if not any(r["src"].endswith("(design/test)") for r in both):
+            fails.append("a design-ref obligation did not expose its locus")
+        open(os.path.join(t5, "20_handoff", "OBLIGATION_negated.md"), "w").write(
+            "# OBLIGATION — not a blocker\n**Status:** OPEN\n**Fix:** Bob\n**Class:** apparatus integrity · not blocking for production\n")
+        if next(r for r in rows_from_obligations(t5, "design/test") if r["id"] == "negated")["p"] != 2:
+            fails.append("a non-blocker prose mention was misclassified as P0")
 
     if fails:
         print("SELF-TEST FAILED:")
