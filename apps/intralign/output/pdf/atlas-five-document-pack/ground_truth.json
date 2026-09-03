@@ -1,0 +1,80 @@
+{
+  "project_title": "Atlas B2B Commerce Launch",
+  "source_document_count": 5,
+  "expected_artifacts": [
+    "intent",
+    "context",
+    "scope",
+    "requirements",
+    "work_breakdown",
+    "schedule",
+    "resources"
+  ],
+  "expected_counts": {
+    "objectives": 5,
+    "stakeholders": 7,
+    "governance_forums": 4,
+    "included_deliverables": 6,
+    "explicit_exclusions": 5,
+    "functional_requirements": 8,
+    "nonfunctional_and_gates": 6,
+    "work_packages": 9,
+    "milestones": 9,
+    "critical_dependencies": 4,
+    "resource_rows": 8,
+    "raci_rows": 7,
+    "explicit_assumptions": 4,
+    "risks_and_issues": 5,
+    "decisions_and_dependencies": 5,
+    "changes": 3
+  },
+  "planted_conflicts": [
+    {
+      "field": "ERP pricing API date",
+      "values": [
+        "08 Feb 2027 needed",
+        "22 Feb 2027 supplier commitment"
+      ],
+      "expected_artifact": "schedule"
+    },
+    {
+      "field": "Project cost",
+      "values": [
+        "GBP 1,800,000 approved ceiling",
+        "GBP 1,845,000 forecast"
+      ],
+      "expected_artifact": "resources"
+    },
+    {
+      "field": "Native offline ordering",
+      "values": [
+        "Explicitly excluded",
+        "CR-002 rejected"
+      ],
+      "expected_artifact": "scope"
+    }
+  ],
+  "explicit_assumptions": [
+    "A-01",
+    "A-02",
+    "A-03",
+    "A-04"
+  ],
+  "expected_gaps": [
+    "OBJ-05 target 30 has no unit",
+    "REQ-007 / returns SLA owner is TBD",
+    "ParcelLink access is unconfirmed",
+    "Solution Architect has no named backup",
+    "Integration Lead has a 0.5 FTE January shortfall",
+    "Only one of two required data stewards is confirmed",
+    "Pen-test vendor is not contracted",
+    "GBP 45,000 forecast variance is not approved"
+  ],
+  "files": [
+    "01_executive_charter_and_benefits.pdf",
+    "02_stakeholder_and_governance.pdf",
+    "03_scope_requirements_and_acceptance.pdf",
+    "04_delivery_schedule_resources_raci.pdf",
+    "05_raid_status_change_decisions.pdf"
+  ]
+}

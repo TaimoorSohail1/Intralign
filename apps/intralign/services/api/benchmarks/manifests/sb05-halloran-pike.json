@@ -1,0 +1,10 @@
+{
+  "name": "SB05 Halloran Pike",
+  "expected_ratings": {"clarity":"High","alignment":"Moderate","feasibility":"Moderate","reliability":"Moderate","confidence":"Moderate"},
+  "trap_profiles": ["small_business"],
+  "findings": [
+    {"id":"SB05-01","severity":"Moderate","concepts":[["client portal"],["must"],["phase 2","deferred"]]},
+    {"id":"SB05-02","severity":"Moderate","concepts":[["case files","family law"],["confidentiality","data protection","retention"]]},
+    {"id":"SB05-03","severity":"Moderate","concepts":[["client update calls"],["three months"],["portal"],["January","after"]]}
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "Project Ironvale",
+  "expected_ratings": {"clarity":"High","alignment":"Low","feasibility":"Very Low","reliability":"Moderate","confidence":"Low"},
+  "findings": [
+    {"id":"IV-01","severity":"Critical","concepts":[["cost total","totals"],["wheel lathe"],["exclude","omit","understate"]]},
+    {"id":"IV-02","severity":"Critical","concepts":[["entry into service","service date"],["timetable change"],["five days","5 days","seven months"]]},
+    {"id":"IV-03","severity":"Critical","concepts":[["forecast final cost","forecast cost"],["39,200,000","39.2m"],["40,560,000","40.56m"],["41,900,000","41.9m"]]},
+    {"id":"IV-04","severity":"Critical","concepts":[["green","overall status"],["milestone","schedule"],["cost","variance"]]},
+    {"id":"IV-05","severity":"Moderate","concepts":[["37.3%","37.3"],["23.3%","23.3"],["weighted","average"]]},
+    {"id":"IV-06","severity":"Moderate","concepts":[["risk score","probability impact"],["R-06","authorisation"],["20","twelve","12"]]},
+    {"id":"IV-07","severity":"Moderate","concepts":[["ORR","authorisation"],["not scheduled","no date"],["eight weeks","8 weeks"]]},
+    {"id":"IV-08","severity":"Moderate","concepts":[["pending","unapproved"],["forecast","variance"],["770,000","770k"]]},
+    {"id":"IV-09","severity":"Moderate","concepts":[["over-allocated","overallocation"],["Brakenridge","Rennick"],["1.2","1.4"]]},
+    {"id":"IV-10","severity":"Moderate","concepts":[["R-12","contamination"],["closed"],["CH-11","1,340,000"]]},
+    {"id":"IV-11","severity":"Moderate","concepts":[["I-06"],["closed"],["future","30 November 2026"]]},
+    {"id":"IV-12","severity":"Moderate","concepts":[["open risks"],["four","4"],["five","5"]]},
+    {"id":"IV-13","severity":"Moderate","concepts":[["drivers"],["142"],["168"]]},
+    {"id":"IV-14","severity":"Moderate","concepts":[["D-05"],["Lindqvist"],["resource","allocation"]]},
+    {"id":"IV-15","severity":"Warning","concepts":[["M7","M10"],["blank variance","variance missing"],["date format","format"]]},
+    {"id":"IV-16","severity":"Warning","concepts":[["below budget","approved envelope"],["contradict","variance"]]}
+  ],
+  "traps": [
+    {"id":"T-01","concepts":[["wheel lathe row"],["wrong","error"]]},
+    {"id":"T-02","concepts":[["total approved"],["3,570,000"],["wrong","incorrect"]]},
+    {"id":"T-03","concepts":[["milestone weights"],["100%"],["wrong","incorrect"]]},
+    {"id":"T-04","concepts":[["total allocated"],["5.7"],["wrong","incorrect"]]},
+    {"id":"T-05","concepts":[["contingency"],["2,600,000"],["missing","wrong"]]},
+    {"id":"T-06","concepts":[["three timetable change dates"],["wrong","duplicate"]]},
+    {"id":"T-07","concepts":[["M1","M2","M3"],["complete"],["wrong","incorrect"]]},
+    {"id":"T-08","concepts":[["per-row variance"],["wrong","incorrect"]]}
+  ],
+  "gates": {"finding_recall":0.9,"critical_recall":1.0,"maximum_false_positive_traps":0,"locator_coverage":1.0,"maximum_duplicate_rate":0,"maximum_duration_seconds":180,"minimum_issue_id_stability":0.95,"require_rating_stability":true}
+}

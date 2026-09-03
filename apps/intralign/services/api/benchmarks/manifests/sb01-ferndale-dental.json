@@ -1,0 +1,10 @@
+{
+  "name": "SB01 Ferndale Dental",
+  "expected_ratings": {"clarity":"High","alignment":"High","feasibility":"Moderate","reliability":"Moderate","confidence":"Moderate"},
+  "trap_profiles": ["small_business"],
+  "findings": [
+    {"id":"SB01-01","severity":"Moderate","concepts":[["patient records","medical history"],["data protection","retention","lawful basis"]]},
+    {"id":"SB01-02","severity":"Moderate","concepts":[["card details","card payments"],["security","PCI"]]},
+    {"id":"SB01-03","severity":"Moderate","concepts":[["18,500"],["21,000"],["unexplained","unallocated","difference"]]}
+  ]
+}

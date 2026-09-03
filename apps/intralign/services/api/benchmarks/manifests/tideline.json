@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "name": "Project Tideline",
+  "source_documents": [
+    "Tideline_A_Client_Brief_v2.1.pdf",
+    "Tideline_B_Design_Team_Meeting_14_Minutes.pdf",
+    "Tideline_C_Cost_Report_No8.pdf"
+  ],
+  "expected_ratings": {
+    "clarity": "High",
+    "alignment": "Very Low",
+    "feasibility": "Very Low",
+    "reliability": "High",
+    "confidence": "Low"
+  },
+  "gates": {
+    "finding_recall": 0.9,
+    "critical_recall": 1.0,
+    "maximum_false_positive_traps": 0,
+    "locator_coverage": 1.0,
+    "maximum_duplicate_rate": 0.0,
+    "maximum_duration_seconds": 180,
+    "minimum_issue_id_stability": 0.95,
+    "require_rating_stability": true
+  },
+  "findings": [
+    {"id": "TD-01", "severity": "Critical", "concepts": [["berth"], ["210"], ["185"], ["length"]]},
+    {"id": "TD-02", "severity": "Critical", "concepts": [["quay", "deck"], ["precast"], ["in-situ", "reinforced"]]},
+    {"id": "TD-03", "severity": "Critical", "concepts": [["board", "governance", "approval"], ["design requirement", "DR-01", "DR-06", "DR-02"]]},
+    {"id": "TD-04", "severity": "Critical", "concepts": [["budget", "cost status"], ["38,500,000", "38500000", "38.5m", "38.50m"], ["41,810,000", "41810000", "41.81m"], ["8.6%", "8.6", "within"]]},
+    {"id": "TD-05", "severity": "High", "concepts": [["marine licence", "license"], ["30 June", "June 2026"], ["30 September", "September 2026"]]},
+    {"id": "TD-06", "severity": "High", "concepts": [["dredge", "dredging"], ["240,000", "240000"], ["310,000", "310000"]]},
+    {"id": "TD-07", "severity": "High", "concepts": [["berth"], ["185"], ["vessel"], ["195"]]},
+    {"id": "TD-08", "severity": "High", "concepts": [["contingency"], ["2,150,000", "2150000", "78.2%"], ["31%"]]},
+    {"id": "TD-09", "severity": "High", "concepts": [["construction start", "start"], ["6 July 2026", "July 2026"], ["contractor"], ["not yet appointed", "under review"]]},
+    {"id": "TD-10", "severity": "Moderate", "concepts": [["agreed"], ["under consideration"], ["report"]]},
+    {"id": "TD-11", "severity": "Moderate", "concepts": [["risk"], ["materialised", "materialized"], ["issue"], ["owner", "recovery"]]},
+    {"id": "TD-12", "severity": "Moderate", "concepts": [["action owner"], ["role"], ["Castellan"]]},
+    {"id": "TD-13", "severity": "Low", "concepts": [["cost pressure"], ["scope change"], ["financial effect", "cost impact"]]},
+    {"id": "TD-14", "severity": "Low", "concepts": [["baseline", "brief"], ["changes"], ["revised", "replacement", "supersedes"]]}
+  ],
+  "traps": [
+    {"id": "TD-T01", "concepts": [["brief"], ["March"], ["old", "stale"], ["defect", "invalid"]]},
+    {"id": "TD-T02", "concepts": [["cost report"], ["arithmetic"], ["incorrect", "does not sum"]]},
+    {"id": "TD-T03", "concepts": [["caveat"], ["excluding design changes"], ["defect", "invalid"]]},
+    {"id": "TD-T04", "concepts": [["minutes"], ["format"], ["defect", "invalid"]]},
+    {"id": "TD-T05", "concepts": [["RA-02"], ["closed"], ["defect", "invalid"]]},
+    {"id": "TD-T06", "concepts": [["RA-03"], ["closed"], ["defect", "invalid"]]},
+    {"id": "TD-T07", "concepts": [["no decision required"], ["defect", "invalid"]]},
+    {"id": "TD-T08", "concepts": [["2,750,000", "2750000"], ["7.1%"], ["unreasonable", "defect", "invalid"]]}
+  ]
+}

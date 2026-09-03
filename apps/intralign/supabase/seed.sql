@@ -1,0 +1,3 @@
+-- The initial administrator is created through scripts/seed_local.py after the
+-- local Auth API is available. Application fixture data belongs here only when
+-- it can be inserted without bypassing the Auth service.

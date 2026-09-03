@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# rapidocr depends on the desktop OpenCV wheel, which needs libGL at runtime.
+# Heroku workers do not render windows, so replace it with the headless wheel.
+python -m pip uninstall -y opencv-python || true
+python -m pip install --no-cache-dir --force-reinstall "opencv-python-headless==5.0.0.93"

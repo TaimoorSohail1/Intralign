@@ -2,8 +2,8 @@
 # Listed owners are REQUIRED reviewers for changes under each path.
 #
 # ZONE SPLIT (velocity + control): engineering self-merges pure app code; the owner gates canon.
-#  - `code/**` is INTENTIONALLY UNLISTED — it has no required code-owner, so a PR touching only
-#    code/** merges on green CI alone (six-gate + visual-regression). This is "engineering authors
+#  - `apps/intralign/**` is INTENTIONALLY UNLISTED — it has no required code-owner, so a PR touching only
+#    apps/intralign/** merges on green CI alone (application quality gates). This is "engineering authors
 #    realization" (DL-051); the gates are the automated review.
 #  - Everything canon/governance/design below requires the owner (@idris-manley). The 20_handoff
 #    seam and CI/infra require both. A PR that touches ANY listed path needs that path's reviewer,
@@ -11,7 +11,7 @@
 #
 # RULESET REQUIREMENT for self-merge to work: `protect-main` must require "status checks to pass"
 # + "review from Code Owners", with **required approvals = 0** (approvals are branch-wide and would
-# otherwise re-gate code/**). Code-owner review still forces owner sign-off on the listed paths.
+# otherwise re-gate apps/intralign/**). Code-owner review still forces owner sign-off on the listed paths.
 #
 # Semantics (DL-051): 00_owner = owner-only; 10_product = product-authoritative; 20_handoff =
 # CO-GOVERNED SEAM (both sides); 30_engineering = engineering-authoritative (owner still ratifies
@@ -67,5 +67,5 @@
 /tools/                 @idris-manley @hamzasohailcodes
 /.github/               @idris-manley @hamzasohailcodes
 
-# --- code/** — NOT LISTED on purpose: engineering self-merges on green CI (no owner review). ---
-#     (Do not add a catch-all `* @idris-manley` above — it would re-gate code/**.)
+# --- apps/intralign/** — NOT LISTED on purpose: engineering self-merges on green CI. ---
+#     (Do not add a catch-all `* @idris-manley` above — it would re-gate the application tree.)

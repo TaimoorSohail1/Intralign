@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "name": "Project Wayfarer BRD v1.2",
+  "source_document": "Project_Wayfarer_Business_Requirements_Document_v1.2.pdf",
+  "expected_ratings": {
+    "clarity": "High",
+    "alignment": "Low",
+    "feasibility": "Low",
+    "reliability": "Moderate",
+    "confidence": "Low"
+  },
+  "gates": {
+    "finding_recall": 0.9,
+    "critical_recall": 1.0,
+    "maximum_false_positive_traps": 0,
+    "locator_coverage": 1.0,
+    "maximum_duplicate_rate": 0.0,
+    "maximum_duration_seconds": 180,
+    "minimum_issue_id_stability": 0.95,
+    "require_rating_stability": true
+  },
+  "findings": [
+    {
+      "id": "WF-01",
+      "severity": "Critical",
+      "concepts": [["cancellation", "cancel"], ["24"], ["48"]]
+    },
+    {
+      "id": "WF-02",
+      "severity": "Critical",
+      "concepts": [["overbooking", "overbook"], ["inventory"], ["5", "5%"]]
+    },
+    {
+      "id": "WF-03",
+      "severity": "Critical",
+      "concepts": [["availability"], ["400"], ["800"], ["synchronous", "partner"]]
+    },
+    {
+      "id": "WF-04",
+      "severity": "Critical",
+      "concepts": [["central", "centrally"], ["property"], ["discount"], ["15", "15%"]]
+    },
+    {
+      "id": "WF-05",
+      "severity": "High",
+      "concepts": [["retention", "history"], ["5"], ["7"]]
+    },
+    {
+      "id": "WF-06",
+      "severity": "High",
+      "concepts": [["spa", "leisure"], ["scope"], ["integration"]]
+    },
+    {
+      "id": "WF-07",
+      "severity": "High",
+      "concepts": [["moscow", "must"], ["phase"], ["loyalty"]]
+    },
+    {
+      "id": "WF-08",
+      "severity": "High",
+      "concepts": [["bedroom", "bedrooms"], ["6240", "6,240"], ["5880", "5,880"]]
+    },
+    {
+      "id": "WF-09",
+      "severity": "High",
+      "concepts": [["reservation", "reservations"], ["annual", "annum"], ["monthly", "month"]]
+    },
+    {
+      "id": "WF-10",
+      "severity": "High",
+      "concepts": [["check", "checkin"], ["handling", "cost"], ["trace", "requirement"]]
+    },
+    {
+      "id": "WF-11",
+      "severity": "Moderate",
+      "concepts": [["direct", "booking"], ["objective"], ["irrelevant", "deliver", "intervention"]]
+    },
+    {
+      "id": "WF-12",
+      "severity": "Moderate",
+      "concepts": [["reporting", "report"], ["trace", "objective", "justification"]]
+    },
+    {
+      "id": "WF-13",
+      "severity": "Moderate",
+      "concepts": [["pci", "payment"], ["security"], ["card"]]
+    },
+    {
+      "id": "WF-14",
+      "severity": "Moderate",
+      "concepts": [["data", "privacy"], ["protection"], ["profile", "personal"]]
+    },
+    {
+      "id": "WF-15",
+      "severity": "Moderate",
+      "concepts": [["disaster", "recovery"], ["rto", "rpo", "failover", "backup"]]
+    },
+    {
+      "id": "WF-16",
+      "severity": "Low",
+      "concepts": [["accessibility", "wcag"], ["requirement", "verification"]]
+    },
+    {
+      "id": "WF-17",
+      "severity": "Low",
+      "concepts": [["groups", "events"], ["requirement"], ["missing", "absent", "none"]]
+    },
+    {
+      "id": "WF-18",
+      "severity": "Low",
+      "concepts": [["peak"], ["ratio"], ["sizing", "unused", "requirement"]]
+    }
+  ],
+  "traps": [
+    {
+      "id": "WF-T01",
+      "concepts": [["bedroom", "room"], ["roomnight", "nights"], ["conflict", "inconsistent"]]
+    },
+    {
+      "id": "WF-T02",
+      "concepts": [["could"], ["priority"], ["invalid", "wrong", "conflict"]]
+    },
+    {
+      "id": "WF-T03",
+      "concepts": [["requirement"], ["id"], ["noncontiguous", "missing sequence", "gap"]]
+    },
+    {
+      "id": "WF-T04",
+      "concepts": [["phase 2"], ["requirement"], ["invalid", "wrong", "should not"]]
+    },
+    {
+      "id": "WF-T05",
+      "concepts": [["12"], ["language"], ["unjustified", "excessive"]]
+    },
+    {
+      "id": "WF-T06",
+      "concepts": [["14"], ["partner"], ["inconsistent", "conflict"]]
+    },
+    {
+      "id": "WF-T07",
+      "concepts": [["out of scope"], ["rationale"], ["defect", "invalid"]]
+    },
+    {
+      "id": "WF-T08",
+      "concepts": [["assumption"], ["owner"], ["date"], ["defect", "invalid"]]
+    }
+  ]
+}

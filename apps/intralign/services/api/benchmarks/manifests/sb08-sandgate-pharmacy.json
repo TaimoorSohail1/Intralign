@@ -1,0 +1,10 @@
+{
+  "name": "SB08 Sandgate Pharmacy",
+  "expected_ratings": {"clarity":"High","alignment":"Moderate","feasibility":"Moderate","reliability":"Moderate","confidence":"Moderate"},
+  "trap_profiles": ["small_business"],
+  "findings": [
+    {"id":"SB08-01","severity":"Moderate","concepts":[["prescription delivery"],["regulatory","GPhC","controlled drugs"]]},
+    {"id":"SB08-02","severity":"Moderate","concepts":[["driver"],["insurance","licence","license"],["missing","no"]]},
+    {"id":"SB08-03","severity":"Moderate","concepts":[["driver wages"],["9,800"],["recurring","ongoing funding"]]}
+  ]
+}

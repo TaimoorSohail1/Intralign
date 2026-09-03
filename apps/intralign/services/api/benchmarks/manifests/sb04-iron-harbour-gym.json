@@ -1,0 +1,10 @@
+{
+  "name": "SB04 Iron Harbour Gym",
+  "expected_ratings": {"clarity":"High","alignment":"Moderate","feasibility":"Moderate","reliability":"Moderate","confidence":"Moderate"},
+  "trap_profiles": ["small_business"],
+  "findings": [
+    {"id":"SB04-01","severity":"Moderate","concepts":[["members"],["640"],["680"]]},
+    {"id":"SB04-02","severity":"Moderate","concepts":[["personal training","PT packages"],["4,200"],["phase 2","out of scope","not included"]]},
+    {"id":"SB04-03","severity":"Moderate","concepts":[["card payments"],["security","PCI"]]}
+  ]
+}

@@ -1,0 +1,34 @@
+# JavaScript
+node_modules/
+.next/
+coverage/
+playwright-report/
+test-results/
+.artifacts/
+.logs/
+.codex-*.log
+.qa-*.png
+tmp/
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+services/api/.data/
+
+# Local configuration
+.env
+.env.local
+!.env.example
+
+# Supabase local state
+supabase/.branches/
+supabase/.temp/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

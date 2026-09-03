@@ -1,0 +1,10 @@
+{
+  "name": "SB07 Brackenfield Vets",
+  "expected_ratings": {"clarity":"High","alignment":"Moderate","feasibility":"Very Low","reliability":"Moderate","confidence":"Moderate"},
+  "trap_profiles": ["small_business"],
+  "findings": [
+    {"id":"SB07-01","severity":"Critical","concepts":[["14-week","14 week"],["12 March"],["26 April"],["six","6.5"]]},
+    {"id":"SB07-02","severity":"Moderate","concepts":[["controlled drugs register"],["acceptance criterion","acceptance criteria"],["missing","no"]]},
+    {"id":"SB07-03","severity":"Moderate","concepts":[["2,800","client records"],["data protection"]]}
+  ]
+}

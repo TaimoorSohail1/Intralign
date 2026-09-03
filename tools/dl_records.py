@@ -276,6 +276,7 @@ REC_HOMES = ("00_owner/decisions/records",
              "release-2.1/canon/decisions")
 REGISTER_REL = "00_owner/decisions/UNRECORDED_DECISIONS.md"
 CITE_SKIP_DIRS = {"90_research"}
+CITE_SKIP_PREFIXES = ("apps/intralign",)
 
 # 4. Declared CI FIXTURES are TEST INPUTS, not assertions about canon. `ci/contracts/*` holds copies of
 #    release-line artifacts that CI reads — a prototype an e2e spec loads, contract documents two
@@ -423,6 +424,8 @@ def cited_ids_canonical(root=ROOT):
     for rel in paths:
         parts = set(Path(rel).parts)
         if parts & SCAN_SKIP_DIRS or parts & CITE_SKIP_DIRS:
+            continue
+        if any(rel.startswith(prefix + "/") for prefix in CITE_SKIP_PREFIXES):
             continue
         if rel in fixtures:          # declared CI fixture: a test input, never a canon assertion
             continue

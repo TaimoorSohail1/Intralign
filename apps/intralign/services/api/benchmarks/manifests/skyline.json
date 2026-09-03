@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "name": "Project Skyline",
+  "source_documents": [
+    "Project_Skyline_Steering_Pack_Meeting_11.pptx"
+  ],
+  "expected_ratings": {
+    "clarity": "Moderate",
+    "alignment": "Very Low",
+    "feasibility": "Low",
+    "reliability": "High",
+    "confidence": "Low"
+  },
+  "gates": {
+    "finding_recall": 0.9,
+    "critical_recall": 1.0,
+    "maximum_false_positive_traps": 0,
+    "locator_coverage": 1.0,
+    "maximum_duplicate_rate": 0.0,
+    "maximum_duration_seconds": 180,
+    "minimum_issue_id_stability": 0.95,
+    "require_rating_stability": true
+  },
+  "findings": [
+    {"id": "SK-01", "severity": "Critical", "concepts": [["schedule summary", "executive summary"], ["milestone register"], ["slipped"]]},
+    {"id": "SK-02", "severity": "Critical", "concepts": [["M7", "system integration"], ["on track"], ["17 weeks", "28 May 2027", "slipped"]]},
+    {"id": "SK-03", "severity": "Critical", "concepts": [["headline underspend", "summary presents an underspend"], ["forecast final cost"], ["deferred", "removed scope"]]},
+    {"id": "SK-04", "severity": "Critical", "concepts": [["cutover"], ["protected operating window", "change freeze"], ["overlap", "inside"]]},
+    {"id": "SK-05", "severity": "High", "concepts": [["risk"], ["highest-scored", "high-scored"], ["executive summary", "top-risk"], ["omitted", "absent"]]},
+    {"id": "SK-06", "severity": "High", "concepts": [["required approval"], ["not scheduled"], ["cutover"]]},
+    {"id": "SK-07", "severity": "High", "concepts": [["completion percentage", "complete"], ["milestone register"], ["reconciled", "measurement basis"]]},
+    {"id": "SK-08", "severity": "High", "concepts": [["design completion", "design is complete"], ["milestone register"], ["slipped"]]},
+    {"id": "SK-09", "severity": "High", "concepts": [["benefit"], ["automation"], ["removed scope", "removed from scope"]]},
+    {"id": "SK-10", "severity": "Moderate", "concepts": [["actions"], ["none", "no actions"], ["10.4", "10.7", "carried-forward"], ["open"]]},
+    {"id": "SK-11", "severity": "Moderate", "concepts": [["fully resourced"], ["vacant", "vacancies"]]},
+    {"id": "SK-12", "severity": "Moderate", "concepts": [["funding decision", "approval request"], ["breakdown"], ["options"], ["consequence"]]},
+    {"id": "SK-13", "severity": "Moderate", "concepts": [["financial summaries", "headline budget"], ["contingency"], ["basis"], ["reconcile", "different"]]},
+    {"id": "SK-14", "severity": "Low", "concepts": [["contingency"], ["heavily drawn", "three quarters"], ["slipped milestones", "delivery remains exposed"]]},
+    {"id": "SK-15", "severity": "Low", "concepts": [["readiness"], ["training"], ["delivery control", "milestone"], ["lacks", "no substantive"]]}
+  ],
+  "traps": [
+    {"id": "SK-T01", "concepts": [["appendix"], ["more detail"], ["defect", "invalid"]]},
+    {"id": "SK-T02", "concepts": [["cost"], ["amber"], ["defect", "invalid"]]},
+    {"id": "SK-T03", "concepts": [["Zone 5"], ["descope"], ["disclosure"], ["defect", "invalid"]]},
+    {"id": "SK-T04", "concepts": [["carried-forward actions"], ["open"], ["honest"], ["defect", "invalid"]]},
+    {"id": "SK-T05", "concepts": [["M1", "M2", "M3"], ["complete"], ["defect", "invalid"]]},
+    {"id": "SK-T06", "concepts": [["4.2m", "4,200,000"], ["request"], ["escalation"], ["defect", "invalid"]]},
+    {"id": "SK-T07", "concepts": [["overnight cutover"], ["single window"], ["defect", "invalid"]]},
+    {"id": "SK-T08", "concepts": [["appendix B"], ["arithmetic"], ["incorrect", "does not sum"]]}
+  ]
+}

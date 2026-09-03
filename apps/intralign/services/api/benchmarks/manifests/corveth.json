@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "name": "Corveth Statement of Work SOW-2026-0417",
+  "source_document": "Corveth_Statement_of_Work_SOW-2026-0417.pdf",
+  "expected_ratings": {
+    "clarity": "High",
+    "alignment": "Very Low",
+    "feasibility": "Low",
+    "reliability": "Moderate",
+    "confidence": "Low"
+  },
+  "gates": {
+    "finding_recall": 0.9,
+    "critical_recall": 1.0,
+    "maximum_false_positive_traps": 0,
+    "locator_coverage": 1.0,
+    "maximum_duplicate_rate": 0.0,
+    "maximum_duration_seconds": 180,
+    "minimum_issue_id_stability": 0.95,
+    "require_rating_stability": true
+  },
+  "findings": [
+    {"id": "SW-01", "severity": "Critical", "concepts": [["three sites", "multi-site"], ["site 1"], ["optional", "separate"], ["scope", "commitment"]]},
+    {"id": "SW-02", "severity": "Critical", "concepts": [["deliverable"], ["acceptance criteria", "objective criteria"], ["deemed accepted"], ["five business days", "review period"]]},
+    {"id": "SW-03", "severity": "Critical", "concepts": [["85%", "85 percent"], ["payable", "payment"], ["before proof", "start of acceptance"], ["irrespective of outcome"]]},
+    {"id": "SW-04", "severity": "Critical", "concepts": [["traceability"], ["BRC", "regulatory"], ["exclusion", "exclusions", "excluding"], ["laboratory", "allergen", "validation"]]},
+    {"id": "SW-05", "severity": "High", "concepts": [["effective date"], ["34 weeks"], ["project plan", "dated baseline"], ["undefined", "after"]]},
+    {"id": "SW-06", "severity": "High", "concepts": [["liability"], ["six months", "fees paid"], ["production loss", "spoilage"], ["client", "risk"]]},
+    {"id": "SW-07", "severity": "High", "concepts": [["warranty"], ["90 days"], ["delivery"], ["go-live", "operational"]]},
+    {"id": "SW-08", "severity": "High", "concepts": [["client"], ["test", "UAT", "SIT"], ["supplier"], ["acceptance", "payment", "control"]]},
+    {"id": "SW-09", "severity": "High", "concepts": [["obligation"], ["client"], ["supplier"], ["remedy", "standing charge", "asymmetric"]]},
+    {"id": "SW-10", "severity": "Moderate", "concepts": [["3,860,000", "3860000"], ["3,976,000", "3976000"], ["116,000", "116000"], ["total", "breakdown"]]},
+    {"id": "SW-11", "severity": "Moderate", "concepts": [["change control"], ["1,150", "1150"], ["1,325", "1325"], ["rate", "conflict"]]},
+    {"id": "SW-12", "severity": "Moderate", "concepts": [["personnel"], ["substitute", "substitution", "replace"], ["supplier"], ["client", "written agreement"]]},
+    {"id": "SW-13", "severity": "Moderate", "concepts": [["cleansed master data"], ["undefined", "threshold", "template"], ["4,200", "4200"], ["penalty", "standing charge"]]},
+    {"id": "SW-14", "severity": "Moderate", "concepts": [["data protection", "privacy", "processor"], ["batch records", "operator records"], ["security", "sub-processor"]]},
+    {"id": "SW-15", "severity": "Low", "concepts": [["exit", "termination"], ["data return", "transition", "escrow"], ["missing", "no"]]},
+    {"id": "SW-16", "severity": "Low", "concepts": [["system-level", "whole system", "go-live"], ["acceptance criteria", "success gate"], ["missing", "no"]]},
+    {"id": "SW-17", "severity": "Low", "concepts": [["termination"], ["40%"], ["remaining unbilled"], ["basis", "evidenced cost"]]}
+  ],
+  "traps": [
+    {"id": "SW-T01", "concepts": [["fixed price"], ["defect", "invalid", "wrong"]]},
+    {"id": "SW-T02", "concepts": [["sites 2", "site 2"], ["optional"], ["optionality itself", "optional is invalid"]]},
+    {"id": "SW-T03", "concepts": [["expenses"], ["at cost"], ["defect", "invalid", "wrong"]]},
+    {"id": "SW-T04", "concepts": [["train-the-trainer"], ["defect", "invalid", "wrong"]]},
+    {"id": "SW-T05", "concepts": [["standing charges"], ["always invalid", "in principle invalid"]]},
+    {"id": "SW-T06", "concepts": [["34 weeks"], ["too long", "unrealistic duration"]]},
+    {"id": "SW-T07", "concepts": [["reasonable skill and care"], ["defect", "invalid", "weak standard"]]},
+    {"id": "SW-T08", "concepts": [["rates"], ["twelve months"], ["defect", "invalid", "wrong"]]}
+  ]
+}
