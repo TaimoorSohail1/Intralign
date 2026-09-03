@@ -2,6 +2,7 @@ import json
 from types import SimpleNamespace
 from uuid import UUID
 
+import pytest
 from pydantic import ValidationError
 
 from oslo_api.analysis import (
@@ -1269,6 +1270,7 @@ def test_evaluate_quarantines_only_findings_with_unsupported_evidence() -> None:
     )
 
     assert [issue.id for issue in assessment.issues] == ["ISS-SUPPORTED"]
+    assert assessment.issues[0].graph_node_id == "REQ-THRESHOLD"
     assert assessment.dependency_graph is not None
     assert [candidate.id for candidate in assessment.sensitivity_candidates] == [
         "ISS-SUPPORTED"
@@ -1278,6 +1280,24 @@ def test_evaluate_quarantines_only_findings_with_unsupported_evidence() -> None:
         "OUTCOME",
     )
     assert len(client.responses.requests) == 1
+
+    from oslo_api.analysis.openai_harness import _AssessmentOutput
+
+    invalid_payload = json.loads(json.dumps(payload))
+    invalid_payload["issues"][0]["graph_node_id"] = "UNKNOWN-NODE"
+    with pytest.raises(ValidationError, match="known dependency graph node"):
+        _AssessmentOutput.model_validate(invalid_payload)
+
+    duplicate_identity_payload = json.loads(json.dumps(payload))
+    duplicate_identity_payload["issues"][1].update(
+        {
+            "graph_node_id": "REQ-THRESHOLD",
+            "finding_type": "inference_gap",
+            "structural_target": "definition",
+        }
+    )
+    with pytest.raises(ValidationError, match="semantic identity must be unique"):
+        _AssessmentOutput.model_validate(duplicate_identity_payload)
 
 
 def test_assessment_schema_uses_provider_compatible_edge_key_array() -> None:

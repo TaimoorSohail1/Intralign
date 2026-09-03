@@ -13,6 +13,9 @@ def _issue(
     artifact_type: ArtifactType = ArtifactType.REQUIREMENTS,
     severity: str = "Critical",
     evidence_refs: tuple[str, ...] = ("document:plan:page:2:fragment:4",),
+    finding_type: str = "dependency_may_fail",
+    structural_target: str = "edge",
+    graph_node_id: str = "dependency:patient-migration",
 ) -> Issue:
     return Issue(
         id=issue_id,
@@ -24,6 +27,9 @@ def _issue(
         recommendation="Confirm the migration threshold.",
         evidence_refs=evidence_refs,
         clarification="What patient-match threshold is approved?",
+        finding_type=finding_type,
+        structural_target=structural_target,
+        graph_node_id=graph_node_id,
     )
 
 
@@ -46,6 +52,79 @@ def test_semantically_equivalent_issue_keeps_previous_stable_id() -> None:
     assert stabilized[0].dimension == "Feasibility"
 
 
+def test_same_plan_weakness_keeps_identity_when_wording_and_artifact_move() -> None:
+    previous = _issue(
+        "ISS-VENUE",
+        artifact_type=ArtifactType.RESOURCES,
+        title="No venue dependency is secured or bounded for the planned attendance",
+        why="The delivery plan does not confirm a venue contract or capacity boundary.",
+        graph_node_id="dependency:venue",
+    )
+    current = _issue(
+        "MODEL-NEW-ID",
+        artifact_type=ArtifactType.SCHEDULE,
+        title="Venue dependency is unsecured and unbounded",
+        why="No confirmed venue arrangement protects the event schedule.",
+        graph_node_id="dependency:venue",
+    )
+
+    stabilized = stabilize_issue_ids((current,), (previous,))
+
+    assert stabilized[0].id == "ISS-VENUE"
+
+
+def test_deterministic_conflict_keeps_identity_when_artifact_moves() -> None:
+    shared_refs = (
+        "document:plan:page:3:fragment:2",
+        "document:plan:page:5:fragment:4",
+    )
+    previous = _issue(
+        "DET-RESOURCES-CONFLICT-OLD",
+        artifact_type=ArtifactType.RESOURCES,
+        title="Phase 1 and first-release scope is internally inconsistent",
+        why=(
+            "The structured read records competing statements: native mobile, "
+            "occupancy, QR access and wearable data are required for first release; "
+            "native mobile and wearable sync are out of scope."
+        ),
+        evidence_refs=shared_refs,
+        finding_type="unowned",
+        structural_target="achievability",
+        graph_node_id="",
+    )
+    current = _issue(
+        "DET-INTENT-CONFLICT-NEW",
+        artifact_type=ArtifactType.INTENT,
+        title="Phase 1 and first-release intent is internally inconsistent",
+        why=(
+            "The structured read records competing statements: trainer scheduling "
+            "is mandatory for first release; native mobile, occupancy, QR access "
+            "and wearable data are required while also listed as out of scope."
+        ),
+        evidence_refs=("document:plan:page:2:fragment:1", *shared_refs),
+        finding_type="unowned",
+        structural_target="edge",
+        graph_node_id="",
+    )
+
+    stabilized = stabilize_issue_ids((current,), (previous,))
+
+    assert stabilized[0].id == "DET-RESOURCES-CONFLICT-OLD"
+
+
+def test_unmatched_deterministic_issue_keeps_its_canonical_id() -> None:
+    current = _issue(
+        "DET-RESOURCES-FUNDING-CONFLICT",
+        title="Funding statements conflict",
+        why="The approved and forecast funding totals differ.",
+        graph_node_id="",
+    )
+
+    stabilized = stabilize_issue_ids((current,), ())
+
+    assert stabilized[0].id == "DET-RESOURCES-FUNDING-CONFLICT"
+
+
 def test_new_issue_receives_deterministic_id_independent_of_model_id() -> None:
     first = _issue(
         "MODEL-ONE",
@@ -62,7 +141,88 @@ def test_new_issue_receives_deterministic_id_independent_of_model_id() -> None:
     second_id = stabilize_issue_ids((second,), ())[0].id
 
     assert first_id == second_id
-    assert first_id.startswith("ISS-REQUIREMENTS-")
+    assert first_id.startswith("ISS-V2-")
+
+
+def test_new_semantic_issue_id_ignores_generated_prose_and_artifact() -> None:
+    verbose = _issue(
+        "MODEL-ONE",
+        artifact_type=ArtifactType.RESOURCES,
+        title="No venue dependency is secured or bounded for the planned attendance",
+        why="The delivery plan does not confirm a venue contract or capacity boundary.",
+        graph_node_id="dependency:venue",
+    )
+    concise = _issue(
+        "MODEL-TWO",
+        artifact_type=ArtifactType.SCHEDULE,
+        title="Venue dependency is unsecured and unbounded",
+        why="No confirmed venue arrangement protects the event schedule.",
+        graph_node_id="dependency:venue",
+    )
+
+    verbose_id = stabilize_issue_ids((verbose,), ())[0].id
+    concise_id = stabilize_issue_ids((concise,), ())[0].id
+
+    assert verbose_id == concise_id
+
+
+def test_different_plan_elements_do_not_share_an_issue_id() -> None:
+    venue = _issue(
+        "MODEL-VENUE",
+        title="Venue dependency is unsecured",
+        why="No venue contract is confirmed.",
+        graph_node_id="dependency:venue",
+    )
+    catering = _issue(
+        "MODEL-CATERING",
+        title="Catering dependency is unsecured",
+        why="No catering contract is confirmed.",
+        graph_node_id="dependency:catering",
+    )
+
+    venue_id = stabilize_issue_ids((venue,), ())[0].id
+    catering_id = stabilize_issue_ids((catering,), ())[0].id
+
+    assert venue_id != catering_id
+
+
+def test_ambiguous_legacy_candidates_are_not_guessed() -> None:
+    current = _issue(
+        "MODEL-CURRENT",
+        title="Venue dependency is unsecured",
+        why="No venue contract is confirmed.",
+        graph_node_id="dependency:venue",
+    )
+    first = replace(current, id="LEGACY-ONE")
+    second = replace(current, id="LEGACY-TWO")
+
+    stabilized = stabilize_issue_ids((current,), (first, second))
+
+    assert stabilized[0].id.startswith("ISS-V2-")
+    assert stabilized[0].id not in {first.id, second.id}
+
+
+def test_last_legacy_issue_key_is_preserved_during_v2_rollout() -> None:
+    previous = _issue(
+        "ISS-LEGACY-MIGRATION",
+        title="Production migration acceptance thresholds undefined",
+        why="No approved patient-match threshold is documented.",
+    )
+    previous = replace(
+        previous,
+        finding_type="",
+        structural_target="",
+        graph_node_id="",
+    )
+    current = _issue(
+        "MODEL-NEW-ID",
+        title="Migration scope and patient-match threshold remain unconfirmed",
+        why="The production migration has no confirmed patient-match threshold.",
+    )
+
+    stabilized = stabilize_issue_ids((current,), (previous,))
+
+    assert stabilized[0].id == "ISS-LEGACY-MIGRATION"
 
 
 def test_duplicate_root_cause_merges_and_keeps_stronger_finding() -> None:

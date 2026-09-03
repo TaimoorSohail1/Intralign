@@ -99,10 +99,6 @@ def stabilize_issue_ids(
     unmatched = {issue.id: issue for issue in previous}
     stabilized = []
     for issue in current:
-        if issue.id.startswith("DET-"):
-            stabilized.append(issue)
-            unmatched.pop(issue.id, None)
-            continue
         if issue.id in previous_by_id:
             unmatched.pop(issue.id, None)
             stabilized.append(issue)
@@ -112,15 +108,33 @@ def stabilize_issue_ids(
             unmatched.pop(candidate.id, None)
             stabilized.append(replace(issue, id=candidate.id))
             continue
+        if issue.id.startswith("DET-"):
+            stabilized.append(issue)
+            continue
         stabilized.append(replace(issue, id=_deterministic_id(issue)))
     return tuple(stabilized)
 
 
 def _best_match(issue: Issue, candidates: tuple[Issue, ...]) -> Issue | None:
+    semantic_key = _semantic_key(issue)
+    if semantic_key is not None:
+        semantic_matches = tuple(
+            candidate
+            for candidate in candidates
+            if _semantic_key(candidate) == semantic_key
+        )
+        if len(semantic_matches) == 1:
+            return semantic_matches[0]
+        if len(semantic_matches) > 1:
+            return None
+
     issue_tokens = _tokens(issue)
     best: tuple[float, Issue] | None = None
     for candidate in candidates:
-        if candidate.artifact_type is not issue.artifact_type:
+        if (
+            candidate.artifact_type is not issue.artifact_type
+            and not _same_root_cause(issue, candidate)
+        ):
             continue
         candidate_tokens = _tokens(candidate)
         union = issue_tokens | candidate_tokens
@@ -130,6 +144,15 @@ def _best_match(issue: Issue, candidates: tuple[Issue, ...]) -> Issue | None:
         if best is None or score > best[0]:
             best = (score, candidate)
     return best[1] if best is not None and best[0] >= 0.38 else None
+
+
+def _semantic_key(issue: Issue) -> tuple[str, str, str] | None:
+    graph_node_id = issue.graph_node_id.strip().casefold()
+    finding_type = issue.finding_type.strip().casefold()
+    structural_target = issue.structural_target.strip().casefold()
+    if not graph_node_id or not finding_type or not structural_target:
+        return None
+    return graph_node_id, finding_type, structural_target
 
 
 def _tokens(issue: Issue) -> set[str]:
@@ -223,6 +246,12 @@ def _concrete_tokens(issue: Issue) -> set[str]:
 
 
 def _deterministic_id(issue: Issue) -> str:
+    semantic_key = _semantic_key(issue)
+    if semantic_key is not None:
+        normalized = "|".join(semantic_key)
+        digest = hashlib.sha256(normalized.encode()).hexdigest()[:16].upper()
+        return f"ISS-V2-{digest}"
+
     normalized = " ".join(sorted(_tokens(issue)))
     digest = hashlib.sha256(
         f"{issue.artifact_type.value}|{normalized}".encode()
