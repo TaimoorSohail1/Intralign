@@ -1,0 +1,48 @@
+{
+  "schema": "deferrals/v1",
+  "note": "Pushing a row out of an iteration is an OWNER RULING, recorded here with a date and a reason. A date passing is not a deferral. Deferred rows are rendered in a visible tail of ITERATION_QUEUE.md, never hidden — and a row deferred TWICE escalates, because the second slip means the row's premise, not its timing, is what is wrong.",
+
+  "fields": {
+    "row": "the row id exactly as it appears in the queue",
+    "from": "iteration id it is leaving",
+    "to": "iteration id it lands in, or 'unscheduled' (which escalates on sight)",
+    "ruled_by": "who ruled it — the owner, named. AI never defers.",
+    "date": "YYYY-MM-DD the ruling was made",
+    "why": "the reason. 'no capacity' is a reason; 'not done' is not."
+  },
+
+  "deferrals": [
+    {
+      "row": "RB-101",
+      "from": "iteration-1",
+      "to": "iteration-2",
+      "ruled_by": "owner",
+      "date": "2026-08-31",
+      "why": "Owner-only, and 28 capability rulings compete directly with R2.2 design for the same hours. R2.2 design is an iteration-1 commitment; Tier 2's adjudication is not. Accepted cost: RB-101 is the row that surfaced RB-102, so delaying it delays whatever else it would surface."
+    },
+    {
+      "row": "RB-126",
+      "from": "iteration-1",
+      "to": "iteration-2",
+      "ruled_by": "owner",
+      "date": "2026-08-31",
+      "why": "A doctrine question that does not block the R2.1 freeze. Deliberately sequenced after the freeze so it gets a full cycle rather than landing on a freeze day. Accepted cost: it is a live honesty-doctrine exposure in a shipping tier — a fixed Free Deep/day cap plus only-reanalysis-resolves can leave a user unable to see their own work land."
+    },
+    {
+      "row": "RB-127",
+      "from": "iteration-1",
+      "to": "iteration-2",
+      "ruled_by": "owner",
+      "date": "2026-08-31",
+      "why": "Additive value rather than a defect — the engine already computes leverage and simply never surfaces it. Natural R2.2 design scope, and the lowest-risk row of the four to move."
+    },
+    {
+      "row": "RB-079",
+      "from": "iteration-1",
+      "to": "iteration-2",
+      "ruled_by": "owner",
+      "date": "2026-08-31",
+      "why": "Dev-owned, and competes with L4 (defect lane) and L5 (promotion enforcement) for the same person inside one iteration. Sequencing it after L3 also lets the handoff contract settle the resource vocabulary before the server realizes it, rather than realizing a vocabulary the contract may restate."
+    }
+  ]
+}
