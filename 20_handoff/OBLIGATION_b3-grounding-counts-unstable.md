@@ -4,8 +4,10 @@
 **Fix:** TaimoorSohail1
 **Accepts:** idris-manley
 **Class:** R2.0 production blocker · blocking for production
-**Raised:** 2026-08-29 staging fitness audit — `release-2/BUILD_READINESS_AUDIT_2026-08-29_R2.0_STAGING.md`
-**Invariants violated:** ⚠️ NOT YET DETERMINED — the GT acceptance register lives on the design line and was not reachable when this obligation was written. **Escalated, not guessed.** Owner or dev lead to fill the GT ids before this row is accepted.
+**Raised:** 2026-08-29 staging fitness audit — `20_handoff/audits/BUILD_READINESS_AUDIT_2026-08-29_R2.0_STAGING.md` *(path corrected 2026-09-02: this row cited `release-2/…`, which exists on no ref. B0 cited the same audit correctly.)*
+**Invariants violated:** ▶ **RULED 2026-09-02 — `GT-61 · GT-93`** *(the grounding counter matches state)*. Not derived here: `R2.0_PRODUCTION_ACCEPTANCE_CRITERIA` §4b binds them to this defect by name — *"GT-61 · GT-93 grounding counter matches state · **B3 — numerator fell to 0 after two attestations** · ⚠️ FAILS"*.
+⚠️ **`GT-35` is deliberately NOT bound.** §4b annotates it *"⚠️ B3"*, so the association is on the record — but **R2.0-9 ruled GT-35 UNTESTED**, and binding an untested criterion into this row's acceptance would let B3 close against something never measured. That is skip-as-pass in a new place. GT-35's annotation stands as a cross-reference, not a binding, and it moves here only once it has been tested.
+*(The field previously read "NOT YET DETERMINED — the GT acceptance register lives on the design line and was not reachable when this obligation was written." That reason expired: `design/release-2.1` is current and reachable.)*
 
 ## 1 · What was measured
 

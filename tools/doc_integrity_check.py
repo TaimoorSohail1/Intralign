@@ -80,6 +80,16 @@ for f in MD:
         if not CLEAN_REF.match(t): continue
         if t.startswith("_") or re.search(r"\d/\d", t): continue   # "_002.md", "001/002.md" shorthand
         if "/" in t:
+            # ⚠️ KNOWN GAP, MEASURED 2026-09-02 — the third clause accepts a reference whose DIRECTORY is
+            # wrong whenever the BASENAME exists anywhere in the corpus. A link that resolves by basename
+            # is not a link that resolves: this validates EXISTENCE, not LOCATION.
+            # Live instance: OBLIGATION_b1/b2/b3 each cited their own originating audit as
+            # `release-2/BUILD_READINESS_AUDIT_2026-08-29_R2.0_STAGING.md` — a path present on NO ref —
+            # for four days, green the whole time, because the file exists at `20_handoff/audits/`.
+            # B0 cited it correctly, so the three were provably wrong rather than conventionally loose.
+            # ⚠️ NOT CHANGED HERE. Tightening this is Altering: it would newly fail every legitimately
+            # relocated reference in the corpus at once, so it needs its own PR, its own RED-proof in both
+            # directions, and a measured count of what it would break before it can be trusted green.
             ok = (f.parent / t).exists() or (ROOT / t).exists() or Path(t).name in ALL_BASENAMES
         else:
             ok = t in ALL_BASENAMES

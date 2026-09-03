@@ -4,8 +4,9 @@
 **Fix:** TaimoorSohail1
 **Accepts:** idris-manley
 **Class:** R2.0 production blocker · blocking for production
-**Raised:** 2026-08-29 staging fitness audit — `release-2/BUILD_READINESS_AUDIT_2026-08-29_R2.0_STAGING.md`
-**Invariants violated:** ⚠️ NOT YET DETERMINED — the GT acceptance register lives on the design line and was not reachable when this obligation was written. **Escalated, not guessed.** Owner or dev lead to fill the GT ids before this row is accepted.
+**Raised:** 2026-08-29 staging fitness audit — `20_handoff/audits/BUILD_READINESS_AUDIT_2026-08-29_R2.0_STAGING.md` *(path corrected 2026-09-02: this row cited `release-2/…`, which exists on no ref. B0 cited the same audit correctly.)*
+**Invariants violated:** ▶ **RULED 2026-09-02 — `GT-67`** *(settled never regresses on landing)*. Not derived here: `R2.0_PRODUCTION_ACCEPTANCE_CRITERIA` §4b already binds it to this defect by name — *"GT-67 settled never regresses on landing · **B2 — attested work returned as the top task** · ⚠️ FAILS"*. The blank was filled from the record, not from judgement.
+*(The field previously read "NOT YET DETERMINED — the GT acceptance register lives on the design line and was not reachable when this obligation was written." That reason expired: `design/release-2.1` is current and reachable.)*
 
 ## 1 · What was measured
 
@@ -43,6 +44,13 @@ On the deployed build carrying the fix, each result reported with the command or
 2. **No finding leaves the set without a transition.** Every disappearance is a resolve or a withdraw, visible in History. If a finding vanishes silently, this row does not close regardless of item 1 — that is the unexplained half.
 3. **The reworded case specifically:** a finding whose wording changes between runs keeps its identity and its attestation join. Demonstrated, not asserted from unit tests.
 4. **The historical orphan repair is scoped** — the affected projects and keys identified, the repair run or explicitly ruled unnecessary with the count that supports it.
+
+   ▶ **RULED 2026-09-02 — owner, date and ticket.** §5 recorded that this repair *"currently has no owner, no date and no ticket"*; that is now closed.
+   - **Owner: TaimoorSohail1.** R2.0-5 assigns product/engine defects to him, and he authored the change that stops NEW orphans being created. The repair of the ones already there belongs with it.
+   - **Date: after the B-series deployment, not before.** ⚠️ **Repairing before the fix ships re-orphans on the next run** — the change explicitly does not delete already-orphaned attestations, so a repair run against an un-fixed build produces new ones. The dependency is the date; a fixed calendar date that the deploy can miss would be a commitment the apparatus could not keep.
+   - **Ticket: this item.** Per R2.0-1 every open subset criterion gets a durable object, and this obligation is B2's. The repair is not split into its own row because it cannot close independently of items 1–3: all four are evidenced on the same deployed build, in the same session.
+
+   ⚠️ **This item can fail on its own.** If the affected keys are identified and the repair is neither run nor ruled unnecessary *with a supporting count*, item 4 is unmet and **B2 does not close**, however items 1–3 read.
 
 ## 5 · Notes
 

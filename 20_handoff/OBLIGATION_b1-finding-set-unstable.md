@@ -4,8 +4,14 @@
 **Fix:** TaimoorSohail1
 **Accepts:** idris-manley
 **Class:** R2.0 production blocker · blocking for production
-**Raised:** 2026-08-29 staging fitness audit — `release-2/BUILD_READINESS_AUDIT_2026-08-29_R2.0_STAGING.md`
-**Invariants violated:** ⚠️ NOT YET DETERMINED — the GT acceptance register lives on the design line and was not reachable when this obligation was written. **Escalated, not guessed.** Owner or dev lead to fill the GT ids before this row is accepted.
+**Raised:** 2026-08-29 staging fitness audit — `20_handoff/audits/BUILD_READINESS_AUDIT_2026-08-29_R2.0_STAGING.md` *(path corrected 2026-09-02: this row cited `release-2/…`, which exists on no ref. B0 cited the same audit correctly.)*
+**Invariants violated:** ⚠️⚠️ **NONE EXIST — RULED 2026-09-02 as a COVERAGE GAP, not a blank to be filled.**
+
+The original blank said the register *"was not reachable when this obligation was written."* That reason expired — `design/release-2.1` is current and reachable — so the field was re-examined and the answer is worse than *unknown*. **Measured:** `R2.0_PRODUCTION_ACCEPTANCE_CRITERIA` §4b binds a GT id to B2 (`GT-67`) and to B3 (`GT-61 · GT-93`) **by name**, and binds **nothing to B1**. No criterion in the twenty-id production-gating subset would catch *the finding set changing across re-analyses of a plan that was never edited.*
+
+⇒ **This is the third instance of the pattern §3 of that document already names:** *"N-1 and N-4 would each have caught a blocking defect this week. Neither has an entry in the GT register. That is the measure of what 'doctrine-only' leaves uncovered."* N-1 and N-4 were minted in response. B1 was not, and has been carried as a production blocker since 2026-08-29 with nothing that would have caught it.
+
+⚠️ **No id is minted here, deliberately.** R2.0-6 already mints four, and RB-109's range of record is unsettled — minting a fifth inside an obligation row would put a criterion into the subset without passing through the act that governs subset membership. **The gap is recorded; closing it is a separate ruling.** Until then this row's acceptance cannot cite an invariant, and that absence is the finding.
 
 ## 1 · What was measured
 
