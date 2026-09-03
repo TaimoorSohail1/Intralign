@@ -317,6 +317,32 @@ def declared_fixtures(root, paths):
 
 REGISTER_ROW_RE = re.compile(r"^\|\s*\*\*DL-(\d{3,})\*\*\s*\|")
 
+# ── Decision INDEXES ────────────────────────────────────────────────────────────────────────────
+# ⚠️ The R2 series was maintained as an INDEX, not as one file per decision. Only some entries were ever
+# promoted to records/, so a citation to an adjudicated-but-unpromoted decision read as "resolves to no
+# record" — 12 of them, every one carrying a ratified disposition in the index below. The corpus was not
+# incomplete; the resolver could not see where the series actually lived.
+#
+# DECLARED, NEVER GLOBBED. A glob would let any new file silently become an authority for resolving
+# citations. Each index is named, and a declared index that is ABSENT is an ERROR — so adopting this
+# mechanism forces the index itself to graduate rather than letting the gate go quiet.
+DECISION_INDEX_RELS = ("00_owner/decisions/indexes/R2_DECISION_INDEX_PHASE_A.md",)
+
+# ⚠️ DEFAULT-DENY, ON AN EXPLICIT MARKER. A first draft resolved any structured table row, and the very
+# first row of the real index is
+#     | DL-157, 159, 160, 161, 163 | **Occur nowhere** — no record, no reference, on any branch |
+# — a row whose PURPOSE is to record that those decisions do not exist. Inferring resolution from row
+# SHAPE would have made an absence record into an authority. So the index must SAY which rows resolve:
+# the marker is `[R]`, placed in the readiness column, and a row without it resolves nothing.
+INDEX_ROW_RE = re.compile(r"^\|\s*\*{0,2}DL-\d{3,}")
+INDEX_MARK = "[R]"
+# Ranges and comma lists are real in this index (`DL-200–205`, `DL-157, 159, 160`). Capturing only the
+# first id of a row would resolve DL-200 and silently refuse DL-205 — arbitrary, and arbitrary is not a
+# rule. Every id a marked row catalogues resolves; no id an unmarked row mentions does.
+INDEX_RANGE_RE = re.compile(r"DL-(\d{3,})\s*[\u2013\u2014\u2026-]\s*(\d{3,})")
+INDEX_ID_RE = re.compile(r"DL-(\d{3,})")
+INDEX_BARE_ID_RE = re.compile(r"(?<![\w-])(\d{3})(?![\d])")
+
 
 # ⚠️ THE SUBJECT IS THE TRACKED CORPUS, NOT THE FILESYSTEM. A draft of this gate walked rglob and was
 # handed to the owner; on his clone it failed instantly on EIGHT ids cited only in
@@ -404,6 +430,13 @@ def cited_ids_canonical(root=ROOT):
             continue
         if rel == REGISTER_REL:
             continue
+        # ⚠️ A DECLARED INDEX MAY NOT CITE ITSELF — the same treatment REGISTER_REL gets directly above,
+        # and for the same reason. An index CATALOGUES ids; reading its own rows as CITATIONS makes the
+        # document the author of its own demand, so it resolves what nothing outside it ever asked for.
+        # MEASURED 2026-09-02 on the merged graduation chain: without this, 45 of 51 resolutions were
+        # the index citing itself; with it, 13 remain and every one has a citer outside the index.
+        if rel in DECISION_INDEX_RELS:
+            continue
         f = root / rel
         if not f.is_file():
             continue
@@ -431,6 +464,41 @@ def register_ids(root=ROOT):
     return out
 
 
+def indexed_ids(root=ROOT):
+    """({id: rel}, errors) — ids catalogued as a structured row of a DECLARED decision index.
+
+    An index entry is a resolvable record: it carries the id, the substance and the ratified
+    disposition. What it is not is a promotion — an id resolved here still has no record file, and the
+    notice in check_citations_resolve says so on every run rather than letting it pass silently.
+    """
+    out, errs = {}, []
+    for rel in DECISION_INDEX_RELS:
+        f = Path(root) / rel
+        if not f.exists():
+            # ⚠️ FAIL-CLOSED, BUT ONLY FOR THE REAL CORPUS. A first draft raised this in every tree and
+            # broke six existing fixtures — synthetic trees carry no index and should not be required to.
+            # Resolution is tree-local; "a declared index must EXIST" is a corpus-level invariant.
+            if Path(root) == ROOT:
+                errs.append(f"[index-missing] {rel} is declared in DECISION_INDEX_RELS but is not "
+                            f"present. A declared index that cannot be read must FAIL — an unreadable "
+                            f"authority is not an absent constraint (DL-243 6b). Graduate the index, "
+                            f"or undeclare it.")
+            continue
+        for line in f.read_text(encoding="utf-8", errors="ignore").splitlines():
+            l = line.strip()
+            if not INDEX_ROW_RE.match(l) or INDEX_MARK not in l:
+                continue
+            cell = l.split("|")[1] if "|" in l else l
+            ids = set()
+            for a, b in INDEX_RANGE_RE.findall(cell):
+                ids.update(range(int(a), int(b) + 1))
+            ids.update(int(x) for x in INDEX_ID_RE.findall(cell))
+            ids.update(int(x) for x in INDEX_BARE_ID_RE.findall(cell))
+            for n in ids:
+                out.setdefault(n, rel)
+    return out, errs
+
+
 def check_citations_resolve(root=ROOT):
     """(errors, notices). A cited id must resolve to a record or be an owner-ratified debt row.
 
@@ -447,7 +515,8 @@ def check_citations_resolve(root=ROOT):
     recorded = recorded_ids(root)
     cited = cited_ids_canonical(root)
     reg = register_ids(root)
-    errs, notes = [], []
+    idx, idx_errs = indexed_ids(root)
+    errs, notes = list(idx_errs), []
     _fpaths, _fscope = scan_paths(root)
     if _fpaths is not None:
         _, _ferrs = declared_fixtures(root, _fpaths)
@@ -458,6 +527,12 @@ def check_citations_resolve(root=ROOT):
                  f"it — fix the checkout, do not treat an unseen corpus as a clean one."], notes)
     for n in sorted(cited):
         if n in recorded or n in reg:
+            continue
+        if n in idx:
+            # Resolved, and deliberately NOISY: an index entry is a record for citation purposes and
+            # is still not a promoted record file. Silence here would hide the shape of the corpus.
+            notes.append(f"[citation-indexed] DL-{n:03d} resolves at {idx[n]} (index entry, not a "
+                         f"record file) — cited by {cited[n][0]}")
             continue
         where = ", ".join(cited[n][:2])
         errs.append(
@@ -716,6 +791,84 @@ def self_test():
     e, _ = check_citations_resolve(root=t)
     if not any("citation-unresolved" in x and tag(301) in x for x in e):
         fails.append("a cited id with no record and no register row did not fail the citation gate")
+
+    # ── INDEX resolution, RED-proved in BOTH directions (added 2026-09-02) ───────────────────────
+    # ⚠️ The dangerous failure is not "an index entry does not resolve" — it is an index that resolves
+    # EVERYTHING. I1 and I2 differ by one ROW, so a green I1 cannot be a fixture that always passes.
+    idxrel = DECISION_INDEX_RELS[0]
+    idxrow = lambda ids: ("| id | what | disposition | R2 |\n|---|---|---|---|\n"
+                          + "".join("| DL-%03d | fixture | CARRY-MODS | ok [R] |\n" % i for i in ids))
+    idxrow_unmarked = lambda ids: ("| id | what | disposition | R2 |\n|---|---|---|---|\n"
+                          + "".join("| DL-%03d | fixture | CARRY-MODS | ok |\n" % i for i in ids))
+
+    # I1 GREEN — cited, no record, no register row, but CATALOGUED in a declared index: must pass.
+    s1 = cited_only(311); s1[idxrel] = idxrow([311])
+    e, n1 = check_citations_resolve(root=tree(s1))
+    if e:
+        fails.append("an indexed decision did not resolve: %s" % e[0].splitlines()[0])
+    if not any("citation-indexed" in x and tag(311) in x for x in n1):
+        fails.append("an index resolution was silent — it must announce that no record file exists")
+
+    # I2 RED — the SAME tree, index present but WITHOUT that row: must still ERROR.
+    # This is the clause that proves the index is being read as a catalogue, not as a blanket exemption.
+    s2 = cited_only(312); s2[idxrel] = idxrow([999])
+    e, _ = check_citations_resolve(root=tree(s2))
+    if not any("citation-unresolved" in x and tag(312) in x for x in e):
+        fails.append("an id ABSENT from the declared index still resolved — the index is exempting "
+                     "everything, which is the failure this mechanism must not introduce")
+
+    # I3 RED — a MENTION is not a row. The id appears in prose only: must still ERROR.
+    s3 = cited_only(313); s3[idxrel] = idxrow([999]) + ("\nSee also %s, which has no record.\n" % tag(313))
+    e, _ = check_citations_resolve(root=tree(s3))
+    if not any("citation-unresolved" in x and tag(313) in x for x in e):
+        fails.append("a bare MENTION in the index resolved a citation — INDEX_ROW_RE is too loose")
+
+    # I5 RED — the row is present and catalogues the id, but carries NO [R] marker: must still ERROR.
+    # This is the absence-row case, generalised: the index decides what resolves, not the row's shape.
+    s5 = cited_only(315); s5[idxrel] = idxrow_unmarked([315])
+    e, _ = check_citations_resolve(root=tree(s5))
+    if not any("citation-unresolved" in x and tag(315) in x for x in e):
+        fails.append("an UNMARKED index row resolved a citation — the marker is not load-bearing, so a "
+                     "row recording a decision's ABSENCE would resolve it")
+
+    # I6 GREEN — a marked RANGE row resolves every id it spans, not just the first.
+    s6 = cited_only(317)
+    s6[idxrel] = ("| id | what | d | R2 |\n|---|---|---|---|\n| %s\u2013318 | fixture | CARRY | ok [R] |\n"
+                  % tag(316))
+    e, _ = check_citations_resolve(root=tree(s6))
+    if e:
+        fails.append("a marked RANGE row did not resolve an id inside it: %s" % e[0].splitlines()[0])
+
+    # I7 GREEN — an index's OWN rows are not citations. A tree whose only mention of an id is the
+    # index row that catalogues it must pass, and must NOT announce a resolution, because nothing
+    # cited it. Without the DECISION_INDEX_RELS exclusion this tree resolves — self-authored demand.
+    s7 = {"00_owner/decisions/decision_log.md": frozen, idxrel: idxrow([321])}
+    e, n7 = check_citations_resolve(root=tree(s7))
+    if e:
+        fails.append("an index row citing only itself raised an error: %s" % e[0].splitlines()[0])
+    if any(tag(321) in x for x in n7):
+        fails.append("the index resolved an id NOTHING outside it cited — a document became the "
+                     "author of its own demand")
+
+    # I8 RED — the exclusion must not blind the gate. The SAME id, cited by a real canonical file and
+    # absent from the index, must still ERROR. I7 and I8 differ only in who does the citing.
+    s8 = cited_only(322); s8[idxrel] = idxrow([999])
+    e, _ = check_citations_resolve(root=tree(s8))
+    if not any("citation-unresolved" in x and tag(322) in x for x in e):
+        fails.append("excluding the index as a citer also hid a citation from a real file — the "
+                     "exclusion is too wide")
+
+    # I4 RED — a DECLARED index that is absent must fail closed at the REAL corpus, not pass quietly.
+    # Proved directly against indexed_ids: every declared index is checked, and absence is an error.
+    _saved = globals()["DECISION_INDEX_RELS"]
+    try:
+        globals()["DECISION_INDEX_RELS"] = ("00_owner/decisions/indexes/DOES-NOT-EXIST.md",)
+        _, ie = indexed_ids(root=ROOT)
+        if not any("index-missing" in x for x in ie):
+            fails.append("a declared-but-absent decision index did not fail at the real root — "
+                         "skip-as-pass in the mechanism that exists to prevent it")
+    finally:
+        globals()["DECISION_INDEX_RELS"] = _saved
 
     # C2 GREEN — the same tree plus an owner-ratified debt row: must pass.
     s = cited_only(302); s[REGISTER_REL] = reg([302])
