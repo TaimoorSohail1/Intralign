@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 
 from oslo_api.analysis.advisor import ProjectAdvisor
@@ -13,6 +15,28 @@ from oslo_api.api.session import router as session_router
 from oslo_api.slice_four import SliceFourApplication
 from oslo_api.slice_one import SliceOneApplication
 from oslo_api.slice_two import SliceTwoApplication
+
+_BUILD_IDENTITY_VARIABLES = (
+    "BUILD_SHA",
+    "HEROKU_SLUG_COMMIT",
+    "SOURCE_VERSION",
+    "VERCEL_GIT_COMMIT_SHA",
+)
+
+
+def build_identity() -> str:
+    """Resolve the running build to its source commit.
+
+    Criterion N-5: a measurement can only be attributed to a build when a
+    surface names the commit it was taken from. Returns "unknown" rather than
+    guessing, so an unstamped deploy is visible instead of silently plausible.
+    """
+
+    for variable in _BUILD_IDENTITY_VARIABLES:
+        commit = os.environ.get(variable, "").strip()
+        if commit:
+            return commit
+    return "unknown"
 
 
 def create_app(
@@ -47,7 +71,11 @@ def create_app(
 
     @app.get("/health", tags=["operations"])
     def health() -> dict[str, str]:
-        return {"status": "ready", "service": "oslo-api"}
+        return {
+            "status": "ready",
+            "service": "oslo-api",
+            "build": build_identity(),
+        }
 
     install_public_schema_guard(app)
     return app

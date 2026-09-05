@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeInitializer } from "@/components/workspace/theme-initializer";
+import { buildIdentity } from "@/lib/build-identity";
 
 import "./globals.css";
 
@@ -16,6 +17,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-build={buildIdentity()}
       suppressHydrationWarning
     >
       <body>
