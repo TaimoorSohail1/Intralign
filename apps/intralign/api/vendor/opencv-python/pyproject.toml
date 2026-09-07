@@ -1,0 +1,12 @@
+[project]
+name = "opencv-python"
+version = "5.0.0.93"
+description = "Compatibility shim selecting the headless OpenCV wheel for serverless deployment."
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "opencv-python-headless==4.12.0.88",
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
