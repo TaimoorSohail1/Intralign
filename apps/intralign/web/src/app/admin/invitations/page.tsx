@@ -41,7 +41,7 @@ export default async function InvitationsPage({ searchParams }: InvitationsPageP
       <section className="admin-content">
         <p className="eyebrow">Workspace access</p><h1>Invitations</h1>
         <p className="admin-copy">Invite trusted teammates into OSLO. Every link is unique and expires after 14 days.</p>
-        {sent ? <p className="success-notice">Invitation sent to {sent}.</p> : null}
+        {sent ? <p className="success-notice">Invitation sent to {sent}. It is pending acceptance by the recipient.</p> : null}
         {updated ? <p className="success-notice">Invitation {updated}.</p> : null}
         {error ? <p className="form-error" id="invite-error" role="alert">{error}</p> : null}
         <form action={inviteMember} className="invite-form">
@@ -53,7 +53,9 @@ export default async function InvitationsPage({ searchParams }: InvitationsPageP
           {invitations.length === 0 ? <p className="table-empty">No invitations yet.</p> : invitations.map((invitation) => (
             <article className="invitation-row" key={invitation.id}>
               <div><strong>{invitation.email}</strong><span>Owner invitation · expires {new Date(invitation.expires_at).toLocaleDateString("en-GB")}</span></div>
-              <span className={`status-badge status-${invitation.status}`}>{invitation.status}</span>
+              <span className={`status-badge status-${invitation.status}`}>
+                {invitation.status === "pending" ? "sent · pending acceptance" : invitation.status}
+              </span>
               {invitation.status === "pending" ? <div className="row-actions">
                 <form action={resendMemberInvitation}><input name="invitation_id" type="hidden" value={invitation.id} /><Button variant="ghost" type="submit">Resend</Button></form>
                 <form action={revokeMemberInvitation}><input name="invitation_id" type="hidden" value={invitation.id} /><Button variant="danger" type="submit">Revoke</Button></form>
