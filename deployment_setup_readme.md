@@ -78,7 +78,7 @@ WEB_URL=http://localhost:3000
 OPENAI_API_KEY=<openai-api-key>
 POSTMARK_SERVER_TOKEN=<postmark-server-token>
 EMAIL_FROM=<verified-sender-address>
-FROM_NAME=ElectraAgentOS
+FROM_NAME=<sender-display-name>
 OBJECT_STORAGE_BACKEND=local
 OBJECT_STORAGE_BUCKET=oslo-source-documents
 ```
@@ -140,7 +140,7 @@ WEB_URL=https://app.intralign.ai
 OPENAI_API_KEY=<openai-api-key>
 POSTMARK_SERVER_TOKEN=<postmark-server-token>
 EMAIL_FROM=<verified-sender-address>
-FROM_NAME=ElectraAgentOS
+FROM_NAME=<sender-display-name>
 OBJECT_STORAGE_BACKEND=supabase
 OBJECT_STORAGE_BUCKET=oslo-source-documents
 ```
@@ -204,4 +204,3 @@ passes and the release is approved.
 - Frontend: <https://app.intralign.ai>
 - Backend: <https://api.intralign.ai>
 - Vercel environment variables: <https://vercel.com/docs/environment-variables>
-
