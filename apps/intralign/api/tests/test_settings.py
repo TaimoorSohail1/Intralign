@@ -21,3 +21,12 @@ def test_settings_preserves_an_explicit_sqlalchemy_driver() -> None:
     assert settings.database_url == (
         "postgresql+psycopg://postgres:postgres@127.0.0.1:55322/postgres"
     )
+
+
+def test_settings_accepts_inline_serverless_analysis_execution() -> None:
+    settings = Settings(
+        analysis_execution_mode="inline",
+        supabase_secret_key="local-test-secret-key-value",
+    )
+
+    assert settings.analysis_execution_mode == "inline"

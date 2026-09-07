@@ -1,6 +1,8 @@
 import { startAnalysis } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
 
+export const maxDuration = 300;
+
 export async function POST(request: Request, context: RouteContext<"/api/projects/[projectId]/analysis-runs">) {
   const session = await readSession();
   if (!session.accessToken) return Response.json({ message: "Unauthorized" }, { status: 401 });

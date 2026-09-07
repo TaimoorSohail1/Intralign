@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "src/main.py": {
+      "includeFiles": "src/oslo_api/**",
+      "maxDuration": 300
+    }
+  }
+}

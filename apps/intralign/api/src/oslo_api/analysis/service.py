@@ -53,6 +53,13 @@ class AnalysisDispatcher(Protocol):
     def submit(self, function: Callable[[UUID], object], run_id: UUID) -> object: ...
 
 
+class InlineAnalysisExecutor:
+    """Run analysis inside the request so serverless shutdown cannot abandon it."""
+
+    def submit(self, function: Callable[[UUID], object], run_id: UUID) -> object:
+        return function(run_id)
+
+
 class DatabaseSliceTwoApplication:
     def __init__(
         self,
@@ -3344,14 +3351,15 @@ def build_slice_two_application() -> DatabaseSliceTwoApplication:
         artifact_workers_per_run=min(4, settings.analysis_artifact_worker_threads),
         artifact_worker_limit=settings.analysis_artifact_worker_threads,
     )
-    executor = (
-        DatabaseAnalysisJobQueue(engine)
-        if settings.analysis_execution_mode == "durable"
-        else ThreadPoolExecutor(
+    if settings.analysis_execution_mode == "durable":
+        executor = DatabaseAnalysisJobQueue(engine)
+    elif settings.analysis_execution_mode == "inline":
+        executor = InlineAnalysisExecutor()
+    else:
+        executor = ThreadPoolExecutor(
             max_workers=settings.analysis_worker_threads,
             thread_name_prefix="oslo-analysis",
         )
-    )
     return DatabaseSliceTwoApplication(
         engine=engine,
         store=store,
