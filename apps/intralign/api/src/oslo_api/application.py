@@ -1,4 +1,6 @@
 import json
+import logging
+from dataclasses import replace
 from datetime import UTC, datetime
 from hashlib import sha256
 from secrets import token_urlsafe
@@ -34,6 +36,14 @@ from oslo_api.tiering.repository import (
     get_workspace_plan,
     record_limit_event,
 )
+
+logger = logging.getLogger(__name__)
+
+
+def _recipient_fingerprint(email: str) -> str:
+    """Return a stable correlation value without placing recipient PII in logs."""
+
+    return sha256(email.strip().lower().encode("utf-8")).hexdigest()[:12]
 
 
 class InvitationMailer(Protocol):
@@ -486,29 +496,36 @@ class DatabaseSliceOneApplication:
                     ),
                 },
             )
-        query = urlencode({"token": issued.token})
+        activation_url = f"{self._web_url}/activate?{urlencode({'token': issued.token})}"
+        invitation = replace(issued.invitation, activation_url=activation_url)
         try:
+            logger.info(
+                "invitation_delivery_attempt operation=initial invitation_id=%s workspace_id=%s "
+                "recipient_sha256=%s",
+                issued.invitation.id,
+                workspace_id,
+                _recipient_fingerprint(issued.invitation.email),
+            )
             self._mailer.send_invitation(
-                email=issued.invitation.email,
+                email=invitation.email,
                 workspace_name=workspace_name,
                 role=(
-                    "Delegate-PM"
-                    if issued.invitation.role is MembershipRole.DELEGATE_PM
-                    else "Owner"
+                    "Delegate-PM" if invitation.role is MembershipRole.DELEGATE_PM else "Owner"
                 ),
-                activation_url=f"{self._web_url}/activate?{query}",
-                expires_at=issued.invitation.expires_at,
+                activation_url=activation_url,
+                expires_at=invitation.expires_at,
             )
         except Exception as error:
+            logger.warning(
+                "invitation_delivery_failed operation=initial invitation_id=%s workspace_id=%s "
+                "recipient_sha256=%s error_type=%s",
+                issued.invitation.id,
+                workspace_id,
+                _recipient_fingerprint(issued.invitation.email),
+                type(error).__name__,
+                exc_info=True,
+            )
             with self._engine.begin() as connection:
-                connection.execute(
-                    text(
-                        "update public.invitations "
-                        "set status = 'revoked', revoked_at = now() "
-                        "where id = :invitation_id and status = 'pending'"
-                    ),
-                    {"invitation_id": issued.invitation.id},
-                )
                 connection.execute(
                     text(
                         """
@@ -528,8 +545,18 @@ class DatabaseSliceOneApplication:
                         "metadata": json.dumps({"email": issued.invitation.email}),
                     },
                 )
-            raise InvitationDeliveryFailed(issued.invitation.id) from error
-        return issued.invitation
+            # The invitation is already durable and the owner receives its
+            # one-time URL in this response. Do not discard that safe manual
+            # delivery path merely because the mail provider is unavailable.
+            return replace(invitation, delivery_status="unavailable")
+        logger.info(
+            "invitation_delivery_accepted operation=initial invitation_id=%s workspace_id=%s "
+            "recipient_sha256=%s",
+            issued.invitation.id,
+            workspace_id,
+            _recipient_fingerprint(issued.invitation.email),
+        )
+        return invitation
 
     def list_invitations(
         self,
@@ -669,6 +696,15 @@ class DatabaseSliceOneApplication:
                 },
             )
         try:
+            logger.info(
+                "invitation_delivery_attempt operation=resend invitation_id=%s "
+                "replaces_invitation_id=%s "
+                "workspace_id=%s recipient_sha256=%s",
+                issued.invitation.id,
+                invitation_id,
+                workspace_id,
+                _recipient_fingerprint(issued.invitation.email),
+            )
             self._mailer.send_invitation(
                 email=issued.invitation.email,
                 workspace_name=workspace_name,
@@ -681,6 +717,17 @@ class DatabaseSliceOneApplication:
                 expires_at=issued.invitation.expires_at,
             )
         except Exception as error:
+            logger.warning(
+                "invitation_delivery_failed operation=resend invitation_id=%s "
+                "replaces_invitation_id=%s "
+                "workspace_id=%s recipient_sha256=%s error_type=%s",
+                issued.invitation.id,
+                invitation_id,
+                workspace_id,
+                _recipient_fingerprint(issued.invitation.email),
+                type(error).__name__,
+                exc_info=True,
+            )
             with self._engine.begin() as connection:
                 connection.execute(
                     text(
@@ -699,6 +746,15 @@ class DatabaseSliceOneApplication:
                     {"original_id": invitation_id},
                 )
             raise InvitationDeliveryFailed(issued.invitation.id) from error
+        logger.info(
+            "invitation_delivery_accepted operation=resend invitation_id=%s "
+            "replaces_invitation_id=%s "
+            "workspace_id=%s recipient_sha256=%s",
+            issued.invitation.id,
+            invitation_id,
+            workspace_id,
+            _recipient_fingerprint(issued.invitation.email),
+        )
         return issued.invitation
 
     def revoke_invitation(

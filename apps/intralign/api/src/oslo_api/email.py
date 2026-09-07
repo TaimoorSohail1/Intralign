@@ -1,15 +1,24 @@
 # ruff: noqa: E501
 
+import logging
 import smtplib
 from collections.abc import Callable
 from datetime import datetime
 from email.message import EmailMessage
+from hashlib import sha256
 from html import escape
 from typing import Any
 
 import httpx
 
 POSTMARK_EMAIL_URL = "https://api.postmarkapp.com/email"
+logger = logging.getLogger(__name__)
+
+
+def _recipient_fingerprint(email: str) -> str:
+    """Return a stable correlation value without placing recipient PII in logs."""
+
+    return sha256(email.strip().lower().encode("utf-8")).hexdigest()[:12]
 
 
 def _sender_address(sender: str, sender_name: str) -> str:
@@ -256,8 +265,19 @@ This unique link expires in 7 days ({expiry}).
             ),
             subtype="html",
         )
-        with self._smtp_factory(self._host, self._port) as smtp:
-            smtp.send_message(message)
+        recipient = _recipient_fingerprint(email)
+        logger.info("invitation_email_submit provider=smtp recipient_sha256=%s", recipient)
+        try:
+            with self._smtp_factory(self._host, self._port) as smtp:
+                smtp.send_message(message)
+        except Exception:
+            logger.warning(
+                "invitation_email_submit_failed provider=smtp recipient_sha256=%s",
+                recipient,
+                exc_info=True,
+            )
+            raise
+        logger.info("invitation_email_accepted provider=smtp recipient_sha256=%s", recipient)
 
 
 class SmtpReportMailer:
@@ -351,21 +371,32 @@ Activate account:
 
 This unique link expires in 7 days ({expiry}).
 """
-        _postmark_send(
-            server_token=self._server_token,
-            sender=self._sender,
-            sender_name=self._sender_name,
-            recipient=email,
-            subject="You're invited to Intralign Alpha",
-            text_body=text_body,
-            html_body=_alpha_invitation_html(
-                workspace_name=workspace_name,
-                role=role,
-                activation_url=activation_url,
-                expiry=expiry,
-            ),
-            client_factory=self._client_factory,
-        )
+        recipient = _recipient_fingerprint(email)
+        logger.info("invitation_email_submit provider=postmark recipient_sha256=%s", recipient)
+        try:
+            _postmark_send(
+                server_token=self._server_token,
+                sender=self._sender,
+                sender_name=self._sender_name,
+                recipient=email,
+                subject="You're invited to Intralign Alpha",
+                text_body=text_body,
+                html_body=_alpha_invitation_html(
+                    workspace_name=workspace_name,
+                    role=role,
+                    activation_url=activation_url,
+                    expiry=expiry,
+                ),
+                client_factory=self._client_factory,
+            )
+        except Exception:
+            logger.warning(
+                "invitation_email_submit_failed provider=postmark recipient_sha256=%s",
+                recipient,
+                exc_info=True,
+            )
+            raise
+        logger.info("invitation_email_accepted provider=postmark recipient_sha256=%s", recipient)
 
 
 class PostmarkReportMailer:

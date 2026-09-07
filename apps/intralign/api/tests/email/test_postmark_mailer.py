@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import UTC, datetime
 
 import httpx
@@ -17,7 +18,8 @@ def recording_client(requests: list[httpx.Request]) -> httpx.Client:
     return httpx.Client(transport=httpx.MockTransport(handler))
 
 
-def test_postmark_invitation_uses_transactional_api_and_branded_sender() -> None:
+def test_postmark_invitation_uses_transactional_api_and_branded_sender(caplog) -> None:
+    caplog.set_level(logging.INFO, logger="oslo_api.email")
     requests: list[httpx.Request] = []
     mailer = PostmarkInvitationMailer(
         server_token="server-token",
@@ -45,6 +47,11 @@ def test_postmark_invitation_uses_transactional_api_and_branded_sender() -> None
     assert payload["MessageStream"] == "outbound"
     assert "Activate account" in payload["HtmlBody"]
     assert "https://app.example.com/activate?token=secret" in payload["TextBody"]
+    log_output = caplog.text
+    assert "invitation_email_submit provider=postmark" in log_output
+    assert "invitation_email_accepted provider=postmark" in log_output
+    assert "new.member@example.com" not in log_output
+    assert "token=secret" not in log_output
 
 
 def test_postmark_report_sends_the_saved_readout() -> None:
