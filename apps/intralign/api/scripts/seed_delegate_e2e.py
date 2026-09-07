@@ -16,7 +16,7 @@ UNASSIGNED_PROJECT_ID = UUID("018f9f7e-8de2-7000-8000-000000000022")
 
 
 def main() -> None:
-    repository_root = Path(__file__).resolve().parents[3]
+    repository_root = Path(__file__).resolve().parents[2]
     status = local_status(repository_root)
     owner_user_id = ensure_auth_user(
         api_url=status["API_URL"],

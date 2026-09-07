@@ -23,7 +23,7 @@ def supabase_executable(repository_root: Path, *, platform_name: str | None = No
 
 
 def local_status(repository_root: Path) -> dict[str, str]:
-    env_path = repository_root / "services" / "api" / ".env"
+    env_path = repository_root / "api" / ".env"
     if env_path.exists():
         configured: dict[str, str] = {}
         for line in env_path.read_text(encoding="utf-8").splitlines():
@@ -140,7 +140,7 @@ def ensure_application_records(*, database_url: str, user_id: UUID) -> None:
 
 
 def main() -> None:
-    repository_root = Path(__file__).resolve().parents[3]
+    repository_root = Path(__file__).resolve().parents[2]
     status = local_status(repository_root)
     email = os.getenv("OSLO_LOCAL_ADMIN_EMAIL", "admin@oslo.local").strip().lower()
     password = os.getenv("OSLO_LOCAL_ADMIN_PASSWORD", "OsloLocalAdmin123!")

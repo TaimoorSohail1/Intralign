@@ -54,7 +54,7 @@ def test_local_status_uses_the_local_api_environment_without_waiting_for_cli(
     tmp_path,
     monkeypatch,
 ) -> None:
-    env_file = tmp_path / "services" / "api" / ".env"
+    env_file = tmp_path / "api" / ".env"
     env_file.parent.mkdir(parents=True)
     env_file.write_text(
         "\n".join(

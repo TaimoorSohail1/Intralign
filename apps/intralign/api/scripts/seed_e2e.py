@@ -177,7 +177,7 @@ def _reset_invitation_fixtures(
 
 
 def main() -> None:
-    repository_root = Path(__file__).resolve().parents[3]
+    repository_root = Path(__file__).resolve().parents[2]
     status = local_status(repository_root)
     _require_local_status(status)
     admin_user_id = ensure_auth_user(
