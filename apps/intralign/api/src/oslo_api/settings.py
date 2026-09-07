@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     email_from: str = "no-reply@oslo.local"
     from_name: str = "OSLO"
     analysis_worker_threads: int = Field(default=4, ge=1, le=32)
-    analysis_execution_mode: Literal["in_process", "durable"] = "in_process"
+    analysis_execution_mode: Literal["in_process", "durable", "inline"] = "in_process"
     analysis_worker_poll_seconds: float = Field(default=1.0, ge=0.1, le=30)
     analysis_worker_lease_seconds: int = Field(default=900, ge=60, le=3_600)
     analysis_artifact_worker_threads: int = Field(default=4, ge=1, le=16)
