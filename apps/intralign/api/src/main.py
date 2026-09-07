@@ -14,6 +14,6 @@ _SRC_DIR = Path(__file__).resolve().parent
 if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 
-from oslo_api.main import app
+from oslo_api.main import app  # noqa: E402
 
 __all__ = ["app"]
