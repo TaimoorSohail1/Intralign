@@ -14973,9 +14973,6 @@ button.attention-cell { cursor: pointer; }
   animation: r2-unlock-pulse 2.1s ease-in-out 2;
 }
 
-/* R2 parity: utility actions stay inside the sidebar while only the document
-   navigation scrolls. The controls therefore remain visible at every desktop
-   height and cannot drift outside the sidebar. */
 @media (min-width: 681px) {
   .is-r2-slice-one .workspace-sidebar {
     overflow: hidden;
