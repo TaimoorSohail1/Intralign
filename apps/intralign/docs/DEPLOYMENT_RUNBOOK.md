@@ -135,7 +135,7 @@ cd apps/intralign
 #   /health -> {"status":"ok"};  /openapi.json -> the schema the frontend client is generated from.
 
 # Frontend (Vercel build locally = vite):
-cd apps/intralign/frontend
+cd web
 npm install
 npm run dev      # http://localhost:5173 ; vite proxies /v1,/health,/openapi.json -> :8000
 # or a production build:

@@ -17,9 +17,9 @@ test("Delegate-PM access is project-scoped and owner controls stay unavailable",
     [
       "run",
       "--project",
-      "services/api",
+      "api",
       "python",
-      "services/api/scripts/seed_delegate_e2e.py",
+      "api/scripts/seed_delegate_e2e.py",
     ],
     { cwd: repositoryRoot, stdio: "inherit" },
   );

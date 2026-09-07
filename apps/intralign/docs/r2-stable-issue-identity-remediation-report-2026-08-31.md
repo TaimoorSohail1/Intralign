@@ -51,9 +51,9 @@ and deployed.
 
 ## Files changed
 
-- `services/api/src/oslo_api/analysis/models.py`
-- `services/api/src/oslo_api/analysis/openai_harness.py`
-- `services/api/src/oslo_api/analysis/issue_identity.py`
-- `services/api/src/oslo_api/analysis/persistence.py`
+- `api/src/oslo_api/analysis/models.py`
+- `api/src/oslo_api/analysis/openai_harness.py`
+- `api/src/oslo_api/analysis/issue_identity.py`
+- `api/src/oslo_api/analysis/persistence.py`
 - Regression tests for identity, provider schema, and snapshot persistence
 

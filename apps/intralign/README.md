@@ -4,8 +4,8 @@ Production application for the OSLO Product Grill vertical slices. The knowledge
 
 ## Repository boundaries
 
-- `apps/web` — Next.js App Router web application.
-- `services/api` — FastAPI application and business capabilities.
+- `web` — Next.js App Router web application.
+- `api` — FastAPI application and business capabilities.
 - `packages/contracts` — generated/shared API contracts.
 - `packages/ui` — OSLO design tokens and reusable UI primitives.
 - `supabase` — reproducible local Supabase configuration and seed data.

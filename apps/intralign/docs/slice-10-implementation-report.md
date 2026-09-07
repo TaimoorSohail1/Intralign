@@ -55,7 +55,7 @@ Production-grade cross-device Readout persistence, immutable memo delivery, sche
 
 ### Shared provenance projection
 
-`apps/web/src/lib/project-provenance.ts` derives one deterministic project provenance view from the current published snapshot. Overview Progress and Inference Map use this same projection, preventing count drift between those surfaces.
+`web/src/lib/project-provenance.ts` derives one deterministic project provenance view from the current published snapshot. Overview Progress and Inference Map use this same projection, preventing count drift between those surfaces.
 
 The projection includes:
 
@@ -69,7 +69,7 @@ The projection includes:
 
 ### Inference Map
 
-`apps/web/src/components/inference/inference-map.tsx` implements:
+`web/src/components/inference/inference-map.tsx` implements:
 
 - By document rows;
 - grounded and inferred pips;
@@ -81,7 +81,7 @@ The projection includes:
 
 ### Overview
 
-`apps/web/src/components/overview/project-overview.tsx` now implements:
+`web/src/components/overview/project-overview.tsx` now implements:
 
 - five-band Outcome Confidence in the header and main read;
 - grounding qualification;
@@ -94,7 +94,7 @@ The projection includes:
 
 ### Reports
 
-`apps/web/src/components/reports/report-workspace.tsx` now implements:
+`web/src/components/reports/report-workspace.tsx` now implements:
 
 - prototype-style slim toolbar;
 - one continuous reader-facing document;

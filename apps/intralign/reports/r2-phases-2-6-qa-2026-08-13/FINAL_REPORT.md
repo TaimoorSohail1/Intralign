@@ -14,10 +14,10 @@ Prototype-only developer controls labeled **“not shipped”** are intentionall
 
 | Screen / component | Prototype expectation | Original app gap / root cause | Severity | Result | Primary files |
 |---|---|---|---|---|---|
-| Invitation email | Intralign Alpha invitation card, exact copy, token, and CTA | Local mail used the generic invitation template and the activation origin was not the live web origin | Major | **FIXED** | `services/api/src/oslo_api/email.py`, `services/api/src/oslo_api/settings.py` |
-| Account activation | Prefilled invite identity, display name, four role choices, password, stay-signed-in, back link | Activation form exposed only the reduced R1 credential path | Major | **FIXED** | `apps/web/src/components/auth/activation-form.tsx`, `apps/web/src/app/activate/actions.ts` |
-| Welcome | Exact welcome copy and “Start your first outcome” CTA | R1 welcome content and geometry differed | Major | **FIXED** | `apps/web/src/app/welcome/page.tsx` |
-| First-time intake | Exact headline, explanation, documents, sample, templates, and CTA | Intake used the earlier compact upload screen | Blocker | **FIXED** | `apps/web/src/components/intake/intake-experience.tsx` |
+| Invitation email | Intralign Alpha invitation card, exact copy, token, and CTA | Local mail used the generic invitation template and the activation origin was not the live web origin | Major | **FIXED** | `api/src/oslo_api/email.py`, `api/src/oslo_api/settings.py` |
+| Account activation | Prefilled invite identity, display name, four role choices, password, stay-signed-in, back link | Activation form exposed only the reduced R1 credential path | Major | **FIXED** | `web/src/components/auth/activation-form.tsx`, `web/src/app/activate/actions.ts` |
+| Welcome | Exact welcome copy and “Start your first outcome” CTA | R1 welcome content and geometry differed | Major | **FIXED** | `web/src/app/welcome/page.tsx` |
+| First-time intake | Exact headline, explanation, documents, sample, templates, and CTA | Intake used the earlier compact upload screen | Blocker | **FIXED** | `web/src/components/intake/intake-experience.tsx` |
 | Returning-client intake | Same intake UI without first-time guided animation | First-time and returning-client state were not separated reliably | Blocker | **FIXED** | `intake-experience.tsx`, `analysis-progress.tsx`, `oslo-api.ts` |
 | Onboarding kinetic arc | Prototype graph, narration, outcome decision, Skip/Replay production controls | Simplified production animation and a late iframe-ready race could leave a completed run stuck | Blocker | **FIXED** | `public/r2/onboarding-arc.html`, `analysis-progress.tsx` |
 | Prototype bottom controls | Developer timing/mode/restart controls are explicitly labeled “not shipped” | They appeared only in the standalone prototype | Minor | **N/A — correctly excluded**; production Skip/Replay controls pass | `public/r2/onboarding-arc.html`, analysis page |

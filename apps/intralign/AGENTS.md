@@ -2,7 +2,7 @@
 
 ## Architecture
 
-- Keep the Next.js application in `apps/web` and FastAPI capabilities in `services/api`.
+- Keep the Next.js application in `web` and FastAPI capabilities in `api`.
 - Business rules must not import Supabase, SMTP, HTTP, or SQL adapters. Inject those boundaries.
 - Keep capability code cohesive; avoid generic `utils`, `helpers`, and catch-all service modules.
 - FastAPI OpenAPI is the API source of truth. Shared/generated client contracts belong in `packages/contracts`.

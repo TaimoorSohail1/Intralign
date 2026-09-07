@@ -142,7 +142,7 @@ def test_an_active_guard_with_a_missing_client_test_fails_the_gate(tmp_path: Pat
     guards["GT-21"] = {
         "status": "active",
         "tests": [],
-        "client_tests": ["apps/web/src/components/missing.test.tsx"],
+        "client_tests": ["web/src/components/missing.test.tsx"],
     }
     _write_contract(tmp_path, registry, markdown)
 
@@ -150,7 +150,7 @@ def test_an_active_guard_with_a_missing_client_test_fails_the_gate(tmp_path: Pat
 
     assert (
         "Active guard GT-21 client test file does not exist: "
-        "apps/web/src/components/missing.test.tsx"
+        "web/src/components/missing.test.tsx"
     ) in report.errors
 
 

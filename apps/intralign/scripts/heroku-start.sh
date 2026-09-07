@@ -9,7 +9,7 @@ case "${APP_COMPONENT:-}" in
     ;;
   api)
     exec python -m uvicorn oslo_api.main:app \
-      --app-dir services/api/src \
+      --app-dir api/src \
       --host 0.0.0.0 \
       --port "${PORT}"
     ;;

@@ -54,8 +54,8 @@ The product must match the golden prototype's information hierarchy and user-vis
 
 ### Approved architecture
 
-- Next.js/React/TypeScript web application in `apps/web`.
-- FastAPI/Pydantic application and analysis capabilities in `services/api`.
+- Next.js/React/TypeScript web application in `web`.
+- FastAPI/Pydantic application and analysis capabilities in `api`.
 - A separate Celery worker process using the same Python capability package.
 - LangGraph for typed orchestration, transitions, retries and checkpoints.
 - A custom OSLO Agent Harness around the three LLM nodes.
@@ -141,7 +141,7 @@ The UI may display all twelve logical stages. In code, submission and browser pr
 ### Skill package layout
 
 ```text
-services/api/src/oslo_api/analysis/
+api/src/oslo_api/analysis/
   graph/
     builder.py
     state.py

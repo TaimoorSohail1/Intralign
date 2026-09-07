@@ -12,7 +12,7 @@ importers:
         specifier: ^2.109.1
         version: 2.109.1
 
-  apps/web:
+  web:
     dependencies:
       '@phosphor-icons/react':
         specifier: ^2.1.10

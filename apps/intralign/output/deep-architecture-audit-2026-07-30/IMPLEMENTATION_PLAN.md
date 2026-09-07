@@ -106,8 +106,8 @@ Work:
 
 Primary areas:
 
-- `services/api/src/oslo_api/analysis/evaluation.py`
-- `services/api/scripts/run_project_benchmarks.py`
+- `api/src/oslo_api/analysis/evaluation.py`
+- `api/scripts/run_project_benchmarks.py`
 - new versioned benchmark fixture directory
 - CI configuration
 
@@ -147,14 +147,14 @@ End-to-end behavior:
 
 Primary areas:
 
-- `services/api/src/oslo_api/analysis/evidence_graph.py`
-- `services/api/src/oslo_api/analysis/models.py`
-- `services/api/src/oslo_api/analysis/workflow.py`
-- `services/api/src/oslo_api/analysis/persistence.py`
-- `apps/web/src/components/overview/project-overview.tsx`
-- `apps/web/src/components/artifacts/artifact-workspace.tsx`
-- `apps/web/src/components/inference/inference-map.tsx`
-- `apps/web/src/components/reports/report-workspace.tsx`
+- `api/src/oslo_api/analysis/evidence_graph.py`
+- `api/src/oslo_api/analysis/models.py`
+- `api/src/oslo_api/analysis/workflow.py`
+- `api/src/oslo_api/analysis/persistence.py`
+- `web/src/components/overview/project-overview.tsx`
+- `web/src/components/artifacts/artifact-workspace.tsx`
+- `web/src/components/inference/inference-map.tsx`
+- `web/src/components/reports/report-workspace.tsx`
 
 Tests:
 
