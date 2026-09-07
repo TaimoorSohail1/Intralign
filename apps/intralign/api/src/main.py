@@ -1,4 +1,4 @@
-"""Vercel FastAPI entrypoint.
+"""Vercel FastAPI entrypoint for the IC-WA-001 deployment contract.
 
 Vercel discovers FastAPI applications exported as ``app`` from ``src/main.py``.
 The application itself remains in the ``oslo_api`` package so local and other
