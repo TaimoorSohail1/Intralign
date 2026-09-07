@@ -56,11 +56,11 @@ jobs:
             echo "::error::RB-056 self-test failed: docs-only input selected application CI."
             exit 1
           fi
-          if ! app_ci_applies true 'apps/intralign/services/api/example.py'; then
+          if ! app_ci_applies true 'apps/intralign/api/example.py'; then
             echo "::error::RB-056 self-test failed: application input skipped application CI."
             exit 1
           fi
-          if app_ci_applies false 'apps/intralign/services/api/example.py'; then
+          if app_ci_applies false 'apps/intralign/api/example.py'; then
             echo "::error::RB-056 self-test failed: absent application tree selected application CI."
             exit 1
           fi
@@ -115,7 +115,7 @@ jobs:
         working-directory: apps/intralign
         run: |
           pnpm install --frozen-lockfile
-          uv sync --project services/api --frozen
+          uv sync --project api --frozen
 
       - name: Gate 2 — approved-contract traceability
         if: steps.scope.outputs.run == 'true' && github.event_name == 'pull_request'
@@ -168,7 +168,7 @@ jobs:
         working-directory: apps/intralign
         shell: bash
         run: |
-          uv run --project services/api uvicorn oslo_api.main:app --host 127.0.0.1 --port 8000 > /tmp/oslo-api.log 2>&1 &
+          uv run --project api uvicorn oslo_api.main:app --host 127.0.0.1 --port 8000 > /tmp/oslo-api.log 2>&1 &
           echo $! > /tmp/oslo-api.pid
           pnpm --filter @oslo/web start > /tmp/oslo-web.log 2>&1 &
           echo $! > /tmp/oslo-web.pid

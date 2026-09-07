@@ -279,12 +279,12 @@ def _validate_surface_registry(
             errors.append(f"R2 route {route_name!r} has an unsupported implementation track")
 
     discovery_roots = [
-        code_root / "apps" / "web" / "src" / "app" / "intake",
-        code_root / "apps" / "web" / "src" / "app" / "projects" / "[projectId]",
-        code_root / "apps" / "web" / "src" / "app" / "review",
-        code_root / "apps" / "web" / "src" / "app" / "share",
-        code_root / "apps" / "web" / "src" / "app" / "settings",
-        code_root / "apps" / "web" / "src" / "app" / "workspace",
+        code_root / "web" / "src" / "app" / "intake",
+        code_root / "web" / "src" / "app" / "projects" / "[projectId]",
+        code_root / "web" / "src" / "app" / "review",
+        code_root / "web" / "src" / "app" / "share",
+        code_root / "web" / "src" / "app" / "settings",
+        code_root / "web" / "src" / "app" / "workspace",
     ]
     discovered_frontends = {
         path.relative_to(code_root).as_posix()
@@ -475,7 +475,7 @@ def run_active_tests(report: GateReport, application_root: Path) -> int:
             return return_code
     if report.active_client_test_files:
         pnpm = shutil.which("pnpm.cmd") or shutil.which("pnpm") or "pnpm"
-        web_root = Path("apps/web")
+        web_root = Path("web")
         client_test_files = [
             Path(client_test).relative_to(web_root).as_posix()
             for client_test in report.active_client_test_files

@@ -20,10 +20,10 @@
 
 | Severity | Screen / component | Prototype | Current app | Likely files |
 |---|---|---|---|---|
-| **Major** | Expanded issue | Opens as a stable focus layer; surrounding shell stays fixed. | Inserts a large card into the queue, moves the work column by about 192 px, and grows the page by more than 1,000 px. | `apps/web/src/components/overview/project-overview.tsx`, `apps/web/src/app/globals.css` |
-| **Major** | Real-document artifacts | Each of the seven artifacts should contain its own structured, source-grounded content. | Artifact views repeat a largely generic/flattened read instead of distinct structured extraction. | `services/api/src/oslo_api/analysis/harness.py`, `services/api/src/oslo_api/analysis/workflow.py` |
-| **Major** | Issue generation from evidence | Planted Atlas gaps/conflicts should become traceable issue cards. | Only four mostly generic issues appeared; several planted gaps and date/cost conflicts were absent. | `services/api/src/oslo_api/analysis/harness.py`, `services/api/src/oslo_api/analysis/completeness.py`, `services/api/src/oslo_api/analysis/integrity.py` |
-| **Major** | OSLO evidence question | Should cite the £45,000 conflict source and state what to verify. | Returned the generic highest-priority delivery-capacity recommendation. The runtime followed the deterministic fallback branch, which does not interpret this evidence-specific question. | `services/api/src/oslo_api/analysis/advisor.py` |
+| **Major** | Expanded issue | Opens as a stable focus layer; surrounding shell stays fixed. | Inserts a large card into the queue, moves the work column by about 192 px, and grows the page by more than 1,000 px. | `web/src/components/overview/project-overview.tsx`, `web/src/app/globals.css` |
+| **Major** | Real-document artifacts | Each of the seven artifacts should contain its own structured, source-grounded content. | Artifact views repeat a largely generic/flattened read instead of distinct structured extraction. | `api/src/oslo_api/analysis/harness.py`, `api/src/oslo_api/analysis/workflow.py` |
+| **Major** | Issue generation from evidence | Planted Atlas gaps/conflicts should become traceable issue cards. | Only four mostly generic issues appeared; several planted gaps and date/cost conflicts were absent. | `api/src/oslo_api/analysis/harness.py`, `api/src/oslo_api/analysis/completeness.py`, `api/src/oslo_api/analysis/integrity.py` |
+| **Major** | OSLO evidence question | Should cite the £45,000 conflict source and state what to verify. | Returned the generic highest-priority delivery-capacity recommendation. The runtime followed the deterministic fallback branch, which does not interpret this evidence-specific question. | `api/src/oslo_api/analysis/advisor.py` |
 
 ## Real-document test
 

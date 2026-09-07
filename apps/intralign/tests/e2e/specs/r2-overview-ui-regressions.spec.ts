@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const applicationStyles = readFileSync(
-  path.resolve(__dirname, "../../../apps/web/src/app/globals.css"),
+  path.resolve(__dirname, "../../../web/src/app/globals.css"),
   "utf8",
 );
 

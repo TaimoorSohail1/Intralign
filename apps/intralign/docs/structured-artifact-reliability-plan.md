@@ -234,15 +234,15 @@ Acceptance:
 
 ### API and domain
 
-- `services/api/src/oslo_api/analysis/models.py`
-- `services/api/src/oslo_api/analysis/openai_harness.py`
-- `services/api/src/oslo_api/analysis/workflow.py`
-- `services/api/src/oslo_api/analysis/persistence.py`
-- `services/api/src/oslo_api/analysis/service.py`
-- `services/api/src/oslo_api/analysis/documents.py`
-- `services/api/src/oslo_api/api/analysis.py`
-- `services/api/src/oslo_api/api/projects.py`
-- `services/api/src/oslo_api/collaboration/pdf.py`
+- `api/src/oslo_api/analysis/models.py`
+- `api/src/oslo_api/analysis/openai_harness.py`
+- `api/src/oslo_api/analysis/workflow.py`
+- `api/src/oslo_api/analysis/persistence.py`
+- `api/src/oslo_api/analysis/service.py`
+- `api/src/oslo_api/analysis/documents.py`
+- `api/src/oslo_api/api/analysis.py`
+- `api/src/oslo_api/api/projects.py`
+- `api/src/oslo_api/collaboration/pdf.py`
 
 ### Database
 
@@ -252,12 +252,12 @@ Acceptance:
 ### Web
 
 - Generated/shared API contracts under `packages/contracts`.
-- `apps/web/src/components/artifacts/artifact-workspace.tsx`
-- `apps/web/src/lib/project-provenance.ts`
-- `apps/web/src/components/reports/report-workspace.tsx`
-- `apps/web/src/app/review/[token]/page.tsx`
-- `apps/web/src/components/collaboration/reviewer-response-form.tsx`
-- `apps/web/src/app/admin/invitations/actions.ts`
+- `web/src/components/artifacts/artifact-workspace.tsx`
+- `web/src/lib/project-provenance.ts`
+- `web/src/components/reports/report-workspace.tsx`
+- `web/src/app/review/[token]/page.tsx`
+- `web/src/components/collaboration/reviewer-response-form.tsx`
+- `web/src/app/admin/invitations/actions.ts`
 - Associated pages, route adapters, styles, and tests.
 
 ## 7. Test strategy

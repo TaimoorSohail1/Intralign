@@ -7,7 +7,7 @@
 ## 1. Security rule
 
 - Share this document and `.env.example`.
-- Never email, commit, or send an existing `.env`, `apps/web/.env.local`, or `services/api/.env` file.
+- Never email, commit, or send an existing `.env`, `web/.env.local`, or `api/.env` file.
 - Share real OpenAI or Stripe test credentials through an approved password manager or another secure secret-sharing channel.
 - Local Supabase credentials are generated on the receiving developer's machine and do not need to be shared.
 
@@ -73,7 +73,7 @@ Create these files locally. They are ignored by Git.
 
 ### 6.1 Web environment
 
-Create `apps/web/.env.local`:
+Create `web/.env.local`:
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321
@@ -88,7 +88,7 @@ Only `NEXT_PUBLIC_*` values are exposed to the browser. Never put a Supabase sec
 
 ### 6.2 API environment
 
-Create `services/api/.env`:
+Create `api/.env`:
 
 ```dotenv
 DATABASE_URL=postgresql+psycopg://postgres:postgres@127.0.0.1:55322/postgres
@@ -227,9 +227,9 @@ Stopping services preserves their local Docker volumes. Do not add `-v` unless t
 | Problem | Check |
 |---|---|
 | Supabase does not start | Confirm Docker Desktop is running and ports `55321–55325` are free. |
-| Web login fails | Confirm `apps/web/.env.local` contains the current local Supabase publishable key. Restart `pnpm dev:web` after changing it. |
-| API reports a missing Supabase key | Confirm `services/api/.env` contains the local secret/service-role key. Restart `pnpm dev:api`. |
-| Real analysis fails | Confirm `OPENAI_API_KEY` is present in `services/api/.env`, has quota, and the configured models are available. |
+| Web login fails | Confirm `web/.env.local` contains the current local Supabase publishable key. Restart `pnpm dev:web` after changing it. |
+| API reports a missing Supabase key | Confirm `api/.env` contains the local secret/service-role key. Restart `pnpm dev:api`. |
+| Real analysis fails | Confirm `OPENAI_API_KEY` is present in `api/.env`, has quota, and the configured models are available. |
 | Stripe Checkout returns 503 | Supply all four Stripe test-mode variables or leave billing testing out of scope. |
 | Port `3000` is occupied | Stop the optional Grafana profile or move its port before starting Next.js. |
 | Seed login does not work | Run `pnpm seed:local` again after confirming the API environment and Supabase services. |
@@ -240,8 +240,8 @@ Stopping services preserves their local Docker volumes. Do not add `-v` unless t
 - [ ] `feature/r2-complete-application` checked out.
 - [ ] Docker Desktop, Node/pnpm, Python, and `uv` installed.
 - [ ] Supabase started and local keys copied.
-- [ ] `apps/web/.env.local` created.
-- [ ] `services/api/.env` created.
+- [ ] `web/.env.local` created.
+- [ ] `api/.env` created.
 - [ ] OpenAI key shared through a secure channel.
 - [ ] Stripe test credentials shared only if billing testing is required.
 - [ ] Neo4j and Redis started.

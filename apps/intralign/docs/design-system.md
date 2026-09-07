@@ -4,9 +4,9 @@ The shared design system is the UI contract for Release 2. It preserves the appr
 
 ## Foundations
 
-- Tokens: `apps/web/src/styles/tokens.css`
-- Components: `apps/web/src/components/design-system/`
-- Global compatibility layer: `apps/web/src/app/globals.css`
+- Tokens: `web/src/styles/tokens.css`
+- Components: `web/src/components/design-system/`
+- Global compatibility layer: `web/src/app/globals.css`
 
 Tokens cover semantic colour, typography, spacing, radii, elevation, control sizing, motion, layout widths, focus, and z-index. Dark mode is the R2 default; light-mode values remain available through `data-theme="light"`.
 

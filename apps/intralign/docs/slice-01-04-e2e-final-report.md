@@ -34,7 +34,7 @@ Commands used:
 
 ```text
 pnpm --filter @oslo/web test -- --run
-uv run --project services/api pytest services/api/tests -q
+uv run --project api pytest api/tests -q
 pnpm --filter @oslo/web lint
 pnpm --filter @oslo/web build
 pnpm --filter @oslo/e2e test -- specs/slice-one.spec.ts specs/slice-two.spec.ts specs/slice-three.spec.ts specs/slice-four.spec.ts --project=desktop

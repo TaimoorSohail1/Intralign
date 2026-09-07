@@ -9,7 +9,7 @@ OSLO needs an independently deployable web client and API, invite-only identity,
 
 ## Decision
 
-Use a pnpm monorepo with Next.js/React in `apps/web`, FastAPI/Python in `services/api`, contract and UI packages under `packages`, and Supabase Local for PostgreSQL, Auth, Storage, Studio, and local email capture. Supabase SQL migrations are the database source of truth. Business rules live in capability modules and remain independent of Supabase adapters.
+Use a pnpm monorepo with Next.js/React in `web`, FastAPI/Python in `api`, contract and UI packages under `packages`, and Supabase Local for PostgreSQL, Auth, Storage, Studio, and local email capture. Supabase SQL migrations are the database source of truth. Business rules live in capability modules and remain independent of Supabase adapters.
 
 ## Consequences
 

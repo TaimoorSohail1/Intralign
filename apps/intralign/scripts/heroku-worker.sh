@@ -6,5 +6,5 @@ if [[ "${APP_COMPONENT:-}" != "api" ]]; then
   exit 1
 fi
 
-export PYTHONPATH="services/api/src${PYTHONPATH:+:${PYTHONPATH}}"
+export PYTHONPATH="api/src${PYTHONPATH:+:${PYTHONPATH}}"
 exec python -m oslo_api.analysis.worker

@@ -4,51 +4,51 @@
   "profiles": {
     "integrity-read": {
       "status": "shipped",
-      "frontend": ["apps/web/src/components/overview/project-overview.tsx"],
-      "backend": ["services/api/src/oslo_api/analysis/integrity.py", "services/api/src/oslo_api/api/analysis.py"],
-      "tests": ["services/api/tests/r2/test_integrity.py", "apps/web/src/components/overview/project-overview.test.tsx"]
+      "frontend": ["web/src/components/overview/project-overview.tsx"],
+      "backend": ["api/src/oslo_api/analysis/integrity.py", "api/src/oslo_api/api/analysis.py"],
+      "tests": ["api/tests/r2/test_integrity.py", "web/src/components/overview/project-overview.test.tsx"]
     },
     "issue-lifecycle": {
       "status": "shipped",
-      "frontend": ["apps/web/src/components/overview/project-overview.tsx", "apps/web/src/components/artifacts/artifact-workspace.tsx"],
-      "backend": ["services/api/src/oslo_api/analysis/issue_lifecycle.py", "services/api/src/oslo_api/api/analysis.py"],
-      "tests": ["services/api/tests/r2/test_issue_lifecycle.py", "apps/web/src/components/overview/project-overview.test.tsx"]
+      "frontend": ["web/src/components/overview/project-overview.tsx", "web/src/components/artifacts/artifact-workspace.tsx"],
+      "backend": ["api/src/oslo_api/analysis/issue_lifecycle.py", "api/src/oslo_api/api/analysis.py"],
+      "tests": ["api/tests/r2/test_issue_lifecycle.py", "web/src/components/overview/project-overview.test.tsx"]
     },
     "reanalysis": {
       "status": "shipped",
-      "frontend": ["apps/web/src/components/overview/project-overview.tsx", "apps/web/src/components/analysis/analysis-progress.tsx"],
-      "backend": ["services/api/src/oslo_api/analysis/reanalysis.py", "services/api/src/oslo_api/api/analysis.py"],
-      "tests": ["services/api/tests/analysis/test_reanalysis.py", "services/api/tests/analysis/test_api.py"]
+      "frontend": ["web/src/components/overview/project-overview.tsx", "web/src/components/analysis/analysis-progress.tsx"],
+      "backend": ["api/src/oslo_api/analysis/reanalysis.py", "api/src/oslo_api/api/analysis.py"],
+      "tests": ["api/tests/analysis/test_reanalysis.py", "api/tests/analysis/test_api.py"]
     },
     "entitlement": {
       "status": "shipped",
-      "frontend": ["apps/web/src/components/outcomes/outcome-capacity-control.tsx", "apps/web/src/components/workspace/project-capacity-modal.tsx"],
-      "backend": ["services/api/src/oslo_api/api/billing.py", "services/api/src/oslo_api/api/outcomes.py", "services/api/src/oslo_api/entitlements/service.py"],
-      "tests": ["services/api/tests/integration/test_slice_four_entitlements.py", "services/api/tests/api/test_outcomes_api.py"]
+      "frontend": ["web/src/components/outcomes/outcome-capacity-control.tsx", "web/src/components/workspace/project-capacity-modal.tsx"],
+      "backend": ["api/src/oslo_api/api/billing.py", "api/src/oslo_api/api/outcomes.py", "api/src/oslo_api/entitlements/service.py"],
+      "tests": ["api/tests/integration/test_slice_four_entitlements.py", "api/tests/api/test_outcomes_api.py"]
     },
     "outcome": {
       "status": "shipped",
-      "frontend": ["apps/web/src/components/outcomes/your-outcome-dashboard.tsx", "apps/web/src/components/artifacts/r2-artifact-content.tsx"],
-      "backend": ["services/api/src/oslo_api/api/outcomes.py", "services/api/src/oslo_api/slice_one.py"],
-      "tests": ["apps/web/src/components/outcomes/your-outcome-dashboard.test.tsx", "services/api/tests/api/test_outcomes_api.py"]
+      "frontend": ["web/src/components/outcomes/your-outcome-dashboard.tsx", "web/src/components/artifacts/r2-artifact-content.tsx"],
+      "backend": ["api/src/oslo_api/api/outcomes.py", "api/src/oslo_api/slice_one.py"],
+      "tests": ["web/src/components/outcomes/your-outcome-dashboard.test.tsx", "api/tests/api/test_outcomes_api.py"]
     },
     "collaboration": {
       "status": "shipped",
-      "frontend": ["apps/web/src/components/collaboration/project-collaboration-controls.tsx", "apps/web/src/components/collaboration/collaboration-projections.tsx", "apps/web/src/components/collaboration/reviewer-response-form.tsx"],
-      "backend": ["services/api/src/oslo_api/api/collaboration.py", "services/api/src/oslo_api/collaboration/service.py"],
-      "tests": ["services/api/tests/integration/test_slice_two_analysis.py", "apps/web/src/components/collaboration/collaboration-projections.test.tsx"]
+      "frontend": ["web/src/components/collaboration/project-collaboration-controls.tsx", "web/src/components/collaboration/collaboration-projections.tsx", "web/src/components/collaboration/reviewer-response-form.tsx"],
+      "backend": ["api/src/oslo_api/api/collaboration.py", "api/src/oslo_api/collaboration/service.py"],
+      "tests": ["api/tests/integration/test_slice_two_analysis.py", "web/src/components/collaboration/collaboration-projections.test.tsx"]
     },
     "reports": {
       "status": "shipped",
-      "frontend": ["apps/web/src/components/reports/report-workspace.tsx", "apps/web/src/components/reports/report-projection.ts", "apps/web/src/components/reports/report-export-content.ts"],
-      "backend": ["services/api/src/oslo_api/api/collaboration.py", "services/api/src/oslo_api/collaboration/service.py", "services/api/src/oslo_api/collaboration/pdf.py"],
-      "tests": ["apps/web/src/components/reports/report-workspace.test.tsx", "apps/web/src/components/reports/report-projection.test.ts"]
+      "frontend": ["web/src/components/reports/report-workspace.tsx", "web/src/components/reports/report-projection.ts", "web/src/components/reports/report-export-content.ts"],
+      "backend": ["api/src/oslo_api/api/collaboration.py", "api/src/oslo_api/collaboration/service.py", "api/src/oslo_api/collaboration/pdf.py"],
+      "tests": ["web/src/components/reports/report-workspace.test.tsx", "web/src/components/reports/report-projection.test.ts"]
     },
     "feedback-service": {
       "status": "shipped",
-      "frontend": ["apps/web/src/components/overview/project-overview.tsx", "apps/web/src/app/api/feedback/tickets/route.ts"],
-      "backend": ["services/api/src/oslo_api/feedback.py", "services/api/src/oslo_api/api/feedback.py"],
-      "tests": ["services/api/tests/feedback/test_feedback_service.py", "services/api/tests/api/test_feedback_api.py", "services/api/tests/integration/test_feedback_isolation.py", "apps/web/src/components/overview/project-overview.test.tsx"]
+      "frontend": ["web/src/components/overview/project-overview.tsx", "web/src/app/api/feedback/tickets/route.ts"],
+      "backend": ["api/src/oslo_api/feedback.py", "api/src/oslo_api/api/feedback.py"],
+      "tests": ["api/tests/feedback/test_feedback_service.py", "api/tests/api/test_feedback_api.py", "api/tests/integration/test_feedback_isolation.py", "web/src/components/overview/project-overview.test.tsx"]
     },
     "feedback-contract": {
       "status": "contract-only",
@@ -59,9 +59,9 @@
     },
     "telemetry": {
       "status": "shipped",
-      "frontend": ["apps/web/src/app/api/workspace/intent-signals/route.ts", "apps/web/src/components/overview/project-overview.tsx"],
-      "backend": ["services/api/src/oslo_api/api/billing.py", "services/api/src/oslo_api/entitlements/repository.py"],
-      "tests": ["services/api/tests/integration/test_slice_four_entitlements.py"]
+      "frontend": ["web/src/app/api/workspace/intent-signals/route.ts", "web/src/components/overview/project-overview.tsx"],
+      "backend": ["api/src/oslo_api/api/billing.py", "api/src/oslo_api/entitlements/repository.py"],
+      "tests": ["api/tests/integration/test_slice_four_entitlements.py"]
     }
   },
   "surfaces": [
@@ -125,22 +125,22 @@
     {"id":"r2-s8-intent-walls","contract_surface":"Intent walls (`_recordIntent`)","profile":"telemetry","guard_ids":["GT-29","GT-30"]}
   ],
   "routes": [
-    {"route":"/intake","frontend":"apps/web/src/app/intake/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
-    {"route":"/projects/[projectId]/analysis/[runId]","frontend":"apps/web/src/app/projects/[projectId]/analysis/[runId]/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
-    {"route":"/projects/[projectId]/overview","frontend":"apps/web/src/app/projects/[projectId]/overview/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
-    {"route":"/projects/[projectId]/issues","frontend":"apps/web/src/app/projects/[projectId]/issues/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
-    {"route":"/projects/[projectId]/artifacts/[artifactType]","frontend":"apps/web/src/app/projects/[projectId]/artifacts/[artifactType]/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
-    {"route":"/projects/[projectId]/outcome","frontend":"apps/web/src/app/projects/[projectId]/outcome/page.tsx","backend":["services/api/src/oslo_api/api/outcomes.py"],"track":"canonical-r2"},
-    {"route":"/projects/[projectId]/roll-up","frontend":"apps/web/src/app/projects/[projectId]/roll-up/page.tsx","backend":["services/api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
-    {"route":"/projects/[projectId]/grounding","frontend":"apps/web/src/app/projects/[projectId]/grounding/page.tsx","backend":["services/api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
-    {"route":"/projects/[projectId]/attention","frontend":"apps/web/src/app/projects/[projectId]/attention/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py"],"track":"legacy-compatibility"},
-    {"route":"/projects/[projectId]/reports","frontend":"apps/web/src/app/projects/[projectId]/reports/page.tsx","backend":["services/api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
-    {"route":"/projects/[projectId]/full-plan","frontend":"apps/web/src/app/projects/[projectId]/full-plan/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py","services/api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
-    {"route":"/projects/[projectId]/history","frontend":"apps/web/src/app/projects/[projectId]/history/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
-    {"route":"/projects/[projectId]/inference","frontend":"apps/web/src/app/projects/[projectId]/inference/page.tsx","backend":["services/api/src/oslo_api/api/analysis.py"],"track":"legacy-compatibility"},
-    {"route":"/review/[token]","frontend":"apps/web/src/app/review/[token]/page.tsx","backend":["services/api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
-    {"route":"/share/[token]","frontend":"apps/web/src/app/share/[token]/page.tsx","backend":["services/api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
-    {"route":"/workspace","frontend":"apps/web/src/app/workspace/page.tsx","backend":["services/api/src/oslo_api/api/projects.py"],"track":"workspace-settings-implementation"},
-    {"route":"/settings","frontend":"apps/web/src/app/settings/page.tsx","backend":["services/api/src/oslo_api/api/projects.py"],"track":"workspace-settings-implementation"}
+    {"route":"/intake","frontend":"web/src/app/intake/page.tsx","backend":["api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/analysis/[runId]","frontend":"web/src/app/projects/[projectId]/analysis/[runId]/page.tsx","backend":["api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/overview","frontend":"web/src/app/projects/[projectId]/overview/page.tsx","backend":["api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/issues","frontend":"web/src/app/projects/[projectId]/issues/page.tsx","backend":["api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/artifacts/[artifactType]","frontend":"web/src/app/projects/[projectId]/artifacts/[artifactType]/page.tsx","backend":["api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/outcome","frontend":"web/src/app/projects/[projectId]/outcome/page.tsx","backend":["api/src/oslo_api/api/outcomes.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/roll-up","frontend":"web/src/app/projects/[projectId]/roll-up/page.tsx","backend":["api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/grounding","frontend":"web/src/app/projects/[projectId]/grounding/page.tsx","backend":["api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/attention","frontend":"web/src/app/projects/[projectId]/attention/page.tsx","backend":["api/src/oslo_api/api/analysis.py"],"track":"legacy-compatibility"},
+    {"route":"/projects/[projectId]/reports","frontend":"web/src/app/projects/[projectId]/reports/page.tsx","backend":["api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/full-plan","frontend":"web/src/app/projects/[projectId]/full-plan/page.tsx","backend":["api/src/oslo_api/api/analysis.py","api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/history","frontend":"web/src/app/projects/[projectId]/history/page.tsx","backend":["api/src/oslo_api/api/analysis.py"],"track":"canonical-r2"},
+    {"route":"/projects/[projectId]/inference","frontend":"web/src/app/projects/[projectId]/inference/page.tsx","backend":["api/src/oslo_api/api/analysis.py"],"track":"legacy-compatibility"},
+    {"route":"/review/[token]","frontend":"web/src/app/review/[token]/page.tsx","backend":["api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
+    {"route":"/share/[token]","frontend":"web/src/app/share/[token]/page.tsx","backend":["api/src/oslo_api/api/collaboration.py"],"track":"canonical-r2"},
+    {"route":"/workspace","frontend":"web/src/app/workspace/page.tsx","backend":["api/src/oslo_api/api/projects.py"],"track":"workspace-settings-implementation"},
+    {"route":"/settings","frontend":"web/src/app/settings/page.tsx","backend":["api/src/oslo_api/api/projects.py"],"track":"workspace-settings-implementation"}
   ]
 }
