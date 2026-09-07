@@ -50,6 +50,9 @@ class InvitationResponse(BaseModel):
     status: InvitationStatus
     expires_at: datetime
     project_id: UUID | None = None
+    # One-time owner-visible link supplied only by the initial create response.
+    activation_url: str | None = None
+    delivery_status: str = "accepted"
 
 
 class ActivateInvitationRequest(BaseModel):

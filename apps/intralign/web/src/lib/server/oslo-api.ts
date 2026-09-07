@@ -813,7 +813,12 @@ export function sendInvitation(input: {
   email: string;
   role?: "owner" | "delegate_pm";
   projectId?: string | null;
-}): Promise<{ id: string; email: string }> {
+}): Promise<{
+  id: string;
+  email: string;
+  activation_url?: string | null;
+  delivery_status?: "accepted" | "unavailable";
+}> {
   return apiRequest(`/v1/workspaces/${input.workspaceId}/invitations`, {
     method: "POST",
     headers: { authorization: `Bearer ${input.accessToken}` },

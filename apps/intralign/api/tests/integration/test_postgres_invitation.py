@@ -9,7 +9,6 @@ from sqlalchemy import create_engine, text
 from oslo_api.application import (
     DatabaseSliceOneApplication,
     InvalidInvitation,
-    InvitationDeliveryFailed,
     ProjectArchiveDenied,
 )
 from oslo_api.database import create_database_engine
@@ -612,7 +611,7 @@ def test_resolve_rejects_terminal_or_expired_invitations(state: str) -> None:
         application.resolve_invitation(raw_token)
 
 
-def test_failed_email_delivery_does_not_leave_a_pending_invitation() -> None:
+def test_failed_email_delivery_keeps_a_pending_invitation_for_manual_link_sharing() -> None:
     email = "delivery.failure.integration@example.com"
     engine = create_engine(DATABASE_URL)
     with engine.begin() as connection:
@@ -626,12 +625,14 @@ def test_failed_email_delivery_does_not_leave_a_pending_invitation() -> None:
         engine=engine, mailer=FailingInvitationMailer(), web_url="http://localhost:3000"
     )
 
-    with pytest.raises(InvitationDeliveryFailed):
-        failing.invite_member(
-            actor_user_id=owner_id,
-            workspace_id=WORKSPACE_ID,
-            email=email,
-        )
+    invitation = failing.invite_member(
+        actor_user_id=owner_id,
+        workspace_id=WORKSPACE_ID,
+        email=email,
+    )
+
+    assert invitation.delivery_status == "unavailable"
+    assert invitation.activation_url is not None
 
     with engine.connect() as connection:
         pending = connection.execute(
@@ -642,7 +643,7 @@ def test_failed_email_delivery_does_not_leave_a_pending_invitation() -> None:
             {"email": email},
         ).scalar_one()
 
-    assert pending == 0
+    assert pending == 1
 
 
 def test_concurrent_activation_submissions_are_idempotent() -> None:

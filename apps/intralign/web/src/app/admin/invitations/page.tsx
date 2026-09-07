@@ -2,18 +2,18 @@ import { redirect } from "next/navigation";
 
 import { BrandLockup } from "@/components/brand/brand-lockup";
 import { Button } from "@/components/design-system";
-import { listInvitations, OsloApiError } from "@/lib/server/oslo-api";
+import { listInvitations, OsloApiError, type InvitationSummary } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
 import { logout } from "@/app/logout-action";
 
-import { inviteMember, resendMemberInvitation, revokeMemberInvitation } from "./actions";
+import { resendMemberInvitation, revokeMemberInvitation } from "./actions";
+import { InviteMemberForm } from "./invite-member-form";
 
 interface InvitationsPageProps {
   searchParams: Promise<{
     sent?: string;
     updated?: string;
     error?: string;
-    email?: string;
   }>;
 }
 
@@ -22,8 +22,9 @@ export default async function InvitationsPage({ searchParams }: InvitationsPageP
   if (!session.accessToken) redirect("/login");
   if (!session.workspaceId) redirect("/login");
   if (session.accountRole !== "admin") redirect("/workspace");
-  const { sent, updated, error, email } = await searchParams;
-  let invitations;
+  const { sent, updated, error: requestError } = await searchParams;
+  let invitations: InvitationSummary[] = [];
+  let invitationServiceError = "";
   try {
     invitations = await listInvitations({
       accessToken: session.accessToken,
@@ -33,7 +34,7 @@ export default async function InvitationsPage({ searchParams }: InvitationsPageP
     if (error instanceof OsloApiError && error.status === 403) {
       redirect("/settings?access=owner-required");
     }
-    throw error;
+    invitationServiceError = "Invitations are temporarily unavailable. Check the local backend configuration and try again.";
   }
   return (
     <main className="admin-shell">
@@ -43,11 +44,9 @@ export default async function InvitationsPage({ searchParams }: InvitationsPageP
         <p className="admin-copy">Invite trusted teammates into OSLO. Every link is unique and expires after 14 days.</p>
         {sent ? <p className="success-notice">Invitation sent to {sent}.</p> : null}
         {updated ? <p className="success-notice">Invitation {updated}.</p> : null}
-        {error ? <p className="form-error" id="invite-error" role="alert">{error}</p> : null}
-        <form action={inviteMember} className="invite-form">
-          <div className="field"><label htmlFor="invite-email">Email address</label><input aria-describedby={error ? "invite-error" : undefined} defaultValue={email} id="invite-email" name="email" required type="email" /></div>
-          <Button type="submit">Send invitation →</Button>
-        </form>
+        {requestError ? <p className="form-error" id="invite-error" role="alert">{requestError}</p> : null}
+        {invitationServiceError ? <p className="form-error" role="alert">{invitationServiceError}</p> : null}
+        <InviteMemberForm />
         <section className="invitation-table">
           <h2>Workspace invitations</h2>
           {invitations.length === 0 ? <p className="table-empty">No invitations yet.</p> : invitations.map((invitation) => (

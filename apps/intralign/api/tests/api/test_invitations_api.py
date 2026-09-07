@@ -194,6 +194,8 @@ def test_owner_can_create_an_invitation_through_the_api() -> None:
         "status": "pending",
         "expires_at": "2026-07-27T09:00:00Z",
         "project_id": None,
+        "activation_url": None,
+        "delivery_status": "accepted",
     }
     assert application.invite_request == (
         USER_ID,
@@ -265,7 +267,7 @@ def test_non_owner_cannot_resend_or_revoke_an_invitation(operation: str) -> None
     assert response.status_code == 403
 
 
-def test_email_delivery_failure_is_reported_as_retryable() -> None:
+def test_legacy_delivery_failure_exception_is_reported_as_retryable() -> None:
     response = TestClient(create_app(slice_one=DeliveryFailureApplication())).post(
         f"/v1/workspaces/{WORKSPACE_ID}/invitations",
         headers={"Authorization": "Bearer valid-access-token"},

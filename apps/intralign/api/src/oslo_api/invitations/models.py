@@ -38,6 +38,10 @@ class Invitation:
     created_at: datetime
     expires_at: datetime
     project_id: UUID | None = None
+    # Populated only in the authenticated create-invitation response. The raw
+    # token remains absent from persistence, audit records, and log output.
+    activation_url: str | None = dataclass_field(default=None, repr=False, compare=False)
+    delivery_status: str = dataclass_field(default="accepted", repr=False, compare=False)
 
 
 @dataclass(frozen=True, slots=True)
