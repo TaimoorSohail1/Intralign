@@ -404,6 +404,7 @@ export function startAnalysis(input: {
   sourceNames: string[];
   sourceDocumentIds: string[];
   idempotencyKey: string;
+  deferExecution?: boolean;
 }): Promise<AnalysisRunSummary> {
   return apiRequest(`/v1/projects/${input.projectId}/analysis-runs`, {
     method: "POST",
@@ -417,7 +418,18 @@ export function startAnalysis(input: {
       description: input.description,
       source_names: input.sourceNames,
       source_document_ids: input.sourceDocumentIds,
+      defer_execution: input.deferExecution ?? false,
     }),
+  });
+}
+
+export function executeAnalysis(input: {
+  accessToken: string;
+  runId: string;
+}): Promise<AnalysisRunSummary> {
+  return apiRequest(`/v1/analysis-runs/${input.runId}/execute`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${input.accessToken}` },
   });
 }
 

@@ -57,6 +57,20 @@ class AnalysisDispatcher(Protocol):
     def submit(self, function: Callable[[UUID], object], run_id: UUID) -> object: ...
 
 
+class DurableAnalysisDispatcher(AnalysisDispatcher, Protocol):
+    def claim_run(
+        self,
+        run_id: UUID,
+        *,
+        worker_id: str,
+        lease_seconds: int,
+    ) -> UUID | None: ...
+
+    def complete(self, run_id: UUID) -> None: ...
+
+    def release(self, run_id: UUID, *, error_code: str, delay_seconds: int) -> None: ...
+
+
 class InlineAnalysisExecutor:
     """Run analysis inside the request so serverless shutdown cannot abandon it."""
 
@@ -73,6 +87,7 @@ class DatabaseSliceTwoApplication:
         workflow: AnalysisWorkflow,
         executor: AnalysisDispatcher,
         document_store: DatabaseDocumentStore,
+        deferred_executor: DurableAnalysisDispatcher | None = None,
         extended_delay_seconds: float = 0.5,
         reanalysis_debounce_seconds: float = 1.5,
         read_moved_immediate_threshold_seconds: float = 5,
@@ -83,6 +98,7 @@ class DatabaseSliceTwoApplication:
         self._store = store
         self._workflow = workflow
         self._executor = executor
+        self._deferred_executor = deferred_executor or DatabaseAnalysisJobQueue(engine)
         self._document_store = document_store
         self._extended_delay_seconds = extended_delay_seconds
         self._reanalysis_debounce_seconds = reanalysis_debounce_seconds
@@ -124,6 +140,7 @@ class DatabaseSliceTwoApplication:
         kind: RunKind,
         key: str,
         provisional: bool = False,
+        defer_execution: bool = False,
     ) -> AnalysisRun:
         workspace_id = self._workspace_for_project(actor_user_id, project_id)
         parent_run = None
@@ -177,7 +194,8 @@ class DatabaseSliceTwoApplication:
         )
         run = self._store.create_run(request)
         if run.status is AnalysisRunStatus.QUEUED:
-            self._executor.submit(self._execute, run.id)
+            executor = self._deferred_executor if defer_execution else self._executor
+            executor.submit(self._execute, run.id)
         return run
 
     def refresh_analysis(
@@ -208,6 +226,34 @@ class DatabaseSliceTwoApplication:
         if run is None:
             raise SliceTwoNotFound
         self._workspace_for_project(actor_user_id, run.request.project_id)
+        return run
+
+    def execute_deferred_analysis(
+        self,
+        *,
+        actor_user_id: UUID,
+        run_id: UUID,
+        worker_id: str,
+    ) -> AnalysisRun:
+        self.get_run(actor_user_id=actor_user_id, run_id=run_id)
+        claimed = self._deferred_executor.claim_run(
+            run_id,
+            worker_id=worker_id,
+            lease_seconds=900,
+        )
+        if claimed is None:
+            return self.get_run(actor_user_id=actor_user_id, run_id=run_id)
+        try:
+            run = self.execute_queued_run(run_id)
+        except Exception as error:
+            self._deferred_executor.release(
+                run_id,
+                error_code=type(error).__name__,
+                delay_seconds=5,
+            )
+            raise
+        if run.status is not AnalysisRunStatus.QUEUED:
+            self._deferred_executor.complete(run_id)
         return run
 
     def events_after(
@@ -3358,8 +3404,9 @@ def build_slice_two_application() -> DatabaseSliceTwoApplication:
         ),
         artifact_worker_limit=settings.analysis_artifact_worker_threads,
     )
+    deferred_executor = DatabaseAnalysisJobQueue(engine)
     if settings.analysis_execution_mode == "durable":
-        executor = DatabaseAnalysisJobQueue(engine)
+        executor = deferred_executor
     elif settings.analysis_execution_mode == "inline":
         executor = InlineAnalysisExecutor()
     else:
@@ -3372,6 +3419,7 @@ def build_slice_two_application() -> DatabaseSliceTwoApplication:
         store=store,
         workflow=workflow,
         executor=executor,
+        deferred_executor=deferred_executor,
         document_store=document_store,
         extended_delay_seconds=settings.extended_analysis_delay_ms / 1000,
         reanalysis_debounce_seconds=settings.reanalysis_debounce_ms / 1000,

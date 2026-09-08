@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from typing import Annotated, Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import (
     APIRouter,
@@ -46,6 +46,7 @@ class StartAnalysisRequest(BaseModel):
     description: str = Field(default="", max_length=100_000)
     source_names: list[str] = Field(default_factory=list, max_length=10)
     source_document_ids: list[UUID] = Field(default_factory=list, max_length=10)
+    defer_execution: bool = False
 
     @model_validator(mode="after")
     def meaningful_input(self) -> "StartAnalysisRequest":
@@ -981,10 +982,31 @@ def start_analysis(
             kind=payload.kind,
             key=idempotency_key,
             provisional=payload.provisional,
+            defer_execution=payload.defer_execution,
         )
     except SliceTwoPermissionDenied as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
     return _start_response(run)
+
+
+@router.post(
+    "/analysis-runs/{run_id}/execute",
+    response_model=AnalysisRunResponse,
+)
+def execute_deferred_analysis(
+    run_id: UUID,
+    context: Annotated[InvitationRequestContext, Depends(invitation_request_context)],
+    request: Request,
+) -> AnalysisRunResponse:
+    try:
+        run = slice_two_application(request).execute_deferred_analysis(
+            actor_user_id=context.user.id,
+            run_id=run_id,
+            worker_id=f"http:{uuid4()}",
+        )
+    except (SliceTwoPermissionDenied, SliceTwoNotFound) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from error
+    return _run_response(run)
 
 
 @router.post(
