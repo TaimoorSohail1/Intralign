@@ -24,6 +24,38 @@ SETTINGS = Settings()  # type: ignore[call-arg]
 WORKSPACE_ID = UUID("018f9f7e-8de2-7000-8000-000000000010")
 
 
+def _single_page_pdf(text_value: str) -> bytes:
+    stream = f"BT /F1 12 Tf 72 720 Td ({text_value}) Tj ET".encode()
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        (
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+            b"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"
+        ),
+        b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    output = BytesIO()
+    output.write(b"%PDF-1.4\n")
+    offsets = [0]
+    for index, body in enumerate(objects, start=1):
+        offsets.append(output.tell())
+        output.write(f"{index} 0 obj\n".encode() + body + b"\nendobj\n")
+    xref = output.tell()
+    output.write(f"xref\n0 {len(objects) + 1}\n".encode())
+    output.write(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        output.write(f"{offset:010d} 00000 n \n".encode())
+    output.write(
+        (
+            f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
+            f"startxref\n{xref}\n%%EOF\n"
+        ).encode()
+    )
+    return output.getvalue()
+
+
 def test_intake_capacity_is_content_metered_not_file_count_metered(tmp_path) -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
@@ -245,7 +277,7 @@ def test_analysis_reads_persisted_document_evidence(tmp_path) -> None:
             )
 
 
-def test_mixed_office_formats_share_traceable_evidence_and_one_workflow(tmp_path) -> None:
+def test_all_advertised_formats_share_traceable_evidence_and_one_workflow(tmp_path) -> None:
     engine = create_engine(SETTINGS.database_url)
     project_id = uuid4()
     with engine.begin() as connection:
@@ -284,9 +316,13 @@ def test_mixed_office_formats_share_traceable_evidence_and_one_workflow(tmp_path
     workbook.save(xlsx)
 
     sources = (
+        ("charter.pdf", _single_page_pdf("Outcome is approved for the September launch.")),
         ("scope.docx", docx.getvalue()),
         ("dependencies.pptx", pptx.getvalue()),
         ("budget.xlsx", xlsx.getvalue()),
+        ("milestones.csv", b"Milestone,Date\nPilot,2026-09-01"),
+        ("owners.txt", b"Delivery owner is Priya Shah."),
+        ("assumptions.md", b"# Assumptions\nSupplier capacity remains unverified."),
     )
     try:
         document_store = DatabaseDocumentStore(engine=engine, object_root=tmp_path)
@@ -319,9 +355,21 @@ def test_mixed_office_formats_share_traceable_evidence_and_one_workflow(tmp_path
             harness=DeterministicAgentHarness(),
         ).run(request)
 
+        assert any(":page:1:" in reference for reference in evidence_refs)
         assert any(":section:Scope:" in reference for reference in evidence_refs)
         assert any(":slide:1:" in reference for reference in evidence_refs)
         assert any(":sheet:Budget:range:A1%3AB2:" in reference for reference in evidence_refs)
+        assert sum(":page:1:" in reference for reference in evidence_refs) >= 4
+        assert {item.file_name for item in uploaded} == {
+            "charter.pdf",
+            "scope.docx",
+            "dependencies.pptx",
+            "budget.xlsx",
+            "milestones.csv",
+            "owners.txt",
+            "assumptions.md",
+        }
+        assert all(item.status == "parsed" for item in uploaded)
         assert result.status is AnalysisRunStatus.COMPLETED
         with engine.connect() as connection:
             assert (

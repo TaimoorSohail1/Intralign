@@ -323,6 +323,55 @@ describe("ProjectOverview", () => {
     expect(await screen.findByText("Reanalysis queued")).toHaveClass("sr-only");
   });
 
+  it("offers a safe visible retry when manual reanalysis cannot be queued", async () => {
+    const staleSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      freshness: {
+        state: "stale",
+        pending_count: 1,
+        based_on_run_id: "run-001",
+        active_run_id: null,
+        last_act_at: "2026-08-12T12:00:00Z",
+        last_landed_at: "2026-08-12T11:59:00Z",
+      },
+    };
+    let reanalysisAttempts = 0;
+    const fetchMock = vi.fn((url: string | URL | Request) => {
+      if (String(url).endsWith("/reanalysis")) {
+        reanalysisAttempts += 1;
+        return reanalysisAttempts === 1
+          ? Promise.reject(new TypeError("Failed to fetch"))
+          : Promise.resolve(Response.json({ run_id: "run-002", status: "queued" }, { status: 202 }));
+      }
+      return Promise.resolve(Response.json([]));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={staleSnapshot}
+        initialView="overview"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Reanalyze now" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Reanalysis could not be queued. Your current read is unchanged.",
+      );
+      expect(screen.getByRole("button", { name: "Retry reanalysis" })).toBeEnabled();
+    });
+    expect(screen.queryByText("Failed to fetch")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry reanalysis" }));
+
+    await waitFor(() => expect(reanalysisAttempts).toBe(2));
+    expect(await screen.findByText("Reanalysis queued")).toBeInTheDocument();
+  });
+
   it("withdraws the latest pending change without hiding the last good read", async () => {
     const staleSnapshot: OverviewSnapshot = {
       ...snapshot,
@@ -1187,6 +1236,74 @@ describe("ProjectOverview", () => {
       accepted: true,
       surface: "folded_read",
     });
+  });
+
+  it("offers a safe idempotent retry when an Accept proposal decision fails", async () => {
+    let proposalAttempts = 0;
+    const fetcher = vi.fn((url: string | URL | Request) => {
+      if (String(url).includes("/proposals/")) {
+        proposalAttempts += 1;
+        return proposalAttempts === 1
+          ? Promise.reject(new TypeError("NetworkError when attempting to fetch resource"))
+          : Promise.resolve(Response.json({
+              proposal: {
+                id: "proposal-1",
+                issue_id: "ISS-001",
+                kind: "optional",
+                resolver_key: "optional:owner",
+                title: "Name a delivery fallback",
+                rationale: "The current plan has no documented fallback.",
+                artifact_type: "resources",
+                load_bearing: false,
+                accepted: true,
+                rejected: false,
+                surface: "folded_read",
+              },
+              analysis_run: null,
+            }));
+      }
+      return Promise.resolve(Response.json([]));
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        initialProposals={[{
+          id: "proposal-1",
+          issue_id: "ISS-001",
+          kind: "optional",
+          resolver_key: "optional:owner",
+          title: "Name a delivery fallback",
+          rationale: "The current plan has no documented fallback.",
+          artifact_type: "resources",
+          load_bearing: false,
+          accepted: false,
+          rejected: false,
+          surface: null,
+        }]}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Accept Name a delivery fallback" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "We could not record this decision. Your project data is unchanged.",
+      );
+      expect(screen.getByRole("button", { name: "Retry action" })).toBeEnabled();
+    });
+    expect(screen.queryByText(/NetworkError/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry action" }));
+
+    await waitFor(() => expect(proposalAttempts).toBe(2));
+    const requests = fetcher.mock.calls
+      .filter(([url]) => String(url).includes("/proposals/"))
+      .map(([, init]) => JSON.parse(String(init?.body)));
+    expect(requests[1].idempotencyKey).toBe(requests[0].idempotencyKey);
   });
 
   it("starts with the full prototype read and collapses it on demand", () => {

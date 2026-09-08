@@ -399,6 +399,7 @@ export function ProjectOverview({
   const [extendedRetryError, setExtendedRetryError] = useState<string | null>(null);
   const [reanalysisPending, setReanalysisPending] = useState(false);
   const [reanalysisFeedback, setReanalysisFeedback] = useState<string | null>(null);
+  const [reanalysisRetryAvailable, setReanalysisRetryAvailable] = useState(false);
   const [clarificationAnswer, setClarificationAnswer] = useState("");
   const [clarificationPending, setClarificationPending] = useState(false);
   const [clarificationError, setClarificationError] = useState<string | null>(null);
@@ -448,6 +449,10 @@ export function ProjectOverview({
     key: string;
   } | null>(null);
   const lifecycleActionIdempotency = useRef<{
+    signature: string;
+    key: string;
+  } | null>(null);
+  const proposalActionIdempotency = useRef<{
     signature: string;
     key: string;
   } | null>(null);
@@ -1364,6 +1369,7 @@ export function ProjectOverview({
     if (reanalysisPending) return;
     setReanalysisPending(true);
     setReanalysisFeedback(null);
+    setReanalysisRetryAvailable(false);
     try {
       const response = await fetch(`/api/projects/${snapshot.project_id}/reanalysis`, {
         method: "POST",
@@ -1380,10 +1386,9 @@ export function ProjectOverview({
           : current.freshness,
       }));
       setReanalysisFeedback("Reanalysis queued");
-    } catch (error) {
-      setReanalysisFeedback(
-        error instanceof Error ? error.message : "Reanalysis could not be queued.",
-      );
+    } catch {
+      setReanalysisFeedback("Reanalysis could not be queued. Your current read is unchanged.");
+      setReanalysisRetryAvailable(true);
     } finally {
       setReanalysisPending(false);
     }
@@ -1490,6 +1495,13 @@ export function ProjectOverview({
     setProposalActionPending(proposal.id);
     setIssueActionError(null);
     setLifecycleActionRetry(null);
+    const signature = `${proposal.id}:${accepted}:${surface}`;
+    if (proposalActionIdempotency.current?.signature !== signature) {
+      proposalActionIdempotency.current = {
+        signature,
+        key: crypto.randomUUID(),
+      };
+    }
     try {
       const response = await fetch(
         `/api/projects/${snapshot.project_id}/proposals/${proposal.id}/decisions`,
@@ -1499,7 +1511,7 @@ export function ProjectOverview({
           body: JSON.stringify({
             accepted,
             surface,
-            idempotencyKey: crypto.randomUUID(),
+            idempotencyKey: proposalActionIdempotency.current.key,
           }),
         },
       );
@@ -1526,12 +1538,13 @@ export function ProjectOverview({
         showQueuedReadChange(result.analysis_run);
         setAnalysisUpdateRunId(result.analysis_run.run_id);
       }
-    } catch (error) {
+    } catch {
       setIssueActionError(
-        error instanceof Error
-          ? error.message
-          : "The proposal decision could not be saved. Please try again.",
+        "We could not record this decision. Your project data is unchanged. Please try again.",
       );
+      setLifecycleActionRetry(() => () => {
+        void decideProposal(proposal, accepted, surface);
+      });
     } finally {
       setProposalActionPending(null);
     }
@@ -2305,7 +2318,14 @@ export function ProjectOverview({
                   )}
                 </section>
               ) : null}
-              {reanalysisFeedback ? (
+              {reanalysisFeedback ? reanalysisRetryAvailable ? (
+                <div className="r2-lifecycle-error" role="alert">
+                  <p>{reanalysisFeedback}</p>
+                  <button onClick={() => void runReanalysisNow()} type="button">
+                    Retry reanalysis
+                  </button>
+                </div>
+              ) : (
                 <p className="sr-only" role="status">{reanalysisFeedback}</p>
               ) : null}
               {snapshot.read_moved_notifications?.[0] && !snapshot.first_run?.freeze_on ? (
@@ -2534,7 +2554,12 @@ export function ProjectOverview({
                   open={resolvedOpen}
                 />
                 {issueActionError && !selectedIssue ? (
-                  <p className="r2-lifecycle-error" role="alert">{issueActionError}</p>
+                  <div className="r2-lifecycle-error" role="alert">
+                    <p>{issueActionError}</p>
+                    {lifecycleActionRetry ? (
+                      <button onClick={lifecycleActionRetry} type="button">Retry action</button>
+                    ) : null}
+                  </div>
                 ) : null}
               </section>
 
