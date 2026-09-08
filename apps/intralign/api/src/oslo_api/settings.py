@@ -35,7 +35,10 @@ class Settings(BaseSettings):
     analysis_execution_mode: Literal["in_process", "durable", "inline"] = "in_process"
     analysis_worker_poll_seconds: float = Field(default=1.0, ge=0.1, le=30)
     analysis_worker_lease_seconds: int = Field(default=900, ge=60, le=3_600)
-    analysis_artifact_worker_threads: int = Field(default=4, ge=1, le=16)
+    # The seven artifacts are independent shards. Running all of them together
+    # keeps a normal first read inside the serverless invocation budget even
+    # when several shards need the single schema-repair attempt.
+    analysis_artifact_worker_threads: int = Field(default=7, ge=1, le=16)
     analysis_phase_delay_ms: int = Field(default=120, ge=0, le=10_000)
     extended_analysis_delay_ms: int = Field(default=750, ge=0, le=60_000)
     reanalysis_debounce_ms: int = Field(default=1_500, ge=0, le=60_000)

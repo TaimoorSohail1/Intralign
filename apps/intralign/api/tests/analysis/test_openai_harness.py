@@ -994,6 +994,48 @@ def test_construct_quarantines_only_artifact_content_with_unsupported_evidence()
     assert len(client.responses.requests) == 1
 
 
+def test_construct_does_not_repeat_a_wholly_unsupported_artifact_response() -> None:
+    evidence_ref = "document:plan:page:1:fragment:0"
+    invented_ref = "document:plan:page:99:fragment:9"
+    payload = {
+        "project_title": None,
+        "project_title_confidence": "low",
+        "artifact": structured_artifact_payload(
+            ARTIFACT_TYPES[0],
+            invented_ref,
+        ),
+    }
+    client = SequencedOpenAI([payload, payload])
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+
+    with pytest.raises(
+        AgentHarnessError,
+        match="EVIDENCE_REFERENCE_CONTRACT_FAILED",
+    ):
+        harness.construct_artifact(
+            perception=Perception(
+                facts=("A supported fact.",),
+                claims=(),
+                gaps=(),
+                evidence_refs=(evidence_ref,),
+                evidence=(
+                    EvidenceFragment(
+                        reference=evidence_ref,
+                        content="Supported evidence.",
+                    ),
+                ),
+            ),
+            artifact_type=ARTIFACT_TYPES[0],
+            kind=RunKind.INITIAL,
+        )
+
+    assert len(client.responses.requests) == 1
+
+
 def test_perceive_quarantines_an_invalid_locator_when_supported_evidence_remains() -> None:
     evidence_ref = "document:plan:page:1:fragment:0"
     invented_ref = "document:plan:page:99:fragment:9"
@@ -1097,6 +1139,68 @@ def test_schema_invalid_response_is_retried_once_then_validated() -> None:
             "message": "raw validation detail",
         }
     ]
+    assert "schema repair attempt" in repair_request["input"][0]["content"]
+    assert invocation.metadata is not None
+    assert invocation.metadata.attempts == 2
+
+
+def test_evaluate_repairs_schema_once_when_global_retries_are_disabled() -> None:
+    evidence_ref = "document:plan:page:1:fragment:0"
+    client = SchemaInvalidOnceOpenAI(
+        {
+            "confidence_index": 55,
+            "confidence_band": "Moderate",
+            "reliability": "Moderate",
+            "clarity": "Moderate",
+            "alignment": "Moderate",
+            "feasibility": "Moderate",
+            "coverage_audit": [
+                {
+                    "artifact_type": artifact_type.value,
+                    "completeness": "complete",
+                    "checked_controls": ["coverage", "consistency"],
+                    "missing_controls": [],
+                }
+                for artifact_type in ARTIFACT_TYPES
+            ],
+            "issues": [],
+        }
+    )
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+        sleeper=lambda _: None,
+        max_retries=0,
+    )
+    invocation = HarnessInvocation(
+        run_id=UUID("018f9f7e-8de2-7000-8000-000000000020"),
+        phase=AnalysisPhase.EVALUATE_ADVISE,
+    )
+
+    assessment = harness.evaluate(
+        artifacts=(),
+        perception=Perception(
+            facts=("A supported project fact.",),
+            claims=(),
+            gaps=(),
+            evidence_refs=(evidence_ref,),
+            evidence=(
+                EvidenceFragment(
+                    reference=evidence_ref,
+                    content="A supported project fact.",
+                ),
+            ),
+        ),
+        kind=RunKind.INITIAL,
+        invocation=invocation,
+    )
+
+    assert assessment.confidence_index == 55
+    assert client.responses.calls == 2
+    repair_request = client.responses.requests[0]
+    repair_payload = json.loads(repair_request["input"][1]["content"])
+    assert repair_payload["schema_repair"]["attempt"] == 1
     assert "schema repair attempt" in repair_request["input"][0]["content"]
     assert invocation.metadata is not None
     assert invocation.metadata.attempts == 2

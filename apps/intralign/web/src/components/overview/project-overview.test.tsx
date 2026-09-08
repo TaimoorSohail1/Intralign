@@ -1435,6 +1435,33 @@ describe("ProjectOverview", () => {
     expect(screen.queryByText("52")).not.toBeInTheDocument();
   });
 
+  it("keeps the canonical integrity level visible while the read is incomplete", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={{
+          ...snapshot,
+          assessment: {
+            ...snapshot.assessment,
+            integrity: {
+              ...snapshot.assessment.integrity,
+              level: "Fragile",
+              complete: false,
+            },
+          },
+        }}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: /Outcome Integrity Fragile, limited by Grounding/i,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Under review")).not.toBeInTheDocument();
+  });
+
   it("renders the project shell and evidence-qualified integrity read", () => {
     render(
       <ProjectOverview

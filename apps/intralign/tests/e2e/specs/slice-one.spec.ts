@@ -222,6 +222,7 @@ test("Owner can resend and revoke a pending invitation", async ({ page }, testIn
   await page.getByLabel("Email address").fill(email);
   await page.getByRole("button", { name: "Send invitation" }).click();
   await expect(page.getByText(`Invitation sent to ${email}`)).toBeVisible();
+  await page.getByRole("button", { name: "Done" }).click();
 
   let pendingRow = page
     .locator("article.invitation-row")
