@@ -1,7 +1,6 @@
 {
   "schema": "deferrals/v1",
   "note": "Pushing a row out of an iteration is an OWNER RULING, recorded here with a date and a reason. A date passing is not a deferral. Deferred rows are rendered in a visible tail of ITERATION_QUEUE.md, never hidden — and a row deferred TWICE escalates, because the second slip means the row's premise, not its timing, is what is wrong.",
-
   "fields": {
     "row": "the row id exactly as it appears in the queue",
     "from": "iteration id it is leaving",
@@ -10,7 +9,6 @@
     "date": "YYYY-MM-DD the ruling was made",
     "why": "the reason. 'no capacity' is a reason; 'not done' is not."
   },
-
   "deferrals": [
     {
       "row": "RB-101",
@@ -43,6 +41,30 @@
       "ruled_by": "owner",
       "date": "2026-08-31",
       "why": "Dev-owned, and competes with L4 (defect lane) and L5 (promotion enforcement) for the same person inside one iteration. Sequencing it after L3 also lets the handoff contract settle the resource vocabulary before the server realizes it, rather than realizing a vocabulary the contract may restate."
+    },
+    {
+      "row": "RB-128",
+      "from": "iteration-1",
+      "to": "iteration-2",
+      "ruled_by": "owner",
+      "date": "2026-09-02",
+      "why": "The citation ratchet's saving is retrospective — it would have unblocked #279, a cost already paid. Adopting it now displaces the R2.0 staging measurement, the only remaining path to sign-off. Accepted cost: every PR until the R2.1 boundary keeps carrying the whole corpus's citation debt."
+    },
+    {
+      "row": "RB-132",
+      "from": "iteration-1",
+      "to": "iteration-2",
+      "ruled_by": "owner",
+      "date": "2026-09-02",
+      "why": "Re-scoping every gate's enforcement tier is a between-releases change; doing it inside R2.0 alters what the gates mean while they are being used to certify a release. Accepted cost: operational-record files keep paying canon ceremony — 19 of the 41 files touched in the week to 2026-09-02."
+    },
+    {
+      "row": "RB-133",
+      "from": "iteration-1",
+      "to": "iteration-2",
+      "ruled_by": "owner",
+      "date": "2026-09-02",
+      "why": "Changing review policy mid-release changes who is able to land the release. Accepted cost: canon PR throughput stays capped at one reviewer's availability, and the owner still cannot self-approve."
     }
   ]
 }
