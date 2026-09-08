@@ -51,6 +51,15 @@ class SliceTwoApplication(Protocol):
         kind: RunKind,
         key: str,
         provisional: bool = False,
+        defer_execution: bool = False,
+    ) -> AnalysisRun: ...
+
+    def execute_deferred_analysis(
+        self,
+        *,
+        actor_user_id: UUID,
+        run_id: UUID,
+        worker_id: str,
     ) -> AnalysisRun: ...
 
     def refresh_analysis(

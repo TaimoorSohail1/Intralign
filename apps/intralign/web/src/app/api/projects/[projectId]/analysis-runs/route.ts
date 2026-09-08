@@ -1,4 +1,6 @@
-import { startAnalysis } from "@/lib/server/oslo-api";
+import { after } from "next/server";
+
+import { executeAnalysis, startAnalysis } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
 
 export const maxDuration = 800;
@@ -21,7 +23,9 @@ export async function POST(request: Request, context: RouteContext<"/api/project
         ? body.sourceDocumentIds.slice(0, 10)
         : [],
       idempotencyKey: String(body.idempotencyKey ?? crypto.randomUUID()),
+      deferExecution: true,
     });
+    after(() => executeAnalysis({ accessToken: session.accessToken!, runId: run.run_id }));
     return Response.json(run, { status: 202 });
   } catch (error) {
     return Response.json(

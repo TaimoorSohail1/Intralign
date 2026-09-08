@@ -58,6 +58,26 @@ def test_claim_uses_a_lease_and_skip_locked() -> None:
     assert parameters == {"worker_id": "worker-1", "lease_seconds": 900}
 
 
+def test_claim_run_leases_only_the_requested_job() -> None:
+    engine = FakeEngine(RUN_ID)
+    queue = DatabaseAnalysisJobQueue(engine)  # type: ignore[arg-type]
+
+    claimed = queue.claim_run(
+        RUN_ID,
+        worker_id="request-worker-1",
+        lease_seconds=900,
+    )
+
+    sql, parameters = engine.connection.calls[0]
+    assert claimed == RUN_ID
+    assert "job.analysis_run_id = :run_id" in sql
+    assert parameters == {
+        "run_id": RUN_ID,
+        "worker_id": "request-worker-1",
+        "lease_seconds": 900,
+    }
+
+
 def test_release_requeues_without_persisting_unbounded_error_detail() -> None:
     engine = FakeEngine()
     queue = DatabaseAnalysisJobQueue(engine)  # type: ignore[arg-type]
