@@ -29,7 +29,11 @@ from oslo_api.analysis.document_store import DatabaseDocumentStore
 from oslo_api.analysis.harness import AgentHarness
 from oslo_api.analysis.history import append_history_event, list_project_history
 from oslo_api.analysis.job_queue import DatabaseAnalysisJobQueue
-from oslo_api.analysis.models import EvidenceFragment, normalize_evidence_state
+from oslo_api.analysis.models import (
+    ARTIFACT_TYPES,
+    EvidenceFragment,
+    normalize_evidence_state,
+)
 from oslo_api.analysis.object_storage import LocalObjectStorage, SupabaseObjectStorage
 from oslo_api.analysis.openai_harness import OpenAIAgentHarness
 from oslo_api.analysis.persistence import DatabaseAnalysisStore
@@ -3348,7 +3352,10 @@ def build_slice_two_application() -> DatabaseSliceTwoApplication:
         store=store,
         harness=harness,
         phase_delay_seconds=settings.analysis_phase_delay_ms / 1000,
-        artifact_workers_per_run=min(4, settings.analysis_artifact_worker_threads),
+        artifact_workers_per_run=min(
+            len(ARTIFACT_TYPES),
+            settings.analysis_artifact_worker_threads,
+        ),
         artifact_worker_limit=settings.analysis_artifact_worker_threads,
     )
     if settings.analysis_execution_mode == "durable":

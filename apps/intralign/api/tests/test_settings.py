@@ -30,3 +30,12 @@ def test_settings_accepts_inline_serverless_analysis_execution() -> None:
     )
 
     assert settings.analysis_execution_mode == "inline"
+
+
+def test_settings_parallelize_the_seven_independent_artifacts_by_default() -> None:
+    settings = Settings(
+        _env_file=None,
+        supabase_secret_key="local-test-secret-key-value",
+    )
+
+    assert settings.analysis_artifact_worker_threads == 7
