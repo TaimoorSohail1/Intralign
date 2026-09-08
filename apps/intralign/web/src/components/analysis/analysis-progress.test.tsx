@@ -112,6 +112,47 @@ describe("AnalysisProgress", () => {
     expect(frame()).toHaveAttribute("src", "/r2/onboarding-arc.html?embed=1&live=1&mode=guided");
   });
 
+  it("delivers a completed read when its completion event is missed", async () => {
+    vi.useFakeTimers();
+    let runStatusReads = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/api/analysis-runs/run-1") {
+          runStatusReads += 1;
+          return Response.json(
+            runStatusReads === 1
+              ? { status: "running", phase: "construct_artifacts", completed_phases: [] }
+              : { status: "completed", phase: "publish", completed_phases: ["publish"] },
+          );
+        }
+        if (url.includes("/overview")) return Response.json(completedOverview());
+        return Response.json({ artifact_type: "intent" });
+      }),
+    );
+
+    render(<AnalysisProgress mode="guided" projectId="project-1" runId="run-1" />);
+    await vi.waitFor(() => expect(runStatusReads).toBe(1));
+    await act(async () => vi.advanceTimersByTimeAsync(5_000));
+
+    await vi.waitFor(() => expect(frame()).toHaveAttribute("data-oarc-complete", "true"));
+    expect(runStatusReads).toBe(2);
+  });
+
+  it("shows a safe retry state after repeated status-read failures", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+    render(<AnalysisProgress mode="guided" projectId="project-1" runId="run-1" />);
+    await act(async () => vi.advanceTimersByTimeAsync(10_000));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("This read needs another attempt");
+    expect(screen.getByText(/Your documents are safe\./)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry analysis" })).toBeEnabled();
+    expect(screen.queryByText("Failed to fetch")).not.toBeInTheDocument();
+  });
+
   it("uses the exact prototype arc and sends truthful live analysis progress into it", async () => {
     vi.stubGlobal(
       "fetch",

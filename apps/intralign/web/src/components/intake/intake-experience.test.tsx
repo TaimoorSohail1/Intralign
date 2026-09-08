@@ -97,6 +97,38 @@ describe("IntakeExperience", () => {
       );
     });
   });
+
+  it("offers a direct progress link when the client-side handoff does not complete", async () => {
+    vi.useFakeTimers();
+    const navigate = vi.fn();
+    render(
+      <IntakeExperience
+        displayName="Alex"
+        navigate={navigate}
+        projectId="project-2"
+        returningClient
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Describe your project"), {
+      target: { value: "Launch the next client project" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Get my analysis/ }));
+
+    await vi.waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(
+        "/projects/project-2/analysis/run-returning?returning=1",
+      );
+    });
+    await act(async () => vi.advanceTimersByTimeAsync(10_000));
+
+    expect(screen.getByRole("link", { name: "Open analysis progress" })).toHaveAttribute(
+      "href",
+      "/projects/project-2/analysis/run-returning?returning=1",
+    );
+    vi.useRealTimers();
+  });
+
   it("keeps analysis blocked until the user adds meaningful input", () => {
     render(<IntakeExperience displayName="Alex" />);
 

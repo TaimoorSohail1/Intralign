@@ -84,6 +84,7 @@ const returningStageByPhase: Record<string, number> = {
 };
 
 const returningStageDurations = [2_000, 4_800, 2_100, 2_100, 2_100, 2_100, 2_100, 1_200] as const;
+const analysisStatusPollIntervalMs = 5_000;
 
 function buildRingSegments(count: number) {
   const center = 84;
@@ -276,17 +277,44 @@ export function AnalysisProgress({
 
   useEffect(() => {
     let closed = false;
+    let terminal = false;
+    let syncing = false;
+    let consecutiveStatusFailures = 0;
+    let stream: EventSource | null = null;
     const sync = async () => {
-      const response = await fetch(`/api/analysis-runs/${runId}`, { cache: "no-store" });
-      if (!response.ok || closed) return;
-      const run = await response.json();
-      setPhase(run.phase ?? "submit_intake");
-      setCompleted(run.completed_phases ?? []);
-      if (run.status === "completed") await loadDecision();
-      if (run.status === "failed") setFailed(run.error_code ?? "Analysis paused unexpectedly");
+      if (closed || terminal || syncing) return;
+      syncing = true;
+      try {
+        const response = await fetch(`/api/analysis-runs/${runId}`, { cache: "no-store" });
+        if (!response.ok || closed || terminal) throw new Error("Analysis status is unavailable");
+        const run = await response.json();
+        consecutiveStatusFailures = 0;
+        setPhase(run.phase ?? "submit_intake");
+        setCompleted(run.completed_phases ?? []);
+        if (run.status === "completed") {
+          terminal = true;
+          stream?.close();
+          await loadDecision();
+        }
+        if (run.status === "failed") {
+          terminal = true;
+          stream?.close();
+          setFailed(run.error_code ?? "Analysis paused unexpectedly");
+        }
+      } catch {
+        consecutiveStatusFailures += 1;
+        if (!closed && consecutiveStatusFailures >= 3) {
+          terminal = true;
+          stream?.close();
+          setFailed("ANALYSIS_STATUS_UNAVAILABLE");
+        }
+      } finally {
+        syncing = false;
+      }
     };
     void sync();
-    const stream = new EventSource(`/api/analysis-runs/${runId}/events`);
+    const poller = window.setInterval(() => void sync(), analysisStatusPollIntervalMs);
+    stream = new EventSource(`/api/analysis-runs/${runId}/events`);
     const onProgress = (event: MessageEvent) => {
       const payload = JSON.parse(event.data);
       if (payload.phase) setPhase(payload.phase);
@@ -300,6 +328,7 @@ export function AnalysisProgress({
       setCompletedArtifacts((current) => [...new Set([...current, payload.artifact_type])]);
     };
     const onCompleted = () => {
+      terminal = true;
       stream.close();
       void loadDecision();
     };
@@ -310,11 +339,13 @@ export function AnalysisProgress({
     stream.addEventListener("analysis.completed", onCompleted);
     stream.addEventListener("analysis.failed", (event) => {
       const payload = JSON.parse((event as MessageEvent).data);
+      terminal = true;
       setFailed(payload.error?.code ?? "Analysis paused unexpectedly");
       stream.close();
     });
     return () => {
       closed = true;
+      window.clearInterval(poller);
       stream.close();
     };
   }, [loadDecision, projectId, runId, syncVersion]);
