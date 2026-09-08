@@ -373,7 +373,7 @@ describe("ReportWorkspace", () => {
     expect(screen.queryByRole("textbox", { name: "Edit readout" })).not.toBeInTheDocument();
   });
 
-  it("shows visible feedback when a generated report is exported", () => {
+  it("shows visible feedback when a generated report is exported", async () => {
     vi.stubGlobal("URL", {
       ...URL,
       createObjectURL: vi.fn(() => "blob:generated-report"),
@@ -388,7 +388,9 @@ describe("ReportWorkspace", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Export this report" }));
 
-    expect(screen.getByRole("status")).toHaveTextContent("TEXT export downloaded");
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("TEXT export downloaded");
+    });
   });
 
   it("attributes retained decisions and keeps open decisions separate", () => {
@@ -833,7 +835,7 @@ describe("ReportWorkspace", () => {
     });
   });
 
-  it("downloads a real CSV payload from the retained plan", () => {
+  it("downloads a real CSV payload from the retained plan", async () => {
     let downloadedAs = "";
     vi.stubGlobal("URL", {
       ...URL,
@@ -849,7 +851,7 @@ describe("ReportWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "CSV" }));
     fireEvent.click(screen.getByRole("button", { name: "Download the CSV" }));
 
-    expect(URL.createObjectURL).toHaveBeenCalledOnce();
+    await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalledOnce());
     expect(downloadedAs).toMatch(/Atlas launch-plan\.csv$|Project understanding-plan\.csv$/);
     expect(screen.getByRole("status")).toHaveTextContent("CSV export downloaded");
   });
@@ -971,6 +973,101 @@ describe("ReportWorkspace", () => {
       expect(screen.getByRole("status")).toHaveTextContent("email delivery failed");
     });
     expect(screen.getByRole("status")).not.toHaveTextContent("Report emailed");
+    expect(screen.getByRole("button", { name: "Retry send" })).toBeEnabled();
+  });
+
+  it("offers retry when generated-draft workspace sync fails", async () => {
+    let putAttempts = 0;
+    let failNextPut = false;
+    vi.mocked(fetch).mockImplementation((url: string | URL | Request, init?: RequestInit) => {
+      const requestUrl = String(url);
+      if (requestUrl.endsWith("/report") && init?.method === "PUT") {
+        putAttempts += 1;
+        if (failNextPut) {
+          failNextPut = false;
+          return Promise.reject(new TypeError("Failed to fetch"));
+        }
+        return Promise.resolve(new Response(null, { status: 204 }));
+      }
+      if (requestUrl.endsWith("/report/schedules")) {
+        return Promise.resolve(Response.json([]));
+      }
+      if (requestUrl.endsWith("/report/asana")) {
+        return Promise.resolve(Response.json({ configured: false, entitled: false, preview: [] }));
+      }
+      return Promise.resolve(Response.json({
+        snapshot_id: snapshot.snapshot_id,
+        content: null,
+        deliveries: [],
+      }));
+    });
+    render(<ReportWorkspace snapshot={snapshot} />);
+
+    await waitFor(() => expect(putAttempts).toBe(1));
+    putAttempts = 0;
+    failNextPut = true;
+
+    fireEvent.click(screen.getByRole("button", { name: /Generate a draft/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "workspace sync failed",
+      );
+      expect(screen.getByRole("button", { name: "Retry draft sync" })).toBeEnabled();
+    });
+    expect(screen.queryByText("Failed to fetch")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry draft sync" }));
+    await waitFor(() => expect(putAttempts).toBe(2));
+    expect(screen.getByRole("status")).toHaveTextContent("Draft synced to this workspace");
+  });
+
+  it("offers retry and does not claim success when export preparation fails", async () => {
+    let exportAttempts = 0;
+    vi.mocked(fetch).mockImplementation((url: string | URL | Request, init?: RequestInit) => {
+      const requestUrl = String(url);
+      if (requestUrl.endsWith("/report/exports") && init?.method === "POST") {
+        exportAttempts += 1;
+        return exportAttempts === 1
+          ? Promise.reject(new TypeError("Failed to fetch"))
+          : Promise.resolve(new Response(null, { status: 204 }));
+      }
+      if (requestUrl.endsWith("/report/schedules")) return Promise.resolve(Response.json([]));
+      if (requestUrl.endsWith("/report/asana")) {
+        return Promise.resolve(Response.json({ configured: false, entitled: false, preview: [] }));
+      }
+      return Promise.resolve(Response.json({
+        snapshot_id: snapshot.snapshot_id,
+        content: null,
+        deliveries: [],
+      }));
+    });
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn(() => "blob:report-export"),
+      revokeObjectURL: vi.fn(),
+    });
+    const download = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    renderAuthored();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Export$/i }));
+    fireEvent.click(screen.getByRole("button", { name: "CSV" }));
+    download.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Download the CSV" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Export could not be prepared. Nothing was downloaded.",
+      );
+      expect(screen.getByRole("button", { name: "Retry export" })).toBeEnabled();
+    });
+    expect(download).not.toHaveBeenCalled();
+    expect(screen.queryByText("Failed to fetch")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry export" }));
+    await waitFor(() => expect(exportAttempts).toBe(2));
+    expect(download).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("status")).toHaveTextContent("CSV export downloaded");
   });
 
   it("labels a previous-analysis report and blocks external sending until refresh", async () => {

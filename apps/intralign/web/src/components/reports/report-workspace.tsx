@@ -383,9 +383,14 @@ export function ReportWorkspace({
   const [findCount, setFindCount] = useState(0);
   const [recipient, setRecipient] = useState(defaultRecipient);
   const [notice, setNotice] = useState<string | null>(null);
+  const [roundTripRetry, setRoundTripRetry] = useState<{
+    label: string;
+    action: () => void;
+  } | null>(null);
   const [sendOpen, setSendOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState<"excel" | "csv" | "text" | "pdf">("pdf");
+  const [exportPending, setExportPending] = useState(false);
   const [exportDetailsOpen, setExportDetailsOpen] = useState(false);
   const [editingRecipient, setEditingRecipient] = useState(false);
   const [deliveryEmail, setDeliveryEmail] = useState("");
@@ -590,20 +595,55 @@ export function ReportWorkspace({
     return content;
   };
 
-  const exportDocument = async () => {
-    setNotice(null);
-    await persistDocument();
-    const link = document.createElement("a");
-    link.href = `/api/projects/${snapshot.project_id}/export`;
-    link.download = `${snapshot.project_title || "project"}-readout.pdf`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    void fetch(`/api/projects/${snapshot.project_id}/report/exports`, {
+  const offerRoundTripRetry = (
+    message: string,
+    label: string,
+    action: () => void,
+  ) => {
+    setNotice(message);
+    setRoundTripRetry({ label, action });
+  };
+
+  const recordExport = async (format: "excel" | "csv" | "text" | "pdf") => {
+    const response = await fetch(`/api/projects/${snapshot.project_id}/report/exports`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ format: "pdf" }),
+      body: JSON.stringify({ format }),
     });
+    if (!response.ok) throw new Error("export record unavailable");
+  };
+
+  const exportDocument = async () => {
+    if (exportPending) return;
+    setExportPending(true);
+    setNotice(null);
+    setRoundTripRetry(null);
+    try {
+      await persistDocument();
+      const response = await fetch(`/api/projects/${snapshot.project_id}/export`, {
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("export unavailable");
+      await recordExport("pdf");
+      const href = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = `${snapshot.project_title || "project"}-readout.pdf`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(href);
+      setNotice("PDF export downloaded.");
+      setExportOpen(false);
+    } catch {
+      offerRoundTripRetry(
+        "Export could not be prepared. Nothing was downloaded. Please try again.",
+        "Retry export",
+        () => void exportDocument(),
+      );
+    } finally {
+      setExportPending(false);
+    }
   };
 
   const downloadPlanFormat = (format: "excel" | "csv" | "text") => {
@@ -622,11 +662,26 @@ export function ReportWorkspace({
     link.remove();
     URL.revokeObjectURL(href);
     setNotice(`${format.toUpperCase()} export downloaded.`);
-    void fetch(`/api/projects/${snapshot.project_id}/report/exports`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ format }),
-    });
+  };
+
+  const exportPlanFormat = async (format: "excel" | "csv" | "text") => {
+    if (exportPending) return;
+    setExportPending(true);
+    setNotice(null);
+    setRoundTripRetry(null);
+    try {
+      await recordExport(format);
+      downloadPlanFormat(format);
+      setExportOpen(false);
+    } catch {
+      offerRoundTripRetry(
+        "Export could not be prepared. Nothing was downloaded. Please try again.",
+        "Retry export",
+        () => void exportPlanFormat(format),
+      );
+    } finally {
+      setExportPending(false);
+    }
   };
 
   const queueDocumentSave = () => {
@@ -722,6 +777,35 @@ export function ReportWorkspace({
     });
   };
 
+  const syncGeneratedDraft = async (html: string, revision: number) => {
+    setRoundTripRetry(null);
+    try {
+      const staging = document.createElement("div");
+      staging.innerHTML = html;
+      const response = await fetch(`/api/projects/${snapshot.project_id}/report`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          snapshot_id: snapshot.snapshot_id,
+          content: editorContent(staging, initialSections),
+          recipient_class: recipient.toLowerCase().replace(" ", "-"),
+          composition_depth: briefingDepth,
+          included: includedBriefingSections,
+          revision,
+        }),
+      });
+      if (!response.ok) throw new Error("draft sync unavailable");
+      setNotice("Draft synced to this workspace.");
+    } catch {
+      offerRoundTripRetry(
+        "The draft remains saved on this device, but workspace sync failed.",
+        "Retry draft sync",
+        () => void syncGeneratedDraft(html, revision),
+      );
+    }
+  };
+
   const generateDraft = () => {
     const nextHtml = sectionsToHtml(composeBriefingSections());
     const hadPreviousDraft = documentHtml !== initialHtml && documentHtml !== nextHtml;
@@ -738,27 +822,7 @@ export function ReportWorkspace({
         ? "Draft regenerated. Your previous authored version can still be restored."
         : "Draft generated from the current retained analysis.",
     );
-    const staging = document.createElement("div");
-    staging.innerHTML = nextHtml;
-    void fetch(`/api/projects/${snapshot.project_id}/report`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      keepalive: true,
-      body: JSON.stringify({
-        snapshot_id: snapshot.snapshot_id,
-        content: editorContent(staging, initialSections),
-        recipient_class: recipient.toLowerCase().replace(" ", "-"),
-        composition_depth: briefingDepth,
-        included: includedBriefingSections,
-        revision: nextRevision,
-      }),
-    }).then((response) => {
-      if (!response.ok) {
-        setNotice("The draft remains saved on this device, but workspace sync failed.");
-      }
-    }).catch(() => {
-      setNotice("The draft remains saved on this device, but workspace sync failed.");
-    });
+    void syncGeneratedDraft(nextHtml, nextRevision);
   };
 
   const createWeeklySchedule = async () => {
@@ -965,6 +1029,7 @@ export function ReportWorkspace({
     }
     setDeliveryPending(true);
     setNotice(null);
+    setRoundTripRetry(null);
     try {
       let latestSnapshotId = currentSnapshotId;
       const currencyResponse = await fetch(
@@ -1016,7 +1081,10 @@ export function ReportWorkspace({
       setSendOpen(false);
       setScheduleOpen(false);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Report delivery failed.");
+      const message = error instanceof Error && error.message.includes("email delivery failed")
+        ? error.message
+        : "Report delivery failed safely. No memo was sent. Please try again.";
+      offerRoundTripRetry(message, "Retry send", () => void deliver(schedule));
     } finally {
       setDeliveryPending(false);
     }
@@ -1643,10 +1711,15 @@ export function ReportWorkspace({
           <div className="report-export-actions">
             <button
               className="is-primary"
-              onClick={() => exportFormat === "pdf" ? void exportDocument() : downloadPlanFormat(exportFormat)}
+              disabled={exportPending}
+              onClick={() => exportFormat === "pdf" ? void exportDocument() : void exportPlanFormat(exportFormat)}
               type="button"
             >
-              <DownloadSimple size={14} /> {exportFormat === "pdf" ? "Export as PDF" : `Download the ${exportFormat.toUpperCase()}`}
+              <DownloadSimple size={14} /> {exportPending
+                ? "Preparing export…"
+                : exportFormat === "pdf"
+                  ? "Export as PDF"
+                  : `Download the ${exportFormat.toUpperCase()}`}
             </button>
             <button onClick={() => void copySummary()} type="button">
               Copy summary
@@ -1704,7 +1777,14 @@ export function ReportWorkspace({
         </div>
       ) : null}
 
-      {notice ? <p className="report-notice" role="status">{notice}</p> : null}
+      {notice ? (
+        <div className="report-notice" role="status">
+          <p>{notice}</p>
+          {roundTripRetry ? (
+            <button onClick={roundTripRetry.action} type="button">{roundTripRetry.label}</button>
+          ) : null}
+        </div>
+      ) : null}
 
       {isPreviousAnalysis ? (
         <aside className="report-currency-warning" role="note">
@@ -1767,9 +1847,16 @@ export function ReportWorkspace({
       </>
       ) : (
         <>
-          {notice ? <p className="report-notice" role="status">{notice}</p> : null}
+          {notice ? (
+            <div className="report-notice" role="status">
+              <p>{notice}</p>
+              {roundTripRetry ? (
+                <button onClick={roundTripRetry.action} type="button">{roundTripRetry.label}</button>
+              ) : null}
+            </div>
+          ) : null}
           <GeneratedReportView
-            onExport={() => downloadPlanFormat("text")}
+            onExport={() => void exportPlanFormat("text")}
             projection={projection}
             view={activeReport}
           />

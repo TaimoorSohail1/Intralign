@@ -163,6 +163,40 @@ def test_xlsx_simple_sum_formula_is_extracted_as_its_computed_value() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("file_name", "content_type", "content", "expected_type"),
+    [
+        ("milestones.csv", "text/csv", b"Milestone,Date\nPilot,2026-09-01", "text/csv"),
+        ("owners.txt", "text/plain", b"Delivery owner is Priya Shah.", "text/plain"),
+        (
+            "assumptions.md",
+            "text/markdown",
+            b"# Assumptions\nSupplier capacity remains unverified.",
+            "text/plain",
+        ),
+    ],
+)
+def test_advertised_plain_text_formats_are_extracted_without_silent_degradation(
+    file_name: str,
+    content_type: str,
+    content: bytes,
+    expected_type: str,
+) -> None:
+    parsed = parse_document(
+        file_name=file_name,
+        declared_content_type=content_type,
+        content=content,
+    )
+
+    assert parsed.detected_content_type == expected_type
+    expected_words = content.decode().replace("\n", " ").split()
+    assert all(word in parsed.fragments[0].content for word in expected_words)
+    assert parsed.fragments[0].locator["kind"] == "text_page"
+    assert parsed.fragments[0].locator["page"] == 1
+    assert parsed.fragments[0].locator["char_start"] == 0
+    assert parsed.fragments[0].locator["char_end"] == len(parsed.fragments[0].content)
+
+
 def test_scanned_pdf_uses_ocr_and_preserves_page_reference() -> None:
     image = Image.new("RGB", (600, 800), "white")
     content = BytesIO()
