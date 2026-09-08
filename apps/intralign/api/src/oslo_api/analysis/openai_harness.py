@@ -951,6 +951,15 @@ class OpenAIAgentHarness:
                     len(invalid_refs),
                 )
                 return quarantined
+            if isinstance(output, _SingleArtifactOutput):
+                # Artifact shards are independently recoverable by the workflow.
+                # If every usable row was quarantined, fail this shard immediately
+                # so the bounded provisional fallback can publish; repeating the
+                # full structured request can consume the serverless run budget.
+                raise AgentHarnessError(
+                    "EVIDENCE_REFERENCE_CONTRACT_FAILED",
+                    retryable=True,
+                )
             if correction_attempt == 1:
                 raise AgentHarnessError(
                     "EVIDENCE_REFERENCE_CONTRACT_FAILED",

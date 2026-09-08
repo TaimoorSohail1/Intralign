@@ -994,6 +994,48 @@ def test_construct_quarantines_only_artifact_content_with_unsupported_evidence()
     assert len(client.responses.requests) == 1
 
 
+def test_construct_does_not_repeat_a_wholly_unsupported_artifact_response() -> None:
+    evidence_ref = "document:plan:page:1:fragment:0"
+    invented_ref = "document:plan:page:99:fragment:9"
+    payload = {
+        "project_title": None,
+        "project_title_confidence": "low",
+        "artifact": structured_artifact_payload(
+            ARTIFACT_TYPES[0],
+            invented_ref,
+        ),
+    }
+    client = SequencedOpenAI([payload, payload])
+    harness = OpenAIAgentHarness(
+        api_key="not-used-by-the-fake",
+        model="gpt-test",
+        client=client,
+    )
+
+    with pytest.raises(
+        AgentHarnessError,
+        match="EVIDENCE_REFERENCE_CONTRACT_FAILED",
+    ):
+        harness.construct_artifact(
+            perception=Perception(
+                facts=("A supported fact.",),
+                claims=(),
+                gaps=(),
+                evidence_refs=(evidence_ref,),
+                evidence=(
+                    EvidenceFragment(
+                        reference=evidence_ref,
+                        content="Supported evidence.",
+                    ),
+                ),
+            ),
+            artifact_type=ARTIFACT_TYPES[0],
+            kind=RunKind.INITIAL,
+        )
+
+    assert len(client.responses.requests) == 1
+
+
 def test_perceive_quarantines_an_invalid_locator_when_supported_evidence_remains() -> None:
     evidence_ref = "document:plan:page:1:fragment:0"
     invented_ref = "document:plan:page:99:fragment:9"
