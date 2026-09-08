@@ -120,7 +120,10 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
   }
 
   await page.goto(projectHref!.replace(/\/overview$/, "/reports"));
-  await expect(page.getByRole("textbox", { name: "Edit readout" })).toBeVisible();
+  const readout = page.getByRole("textbox", { name: "Edit readout" });
+  const generateDraft = page.getByRole("button", { name: "Generate a draft →" });
+  if (await generateDraft.isVisible()) await generateDraft.click();
+  await expect(readout).toBeVisible({ timeout: 30_000 });
   if (testInfo.project.name === "desktop") {
     await expect(page.getByRole("button", { name: "Basic", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Reports" })).toHaveAttribute(
@@ -128,7 +131,6 @@ test("Slice 10 explains equal judgment and governs workspace capacity without de
       "page",
     );
   }
-  const readout = page.getByRole("textbox", { name: "Edit readout" });
   await expect(readout).toBeVisible();
   await expect(readout.getByRole("heading", { name: "Summary" })).toBeVisible();
   await expect(readout.getByRole("heading", { name: "What changed" })).toBeVisible();

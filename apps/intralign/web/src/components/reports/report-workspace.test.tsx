@@ -360,6 +360,10 @@ describe("ReportWorkspace", () => {
     );
     expect(groundingSummary).toHaveTextContent(/1 of 4 load-bearing details rest on your evidence/i);
     expect(groundingSummary).toHaveTextContent(/3 remain ungrounded/i);
+    expect(screen.getByText("Mixed grounding — most load-bearing first")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Still resting on OSLO’s inference — most load-bearing first"),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Summary" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByText("Evidence detail 6")).not.toBeInTheDocument();
 

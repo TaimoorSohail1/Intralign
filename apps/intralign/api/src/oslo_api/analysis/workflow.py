@@ -66,7 +66,10 @@ class AnalysisWorkflow:
         self._store = store
         self._harness = harness
         self._phase_delay_seconds = phase_delay_seconds
-        self._artifact_workers_per_run = max(1, min(4, artifact_workers_per_run))
+        self._artifact_workers_per_run = max(
+            1,
+            min(len(ARTIFACT_TYPES), artifact_workers_per_run),
+        )
         self._artifact_slots = BoundedSemaphore(max(1, artifact_worker_limit))
         self._artifact_attempts_per_run = max(1, min(3, artifact_attempts_per_run))
         builder = StateGraph(_GraphState)

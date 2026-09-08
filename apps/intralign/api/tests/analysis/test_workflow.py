@@ -700,6 +700,30 @@ def test_artifact_construction_uses_four_workers_when_configured() -> None:
     assert harness.peak_active_calls == 4
 
 
+def test_artifact_construction_can_run_all_seven_independent_artifacts_concurrently() -> None:
+    harness = ConcurrentArtifactHarness()
+    workflow = AnalysisWorkflow(
+        store=InMemoryAnalysisStore(),
+        harness=harness,
+        artifact_workers_per_run=len(ARTIFACT_TYPES),
+        artifact_worker_limit=len(ARTIFACT_TYPES),
+    )
+
+    result = workflow.run(
+        AnalysisRunRequest(
+            workspace_id=WORKSPACE_ID,
+            project_id=PROJECT_ID,
+            requested_by=USER_ID,
+            kind=RunKind.INITIAL,
+            description="A serverless run that must finish inside its runtime budget.",
+            source_names=(),
+        )
+    )
+
+    assert result.status is AnalysisRunStatus.COMPLETED
+    assert harness.peak_active_calls == len(ARTIFACT_TYPES)
+
+
 def test_issue_clarification_rebuilds_only_the_owning_artifact() -> None:
     store = InMemoryAnalysisStore()
     harness = CountingArtifactHarness()

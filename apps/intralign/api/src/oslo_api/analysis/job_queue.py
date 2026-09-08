@@ -65,6 +65,40 @@ class DatabaseAnalysisJobQueue:
                 {"worker_id": worker_id, "lease_seconds": lease_seconds},
             ).scalar_one_or_none()
 
+    def claim_run(
+        self,
+        run_id: UUID,
+        *,
+        worker_id: str,
+        lease_seconds: int,
+    ) -> UUID | None:
+        """Lease one known run without allowing duplicate HTTP workers."""
+
+        with self._engine.begin() as connection:
+            return connection.execute(
+                text(
+                    """
+                    update public.analysis_jobs job
+                    set status = 'running', attempts = attempts + 1,
+                        locked_at = now(), locked_by = :worker_id, updated_at = now()
+                    where job.analysis_run_id = :run_id
+                      and (
+                        (status = 'queued' and available_at <= now())
+                        or (
+                          status = 'running'
+                          and locked_at < now() - make_interval(secs => :lease_seconds)
+                        )
+                      )
+                    returning job.analysis_run_id
+                    """
+                ),
+                {
+                    "run_id": run_id,
+                    "worker_id": worker_id,
+                    "lease_seconds": lease_seconds,
+                },
+            ).scalar_one_or_none()
+
     def complete(self, run_id: UUID) -> None:
         with self._engine.begin() as connection:
             connection.execute(

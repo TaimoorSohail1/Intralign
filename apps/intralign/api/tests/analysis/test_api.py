@@ -36,6 +36,8 @@ class RecordingSliceTwo:
     def __init__(self, store=None) -> None:
         self.store = store or InMemoryAnalysisStore()
         self.started: list[AnalysisRunRequest] = []
+        self.deferred_starts: list[bool] = []
+        self.executed_run_ids: list[UUID] = []
         self.latest_extended = None
         self.orientation_seen = False
         self.issue_actions: list[dict] = []
@@ -57,6 +59,7 @@ class RecordingSliceTwo:
         kind,
         key,
         provisional=False,
+        defer_execution=False,
     ):
         assert actor_user_id == USER_ID
         assert project_id == PROJECT_ID
@@ -72,7 +75,14 @@ class RecordingSliceTwo:
             provisional=provisional,
         )
         self.started.append(request)
+        self.deferred_starts.append(defer_execution)
         return self.store.create_run(request)
+
+    def execute_deferred_analysis(self, *, actor_user_id, run_id, worker_id):
+        assert actor_user_id == USER_ID
+        assert worker_id.startswith("http:")
+        self.executed_run_ids.append(run_id)
+        return self.get_run(actor_user_id=actor_user_id, run_id=run_id)
 
     def get_run(self, *, actor_user_id, run_id):
         assert actor_user_id == USER_ID
@@ -547,6 +557,36 @@ def test_authenticated_user_starts_analysis_idempotently() -> None:
     assert first.json()["status"] == "queued"
     assert slice_two.started[0].kind is RunKind.INITIAL
     assert slice_two.started[0].provisional is True
+
+
+def test_deferred_analysis_returns_queued_then_runs_through_worker_endpoint() -> None:
+    slice_two = RecordingSliceTwo()
+    client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
+    headers = {
+        "Authorization": "Bearer valid-access-token",
+        "Idempotency-Key": "deferred-intake-001",
+    }
+
+    started = client.post(
+        f"/v1/projects/{PROJECT_ID}/analysis-runs",
+        headers=headers,
+        json={
+            "description": "Launch the new customer portal.",
+            "defer_execution": True,
+        },
+    )
+
+    assert started.status_code == 202
+    assert started.json()["status"] == "queued"
+    assert slice_two.deferred_starts == [True]
+
+    executed = client.post(
+        f"/v1/analysis-runs/{started.json()['run_id']}/execute",
+        headers={"Authorization": "Bearer valid-access-token"},
+    )
+
+    assert executed.status_code == 200
+    assert slice_two.executed_run_ids == [UUID(started.json()["run_id"])]
 
 
 def test_analysis_run_keeps_uploaded_document_ids() -> None:
