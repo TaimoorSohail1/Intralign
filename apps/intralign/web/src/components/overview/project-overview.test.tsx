@@ -146,6 +146,29 @@ afterEach(() => {
 });
 
 describe("ProjectOverview", () => {
+  it("keeps an incomplete integrity decomposition in the canonical band vocabulary", () => {
+    const incompleteSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      assessment: {
+        ...snapshot.assessment,
+        integrity: {
+          ...snapshot.assessment.integrity,
+          level: "Fragile",
+          complete: false,
+        },
+      },
+    };
+
+    render(
+      <ProjectOverview displayName="Alex" initial={incompleteSnapshot} logoutAction={vi.fn()} />,
+    );
+
+    expect(screen.getByRole("button", {
+      name: "Outcome Integrity Fragile, limited by Grounding",
+    })).toBeInTheDocument();
+    expect(screen.queryByText("Under review")).not.toBeInTheDocument();
+  });
+
   it("renders the Slice 10 primary affordance from the derived finding model", () => {
     const classifiedSnapshot: OverviewSnapshot = {
       ...snapshot,
@@ -2548,6 +2571,55 @@ describe("ProjectOverview", () => {
         "Settling to resolved",
       );
     });
+  });
+
+  it("gives a failed governed act a safe retry that preserves its basis", async () => {
+    const fetcher = vi.fn()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          issue_id: "ISS-001",
+          act: "confirm",
+          status: "addressed",
+          analysis_run: null,
+        }),
+      });
+    vi.stubGlobal("fetch", fetcher);
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm — it holds" }));
+    fireEvent.click(screen.getByRole("button", { name: "I have it documented in writing" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Your project data is unchanged.",
+      );
+      expect(screen.getByRole("button", { name: "Retry action" })).toBeEnabled();
+    });
+    expect(screen.queryByText("Failed to fetch")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry action" }));
+
+    await waitFor(() => {
+      expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith("/acts"))).toHaveLength(2);
+    });
+    const actRequests = fetcher.mock.calls.filter(([url]) => String(url).endsWith("/acts"));
+    const firstRequest = JSON.parse(String(actRequests[0][1]?.body));
+    const retriedRequest = JSON.parse(String(actRequests[1][1]?.body));
+    expect(retriedRequest).toMatchObject({
+      act: "confirm",
+      basis: "documented",
+      evidenceRef: "document:plan:page:1:fragment:0",
+    });
+    expect(retriedRequest.idempotencyKey).toBe(firstRequest.idempotencyKey);
   });
 
   it("saves a clarification once and marks the issue addressed until analysis completes", async () => {

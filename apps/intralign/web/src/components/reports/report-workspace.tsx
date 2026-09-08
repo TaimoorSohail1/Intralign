@@ -34,7 +34,7 @@ import type {
 
 import { GeneratedReportView } from "./generated-report-view";
 import { buildPlanExport } from "./report-export-content";
-import { currentReadSummary, projectReportProjection } from "./report-projection";
+import { projectReportProjection } from "./report-projection";
 
 type ReportView =
   | "executive-briefing"
@@ -91,11 +91,6 @@ const defaultBriefingIncludes = {
   moves: true,
 };
 
-function sentence(value: string | null | undefined, fallback: string) {
-  const normalized = value?.trim();
-  return normalized || fallback;
-}
-
 function uniqueText(values: string[]) {
   const unique = new Map<string, string>();
   for (const value of values) {
@@ -103,6 +98,13 @@ function uniqueText(values: string[]) {
     if (key && !unique.has(key)) unique.set(key, value);
   }
   return [...unique.values()];
+}
+
+function withoutEvidenceTokens(value: string) {
+  return value
+    .replace(/\s*\[[a-z][a-z0-9_-]*(?::\d+)+\]\s*/giu, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 const reportDateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -178,6 +180,7 @@ function buildSections(
           ...section.rows.map((row) => row.filter(Boolean).join(" — ")),
         ]),
     )
+    .map(withoutEvidenceTokens)
     .filter(Boolean));
 
   return [
@@ -185,14 +188,7 @@ function buildSections(
       id: "summary",
       title: "Summary",
       body: [
-        sentence(
-          currentReadSummary(
-            snapshot.summary,
-            issues.length,
-            snapshot.project_title,
-          ),
-          "The supplied project material forms a usable current view of the plan.",
-        ),
+        `Outcome Integrity is ${snapshot.assessment.integrity.level}, limited by ${snapshot.assessment.integrity.limiting_pillar}.`,
         issues.length
           ? `${issues.length} open ${issues.length === 1 ? "point needs" : "points need"} attention before the plan can be treated as settled.`
           : "No material open point remains in the current project read.",
@@ -217,7 +213,7 @@ function buildSections(
             ...documentedRisks,
             ...issues.map(
             (issue) =>
-              `${issue.title}. ${issue.why} If it stays unresolved, it may weaken delivery of the intended outcome.`,
+              withoutEvidenceTokens(`${issue.title}. ${issue.why} If it stays unresolved, it may weaken delivery of the intended outcome.`),
             ),
           ]).slice(0, 10)
         : ["No open critical or moderate risk is present in the current read."],
