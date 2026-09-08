@@ -471,7 +471,7 @@ describe("ReportWorkspace", () => {
     expect(screen.getByRole("heading", { name: "Project understanding" })).toBeInTheDocument();
     expect(screen.getAllByRole("textbox")).toHaveLength(1);
     expect(screen.getByRole("textbox", { name: "Edit readout" })).toHaveTextContent(
-      "The launch plan has a clear goal",
+      "Outcome Integrity is Fragile, limited by Viability.",
     );
     expect(screen.getByRole("textbox", { name: "Edit readout" })).toHaveTextContent(
       "Delivery ownership is unresolved",
@@ -483,6 +483,31 @@ describe("ReportWorkspace", () => {
       "The delivery lead can approve the cutover",
     );
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(7);
+  });
+
+  it("renders the canonical integrity read and removes evidence markers from Key risks", () => {
+    const tokenizedSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      summary: "The read is very low confidence, limited by clarity.",
+      artifacts: [{
+        ...snapshot.artifacts[0],
+        content: {
+          sections: [{
+            heading: "Key risks",
+            body: "[description:1] Delivery ownership is unresolved.",
+            bullets: [],
+            rows: [],
+          }],
+        },
+      }],
+    };
+
+    renderAuthored(tokenizedSnapshot);
+
+    const report = screen.getByRole("textbox", { name: "Edit readout" });
+    expect(report).toHaveTextContent("Outcome Integrity is Fragile, limited by Viability.");
+    expect(report).not.toHaveTextContent(/very low confidence|limited by clarity|\[description:1\]/i);
+    expect(report).toHaveTextContent("Delivery ownership is unresolved.");
   });
 
   it("does not repeat equivalent assumptions or recommendations", () => {

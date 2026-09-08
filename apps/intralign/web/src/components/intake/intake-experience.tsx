@@ -43,6 +43,7 @@ const maxFileBytes = 10 * 1024 * 1024;
 const maxTotalBytes = 50 * 1024 * 1024;
 const samplePlanDescription =
   "DevNorth 2026 is a one-day developer conference for approximately 450 attendees on 18 September. Confirm the venue, programme, Wi-Fi capacity, sponsors, budget, schedule and delivery owners.";
+const handoffRecoveryDelayMs = 10_000;
 
 async function noOpLogout() {}
 const navigateWindow = (href: string) => window.location.assign(href);
@@ -89,6 +90,7 @@ export function IntakeExperience({
   const [phase, setPhase] = useState(0);
   const [orientationOpen, setOrientationOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [handoffHref, setHandoffHref] = useState<string | null>(null);
   const [error, setError] = useState("");
   const canStart = description.trim().length > 0 || files.length > 0;
 
@@ -146,7 +148,9 @@ export function IntakeExperience({
     if (!canStart || view !== "intake") return;
     if (projectId) {
       setSubmitting(true);
+      setHandoffHref(null);
       setError("");
+      let progressHref: string | null = null;
       try {
         const result = await startProjectAnalysisWithRecovery({
           projectId,
@@ -154,12 +158,19 @@ export function IntakeExperience({
           files,
           kind: analysisKind,
         });
-        navigate(
-          `/projects/${result.projectId}/analysis/${result.run.run_id}${returningClient ? "?returning=1" : ""}`,
-        );
+        const href =
+          `/projects/${result.projectId}/analysis/${result.run.run_id}${returningClient ? "?returning=1" : ""}`;
+        progressHref = href;
+        window.setTimeout(() => setHandoffHref(href), handoffRecoveryDelayMs);
+        navigate(href);
         return;
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Analysis could not start");
+        if (progressHref) {
+          setHandoffHref(progressHref);
+          setError("Your analysis has started, but we could not open its progress page automatically.");
+        } else {
+          setError(cause instanceof Error ? cause.message : "Analysis could not start");
+        }
         setSubmitting(false);
         return;
       }
@@ -288,6 +299,11 @@ export function IntakeExperience({
         </div>
         <p className="intake-micro">PDF, DOCX, PPTX, XLSX, CSV, TXT, MD · up to 10 files, 10 MB each · Your first read is usually ready in under a minute.</p>
         {error ? <p className="intake-error" role="alert">{error}</p> : null}
+        {handoffHref ? (
+          <a className="intake-handoff" href={handoffHref}>
+            Open analysis progress
+          </a>
+        ) : null}
       </section>
       <button
         className="sample-link sample-link-primary"

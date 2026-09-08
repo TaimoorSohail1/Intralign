@@ -198,8 +198,8 @@ type IssueActionFeedback = {
 function integrityReadLabel(
   integrity: OverviewSnapshot["assessment"]["integrity"],
 ) {
-  // OBLIGATION_n7-n8: incomplete grounding qualifies the read; it must not
-  // replace the canonical Outcome Integrity level shown elsewhere.
+  // N-7 / GT-122: the composite is always expressed with its canonical band.
+  // An incomplete decomposition is disclosed elsewhere; it is not a sixth band.
   return integrity.level;
 }
 
@@ -447,6 +447,11 @@ export function ProjectOverview({
     signature: string;
     key: string;
   } | null>(null);
+  const lifecycleActionIdempotency = useRef<{
+    signature: string;
+    key: string;
+  } | null>(null);
+  const [lifecycleActionRetry, setLifecycleActionRetry] = useState<(() => void) | null>(null);
 
   const isProvisional = snapshot.state === "provisional";
   const extendedRun = snapshot.extended_analysis;
@@ -1301,6 +1306,7 @@ export function ProjectOverview({
     }
     setIssueActionPending(true);
     setIssueActionError(null);
+    setLifecycleActionRetry(null);
     try {
       const response = await fetch(
         `/api/projects/${snapshot.project_id}/issues/${encodeURIComponent(actedIssue.id)}/actions`,
@@ -1396,6 +1402,21 @@ export function ProjectOverview({
     if (issueActionPending) return;
     setIssueActionPending(true);
     setIssueActionError(null);
+    setLifecycleActionRetry(null);
+    const signature = [
+      issue.id,
+      act,
+      options.basis ?? "",
+      options.evidenceRef ?? "",
+      options.resolution ?? "",
+      options.reviewer?.id ?? "",
+    ].join(":");
+    if (lifecycleActionIdempotency.current?.signature !== signature) {
+      lifecycleActionIdempotency.current = {
+        signature,
+        key: crypto.randomUUID(),
+      };
+    }
     try {
       const response = await fetch(
         `/api/projects/${snapshot.project_id}/issues/${encodeURIComponent(issue.id)}/acts`,
@@ -1408,7 +1429,7 @@ export function ProjectOverview({
             evidenceRef: options.evidenceRef ?? null,
             resolution: options.resolution ?? null,
             reviewer: options.reviewer ?? null,
-            idempotencyKey: crypto.randomUUID(),
+            idempotencyKey: lifecycleActionIdempotency.current.key,
           }),
         },
       );
@@ -1448,12 +1469,13 @@ export function ProjectOverview({
       if (act !== "route") {
         closeIssueAfterGovernedAction(issue.id);
       }
-    } catch (error) {
+    } catch {
       setIssueActionError(
-        error instanceof Error
-          ? error.message
-          : "The issue act could not be saved. Please try again.",
+        "We could not record this action. Your project data is unchanged. Please try again.",
       );
+      setLifecycleActionRetry(() => () => {
+        void actOnIssueLifecycle(issue, act, options);
+      });
     } finally {
       setIssueActionPending(false);
     }
@@ -1467,6 +1489,7 @@ export function ProjectOverview({
     if (proposalActionPending) return;
     setProposalActionPending(proposal.id);
     setIssueActionError(null);
+    setLifecycleActionRetry(null);
     try {
       const response = await fetch(
         `/api/projects/${snapshot.project_id}/proposals/${proposal.id}/decisions`,
@@ -1681,6 +1704,7 @@ export function ProjectOverview({
       onClose={closeIssue}
       onIssueAction={actOnIssue}
       onLifecycleAct={(act, options) => actOnIssueLifecycle(selectedIssue, act, options)}
+      onRetryLifecycleAction={lifecycleActionRetry ?? undefined}
       onProposalDecision={(proposal, accepted) =>
         decideProposal(proposal, accepted, "issue_card")
       }
@@ -3768,6 +3792,7 @@ function IssuePanel({
   onClose,
   onIssueAction,
   onLifecycleAct,
+  onRetryLifecycleAction,
   onProposalDecision,
   onSubmit,
   pending,
@@ -3793,6 +3818,7 @@ function IssuePanel({
     act: IssueLifecycleAct,
     options?: IssueLifecycleActOptions,
   ) => Promise<void>;
+  onRetryLifecycleAction?: () => void;
   onProposalDecision: (proposal: IssueProposalSummary, accepted: boolean) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   pending: boolean;
@@ -4651,7 +4677,14 @@ function IssuePanel({
       <p className={`issue-history-pointer ${inline ? "is-inline" : ""}`}>
         Status changes and reviewer attestations are retained in project history.
       </p>
-      {error ? <p className="clarification-error" role="alert">{error}</p> : null}
+      {error ? (
+        <div className="clarification-error" role="alert">
+          <p>{error}</p>
+          {onRetryLifecycleAction ? (
+            <button onClick={onRetryLifecycleAction} type="button">Retry action</button>
+          ) : null}
+        </div>
+      ) : null}
     </aside>
   );
 }

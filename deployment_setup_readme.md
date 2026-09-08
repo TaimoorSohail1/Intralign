@@ -117,6 +117,19 @@ Add variables in **Vercel → Project → Settings → Environment Variables**.
 Select the environment explicitly; adding a variable to Preview does not add
 it to Production.
 
+### Build identity (both Vercel projects)
+
+Enable **Automatically expose System Environment Variables** for both
+`intralign-v2` and `intralign-v2-api`. This makes Vercel's
+`VERCEL_GIT_COMMIT_SHA` available while building and running each deployment.
+It is the source of the build identity: the web renders it in `data-build` and
+the footer, while the API returns it as `build` from `/health`.
+
+Do not create a hand-maintained `VERCEL_GIT_COMMIT_SHA` value. For a
+non-Vercel deployment only, set one of the supported commit variables
+(`NEXT_PUBLIC_BUILD_SHA` for web; `BUILD_SHA`, `HEROKU_SLUG_COMMIT`, or
+`SOURCE_VERSION` for API) to the immutable commit being deployed.
+
 ### Frontend project: `intralign-v2`
 
 Set these for Preview and Production as appropriate:
@@ -158,6 +171,8 @@ Confirm these settings before a deployment:
 4. The backend commit contains the approved FastAPI Vercel entrypoint and
    includes the `src/oslo_api` package in the function bundle.
 5. Preview and Production variables are present in their respective projects.
+6. **Automatically expose System Environment Variables** is enabled in both
+   Vercel projects so the deployment carries `VERCEL_GIT_COMMIT_SHA`.
 
 ## 7. Deployment flow
 
@@ -178,14 +193,18 @@ Check the following after each deployment:
 
 - `https://app.intralign.ai/login` loads successfully.
 - `https://api.intralign.ai/health` returns a healthy response.
-- Frontend and backend report the expected commit/build SHA.
+- Frontend `data-build` and footer, and backend `/health` `build`, report the
+  same expected `VERCEL_GIT_COMMIT_SHA` for the deployed commit.
 - Login, invitation send/resend/accept, and access-control behavior work.
 - A test document can be uploaded and analysis can be started.
 - Results, history, confirmations, reports, and refresh persistence work.
 - Browser console and Vercel runtime logs contain no new errors.
 
-Run these checks on Preview first. Production is changed only after Preview
-passes and the release is approved.
+Run these checks on Preview first to validate the promotion candidate. Preview
+results do **not** constitute sign-off evidence. Production is changed only
+after Preview passes and the release is owner-approved; the sign-off evidence
+is then collected against that Production deployment and its reported build
+identity.
 
 ## 9. Secrets and incident handling
 
