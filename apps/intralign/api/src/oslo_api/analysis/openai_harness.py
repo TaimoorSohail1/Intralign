@@ -804,6 +804,9 @@ class OpenAIAgentHarness:
                 for item in collection
                 for reference in item.evidence_refs
             ),
+            # OBLIGATION_b5: one bounded repair keeps a valid read from being
+            # discarded when only the evaluator's first structured output is invalid.
+            schema_repair_attempts=1,
         )
         return Assessment(
             confidence_index=output.confidence_index,
@@ -903,6 +906,7 @@ class OpenAIAgentHarness:
         invocation: HarnessInvocation | None,
         allowed_refs: set[str],
         evidence_refs: Callable[[Any], Iterable[str]],
+        schema_repair_attempts: int = 0,
     ):
         """Quarantine unsupported findings or retry one indivisible contract.
 
@@ -925,6 +929,7 @@ class OpenAIAgentHarness:
                 system=current_system,
                 payload=current_payload,
                 invocation=invocation,
+                schema_repair_attempts=schema_repair_attempts,
             )
             if invocation is not None:
                 accumulated_metadata = self._merge_metadata(
@@ -1110,6 +1115,7 @@ class OpenAIAgentHarness:
         system: str,
         payload: dict[str, Any],
         invocation: HarnessInvocation | None,
+        schema_repair_attempts: int = 0,
     ):
         started = monotonic()
         attempts = 0
@@ -1142,7 +1148,10 @@ class OpenAIAgentHarness:
                 safe_error = self._safe_provider_error(error)
                 if not safe_error.retryable:
                     raise safe_error from None
-                if attempts > self._max_retries:
+                retry_limit = self._max_retries
+                if safe_error.code == "OPENAI_SCHEMA_INVALID":
+                    retry_limit = max(retry_limit, schema_repair_attempts)
+                if attempts > retry_limit:
                     fallback_allowed = safe_error.code in {
                         "OPENAI_SCHEMA_INVALID",
                         "OPENAI_TIMEOUT",

@@ -182,6 +182,14 @@ function AssumptionsEvidence({
 }) {
   const [depth, setDepth] = useState<"summary" | "full">("summary");
   const visible = depth === "summary" ? projection.evidenceItems.slice(0, 5) : projection.evidenceItems;
+  // Wave E epistemic-safety: a mixed register must not label confirmed items
+  // as though every item were still an OSLO inference.
+  const evidenceRegisterLabel = projection.evidenceRegister.grounded > 0 &&
+    projection.evidenceRegister.inferred > 0
+    ? "Mixed grounding — most load-bearing first"
+    : projection.evidenceRegister.inferred > 0
+      ? "Still resting on OSLO’s inference — most load-bearing first"
+      : "Grounded on source evidence — most load-bearing first";
   return (
     <>
       <p className="report-view-context">What the plan rests on — grounded vs OSLO’s inference.</p>
@@ -196,11 +204,7 @@ function AssumptionsEvidence({
           )} remain ungrounded.
         </p>
         <section aria-label="Evidence register" className="generated-report-list is-compact">
-          <span className="generated-report-list-label">
-            {projection.evidenceRegister.inferred
-              ? "Still resting on OSLO’s inference — most load-bearing first"
-              : "Grounded on source evidence — most load-bearing first"}
-          </span>
+          <span className="generated-report-list-label">{evidenceRegisterLabel}</span>
           {visible.map((item) => (
             <article key={item.id}>
               <div>

@@ -198,7 +198,9 @@ type IssueActionFeedback = {
 function integrityReadLabel(
   integrity: OverviewSnapshot["assessment"]["integrity"],
 ) {
-  return integrity.complete === false ? "Under review" : integrity.level;
+  // OBLIGATION_n7-n8: incomplete grounding qualifies the read; it must not
+  // replace the canonical Outcome Integrity level shown elsewhere.
+  return integrity.level;
 }
 
 function artifactLabel(value: string) {
