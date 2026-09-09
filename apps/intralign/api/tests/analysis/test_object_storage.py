@@ -1,12 +1,31 @@
 from __future__ import annotations
 
-import httpx
+import os
 
-from oslo_api.analysis.object_storage import SupabaseObjectStorage
+import httpx
+import pytest
+
+from oslo_api.analysis.object_storage import LocalObjectStorage, SupabaseObjectStorage
 
 
 def _client(handler):
     return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows long-path regression")
+def test_local_storage_supports_content_addressed_keys_beyond_max_path(tmp_path) -> None:
+    root = tmp_path / ("nested-storage-root-" * 4)
+    storage = LocalObjectStorage(root)
+    object_key = f"{'w' * 36}/{'p' * 36}/{'a' * 64}.pdf"
+    target = root.resolve() / object_key
+    assert len(str(target)) > 260
+
+    storage.put(object_key, b"source pdf")
+
+    assert storage.exists(object_key) is True
+    assert storage.get(object_key) == b"source pdf"
+    storage.delete(object_key)
+    assert storage.exists(object_key) is False
 
 
 def test_supabase_storage_puts_and_reads_a_private_object() -> None:

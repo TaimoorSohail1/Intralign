@@ -199,11 +199,15 @@ def test_confirming_the_primary_outcome_updates_the_first_class_outcome_record(
             extended_delay_seconds=0,
         )
 
-        application.act_on_outcome(
+        long_outcome = (
+            "Reduce failed customer handoffs while preserving the complete evidence-backed "
+            "outcome narrative for analysis, review, and later refinement. " * 3
+        ).strip()
+        result = application.act_on_outcome(
             actor_user_id=workspace_owner_id,
             project_id=project_id,
             action="confirm",
-            outcome="Reduce failed customer handoffs",
+            outcome=long_outcome,
             key=f"confirm-primary-outcome:{project_id}",
         )
 
@@ -216,9 +220,10 @@ def test_confirming_the_primary_outcome_updates_the_first_class_outcome_record(
                 {"project_id": project_id},
             ).mappings().one()
         assert dict(stored) == {
-            "title": "Reduce failed customer handoffs",
+            "title": f"{long_outcome[:239].rstrip()}…",
             "provenance": "declared",
         }
+        assert result["outcome"] == long_outcome
     finally:
         with engine.begin() as connection:
             connection.execute(

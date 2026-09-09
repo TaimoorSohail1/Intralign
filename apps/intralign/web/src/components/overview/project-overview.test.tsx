@@ -146,6 +146,51 @@ afterEach(() => {
 });
 
 describe("ProjectOverview", () => {
+  it("keeps first-run guidance non-coercive while every workspace destination remains available", () => {
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={{
+          ...snapshot,
+          first_run: {
+            first_run: true,
+            onboarded: false,
+            grounding_act_count: 0,
+            unlock_threshold: 2,
+            ever_unlocked: false,
+            freeze_on: true,
+          },
+        }}
+        initialView="overview"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText("First run guidance")).toHaveTextContent("0 of 2");
+    expect(screen.getByLabelText("First run guidance")).toHaveTextContent(
+      "Ground two decisions to complete your first read.",
+    );
+    expect(screen.getByLabelText("First run guidance")).toHaveTextContent(
+      "Your workspace remains available.",
+    );
+    expect(screen.getByRole("link", { name: "Issues 1" })).toHaveAttribute(
+      "href",
+      "/projects/project-001/issues",
+    );
+    expect(screen.getByRole("link", { name: "Your Outcome" })).toHaveAttribute(
+      "href",
+      "/projects/project-001/outcome",
+    );
+    expect(screen.getByRole("link", { name: "Reports" })).toHaveAttribute(
+      "href",
+      "/projects/project-001/reports",
+    );
+    expect(screen.getByRole("link", { name: "Full plan · export" })).toHaveAttribute(
+      "href",
+      "/projects/project-001/full-plan",
+    );
+  });
+
   it("keeps an incomplete integrity decomposition in the canonical band vocabulary", () => {
     const incompleteSnapshot: OverviewSnapshot = {
       ...snapshot,
@@ -2762,6 +2807,111 @@ describe("ProjectOverview", () => {
       act: "confirm",
       basis: "documented",
       evidenceRef: "document:plan:page:1:fragment:0",
+    });
+    expect(retriedRequest.idempotencyKey).toBe(firstRequest.idempotencyKey);
+  });
+
+  it("gives a failed flag act a safe retry without changing the project", async () => {
+    const fetcher = vi.fn()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          issue_id: "ISS-001",
+          act: "flag",
+          status: "addressed",
+          analysis_run: null,
+        }),
+      });
+    vi.stubGlobal("fetch", fetcher);
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
+    fireEvent.click(screen.getByRole("button", { name: /It doesn't hold/ }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Your project data is unchanged.",
+      );
+      expect(screen.getByRole("button", { name: "Retry action" })).toBeEnabled();
+    });
+    expect(screen.queryByText("Failed to fetch")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry action" }));
+
+    await waitFor(() => {
+      expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith("/acts"))).toHaveLength(2);
+    });
+    const actRequests = fetcher.mock.calls.filter(([url]) => String(url).endsWith("/acts"));
+    const firstRequest = JSON.parse(String(actRequests[0][1]?.body));
+    const retriedRequest = JSON.parse(String(actRequests[1][1]?.body));
+    expect(retriedRequest).toMatchObject({
+      act: "flag",
+      basis: "verified-directly",
+      evidenceRef: "document:plan:page:1:fragment:0",
+    });
+    expect(retriedRequest.idempotencyKey).toBe(firstRequest.idempotencyKey);
+  });
+
+  it("gives a failed route act a safe retry that preserves its reviewer", async () => {
+    let actAttempts = 0;
+    const fetcher = vi.fn().mockImplementation(async (request: RequestInfo | URL) => {
+      const url = String(request);
+      if (url.endsWith("/collaboration")) {
+        return Response.json({ comments: [] });
+      }
+      if (url.endsWith("/acts")) {
+        actAttempts += 1;
+        if (actAttempts === 1) throw new TypeError("Failed to fetch");
+        return Response.json({
+          issue_id: "ISS-001",
+          act: "route",
+          status: "routed",
+          analysis_run: null,
+        }, { status: 202 });
+      }
+      return Response.json({});
+    });
+    vi.stubGlobal("fetch", fetcher);
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={snapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Ask for evidence/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Project collaborator/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Your project data is unchanged.",
+      );
+      expect(screen.getByRole("button", { name: "Retry action" })).toBeEnabled();
+    });
+    expect(screen.queryByText("Failed to fetch")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry action" }));
+
+    await waitFor(() => expect(actAttempts).toBe(2));
+    const actRequests = fetcher.mock.calls.filter(([url]) => String(url).endsWith("/acts"));
+    const firstRequest = JSON.parse(String(actRequests[0][1]?.body));
+    const retriedRequest = JSON.parse(String(actRequests[1][1]?.body));
+    expect(retriedRequest).toMatchObject({
+      act: "route",
+      reviewer: {
+        id: "project-collaborator",
+        display_name: "Project collaborator",
+        role: "collaborator",
+      },
     });
     expect(retriedRequest.idempotencyKey).toBe(firstRequest.idempotencyKey);
   });

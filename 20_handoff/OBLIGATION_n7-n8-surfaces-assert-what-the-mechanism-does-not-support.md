@@ -66,7 +66,7 @@ Two doctrine anchors are implicated directly, named here as doctrine and **not**
 2. **`Under review` is resolved, not translated.** Either it is a real state that belongs in a named vocabulary — in which case say which, and where that vocabulary is defined — or the masthead is corrected to the band word. It may not remain a fifth word outside the ramp.
 3. **The briefing uses the band vocabulary.** The band word appears in the briefing; confidence vocabulary does not appear on any surface.
 4. **The limiting pillar agrees everywhere.** Masthead, `/outcome` gating chip, `/full-plan` opener and the briefing name the same pillar, measured in one pass on one project.
-5. **RED proof.** Re-run R1's own probe — the `OUTCOME INTEGRITY` regex over `innerText` at `/outcome` — and record **one** match rather than two. The probe that found the defect is the probe that closes it.
+5. **RED proof.** Re-run R1's own probe — the `OUTCOME INTEGRITY` regex over `innerText` at `/outcome` — and record **one distinct band value** rather than two conflicting values. Repeated rendering of the same value in the masthead and card is allowed. The probe that found the defect is the probe that closes it.
 
 ### Path B — N-8 · output states only what the mechanism supports
 
