@@ -36,7 +36,7 @@ from oslo_api.analysis.models import (
 )
 from oslo_api.analysis.object_storage import LocalObjectStorage, SupabaseObjectStorage
 from oslo_api.analysis.openai_harness import OpenAIAgentHarness
-from oslo_api.analysis.persistence import DatabaseAnalysisStore
+from oslo_api.analysis.persistence import DatabaseAnalysisStore, outcome_record_title
 from oslo_api.analysis.user_evidence import (
     build_clarification_evidence,
     build_reviewer_evidence,
@@ -2622,6 +2622,7 @@ class DatabaseSliceTwoApplication:
         actor_user_id: UUID,
         title: str,
     ) -> None:
+        record_title = outcome_record_title(title)
         with self._engine.begin() as connection:
             updated = connection.execute(
                 text(
@@ -2629,7 +2630,7 @@ class DatabaseSliceTwoApplication:
                     "set title = :title, provenance = 'declared', updated_at = now() "
                     "where project_id = :project_id and is_primary"
                 ),
-                {"project_id": project_id, "title": title},
+                {"project_id": project_id, "title": record_title},
             )
             if updated.rowcount == 0:
                 connection.execute(
@@ -2642,7 +2643,7 @@ class DatabaseSliceTwoApplication:
                     {
                         "workspace_id": workspace_id,
                         "project_id": project_id,
-                        "title": title,
+                        "title": record_title,
                         "created_by": actor_user_id,
                     },
                 )

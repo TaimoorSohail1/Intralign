@@ -1,5 +1,6 @@
 from dataclasses import replace
 
+from oslo_api.analysis import issue_identity
 from oslo_api.analysis.issue_identity import deduplicate_issues, stabilize_issue_ids
 from oslo_api.analysis.models import ArtifactType, Issue
 
@@ -71,6 +72,74 @@ def test_same_plan_weakness_keeps_identity_when_wording_and_artifact_move() -> N
     stabilized = stabilize_issue_ids((current,), (previous,))
 
     assert stabilized[0].id == "ISS-VENUE"
+
+
+def test_b0_server_twin_covers_threshold_below_threshold_and_artifact_move(
+    monkeypatch,
+) -> None:
+    shared_at_threshold = [f"shared{index:03d}" for index in range(23)]
+    threshold_previous = _issue(
+        "ISS-AT-THRESHOLD",
+        title=" ".join(
+            (*shared_at_threshold, *(f"previous{index:03d}" for index in range(39)))
+        ),
+        why="",
+    )
+    threshold_current = _issue(
+        "MODEL-AT-THRESHOLD",
+        title=" ".join(
+            (*shared_at_threshold, *(f"current{index:03d}" for index in range(38)))
+        ),
+        why="",
+    )
+
+    shared_below_threshold = [f"common{index:03d}" for index in range(22)]
+    below_previous = _issue(
+        "ISS-BELOW-THRESHOLD",
+        title=" ".join(
+            (*shared_below_threshold, *(f"earlier{index:03d}" for index in range(39)))
+        ),
+        why="",
+        graph_node_id="dependency:below-threshold",
+    )
+    below_current = _issue(
+        "MODEL-BELOW-THRESHOLD",
+        title=" ".join(
+            (*shared_below_threshold, *(f"later{index:03d}" for index in range(39)))
+        ),
+        why="",
+        graph_node_id="dependency:below-threshold",
+    )
+
+    moved_previous = _issue(
+        "ISS-ARTIFACT-MOVE",
+        artifact_type=ArtifactType.RESOURCES,
+        title="Venue capacity contract remains unsigned",
+        why="No approved capacity boundary protects attendance.",
+        evidence_refs=("document:plan:page:2:fragment:1",),
+        graph_node_id="dependency:artifact-move",
+    )
+    moved_current = _issue(
+        "MODEL-ARTIFACT-MOVE",
+        artifact_type=ArtifactType.SCHEDULE,
+        title="Calendar contingency lacks accountable activation",
+        why="Fallback sequencing has no named trigger owner.",
+        evidence_refs=("document:plan:page:8:fragment:4",),
+        graph_node_id="dependency:artifact-move",
+    )
+
+    for current, previous in (
+        (threshold_current, threshold_previous),
+        (below_current, below_previous),
+        (moved_current, moved_previous),
+    ):
+        assert stabilize_issue_ids((current,), (previous,))[0].id == previous.id
+
+    # RED proof: removing the semantic plan-element key reproduces the two
+    # pre-B0 losses that token threshold tuning cannot repair.
+    monkeypatch.setattr(issue_identity, "_semantic_key", lambda issue: None)
+    assert stabilize_issue_ids((below_current,), (below_previous,))[0].id != below_previous.id
+    assert stabilize_issue_ids((moved_current,), (moved_previous,))[0].id != moved_previous.id
 
 
 def test_deterministic_conflict_keeps_identity_when_artifact_moves() -> None:

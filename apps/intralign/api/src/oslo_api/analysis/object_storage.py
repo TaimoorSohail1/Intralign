@@ -16,6 +16,17 @@ _CONTENT_TYPES_BY_SUFFIX = {
 }
 
 
+def _filesystem_path(path: Path) -> str:
+    """Return a Windows long-path-safe absolute path for filesystem calls."""
+
+    value = os.fspath(path)
+    if os.name != "nt" or value.startswith("\\\\?\\"):
+        return value
+    if value.startswith("\\\\"):
+        return f"\\\\?\\UNC\\{value[2:]}"
+    return f"\\\\?\\{value}"
+
+
 class ObjectStorage(Protocol):
     """Storage boundary used by document ingestion.
 
@@ -38,31 +49,40 @@ class LocalObjectStorage:
 
     def put(self, object_key: str, content: bytes) -> None:
         target = self._target(object_key)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if target.exists():
+        os.makedirs(_filesystem_path(target.parent), exist_ok=True)
+        if os.path.exists(_filesystem_path(target)):
             return
         temporary_path: Path | None = None
         try:
-            with NamedTemporaryFile(dir=target.parent, delete=False) as temporary:
+            with NamedTemporaryFile(
+                dir=_filesystem_path(target.parent),
+                delete=False,
+            ) as temporary:
                 temporary.write(content)
                 temporary.flush()
                 os.fsync(temporary.fileno())
                 temporary_path = Path(temporary.name)
-            temporary_path.replace(target)
+            os.replace(
+                _filesystem_path(temporary_path),
+                _filesystem_path(target),
+            )
         finally:
-            if temporary_path is not None and temporary_path.exists():
-                temporary_path.unlink()
+            if temporary_path is not None and os.path.exists(
+                _filesystem_path(temporary_path)
+            ):
+                os.unlink(_filesystem_path(temporary_path))
 
     def get(self, object_key: str) -> bytes:
-        return self._target(object_key).read_bytes()
+        with open(_filesystem_path(self._target(object_key)), "rb") as stored:
+            return stored.read()
 
     def exists(self, object_key: str) -> bool:
-        return self._target(object_key).exists()
+        return os.path.exists(_filesystem_path(self._target(object_key)))
 
     def delete(self, object_key: str) -> None:
         target = self._target(object_key)
-        if target.exists():
-            target.unlink()
+        if os.path.exists(_filesystem_path(target)):
+            os.unlink(_filesystem_path(target))
 
     def _target(self, object_key: str) -> Path:
         target = (self._root / object_key).resolve()

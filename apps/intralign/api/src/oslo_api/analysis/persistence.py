@@ -403,6 +403,15 @@ def _issue_observation_dimension(issue: Issue) -> str | None:
     return issue.dimension or None
 
 
+def outcome_record_title(value: str) -> str:
+    """Fit a full outcome statement into the first-class outcome title contract."""
+
+    normalized = re.sub(r"\s+", " ", value).strip()
+    if len(normalized) <= 240:
+        return normalized
+    return f"{normalized[:239].rstrip()}…"
+
+
 def _primary_outcome_title(artifacts: tuple[Artifact, ...]) -> str | None:
     """Use the evidence-derived intent statement, not extractor progress copy."""
 
@@ -446,7 +455,7 @@ def _primary_outcome_title(artifacts: tuple[Artifact, ...]) -> str | None:
         )
         if names_outcome_concept and says_it_is_missing:
             continue
-        return sentence if len(sentence) <= 320 else f"{sentence[:317].rstrip()}…"
+        return outcome_record_title(sentence)
     return None
 
 
