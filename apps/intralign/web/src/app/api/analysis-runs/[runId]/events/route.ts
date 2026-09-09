@@ -7,7 +7,13 @@ export async function GET(request: Request, context: RouteContext<"/api/analysis
   const session = await readSession();
   if (!session.accessToken) return Response.json({ message: "Unauthorized" }, { status: 401 });
   const { runId } = await context.params;
-  const lastEventId = request.headers.get("last-event-id") ?? "0";
+  const requestedCursor = new URL(request.url).searchParams.get("lastEventId");
+  const lastEventIdHeader = request.headers.get("last-event-id");
+  const lastEventId = lastEventIdHeader && /^\d+$/.test(lastEventIdHeader)
+    ? lastEventIdHeader
+    : requestedCursor && /^\d+$/.test(requestedCursor)
+      ? requestedCursor
+      : "0";
   const upstream = await fetch(`${osloApiUrl}/v1/analysis-runs/${runId}/events`, {
     cache: "no-store",
     headers: {
