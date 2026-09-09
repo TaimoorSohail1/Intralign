@@ -13,8 +13,10 @@ vi.mock("next/navigation", () => ({
 class FakeEventSource {
   static current: FakeEventSource | null = null;
   private listeners = new Map<string, Array<(event: MessageEvent) => void>>();
+  readonly url: string;
 
-  constructor() {
+  constructor(url: string | URL) {
+    this.url = String(url);
     FakeEventSource.current = this;
   }
 
@@ -110,6 +112,101 @@ describe("AnalysisProgress", () => {
     await waitFor(() => expect(statusRequest).toBe(2));
     expect(screen.getByRole("status")).toHaveTextContent("Drafting your plan documents…");
     expect(frame()).toHaveAttribute("src", "/r2/onboarding-arc.html?embed=1&live=1&mode=guided");
+  });
+
+  it("keeps reconciling when the first status read after Retry is stale", async () => {
+    let statusRequest = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (init?.method === "POST") return new Response("{}", { status: 202 });
+      if (url.includes("/overview")) return Response.json(completedOverview());
+      if (url.includes("/artifacts/intent")) {
+        return Response.json({ artifact_type: "intent" });
+      }
+      statusRequest += 1;
+      if (statusRequest <= 2) {
+        return Response.json({
+          status: "failed",
+          phase: "construct_artifacts",
+          completed_phases: ["perceive"],
+          error_code: "OPENAI_TIMEOUT",
+        });
+      }
+      return Response.json({
+        status: "completed",
+        phase: "publish",
+        completed_phases: ["publish"],
+      });
+    }));
+
+    render(<AnalysisProgress mode="watch" projectId="project-1" runId="run-1" />);
+    await screen.findByRole("button", { name: "Retry analysis" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry analysis" }));
+    await waitFor(() => expect(statusRequest).toBe(2));
+    await waitFor(() => expect(statusRequest).toBe(3), { timeout: 6_000 });
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+  }, 8_000);
+
+  it("resumes the event stream after the failure event that triggered Retry", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (init?.method === "POST") return new Response("{}", { status: 202 });
+      if (url.includes("/overview")) return Response.json(completedOverview());
+      if (url.includes("/artifacts/intent")) {
+        return Response.json({ artifact_type: "intent" });
+      }
+      return Response.json({
+        status: "running",
+        phase: "construct_artifacts",
+        completed_phases: ["perceive"],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AnalysisProgress mode="watch" projectId="project-1" runId="run-1" />);
+    await screen.findByRole("status");
+    FakeEventSource.current?.emit("analysis.failed", {
+      sequence: 12,
+      error: { code: "OPENAI_TIMEOUT", retryable: true },
+    });
+    await screen.findByRole("button", { name: "Retry analysis" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry analysis" }));
+
+    await waitFor(() => expect(FakeEventSource.current?.url).toBe(
+      "/api/analysis-runs/run-1/events?lastEventId=12",
+    ));
+    FakeEventSource.current?.emit("analysis.completed", { sequence: 13 });
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+  });
+
+  it("hands off a newly completed read within the ten-second delivery ceiling", async () => {
+    vi.useFakeTimers();
+    let runStatusReads = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/overview")) return Response.json(completedOverview());
+      if (url.includes("/artifacts/intent")) {
+        return Response.json({ artifact_type: "intent" });
+      }
+      runStatusReads += 1;
+      return Response.json(
+        runStatusReads === 1
+          ? { status: "running", phase: "ingest_parse", completed_phases: [] }
+          : { status: "completed", phase: "publish", completed_phases: ["publish"] },
+      );
+    }));
+
+    render(<AnalysisProgress mode="watch" projectId="project-1" runId="run-1" />);
+    await vi.waitFor(() => expect(runStatusReads).toBe(1));
+    await act(async () => vi.advanceTimersByTimeAsync(5_000));
+    await vi.waitFor(() => expect(runStatusReads).toBe(2));
+    await vi.waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Analysis complete"));
+
+    await act(async () => vi.advanceTimersByTimeAsync(9_000));
+
+    expect(replace).toHaveBeenCalledWith("/projects/project-1/overview");
   });
 
   it("delivers a completed read when its completion event is missed", async () => {

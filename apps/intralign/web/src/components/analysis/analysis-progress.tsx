@@ -229,6 +229,8 @@ export function AnalysisProgress({
   const arcRef = useRef<HTMLIFrameElement>(null);
   const decisionOutcomeRef = useRef<string | null>(null);
   const submittingDecisionRef = useRef(false);
+  const lastEventSequenceRef = useRef(0);
+  const retryPendingRef = useRef(false);
   const [phase, setPhase] = useState<string>("submit_intake");
   const [completed, setCompleted] = useState<string[]>([]);
   const [completedArtifacts, setCompletedArtifacts] = useState<string[]>([]);
@@ -280,6 +282,7 @@ export function AnalysisProgress({
     let terminal = false;
     let syncing = false;
     let consecutiveStatusFailures = 0;
+    let staleRetryFailures = 0;
     let stream: EventSource | null = null;
     const sync = async () => {
       if (closed || terminal || syncing) return;
@@ -292,14 +295,24 @@ export function AnalysisProgress({
         setPhase(run.phase ?? "submit_intake");
         setCompleted(run.completed_phases ?? []);
         if (run.status === "completed") {
+          retryPendingRef.current = false;
           terminal = true;
           stream?.close();
           await loadDecision();
         }
         if (run.status === "failed") {
+          if (retryPendingRef.current && staleRetryFailures < 2) {
+            staleRetryFailures += 1;
+            return;
+          }
+          retryPendingRef.current = false;
           terminal = true;
           stream?.close();
           setFailed(run.error_code ?? "Analysis paused unexpectedly");
+        }
+        if (run.status === "queued" || run.status === "running") {
+          retryPendingRef.current = false;
+          staleRetryFailures = 0;
         }
       } catch {
         consecutiveStatusFailures += 1;
@@ -314,20 +327,32 @@ export function AnalysisProgress({
     };
     void sync();
     const poller = window.setInterval(() => void sync(), analysisStatusPollIntervalMs);
-    stream = new EventSource(`/api/analysis-runs/${runId}/events`);
-    const onProgress = (event: MessageEvent) => {
+    stream = new EventSource(
+      `/api/analysis-runs/${runId}/events?lastEventId=${lastEventSequenceRef.current}`,
+    );
+    const eventPayload = (event: MessageEvent) => {
       const payload = JSON.parse(event.data);
+      const sequence = Number(payload.sequence);
+      if (Number.isSafeInteger(sequence) && sequence > lastEventSequenceRef.current) {
+        lastEventSequenceRef.current = sequence;
+      }
+      return payload;
+    };
+    const onProgress = (event: MessageEvent) => {
+      const payload = eventPayload(event);
       if (payload.phase) setPhase(payload.phase);
       if (event.type === "analysis.phase_completed" && payload.phase) {
         setCompleted((current) => [...new Set([...current, payload.phase])]);
       }
     };
     const onArtifactCompleted = (event: MessageEvent) => {
-      const payload = JSON.parse(event.data);
+      const payload = eventPayload(event);
       if (!payload.artifact_type) return;
       setCompletedArtifacts((current) => [...new Set([...current, payload.artifact_type])]);
     };
-    const onCompleted = () => {
+    const onCompleted = (event: MessageEvent) => {
+      eventPayload(event);
+      retryPendingRef.current = false;
       terminal = true;
       stream.close();
       void loadDecision();
@@ -338,7 +363,8 @@ export function AnalysisProgress({
     stream.addEventListener("assessment.published", onCompleted);
     stream.addEventListener("analysis.completed", onCompleted);
     stream.addEventListener("analysis.failed", (event) => {
-      const payload = JSON.parse((event as MessageEvent).data);
+      const payload = eventPayload(event as MessageEvent);
+      retryPendingRef.current = false;
       terminal = true;
       setFailed(payload.error?.code ?? "Analysis paused unexpectedly");
       stream.close();
@@ -366,7 +392,9 @@ export function AnalysisProgress({
   }, [actualWatchStage, mode, visibleWatchStage]);
 
   const stage = mode === "watch"
-    ? visibleWatchStage
+    ? decision
+      ? returningStages.length
+      : visibleWatchStage
     : Math.max(1, Math.min(8, Math.ceil(((activeIndex + 1) / workflow.length) * 8)));
 
   const arcEvents = useMemo(() => {
@@ -407,6 +435,7 @@ export function AnalysisProgress({
       setFailed("ANALYSIS_RETRY_FAILED");
       return;
     }
+    retryPendingRef.current = true;
     setSyncVersion((current) => current + 1);
   };
 
