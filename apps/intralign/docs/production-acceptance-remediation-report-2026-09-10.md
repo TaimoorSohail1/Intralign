@@ -5,6 +5,9 @@
 This work was prepared from `client/main` build `e069da1a66a581e6c097ef9bffbe1e16e2dfc76c`
 on branch `fix/production-acceptance-remediation-2026-09-09`.
 
+Approved-contract traceability: `IC-WA-001` governs Artifact Intake / Perceive, and
+`IC-WU-ACCEPT` governs the user confirmation and retained acceptance record.
+
 The evidence below separates three states:
 
 - Production observations already measured on build `e069da1`;
