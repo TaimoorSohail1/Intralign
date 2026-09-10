@@ -22,7 +22,7 @@ from oslo_api.analysis.document_store import DatabaseDocumentStore
 from oslo_api.analysis.history import list_project_history
 from oslo_api.analysis.object_storage import LocalObjectStorage
 from oslo_api.analysis.persistence import DatabaseAnalysisStore, _primary_outcome_title
-from oslo_api.analysis.service import DatabaseSliceTwoApplication
+from oslo_api.analysis.service import DatabaseSliceTwoApplication, InlineAnalysisExecutor
 from oslo_api.application import DatabaseSliceOneApplication
 from oslo_api.collaboration.service import CollaborationError, DatabaseCollaborationService
 from oslo_api.identity import SupabaseIdentityProvider
@@ -2063,6 +2063,91 @@ def test_new_snapshot_preserves_lifecycle_state_for_a_repeated_issue(
                     """
                 ),
                 {"project_id": project_id, "issue_id": issue_id},
+            ).scalar_one()
+        assert current_status == "resolved"
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+
+
+def test_inline_lifecycle_confirmation_lands_after_its_attestation_is_persisted(
+    tmp_path,
+    workspace_owner_id: UUID,
+) -> None:
+    """Inline serverless runs must not leave a completed act waiting forever."""
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Inline lifecycle landing', 'draft', :owner_id)
+                """
+            ),
+            {
+                "id": project_id,
+                "workspace_id": WORKSPACE_ID,
+                "owner_id": workspace_owner_id,
+            },
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        baseline = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=workspace_owner_id,
+                kind=RunKind.INITIAL,
+                description="A delivery plan with an unresolved owner and fallback.",
+                source_names=("brief.md",),
+                idempotency_key=f"inline-lifecycle-baseline:{project_id}",
+            )
+        )
+        assert baseline.status is AnalysisRunStatus.COMPLETED
+        snapshot = store.current_snapshot(project_id)
+        assert snapshot is not None
+        issue = snapshot.assessment.issues[0]
+        application = DatabaseSliceTwoApplication(
+            engine=engine,
+            store=store,
+            workflow=workflow,
+            executor=InlineAnalysisExecutor(),
+            document_store=DatabaseDocumentStore(
+                engine=engine,
+                object_store=LocalObjectStorage(tmp_path),
+            ),
+            extended_delay_seconds=0,
+            reanalysis_debounce_seconds=0,
+        )
+
+        result = application.act_on_issue_lifecycle(
+            actor_user_id=workspace_owner_id,
+            project_id=project_id,
+            issue_id=issue.id,
+            act="confirm",
+            basis="documented",
+            evidence_ref=None,
+            resolution=None,
+            reviewer=None,
+            key=f"inline-lifecycle-confirm:{project_id}",
+        )
+
+        assert result["analysis_run"] is not None
+        assert result["analysis_run"].status is AnalysisRunStatus.COMPLETED
+        with engine.connect() as connection:
+            current_status = connection.execute(
+                text(
+                    """
+                    select current_status from public.issues
+                    where project_id = :project_id and stable_key = :issue_id
+                    """
+                ),
+                {"project_id": project_id, "issue_id": issue.id},
             ).scalar_one()
         assert current_status == "resolved"
     finally:

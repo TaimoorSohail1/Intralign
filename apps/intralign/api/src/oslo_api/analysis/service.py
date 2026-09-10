@@ -1262,6 +1262,21 @@ class DatabaseSliceTwoApplication:
                 payload={"basis": basis, "evidence_ref": evidence_ref},
             )
 
+        # In inline mode the batch finishes before its attestation can be
+        # persisted: _batched_reanalysis_run executes synchronously, while the
+        # insert above deliberately carries the resulting run id. The normal
+        # landing hook therefore cannot see this act on its first pass. Settle
+        # the persisted act only after its completed reanalysis is durable.
+        # Queued dispatchers still use _mark_reanalysis_landed when their run
+        # finishes, so this branch does not change their ordering.
+        landed_run = self._store.get_run(run.id) if run is not None else None
+        if landed_run is not None and landed_run.status is AnalysisRunStatus.COMPLETED:
+            self._settle_completed_lifecycle_act(
+                project_id=project_id,
+                issue_id=issue_id,
+                act=act,
+            )
+
         first_run = self.runtime_state(
             actor_user_id=actor_user_id,
             project_id=project_id,
@@ -1285,6 +1300,37 @@ class DatabaseSliceTwoApplication:
             "analysis_run": run,
             "first_run": first_run,
         }
+
+    def _settle_completed_lifecycle_act(
+        self,
+        *,
+        project_id: UUID,
+        issue_id: str,
+        act: str,
+    ) -> None:
+        """Land an inline lifecycle act after its attestation is persisted."""
+
+        status_by_act = {
+            "flag": "needs_fix",
+            "fix": "needs_grounding",
+            "withdraw": "open",
+        }
+        status = status_by_act.get(act, "resolved")
+        with self._engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    update public.issues
+                    set current_status = :status, updated_at = now()
+                    where project_id = :project_id and stable_key = :issue_id
+                    """
+                ),
+                {
+                    "status": status,
+                    "project_id": project_id,
+                    "issue_id": issue_id,
+                },
+            )
 
     def list_issue_actions(
         self,
