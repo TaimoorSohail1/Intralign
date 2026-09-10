@@ -28,6 +28,7 @@ from oslo_api.analysis.models import (
     EvidenceFragment,
     HarnessInvocation,
     Perception,
+    ReanalysisTrigger,
     RunKind,
 )
 from oslo_api.analysis.result_contract import canonicalize_assessment
@@ -39,7 +40,7 @@ from oslo_api.analysis.semantic_validation import (
     normalize_artifact_provenance,
 )
 from oslo_api.analysis.store import AnalysisStore
-from oslo_api.analysis.understanding import enrich_assessment
+from oslo_api.analysis.understanding import enrich_assessment, with_integrity
 
 SAMPLE_PLAN_DESCRIPTION = (
     "DevNorth 2026 is a one-day developer conference for approximately 450 attendees "
@@ -269,6 +270,14 @@ class AnalysisWorkflow:
             self._store.complete_phase(run.id, phase, state)
         elif phase is AnalysisPhase.EVALUATE_ADVISE:
             self._start(run.id, request, phase)
+            attestation_parent = self._attestation_parent(request)
+            if attestation_parent is not None:
+                # A state-only attestation changes the evidence status of a
+                # retained subject, not the plan or its set of dependencies.
+                # Lifecycle settlement still happens only after publication.
+                state["assessment"] = attestation_parent.assessment
+                self._store.complete_phase(run.id, phase, state)
+                return graph_state
             invocation = self._harness_invocation(run.id, phase, state)
             model_assessment = self._harness.evaluate(
                 artifacts=state["artifacts"],
@@ -319,13 +328,18 @@ class AnalysisWorkflow:
                     )
                 ),
             )
-            assessment = enrich_assessment(
-                assessment=state["assessment"],
-                artifacts=state["artifacts"],
-                kind=request.kind,
-                previous_snapshot=previous_snapshot,
-                description=str(state.get("governed_description", request.description)),
-                user_evidence=request.user_evidence,
+            attestation_parent = self._attestation_parent(request)
+            assessment = (
+                with_integrity(attestation_parent.assessment, state["artifacts"])
+                if attestation_parent is not None
+                else enrich_assessment(
+                    assessment=state["assessment"],
+                    artifacts=state["artifacts"],
+                    kind=request.kind,
+                    previous_snapshot=previous_snapshot,
+                    description=str(state.get("governed_description", request.description)),
+                    user_evidence=request.user_evidence,
+                )
             )
             state["assessment"] = assessment
             project_title = next(
@@ -496,6 +510,12 @@ class AnalysisWorkflow:
         the later cross-artifact evaluator. Source-document changes still rebuild
         all seven artifacts.
         """
+        attestation_parent = self._attestation_parent(request)
+        if attestation_parent is not None:
+            return {
+                artifact.artifact_type: artifact
+                for artifact in attestation_parent.artifacts
+            }
         edited_types = {
             item.reference.split(":", 3)[2]
             for item in request.user_evidence
@@ -539,6 +559,55 @@ class AnalysisWorkflow:
             for artifact in parent.snapshot.artifacts
             if artifact.artifact_type.value != edited_type
         }
+
+    def _attestation_parent(
+        self, request: AnalysisRunRequest,
+    ) -> AssessmentSnapshot | None:
+        """IC-WU-ACCEPT / IC-WA-00R: retain the plan for state-only acts.
+
+        Only the service's default issue-act envelopes qualify. Custom evidence,
+        changed source inputs, edits, clarifications and explicit reanalysis must
+        still run cognition. This never creates or settles an attestation: the
+        persisted lifecycle remains authoritative after the new run publishes.
+        """
+        if (
+            request.kind is not RunKind.EXTENDED
+            or request.reanalysis_trigger is not ReanalysisTrigger.BATCH
+            or request.parent_run_id is None
+        ):
+            return None
+        parent = self._store.get_run(request.parent_run_id)
+        if parent is None or parent.snapshot is None:
+            return None
+        prior = parent.request
+        if (
+            request.workspace_id != prior.workspace_id
+            or request.project_id != prior.project_id
+            or request.description != prior.description
+            or request.source_names != prior.source_names
+            or request.source_document_ids != prior.source_document_ids
+            or request.user_evidence[:len(prior.user_evidence)] != prior.user_evidence
+        ):
+            return None
+        added = request.user_evidence[len(prior.user_evidence):]
+        if not added:
+            return None
+        titles = {issue.title for issue in parent.snapshot.assessment.issues}
+        for evidence in added:
+            match = re.fullmatch(
+                r"user:issue-act:(confirm|ground|flag|withdraw):.+", evidence.reference,
+            )
+            if (
+                match is None
+                or evidence.source_name != "Issue attestation"
+                or evidence.location not in titles
+                or evidence.content != (
+                    f"The user recorded a governed {match.group(1)} act "
+                    f"for {evidence.location}."
+                )
+            ):
+                return None
+        return parent.snapshot
 
     @staticmethod
     def _explicit_description_title(description: str) -> str | None:
