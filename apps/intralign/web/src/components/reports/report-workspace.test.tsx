@@ -512,6 +512,96 @@ describe("ReportWorkspace", () => {
     expect(report).toHaveTextContent("Delivery ownership is unresolved.");
   });
 
+  it("reports only user-authored plan changes in What changed", () => {
+    const history: ProjectHistory = {
+      project_id: snapshot.project_id,
+      next_cursor: null,
+      trend: [],
+      groups: [
+        {
+          run_id: snapshot.analysis_run_id,
+          kind: "extended",
+          status: "completed",
+          current: true,
+          occurred_at: snapshot.published_at,
+          confidence_band: "Moderate",
+          grounded_load_bearing: 0,
+          total_load_bearing: 1,
+          confidence_direction: "strengthened",
+          understanding_stage: "expanded",
+          changes: [
+            { label: "14 issues opened", tone: "warning" },
+            { label: "Feasibility Low → Moderate", tone: "positive" },
+          ],
+          events: [
+            {
+              id: 18,
+              category: "issues",
+              event_type: "issues.reconciled",
+              summary: "14 issues detected",
+              detail: "Derived findings changed during analysis.",
+              actor_type: "system",
+              artifact_type: null,
+              artifact_version: null,
+              issue_id: null,
+              occurred_at: snapshot.published_at,
+            },
+            {
+              id: 19,
+              category: "versions",
+              event_type: "artifact.version_created",
+              summary: "Resources updated",
+              detail: "Version 3 was retained and queued for re-analysis.",
+              actor_type: "user",
+              artifact_type: "resources",
+              artifact_version: 3,
+              issue_id: null,
+              occurred_at: snapshot.published_at,
+            },
+          ],
+        },
+      ],
+    };
+
+    render(<ReportWorkspace history={history} snapshot={snapshot} />);
+    fireEvent.click(screen.getByRole("button", { name: /Generate a draft/i }));
+
+    const report = screen.getByRole("textbox", { name: "Edit readout" });
+    expect(report).toHaveTextContent("Resources updated");
+    expect(report).not.toHaveTextContent(/issues opened|feasibility low/i);
+  });
+
+  it("states explicitly when no user-authored plan change exists", () => {
+    const history: ProjectHistory = {
+      project_id: snapshot.project_id,
+      next_cursor: null,
+      trend: [],
+      groups: [
+        {
+          run_id: snapshot.analysis_run_id,
+          kind: "initial",
+          status: "completed",
+          current: true,
+          occurred_at: snapshot.published_at,
+          confidence_band: "Moderate",
+          grounded_load_bearing: 0,
+          total_load_bearing: 1,
+          confidence_direction: null,
+          understanding_stage: "orientation",
+          changes: [{ label: "14 issues opened", tone: "neutral" }],
+          events: [],
+        },
+      ],
+    };
+
+    render(<ReportWorkspace history={history} snapshot={snapshot} />);
+    fireEvent.click(screen.getByRole("button", { name: /Generate a draft/i }));
+
+    const report = screen.getByRole("textbox", { name: "Edit readout" });
+    expect(report).toHaveTextContent("No changes to the plan since the last read.");
+    expect(report).not.toHaveTextContent(/14 issues opened|0 opened/i);
+  });
+
   it("does not repeat equivalent assumptions or recommendations", () => {
     const repeated: OverviewSnapshot = {
       ...snapshot,

@@ -87,5 +87,7 @@ test("PDF intake opens the progress page and keeps the first read truthful", asy
   await expect(readout).toContainText(
     `Outcome Integrity is ${canonicalRead![1]}, limited by ${canonicalRead![2]}.`,
   );
+  await expect(readout).toContainText("No changes to the plan since the last read.");
+  await expect(readout).not.toContainText(/\b\d+\s+(?:issues\s+)?(?:opened|resolved)\b/i);
   await expect(readout).not.toContainText(/\[[a-z_]+:\d+\]/i);
 });
