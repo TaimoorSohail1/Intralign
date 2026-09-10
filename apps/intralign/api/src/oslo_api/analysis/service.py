@@ -144,6 +144,7 @@ class DatabaseSliceTwoApplication:
     ) -> AnalysisRun:
         workspace_id = self._workspace_for_project(actor_user_id, project_id)
         parent_run = None
+        submitted_plan_change = description.strip()
         if kind is RunKind.EXTENDED:
             snapshot = self._store.current_snapshot(project_id)
             if snapshot is None:
@@ -153,6 +154,13 @@ class DatabaseSliceTwoApplication:
                 raise SliceTwoNotFound
 
             prior = parent_run.request
+            prior_descriptions = {
+                value.strip()
+                for value in prior.description.split("\n\n")
+                if value.strip()
+            }
+            if submitted_plan_change in prior_descriptions:
+                submitted_plan_change = ""
             documents = list(zip(prior.source_document_ids, prior.source_names, strict=False))
             known_document_ids = {document_id for document_id, _name in documents}
             documents.extend(
@@ -193,6 +201,21 @@ class DatabaseSliceTwoApplication:
             provisional=provisional and kind is RunKind.INITIAL,
         )
         run = self._store.create_run(request)
+        if kind is RunKind.EXTENDED and submitted_plan_change:
+            with self._engine.begin() as connection:
+                append_history_event(
+                    connection,
+                    workspace_id=workspace_id,
+                    project_id=project_id,
+                    analysis_run_id=run.id,
+                    actor_id=actor_user_id,
+                    actor_type="user",
+                    category="versions",
+                    event_type="plan.change_submitted",
+                    summary=submitted_plan_change,
+                    detail="User-authored plan change submitted for this analysis.",
+                    idempotency_key=f"history:plan-change-submitted:{run.id}",
+                )
         if run.status is AnalysisRunStatus.QUEUED:
             executor = self._deferred_executor if defer_execution else self._executor
             executor.submit(self._execute, run.id)

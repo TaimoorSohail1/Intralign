@@ -168,8 +168,9 @@ function buildSections(
         (event) =>
           event.actor_type === "user" &&
           event.category === "versions" &&
-          event.event_type === "artifact.version_created" &&
-          Boolean(event.artifact_type),
+          (event.event_type === "plan.change_submitted" ||
+            (event.event_type === "artifact.version_created" &&
+              Boolean(event.artifact_type))),
       )
       .map((event) => event.summary),
   );
