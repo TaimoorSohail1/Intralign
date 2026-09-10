@@ -505,6 +505,46 @@ describe("ProjectOverview", () => {
     expect(screen.getByText("Success metric is not measurable")).toBeInTheDocument();
   });
 
+  it("keeps CAF dimensions visible beside their Outcome Integrity pillar", () => {
+    const withCafDimensions: OverviewSnapshot = {
+      ...sliceFourSnapshot,
+      assessment: {
+        ...sliceFourSnapshot.assessment,
+        issues: [
+          {
+            ...sliceFourSnapshot.assessment.issues[0],
+            pillar: "Viability",
+          },
+          {
+            ...sliceFourSnapshot.assessment.issues[0],
+            id: "ISS-REQ-ALIGNMENT",
+            dimension: "Alignment",
+            pillar: "Viability",
+            title: "Sponsor outcome conflicts with the delivery target",
+          },
+        ],
+      },
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={withCafDimensions}
+        initialView="issues"
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const clarityIssue = screen.getByRole("button", {
+      name: /Success metric is not measurable/i,
+    });
+    const alignmentIssue = screen.getByRole("button", {
+      name: /Sponsor outcome conflicts with the delivery target/i,
+    });
+    expect(within(clarityIssue).getByText("Viability · Clarity")).toBeInTheDocument();
+    expect(within(alignmentIssue).getByText("Viability · Alignment")).toBeInTheDocument();
+  });
+
   it("keeps resolved findings out of the default active filter counts", () => {
     const withResolved: OverviewSnapshot = {
       ...sliceFourSnapshot,

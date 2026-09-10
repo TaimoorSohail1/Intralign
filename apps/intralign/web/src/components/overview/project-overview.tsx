@@ -189,6 +189,14 @@ function issuePillar(issue: Issue) {
   return "Viability";
 }
 
+function issueClassificationLabel(issue: Issue) {
+  const pillar = issuePillar(issue);
+  const dimension = artifactLabel(issue.dimension);
+  return dimension.toLowerCase() === pillar.toLowerCase()
+    ? pillar
+    : `${pillar} · ${dimension}`;
+}
+
 type IssueActionFeedback = {
   title: string;
   detail: string;
@@ -2466,7 +2474,7 @@ export function ProjectOverview({
                               <small><em>Holds up</em> {issue.why}</small>
                             </span>
                             <span className={`r2-pillar r2-pillar-${issuePillar(issue).toLowerCase()}`}>
-                              {issuePillar(issue)}
+                              {issueClassificationLabel(issue)}
                             </span>
                             <span className={`severity severity-${issue.severity.toLowerCase()}`}>
                               {issue.severity}
@@ -3379,7 +3387,7 @@ function IssuesWorkspace({
     >
       <span className="issue-layer-tags">
         <b className={`issue-layer-pillar pillar-${issuePillar(issue).toLowerCase()}`}>
-          {issuePillar(issue)}
+          {issueClassificationLabel(issue)}
           {issuePillar(issue) === limitingPillar ? " · gating" : ""}
         </b>
         <em>{issue.clarification ? "Clarification" : "Finding"}</em>
@@ -3771,7 +3779,7 @@ function IssueLifecycleTray({
                 ) : null}
               </div>
               <span className={`r2-pillar r2-pillar-${issuePillar(issue).toLowerCase()}`}>
-                {issuePillar(issue)}
+                {issueClassificationLabel(issue)}
               </span>
               <div className="r2-tray-actions">
                 {issue.status === "needs_fix" ? (
@@ -4090,7 +4098,7 @@ function IssuePanel({
         <div>
           {inline ? (
             <span className={`r2-pillar r2-pillar-${issuePillar(issue).toLowerCase()}`}>
-              {issuePillar(issue)}
+              {issueClassificationLabel(issue)}
             </span>
           ) : null}
           <span className={`severity severity-${issue.severity.toLowerCase()}`}>
