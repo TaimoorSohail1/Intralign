@@ -49,10 +49,12 @@ async function openIssue(
   issue: OpenIssue,
 ) {
   await page.goto(`/projects/${projectId}/issues`);
-  const issueRow = page.locator(`.issue-row[data-issue-id="${issue.id}"]`);
-  await expect(issueRow).toBeVisible();
-  await issueRow.click();
   const panel = page.locator(".issue-panel");
+  if (!(await panel.getByRole("heading", { name: issue.title }).isVisible())) {
+    const issueRow = page.locator(`.issue-row[data-issue-id="${issue.id}"]`);
+    await expect(issueRow).toBeVisible();
+    await issueRow.click();
+  }
   await expect(panel.getByRole("heading", { name: issue.title })).toBeVisible();
   return panel;
 }
@@ -64,10 +66,15 @@ test("N-4 intercepts Confirm, Flag and Route failures without losing retry inten
 
   const projectId = await createAnalyzedProject(page);
   await page.goto(`/projects/${projectId}/issues`);
-  const visibleIssueRow = page.locator(".issue-row").first();
-  await expect(visibleIssueRow).toBeVisible();
-  const visibleIssueId = await visibleIssueRow.getAttribute("data-issue-id");
-  expect(visibleIssueId, "The rendered issue row needs its canonical issue id").toBeTruthy();
+  const verifyPanel = page.locator(".issue-panel");
+  const confirm = verifyPanel.getByRole("button", { name: "Confirm — it holds" });
+  await expect(confirm).toBeVisible();
+  await expect(confirm).toBeEnabled({ timeout: 120_000 });
+  const verifyPanelId = await verifyPanel.getAttribute("id");
+  expect(verifyPanelId, "The verify panel needs its canonical issue id").toMatch(
+    /^issue-detail-.+/,
+  );
+  const visibleIssueId = verifyPanelId!.replace(/^issue-detail-/, "");
   const overviewResponse = await page.request.get(`/api/projects/${projectId}/overview`);
   expect(overviewResponse.ok()).toBeTruthy();
   const overview = (await overviewResponse.json()) as {
@@ -76,7 +83,7 @@ test("N-4 intercepts Confirm, Flag and Route failures without losing retry inten
   const issue = overview.assessment.issues.find(
     (candidate) => candidate.id === visibleIssueId && candidate.status === "open",
   );
-  expect(issue, "The rendered queue issue must map to one open canonical issue").toBeTruthy();
+  expect(issue, "The visible verify panel must map to one open canonical issue").toBeTruthy();
 
   const intercepted: Array<{ act: GovernedAct; body: Record<string, unknown> }> = [];
   await page.route(/\/api\/projects\/[^/]+\/issues\/[^/]+\/acts$/, async (route) => {
@@ -111,7 +118,7 @@ test("N-4 intercepts Confirm, Flag and Route failures without losing retry inten
       });
     }
 
-    const alert = page.getByRole("alert");
+    const alert = panel.getByRole("alert");
     await expect(alert).toContainText("Your project data is unchanged.");
     await expect(page.getByText(/Failed to fetch/i)).toHaveCount(0);
     const retry = page.getByRole("button", { name: "Retry action" });
