@@ -162,6 +162,17 @@ function buildSections(
 ): ReportSection[] {
   const issues = snapshot.assessment.issues.filter((issue) => issue.status !== "resolved");
   const currentRun = history?.groups.find((group) => group.current);
+  const planChanges = uniqueText(
+    (currentRun?.events ?? [])
+      .filter(
+        (event) =>
+          event.actor_type === "user" &&
+          event.category === "versions" &&
+          event.event_type === "artifact.version_created" &&
+          Boolean(event.artifact_type),
+      )
+      .map((event) => event.summary),
+  );
   const evidenceCount = new Set(
     snapshot.artifacts.flatMap((artifact) => artifact.evidence_refs),
   ).size;
@@ -197,13 +208,9 @@ function buildSections(
     {
       id: "changed",
       title: "What changed",
-      body: currentRun?.changes.length
-        ? currentRun.changes.map((change) => change.label)
-        : [
-            snapshot.state === "provisional"
-              ? "This is the first retained project read."
-              : "The latest evidence review is now the current retained project view.",
-          ],
+      body: planChanges.length
+        ? planChanges
+        : ["No changes to the plan since the last read."],
     },
     {
       id: "risks",

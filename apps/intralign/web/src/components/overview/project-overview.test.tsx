@@ -2788,6 +2788,19 @@ describe("ProjectOverview", () => {
     fireEvent.click(screen.getByRole("button", { name: "I have it documented in writing" }));
 
     await waitFor(() => {
+      expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith("/acts"))).toHaveLength(1);
+    });
+    const interceptedConfirm = JSON.parse(String(
+      fetcher.mock.calls.find(([url]) => String(url).endsWith("/acts"))?.[1]?.body,
+    ));
+    expect(interceptedConfirm).toMatchObject({
+      act: "confirm",
+      basis: "documented",
+      evidenceRef: "document:plan:page:1:fragment:0",
+    });
+    expect(interceptedConfirm.idempotencyKey).toBeTruthy();
+
+    await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
         "Your project data is unchanged.",
       );
@@ -2834,6 +2847,19 @@ describe("ProjectOverview", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
     fireEvent.click(screen.getByRole("button", { name: /It doesn't hold/ }));
+
+    await waitFor(() => {
+      expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith("/acts"))).toHaveLength(1);
+    });
+    const interceptedFlag = JSON.parse(String(
+      fetcher.mock.calls.find(([url]) => String(url).endsWith("/acts"))?.[1]?.body,
+    ));
+    expect(interceptedFlag).toMatchObject({
+      act: "flag",
+      basis: "verified-directly",
+      evidenceRef: "document:plan:page:1:fragment:0",
+    });
+    expect(interceptedFlag.idempotencyKey).toBeTruthy();
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
@@ -2890,6 +2916,20 @@ describe("ProjectOverview", () => {
     fireEvent.click(screen.getByRole("button", { name: /Migration ownership is unresolved/i }));
     fireEvent.click(screen.getByRole("button", { name: /Ask for evidence/i }));
     fireEvent.click(screen.getByRole("button", { name: /Project collaborator/i }));
+
+    await waitFor(() => expect(actAttempts).toBe(1));
+    const interceptedRoute = JSON.parse(String(
+      fetcher.mock.calls.find(([url]) => String(url).endsWith("/acts"))?.[1]?.body,
+    ));
+    expect(interceptedRoute).toMatchObject({
+      act: "route",
+      reviewer: {
+        id: "project-collaborator",
+        display_name: "Project collaborator",
+        role: "collaborator",
+      },
+    });
+    expect(interceptedRoute.idempotencyKey).toBeTruthy();
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
