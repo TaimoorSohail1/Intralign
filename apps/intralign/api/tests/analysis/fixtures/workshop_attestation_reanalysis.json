@@ -1,0 +1,448 @@
+{
+  "baseline": [
+    {
+      "id": "ISS-V2-EEC2EDE9BFC8E2F0",
+      "artifact_type": "intent",
+      "dimension": "Clarity",
+      "severity": "Critical",
+      "title": "No agreed outcome connects the workshop to a solution",
+      "why": "The intent artifact explicitly states that no purpose, intended outcome, benefit, or KPI is available. The plan therefore demonstrates delivery activity but not how the workshop resolves a diagnosed problem or achieves a participant result.",
+      "recommendation": "Agree and record one or more participant outcomes, then link the exercise, delivery approach, and readiness decisions to those outcomes.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "What specific participant outcome should the workshop achieve, and who confirms that outcome?",
+      "status": "open",
+      "finding_type": "inference_gap",
+      "finding_basis": "structural",
+      "structural_target": "definition",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-CP-OC-01",
+      "artifact_type": "schedule",
+      "dimension": "Adaptability",
+      "severity": "Moderate",
+      "title": "Workshop preparation and delivery has no outcome checkpoint",
+      "why": "The outcome is not re-read during Workshop preparation and delivery while there is still runway to change course.",
+      "recommendation": "Add checkpoint: read Agreed participant learning outcome has a defined pre-workshop baseline and a measurable end-of-workshop check, such as completion of the 30-minute exercise or a defined skill demonstration.; By 8 October 2026, before the final go/no-go check and with one week of corrective runway; re-read at workshop close.; if it drifts, Clarify the outcome and adjust the exercise, facilitation approach, scope, or postponement decision if the indicator or baseline is not ready..",
+      "evidence_refs": [],
+      "clarification": null,
+      "status": "open",
+      "finding_type": "coverage_gap",
+      "finding_basis": "structural",
+      "structural_target": "coverage",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-4282FECA87337CDC",
+      "artifact_type": "intent",
+      "dimension": "Grounding",
+      "severity": "Critical",
+      "title": "No success measure or outcome readout",
+      "why": "The intent and requirements artifacts state that no success measure or KPI has been agreed. Delivery milestones cannot establish whether the workshop produced the intended benefit.",
+      "recommendation": "Define a measurable success threshold, its baseline, the measurement method, the owner, and when the result will be read.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "What measurable threshold will determine workshop success, and when will it be measured?",
+      "status": "open",
+      "finding_type": "metric_mismatch",
+      "finding_basis": "structural",
+      "structural_target": "truth",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-5C03032D5E324732",
+      "artifact_type": "resources",
+      "dimension": "Adaptability",
+      "severity": "Warning",
+      "title": "Postponement action is unowned",
+      "why": "The resources artifact marks the postponement action as having an unknown assignee, even though the schedule requires a one-week postponement when registrations are below six.",
+      "recommendation": "Assign the postponement decision and notification action to Dana or another named owner, including the decision date and communication route.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "Who owns the postponement decision and participant/library notification if fewer than six people register?",
+      "status": "open",
+      "finding_type": "unowned",
+      "finding_basis": "structural",
+      "structural_target": "coverage",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-6B2C5447E1E60B6C",
+      "artifact_type": "schedule",
+      "dimension": "Alignment",
+      "severity": "Moderate",
+      "title": "Venue and laptop dependencies have no fallback",
+      "why": "The schedule makes Room A and twelve working laptops prerequisites, but records no alternative venue, spare equipment, reduced-capacity approach, or decision deadline if either assumption fails.",
+      "recommendation": "Define a fallback for each load-bearing dependency and set a decision date before 15 October that preserves corrective runway.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "If Room A or one or more laptops is unavailable at the 8 October check, what fallback will Dana use and by what deadline will that decision be made?",
+      "status": "open",
+      "finding_type": "dependency_may_fail",
+      "finding_basis": "structural",
+      "structural_target": "edge",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-F66C4572C676E416",
+      "artifact_type": "schedule",
+      "dimension": "Feasibility",
+      "severity": "Warning",
+      "title": "The proceed-or-postpone decision has no fixed decision deadline",
+      "why": "The threshold is checked on 8 October, but the schedule also permits an unknown decision point; this leaves unclear when participants, the venue, and the facilitator are committed to the original or postponed date.",
+      "recommendation": "Set the decision deadline immediately after the 8 October registration and readiness check, and define who communicates the result within the synthetic plan.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "By what date and time must Dana decide and record whether the workshop remains on 15 October or moves to 22 October?",
+      "status": "open",
+      "finding_type": "no_deadline",
+      "finding_basis": "structural",
+      "structural_target": "achievability",
+      "load_bearing": true
+    }
+  ],
+  "after_one_settled": [
+    {
+      "id": "ISS-V2-EEC2EDE9BFC8E2F0",
+      "artifact_type": "intent",
+      "dimension": "Clarity",
+      "severity": "Critical",
+      "title": "The participant outcome is not agreed",
+      "why": "The plan describes a possible introductory spreadsheet capability outcome, but records it as inferred and states that no intended outcome has been agreed. Delivery therefore cannot be tested against an agreed purpose.",
+      "recommendation": "Agree and record the participant outcome, including the capability or behavior participants should demonstrate after the workshop.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "What specific participant outcome should the workshop achieve, and who confirms that decision?",
+      "status": "open",
+      "finding_type": "inference_gap",
+      "finding_basis": "decision",
+      "structural_target": "definition",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-CP-OC-001",
+      "artifact_type": "schedule",
+      "dimension": "Adaptability",
+      "severity": "Moderate",
+      "title": "WORKSTREAM_PREPARATION has no outcome checkpoint",
+      "why": "The outcome is not re-read during WORKSTREAM_PREPARATION while there is still runway to change course.",
+      "recommendation": "Add checkpoint: read Exercise is complete, usable and aligned to the agreed participant outcome; By 1 October 2026, before the 8 October readiness check; if it drifts, Adjust exercise scope, examples or preparation effort.",
+      "evidence_refs": [],
+      "clarification": null,
+      "status": "open",
+      "finding_type": "coverage_gap",
+      "finding_basis": "structural",
+      "structural_target": "coverage",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-CP-OC-002",
+      "artifact_type": "schedule",
+      "dimension": "Adaptability",
+      "severity": "Moderate",
+      "title": "WORKSTREAM_READINESS has no outcome checkpoint",
+      "why": "The outcome is not re-read during WORKSTREAM_READINESS while there is still runway to change course.",
+      "recommendation": "Add checkpoint: read At least six registrations and twelve usable laptops are confirmed; On 8 October 2026, with the decision made before participant notification and final preparation; if it drifts, Proceed, postpone, reduce delivery scope, or activate an equipment/venue fallback.",
+      "evidence_refs": [],
+      "clarification": null,
+      "status": "open",
+      "finding_type": "coverage_gap",
+      "finding_basis": "structural",
+      "structural_target": "coverage",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-CP-OC-003",
+      "artifact_type": "schedule",
+      "dimension": "Adaptability",
+      "severity": "Moderate",
+      "title": "WORKSTREAM_DELIVERY has no outcome checkpoint",
+      "why": "The outcome is not re-read during WORKSTREAM_DELIVERY while there is still runway to change course.",
+      "recommendation": "Add checkpoint: read The planned exercise and delivery conditions are ready for participants to demonstrate the agreed spreadsheet capability; At the 8 October readiness gate, while there is still time to change sequence, scope or delivery approach; if it drifts, Change exercise sequence, add guided practice, reduce scope, or postpone delivery.",
+      "evidence_refs": [],
+      "clarification": null,
+      "status": "open",
+      "finding_type": "coverage_gap",
+      "finding_basis": "structural",
+      "structural_target": "coverage",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-1F5048D78ABDB32A",
+      "artifact_type": "requirements",
+      "dimension": "",
+      "severity": "Critical",
+      "title": "No outcome success measure is defined",
+      "why": "The plan contains attendance, duration and readiness quantities, but explicitly records that no success measure has been agreed. These operational figures do not establish whether participant capability improved.",
+      "recommendation": "Define at least one measurable outcome target, such as a proportion of participants completing a specified spreadsheet task, with a measurement point and method.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "What measurable result will determine whether the workshop achieved its intended participant outcome, and when will it be measured?",
+      "status": "open",
+      "finding_type": "metric_mismatch",
+      "finding_basis": "model_gap",
+      "structural_target": "truth",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-4282FECA87337CDC",
+      "artifact_type": "intent",
+      "dimension": "Grounding",
+      "severity": "Critical",
+      "title": "No success measure or outcome readout",
+      "why": "The intent and requirements artifacts state that no success measure or KPI has been agreed. Delivery milestones cannot establish whether the workshop produced the intended benefit.",
+      "recommendation": "Define a measurable success threshold, its baseline, the measurement method, the owner, and when the result will be read.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "What measurable threshold will determine workshop success, and when will it be measured?",
+      "status": "open",
+      "finding_type": "metric_mismatch",
+      "finding_basis": "structural",
+      "structural_target": "truth",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-5C03032D5E324732",
+      "artifact_type": "resources",
+      "dimension": "Adaptability",
+      "severity": "Warning",
+      "title": "Postponement action is unowned",
+      "why": "The resources artifact marks the postponement action as having an unknown assignee, even though the schedule requires a one-week postponement when registrations are below six.",
+      "recommendation": "Assign the postponement decision and notification action to Dana or another named owner, including the decision date and communication route.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "Who owns the postponement decision and participant/library notification if fewer than six people register?",
+      "status": "open",
+      "finding_type": "unowned",
+      "finding_basis": "structural",
+      "structural_target": "coverage",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-191BF0BCC38101E9",
+      "artifact_type": "schedule",
+      "dimension": "Feasibility",
+      "severity": "Moderate",
+      "title": "The proceed-or-postpone decision has no deadline",
+      "why": "The registration and laptop check is dated 8 October, but the plan does not set the deadline by which Dana must decide. This weakens the ability to notify participants, preserve the venue and prepare for 15 or 22 October.",
+      "recommendation": "Set a decision deadline immediately after the 8 October check and specify who records and communicates the decision.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "By what date and time must Dana make and communicate the proceed-or-postpone decision after the 8 October check?",
+      "status": "open",
+      "finding_type": "no_deadline",
+      "finding_basis": "structural",
+      "structural_target": "achievability",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-6B2C5447E1E60B6C",
+      "artifact_type": "resources",
+      "dimension": "Feasibility",
+      "severity": "Moderate",
+      "title": "Load-bearing venue and equipment dependencies have no fallback",
+      "why": "Room A and twelve working laptops are treated as assumptions, and the plan checks laptop readiness, but no alternative room, replacement equipment, reduced-capacity approach or other recovery action is defined if either dependency fails.",
+      "recommendation": "Define a proportionate fallback for each dependency, including an owner and latest activation point; for example, an alternative room or a reduced-device teaching approach.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "If Room A or one or more laptops is unavailable at the 8 October check, what fallback will Dana use and by when must it be activated?",
+      "status": "open",
+      "finding_type": "no_backup",
+      "finding_basis": "structural",
+      "structural_target": "achievability",
+      "load_bearing": true
+    }
+  ],
+  "after_two_settled": [
+    {
+      "id": "ISS-V2-EEC2EDE9BFC8E2F0",
+      "artifact_type": "intent",
+      "dimension": "Clarity",
+      "severity": "Critical",
+      "title": "Participant outcome is not agreed",
+      "why": "The plan records participant learning only as an inference and explicitly says no intended outcome has been agreed. The workshop intervention therefore cannot be tested against an authorized objective.",
+      "recommendation": "Agree and record the participant outcome before delivery, including the capability participants should demonstrate after the workshop.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "What participant outcome is authorized, and what observable capability should participants demonstrate after the workshop?",
+      "status": "open",
+      "finding_type": "inference_gap",
+      "finding_basis": "inference",
+      "structural_target": "definition",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-8B6BE16246D16C7E",
+      "artifact_type": "requirements",
+      "dimension": "Adaptability",
+      "severity": "Moderate",
+      "title": "Acceptance and testing criteria are absent",
+      "why": "The requirements artifact explicitly states that functional requirements, acceptance criteria and quality targets are not specified. The exercise and two-hour workshop are activities, not verifiable acceptance conditions.",
+      "recommendation": "Define minimum acceptance criteria for the exercise, session delivery and participant result, plus how Dana will test or verify each criterion.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "What minimum conditions must be demonstrated for the exercise and workshop to be accepted, and how will each be tested?",
+      "status": "open",
+      "finding_type": "coverage_gap",
+      "finding_basis": "structural",
+      "structural_target": "coverage",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-FB93AB86656D049E",
+      "artifact_type": "resources",
+      "dimension": "Adaptability",
+      "severity": "Moderate",
+      "title": "Postponement action is unowned",
+      "why": "The plan names Dana as facilitator and owner but explicitly leaves the postponement action and the decision owner unspecified. The fallback therefore has no accountable executor.",
+      "recommendation": "Assign the decision and postponement action to a named owner, including responsibility for updating the schedule and communicating the change if the fixture becomes operational.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "Who owns the proceed-or-postpone decision and the postponement action?",
+      "status": "open",
+      "finding_type": "unowned",
+      "finding_basis": "structural",
+      "structural_target": "coverage",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-CP-OCP-001",
+      "artifact_type": "schedule",
+      "dimension": "Adaptability",
+      "severity": "Moderate",
+      "title": "intervention:workshop-delivery has no outcome checkpoint",
+      "why": "The outcome is not re-read during intervention:workshop-delivery while there is still runway to change course.",
+      "recommendation": "Add checkpoint: read Percentage of participants who can complete the agreed introductory spreadsheet task without assistance; From-OSLO proposal: read at the end of the workshop and again 7 days later, while any follow-up or repeat-session decision remains possible; if it drifts, From-OSLO proposal: adjust the exercise sequence, provide targeted follow-up practice, or repeat the workshop if the indicator is below the agreed threshold.",
+      "evidence_refs": [],
+      "clarification": null,
+      "status": "open",
+      "finding_type": "coverage_gap",
+      "finding_basis": "structural",
+      "structural_target": "coverage",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-4282FECA87337CDC",
+      "artifact_type": "intent",
+      "dimension": "Grounding",
+      "severity": "Critical",
+      "title": "No success measure or outcome readout",
+      "why": "The intent and requirements artifacts state that no success measure or KPI has been agreed. Delivery milestones cannot establish whether the workshop produced the intended benefit.",
+      "recommendation": "Define a measurable success threshold, its baseline, the measurement method, the owner, and when the result will be read.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "What measurable threshold will determine workshop success, and when will it be measured?",
+      "status": "open",
+      "finding_type": "metric_mismatch",
+      "finding_basis": "structural",
+      "structural_target": "truth",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-1F5048D78ABDB32A",
+      "artifact_type": "requirements",
+      "dimension": "",
+      "severity": "Critical",
+      "title": "No outcome success measure is defined",
+      "why": "The plan contains attendance, duration and readiness quantities, but explicitly records that no success measure has been agreed. These operational figures do not establish whether participant capability improved.",
+      "recommendation": "Define at least one measurable outcome target, such as a proportion of participants completing a specified spreadsheet task, with a measurement point and method.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "What measurable result will determine whether the workshop achieved its intended participant outcome, and when will it be measured?",
+      "status": "open",
+      "finding_type": "metric_mismatch",
+      "finding_basis": "model_gap",
+      "structural_target": "truth",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-1AA9EA006155BA0C",
+      "artifact_type": "resources",
+      "dimension": "Adaptability",
+      "severity": "Warning",
+      "title": "Budget feasibility is capped but not costed",
+      "why": "The $200 ceiling and library funding are stated, but actual committed spend, remaining budget, cost allocation and no-cost alternatives are unknown. The small scale limits the concern, but the ceiling alone does not demonstrate affordability.",
+      "recommendation": "Record expected costs and confirm that the planned delivery fits within the $200 ceiling, including any equipment, materials or venue charges.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "What costs are expected against the $200 ceiling, and who has confirmed that funding is available for them?",
+      "status": "open",
+      "finding_type": "coverage_gap",
+      "finding_basis": "structural",
+      "structural_target": "coverage",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-191BF0BCC38101E9",
+      "artifact_type": "schedule",
+      "dimension": "Feasibility",
+      "severity": "Moderate",
+      "title": "Proceed-or-postpone decision has no deadline",
+      "why": "A registration threshold and one-week alternative exist, but no date or time is set for making the decision. This can leave preparation, participant notice and venue use unresolved.",
+      "recommendation": "Set a decision deadline before 15 October, with enough time to notify participants and enact the one-week alternative.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "On what date and time will Dana make the proceed-or-postpone decision?",
+      "status": "open",
+      "finding_type": "no_deadline",
+      "finding_basis": "decision",
+      "structural_target": "achievability",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-0D161C7E34DAF6BD",
+      "artifact_type": "context",
+      "dimension": "Feasibility",
+      "severity": "Moderate",
+      "title": "Delivery depends on unconfirmed room and laptop availability",
+      "why": "Room A and twelve working laptops are labelled assumptions, despite being load-bearing for a 12-person session. The plan has a readiness check but no failure response or backup resource.",
+      "recommendation": "Define the readiness pass condition and a fallback venue or equipment arrangement, or explicitly accept cancellation/postponement if either dependency fails.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "What is the fallback if Room A or one or more of the twelve laptops is unavailable at the 8 October check?",
+      "status": "open",
+      "finding_type": "dependency_may_fail",
+      "finding_basis": "inference",
+      "structural_target": "achievability",
+      "load_bearing": true
+    },
+    {
+      "id": "ISS-V2-6B2C5447E1E60B6C",
+      "artifact_type": "resources",
+      "dimension": "Feasibility",
+      "severity": "Moderate",
+      "title": "Load-bearing venue and equipment dependencies have no fallback",
+      "why": "Room A and twelve working laptops are treated as assumptions, and the plan checks laptop readiness, but no alternative room, replacement equipment, reduced-capacity approach or other recovery action is defined if either dependency fails.",
+      "recommendation": "Define a proportionate fallback for each dependency, including an owner and latest activation point; for example, an alternative room or a reduced-device teaching approach.",
+      "evidence_refs": [
+        "description:1"
+      ],
+      "clarification": "If Room A or one or more laptops is unavailable at the 8 October check, what fallback will Dana use and by when must it be activated?",
+      "status": "open",
+      "finding_type": "no_backup",
+      "finding_basis": "structural",
+      "structural_target": "achievability",
+      "load_bearing": true
+    }
+  ]
+}
