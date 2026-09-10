@@ -48,3 +48,6 @@ Only the repository owner ratifies canonical content. AI systems assist with ana
 - **Source Material:** Constitutional Principles Draft as Historical Artifact (DL-035).
 - **Registry foundation:** Bounded Registry Foundation operative (DL-036).
 - **Repository structure:** Per the Repository Restructure (DL-037).
+
+- <!-- deploy trigger: 2026-09-10 -->
+- 
