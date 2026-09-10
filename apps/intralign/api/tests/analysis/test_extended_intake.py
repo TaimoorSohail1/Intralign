@@ -1,8 +1,9 @@
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
+import oslo_api.analysis.service as service_module
 from oslo_api.analysis import AnalysisRun, AnalysisRunRequest, AnalysisRunStatus, RunKind
 from oslo_api.analysis.models import EvidenceFragment
 from oslo_api.analysis.service import DatabaseSliceTwoApplication
@@ -35,6 +36,24 @@ class RecordingExecutor:
         self.run_ids.append(run_id)
 
 
+class RecordingConnection:
+    def execute(self, *_args, **_kwargs):
+        return None
+
+
+class RecordingTransaction:
+    def __enter__(self):
+        return RecordingConnection()
+
+    def __exit__(self, *_args):
+        return None
+
+
+class RecordingEngine:
+    def begin(self):
+        return RecordingTransaction()
+
+
 class RecordingDurableExecutor(RecordingExecutor):
     def __init__(self) -> None:
         super().__init__()
@@ -53,18 +72,112 @@ class RecordingDurableExecutor(RecordingExecutor):
         self.released.append((run_id, error_code, delay_seconds))
 
 
-def build_application(store: RecordingStore) -> DatabaseSliceTwoApplication:
+def build_application(
+    store: RecordingStore,
+    workspace_id: UUID | None = None,
+) -> DatabaseSliceTwoApplication:
     application = DatabaseSliceTwoApplication(
-        engine=object(),  # type: ignore[arg-type]
+        engine=RecordingEngine(),  # type: ignore[arg-type]
         store=store,  # type: ignore[arg-type]
         workflow=object(),  # type: ignore[arg-type]
         executor=RecordingExecutor(),
         document_store=object(),  # type: ignore[arg-type]
     )
-    workspace_id = uuid4()
-    application._workspace_for_project = lambda *_args: workspace_id  # type: ignore[method-assign]
+    effective_workspace_id = workspace_id or uuid4()
+    application._workspace_for_project = lambda *_args: effective_workspace_id  # type: ignore[method-assign]
     application._validate_documents = lambda **_kwargs: None  # type: ignore[method-assign]
     return application
+
+
+def test_extended_intake_records_the_user_authored_plan_change(monkeypatch) -> None:
+    workspace_id = uuid4()
+    project_id = uuid4()
+    actor_id = uuid4()
+    parent_request = AnalysisRunRequest(
+        workspace_id=workspace_id,
+        project_id=project_id,
+        requested_by=actor_id,
+        kind=RunKind.INITIAL,
+        description="Original approved budget: GBP 1,800,000.",
+        source_names=(),
+    )
+    parent = AnalysisRun(
+        id=uuid4(),
+        request=parent_request,
+        status=AnalysisRunStatus.COMPLETED,
+    )
+    application = build_application(RecordingStore(parent), workspace_id)
+    recorded: list[dict] = []
+    monkeypatch.setattr(
+        service_module,
+        "append_history_event",
+        lambda _connection, **event: recorded.append(event),
+    )
+
+    run = application.start_analysis(
+        actor_user_id=actor_id,
+        project_id=project_id,
+        description="Budget ceiling increased from GBP 1,800,000 to GBP 1,850,000.",
+        source_names=(),
+        source_document_ids=(),
+        kind=RunKind.EXTENDED,
+        key="budget-plan-change",
+    )
+
+    assert recorded == [
+        {
+            "workspace_id": workspace_id,
+            "project_id": project_id,
+            "analysis_run_id": run.id,
+            "actor_id": actor_id,
+            "actor_type": "user",
+            "category": "versions",
+            "event_type": "plan.change_submitted",
+            "summary": "Budget ceiling increased from GBP 1,800,000 to GBP 1,850,000.",
+            "detail": "User-authored plan change submitted for this analysis.",
+            "idempotency_key": f"history:plan-change-submitted:{run.id}",
+        }
+    ]
+
+
+def test_extended_intake_does_not_report_repeated_plan_context_as_a_change(
+    monkeypatch,
+) -> None:
+    workspace_id = uuid4()
+    project_id = uuid4()
+    actor_id = uuid4()
+    repeated_context = "Original approved budget: GBP 1,800,000."
+    parent = AnalysisRun(
+        id=uuid4(),
+        request=AnalysisRunRequest(
+            workspace_id=workspace_id,
+            project_id=project_id,
+            requested_by=actor_id,
+            kind=RunKind.INITIAL,
+            description=repeated_context,
+            source_names=(),
+        ),
+        status=AnalysisRunStatus.COMPLETED,
+    )
+    application = build_application(RecordingStore(parent), workspace_id)
+    recorded: list[dict] = []
+    monkeypatch.setattr(
+        service_module,
+        "append_history_event",
+        lambda _connection, **event: recorded.append(event),
+    )
+
+    application.start_analysis(
+        actor_user_id=actor_id,
+        project_id=project_id,
+        description=repeated_context,
+        source_names=(),
+        source_document_ids=(),
+        kind=RunKind.EXTENDED,
+        key="repeated-plan-context",
+    )
+
+    assert recorded == []
 
 
 def test_extended_intake_keeps_the_current_read_and_adds_new_evidence() -> None:

@@ -571,6 +571,51 @@ describe("ReportWorkspace", () => {
     expect(report).not.toHaveTextContent(/issues opened|feasibility low/i);
   });
 
+  it("reports a user-authored plan change submitted through returning intake", () => {
+    const planChange = "Budget ceiling increased from GBP 1,800,000 to GBP 1,850,000.";
+    const history: ProjectHistory = {
+      project_id: snapshot.project_id,
+      next_cursor: null,
+      trend: [],
+      groups: [
+        {
+          run_id: snapshot.analysis_run_id,
+          kind: "extended",
+          status: "completed",
+          current: true,
+          occurred_at: snapshot.published_at,
+          confidence_band: "Moderate",
+          grounded_load_bearing: 0,
+          total_load_bearing: 1,
+          confidence_direction: "weakened",
+          understanding_stage: "expanded",
+          changes: [{ label: "7 issues opened", tone: "warning" }],
+          events: [
+            {
+              id: 20,
+              category: "versions",
+              event_type: "plan.change_submitted",
+              summary: planChange,
+              detail: "User-authored plan change submitted for this analysis.",
+              actor_type: "user",
+              artifact_type: null,
+              artifact_version: null,
+              issue_id: null,
+              occurred_at: snapshot.published_at,
+            },
+          ],
+        },
+      ],
+    };
+
+    render(<ReportWorkspace history={history} snapshot={snapshot} />);
+    fireEvent.click(screen.getByRole("button", { name: /Generate a draft/i }));
+
+    const report = screen.getByRole("textbox", { name: "Edit readout" });
+    expect(report).toHaveTextContent(planChange);
+    expect(report).not.toHaveTextContent(/No changes to the plan|issues opened/i);
+  });
+
   it("states explicitly when no user-authored plan change exists", () => {
     const history: ProjectHistory = {
       project_id: snapshot.project_id,
