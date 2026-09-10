@@ -49,7 +49,7 @@ async function openIssue(
   issue: OpenIssue,
 ) {
   await page.goto(`/projects/${projectId}/issues`);
-  const issueRow = page.locator(".issue-row").filter({ hasText: issue.title }).first();
+  const issueRow = page.locator(`.issue-row[data-issue-id="${issue.id}"]`);
   await expect(issueRow).toBeVisible();
   await issueRow.click();
   const panel = page.locator(".issue-panel");
@@ -63,13 +63,20 @@ test("N-4 intercepts Confirm, Flag and Route failures without losing retry inten
   test.skip(testInfo.project.name !== "desktop", "One desktop transport proof covers this seam.");
 
   const projectId = await createAnalyzedProject(page);
+  await page.goto(`/projects/${projectId}/issues`);
+  const visibleIssueRow = page.locator(".issue-row").first();
+  await expect(visibleIssueRow).toBeVisible();
+  const visibleIssueId = await visibleIssueRow.getAttribute("data-issue-id");
+  expect(visibleIssueId, "The rendered issue row needs its canonical issue id").toBeTruthy();
   const overviewResponse = await page.request.get(`/api/projects/${projectId}/overview`);
   expect(overviewResponse.ok()).toBeTruthy();
   const overview = (await overviewResponse.json()) as {
     assessment: { issues: OpenIssue[] };
   };
-  const issue = overview.assessment.issues.find((candidate) => candidate.status === "open");
-  expect(issue, "The deterministic fixture needs one open issue").toBeTruthy();
+  const issue = overview.assessment.issues.find(
+    (candidate) => candidate.id === visibleIssueId && candidate.status === "open",
+  );
+  expect(issue, "The rendered queue issue must map to one open canonical issue").toBeTruthy();
 
   const intercepted: Array<{ act: GovernedAct; body: Record<string, unknown> }> = [];
   await page.route(/\/api\/projects\/[^/]+\/issues\/[^/]+\/acts$/, async (route) => {
