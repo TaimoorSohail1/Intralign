@@ -1468,10 +1468,11 @@ describe("ProjectOverview", () => {
     });
     expect(within(advisor).getByText("On your read", { exact: false })).toBeInTheDocument();
     expect(within(advisor).getByText("Reasoning")).toBeInTheDocument();
-    expect(within(advisor).getByText("Reliability basis")).toBeInTheDocument();
-    expect(within(advisor).getByText("Reliability basis").closest("section")).toHaveTextContent(
-      "0 load-bearing details grounded · 1 still OSLO's inference",
+    expect(within(advisor).getByText("Issue lifecycle")).toBeInTheDocument();
+    expect(within(advisor).getByText("Issue lifecycle").closest("section")).toHaveTextContent(
+      "0 issues resolved · 1 issue still open",
     );
+    expect(within(advisor).queryByText(/load-bearing details grounded/i)).not.toBeInTheDocument();
     expect(within(advisor).getByText(/Your next move/)).toBeInTheDocument();
   });
 
@@ -3580,5 +3581,8 @@ describe("ProjectOverview", () => {
     );
 
     expect(screen.getAllByText("1 of 2")).not.toHaveLength(0);
+    expect(screen.getByText("Issue lifecycle").closest("section")).toHaveTextContent(
+      "1 issue resolved · 1 issue still open",
+    );
   });
 });
