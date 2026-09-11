@@ -40,8 +40,10 @@ Fixed in **PR #249**, commits `1fad48d`, `94dafb1` — `preserve deterministic i
 
 On the deployed build carrying the fix, each result reported with the command or observation that produced it:
 
+**Lifecycle vocabulary for this proof:** `settled` means `addressed` or `resolved`. `routed` is recorded separately and is not settled. `withdraw` is a user act that returns an issue to `open` through re-analysis; it is not a terminal lifecycle state.
+
 1. **Settle a finding, then re-analyse three times.** It stays settled across all three, and does not re-enter the open list under any wording.
-2. **No finding leaves the set without a transition.** Every disappearance is a resolve or a withdraw, visible in History. If a finding vanishes silently, this row does not close regardless of item 1 — that is the unexplained half.
+2. **No finding leaves the open set without a recorded state transition.** Every departure from the open set enters `addressed`, `routed` or `resolved`, and the transition is visible in History. If a finding vanishes silently, this row does not close regardless of item 1 — that is the unexplained half.
 3. **The reworded case specifically:** a finding whose wording changes between runs keeps its identity and its attestation join. Demonstrated, not asserted from unit tests.
 4. **The historical orphan repair is scoped** — the affected projects and keys identified, the repair run or explicitly ruled unnecessary with the count that supports it.
 
