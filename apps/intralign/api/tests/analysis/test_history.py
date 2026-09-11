@@ -152,6 +152,11 @@ def test_history_service_passes_the_current_overview_grounding_to_history(
         "build_project_provenance",
         lambda **_kwargs: {"grounding": expected_grounding},
     )
+    monkeypatch.setattr(
+        analysis_service,
+        "with_integrity",
+        lambda assessment, _artifacts, **_kwargs: assessment,
+    )
 
     def recording_history(_engine, **kwargs):
         captured.update(kwargs)
@@ -171,6 +176,60 @@ def test_history_service_passes_the_current_overview_grounding_to_history(
     assert captured["current_grounding"] == expected_grounding
     assert captured["workspace_id"] == workspace_id
     assert captured["project_id"] == project_id
+
+
+def test_history_service_uses_the_same_issue_projection_as_overview(monkeypatch) -> None:
+    """IC-WB-EVAL/B3: checkpoint issues must not inflate History's current total."""
+    application = object.__new__(DatabaseSliceTwoApplication)
+    workspace_id = uuid4()
+    project_id = uuid4()
+    user_id = uuid4()
+    raw_issues = tuple(SimpleNamespace(id=f"ISS-{index:03d}") for index in range(88))
+    overview_issues = raw_issues[:48]
+    snapshot = SimpleNamespace(
+        artifacts=(),
+        assessment=SimpleNamespace(issues=raw_issues),
+    )
+    application._engine = object()
+    application._store = SimpleNamespace(current_snapshot=lambda _project_id: snapshot)
+    application._workspace_for_project = lambda _user_id, _project_id: workspace_id
+    application.list_issue_actions = lambda **_kwargs: []
+    captured: dict = {}
+
+    monkeypatch.setattr(
+        analysis_service,
+        "with_integrity",
+        lambda assessment, _artifacts, **_kwargs: SimpleNamespace(
+            issues=overview_issues
+        ),
+        raising=False,
+    )
+
+    def recording_provenance(**kwargs):
+        captured["issues"] = kwargs["issues"]
+        return {"grounding": {"grounded": 4, "total": len(kwargs["issues"])}}
+
+    monkeypatch.setattr(
+        analysis_service,
+        "build_project_provenance",
+        recording_provenance,
+    )
+    monkeypatch.setattr(
+        analysis_service,
+        "list_project_history",
+        lambda _engine, **kwargs: {"current_grounding": kwargs["current_grounding"]},
+    )
+
+    result = application.list_history(
+        actor_user_id=user_id,
+        project_id=project_id,
+        category="all",
+        cursor=None,
+        limit=25,
+    )
+
+    assert captured["issues"] == overview_issues
+    assert result["current_grounding"] == {"grounded": 4, "total": 48}
 
 
 def test_resolution_identity_audit_accepts_only_recorded_lifecycle_departures() -> None:
