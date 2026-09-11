@@ -338,6 +338,95 @@ def test_clarification_is_durable_and_addressed_before_reanalysis_completes(
             )
 
 
+
+def test_confirm_attestation_is_committed_before_its_deep_pass_is_scheduled(
+    tmp_path,
+    workspace_owner_id: UUID,
+) -> None:
+    engine = create_engine(SETTINGS.database_url)
+    project_id = uuid4()
+    owner_id = workspace_owner_id
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                insert into public.projects (id, workspace_id, name, status, created_by)
+                values (:id, :workspace_id, 'Attestation scheduling', 'draft', :owner_id)
+                """
+            ),
+            {"id": project_id, "workspace_id": WORKSPACE_ID, "owner_id": owner_id},
+        )
+    try:
+        store = DatabaseAnalysisStore(engine)
+        workflow = AnalysisWorkflow(store=store, harness=DeterministicAgentHarness())
+        baseline = workflow.run(
+            AnalysisRunRequest(
+                workspace_id=WORKSPACE_ID,
+                project_id=project_id,
+                requested_by=owner_id,
+                kind=RunKind.INITIAL,
+                description="A delivery plan with an unresolved dependency owner.",
+                source_names=("brief.md",),
+                idempotency_key=f"attestation-scheduling-baseline:{project_id}",
+            )
+        )
+        assert baseline.snapshot is not None
+        issue = baseline.snapshot.assessment.issues[0]
+
+        class AttestationCheckingExecutor:
+            submitted_run_ids: list[UUID] = []
+
+            def submit(self, _function, run_id) -> None:
+                with engine.connect() as connection:
+                    attestation_count = connection.execute(
+                        text(
+                            """
+                            select count(*) from public.issue_attestations
+                            where project_id = :project_id and analysis_run_id = :run_id
+                            """
+                        ),
+                        {"project_id": project_id, "run_id": run_id},
+                    ).scalar_one()
+                assert attestation_count == 1
+                self.submitted_run_ids.append(run_id)
+
+        executor = AttestationCheckingExecutor()
+        application = DatabaseSliceTwoApplication(
+            engine=engine,
+            store=store,
+            workflow=workflow,
+            executor=executor,  # type: ignore[arg-type]
+            document_store=DatabaseDocumentStore(
+                engine=engine,
+                object_store=LocalObjectStorage(tmp_path),
+            ),
+            extended_delay_seconds=0,
+        )
+
+        recorded = application.act_on_issue_lifecycle(
+            actor_user_id=owner_id,
+            project_id=project_id,
+            issue_id=issue.id,
+            act="confirm",
+            basis="documented",
+            evidence_ref=None,
+            resolution=None,
+            reviewer=None,
+            key=f"attestation-scheduling:{project_id}",
+        )
+
+        assert recorded["status"] == "addressed"
+        assert recorded["analysis_run"] is not None
+        assert executor.submitted_run_ids == [recorded["analysis_run"].id]
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                text("delete from public.projects where id = :id"),
+                {"id": project_id},
+            )
+        engine.dispose()
+
+
 def test_applied_issue_moves_to_needs_grounding_after_reanalysis_lands(
     tmp_path,
     workspace_owner_id: UUID,

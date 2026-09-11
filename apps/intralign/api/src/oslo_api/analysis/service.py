@@ -1095,6 +1095,7 @@ class DatabaseSliceTwoApplication:
             "role": str(actor_row["role"]),
         }
         run: AnalysisRun | None = None
+        schedule_reanalysis = False
         plan_change_ref: str | None = None
         routed_to: dict | None = None
         supersedes: UUID | None = None
@@ -1170,7 +1171,7 @@ class DatabaseSliceTwoApplication:
                 source_name="Issue attestation",
                 location=issue.title,
             )
-            run = self._batched_reanalysis_run(
+            run, schedule_reanalysis = self._prepare_batched_reanalysis_run(
                 workspace_id=workspace_id,
                 actor_user_id=actor_user_id,
                 project_id=project_id,
@@ -1262,14 +1263,18 @@ class DatabaseSliceTwoApplication:
                 payload={"basis": basis, "evidence_ref": evidence_ref},
             )
 
-        # In inline mode the batch finishes before its attestation can be
-        # persisted: _batched_reanalysis_run executes synchronously, while the
-        # insert above deliberately carries the resulting run id. The normal
-        # landing hook therefore cannot see this act on its first pass. Settle
-        # the persisted act only after its completed reanalysis is durable.
-        # Queued dispatchers still use _mark_reanalysis_landed when their run
-        # finishes, so this branch does not change their ordering.
+        # Persist the user attestation before the Deep Pass can acquire its issue row.
+        # This keeps the governed act responsive and ensures the resulting read sees it.
+        if schedule_reanalysis and run is not None and run.status is AnalysisRunStatus.QUEUED:
+            self._submit_batched(run.id)
+
+        # Refresh the run after dispatch: an inline executor can complete it before
+        # this method returns. The landing hook ran before the attestation transaction,
+        # so settle the now-durable act here; queued dispatchers retain their normal
+        # landing path.
         landed_run = self._store.get_run(run.id) if run is not None else None
+        if landed_run is not None:
+            run = landed_run
         if landed_run is not None and landed_run.status is AnalysisRunStatus.COMPLETED:
             self._settle_completed_lifecycle_act(
                 project_id=project_id,
@@ -2731,6 +2736,36 @@ class DatabaseSliceTwoApplication:
         consumes_analysis_allowance: bool,
         requires_deep_pass: bool = False,
     ) -> AnalysisRun:
+        run, schedule_reanalysis = self._prepare_batched_reanalysis_run(
+            workspace_id=workspace_id,
+            actor_user_id=actor_user_id,
+            project_id=project_id,
+            parent_run=parent_run,
+            evidence=evidence,
+            event_key=event_key,
+            change_kind=change_kind,
+            scope=scope,
+            consumes_analysis_allowance=consumes_analysis_allowance,
+            requires_deep_pass=requires_deep_pass,
+        )
+        if schedule_reanalysis:
+            self._submit_batched(run.id)
+        return run
+
+    def _prepare_batched_reanalysis_run(
+        self,
+        *,
+        workspace_id: UUID,
+        actor_user_id: UUID,
+        project_id: UUID,
+        parent_run: AnalysisRun,
+        evidence: tuple[EvidenceFragment, ...],
+        event_key: str,
+        change_kind: str,
+        scope: str,
+        consumes_analysis_allowance: bool,
+        requires_deep_pass: bool = False,
+    ) -> tuple[AnalysisRun, bool]:
         event_id, existing_run_id = self._enqueue_change(
             workspace_id=workspace_id,
             actor_user_id=actor_user_id,
@@ -2751,7 +2786,7 @@ class DatabaseSliceTwoApplication:
         if existing_run_id is not None:
             existing = self._store.get_run(existing_run_id)
             if existing is not None:
-                return existing
+                return existing, False
 
         active = self._store.latest_run_for_project(project_id, RunKind.EXTENDED)
         if (
@@ -2770,7 +2805,7 @@ class DatabaseSliceTwoApplication:
                 event_ids=(event_id,),
             )
             self._attach_change_to_run(event_id, merged.id)
-            return merged
+            return merged, False
 
         run = self._store.create_run(
             AnalysisRunRequest(
@@ -2791,9 +2826,7 @@ class DatabaseSliceTwoApplication:
             )
         )
         self._attach_change_to_run(event_id, run.id)
-        if run.status is AnalysisRunStatus.QUEUED:
-            self._submit_batched(run.id)
-        return run
+        return run, run.status is AnalysisRunStatus.QUEUED
 
     def _enqueue_change(
         self,
