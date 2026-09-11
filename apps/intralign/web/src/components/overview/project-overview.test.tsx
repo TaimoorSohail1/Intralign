@@ -3105,6 +3105,62 @@ describe("ProjectOverview", () => {
     vi.useRealTimers();
   });
 
+  it("reconnects to a lifecycle reanalysis published through freshness after a browser refresh", async () => {
+    vi.useFakeTimers();
+    const runningSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      freshness: {
+        state: "reanalyzing",
+        pending_count: 1,
+        based_on_run_id: "run-001",
+        active_run_id: "run-lifecycle-refresh",
+        last_act_at: "2026-08-12T12:00:00Z",
+        last_landed_at: "2026-08-12T11:59:00Z",
+      },
+    };
+    const completedSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      snapshot_id: "snap-lifecycle-complete",
+      summary: "The lifecycle confirmation is now part of the current read.",
+    };
+    const fetcher = vi.fn().mockImplementation((url: string) => {
+      if (url === "/api/analysis-runs/run-lifecycle-refresh") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ status: "completed" }),
+        });
+      }
+      if (url === "/api/projects/project-001/overview") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => completedSnapshot,
+        });
+      }
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={runningSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2500);
+    });
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "/api/analysis-runs/run-lifecycle-refresh",
+      { cache: "no-store" },
+    );
+    expect(
+      screen.getByText("The lifecycle confirmation is now part of the current read."),
+    ).toBeInTheDocument();
+  });
+
   it("renders the delivered Issues workspace while keeping History honest", () => {
     const { rerender } = render(
       <ProjectOverview

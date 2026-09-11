@@ -427,9 +427,12 @@ export function ProjectOverview({
   const [projectHistory, setProjectHistory] = useState(initialHistory);
   const [analysisUpdateRunId, setAnalysisUpdateRunId] = useState<string | null>(() => {
     const activeExtended = initial.extended_analysis;
-    return activeExtended?.status === "queued" || activeExtended?.status === "running"
-      ? activeExtended.run_id
-      : null;
+    if (activeExtended?.status === "queued" || activeExtended?.status === "running") {
+      return activeExtended.run_id;
+    }
+    // A lifecycle act may have published its run before the page loaded. Its
+    // freshness record is the authoritative active-run source in that case.
+    return initial.freshness?.active_run_id ?? null;
   });
   const advisorInFlight = useRef(false);
   const advisorStateBeforeIssue = useRef(!initial.first_run?.freeze_on);
