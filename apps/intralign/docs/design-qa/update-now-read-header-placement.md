@@ -1,6 +1,6 @@
 # Update now — project read placement mockup
 
-**Status:** Placement proposal only — owner approval required before implementation.
+**Status:** Placement approved by the owner on 2026-09-11. The exhausted state below incorporates the owner’s required accessibility and reset-date refinements.
 
 **Contract basis:** `IC-WE-DISCLOSE` (project read presentation) · `IC-WA-00R` (event-driven recompute).
 
@@ -26,6 +26,12 @@ No allowance number is invented in this mockup.
 - Failed request: honest unchanged-data message plus **Try again**
 - Successful request: continue to the resulting analysis run
 - No raw transport error is shown
+
+## Exhausted capacity
+
+- The action remains keyboard-focusable with `aria-disabled="true"`; activation is refused without sending a request.
+- `aria-describedby` associates the action with: **0 analyses remaining this month. Your current read remains available. Resets {date}.**
+- `{date}` comes from returned capacity data. The surface does not invent an allowance or reset date.
 
 ## Responsive behavior
 

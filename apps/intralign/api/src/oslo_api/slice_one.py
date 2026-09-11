@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from typing import Protocol
 from uuid import UUID
 
@@ -103,6 +103,7 @@ class WorkspaceSummary:
     collaborator_seat_limit: int | None = None
     monthly_analysis_limit: int | None = None
     monthly_analyses_used: int = 0
+    monthly_analysis_resets_at: date | None = None
     can_manage_plan: bool = False
     member_count: int = 1
     collaborator_seats_used: int = 1

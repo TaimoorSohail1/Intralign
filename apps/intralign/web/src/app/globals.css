@@ -18946,3 +18946,98 @@ button.attention-cell { cursor: pointer; }
     text-transform: uppercase;
   }
 }
+
+/* The read refresh is part of the judgment loop, so its primary entry point
+   stays with the current read rather than under account or billing settings. */
+.project-shell.is-r2-slice-one .read-refresh-control {
+  grid-area: refresh;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 9px 11px;
+  border: 1px solid var(--r2-border-2);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--r2-surface-2) 82%, transparent);
+}
+
+.project-shell.is-r2-slice-one .read-refresh-control > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.project-shell.is-r2-slice-one .read-refresh-control strong {
+  color: var(--r2-text);
+  font-size: 10px;
+  font-weight: 680;
+}
+
+.project-shell.is-r2-slice-one .read-refresh-control small {
+  color: var(--r2-muted);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.project-shell.is-r2-slice-one .read-refresh-control > button {
+  min-width: 88px;
+  min-height: 30px;
+  padding: 7px 11px;
+  border: 1px solid var(--r2-action);
+  border-radius: 6px;
+  background: var(--r2-action);
+  color: #15100b;
+  font: 680 9px/1 var(--font-sans);
+  cursor: pointer;
+}
+
+.project-shell.is-r2-slice-one .read-refresh-control > button:hover,
+.project-shell.is-r2-slice-one .read-refresh-control > button:focus-visible {
+  filter: brightness(1.08);
+}
+
+.project-shell.is-r2-slice-one .read-refresh-control > button[aria-disabled="true"] {
+  background: transparent;
+  color: var(--r2-muted);
+  cursor: not-allowed;
+  filter: none;
+}
+
+.project-shell.is-r2-slice-one .read-refresh-error {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  color: #ee858a;
+  font-size: 9px;
+}
+
+@media (min-width: 901px) {
+  .project-shell.is-r2-slice-one {
+    --r2-integrity-height: 188px;
+  }
+
+  .project-shell.is-r2-slice-one .integrity-read,
+  .project-shell.is-r2-slice-one.r2-integrity-expanded .integrity-read,
+  .project-shell.is-r2-slice-one.r2-integrity-expanded.r2-integrity-detail-open .integrity-read {
+    min-height: var(--r2-integrity-height);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "copy pillars"
+      "refresh refresh";
+  }
+}
+
+@media (max-width: 900px) {
+  .project-shell.is-r2-slice-one .integrity-read {
+    grid-template-areas: "copy" "pillars" "refresh";
+  }
+
+  .project-shell.is-r2-slice-one .read-refresh-control {
+    grid-template-columns: 1fr;
+  }
+
+  .project-shell.is-r2-slice-one .read-refresh-control > button {
+    justify-self: stretch;
+  }
+}

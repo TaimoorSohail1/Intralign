@@ -1636,7 +1636,15 @@ describe("ProjectOverview", () => {
     }
   });
 
-  it("renders the Slice 1 outcome-integrity read and its three pillar drills", () => {
+  it("renders the Slice 1 outcome-integrity read, refresh action, and three pillar drills", () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      Response.json({
+        monthly_analysis_limit: 5,
+        monthly_analyses_used: 3,
+        monthly_analysis_resets_at: "2026-08-01",
+      }),
+    ));
+
     render(
       <ProjectOverview
         displayName="Alex"
@@ -1652,8 +1660,13 @@ describe("ProjectOverview", () => {
     expect(within(integrityTrigger).getByText("Viability Solid")).toBeInTheDocument();
     expect(within(integrityTrigger).getByText("Grounding Developing")).toBeInTheDocument();
     expect(within(integrityTrigger).getByText("Adaptability Solid")).toBeInTheDocument();
-    expect(screen.getAllByText("as of this analysis").length).toBeGreaterThan(0);
-    expect(screen.getByText(/live tracking begins at execution/)).toBeInTheDocument();
+    const integritySummary = screen.getByRole("region", {
+      name: "Outcome Integrity summary",
+    });
+    expect(within(integritySummary).getByText("as of 23 July 2026")).toBeInTheDocument();
+    expect(within(integritySummary).getByRole("region", {
+      name: "Refresh the current read",
+    })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Viability Solid/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Grounding Developing/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Adaptability Solid/i })).toBeInTheDocument();
@@ -2142,8 +2155,8 @@ describe("ProjectOverview", () => {
     });
     expect(disclosure).toHaveAttribute("open");
     expect(within(disclosure as HTMLElement).queryByText("Clarity")).not.toBeInTheDocument();
-    expect(fetcher).toHaveBeenCalledTimes(1);
-    expect(fetcher).toHaveBeenCalledWith("/api/workspace", { cache: "no-store" });
+    expect(fetcher).toHaveBeenCalled();
+    expect(fetcher.mock.calls.every(([url]) => String(url) === "/api/workspace")).toBe(true);
 
     fireEvent.click(disclosureSummary);
     await waitFor(() => {
@@ -2803,17 +2816,22 @@ describe("ProjectOverview", () => {
   });
 
   it("gives a failed governed act a safe retry that preserves its basis", async () => {
-    const fetcher = vi.fn()
-      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
+    let actAttempts = 0;
+    const fetcher = vi.fn().mockImplementation(async (request: RequestInfo | URL) => {
+      const url = String(request);
+      if (url.endsWith("/acts")) {
+        actAttempts += 1;
+        if (actAttempts === 1) throw new TypeError("Failed to fetch");
+        return Response.json({
           issue_id: "ISS-001",
           act: "confirm",
           status: "addressed",
           analysis_run: null,
-        }),
-      });
+        });
+      }
+      if (url.endsWith("/collaboration")) return Response.json({ comments: [] });
+      return Response.json({});
+    });
     vi.stubGlobal("fetch", fetcher);
     render(
       <ProjectOverview
@@ -2865,17 +2883,22 @@ describe("ProjectOverview", () => {
   });
 
   it("gives a failed flag act a safe retry without changing the project", async () => {
-    const fetcher = vi.fn()
-      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
+    let actAttempts = 0;
+    const fetcher = vi.fn().mockImplementation(async (request: RequestInfo | URL) => {
+      const url = String(request);
+      if (url.endsWith("/acts")) {
+        actAttempts += 1;
+        if (actAttempts === 1) throw new TypeError("Failed to fetch");
+        return Response.json({
           issue_id: "ISS-001",
           act: "flag",
           status: "addressed",
           analysis_run: null,
-        }),
-      });
+        });
+      }
+      if (url.endsWith("/collaboration")) return Response.json({ comments: [] });
+      return Response.json({});
+    });
     vi.stubGlobal("fetch", fetcher);
     render(
       <ProjectOverview

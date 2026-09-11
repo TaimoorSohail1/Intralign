@@ -87,13 +87,11 @@ export function WorkspaceSettingsDialog({
   initialSection = "profile",
   onClose,
   open,
-  projectId,
 }: {
   displayName: string;
   initialSection?: SettingsSectionId;
   onClose: () => void;
   open: boolean;
-  projectId?: string;
 }) {
   const [preferences, setPreferences] = useState<WorkspacePreferences | null>(null);
   const [workspace, setWorkspace] = useState<WorkspaceSummary | null>(null);
@@ -146,7 +144,6 @@ export function WorkspaceSettingsDialog({
       initialSection={initialSection}
       modal
       onClose={onClose}
-      projectId={projectId}
       workspace={workspace}
       workspaceName={workspace.name}
     />
@@ -162,7 +159,6 @@ export function WorkspaceSettings({
   modal = false,
   onClose,
   initialSection = "profile",
-  projectId,
 }: {
   initial: WorkspacePreferences;
   workspaceName: string;
@@ -173,7 +169,6 @@ export function WorkspaceSettings({
   modal?: boolean;
   onClose?: () => void;
   initialSection?: SettingsSectionId;
-  projectId?: string;
 }) {
   const initialActorRole = workspace?.role ?? initial.actor_role;
   const safeInitialSection = initialActorRole === "owner"
@@ -190,8 +185,6 @@ export function WorkspaceSettings({
   const [role, setRole] = useState(initial.role_title || roleOptions[0][0]);
   const [workspaceState, setWorkspaceState] = useState(workspace);
   const [plansOpen, setPlansOpen] = useState(false);
-  const [analysisBusy, setAnalysisBusy] = useState(false);
-  const [analysisError, setAnalysisError] = useState(false);
   const planTransitionRef = useRef(false);
   const [activeSection, setActiveSection] = useState<SettingsSectionId>(safeInitialSection);
   const [invitationManagerOpen, setInvitationManagerOpen] = useState(false);
@@ -312,23 +305,6 @@ export function WorkspaceSettings({
     window.setTimeout(() => {
       planTransitionRef.current = false;
     }, 250);
-  };
-
-  const updateAnalysis = async () => {
-    if (!projectId || analysisBusy) return;
-    setAnalysisBusy(true);
-    setAnalysisError(false);
-    try {
-      const response = await fetch(`/api/projects/${projectId}/analysis-runs/refresh`, {
-        method: "POST",
-      });
-      const payload = await response.json().catch(() => null);
-      if (!response.ok || !payload?.run_id) throw new Error("Analysis could not refresh");
-      window.location.assign(`/projects/${projectId}/analysis/${payload.run_id}`);
-    } catch {
-      setAnalysisBusy(false);
-      setAnalysisError(true);
-    }
   };
 
   const loadInvitations = async () => {
@@ -510,19 +486,6 @@ export function WorkspaceSettings({
               <span>{workspaceState?.plan_label ?? "Free"}</span>
               <strong>You&apos;re on the {workspaceState?.plan_label ?? "Free"} plan — the full-quality read on one outcome, your whole record kept and unmetered.</strong>
             </div>
-
-            {projectId ? <div className="settings-card">
-              <div className="settings-row settings-row-start">
-                <span>
-                  <strong>Refresh the current read</strong>
-                  <small>Run an unchanged Deep Pass without editing the plan or taking a finding action.</small>
-                </span>
-                <button className="settings-primary-button" disabled={analysisBusy} onClick={() => void updateAnalysis()} type="button">
-                  {analysisBusy ? "Starting…" : analysisError ? "Try again" : "Update now"}
-                </button>
-              </div>
-              {analysisError ? <p className="settings-save-error" role="alert">Analysis could not refresh. Your project data is unchanged; try again.</p> : null}
-            </div> : null}
 
             <h3>What you&apos;re using</h3>
             <div className="settings-card settings-plan-usage">

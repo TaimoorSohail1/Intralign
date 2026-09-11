@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from fastapi.testclient import TestClient
@@ -80,6 +80,7 @@ class RecordingWorkspaceApplication:
                     read=False,
                 )
             ],
+            monthly_analysis_resets_at=date(2026, 8, 1),
         )
 
     def start_first_project(
@@ -167,6 +168,7 @@ def test_workspace_summary_serializes_projects_and_activity() -> None:
     assert payload["active_project_limit"] == 1
     assert payload["member_count"] == 1
     assert payload["collaborator_seats_used"] == 1
+    assert payload["monthly_analysis_resets_at"] == "2026-08-01"
     assert "confidence_index" not in payload["projects"][0]
     assert payload["projects"][0]["weakest_pillar"] == "Grounding"
     assert payload["notifications"][0]["key"] == "analysis:run-1"

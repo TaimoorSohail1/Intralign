@@ -34,6 +34,7 @@ from oslo_api.tiering.policy import PlanPolicy, get_plan_policy
 from oslo_api.tiering.repository import (
     count_monthly_analysis_usage,
     get_workspace_plan,
+    next_monthly_analysis_reset,
     record_limit_event,
 )
 
@@ -1180,6 +1181,7 @@ class DatabaseSliceOneApplication:
             collaborator_seat_limit=policy.collaborator_seat_limit,
             monthly_analysis_limit=policy.monthly_analysis_limit,
             monthly_analyses_used=monthly_analyses_used,
+            monthly_analysis_resets_at=next_monthly_analysis_reset(),
             can_manage_plan=role is MembershipRole.OWNER,
             member_count=member_count,
             collaborator_seats_used=collaborator_seats_used,
