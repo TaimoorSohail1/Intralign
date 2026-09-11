@@ -67,9 +67,9 @@ test("Slice 2 survives refresh and publishes exactly seven artifacts", async ({ 
     await expect(orientation).toBeHidden();
   }
 
-  await expect(page.locator(".r2-maturity-row > small")).toContainText(
-    /as of this analysis.+live tracking begins at execution/i,
-  );
+  const readDate = page.locator(".r2-maturity-row > small");
+  await expect(readDate).toContainText(/as of \d{1,2} [A-Za-z]+ \d{4}/i);
+  await expect(readDate).not.toContainText("live tracking begins at execution");
   const projectId = page.url().match(/\/projects\/([^/]+)\//)?.[1];
   if (!projectId) throw new Error(`Could not read a project id from ${page.url()}`);
   const artifactLinks = page

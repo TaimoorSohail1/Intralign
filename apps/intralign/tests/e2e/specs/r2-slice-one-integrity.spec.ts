@@ -60,7 +60,8 @@ test("R2 Slice 1 exposes the integrity read at every supported viewport", async 
   await expect(integrityRead.getByRole("button", { name: /^Viability (Fragile|Weak|Developing|Solid|Sound)$/ })).toBeVisible();
   await expect(integrityRead.getByRole("button", { name: /^Grounding (Fragile|Weak|Developing|Solid|Sound)$/ })).toBeVisible();
   await expect(integrityRead.getByRole("button", { name: /^Adaptability (Fragile|Weak|Developing|Solid|Sound)$/ })).toBeVisible();
-  await expect(integrityRead).toContainText("live tracking begins at execution");
+  await expect(integrityRead).toContainText(/as of \d{1,2} [A-Za-z]+ \d{4}/i);
+  await expect(integrityRead).not.toContainText("live tracking begins at execution");
   await expect(integrityRead).not.toContainText(/\d+%/);
 
   const horizontalOverflow = await page.evaluate(
