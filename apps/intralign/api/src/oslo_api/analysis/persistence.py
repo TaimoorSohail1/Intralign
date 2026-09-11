@@ -353,6 +353,31 @@ def _snapshot_dict(snapshot: AssessmentSnapshot) -> dict:
     return payload
 
 
+def _retain_unobserved_issues(
+    snapshot: AssessmentSnapshot,
+    previous: AssessmentSnapshot | None,
+) -> AssessmentSnapshot:
+    """Keep a prior issue visible until a governed transition removes it.
+
+    A Deep Pass may fail to reproduce a finding. That is not evidence that the
+    finding was resolved, so it cannot shrink the active grounding denominator.
+    """
+
+    if previous is None:
+        return snapshot
+    current_keys = {issue.id for issue in snapshot.assessment.issues}
+    retained = tuple(
+        issue for issue in previous.assessment.issues if issue.id not in current_keys
+    )
+    if not retained:
+        return snapshot
+    assessment = replace(
+        snapshot.assessment,
+        issues=snapshot.assessment.issues + retained,
+    )
+    return replace(snapshot, assessment=assessment)
+
+
 def _public_snapshot_summary(value: str) -> str:
     if not value.startswith("USER_ARTIFACT_EDIT"):
         return value
@@ -1257,7 +1282,6 @@ class DatabaseAnalysisStore:
                             for artifact in snapshot.artifacts
                         ),
                     )
-            payload = _snapshot_dict(snapshot)
             run_row = (
                 connection.execute(
                     text(
@@ -1288,10 +1312,15 @@ class DatabaseAnalysisStore:
                 ),
                 {"project_id": snapshot.project_id},
             ).scalar_one_or_none()
-            previous_issue_keys = _active_issue_keys(
-                _snapshot_from_dict(previous_snapshot_payload).assessment.issues
+            previous_snapshot = (
+                _snapshot_from_dict(previous_snapshot_payload)
                 if previous_snapshot_payload
-                else ()
+                else None
+            )
+            snapshot = _retain_unobserved_issues(snapshot, previous_snapshot)
+            payload = _snapshot_dict(snapshot)
+            previous_issue_keys = _active_issue_keys(
+                previous_snapshot.assessment.issues if previous_snapshot else ()
             )
             connection.execute(
                 text(
