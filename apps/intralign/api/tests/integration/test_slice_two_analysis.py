@@ -2228,6 +2228,16 @@ def test_inline_lifecycle_confirmation_lands_after_its_attestation_is_persisted(
 
         assert result["analysis_run"] is not None
         assert result["analysis_run"].status is AnalysisRunStatus.COMPLETED
+        history = list_project_history(
+            engine,
+            workspace_id=WORKSPACE_ID,
+            project_id=project_id,
+            category="all",
+            cursor=None,
+            limit=40,
+        )
+        current_trend = next(item for item in history["trend"] if item["current"])
+        assert current_trend["grounded_load_bearing"] == 1
         with engine.connect() as connection:
             current_status = connection.execute(
                 text(

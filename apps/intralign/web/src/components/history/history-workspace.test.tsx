@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ProjectHistory } from "@/lib/server/oslo-api";
 
-import { HistoryWorkspace } from "./history-workspace";
+import { formatHistoryRelativeDate, HistoryWorkspace } from "./history-workspace";
 
 const history: ProjectHistory = {
   project_id: "project-001",
@@ -122,6 +122,21 @@ afterEach(() => {
 });
 
 describe("HistoryWorkspace", () => {
+  it("formats timeline dates in UTC so server and browser output agree", () => {
+    expect(
+      formatHistoryRelativeDate(
+        "2026-09-10T23:30:00Z",
+        new Date("2026-09-11T00:15:00Z"),
+      ),
+    ).toBe("Sep 10, 2026");
+    expect(
+      formatHistoryRelativeDate(
+        "2026-09-11T00:30:00Z",
+        new Date("2026-09-11T23:59:00Z"),
+      ),
+    ).toBe("Today");
+  });
+
   it("keeps an empty session steady without inventing movement", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
     render(

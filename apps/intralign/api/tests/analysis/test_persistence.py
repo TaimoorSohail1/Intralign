@@ -22,6 +22,7 @@ from oslo_api.analysis.persistence import (
     _primary_outcome_title,
     _snapshot_dict,
     _snapshot_from_dict,
+    _snapshot_with_persisted_issue_lifecycle,
 )
 
 
@@ -166,6 +167,94 @@ def test_snapshot_round_trip_retains_slice_ten_graph_and_sensitivity_contract() 
     assert restored.assessment.dependency_graph == graph
     assert restored.assessment.sensitivity_candidates == (candidate,)
     assert restored.assessment.issues[0].graph_node_id == "dependency"
+
+
+def test_retained_snapshot_projects_durable_lifecycle_into_history_provenance() -> None:
+    """A reanalysis must retain the evidence-backed lifecycle it follows."""
+    issue = Issue(
+        id="ISS-VERIFIED",
+        artifact_type=ArtifactType.REQUIREMENTS,
+        dimension="Grounding",
+        severity="Moderate",
+        title="Owner confirmation is required",
+        why="The project owner is not yet evidenced.",
+        recommendation="Confirm the owner.",
+        evidence_refs=("document:test:page:1:fragment:1",),
+        status="open",
+        load_bearing=True,
+        primary_act="verify",
+    )
+    snapshot = AssessmentSnapshot(
+        id=UUID("018f9f7e-8de2-7000-8000-000000000011"),
+        analysis_run_id=UUID("018f9f7e-8de2-7000-8000-000000000012"),
+        workspace_id=UUID("018f9f7e-8de2-7000-8000-000000000013"),
+        project_id=UUID("018f9f7e-8de2-7000-8000-000000000014"),
+        state="current",
+        summary="Read after a governed confirmation.",
+        artifacts=(),
+        assessment=Assessment(0, "Low", "Low", "Low", "Low", "Low", (issue,)),
+        published_at=datetime(2026, 9, 11, tzinfo=UTC),
+    )
+    lifecycle = (
+        {
+            "issue_id": issue.id,
+            "action": "confirm",
+            "status": "resolved",
+            "basis": "documented",
+        },
+    )
+
+    retained = _snapshot_with_persisted_issue_lifecycle(snapshot, lifecycle)
+    payload = _snapshot_dict(retained, issue_actions=lifecycle)
+
+    assert snapshot.assessment.issues[0].status == "open"
+    assert retained.assessment.issues[0].status == "resolved"
+    assert payload["provenance"]["grounding"] == {
+        "grounded": 1,
+        "addressed": 0,
+        "routed": 0,
+        "inferred": 0,
+        "total": 1,
+        "basis": 1.0,
+        "band": "Sound",
+    }
+
+
+def test_retained_snapshot_does_not_credit_a_resolution_without_evidence() -> None:
+    """A lifecycle status alone never manufactures Grounding evidence."""
+    issue = Issue(
+        id="ISS-UNSUPPORTED",
+        artifact_type=ArtifactType.REQUIREMENTS,
+        dimension="Grounding",
+        severity="Moderate",
+        title="Owner confirmation is required",
+        why="The project owner is not yet evidenced.",
+        recommendation="Confirm the owner.",
+        evidence_refs=(),
+        status="open",
+        load_bearing=True,
+        primary_act="verify",
+    )
+    snapshot = AssessmentSnapshot(
+        id=UUID("018f9f7e-8de2-7000-8000-000000000021"),
+        analysis_run_id=UUID("018f9f7e-8de2-7000-8000-000000000022"),
+        workspace_id=UUID("018f9f7e-8de2-7000-8000-000000000023"),
+        project_id=UUID("018f9f7e-8de2-7000-8000-000000000024"),
+        state="current",
+        summary="Read with unsupported lifecycle status.",
+        artifacts=(),
+        assessment=Assessment(0, "Low", "Low", "Low", "Low", "Low", (issue,)),
+        published_at=datetime(2026, 9, 11, tzinfo=UTC),
+    )
+    lifecycle = ({"issue_id": issue.id, "action": "confirm", "status": "resolved"},)
+
+    payload = _snapshot_dict(
+        _snapshot_with_persisted_issue_lifecycle(snapshot, lifecycle),
+        issue_actions=lifecycle,
+    )
+
+    assert payload["provenance"]["grounding"]["grounded"] == 0
+    assert payload["provenance"]["grounding"]["addressed"] == 1
 
 
 def test_unobserved_issue_is_retained_in_a_new_snapshot() -> None:

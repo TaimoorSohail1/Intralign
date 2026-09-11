@@ -344,13 +344,93 @@ def _integrity_from_dict(data: dict | None) -> Integrity | None:
     )
 
 
-def _snapshot_dict(snapshot: AssessmentSnapshot) -> dict:
+def _snapshot_dict(
+    snapshot: AssessmentSnapshot,
+    *,
+    issue_actions: tuple[dict[str, object], ...] = (),
+) -> dict:
     payload = json.loads(json.dumps(asdict(snapshot), default=_json_default))
     payload["provenance"] = build_project_provenance(
         artifacts=snapshot.artifacts,
         issues=snapshot.assessment.issues,
+        issue_actions=issue_actions,
     )
     return payload
+
+
+def _snapshot_with_persisted_issue_lifecycle(
+    snapshot: AssessmentSnapshot,
+    issue_actions: tuple[dict[str, object], ...],
+) -> AssessmentSnapshot:
+    """Project governed Issue lifecycle state into the newly retained read.
+
+    IC-WB-INFER requires a reanalysis to preserve the lifecycle evidence that
+    preceded it. The retained JSON is the History source of truth, so it must
+    describe the same published lifecycle state used by the Grounding projection.
+    """
+
+    status_by_issue = {
+        str(action["issue_id"]): str(action["status"])
+        for action in issue_actions
+        if action.get("issue_id") and action.get("status")
+    }
+    if not status_by_issue:
+        return snapshot
+
+    issues = tuple(
+        replace(issue, status=status_by_issue.get(issue.id, issue.status))
+        for issue in snapshot.assessment.issues
+    )
+    assessment = replace(
+        snapshot.assessment,
+        issues=issues,
+        resolved_issue_count=sum(issue.status == "resolved" for issue in issues),
+    )
+    return replace(snapshot, assessment=assessment)
+
+
+def _current_issue_lifecycle(
+    connection: Connection,
+    *,
+    workspace_id: UUID,
+    project_id: UUID,
+) -> tuple[dict[str, object], ...]:
+    """Read the latest durable lifecycle evidence for a newly published snapshot."""
+
+    rows = (
+        connection.execute(
+            text(
+                """
+                select issue.stable_key, issue.current_status,
+                       attestation.act, attestation.basis
+                from public.issues issue
+                left join lateral (
+                  select act, basis
+                  from public.issue_attestations
+                  where workspace_id = issue.workspace_id
+                    and project_id = issue.project_id
+                    and issue_stable_key = issue.stable_key
+                  order by created_at desc
+                  limit 1
+                ) attestation on true
+                where issue.workspace_id = :workspace_id
+                  and issue.project_id = :project_id
+                """
+            ),
+            {"workspace_id": workspace_id, "project_id": project_id},
+        )
+        .mappings()
+        .all()
+    )
+    return tuple(
+        {
+            "issue_id": str(row["stable_key"]),
+            "status": str(row["current_status"]),
+            "action": str(row["act"]) if row["act"] is not None else "",
+            "basis": str(row["basis"]) if row["basis"] is not None else None,
+        }
+        for row in rows
+    )
 
 
 def _retain_unobserved_issues(
@@ -1318,7 +1398,16 @@ class DatabaseAnalysisStore:
                 else None
             )
             snapshot = _retain_unobserved_issues(snapshot, previous_snapshot)
-            payload = _snapshot_dict(snapshot)
+            issue_lifecycle = _current_issue_lifecycle(
+                connection,
+                workspace_id=snapshot.workspace_id,
+                project_id=snapshot.project_id,
+            )
+            retained_snapshot = _snapshot_with_persisted_issue_lifecycle(
+                snapshot,
+                issue_lifecycle,
+            )
+            payload = _snapshot_dict(retained_snapshot, issue_actions=issue_lifecycle)
             previous_issue_keys = _active_issue_keys(
                 previous_snapshot.assessment.issues if previous_snapshot else ()
             )
