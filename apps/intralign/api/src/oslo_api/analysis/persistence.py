@@ -1997,6 +1997,63 @@ class DatabaseAnalysisStore:
             ).scalar_one_or_none()
         return _snapshot_from_dict(payload) if payload else None
 
+    def synchronize_published_lifecycle(
+        self,
+        connection: Connection,
+        *,
+        run_id: UUID,
+    ) -> None:
+        """Persist the lifecycle state that the completed Deep Pass landed.
+
+        Publishing happens before the application lands governed lifecycle
+        transitions. History reads the retained snapshot JSON, so refresh that
+        JSON inside the same transaction as those transitions rather than
+        leaving it with the pre-landing state.
+        """
+
+        payload = connection.execute(
+            text(
+                """
+                select snapshot_json
+                from public.assessment_snapshots
+                where analysis_run_id = :run_id
+                for update
+                """
+            ),
+            {"run_id": run_id},
+        ).scalar_one_or_none()
+        if payload is None:
+            return
+
+        snapshot = _snapshot_from_dict(payload)
+        issue_lifecycle = _current_issue_lifecycle(
+            connection,
+            workspace_id=snapshot.workspace_id,
+            project_id=snapshot.project_id,
+        )
+        retained_snapshot = _snapshot_with_persisted_issue_lifecycle(
+            snapshot,
+            issue_lifecycle,
+        )
+        connection.execute(
+            text(
+                """
+                update public.assessment_snapshots
+                set snapshot_json = cast(:snapshot as jsonb)
+                where analysis_run_id = :run_id
+                """
+            ),
+            {
+                "run_id": run_id,
+                "snapshot": json.dumps(
+                    _snapshot_dict(
+                        retained_snapshot,
+                        issue_actions=issue_lifecycle,
+                    )
+                ),
+            },
+        )
+
     def events_after(self, run_id: UUID, sequence: int) -> tuple[AnalysisEvent, ...]:
         with self._engine.connect() as connection:
             rows = (
