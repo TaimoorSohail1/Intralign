@@ -1,9 +1,14 @@
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
+from uuid import uuid4
 
+import oslo_api.analysis.service as analysis_service
 from oslo_api.analysis.history import (
+    _history_grounding,
     _snapshot_provenance,
     build_resolution_identity_audits,
 )
+from oslo_api.analysis.service import DatabaseSliceTwoApplication
 
 
 def _serialized_issue(index: int, *, resolved: bool = False) -> dict:
@@ -50,6 +55,122 @@ def test_snapshot_provenance_rejects_a_stale_cached_grounding_denominator() -> N
 
     assert grounding["grounded"] == 4
     assert grounding["total"] == 48
+
+
+def test_current_history_grounding_uses_the_current_overview_projection() -> None:
+    """B3: the current History read must display the same judgment as Overview."""
+    retained_snapshot = {
+        "artifacts": [],
+        "assessment": {
+            "issues": [
+                _serialized_issue(index, resolved=index < 4) for index in range(88)
+            ]
+        },
+        "provenance": {
+            "schema_version": 1,
+            "grounding": {
+                "grounded": 4,
+                "addressed": 0,
+                "routed": 0,
+                "inferred": 84,
+                "total": 88,
+                "basis": 4 / 88,
+                "band": "Fragile",
+            },
+        },
+    }
+    current_overview_grounding = {
+        "grounded": 4,
+        "addressed": 0,
+        "routed": 0,
+        "inferred": 44,
+        "total": 48,
+        "basis": 4 / 48,
+        "band": "Fragile",
+    }
+
+    grounding = _history_grounding(
+        retained_snapshot,
+        current=True,
+        current_grounding=current_overview_grounding,
+    )
+
+    assert grounding["grounded"] == 4
+    assert grounding["total"] == 48
+
+
+def test_historical_grounding_keeps_the_projection_retained_for_that_run() -> None:
+    historical_snapshot = {
+        "artifacts": [],
+        "assessment": {
+            "issues": [_serialized_issue(index) for index in range(88)]
+        },
+        "provenance": {
+            "schema_version": 1,
+            "grounding": {
+                "grounded": 4,
+                "addressed": 0,
+                "routed": 0,
+                "inferred": 84,
+                "total": 88,
+                "basis": 4 / 88,
+                "band": "Fragile",
+            },
+        },
+    }
+
+    grounding = _history_grounding(
+        historical_snapshot,
+        current=False,
+        current_grounding={"grounded": 4, "total": 48},
+    )
+
+    assert grounding["grounded"] == 4
+    assert grounding["total"] == 88
+
+
+def test_history_service_passes_the_current_overview_grounding_to_history(
+    monkeypatch,
+) -> None:
+    application = object.__new__(DatabaseSliceTwoApplication)
+    workspace_id = uuid4()
+    project_id = uuid4()
+    user_id = uuid4()
+    snapshot = SimpleNamespace(
+        artifacts=(),
+        assessment=SimpleNamespace(issues=()),
+    )
+    application._engine = object()
+    application._store = SimpleNamespace(current_snapshot=lambda _project_id: snapshot)
+    application._workspace_for_project = lambda _user_id, _project_id: workspace_id
+    application.list_issue_actions = lambda **_kwargs: [{"issue_id": "ISS-001"}]
+    expected_grounding = {"grounded": 4, "total": 48}
+    captured: dict = {}
+
+    monkeypatch.setattr(
+        analysis_service,
+        "build_project_provenance",
+        lambda **_kwargs: {"grounding": expected_grounding},
+    )
+
+    def recording_history(_engine, **kwargs):
+        captured.update(kwargs)
+        return {"trend": []}
+
+    monkeypatch.setattr(analysis_service, "list_project_history", recording_history)
+
+    result = application.list_history(
+        actor_user_id=user_id,
+        project_id=project_id,
+        category="all",
+        cursor=None,
+        limit=25,
+    )
+
+    assert result == {"trend": []}
+    assert captured["current_grounding"] == expected_grounding
+    assert captured["workspace_id"] == workspace_id
+    assert captured["project_id"] == project_id
 
 
 def test_resolution_identity_audit_accepts_only_recorded_lifecycle_departures() -> None:

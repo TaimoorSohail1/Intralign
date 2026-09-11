@@ -37,6 +37,7 @@ from oslo_api.analysis.models import (
 from oslo_api.analysis.object_storage import LocalObjectStorage, SupabaseObjectStorage
 from oslo_api.analysis.openai_harness import OpenAIAgentHarness
 from oslo_api.analysis.persistence import DatabaseAnalysisStore, outcome_record_title
+from oslo_api.analysis.provenance import build_project_provenance
 from oslo_api.analysis.user_evidence import (
     build_clarification_evidence,
     build_reviewer_evidence,
@@ -334,6 +335,19 @@ class DatabaseSliceTwoApplication:
         limit: int,
     ) -> dict:
         workspace_id = self._workspace_for_project(actor_user_id, project_id)
+        snapshot = self._store.current_snapshot(project_id)
+        current_grounding = None
+        if snapshot is not None:
+            current_grounding = build_project_provenance(
+                artifacts=snapshot.artifacts,
+                issues=snapshot.assessment.issues,
+                issue_actions=tuple(
+                    self.list_issue_actions(
+                        actor_user_id=actor_user_id,
+                        project_id=project_id,
+                    )
+                ),
+            )["grounding"]
         return list_project_history(
             self._engine,
             workspace_id=workspace_id,
@@ -341,6 +355,7 @@ class DatabaseSliceTwoApplication:
             category=category,
             cursor=cursor,
             limit=limit,
+            current_grounding=current_grounding,
         )
 
     def history_snapshot(
