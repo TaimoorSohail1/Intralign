@@ -282,3 +282,50 @@ def test_unobserved_issue_is_retained_in_a_new_snapshot() -> None:
     retained = _retain_unobserved_issues(reanalysis, baseline)
 
     assert tuple(item.id for item in retained.assessment.issues) == ("ISS-V2-RETAINED",)
+
+
+def test_explicit_unchanged_refresh_holds_the_exact_issue_population() -> None:
+    from oslo_api.analysis.persistence import _hold_unchanged_issue_population
+
+    def issue(issue_id: str, title: str) -> Issue:
+        return Issue(
+            id=issue_id,
+            artifact_type=ArtifactType.INTENT,
+            dimension="Grounding",
+            severity="Critical",
+            title=title,
+            why="Still needs a governed transition.",
+            recommendation="Resolve it through the issue lifecycle.",
+            evidence_refs=(),
+            load_bearing=True,
+        )
+
+    def snapshot_with(issues: tuple[Issue, ...], run_suffix: str) -> AssessmentSnapshot:
+        return AssessmentSnapshot(
+            id=UUID(f"018f9f7e-8de2-7000-8000-00000000002{run_suffix}"),
+            analysis_run_id=UUID(f"018f9f7e-8de2-7000-8000-00000000003{run_suffix}"),
+            workspace_id=UUID("018f9f7e-8de2-7000-8000-000000000003"),
+            project_id=UUID("018f9f7e-8de2-7000-8000-000000000004"),
+            state="current",
+            summary="read",
+            artifacts=(),
+            assessment=Assessment(0, "Low", "Low", "Low", "Low", "Low", issues),
+            published_at=datetime(2026, 9, 11, tzinfo=UTC),
+        )
+
+    baseline = snapshot_with(
+        (issue("ISS-STABLE", "Original wording"), issue("ISS-RETAINED", "Retained")),
+        "1",
+    )
+    generated = snapshot_with(
+        (issue("ISS-STABLE", "Updated wording"), issue("ISS-NEW", "Model-only addition")),
+        "2",
+    )
+
+    held = _hold_unchanged_issue_population(generated, baseline)
+
+    assert tuple(item.id for item in held.assessment.issues) == (
+        "ISS-STABLE",
+        "ISS-RETAINED",
+    )
+    assert held.assessment.issues[0].title == "Updated wording"

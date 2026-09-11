@@ -141,6 +141,7 @@ class DatabaseSliceTwoApplication:
         key: str,
         provisional: bool = False,
         defer_execution: bool = False,
+        reanalysis_trigger: ReanalysisTrigger = ReanalysisTrigger.INTAKE,
     ) -> AnalysisRun:
         workspace_id = self._workspace_for_project(actor_user_id, project_id)
         parent_run = None
@@ -198,6 +199,7 @@ class DatabaseSliceTwoApplication:
             idempotency_key=key,
             parent_run_id=parent_run.id if parent_run else None,
             consumes_analysis_allowance=True,
+            reanalysis_trigger=reanalysis_trigger,
             provisional=provisional and kind is RunKind.INITIAL,
         )
         run = self._store.create_run(request)
@@ -242,6 +244,7 @@ class DatabaseSliceTwoApplication:
             source_document_ids=previous.request.source_document_ids,
             kind=RunKind.INITIAL,
             key=key,
+            reanalysis_trigger=ReanalysisTrigger.EXPLICIT,
         )
 
     def get_run(self, *, actor_user_id: UUID, run_id: UUID) -> AnalysisRun:
