@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -62,6 +62,7 @@ class WorkspaceResponse(BaseModel):
     collaborator_seat_limit: int | None
     monthly_analysis_limit: int | None
     monthly_analyses_used: int
+    monthly_analysis_resets_at: date | None
     can_manage_plan: bool
     member_count: int
     collaborator_seats_used: int

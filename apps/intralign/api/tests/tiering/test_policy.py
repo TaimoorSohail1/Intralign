@@ -1,4 +1,7 @@
+from datetime import date
+
 from oslo_api.tiering.policy import PlanCode, get_plan_policy
+from oslo_api.tiering.repository import next_monthly_analysis_reset
 
 
 def test_free_and_basic_define_capacity_without_metering_people_or_quality() -> None:
@@ -52,3 +55,8 @@ def test_plan_policy_exposes_contextual_remedies_without_destructive_actions() -
     assert file_count_decision.allowed is True
     assert seat_decision.allowed is True
     assert seat_decision.remedies == ()
+
+
+def test_monthly_analysis_reset_uses_the_next_utc_month_boundary() -> None:
+    assert next_monthly_analysis_reset(date(2026, 9, 11)) == date(2026, 10, 1)
+    assert next_monthly_analysis_reset(date(2026, 12, 31)) == date(2027, 1, 1)

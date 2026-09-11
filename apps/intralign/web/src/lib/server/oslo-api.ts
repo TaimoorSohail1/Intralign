@@ -932,6 +932,7 @@ export interface WorkspaceSummary {
   collaborator_seat_limit: number | null;
   monthly_analysis_limit: number | null;
   monthly_analyses_used: number;
+  monthly_analysis_resets_at: string | null;
   can_manage_plan: boolean;
   member_count?: number;
   collaborator_seats_used?: number;

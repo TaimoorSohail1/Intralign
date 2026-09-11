@@ -60,6 +60,7 @@ import { InferenceMap } from "@/components/inference/inference-map";
 import { YourOutcomeDashboard } from "@/components/outcomes/your-outcome-dashboard";
 import type { YourOutcomeProjection } from "@/components/outcomes/your-outcome-projection";
 import { ReportWorkspace } from "@/components/reports/report-workspace";
+import { ReadRefreshControl } from "@/components/overview/read-refresh-control";
 import { ProjectWorkspaceControls } from "@/components/workspace/project-workspace-controls";
 import {
   WorkspaceSettingsDialog,
@@ -76,6 +77,12 @@ import { currentReadSummary } from "@/lib/current-read-summary";
 
 const dimensions = ["clarity", "alignment", "feasibility"] as const;
 const integrityBands = ["Fragile", "Weak", "Developing", "Solid", "Sound"] as const;
+const readDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "long",
+  timeZone: "UTC",
+  year: "numeric",
+});
 const intralignLogo = "/intralign-logo.webp";
 export { intralignLogo };
 
@@ -1806,7 +1813,7 @@ export function ProjectOverview({
             ))}
           </div>
           <span>Sound</span>
-          <small><b>as of this analysis</b> · live tracking begins at execution</small>
+          <small><b>as of {readDateFormatter.format(new Date(snapshot.published_at))}</b></small>
         </div>
         <details
           className="confidence-method"
@@ -1859,6 +1866,7 @@ export function ProjectOverview({
           );
         })}
       </div>
+      <ReadRefreshControl projectId={snapshot.project_id} />
     </section>
   );
 

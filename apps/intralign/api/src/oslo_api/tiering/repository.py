@@ -1,10 +1,19 @@
 import json
-from datetime import date
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from sqlalchemy import Connection, text
 
 from oslo_api.tiering.policy import PlanCode, PlanPolicy, get_plan_policy
+
+
+def next_monthly_analysis_reset(current_date: date | None = None) -> date:
+    """Return the next UTC monthly analysis period boundary."""
+
+    current = current_date or datetime.now(UTC).date()
+    if current.month == 12:
+        return date(current.year + 1, 1, 1)
+    return date(current.year, current.month + 1, 1)
 
 
 def get_workspace_plan(connection: Connection, workspace_id: UUID) -> PlanPolicy:
