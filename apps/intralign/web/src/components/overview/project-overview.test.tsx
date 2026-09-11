@@ -1538,6 +1538,77 @@ describe("ProjectOverview", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("keeps Grounding and issue lifecycle counters independent", () => {
+    const independentCountersSnapshot: OverviewSnapshot = {
+      ...snapshot,
+      assessment: {
+        ...snapshot.assessment,
+        issues: [
+          snapshot.assessment.issues[0],
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-RESOLVED-1",
+            status: "resolved",
+            title: "Migration sponsor confirmed",
+          },
+          {
+            ...snapshot.assessment.issues[0],
+            id: "ISS-RESOLVED-2",
+            status: "resolved",
+            title: "Fallback owner confirmed",
+          },
+        ],
+      },
+      provenance: {
+        schema_version: 1,
+        artifacts: [],
+        assumptions: [],
+        grounded_claims: 1,
+        inferred_claims: 3,
+        total_claims: 4,
+        load_bearing_inferences: 3,
+        grounding: {
+          grounded: 1,
+          addressed: 0,
+          routed: 0,
+          inferred: 3,
+          total: 4,
+          basis: 0.25,
+          band: "Weak",
+        },
+        structure: {
+          unconfirmed_dependencies: 3,
+          unowned_parties: 0,
+          untraceable_numbers: 0,
+        },
+        this_week: {
+          user_grounded: 1,
+          oslo_inferred: 3,
+        },
+      },
+    };
+
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={independentCountersSnapshot}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const integritySummary = screen.getByRole("region", {
+      name: "Outcome Integrity summary",
+    });
+    expect(within(integritySummary).getByText("Grounded 1 of 4 load-bearing")).toBeInTheDocument();
+
+    const advisor = screen.getByRole("complementary", {
+      name: "OSLO project advisor",
+    });
+    expect(within(advisor).getByText("Issue lifecycle").closest("section")).toHaveTextContent(
+      "2 issues resolved · 1 issue still open",
+    );
+  });
+
   it("labels an inferred primary outcome honestly and uses its managed title", () => {
     render(
       <ProjectOverview
