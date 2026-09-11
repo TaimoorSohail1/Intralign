@@ -35,6 +35,26 @@ def _snapshot_provenance(snapshot: dict) -> dict:
     return rebuilt
 
 
+def _history_grounding(
+    snapshot: dict,
+    *,
+    current: bool,
+    current_grounding: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Use the live current-read judgment for History's current point.
+
+    Historical snapshots retain the projection published with that run. The
+    current History point, however, represents the same current read rendered
+    by Overview and must therefore use that read's live projection rather than
+    a stale projection retained inside snapshot JSON.
+    """
+
+    if current and current_grounding is not None:
+        return dict(current_grounding)
+    grounding = _snapshot_provenance(snapshot).get("grounding") or {}
+    return dict(grounding)
+
+
 _TRANSITION_STATE_BY_EVENT = {
     "clarification.answered": "addressed",
     "review.responded": "addressed",
@@ -302,6 +322,7 @@ def list_project_history(
     category: str,
     cursor: str | None,
     limit: int,
+    current_grounding: Mapping[str, Any] | None = None,
 ) -> dict:
     decoded = _decode_cursor(cursor)
     cursor_time, cursor_id = decoded or (None, None)
@@ -409,15 +430,23 @@ def list_project_history(
             dict(row["snapshot_json"]) if row["snapshot_json"] is not None else None
         )
         assessment = snapshot.get("assessment", {}) if snapshot else {}
-        provenance = _snapshot_provenance(snapshot) if snapshot else {}
-        grounding = provenance.get("grounding") or {}
+        is_current = run_id == row["current_analysis_run_id"]
+        grounding = (
+            _history_grounding(
+                snapshot,
+                current=is_current,
+                current_grounding=current_grounding,
+            )
+            if snapshot
+            else {}
+        )
         group = grouped.setdefault(
             run_id,
             {
                 "run_id": str(run_id),
                 "kind": str(row["kind"]),
                 "status": str(row["status"]),
-                "current": run_id == row["current_analysis_run_id"],
+                "current": is_current,
                 "occurred_at": row["occurred_at"].isoformat(),
                 "confidence_band": assessment.get("confidence_band"),
                 "grounded_load_bearing": int(grounding.get("grounded", 0)),
@@ -520,23 +549,21 @@ def list_project_history(
             )
             if not visible_events:
                 continue
+            is_current = run_id == row["current_analysis_run_id"]
+            grounding = _history_grounding(
+                snapshot,
+                current=is_current,
+                current_grounding=current_grounding,
+            )
             grouped[run_id] = {
                 "run_id": str(run_id),
                 "kind": str(row["kind"]),
                 "status": str(row["status"]),
-                "current": run_id == row["current_analysis_run_id"],
+                "current": is_current,
                 "occurred_at": published_at,
                 "confidence_band": assessment.get("confidence_band"),
-                "grounded_load_bearing": int(
-                    (_snapshot_provenance(snapshot).get("grounding") or {}).get(
-                        "grounded", 0
-                    )
-                ),
-                "total_load_bearing": int(
-                    (_snapshot_provenance(snapshot).get("grounding") or {}).get(
-                        "total", 0
-                    )
-                ),
+                "grounded_load_bearing": int(grounding.get("grounded", 0)),
+                "total_load_bearing": int(grounding.get("total", 0)),
                 "confidence_direction": assessment.get("confidence_direction"),
                 "understanding_stage": assessment.get("understanding_stage"),
                 "changes": _change_labels(
@@ -552,8 +579,12 @@ def list_project_history(
         snapshot = dict(row["snapshot_json"])
         assessment = snapshot.get("assessment", {})
         changes = _change_labels(snapshot, previous)
-        provenance = _snapshot_provenance(snapshot)
-        grounding = provenance.get("grounding") or {}
+        is_current = row["analysis_run_id"] == row["current_analysis_run_id"]
+        grounding = _history_grounding(
+            snapshot,
+            current=is_current,
+            current_grounding=current_grounding,
+        )
         grounded_load_bearing = int(grounding.get("grounded", 0))
         total_load_bearing = int(grounding.get("total", 0))
         trend.append(
@@ -565,7 +596,7 @@ def list_project_history(
                 "direction": assessment.get("confidence_direction", "unchanged"),
                 "cause": changes[0]["label"],
                 "occurred_at": row["published_at"].isoformat(),
-                "current": row["analysis_run_id"] == row["current_analysis_run_id"],
+                "current": is_current,
             }
         )
         previous = snapshot
