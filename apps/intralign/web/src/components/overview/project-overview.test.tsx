@@ -1468,10 +1468,11 @@ describe("ProjectOverview", () => {
     });
     expect(within(advisor).getByText("On your read", { exact: false })).toBeInTheDocument();
     expect(within(advisor).getByText("Reasoning")).toBeInTheDocument();
-    expect(within(advisor).getByText("Reliability basis")).toBeInTheDocument();
-    expect(within(advisor).getByText("Reliability basis").closest("section")).toHaveTextContent(
-      "0 load-bearing details grounded · 1 still OSLO's inference",
+    expect(within(advisor).getByText("Issue lifecycle")).toBeInTheDocument();
+    expect(within(advisor).getByText("Issue lifecycle").closest("section")).toHaveTextContent(
+      "0 issues resolved · 1 issue still open",
     );
+    expect(within(advisor).queryByText(/load-bearing details grounded/i)).not.toBeInTheDocument();
     expect(within(advisor).getByText(/Your next move/)).toBeInTheDocument();
   });
 
@@ -1535,6 +1536,143 @@ describe("ProjectOverview", () => {
     expect(
       within(integritySummary).queryByText("38 of 54 load-bearing items rest on evidence"),
     ).not.toBeInTheDocument();
+  });
+
+  const counterIndependenceSnapshot = (
+    grounded: number,
+    resolved: number,
+  ): OverviewSnapshot => ({
+    ...snapshot,
+    assessment: {
+      ...snapshot.assessment,
+      resolved_issue_count: resolved,
+      issues: [
+        snapshot.assessment.issues[0],
+        ...Array.from({ length: resolved }, (_, index) => ({
+          ...snapshot.assessment.issues[0],
+          id: `ISS-RESOLVED-${index + 1}`,
+          status: "resolved" as const,
+          title: `Resolved issue ${index + 1}`,
+        })),
+      ],
+    },
+    provenance: {
+      schema_version: 1,
+      artifacts: [],
+      assumptions: [],
+      grounded_claims: grounded,
+      inferred_claims: 4 - grounded,
+      total_claims: 4,
+      load_bearing_inferences: 4 - grounded,
+      grounding: {
+        grounded,
+        addressed: 0,
+        routed: 0,
+        inferred: 4 - grounded,
+        total: 4,
+        basis: grounded / 4,
+        band: "Weak",
+      },
+      structure: {
+        unconfirmed_dependencies: 3,
+        unowned_parties: 0,
+        untraceable_numbers: 0,
+      },
+      this_week: {
+        user_grounded: grounded,
+        oslo_inferred: 4 - grounded,
+      },
+    },
+  });
+
+  it("allows Grounding to rise while issue progress stays unchanged", () => {
+    const baseline = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={counterIndependenceSnapshot(1, 0)}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const integritySummary = screen.getByRole("region", {
+      name: "Outcome Integrity summary",
+    });
+    const advisor = screen.getByRole("complementary", {
+      name: "OSLO project advisor",
+    });
+    expect(within(integritySummary).getByText("Grounded 1 of 4 load-bearing")).toBeInTheDocument();
+    expect(within(advisor).getByText("Issue lifecycle").closest("section")).toHaveTextContent(
+      "0 issues resolved · 1 issue still open",
+    );
+
+    baseline.unmount();
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={counterIndependenceSnapshot(3, 0)}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const updatedIntegritySummary = screen.getByRole("region", {
+      name: "Outcome Integrity summary",
+    });
+    const updatedAdvisor = screen.getByRole("complementary", {
+      name: "OSLO project advisor",
+    });
+    expect(
+      within(updatedIntegritySummary).getByText("Grounded 3 of 4 load-bearing"),
+    ).toBeInTheDocument();
+    expect(
+      within(updatedAdvisor).getByText("Issue lifecycle").closest("section"),
+    ).toHaveTextContent(
+      "0 issues resolved · 1 issue still open",
+    );
+  });
+
+  it("allows issue progress to rise while Grounding stays unchanged", () => {
+    const baseline = render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={counterIndependenceSnapshot(1, 0)}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const integritySummary = screen.getByRole("region", {
+      name: "Outcome Integrity summary",
+    });
+    const advisor = screen.getByRole("complementary", {
+      name: "OSLO project advisor",
+    });
+    expect(within(integritySummary).getByText("Grounded 1 of 4 load-bearing")).toBeInTheDocument();
+    expect(within(advisor).getByText("Issue lifecycle").closest("section")).toHaveTextContent(
+      "0 issues resolved · 1 issue still open",
+    );
+
+    baseline.unmount();
+    render(
+      <ProjectOverview
+        displayName="Alex"
+        initial={counterIndependenceSnapshot(1, 2)}
+        logoutAction={vi.fn()}
+      />,
+    );
+
+    const updatedIntegritySummary = screen.getByRole("region", {
+      name: "Outcome Integrity summary",
+    });
+    const updatedAdvisor = screen.getByRole("complementary", {
+      name: "OSLO project advisor",
+    });
+    expect(
+      within(updatedIntegritySummary).getByText("Grounded 1 of 4 load-bearing"),
+    ).toBeInTheDocument();
+    expect(
+      within(updatedAdvisor).getByText("Issue lifecycle").closest("section"),
+    ).toHaveTextContent(
+      "2 issues resolved · 1 issue still open",
+    );
   });
 
   it("labels an inferred primary outcome honestly and uses its managed title", () => {
@@ -3603,5 +3741,8 @@ describe("ProjectOverview", () => {
     );
 
     expect(screen.getAllByText("1 of 2")).not.toHaveLength(0);
+    expect(screen.getByText("Issue lifecycle").closest("section")).toHaveTextContent(
+      "1 issue resolved · 1 issue still open",
+    );
   });
 });

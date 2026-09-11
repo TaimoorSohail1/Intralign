@@ -4848,8 +4848,11 @@ function AdvisorPanel({
           <span>{integrity.decomposition.find((pillar) => pillar.key === integrity.limiting_pillar)?.why[0]}</span>
         </section>
         <section className="r2-advisor-basis">
-          <p>Reliability basis</p>
-          <span><b>{resolvedIssueCount}</b> load-bearing details grounded · <b>{openIssueCount}</b> still OSLO&apos;s inference. The read is only as strong as what it rests on.</span>
+          <p>Issue lifecycle</p>
+          <span>
+            <b>{resolvedIssueCount}</b> {resolvedIssueCount === 1 ? "issue" : "issues"} resolved ·{" "}
+            <b>{openIssueCount}</b> {openIssueCount === 1 ? "issue" : "issues"} still open.
+          </span>
         </section>
         {topIssue ? (
           <section className="r2-advisor-next">
