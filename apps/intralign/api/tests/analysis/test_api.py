@@ -715,6 +715,7 @@ def test_authenticated_user_lists_append_only_project_history() -> None:
                 "current": True,
             }
         ],
+        "resolution_identity_audits": [],
         "next_cursor": None,
     }
     client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))
@@ -821,6 +822,7 @@ def test_project_history_accepts_collaboration_events() -> None:
             }
         ],
         "trend": [],
+        "resolution_identity_audits": [],
         "next_cursor": None,
     }
     client = TestClient(create_app(slice_one=AuthenticatedSliceOne(), slice_two=slice_two))

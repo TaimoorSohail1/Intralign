@@ -338,6 +338,21 @@ export interface ProjectHistory {
   project_id: string;
   groups: HistoryGroup[];
   trend: HistoryTrendPoint[];
+  resolution_identity_audits?: Array<{
+    run_id: string;
+    reported_resolved_count: number;
+    resolved_issue_ids: string[];
+    identity_count_matches: boolean;
+    recorded_transitions: Array<{
+      issue_id: string;
+      state: "addressed" | "routed" | "resolved";
+      event_type: string;
+      run_id: string;
+      occurred_at: string;
+    }>;
+    missing_transition_issue_ids: string[];
+    verdict: "pass" | "fail" | "unverifiable";
+  }>;
   next_cursor: string | null;
 }
 

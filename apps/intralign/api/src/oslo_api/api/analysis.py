@@ -352,10 +352,31 @@ class HistoryTrendResponse(BaseModel):
     current: bool
 
 
+class HistoryResolutionTransitionResponse(BaseModel):
+    issue_id: str
+    state: Literal["addressed", "routed", "resolved"]
+    event_type: str
+    run_id: UUID
+    occurred_at: datetime
+
+
+class HistoryResolutionIdentityAuditResponse(BaseModel):
+    run_id: UUID
+    reported_resolved_count: int
+    resolved_issue_ids: list[str]
+    identity_count_matches: bool
+    recorded_transitions: list[HistoryResolutionTransitionResponse]
+    missing_transition_issue_ids: list[str]
+    verdict: Literal["pass", "fail", "unverifiable"]
+
+
 class ProjectHistoryResponse(BaseModel):
     project_id: UUID
     groups: list[HistoryGroupResponse]
     trend: list[HistoryTrendResponse]
+    resolution_identity_audits: list[HistoryResolutionIdentityAuditResponse] = Field(
+        default_factory=list
+    )
     next_cursor: str | None
 
 

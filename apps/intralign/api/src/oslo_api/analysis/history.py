@@ -1,8 +1,10 @@
 import base64
 import json
+import re
 from collections import OrderedDict
+from collections.abc import Iterable, Mapping
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from sqlalchemy import Connection, Engine, text
@@ -19,10 +21,158 @@ HistoryCategory = Literal[
 
 
 def _snapshot_provenance(snapshot: dict) -> dict:
+    rebuilt = build_serialized_project_provenance(snapshot)
     stored = snapshot.get("provenance")
     if isinstance(stored, dict) and isinstance(stored.get("grounding"), dict):
-        return stored
-    return build_serialized_project_provenance(snapshot)
+        stored_total = stored["grounding"].get("total")
+        rebuilt_total = rebuilt["grounding"].get("total")
+        if stored_total == rebuilt_total:
+            return stored
+    # Provenance is derived cognition, not canonical state. A retained payload
+    # can carry a projection written before its issue set was reconciled. When
+    # that cache disagrees with the retained assessment, rebuild it from the
+    # assessment so History and Overview describe one Grounding population.
+    return rebuilt
+
+
+_TRANSITION_STATE_BY_EVENT = {
+    "clarification.answered": "addressed",
+    "review.responded": "addressed",
+    "issue.resolution_selected": "addressed",
+    "grounding_act.confirm": "addressed",
+    "grounding_act.confirmed": "addressed",
+    "grounding_act.answer": "addressed",
+    "grounding_act.answered": "addressed",
+    "grounding_act.fix": "addressed",
+    "grounding_act.fix_applied": "addressed",
+    "grounding_act.flag": "needs_fix",
+    "grounding_act.flagged": "needs_fix",
+    "grounding_act.ground": "addressed",
+    "grounding_act.grounded": "addressed",
+    "grounding_act.route": "routed",
+    "grounding_act.routed": "routed",
+    "grounding_act.withdraw": "open",
+    "grounding_act.withdrawn": "open",
+}
+_RECORDED_DEPARTURE_STATES = {"addressed", "routed", "resolved"}
+
+
+def _event_time(value: object) -> str:
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value or "")
+
+
+def _transition_state(event_type: str) -> str | None:
+    if event_type.startswith("issue.resolution_"):
+        return "addressed"
+    return _TRANSITION_STATE_BY_EVENT.get(event_type)
+
+
+def build_resolution_identity_audits(
+    events: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Prove aggregate resolved counts against stable keys and legal transitions.
+
+    IC-WB-INFER and the ratified B2 wording permit an issue to leave the open
+    set only through ``addressed``, ``routed`` or ``resolved``. The aggregate
+    History count is not evidence unless every identity has such a transition.
+    """
+
+    rows = [dict(event) for event in events]
+    transitions = [
+        {
+            **event,
+            "state": _transition_state(str(event.get("event_type") or "")),
+        }
+        for event in rows
+        if event.get("issue_id")
+        and _transition_state(str(event.get("event_type") or "")) is not None
+    ]
+    audits: list[dict[str, Any]] = []
+    for reconciliation in rows:
+        if reconciliation.get("event_type") != "issues.reconciled":
+            continue
+        detail = str(reconciliation.get("detail") or "")
+        payload = reconciliation.get("payload")
+        payload = payload if isinstance(payload, dict) else {}
+        raw_resolved = payload.get("resolved")
+        declared_match = re.search(r"\b(\d+) resolved\b", detail)
+        reported_count = (
+            int(declared_match.group(1))
+            if declared_match
+            else len(raw_resolved)
+            if isinstance(raw_resolved, list)
+            else 0
+        )
+        if reported_count == 0:
+            continue
+
+        run_id = str(reconciliation.get("run_id") or "")
+        if not isinstance(raw_resolved, list):
+            audits.append(
+                {
+                    "run_id": run_id,
+                    "reported_resolved_count": reported_count,
+                    "resolved_issue_ids": [],
+                    "identity_count_matches": False,
+                    "recorded_transitions": [],
+                    "missing_transition_issue_ids": [],
+                    "verdict": "unverifiable",
+                }
+            )
+            continue
+
+        resolved_ids = list(dict.fromkeys(str(issue_id) for issue_id in raw_resolved))
+        identity_count_matches = len(resolved_ids) == reported_count
+        recorded: list[dict[str, Any]] = []
+        missing: list[str] = []
+        reconciliation_time = _event_time(reconciliation.get("occurred_at"))
+        for issue_id in resolved_ids:
+            candidates = [
+                transition
+                for transition in transitions
+                if str(transition.get("issue_id")) == issue_id
+                and (
+                    str(transition.get("run_id") or "") == run_id
+                    or _event_time(transition.get("occurred_at")) <= reconciliation_time
+                )
+            ]
+            if not candidates:
+                missing.append(issue_id)
+                continue
+            latest = max(
+                candidates,
+                key=lambda event: (
+                    _event_time(event.get("occurred_at")),
+                    int(event.get("id") or 0),
+                ),
+            )
+            state = str(latest["state"])
+            if state not in _RECORDED_DEPARTURE_STATES:
+                missing.append(issue_id)
+                continue
+            recorded.append(
+                {
+                    "issue_id": issue_id,
+                    "state": state,
+                    "event_type": str(latest.get("event_type") or ""),
+                    "run_id": str(latest.get("run_id") or ""),
+                    "occurred_at": _event_time(latest.get("occurred_at")),
+                }
+            )
+        audits.append(
+            {
+                "run_id": run_id,
+                "reported_resolved_count": reported_count,
+                "resolved_issue_ids": resolved_ids,
+                "identity_count_matches": identity_count_matches,
+                "recorded_transitions": recorded,
+                "missing_transition_issue_ids": missing,
+                "verdict": "fail" if missing or not identity_count_matches else "pass",
+            }
+        )
+    return audits
 
 
 def append_history_event(
@@ -221,6 +371,29 @@ def list_project_history(
             .mappings()
             .all()
         )
+        identity_rows = (
+            connection.execute(
+                text(
+                    """
+                    select history.id, history.analysis_run_id as run_id,
+                           history.event_type,
+                           history.issue_stable_key as issue_id,
+                           history.payload, history.detail, history.occurred_at
+                    from public.project_history_events history
+                    where history.workspace_id = :workspace_id
+                      and history.project_id = :project_id
+                      and (
+                        history.event_type = 'issues.reconciled'
+                        or history.issue_stable_key is not null
+                      )
+                    order by history.occurred_at, history.id
+                    """
+                ),
+                {"workspace_id": workspace_id, "project_id": project_id},
+            )
+            .mappings()
+            .all()
+        )
     has_more = len(rows) > limit
     page_rows = rows[:limit]
     previous_by_run: dict[UUID, dict | None] = {}
@@ -405,5 +578,6 @@ def list_project_history(
         "project_id": str(project_id),
         "groups": list(grouped.values()),
         "trend": trend,
+        "resolution_identity_audits": build_resolution_identity_audits(identity_rows),
         "next_cursor": next_cursor,
     }

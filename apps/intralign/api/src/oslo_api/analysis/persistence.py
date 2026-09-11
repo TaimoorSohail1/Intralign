@@ -458,6 +458,25 @@ def _retain_unobserved_issues(
     return replace(snapshot, assessment=assessment)
 
 
+def _hold_unchanged_issue_population(
+    snapshot: AssessmentSnapshot,
+    previous: AssessmentSnapshot | None,
+) -> AssessmentSnapshot:
+    """Keep the load-bearing population fixed for an explicit unchanged refresh.
+
+    B3 makes the denominator a property of the plan. An explicit refresh has no
+    plan edit, so model wording variance may update a stable finding but may not
+    add or remove identities. Governed lifecycle state is applied afterwards.
+    """
+
+    if previous is None:
+        return snapshot
+    current_by_key = {issue.id: issue for issue in snapshot.assessment.issues}
+    held = tuple(current_by_key.get(issue.id, issue) for issue in previous.assessment.issues)
+    assessment = replace(snapshot.assessment, issues=held)
+    return replace(snapshot, assessment=assessment)
+
+
 def _public_snapshot_summary(value: str) -> str:
     if not value.startswith("USER_ARTIFACT_EDIT"):
         return value
@@ -1366,7 +1385,8 @@ class DatabaseAnalysisStore:
                 connection.execute(
                     text(
                         """
-                        select kind, consumes_analysis_allowance, requested_by
+                        select kind, consumes_analysis_allowance, requested_by,
+                               reanalysis_trigger
                         from public.analysis_runs
                         where id = :run_id
                         """
@@ -1397,7 +1417,10 @@ class DatabaseAnalysisStore:
                 if previous_snapshot_payload
                 else None
             )
-            snapshot = _retain_unobserved_issues(snapshot, previous_snapshot)
+            if str(run_row["reanalysis_trigger"]) == ReanalysisTrigger.EXPLICIT.value:
+                snapshot = _hold_unchanged_issue_population(snapshot, previous_snapshot)
+            else:
+                snapshot = _retain_unobserved_issues(snapshot, previous_snapshot)
             issue_lifecycle = _current_issue_lifecycle(
                 connection,
                 workspace_id=snapshot.workspace_id,
