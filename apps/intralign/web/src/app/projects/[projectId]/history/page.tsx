@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { logout } from "@/app/logout-action";
 import { HistoryOnlyPage } from "@/components/history/history-only-page";
+import { HistoryUnavailablePage } from "@/components/history/history-unavailable-page";
 import { ProjectOverview } from "@/components/overview/project-overview";
 import { getOverview, getProjectHistory } from "@/lib/server/oslo-api";
 import { readSession } from "@/lib/server/session";
@@ -18,7 +19,7 @@ export default async function HistoryPage({
     accessToken: session.accessToken,
     projectId,
   }).catch(() => null);
-  if (!history) redirect(`/intake?project=${projectId}`);
+  if (!history) return <HistoryUnavailablePage projectId={projectId} />;
   let snapshot;
   try {
     snapshot = await getOverview(session.accessToken, projectId);

@@ -27,6 +27,13 @@ const filters: Array<{ label: string; value: HistoryFilter }> = [
   { label: "Issues", value: "issues" },
 ];
 
+const historyDateFormatter = new Intl.DateTimeFormat("en", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+  year: "numeric",
+});
+
 function displayCategory(event: HistoryEvent): Exclude<HistoryFilter, "all"> {
   if (event.category === "issues") return "issues";
   if (event.category === "decisions" || event.category === "collaboration") {
@@ -42,15 +49,12 @@ function runTitle(group: HistoryGroup) {
   return `${group.kind === "initial" ? "Initial" : "Extended"} Analysis complete`;
 }
 
-function relativeDate(value: string) {
+export function formatHistoryRelativeDate(value: string, now = new Date()) {
   const date = new Date(value);
-  const now = new Date();
-  if (date.toDateString() === now.toDateString()) return "Today";
-  return new Intl.DateTimeFormat("en", {
-    day: "numeric",
-    month: "short",
-    year: date.getFullYear() === now.getFullYear() ? undefined : "numeric",
-  }).format(date);
+  const day = date.toISOString().slice(0, 10);
+  const currentDay = now.toISOString().slice(0, 10);
+  if (day === currentDay) return "Today";
+  return historyDateFormatter.format(date);
 }
 
 function eventIcon(event: HistoryEvent) {
@@ -211,7 +215,7 @@ export function HistoryWorkspace({
                       ? "Analysis"
                       : "Issues"}
                 </span>
-                <time dateTime={event.occurred_at}>{relativeDate(event.occurred_at)}</time>
+                <time dateTime={event.occurred_at}>{formatHistoryRelativeDate(event.occurred_at)}</time>
               </header>
               <div>
                 <span className="history-card-icon">{eventIcon(event)}</span>

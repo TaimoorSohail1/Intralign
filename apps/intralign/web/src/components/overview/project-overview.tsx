@@ -83,6 +83,11 @@ const readDateFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
   year: "numeric",
 });
+const commentDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "UTC",
+});
 const intralignLogo = "/intralign-logo.webp";
 export { intralignLogo };
 
@@ -4602,7 +4607,7 @@ function IssuePanel({
               <header>
                 <strong>{comment.author_name || "You"}</strong>
                 <time dateTime={comment.created_at}>
-                  {new Date(comment.created_at).toLocaleString()}
+                  {commentDateFormatter.format(new Date(comment.created_at))} UTC
                 </time>
               </header>
               <p>{comment.body}</p>

@@ -3106,6 +3106,10 @@ class DatabaseSliceTwoApplication:
                 ),
                 {"run_id": run.id, "project_id": run.request.project_id},
             )
+            self._store.synchronize_published_lifecycle(
+                connection,
+                run_id=run.id,
+            )
             pending_count = connection.execute(
                 text(
                     """
