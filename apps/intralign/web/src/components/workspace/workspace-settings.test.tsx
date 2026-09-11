@@ -163,6 +163,74 @@ describe("WorkspaceSettings", () => {
     expect(screen.getByText("Arrives after this release")).toBeInTheDocument();
   });
 
+  it("starts one unchanged Deep Pass from Plan & usage", async () => {
+    vi.mocked(fetch).mockImplementation((input: RequestInfo | URL) => {
+      if (String(input) === "/api/projects/project-1/analysis-runs/refresh") {
+        return Promise.resolve(Response.json({ run_id: "refresh-run-1" }, { status: 202 }));
+      }
+      return Promise.resolve(Response.json(initial));
+    });
+
+    render(
+      <WorkspaceSettings
+        displayName="Taimoor"
+        email="taimoor@example.com"
+        initial={initial}
+        initialSection="plan"
+        modal
+        onClose={vi.fn()}
+        projectId="project-1"
+        workspace={workspace}
+        workspaceName="OSLO Alpha"
+      />,
+    );
+
+    const update = screen.getByRole("button", { name: "Update now" });
+    fireEvent.click(update);
+    fireEvent.click(update);
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/projects/project-1/analysis-runs/refresh",
+      { method: "POST" },
+    );
+  });
+
+  it("keeps the refresh action scoped to an active project", () => {
+    renderSettings("plan");
+
+    expect(screen.queryByRole("button", { name: "Update now" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Refresh the current read")).not.toBeInTheDocument();
+  });
+
+  it("keeps project data unchanged and offers retry when refresh cannot start", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      Response.json({ message: "raw upstream transport detail" }, { status: 502 }),
+    );
+
+    render(
+      <WorkspaceSettings
+        displayName="Taimoor"
+        email="taimoor@example.com"
+        initial={initial}
+        initialSection="plan"
+        modal
+        onClose={vi.fn()}
+        projectId="project-1"
+        workspace={workspace}
+        workspaceName="OSLO Alpha"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Update now" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Analysis could not refresh. Your project data is unchanged; try again.",
+    );
+    expect(screen.queryByText("raw upstream transport detail")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+  });
+
   it("manages workspace invitations inside Settings without leaving the project", async () => {
     const invitations = [{
       id: "invite-1",

@@ -2858,6 +2858,7 @@ export function ProjectOverview({
           window.requestAnimationFrame(() => accountTrigger.current?.focus());
         }}
         open={settingsOpen}
+        projectId={snapshot.project_id}
       />
 
       {orientation ? (
