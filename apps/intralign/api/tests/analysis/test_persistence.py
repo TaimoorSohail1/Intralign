@@ -166,3 +166,30 @@ def test_snapshot_round_trip_retains_slice_ten_graph_and_sensitivity_contract() 
     assert restored.assessment.dependency_graph == graph
     assert restored.assessment.sensitivity_candidates == (candidate,)
     assert restored.assessment.issues[0].graph_node_id == "dependency"
+
+
+def test_unobserved_issue_is_retained_in_a_new_snapshot() -> None:
+    from oslo_api.analysis.persistence import _retain_unobserved_issues
+
+    issue = Issue(
+        id="ISS-V2-RETAINED", artifact_type=ArtifactType.INTENT, dimension="Grounding",
+        severity="Critical", title="Retained issue", why="Still needs a transition.",
+        recommendation="Resolve or withdraw it.", evidence_refs=(), load_bearing=True,
+    )
+    def snapshot_with(issues: tuple[Issue, ...], run_suffix: str) -> AssessmentSnapshot:
+        return AssessmentSnapshot(
+            id=UUID(f"018f9f7e-8de2-7000-8000-00000000000{run_suffix}"),
+            analysis_run_id=UUID(f"018f9f7e-8de2-7000-8000-00000000001{run_suffix}"),
+            workspace_id=UUID("018f9f7e-8de2-7000-8000-000000000003"),
+            project_id=UUID("018f9f7e-8de2-7000-8000-000000000004"),
+            state="current", summary="read", artifacts=(),
+            assessment=Assessment(0, "Low", "Low", "Low", "Low", "Low", issues),
+            published_at=datetime(2026, 9, 11, tzinfo=UTC),
+        )
+
+    baseline = snapshot_with((issue,), "1")
+    reanalysis = snapshot_with((), "2")
+
+    retained = _retain_unobserved_issues(reanalysis, baseline)
+
+    assert tuple(item.id for item in retained.assessment.issues) == ("ISS-V2-RETAINED",)
