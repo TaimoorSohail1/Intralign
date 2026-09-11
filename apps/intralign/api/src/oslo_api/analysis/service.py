@@ -2758,6 +2758,11 @@ class DatabaseSliceTwoApplication:
             active is not None
             and active.status is AnalysisRunStatus.QUEUED
             and active.request.reanalysis_trigger is ReanalysisTrigger.BATCH
+            # A lifecycle attestation must retain the currently published
+            # snapshot as its parent. Merging it into an older queued batch
+            # makes the state-only attestation guard reject the run and lets
+            # the model regenerate the issue under a new key.
+            and change_kind not in {"confirm", "flag", "withdraw"}
         ):
             merged = self._store.merge_queued_run(
                 active.id,
