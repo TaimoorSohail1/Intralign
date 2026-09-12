@@ -338,12 +338,17 @@ class DatabaseCollaborationService:
         project_id: UUID,
     ) -> tuple[dict, dict[str, str], list[dict], dict[str, dict]]:
         with self._engine.connect() as connection:
+            # IC-WB-EVAL / B3: collaboration surfaces describe the atomically
+            # selected current read, not a later-published non-current snapshot.
             snapshot = connection.execute(
                 text(
                     """
-                    select snapshot_json from public.assessment_snapshots
-                    where project_id = :project_id
-                    order by published_at desc limit 1
+                    select snapshot.snapshot_json
+                    from public.projects project
+                    join public.assessment_snapshots snapshot
+                      on snapshot.analysis_run_id = project.current_analysis_run_id
+                    where project.id = :project_id
+                    limit 1
                     """
                 ),
                 {"project_id": project_id},
