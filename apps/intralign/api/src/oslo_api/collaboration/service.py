@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from datetime import time as wall_time
 from hashlib import sha256
@@ -15,7 +16,9 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import Connection, Engine, text
 
 from oslo_api.analysis.history import append_history_event
+from oslo_api.analysis.persistence import _snapshot_dict, _snapshot_from_dict
 from oslo_api.analysis.provenance import grounding_issue_state
+from oslo_api.analysis.understanding import with_integrity
 from oslo_api.collaboration.asana import AsanaGateway, executable_plan_items
 from oslo_api.project_access import find_project_access
 
@@ -274,6 +277,7 @@ class DatabaseCollaborationService:
     def roll_up(self, *, actor_user_id: UUID, project_id: UUID) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
         snapshot, statuses, reviewers, actions = self._collaboration_projection_data(project_id)
+        snapshot = self._canonical_projection_snapshot(snapshot, statuses, actions)
         assessment = snapshot.get("assessment") or {}
         nodes = self._grounding_nodes(
             project_id,
@@ -320,6 +324,7 @@ class DatabaseCollaborationService:
     def grounding_map(self, *, actor_user_id: UUID, project_id: UUID) -> dict:
         workspace_id, role = self._project_access(actor_user_id, project_id)
         snapshot, statuses, reviewers, actions = self._collaboration_projection_data(project_id)
+        snapshot = self._canonical_projection_snapshot(snapshot, statuses, actions)
         issues = (snapshot.get("assessment") or {}).get("issues") or []
         nodes = self._grounding_nodes(project_id, issues, statuses, reviewers, actions)
         return {
@@ -332,6 +337,31 @@ class DatabaseCollaborationService:
                 for state in ("grounded", "addressed", "routed", "inferred")
             },
         }
+
+    @staticmethod
+    def _canonical_projection_snapshot(
+        snapshot: dict,
+        statuses: dict[str, str],
+        actions: dict[str, dict],
+    ) -> dict:
+        """Use the same governed issue universe as the current Overview read."""
+
+        retained = _snapshot_from_dict(snapshot)
+        issue_actions = tuple(
+            {
+                "issue_id": issue_id,
+                **dict(action),
+                "status": statuses.get(issue_id, str(action.get("status") or "open")),
+            }
+            for issue_id, action in actions.items()
+        )
+        canonical_assessment = with_integrity(
+            retained.assessment,
+            retained.artifacts,
+            issue_actions=issue_actions,
+        )
+        canonical_snapshot = replace(retained, assessment=canonical_assessment)
+        return _snapshot_dict(canonical_snapshot, issue_actions=issue_actions)
 
     def _collaboration_projection_data(
         self,
